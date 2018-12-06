@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.springframework</groupId>
+    <artifactId>NeqSimSource</artifactId>
+    <packaging>jar</packaging>
+	<version>2.1</version>
+	
+	<repositories>
+	<repository>
+        <id>central</id>
+        <url>http://central.maven.org/maven2/</url>
+    </repository>
+    <repository>
+      <id>netbeans</id>
+      <name>Netbeans rep</name>
+      <url>http://bits.netbeans.org/maven2/</url>
+   </repository>
+<repository>
+         <id>boundless</id>
+         <url>https://repo.boundlessgeo.com/main/</url>
+    </repository> 
+	<repository>
+        <id>unidata-all</id>
+        <url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url> 
+    </repository> 
+
+	
+	</repositories>
+	
+	
+	<dependencies>
+		<dependency>
+			<groupId>lp</groupId>
+			<artifactId>lp</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/dist/lib/lp.zip</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>org.netbeans.external</groupId>  <!-- OK! -->
+			<artifactId>AbsoluteLayout</artifactId>
+			<version>RELEASE802</version>
+		</dependency>
+		<dependency>
+			<groupId>colt</groupId>					  <!-- OK! -->
+			<artifactId>colt</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>            <!-- OK! -->
+			<artifactId>commons-logging</artifactId>
+			<version>1.1.3</version>
+		</dependency>
+				<dependency>
+			<groupId>commons-lang</groupId>				<!--OK! -->
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>		<!--OK! -->		
+			<artifactId>commons-math3</artifactId>
+			<version>3.6.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.derby</groupId>         <!--OK! -->		          
+			<artifactId>derby</artifactId>
+			<version>10.12.1.1</version>
+		</dependency>
+		<dependency>									
+			<groupId>org.ejml</groupId>
+			<artifactId>ejml-cdense</artifactId>		<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>                                  
+			<groupId>org.ejml</groupId>
+			<artifactId>ejml-core</artifactId>			<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ejml</groupId>				
+			<artifactId>ejml-ddense</artifactId>		<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ejml</groupId>				
+			<artifactId>ejml-dsparse</artifactId>		<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ejml</groupId>       
+			<artifactId>ejml-experimental</artifactId>	<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ejml</groupId>		
+            <artifactId>ejml-fdense</artifactId>		<!--OK! -->			
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ejml</groupId>				
+			<artifactId>ejml-simple</artifactId>		<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>org.ejml</groupId>           
+			<artifactId>ejml-zdense</artifactId>		<!--OK! -->		
+			<version>0.34</version>
+		</dependency>
+		<dependency>
+			<groupId>com.lowagie</groupId>                    <!-- OK! -->
+			<artifactId>itext</artifactId>
+			<version>1.02b</version>
+		</dependency>
+		<dependency>
+			<groupId>gov.nist.math</groupId>              <!-- OK -->
+			<artifactId>jama</artifactId>
+			<version>1.0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>jcommon</groupId>					 <!-- OK! -->
+			<artifactId>jcommon</artifactId>
+			<version>0.9.5</version>
+		</dependency>
+		<dependency>
+			<groupId>jfreechart</groupId>					 <!-- OK! -->
+			<artifactId>jfreechart</artifactId>
+			<version>0.9.20</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.tbekolay.jnumeric</groupId>   <!-- OK! -->
+			<artifactId>jnumeric</artifactId>
+			<version>0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>   					 <!-- OK! -->
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+		</dependency>
+		<dependency>
+			<groupId>org.python</groupId>					 <!-- OK! -->
+			<artifactId>jython</artifactId>
+			<version>2.7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.matrix-toolkits-java</groupId>   <!-- OK! Different version -->
+			<artifactId>mtj</artifactId>
+			<version>1.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>			<!-- OK! -->
+			<version>8.0.11</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.ucar</groupId>
+			<artifactId>netcdfAll</artifactId>
+			<version>4.6.2</version>
+		</dependency> 
+		<dependency>
+			<groupId>org.ojalgo</groupId>							    <!-- OK! -->
+			<artifactId>ojalgo</artifactId>
+			<version>44.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.xerial</groupId>								<!-- OK! -->
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.23.1</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.ucanaccess</groupId>						<!-- OK! -->
+			<artifactId>ucanaccess</artifactId>
+			<version>4.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>io.airlift</groupId>								<!-- OK! -->
+			<artifactId>units</artifactId>
+			<version>0.68</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.wisc.ssec</groupId>						
+			<artifactId>visad</artifactId>
+			<version>2.0-20130124</version>
+		</dependency>
+	</dependencies>
+	
+	
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+						<finalName>NeqSimSource</finalName>
+                            <transformers>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>guiAuto.graphicalUserInterface.mainFrame.ThermodynamicCalculator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+			 <plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.0</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

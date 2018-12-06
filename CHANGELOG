@@ -1,0 +1,8 @@
+Version 2018.1
+- improved speed for CPA model22
+
+Version 2018.2
+- update base package to neqsim
+
+Version 2018.3 (in progress)
+- updates on multithreading performance
