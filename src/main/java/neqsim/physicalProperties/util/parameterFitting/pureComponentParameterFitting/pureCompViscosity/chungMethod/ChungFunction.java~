@@ -1,0 +1,38 @@
+/*
+ * RacketFunction.java
+ *
+ * Created on 24. januar 2001, 21:15
+ */
+
+package physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.chungMethod;
+
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+import thermo.system.*;
+import thermodynamicOperations.*;
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class ChungFunction extends LevenbergMarquardtFunction{
+    
+    
+    public ChungFunction() {
+        params = new double[1];
+    }
+    
+    public double calcValue(double[] dependentValues){
+        system.setTemperature(dependentValues[0]);
+        system.init(1);
+        system.initPhysicalProperties();
+        return system.getPhases()[0].getPhysicalProperties().getViscosity();
+    }
+    
+    public void setFittingParams(int i, double value){
+        params[i] = value;
+        system.getPhases()[0].getComponents()[i].setViscosityAssociationFactor(value);
+        system.getPhases()[1].getComponents()[i].setViscosityAssociationFactor(value);
+    }
+}

@@ -1,0 +1,23 @@
+/*
+ * ComponentGEInterface.java
+ *
+ * Created on 11. juli 2000, 19:58
+ */
+
+package thermo.component;
+
+import thermo.phase.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public interface ComponentGEInterface{
+    
+   public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype,  double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
+   public double getGamma();
+   public double getlnGammadt();
+   public double getlnGammadn(int k);
+   
+}

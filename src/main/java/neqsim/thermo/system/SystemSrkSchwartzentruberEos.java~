@@ -1,0 +1,55 @@
+/*
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:05
+ */
+
+package thermo.system;
+
+import thermo.phase.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+
+/** This class defines a thermodynamic system using the SRK equation of state
+ */
+public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
+    /** Creates a thermodynamic system using the SRK equation of state. */
+    protected String modelName = "ScRK-EOS";
+    //  SystemSrkEos clonedSystem;
+    public SystemSrkSchwartzentruberEos(){
+        super();
+        attractiveTermNumber = 2;
+    }
+    
+    public SystemSrkSchwartzentruberEos(double T, double P) {
+        super(T,P);
+        attractiveTermNumber = 2;
+    }
+    
+    public SystemSrkSchwartzentruberEos(double T, double P, boolean solidCheck) {
+        super(T, P, solidCheck);
+        attractiveTermNumber = 2;
+    }
+    
+    public Object clone(){
+        SystemSrkSchwartzentruberEos clonedSystem = null;
+        try{
+            clonedSystem = (SystemSrkSchwartzentruberEos) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+//        
+//        for(int i = 0; i < numberOfPhases; i++) {
+//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+//        }
+        
+        return clonedSystem;
+    }
+    
+    
+}

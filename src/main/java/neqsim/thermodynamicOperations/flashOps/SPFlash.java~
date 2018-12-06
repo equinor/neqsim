@@ -1,0 +1,77 @@
+/*
+ * PHflash.java
+ *
+ * Created on 8. mars 2001, 10:56
+ */
+
+package thermodynamicOperations.flashOps;
+
+import thermo.system.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.io.*;
+/**
+ *
+ * @author  even solbraa
+ * @version
+ */
+public class QfuncFlash_1 extends Flash implements java.io.Serializable {
+    
+    double Hspec=0;
+    Flash tpFlash;
+    int type=0;
+    /** Creates new PHflash */
+    public QfuncFlash_1() {
+    }
+    
+    public QfuncFlash_1(SystemInterface system, double Hspec, int type) {
+        this.system = system;
+        this.tpFlash = new TPflash(system);
+        this.Hspec = Hspec;
+        this.type = type;
+    }
+    
+    public double calcdQdTT(){
+        double dQdTT = - system.getTemperature() * system.getTemperature() * system.getCp();
+        return dQdTT;
+    }
+    
+    public double calcdQdT(){
+        double dQ = system.getEnthalpy()-Hspec;
+        return dQ;
+    }
+    
+    public double solveQ(){
+        double oldTemp=1.0/system.getTemperature(), nyTemp=1.0/system.getTemperature();
+        double iterations=1;
+        do{
+            iterations++;
+            oldTemp = nyTemp;
+            system.init(3);
+            nyTemp = oldTemp - iterations/(iterations)*calcdQdT()/calcdQdTT();
+            system.setTemperature(1.0/nyTemp);
+            tpFlash.run();
+        }
+        while(Math.abs((1.0/nyTemp-1.0/oldTemp)/(1.0/nyTemp))>1e-9 && iterations<1000);
+        return 1.0/nyTemp;
+    }
+    
+    public void run(){
+        tpFlash.run();
+        System.out.println("enthalpy: " + system.getEnthalpy());
+        if(type==0){
+            solveQ();
+        }
+        else{
+            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents());
+            secondOrderSolver.setEnthalpySpec(Hspec);
+            secondOrderSolver.solve(1);
+            
+        }
+        System.out.println("enthalpy: " + system.getEnthalpy());
+        System.out.println("Temperature: " + system.getTemperature());
+        return;
+    }
+    
+}

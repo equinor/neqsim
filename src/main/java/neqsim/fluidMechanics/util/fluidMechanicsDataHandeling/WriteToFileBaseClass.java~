@@ -1,0 +1,20 @@
+/*
+ * WriteToFileBaseClass.java
+ *
+ * Created on 27. oktober 2000, 21:44
+ */
+
+package Templates.Classes;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class Class {
+
+    /** Creates new WriteToFileBaseClass */
+    public Class () {
+    }
+
+}

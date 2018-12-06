@@ -1,0 +1,20 @@
+/*
+ * WriteToFileBaseClass.java
+ *
+ * Created on 27. oktober 2000, 21:44
+ */
+
+package fluidMechanics.util.writeToFile;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class FileWriterBaseClass {
+
+    /** Creates new WriteToFileBaseClass */
+    public FileWriterBaseClass() {
+    }
+
+}

@@ -1,0 +1,24 @@
+/*
+ * SeparatorInterface.java
+ *
+ * Created on 22. august 2001, 17:22
+ */
+
+package processSimulation.processEquipment.splitter;
+
+import processSimulation.processEquipment.*;
+import processSimulation.processEquipment.stream.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface SplitterInterface extends ProcessEquipmentInterface{
+    public void setName(String name);
+    public void setSplitNumber(int i);
+    public void setInletStream(Stream inletStream);
+    public Stream getSplitStream(int i);
+    public String getName();
+    
+}
+

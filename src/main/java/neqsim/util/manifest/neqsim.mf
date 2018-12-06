@@ -1,0 +1,2 @@
+Name: thermo.thermoBean.class
+Java-Bean: True

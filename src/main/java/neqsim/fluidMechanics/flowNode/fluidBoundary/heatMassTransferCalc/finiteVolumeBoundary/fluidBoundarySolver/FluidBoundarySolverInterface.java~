@@ -1,0 +1,17 @@
+/*
+ * FluidBoundarySolverInterface.java
+ *
+ * Created on 8. august 2001, 14:51
+ */
+
+package fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySolver;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface FluidBoundarySolverInterface {
+    public void solve();
+}
+

@@ -1,0 +1,25 @@
+/*
+ * MixerInterface.java
+ *
+ * Created on 21. august 2001, 22:28
+ */
+
+package processSimulation.processEquipment.mixer;
+
+import processSimulation.processEquipment.stream.*;
+import processSimulation.processEquipment.*;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface MixerInterface extends ProcessEquipmentInterface{
+    public void run();
+    public void addStream(StreamInterface newStream);
+    public Stream getOutStream();
+    public void setName(String name);
+    public String getName();
+     
+}
+

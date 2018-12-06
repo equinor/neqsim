@@ -1,0 +1,17 @@
+/*
+ * FlowNodeIVisualizationInterface.java
+ *
+ * Created on 5. august 2001, 16:28
+ */
+
+package Templates.Classes;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public interface Interface {
+
+}
+

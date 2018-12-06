@@ -1,0 +1,28 @@
+/*
+ * newtonRhapson.java
+ *
+ * Created on 15. juli 2000, 17:43
+ */
+
+package MathLib.generalMath;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public static class GeneralMath extends Object implements java.io.Serializable{
+    
+    
+
+    /** Creates new newtonRhapson */
+    public GeneralMath() {
+    }
+    
+    public static double log10(double var){
+        return Math.log(var) / Math.log(10); 
+    }
+    
+}
+    
+    

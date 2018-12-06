@@ -1,0 +1,41 @@
+/*
+ * SampleCreator.java
+ *
+ * Created on 8. februar 2001, 09:14
+ */
+
+package statistics.experimentalSampleCreation.sampleCreator;
+
+import statistics.experimentalSampleCreation.readDataFromFile.*;
+import thermo.system.*;
+import thermodynamicOperations.*; 
+import statistics.experimentalEquipmentData.*;
+/**
+ *
+ * @author  even solbraa
+ * @version 
+ */
+public class SampleCreator extends Object {
+
+    SystemInterface system;
+    ThermodynamicOperations thermoOps;
+    ExperimentalEquipmentData equipment;
+    /** Creates new SampleCreator */
+    public SampleCreator() {
+    }
+    
+    public SampleCreator(SystemInterface system, ThermodynamicOperations thermoOps) {
+        this.system = system;
+        this.thermoOps = thermoOps;
+    }
+    
+    public void setThermoSystem(SystemInterface system){
+        this.system = system;
+        this.thermoOps = thermoOps;
+    }
+    
+    public void setExperimentalEquipment(ExperimentalEquipmentData equipment){
+        this.equipment = equipment;
+    }
+        
+}

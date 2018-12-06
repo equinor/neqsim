@@ -1,0 +1,31 @@
+package fluidMechanics.flowSystem.twoPhaseFlowSystem;
+
+import thermo.system.*;
+import fluidMechanics.*;
+import fluidMechanics.geometryDefinitions.pipe.*;
+import fluidMechanics.flowSystem.*;
+import fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.annularFlow.*;
+import fluidMechanics.flowNode.*;
+
+
+public abstract class TwoPhaseFlowSystem extends FlowSystem
+{
+   // FlowNodeInterface[] test = new AnnularFlow[100];
+    //	public FluidMechanicsInterface[] flowNode;
+    public PipeData pipe;
+    
+    
+    public TwoPhaseFlowSystem(){
+    }
+    
+    public TwoPhaseFlowSystem(SystemInterface system){
+    }
+    
+    
+    public static void main(String[] args)
+    {
+       
+        
+        
+    }
+}

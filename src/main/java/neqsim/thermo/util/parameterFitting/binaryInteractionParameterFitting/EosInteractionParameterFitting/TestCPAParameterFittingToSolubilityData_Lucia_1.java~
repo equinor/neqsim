@@ -1,0 +1,137 @@
+/*
+ * TestAcentric.java
+ *
+ * Created on 23. januar 2001, 22:08
+ */
+
+package thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
+
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+import statistics.parameterFitting.*;
+import thermo.system.*;
+import java.sql.*;
+import util.database.*;
+import java.util.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Object {
+    
+    /** Creates new TestAcentric */
+    public TestCPAParameterFittingToSolubilityData_Lucia() {
+    }
+    
+    
+    public static void main(String[] args){
+        
+        LevenbergMarquardt optim = new LevenbergMarquardt();
+        ArrayList sampleList = new ArrayList();
+        
+        // inserting samples from database
+        NeqSimDataBase database = new NeqSimDataBase();
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature<390 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
+       //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='ethane' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
+        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature<390 AND Pressure<15000000 AND L2<>NULL AND L2>0.0000000001 AND ID>2204 AND ID<2410 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
+        try{
+            int p=0;
+            System.out.println("adding....");
+            while(dataSet.next() && p<500){
+                p++;
+                CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData();
+                
+                SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("Pressure"))/1.0e5);
+                //SystemInterface testSystem = new SystemSrkEos(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("Pressure"))/1.0e5);
+                //testSystem.addComponent("methane", 1.0);
+                testSystem.addComponent("propane", 1.0);
+                testSystem.addComponent("water", 10.0);
+                //testSystem.createDatabase(true);
+                testSystem.setMixingRule(7);
+                testSystem.init(0);
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature    // presure std.dev pressure
+                double val = Double.parseDouble(dataSet.getString("L2"));
+                double sdev = val/100.0;
+                SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
+                sample.setFunction(function);
+                sample.setThermodynamicSystem(testSystem);//34.7
+                sample.setReference(Double.toString(testSystem.getTemperature()));
+                double parameterGuess[] = {0.055112588}; //srk
+                //double parameterGuess[] = {0.1611996305}; //cpa-srk- metan 20.8% dev
+                //double parameterGuess[] = {0.1592294845}; //cpa-pr - metan 21.9
+                //double parameterGuess[] = {-0.0104486871}; //cpa-srk - nitrogen
+               // double parameterGuess[] = {0.2413992410}; //cpa-pr - nitrogen 19.4
+                //double parameterGuess[] = {-0.0509226889}; //cpa-srk - CO2 12.0
+                //double parameterGuess[] = {0.0160496243}; //cpa-pr - CO2
+                //double parameterGuess[] = {0.13287685}; //srk
+                
+                function.setInitialGuess(parameterGuess);
+                sampleList.add(sample);
+            }
+        }
+        catch(Exception e){
+            System.out.println("database error" + e);
+        }
+        
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<380 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+       // dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='ethane' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature<390 AND Pressure<15000000 AND Y<>NULL AND Y>0.000000001 AND ID>2204 AND ID<2410 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
+        try{
+            int p=0;
+            System.out.println("adding....");
+            while(!dataSet.next() && p<500){
+                p++;
+                CPAParameterFittingToSolubilityData_Vap function = new CPAParameterFittingToSolubilityData_Vap();
+                
+                SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("Pressure"))/1.0e5);
+                //SystemInterface testSystem = new SystemSrkEos(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("Pressure"))/1.0e5);
+                //testSystem.addComponent("methane", 1.0);
+                testSystem.addComponent("propane", 1.0);
+                testSystem.addComponent("water", 10.0);
+                testSystem.createDatabase(true);
+                testSystem.init(0);
+                testSystem.setMixingRule(7);
+                
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature    // presure std.dev pressure
+                double val = 1.0-Double.parseDouble(dataSet.getString("Y"));
+                double sdev = val/100.0;
+                SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
+                sample.setFunction(function);
+                sample.setThermodynamicSystem(testSystem);
+                sample.setReference(Double.toString(testSystem.getTemperature()));
+                double parameterGuess[] = {0.055112588}; //srk
+                //double parameterGuess[] = {0.1611996305}; //cpa-srk - metan
+                //double parameterGuess[] = {0.1592294845}; //cpa-pr - metan
+                //double parameterGuess[] = {-0.0104486871}; //cpa-srk - nitrogen
+                //double parameterGuess[] = {0.2413992410}; //cpa-pr - nitrogen
+                //double parameterGuess[] = {-0.0509226889}; //cpa-srk - CO2 12.0
+                //double parameterGuess[] = {0.0160496243}; //cpa-pr - CO2
+                function.setInitialGuess(parameterGuess);
+                sampleList.add(sample);
+            }
+        }
+        catch(Exception e){
+            System.out.println("database error" + e);
+        }
+        
+        SampleSet sampleSet = new SampleSet(sampleList);
+        optim.setSampleSet(sampleSet);
+        
+        // do simulations
+        //optim.solve();
+        //optim.runMonteCarloSimulation();
+        //    optim.displayResult();
+        optim.displayCurveFit();
+        optim.writeToCdfFile("c:/testFit.nc");
+        optim.writeToTextFile("c:/testFit.txt");
+    }
+}

@@ -1,0 +1,31 @@
+/*
+ * CreateNetCDF.java
+ *
+ * Created on 5. august 2001, 21:50
+ */
+
+package dataPresentation.dataHandeling.createNetCDF;
+
+import ucar.multiarray.ArrayMultiArray;
+import ucar.multiarray.IndexIterator;
+import ucar.multiarray.MultiArray;
+import ucar.netcdf.Attribute;
+import ucar.netcdf.Dimension;
+import ucar.netcdf.NetcdfFile;
+import ucar.netcdf.ProtoVariable;
+import ucar.netcdf.Schema;
+import ucar.netcdf.UnlimitedDimension;
+import ucar.netcdf.Variable;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class CreateNetCDF {
+
+    /** Creates new CreateNetCDF */
+    public CreateNetCDF() {
+    }
+
+}

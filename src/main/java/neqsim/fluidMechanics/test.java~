@@ -1,0 +1,20 @@
+/*
+ * test.java
+ *
+ * Created on 30. oktober 2001, 23:09
+ */
+
+package fluidMechanics;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class test {
+
+    /** Creates new test */
+    public test() {
+    }
+
+}

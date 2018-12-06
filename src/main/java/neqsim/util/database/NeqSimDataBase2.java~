@@ -1,0 +1,48 @@
+/*
+ * NeqSimDataBase.java
+ *
+ * Created on 17. mai 2001, 20:25
+ */
+
+package util.database;
+
+import java.sql.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class NeqSimDataBase2 {
+    
+    public static boolean useOnlineBase = false;
+    /** Creates new NeqSimDataBase */
+    public NeqSimDataBase2() {
+    }
+    
+    public Connection openConnection(String database) throws SQLException, ClassNotFoundException{
+        if(useOnlineBase){
+            Class.forName("org.gjt.mm.mysql.Driver");
+            return DriverManager.getConnection("jdbc:mysql:" + database);
+        }
+        else{
+            Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+            //return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=c:\\NeqSimDatabase2.mdb");
+            return DriverManager.getConnection("jdbc:odbc:" + database);
+        }
+    }
+    
+    public ResultSet getResultSet(String database, String sqlString){
+        ResultSet result = null;
+        try{
+            Connection databaseConnection = this.openConnection(database);
+            Statement statement = databaseConnection.createStatement();
+            result =  statement.executeQuery(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("error in NeqSimDataBase " +e.toString());
+            System.out.println("The database must be rgistered on the local DBMS to work.");
+        }
+        return result;
+    }
+    
+}

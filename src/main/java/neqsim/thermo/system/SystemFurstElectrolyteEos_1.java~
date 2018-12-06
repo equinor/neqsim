@@ -1,0 +1,56 @@
+/*
+ * SystemModifiedFurstElectrolyteEos.java
+ *
+ * Created on 26. februar 2001, 17:38
+ */
+
+package thermo.system;
+
+import thermo.phase.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class SystemFurstElectrolyteEos extends SystemEos {
+    
+    /** Creates new SystemModifiedFurstElectrolyteEos */
+    public SystemFurstElectrolyteEos() {
+        super();
+        attractiveTermNumber = 2;
+        for (int i=0;i<numberOfPhases;i++){
+            phaseArray[i] = new PhaseModifiedFurstElectrolyteEos();
+        }
+    }
+    
+    public SystemFurstElectrolyteEos(double T, double P) {
+        super(T,P);
+        attractiveTermNumber = 2;
+        for (int i=0;i<numberOfPhases;i++){
+            phaseArray[i] = new PhaseModifiedFurstElectrolyteEos();
+            phaseArray[i].setTemperature(T);
+            phaseArray[i].setPressure(P);
+        }
+    }
+    
+  
+    public Object clone(){
+        SystemFurstElectrolyteEos clonedSystem = null;
+        try{
+            clonedSystem = (SystemFurstElectrolyteEos) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        
+        for(int i = 0; i < numberOfPhases; i++) {
+            clonedSystem.phaseArray[i] = (PhaseModifiedFurstElectrolyteEos)((PhaseModifiedFurstElectrolyteEos)clonedSystem.phaseArray[i]).clone();
+        }
+        
+        return clonedSystem;
+    }
+    
+    
+    
+}

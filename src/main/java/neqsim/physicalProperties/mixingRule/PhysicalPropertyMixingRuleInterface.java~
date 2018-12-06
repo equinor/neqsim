@@ -1,0 +1,23 @@
+/*
+ * PhysicalPropertyMixingRuleInterface.java
+ *
+ * Created on 2. august 2001, 13:41
+ */
+
+package physicalProperties.mixingRule;
+
+import thermo.*;
+import thermo.phase.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface PhysicalPropertyMixingRuleInterface {
+    public double getViscosityGij(int i, int j);
+    public void setViscosityGij(double val, int i, int j);
+    public double getConductivityAij(int i, int j);
+    public void setConductivityAij(double val, int i, int j);
+    public void initMixingRules(PhaseInterface phase);
+}
+

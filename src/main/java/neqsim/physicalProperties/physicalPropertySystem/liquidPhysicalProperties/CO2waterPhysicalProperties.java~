@@ -1,0 +1,47 @@
+/*
+ * LiquidPhysicalProperties.java
+ *
+ * Created on 29. oktober 2000, 16:17
+ */
+
+package physicalProperties.physicalPropertySystem.liquidPhysicalProperties;
+
+import physicalProperties.*;
+import thermo.phase.*;
+import physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.*;
+import physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity.*;
+import physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.*;
+import physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class CO2waterPhysicalProperties extends physicalProperties.physicalPropertySystem.PhysicalProperties {
+    
+    
+    
+    public CO2waterPhysicalProperties() {
+    }
+    
+    public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+        super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
+        conductivityCalc = new Conductivity(this);
+        viscosityCalc = new Viscosity(this);
+        diffusivityCalc = new CO2water(this);
+        densityCalc = new Density(this);
+    }
+    
+    public Object clone(){
+        LiquidPhysicalProperties properties = null;
+        
+        try{
+            properties = (LiquidPhysicalProperties) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        return properties;
+    }
+  
+}

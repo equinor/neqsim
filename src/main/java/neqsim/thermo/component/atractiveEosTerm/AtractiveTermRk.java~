@@ -1,0 +1,61 @@
+/*
+ * AtractiveTermSrk.java
+ *
+ * Created on 13. mai 2001, 21:59
+ */
+
+package thermo.component.atractiveEosTerm;
+
+import thermo.component.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class AtractiveTermRk extends AtractiveTermBaseClass{
+    
+    /** Creates new AtractiveTermSrk */
+    public AtractiveTermRk(ComponentEosInterface component) {
+        super(component);
+     }
+    
+    public Object clone(){
+        AtractiveTermRk atractiveTerm = null;
+        try{
+            atractiveTerm = (AtractiveTermRk) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        return atractiveTerm;
+    }
+    
+    
+    public double alpha(double temperature){
+        return Math.sqrt(component.getTC()/temperature);
+    }
+    
+    public double aT(double temperature){
+        return component.geta() * alpha(temperature);
+    }
+    
+    public double diffalphaT(double temperature) {
+        return -0.5*component.getTC()/(Math.sqrt(component.getTC()/temperature)*Math.pow(temperature,2.0));
+    }
+    
+    public double diffdiffalphaT(double temperature) {
+        
+        return  Math.sqrt(component.getTC()/temperature);
+        
+    }
+    
+    public double diffaT(double temperature) {
+        return component.geta()*diffalphaT(temperature);
+    }
+    
+    public double diffdiffaT(double temperature) {
+        return component.geta()*diffdiffalphaT(temperature);
+    }
+    
+}

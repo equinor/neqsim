@@ -1,0 +1,20 @@
+/*
+ * TimeUnit.java
+ *
+ * Created on 25. januar 2002, 20:23
+ */
+
+package util.unit;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class TimeUnit {
+
+    /** Creates new TimeUnit */
+    public TimeUnit() {
+    }
+
+}

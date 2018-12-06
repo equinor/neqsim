@@ -1,0 +1,19 @@
+/*
+ * FrictionFactorInterface.java
+ *
+ * Created on 12. juni 2001, 19:57
+ */
+
+package fluidMechanics.flowNode.frictionFactor;
+
+import fluidMechanics.flowNode.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface FrictionFactorInterface {
+    public double calcWallFrictionFactor(FlowNodeInterface node);
+    public double calcWallFrictionFactor(int phase,FlowNodeInterface node);
+    public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node);
+}

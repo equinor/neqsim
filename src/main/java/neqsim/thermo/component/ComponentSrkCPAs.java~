@@ -1,0 +1,58 @@
+  /*
+   * System_SRK_EOS.java
+   *
+   * Created on 8. april 2000, 23:14
+   */
+
+package thermo.component;
+
+import thermo.phase.*;
+import thermo.mixingRule.*;
+import MathLib.nonLinearSolver.*;
+import thermo.component.atractiveEosTerm.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class ComponentSrkCPAs extends ComponentSrkCPA{
+    
+    /** Creates new System_SRK_EOS
+     * Ev liten fil ja.
+     */
+    int cpaon = 1;
+    double[] xsite;
+    public ComponentSrkCPAs() {
+    }
+    
+    public ComponentSrkCPAs(double moles) {
+        super(moles);
+    }
+    
+    public ComponentSrkCPAs(String component_name, double moles, double molesInPhase, int compnumber){
+        super(component_name, moles, molesInPhase, compnumber);
+    }
+    
+    public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles) {
+        super(number, TC, PC, M, a, moles);
+    }
+    
+    public Object clone(){
+        
+        ComponentSrkCPAs clonedComponent = null;
+        try{
+            clonedComponent = (ComponentSrkCPAs) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        return clonedComponent;
+    }
+    
+    public double calc_lngi(PhaseInterface phase){
+        return 0.475/(1.0-0.475*phase.getB()/phase.getTotalVolume())*getBi()/phase.getTotalVolume();
+    }
+    
+    
+}

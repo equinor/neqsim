@@ -1,0 +1,138 @@
+/*
+ * PhysicalProperties.java
+ *
+ * Created on 29. oktober 2000, 16:13
+ */
+
+package physicalProperties.physicalPropertySystem;
+
+import thermo.phase.*;
+import thermo.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public abstract class PhysicalProperties extends java.lang.Object implements PhysicalPropertiesInterface, java.io.Serializable, ThermodynamicConstantsInterface, Cloneable {
+    
+    public PhaseInterface phase;
+    protected int binaryDiffusionCoefficientMethod;
+    protected int multicomponentDiffusionMethod;
+    protected physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule;
+    
+    public physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface conductivityCalc;
+    public physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface viscosityCalc;
+    public physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface diffusivityCalc;
+    public physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface densityCalc;
+    
+    public double kinematicViscosity=0, density=0, viscosity=0, conductivity=0;
+    
+    /** Creates new PhysicalProperties */
+    public PhysicalProperties() {
+    }
+    
+    public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+        this.phase = phase;
+        this.binaryDiffusionCoefficientMethod = binaryDiffusionCoefficientMethod;
+        this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
+        mixingRule = new physicalProperties.mixingRule.PhysicalPropertyMixingRule();
+        mixingRule.initMixingRules(phase);
+    }
+    
+    
+    public Object clone(){
+        PhysicalProperties properties = null;
+        
+        try{
+            properties = (PhysicalProperties) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        properties.densityCalc =(physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface) densityCalc.clone();
+        properties.diffusivityCalc = (physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface) diffusivityCalc.clone();
+        properties.viscosityCalc =  (physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface) viscosityCalc.clone();
+        properties.conductivityCalc = (physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface) conductivityCalc.clone();
+        return properties;
+    }
+    
+    public PhaseInterface getPhase(){
+        return phase;
+    }
+    
+    public physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule(){
+        return mixingRule;
+    }
+    
+    
+    public void setBinaryDiffusionCoefficientMethod(int i){
+        binaryDiffusionCoefficientMethod = i;
+    }
+    
+    public void setMulticomponentDiffusionMethod(int i){
+        multicomponentDiffusionMethod = i;
+    }
+    
+    
+    public double calcKinematicViscosity(){
+        kinematicViscosity = viscosity/phase.getDensity();
+        return kinematicViscosity;
+    }
+    
+    public void setPhases(){
+        conductivityCalc.setPhase(this);
+        densityCalc.setPhase(this);
+        viscosityCalc.setPhase(this);
+        diffusivityCalc.setPhase(this);
+    }
+    
+    public void init(PhaseInterface phase){
+        this.phase = phase;
+        this.setPhases();
+        density = densityCalc.calcDensity();
+        viscosity = viscosityCalc.calcViscosity();
+        kinematicViscosity = this.calcKinematicViscosity();
+        diffusivityCalc.calcDiffusionCoeffisients(binaryDiffusionCoefficientMethod ,multicomponentDiffusionMethod);
+        conductivity = conductivityCalc.calcConductivity();
+    }
+    
+    
+    public double getViscosity(){
+        return viscosity;
+    }
+    
+    public double getPureComponentViscosity(int i){
+        return viscosityCalc.getPureComponentViscosity(i);
+    }
+    
+    public double getConductivity(){
+        return conductivity;
+    }
+    
+    
+    public double getDensity(){
+        return density;
+    }
+    
+    public double getKinematicViscosity(){
+        return kinematicViscosity;
+    }
+    
+    public double getDiffusionCoeffisient(int i, int j){
+        return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i,j);
+    }
+    
+    public double getFickDiffusionCoeffisient(int i, int j){
+        return diffusivityCalc.getFickBinaryDiffusionCoefficient(i,j);
+    }
+    
+    public void calcEffectiveDiffusionCoefficients(){
+        this.init(phase);
+       diffusivityCalc.calcEffectiveDiffusionCoeffisients();
+    }
+    
+    public double getEffectiveDiffusionCoefficient(int i){
+        return diffusivityCalc.getEffectiveDiffusionCoefficient(i);
+    }
+}

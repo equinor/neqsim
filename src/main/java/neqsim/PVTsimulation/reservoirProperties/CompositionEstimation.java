@@ -1,0 +1,30 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package neqsim.PVTsimulation.reservoirProperties;
+
+/**
+ *
+ * @author esol
+ */
+public class CompositionEstimation {
+
+    private static final long serialVersionUID = 1000;
+
+    double reservoirTemperature, reservoirPressure;
+
+    public CompositionEstimation(double reservoirTemperature, double reservoirPressure) {
+        reservoirTemperature = reservoirTemperature;
+        reservoirPressure = reservoirPressure;
+    }
+// correltaion from Håland et. al. 1999
+    public double estimateH2Sconcentration() {
+        return 5.0e7 * Math.exp(-6543.0 / reservoirTemperature);
+    }
+
+    // reservoir temperatur in Kelvin CO2concentration in molfraction
+    public double estimateH2Sconcentration(double CO2concentration) {
+        return Math.exp(11.7 - 4438.3 / reservoirTemperature + 0.7*Math.log(CO2concentration*100.0));
+    }
+}

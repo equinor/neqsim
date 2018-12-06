@@ -1,0 +1,28 @@
+/*
+ * GasPhysicalProperties.java
+ *
+ * Created on 29. oktober 2000, 16:18
+ */
+
+package physicalProperties.physicalPropertyMethods.liquidPhysicalProperties;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class LiquidPhysicalPropertyMethod extends physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod{
+    
+    protected physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase;
+    
+    public LiquidPhysicalPropertyMethod() {
+    }
+    
+    public LiquidPhysicalPropertyMethod(physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+        this.liquidPhase = liquidPhase;
+    }
+    
+     public void setPhase(physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase){
+        this.liquidPhase = phase;
+    }
+}

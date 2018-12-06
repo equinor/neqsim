@@ -1,0 +1,25 @@
+/*
+ * ValveInterface.java
+ *
+ * Created on 22. august 2001, 17:20
+ */
+
+package processSimulation.processEquipment.expander;
+
+import processSimulation.processEquipment.*;
+import thermo.system.*;
+import processSimulation.processEquipment.stream.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface ExpanderInterface extends ProcessEquipmentInterface {
+    public void run();
+    public void setOutletPressure(double pressure);
+    public void setInletStream(Stream inletStream);
+    public double getEnergy();
+    public String getName();
+    public Stream getOutStream();
+}
+

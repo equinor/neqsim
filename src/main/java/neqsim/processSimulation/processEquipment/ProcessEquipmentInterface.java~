@@ -1,0 +1,22 @@
+/*
+ * OperationInterafce.java
+ *
+ * Created on 2. oktober 2000, 22:14
+ */
+
+package processSimulation.processEquipment;
+
+import thermo.system.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public interface ProcessEquipmentInterface extends Runnable {
+    
+    public void run();
+    public void displayResult();   
+    public String getName();
+
+}
+

@@ -1,0 +1,157 @@
+/*
+ * ElectrolyteMixingRules.java
+ *
+ * Created on 26. februar 2001, 19:34
+ */
+
+package thermo.mixingRule;
+
+import thermo.phase.*;
+import thermo.component.*;
+import java.util.*;
+import MathLib.JamaLinAlg.*;
+import java.io.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public class ElectrolyteMixingRules extends java.lang.Object {
+
+    public double intparam[][];
+    public double wij[][];
+    
+    /** Creates new ElectrolyteMixingRules */
+    public ElectrolyteMixingRules() {
+    }
+    
+        
+    public Object clone(){
+        ElectrolyteMixingRules clonedSystem = null;
+        try{
+            clonedSystem = (ElectrolyteMixingRules) super.clone();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace(System.err);
+        }
+        
+        clonedSystem.intparam = (double[][]) clonedSystem.intparam.clone();
+        
+        return clonedSystem;
+    }
+    
+    
+     public class Classic implements ElectrolyteMixingRulesInterface, Cloneable, java.io.Serializable{
+        
+        public double calcW(PhaseInterface phase, double temperature, double pressure, int numbcomp){
+            
+            double aij=0;
+            ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+            
+            double A = 0;
+            for (int i=0;i<numbcomp;i++){
+                for (int j=0;j<numbcomp;j++){
+                    aij = Math.sqrt(compArray[i].getaT()*compArray[j].getaT());
+                    A = A + compArray[i].getNumberOfMolesInPhase() * compArray[j].getNumberOfMolesInPhase() * aij;
+                }
+            }
+            return A;
+        }
+        
+           public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp){
+            
+            double aij=0;
+            ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
+            
+            double A = 0;
+                    
+            return 2*A;
+        }
+     }
+        
+   public ElectrolyteMixingRulesInterface getMixingRule(int i, PhaseInterface phase){
+        RandomAccessFile file;
+        intparam = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+        StringTokenizer tokenizer;
+        double[][] HVgij, HValpha;
+        String token;
+        HVgij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+        HValpha =  new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+        String[][] classicOrHV = new String[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
+        
+        for(int k=0; k<phase.getNumberOfComponents(); k++){
+            String nameOfComponent = phase.getComponents()[k].getComponentName();
+            
+            
+            String path = "D:/Java/Thermo_with_Java/thermo/component/componentData/" + nameOfComponent + ".txt";
+            
+            //    System.out.println(path);
+            
+            try	{
+                
+                file = new RandomAccessFile(path, "r");
+                long filepointer = 0;
+                int index;
+                long length = file.length();
+                String s;
+                
+                for(int l=0; l<phase.getNumberOfComponents(); l++){
+                    if(l==k){
+                        intparam[k][l]=0.0;
+                        classicOrHV[k][l] = "Classic";
+                    }
+                    else{
+                        
+                        
+                        file = new RandomAccessFile(path, "r");
+                        s = file.readLine();
+                        s = file.readLine();
+                        s = file.readLine();
+                        s = file.readLine();
+                        do
+                        {
+                            
+                            s = file.readLine();
+                            tokenizer = new StringTokenizer(s);
+                            index = Integer.parseInt(tokenizer.nextToken());
+                            //      System.out.println("index : " + index + "  " + phase.getComponents()[l].getIndex());
+                            
+                            filepointer = file.getFilePointer();
+                            
+                        }
+                        while (!(index==phase.getComponents()[l].getIndex()));
+                        
+                        tokenizer.nextToken();                                                             //AW
+                        classicOrHV[k][l] = tokenizer.nextToken();
+                        intparam[k][l] =  Double.parseDouble( tokenizer.nextToken()) ;
+                        tokenizer.nextToken();
+                        if(i==3){
+                            HValpha[k][l] = Double.parseDouble( tokenizer.nextToken()) ;
+                            HVgij[k][l] = Double.parseDouble( tokenizer.nextToken()) ;
+                        }
+                    }
+                    
+                    // System.out.println("hei");
+                    
+                    //    System.out.println("intpram: " + intparam[k][l]);
+                    
+                }
+            }
+            
+            catch (Exception e)
+            {
+                String err = e.toString();
+                System.out.println(err);
+            }
+        }
+        
+   /*     Matrix mat = new Matrix(HValpha);
+        mat.print(10,3);
+        Matrix mat2 = new Matrix(HVgij);
+        mat2.print(10,3);*/
+        
+        return new Classic();
+   }
+       
+}

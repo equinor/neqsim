@@ -1,0 +1,58 @@
+package thermo.util.example;
+/*
+ * TPflash.java
+ *
+ * Created on 27. september 2001, 09:43
+ */
+
+import thermo.system.*;
+import thermodynamicOperations.*;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class TPflash_1 {
+    
+    /** Creates new TPflash */
+    public TPflash_1() {
+    }
+    public static void main(String args[]){
+        //SystemInterface testSystem = new SystemSrkEos(320.15,10.2300);
+        SystemInterface testSystem = new SystemSrkEos(288.15,10.00);
+       //  SystemInterface testSystem = new SystemPrEos(265.15,40.00);
+        //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(310.15,1.00);
+        
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testSystem.addComponent("methane", 1.89);
+        testSystem.addComponent("ethane", 1.07);
+        //testSystem.addComponent("n-butane", 0.0399);
+        //testSystem.addComponent("CO2", 5.1);
+        testSystem.addComponent("water", 10.0012);
+        testSystem.createDatabase(true);
+        // 1- orginal no interaction 2- classic w interaction
+        // 3- Huron-Vidal 4- Wong-Sandler
+        testSystem.setMixingRule(4);
+        //testSystem.setMultiPhaseCheck(true);
+        //testSystem.init(0);
+        //
+        //testOps.TPflash();
+        //testOps.dewPointPressureFlash();
+        testSystem.getPhase(0).setPressure(100);
+        try{
+            testOps.TPflash();
+            testSystem.display();
+            testSystem.write("c:/testFlash.txt","c:/testFlash.txt",true);
+        }
+        catch(Exception e){
+            System.out.println(e.toString());
+        }
+//        thermo.ThermodynamicModelTest testModel = new thermo.ThermodynamicModelTest(testSystem);
+//        testModel.runTest();
+        //testSystem.setTemperature(146);
+        //testOps.dewPointPressureFlash();
+        //testSystem.display();
+        //testOps.bubblePointTemperatureFlash();
+    }
+}

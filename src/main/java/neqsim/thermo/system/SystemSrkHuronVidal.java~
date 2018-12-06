@@ -1,0 +1,29 @@
+/*
+ * SystemSrkHuronVidal.java
+ *
+ * Created on 13. juli 2000, 00:27
+ */
+
+package thermo.system;
+
+import thermo.phase.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public class SystemSrkHuronVidal extends SystemEos {
+
+    /** Creates new SystemSrkHuronVidal */
+    public SystemSrkHuronVidal() {
+    }
+    
+    public SystemSrkHuronVidal(double T,double P) {
+        super(T,P);
+    phaseArray[0] = new PhaseSrkEosHuronVidal(2);    // 1 Uniquac , 2: NRTL  
+    phaseArray[1] = new PhaseSrkEos();
+    phaseArray[2] = new PhaseSrkEos();
+    }
+
+}

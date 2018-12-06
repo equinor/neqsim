@@ -1,0 +1,20 @@
+/*
+ * test.java
+ *
+ * Created on 30. oktober 2001, 11:10
+ */
+
+package fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class test extends TwoPhaseFixedStaggeredGridSolver {
+
+    /** Creates new test */
+    public test() {
+    }
+
+}

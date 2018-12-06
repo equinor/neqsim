@@ -1,0 +1,986 @@
+/*
+ * Component.java
+ *
+ * Created on 8. april 2000, 23:28
+ */
+
+package thermo.component;
+
+//import thermo.component.*;
+import java.util.*;
+import java.io.*;
+import java.net.*;
+import thermo.component.atractiveEosTerm.*;
+
+/** This is the base class for a component object
+ * @author Even Solbraa
+ * @version
+ */
+
+import thermo.*;
+import thermo.phase.*;
+import thermo.atomElement.*;
+
+
+
+abstract class Component extends Object implements ComponentInterface, ThermodynamicConstantsInterface, Cloneable,  java.io.Serializable {
+    
+    protected int index, componentNumber, atractiveTermNumber = 0, numberOfAssociationSites=0;
+    protected double logFugasityCoeffisient=0.0, associationVolume=0.0, associationEnergy=0.0, aCPA=0.0, bCPA=0.0, mCPA=0.0;
+    protected String componentName = null, referenceStateType=null, electrolyteInteractionType=null;
+    protected Element elements;
+    protected double qPure=0;
+    protected int calcActivity=1;
+    protected double dqPuredT =0, dqPuredTdT = 0;
+    protected double  criticalPressure, criticalTemperature, molarMass, acentricFactor, numberOfMoles=0.0, numberOfMolesInPhase=0.0, normalLiquidDensity=0;
+    protected double  reducedPressure, reducedTemperature, fugasityCoeffisient, debyeDipoleMoment=0, viscosityCorrectionFactor=0, criticalVolume=0, racketZ=0;
+    protected double gibbsEnergyOfFormation=0;
+    protected double referencePotential=0;
+    protected int liquidViscosityModel=0;
+    protected int ionicCharge=0;
+    protected double parachorParameter=0.0, normalBoilingPoint=0, sphericalCoreRadius=0.384, standardDensity=0,AntoineASolid=0.0,AntoineBSolid=0.0;
+    protected double[] liquidViscosityParameter = new double[4];
+    protected double[] liquidConductivityParameter = new double[3];
+    protected double[] dielectricParameter = new double[5];
+    protected double[] schwartzentruberParams = new double[3], matiascopemanParams = new double[3];
+    protected double lennardJonesMolecularDiameter=0, lennardJonesEnergyParameter=0, stokesCationicDiameter=0, paulingAnionicDiameter=0;
+    protected double K, z;
+    protected double x=0;
+    protected double dfugdt=0.1,dfugdp=0.1;
+    protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
+    public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
+    double AntoineA = 0,AntoineB = 0,AntoineC = 0, AntoineD = 0;
+    double CpA=0, CpB=0, CpC=0, CpD=0;
+    double heatOfFusion=0.0, triplePointDensity=0.0, triplePointPressure=0.0, triplePointTemperature = 0.0, meltingPointTemperature=0.0, idealGasEnthalpyOfFormation=0.0, idealGasGibsEnergyOfFormation=0.0, idealGasAbsoluteEntropy=0.0;
+    
+    double[] solidDensityCoefs = new double[5];
+    double[] liquidDensityCoefs = new double[5];
+    double[] heatOfVaporizationCoefs = new double[5];
+    
+    
+    /** Creates new Component */
+    
+    
+    // Class methods
+    
+    public Component() {
+    }
+    
+    public Component(int number, double moles) {
+        
+        numberOfMoles = moles;
+        
+    }
+    public Component(double moles) {
+        numberOfMoles = moles;
+    }
+    
+    public Component(int number, double TC, double PC, double M, double a, double moles) {
+        criticalPressure = PC;
+        criticalTemperature = TC;
+        molarMass = M;
+        acentricFactor = a;
+        numberOfMoles = moles;
+    }
+    
+    
+    
+    public Component(String component_name, double moles,  double molesInPhase, int compnumber){
+        createComponent(component_name, moles, molesInPhase, compnumber);
+    }
+    
+    public void createComponent(String component_name, double moles,  double molesInPhase, int compnumber){
+        componentName = component_name;
+        numberOfMoles = moles;
+        numberOfMolesInPhase = molesInPhase;
+        
+        try{
+            util.database.NeqSimDataBase database = new util.database.NeqSimDataBase();
+            java.sql.ResultSet dataSet = null;
+            try{
+                dataSet =  database.getResultSet(("SELECT * FROM COMP WHERE name='"+component_name + "'"));
+                dataSet.next();
+                dataSet.getClob("name");
+            }
+            catch(Exception e){
+                dataSet.close();
+                //System.out.println("no parameters in tempcomp -- trying comp.. " + component_name);
+                dataSet =  database.getResultSet(("SELECT * FROM COMP WHERE name='"+component_name + "'"));
+                dataSet.next();
+            }
+            index = Integer.parseInt(dataSet.getString("index"));                                                        //C
+            molarMass  = Double.parseDouble(dataSet.getString("molarmass"))/1000.0 ;                         //D
+            normalLiquidDensity = Double.parseDouble(dataSet.getString("liqdens"));                //E
+            criticalTemperature = (Double.parseDouble(dataSet.getString("TC")) + 273.15);      //F
+            criticalPressure = Double.parseDouble(dataSet.getString("PC")) ;                   //G
+            acentricFactor = Double.parseDouble(dataSet.getString("acsfact")) ;                                                            //J
+            criticalVolume=Double.parseDouble(dataSet.getString("critvol")) ;
+            CpA = Double.parseDouble(dataSet.getString("CPA")) ;                                //R                                       //S
+            CpB = Double.parseDouble(dataSet.getString("CPB")) ;                                //S
+            CpC = Double.parseDouble(dataSet.getString("CPC")) ;                                //T
+            CpD = Double.parseDouble(dataSet.getString("CPD")) ;
+            
+            AntoineA = Double.parseDouble(dataSet.getString("ANTOINEA"));                           //AY
+            AntoineB = Double.parseDouble(dataSet.getString("ANTOINEB"));                           //AZ
+            AntoineC = Double.parseDouble(dataSet.getString("ANTOINEC"));                           //AX
+            AntoineD = Double.parseDouble(dataSet.getString("ANTOINED"));
+            
+            AntoineASolid =  Double.parseDouble(dataSet.getString("ANTOINESolidA"));
+            AntoineBSolid = Double.parseDouble(dataSet.getString("ANTOINESolidB"));
+            
+            debyeDipoleMoment=Double.parseDouble(dataSet.getString("dipolemoment"));
+            normalBoilingPoint = Double.parseDouble(dataSet.getString("normboil"));
+            standardDensity = Double.parseDouble(dataSet.getString("stddens"));
+            viscosityCorrectionFactor=Double.parseDouble(dataSet.getString("viscfact")) ;            //BC
+            racketZ=Double.parseDouble(dataSet.getString("racketZ"));                              //BE
+            lennardJonesMolecularDiameter=Double.parseDouble(dataSet.getString("LJdiameter")) ;        //BF
+            lennardJonesEnergyParameter=Double.parseDouble(dataSet.getString("LJeps"));
+            sphericalCoreRadius = Double.parseDouble(dataSet.getString("SphericalCoreRadius"));
+            liquidViscosityModel = Integer.parseInt(dataSet.getString("liqviscmodel")) ;
+            liquidViscosityParameter[0] = Double.parseDouble(dataSet.getString("liqvisc1")) ;
+            liquidViscosityParameter[1] = Double.parseDouble(dataSet.getString("liqvisc2")) ;
+            liquidViscosityParameter[2] = Double.parseDouble(dataSet.getString("liqvisc3")) ;
+            liquidViscosityParameter[3] = Double.parseDouble(dataSet.getString("liqvisc4")) ;
+            
+            gibbsEnergyOfFormation = Double.parseDouble(dataSet.getString("gibbsEnergyOfFormation")) ;
+            dielectricParameter[0] = Double.parseDouble(dataSet.getString("dielectricParameter1")) ;
+            dielectricParameter[1] = Double.parseDouble(dataSet.getString("dielectricParameter2")) ;
+            dielectricParameter[2] = Double.parseDouble(dataSet.getString("dielectricParameter3")) ;
+            dielectricParameter[3] = Double.parseDouble(dataSet.getString("dielectricParameter4")) ;
+            dielectricParameter[4] = Double.parseDouble(dataSet.getString("dielectricParameter5")) ;
+            
+            ionicCharge = Integer.parseInt(dataSet.getString("ionicCharge"));
+            
+            referenceStateType = dataSet.getString("referenceStateType").trim();
+            schwartzentruberParams[0]=Double.parseDouble(dataSet.getString("schwartzentruber1"));
+            schwartzentruberParams[1]=Double.parseDouble(dataSet.getString("schwartzentruber2"));
+            schwartzentruberParams[2]=Double.parseDouble(dataSet.getString("schwartzentruber3"));
+            
+            matiascopemanParams[0] =Double.parseDouble(dataSet.getString("MC1"));
+            matiascopemanParams[0] =Double.parseDouble(dataSet.getString("MC2"));
+            matiascopemanParams[0] =Double.parseDouble(dataSet.getString("MC3"));
+            
+            liquidConductivityParameter[0]=Double.parseDouble(dataSet.getString("liquidConductivity1")) ;
+            liquidConductivityParameter[1]=Double.parseDouble(dataSet.getString("liquidConductivity2")) ;
+            liquidConductivityParameter[2]=Double.parseDouble(dataSet.getString("liquidConductivity3")) ;
+            
+            parachorParameter = Double.parseDouble(dataSet.getString("parachor"));
+            heatOfFusion=Double.parseDouble(dataSet.getString("heatOfFusion"));
+            
+            triplePointDensity=Double.parseDouble(dataSet.getString("triplePointDensity"));
+            triplePointPressure=Double.parseDouble(dataSet.getString("triplePointPressure"));
+            triplePointTemperature =Double.parseDouble(dataSet.getString("triplePointTemperature"));
+            meltingPointTemperature=Double.parseDouble(dataSet.getString("meltingPointTemperature"));
+            
+            idealGasEnthalpyOfFormation = Double.parseDouble(dataSet.getString("EnthalpyOfFormation"));
+            idealGasGibsEnergyOfFormation = gibbsEnergyOfFormation;
+            idealGasAbsoluteEntropy=Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
+            
+            for(int i=0;i<5;i++) solidDensityCoefs[i] = Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i+1))));
+            for(int i=0;i<5;i++) liquidDensityCoefs[i] = Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i+1))));
+            for(int i=0;i<5;i++) heatOfVaporizationCoefs[i] = Double.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i+1))));
+            electrolyteInteractionType = dataSet.getString("electrolyteInteractionType").trim();
+            // disse må settes inn fra database ssociationsites
+            numberOfAssociationSites = Integer.parseInt(dataSet.getString("associationsites")) ;
+            
+            associationEnergy=Double.parseDouble(dataSet.getString("associationenergy"));
+            
+            calcActivity=Integer.parseInt(dataSet.getString("calcActivity")) ;
+            
+            if(this.getClass().getName().equals("thermo.component.ComponentPrCPA")){
+                //System.out.println("pr-cpa");
+                associationVolume= Double.parseDouble(dataSet.getString("associationboundingvolume-PR"));
+                aCPA = Double.parseDouble(dataSet.getString("aCPA-PR"));
+                bCPA = Double.parseDouble(dataSet.getString("bCPA-PR"));
+                mCPA = Double.parseDouble(dataSet.getString("mCPA-PR"));
+            }
+            else{
+                //System.out.println("srk-cpa");
+                associationVolume= Double.parseDouble(dataSet.getString("associationboundingvolume-SRK"));
+                aCPA = Double.parseDouble(dataSet.getString("aCPA-SRK"));
+                bCPA = Double.parseDouble(dataSet.getString("bCPA-SRK"));
+                mCPA = Double.parseDouble(dataSet.getString("mCPA-SRK"));
+            }
+            
+            componentNumber = compnumber;
+            if(normalLiquidDensity==0) normalLiquidDensity=molarMass/(0.285*Math.pow(criticalVolume,1.048));
+            dataSet.close();
+            database.getConnection().close();
+        }
+        
+        catch (Exception e) {
+            String err = e.toString();
+            System.out.println(err);
+        }
+        
+        stokesCationicDiameter = lennardJonesMolecularDiameter;
+        paulingAnionicDiameter = lennardJonesMolecularDiameter;
+    }
+    
+    public Object clone(){
+        
+        Component clonedComponent = null;
+        try{
+            clonedComponent = (Component) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        return clonedComponent;
+    }
+    
+    public void addMolesChemReac(double dn){
+        numberOfMoles += dn;
+        numberOfMolesInPhase += dn;
+    }
+    
+    public void addMolesChemReac(double dn, double totdn){
+        numberOfMoles += totdn;
+        numberOfMolesInPhase += dn;
+    }
+    
+    public void addMoles(double dn){
+        numberOfMolesInPhase += dn;
+    }
+    
+    public void setProperties(ComponentInterface component){
+        x = component.getx();
+        z = component.getz();
+        numberOfMolesInPhase = component.getNumberOfMolesInPhase();
+        numberOfMoles = component.getNumberOfmoles();
+        K = component.getK();
+    }
+    
+    public void init(double temperature,double pressure,double totalNumberOfMoles,double beta, int type){
+        
+        if (type == 0){
+            z = numberOfMoles / totalNumberOfMoles;
+            K = Math.exp(Math.log(criticalPressure/pressure) + 5.373* (1.0+acentricFactor)* (1.0- criticalTemperature/temperature));
+            x = z;
+            //System.out.println("K " + K);
+        }
+        
+        numberOfMolesInPhase = totalNumberOfMoles*x*beta;
+        z = numberOfMoles / totalNumberOfMoles;
+    }
+    
+    public Element getElements(){
+        if(elements==null) elements = new Element(componentName);
+        return elements;
+    }
+    
+    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta, int numberOfComponents,  int type){
+    }
+    
+    public double getx(){
+        return x;
+    }
+    
+    public double getz(){
+        return z;
+    }
+    
+    public void setz(double z){
+        this.z = z;
+    }
+    
+    public double getReferencePotential(){
+        return referencePotential;
+    }
+    
+    public void setReferencePotential(double ref){
+        this.referencePotential = ref;
+    }
+    
+    public double getK(){
+        return K;
+    }
+    
+    public double getHeatOfFusion(){
+        return heatOfFusion;
+    }
+    
+    public double getHeatOfVapourization(double temp){
+        return heatOfVaporizationCoefs[0]*0.0;  // må settes på rett form
+    }
+    
+    public double getTripplePointDensity(){
+        return triplePointDensity;
+    }
+    public double getTriplePointPressure(){
+        return triplePointPressure;
+    }
+    public double getTriplePointTemperature(){
+        return triplePointTemperature;
+    }
+    public double getMeltingPointTemperature(){
+        return meltingPointTemperature;
+    }
+    public double getIdealGasEnthalpyOfFormation(){
+        return idealGasEnthalpyOfFormation;
+    }
+    public double getIdealGasGibsEnergyOfFormation(){
+        return idealGasGibsEnergyOfFormation;
+    }
+    
+    public double getIdealGasAbsoluteEntropy(){
+        return idealGasAbsoluteEntropy;
+    }
+    
+    
+    public double getTC(){
+        return criticalTemperature;
+    }
+    
+    public void setTC(double val){
+        criticalTemperature = val;
+    }
+    
+    public void setPC(double val){
+        criticalPressure = val;
+    }
+    
+    public String getComponentName(){
+        return componentName;
+    }
+    
+    public String getReferenceStateType(){
+        return referenceStateType;
+    }
+    
+    public double getPC(){
+        return criticalPressure;
+    }
+    
+    public double getGibbsEnergyOfFormation(){
+        return gibbsEnergyOfFormation;
+    }
+    
+    public double getDiElectricConstant(double temperature){
+        return dielectricParameter[0]+dielectricParameter[1]/temperature+dielectricParameter[2]*temperature+dielectricParameter[3]*temperature*temperature+dielectricParameter[4]*Math.pow(temperature,3.0);
+    }
+    
+    public double getDiElectricConstantdT(double temperature){
+        return -dielectricParameter[1]/Math.pow(temperature,2.0) + dielectricParameter[2] + 2.0*dielectricParameter[3]*temperature + 3.0*dielectricParameter[4]*Math.pow(temperature,2.0);
+    }
+    
+    public double getDiElectricConstantdTdT(double temperature){
+        return 2.0*dielectricParameter[1]/Math.pow(temperature,3.0) + 2.0*dielectricParameter[3] + 6.0*dielectricParameter[4]*Math.pow(temperature,1.0);
+    }
+    
+    public double getDebyeDipoleMoment(){
+        return debyeDipoleMoment;
+    }
+    
+    public double getIonicCharge(){
+        return ionicCharge;
+    }
+    
+    public void setViscosityAssociationFactor(double val){
+        viscosityCorrectionFactor = val;
+    }
+    
+    
+    public double getRacketZ(){
+        return racketZ;
+    }
+    
+    public double getVolumeCorrection(){
+        return 0;
+    }
+    
+    public double getNormalLiquidDensity(){
+        return normalLiquidDensity;
+    }
+    
+    public double getViscosityCorrectionFactor(){
+        return viscosityCorrectionFactor;
+    }
+    
+    public double getCriticalVolume(){
+        return criticalVolume;
+    }
+    
+    public int getLiquidViscosityModel(){
+        return  liquidViscosityModel;
+    }
+    
+    public double getParachorParameter(){
+        return parachorParameter;
+    }
+    
+    public void setParachorParameter(double parachorParameter){
+        this.parachorParameter = parachorParameter;
+    }
+    
+    public void setLiquidViscosityModel(int modelNumber){
+        liquidViscosityModel = modelNumber;
+    }
+    
+    
+    public void setLiquidViscosityParameter(double number, int i){
+        liquidViscosityParameter[i] = number;
+    }
+    
+    public double getLiquidViscosityParameter(int i){
+        return liquidViscosityParameter[i];
+    }
+    
+    public void setLiquidConductivityParameter(double number, int i){
+        liquidConductivityParameter[i] = number;
+    }
+    
+    public double getLiquidConductivityParameter(int i){
+        return liquidConductivityParameter[i];
+    }
+    
+    /** Units in m*e10
+     */
+    public double getLennardJonesMolecularDiameter(){
+        return lennardJonesMolecularDiameter;
+    }
+    
+    public double getLennardJonesEnergyParameter(){
+        return lennardJonesEnergyParameter;
+    }
+    
+    
+    /**Calculates the pure comonent solid density in kg/m^3
+     * Should only be used in the valid temperature range (specified in component database).
+     */
+    public double getPureComponentSolidDensity(double temperature){
+        return molarMass*solidDensityCoefs[0]+solidDensityCoefs[1]*Math.pow(temperature,1.0)+solidDensityCoefs[2]*Math.pow(temperature,2.0)+solidDensityCoefs[3]*Math.pow(temperature,3.0)+solidDensityCoefs[4]*Math.pow(temperature,4.0);
+    }
+    
+    /**Calculates the pure comonent liquid density in kg/m^3
+     * Should only be used in the valid temperature range (specified in component database).
+     * This method seems to give bad results at the moment
+     */
+    public double getPureComponentLiquidDensity(double temperature){
+        return Math.pow(liquidDensityCoefs[0]/liquidDensityCoefs[1], 1.0+Math.pow(1.0-temperature/liquidDensityCoefs[2],liquidDensityCoefs[3]));
+    }
+    
+    /**Calculates the pure comonent heat of vaporization in J/mol
+     */
+    public double getPureComponentHeatOfVaporization(double temperature){
+        return 1.0e-3*heatOfVaporizationCoefs[0]*Math.pow((1.0-temperature/criticalTemperature),heatOfVaporizationCoefs[1]+heatOfVaporizationCoefs[2]*temperature/criticalTemperature+heatOfVaporizationCoefs[3]*Math.pow(temperature/criticalTemperature,2.0));
+    }
+    
+    public void setx(double newx){
+        if(Double.isNaN(newx) || Double.isInfinite(newx)) return;
+        if(newx>0) x = newx;
+        if(newx>5) x = 5;
+    }
+    
+    public void setNumberOfmoles(double newmoles){
+        numberOfMoles = newmoles;
+    }
+    
+    public void setNumberOfMolesInPhase(double totmoles){
+        numberOfMolesInPhase = totmoles*x;
+        
+    }
+    
+    public double getNumberOfmoles(){
+        return this.numberOfMoles;
+    }
+    
+    public double getMolarMass(){
+        return this.molarMass;
+    }
+    
+    
+    public double getNumberOfMolesInPhase(){
+        return this.numberOfMolesInPhase;
+    }
+    
+    public double getRate(String unitName){
+        util.unit.Unit unit = new  util.unit.RateUnit(numberOfMolesInPhase, "mol/sec", molarMass, normalLiquidDensity, normalBoilingPoint);
+        double val = unit.getValue(unitName);
+        return val;
+    }
+    
+    public void setK(double newK){
+        
+        K = newK;
+    }
+    
+    public double getFugasityCoeffisient(){
+        return fugasityCoeffisient;
+    }
+    
+    public double getFugasityCoefficient(){
+        return getFugasityCoeffisient();
+    }
+    
+    public double fugcoef(PhaseInterface phase){
+        fugasityCoeffisient = 1.0;//this.fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        return fugasityCoeffisient;
+    }
+    
+    public double logfugcoefdT(PhaseInterface phase){
+        dfugdt = 0.0;//this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        return dfugdt;
+    }
+    
+    public double logfugcoefdP(PhaseInterface phase){
+        dfugdp = 0.0;//this.fugcoefDiffPres(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        return dfugdp;
+    }
+    
+    public double[] logfugcoefdN(PhaseInterface phase){
+        //dfugdn = this.fugcoefDiffN(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        return new double[2];
+    }
+    
+    public double getdfugdt(){
+        return dfugdt;
+    }
+    
+    public double getdfugdp(){
+        return dfugdp;
+    }
+    
+    public void setdfugdt(double val){
+        dfugdt = val;
+    }
+    
+    public void setdfugdp(double val){
+        dfugdp = val;
+    }
+    
+    public void setdfugdn(int i, double val){
+        dfugdn[i] = val;
+    }
+    
+    public void setdfugdx(int i, double val){
+        dfugdx[i] = val;
+    }
+    
+    public double getAcentricFactor(){
+        return acentricFactor;
+    }
+    
+    
+    public double getdfugdx(int i){
+        return dfugdx[i];
+    }
+    
+    
+    
+    public double getdfugdn(int i){
+        return dfugdn[i];
+    }
+    
+    
+    
+    public int getIndex(){
+        return index;
+    }
+    
+    
+    public int getComponentNumber(){
+        return componentNumber;
+    }
+    
+    public double getGibbsEnergy(double temperature, double pressure){
+        
+        return getEnthalpy(temperature)-temperature*getEntropy(temperature, pressure);
+    }
+    
+    public void setComponentNumber(int numb){
+        componentNumber = numb;
+    }
+    
+    public double getAntoineVaporPressure(double temp){
+        if(AntoineD==0){
+            return (Math.exp(AntoineA-(AntoineB/(temp+AntoineC))));
+        }
+        else {
+            double x= 1-(temp/criticalTemperature);
+            return  (Math.exp(Math.pow((1-x),-1)*(AntoineA*x+AntoineB*Math.pow(x,1.5)+AntoineC*Math.pow(x,3)+AntoineD*Math.pow(x,6)))*criticalPressure);
+        }
+    }
+    
+    public double getLogAntoineVaporPressuredT(double temp){
+        if(AntoineD==0){
+            return AntoineB/Math.pow(temp+AntoineC,2.0);
+        }
+        else {
+            double x= 1-(temp/criticalTemperature);
+            return 0.0;
+        }
+    }
+    
+    public double getAntoineVaporTemperature(double pres){
+        double nyPres=0, nyTemp=criticalTemperature-50;
+        nyPres = getAntoineVaporPressure(nyTemp);
+        
+        if(AntoineD==0){
+            return (Math.exp(AntoineA-(AntoineB/(pres+AntoineC))));
+        }
+        else {
+            do{
+                nyTemp = nyTemp - (nyPres-pres);
+                
+                nyPres = getAntoineVaporPressure(nyTemp);
+            }
+            while(Math.abs(nyPres-pres)>0.001);
+            
+            return nyTemp;
+        }
+        
+    }
+    
+    
+    public double getHresTP(double temperature){
+        return R*temperature*(-temperature*getdfugdt());
+    }
+    
+    public double getGresTP(double temperature){
+        return R*temperature*(Math.log(getFugasityCoeffisient()));
+    }
+    
+    public double getSresTP(double temperature){
+        return (getHresTP(temperature)-getGresTP(temperature))/temperature;
+    }
+    
+    public double getCp0(double temperature){
+        return CpA + CpB*temperature +   CpC*Math.pow(temperature,2) + CpD*Math.pow(temperature,3);
+    }
+    
+    public double getCv0(double temperature){
+        return CpA + CpB*temperature +   CpC*Math.pow(temperature,2) +CpD*Math.pow(temperature,3) - R;
+    }
+    
+    
+    /**
+     * @param temperature
+     * @return  enthalpy
+     *  The function gives the total enhalpy for the component in the specific phase
+     */
+    public double getEnthalpy(double temperature){
+        return getCp0(temperature)*numberOfMolesInPhase*(temperature-referenceTemperature) + getHresTP(temperature)*numberOfMolesInPhase;
+    }
+    
+    public double getEntropy(double temperature, double pressure){
+        return  ((CpD*temperature*temperature*temperature/3.0+CpC*temperature*temperature/2.0+CpB*temperature+CpA*Math.log(temperature)-CpD*referenceTemperature*
+        referenceTemperature*referenceTemperature/3.0-CpC*referenceTemperature*
+        referenceTemperature/2.0-CpB*referenceTemperature-CpA*Math.log(referenceTemperature))
+        -(R*Math.log(pressure/referencePressure))+ getSresTP(temperature));
+    }
+    
+    public String getName(){
+        return componentName;
+    }
+    
+    public void setAcentricFactor(double val){
+        acentricFactor = val;
+        getAtractiveTerm().init();
+    }
+    
+    public void setRacketZ(double val){
+        racketZ = val;
+    }
+    
+    public void setAtractiveTerm(int i){}
+    
+    public AtractiveTermInterface getAtractiveTerm(){return null;}
+    
+    public double[] getSchwartzentruberParams(){
+        return schwartzentruberParams;
+    }
+    
+    public void setSchwartzentruberParams(int i, double param){
+        schwartzentruberParams[i] = param;
+    }
+    
+    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        double temp1=0.0, temp2=0.0;
+        double dp = phase.getPressure()/1.0e5;
+        temp1 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        phase.setPressure(phase.getPressure()-dp);
+        phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(), phase.getBeta());
+        phase.getComponents()[componentNumber].fugcoef(phase);
+        temp2 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        phase.setPressure(phase.getPressure()+dp);
+        phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(), phase.getBeta());
+        phase.getComponents()[componentNumber].fugcoef(phase);
+        dfugdp = (Math.log(temp1)-Math.log(temp2))/dp;
+        return dfugdp;
+    }
+    
+    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        double temp1=0.0, temp2=0.0;
+        double dt = phase.getTemperature()/1.0e6;
+        temp1 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        phase.setTemperature(phase.getTemperature()-dt);
+        phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(), phase.getBeta());
+        phase.getComponents()[componentNumber].fugcoef(phase);
+        temp2 = phase.getComponents()[componentNumber].getFugasityCoeffisient();
+        //        phase.setTemperature(phase.getTemperature()+dt);
+        //        System.out.println("temp " + phase.getTemperature());
+        //        phase.init(numberOfMolesInPhase, numberOfComponents, 1,phase.getPhaseType(), phase.getBeta());
+        //        phase.getComponents()[componentNumber].fugcoef(phase, numberOfComponents, phase.getTemperature(), phase.getPressure());
+        dfugdt = (Math.log(temp1)-Math.log(temp2))/dt;
+        return dfugdt;
+    }
+    
+    public boolean doElectrolyteInteractionCalc(){
+        if(electrolyteInteractionType.equals("calculate") || electrolyteInteractionType.equals("calculated")) return true;
+        else return false;
+    }
+    
+    public double getIonicDiameter(){
+        if(ionicCharge<0) return paulingAnionicDiameter;
+        else if(ionicCharge>0) return stokesCationicDiameter;
+        else return lennardJonesMolecularDiameter;
+    }
+    
+    /** Getter for property stokesCationicDiameter.
+     * @return Value of property stokesCationicDiameter.
+     */
+    public double getStokesCationicDiameter() {
+        return stokesCationicDiameter;
+    }
+    
+    /** Setter for property stokesCationicDiameter.
+     * @param stokesCationicDiameter New value of property stokesCationicDiameter.
+     */
+    public void setStokesCationicDiameter(double stokesCationicDiameter) {
+        this.stokesCationicDiameter = stokesCationicDiameter;
+    }
+    
+    /** Getter for property paulingAnionicDiameter.
+     * @return Value of property paulingAnionicDiameter.
+     */
+    public double getPaulingAnionicDiameter() {
+        return paulingAnionicDiameter;
+    }
+    
+    /** Setter for property paulingAnionicDiameter.
+     * @param paulingAnionicDiameter New value of property paulingAnionicDiameter.
+     */
+    public void setPaulingAnionicDiameter(double paulingAnionicDiameter) {
+        this.paulingAnionicDiameter = paulingAnionicDiameter;
+    }
+    
+    /** Getter for property logFugasityCoeffisient.
+     * @return Value of property logFugasityCoeffisient.
+     */
+    public double getLogFugasityCoeffisient() {
+        return Math.log(fugasityCoeffisient);
+    }
+    
+    /** Getter for property atractiveTermNumber.
+     * @return Value of property atractiveTermNumber.
+     */
+    public int getAtractiveTermNumber() {
+        return atractiveTermNumber;
+    }
+    
+    public double getVoli(){
+        return 0;
+    }
+    
+    public String getElectrolyteInteractionType(){
+        return electrolyteInteractionType;
+    }
+    
+    /** Indexed getter for property matiascopemanParams.
+     * @param index Index of the property.
+     * @return Value of the property at <CODE>index</CODE>.
+     */
+    public double getMatiascopemanParams(int index) {
+        return matiascopemanParams[index];
+    }
+    
+    /** Getter for property matiascopemanParams.
+     * @return Value of property matiascopemanParams.
+     */
+    public double[] getMatiascopemanParams() {
+        return matiascopemanParams;
+    }
+    
+    /** Indexed setter for property matiascopemanParams.
+     * @param index Index of the property.
+     * @param matiascopemanParams New value of the property at <CODE>index</CODE>.
+     */
+    public void setMatiascopemanParams(int index, double matiascopemanParams) {
+        this.matiascopemanParams[index] = matiascopemanParams;
+    }
+    
+    /** Setter for property matiascopemanParams.
+     * @param matiascopemanParams New value of property matiascopemanParams.
+     */
+    public void setMatiascopemanParams(double[] matiascopemanParams) {
+        this.matiascopemanParams = matiascopemanParams;
+    }
+    
+    public void setFugacityCoefficient(double val){
+        fugasityCoeffisient = val;
+        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+    }
+    
+    /** Getter for property numberOfAssociationSites.
+     * @return Value of property numberOfAssociationSites.
+     */
+    public int getNumberOfAssociationSites() {
+        return numberOfAssociationSites;
+    }
+    
+    /** Setter for property numberOfAssociationSites.
+     * @param numberOfAssociationSites New value of property numberOfAssociationSites.
+     */
+    public void setNumberOfAssociationSites(int numberOfAssociationSites) {
+        this.numberOfAssociationSites = numberOfAssociationSites;
+    }
+    
+    public void seta(double a) {
+        System.out.println("no method set a");
+    }
+    
+    public void setb(double b) {
+        System.out.println("no method set b");
+    }
+    
+    /** Getter for property associationVolume.
+     * @return Value of property associationVolume.
+     */
+    public double getAssociationVolume() {
+        return associationVolume;
+    }
+    
+    /** Setter for property associationVolume.
+     * @param associationVolume New value of property associationVolume.
+     */
+    public void setAssociationVolume(double associationVolume) {
+        this.associationVolume = associationVolume;
+    }
+    
+    /** Getter for property associationEnergy.
+     * @return Value of property associationEnergy.
+     */
+    public double getAssociationEnergy() {
+        return associationEnergy;
+    }
+    
+    /** Setter for property associationEnergy.
+     * @param associationEnergy New value of property associationEnergy.
+     */
+    public void setAssociationEnergy(double associationEnergy) {
+        this.associationEnergy = associationEnergy;
+    }
+    
+    /** Getter for property normalBoilingPoint.
+     * @return Value of property normalBoilingPoint.
+     */
+    public double getNormalBoilingPoint() {
+        return normalBoilingPoint;
+    }
+    
+    /** Setter for property normalBoilingPoint.
+     * @param normalBoilingPoint New value of property normalBoilingPoint.
+     */
+    public void setNormalBoilingPoint(double normalBoilingPoint) {
+        this.normalBoilingPoint = normalBoilingPoint;
+    }
+    
+    /** Getter for property standardDensity.
+     * @return Value of property standardDensity.
+     */
+    public double getStandardDensity() {
+        return standardDensity;
+    }
+    
+    /** Setter for property standardDensity.
+     * @param standardDensity New value of property standardDensity.
+     */
+    public void setStandardDensity(double standardDensity) {
+        this.standardDensity = standardDensity;
+    }
+    
+    /** Getter for property AntoineASolid.
+     * @return Value of property AntoineASolid.
+     */
+    public double getAntoineASolid() {
+        return AntoineASolid;
+    }
+    
+    /** Setter for property AntoineASolid.
+     * @param AntoineASolid New value of property AntoineASolid.
+     */
+    public void setAntoineASolid(double AntoineASolid) {
+        this.AntoineASolid = AntoineASolid;
+    }
+    
+    /** Getter for property AntoineBSolid.
+     * @return Value of property AntoineBSolid.
+     */
+    public double getAntoineBSolid() {
+        return AntoineBSolid;
+    }
+    
+    /** Setter for property AntoineBSolid.
+     * @param AntoineBSolid New value of property AntoineBSolid.
+     */
+    public void setAntoineBSolid(double AntoineBSolid) {
+        this.AntoineBSolid = AntoineBSolid;
+    }
+    
+    public double getSolidVaporPressure(double temperature){
+        return Math.exp(AntoineASolid+AntoineBSolid/temperature);
+    }
+    
+    public double getSolidVaporPressuredT(double temperature){
+        return -AntoineBSolid/(temperature*temperature)*Math.exp(AntoineASolid+AntoineBSolid/temperature);
+    }
+    
+    public double getSphericalCoreRadius(){
+        return sphericalCoreRadius;
+    }
+    
+    /** Setter for property componentName.
+     * @param componentName New value of property componentName.
+     */
+    public void setComponentName(java.lang.String componentName) {
+        this.componentName = componentName;
+    }
+    
+    /** Setter for property lennardJonesEnergyParameter.
+     * @param lennardJonesEnergyParameter New value of property lennardJonesEnergyParameter.
+     *
+     */
+    public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter) {
+        this.lennardJonesEnergyParameter = lennardJonesEnergyParameter;
+    }
+    
+    /** Setter for property lennardJonesMolecularDiameter.
+     * @param lennardJonesMolecularDiameter New value of property lennardJonesMolecularDiameter.
+     *
+     */
+    public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter) {
+        this.lennardJonesMolecularDiameter = lennardJonesMolecularDiameter;
+    }
+    
+    /** Setter for property sphericalCoreRadius.
+     * @param sphericalCoreRadius New value of property sphericalCoreRadius.
+     *
+     */
+    public void setSphericalCoreRadius(double sphericalCoreRadius) {
+        this.sphericalCoreRadius = sphericalCoreRadius;
+    }
+    
+    /** Getter for property calcActivity.
+     * @return Value of property calcActivity.
+     *
+     */
+    public boolean calcActivity() {
+        if(calcActivity==0) return false;
+        else return true;
+    }
+    
+    
+}

@@ -1,0 +1,17 @@
+/*
+ * SeparatorInterface.java
+ *
+ * Created on 22. august 2001, 17:22
+ */
+
+package processSimulation.processEquipment.separator;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface SeparatorInterface {
+    public void setName(String name);
+}
+

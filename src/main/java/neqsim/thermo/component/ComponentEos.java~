@@ -1,0 +1,329 @@
+/*
+ * ComponentEos.java
+ *
+ * Created on 14. mai 2000, 21:27
+ */
+
+package thermo.component;
+
+import thermo.phase.*;
+import thermo.component.atractiveEosTerm.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+abstract class ComponentEos extends Component implements ComponentEosInterface, thermo.ThermodynamicConstantsInterface{
+    
+    /** Creates new ComponentEos */
+    public double a=1, b=1, m=0, alpha=0, aT=1, aDiffT=0, Bi=0, Ai=0, AiT=0,  aDiffDiffT=0, voli=0;
+    public double[] Aij = new double[MAX_NUMBER_OF_COMPONENTS];
+    public double[] Bij = new double[MAX_NUMBER_OF_COMPONENTS];
+    protected double delta1=0, delta2 =0;
+    protected double aDern=0, aDerT=0,aDerTT=0,aDerTn=0,bDern=0,bDerTn=0;
+    protected double dAdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
+    protected double dBdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
+    protected AtractiveTermInterface atractiveParameter;
+    
+    public ComponentEos() {
+    }
+    
+    public ComponentEos(String component_name, double moles,  double molesInPhase, int compnumber){
+        super(component_name, moles,  molesInPhase, compnumber);
+    }
+    
+    public ComponentEos(int number, double TC, double PC, double M, double a, double moles) {
+        super(number, TC, PC, M, a, moles);
+    }
+    
+    public Object clone(){
+        
+        ComponentEos clonedComponent = null;
+        try{
+            clonedComponent = (ComponentEos) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        clonedComponent.atractiveParameter = (AtractiveTermInterface) this.atractiveParameter.clone();
+        
+        return clonedComponent;
+    }
+    
+    public void init(double temp, double pres, double totMoles, double beta, int type){
+        super.init(temp, pres, totMoles, beta, type);
+        reducedTemperature  = reducedTemperature(temp);
+        reducedPressure     = reducedPressure(pres);
+        aT	  = a * alpha(temp);
+        aDiffT = diffaT(temp);
+        aDiffDiffT = diffdiffaT(temp);
+    }
+    
+    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta, int numberOfComponents,  int type){
+        Bi = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
+        Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
+        if(type>=2) AiT = phase.calcAiT(componentNumber, phase, temp, pres, numberOfComponents);
+        
+        if(type>=3){
+            for(int j = 0; j< numberOfComponents;j++){
+                Aij[j] = phase.calcAij(componentNumber, j,  phase, temp, pres, numberOfComponents);
+                Bij[j] = phase.calcBij(componentNumber, j,  phase, temp, pres, numberOfComponents);
+            }
+        }
+        voli = -(-R*temp*dFdNdV(phase, numberOfComponents, temp, pres)+R*temp/(phase.getMolarVolume()*phase.getNumberOfMolesInPhase()))/(-R*temp*phase.dFdVdV()-phase.getNumberOfMolesInPhase()*R*temp/Math.pow(phase.getMolarVolume()*phase.getNumberOfMolesInPhase(),2));
+    }
+    
+    public void setAtractiveTerm(int i){
+        atractiveTermNumber = i;
+        System.out.println("atr "+i);
+        if(i==0) atractiveParameter = new AtractiveTermSrk(this);
+        else if (i==1) atractiveParameter = new AtractiveTermPr(this);
+        else if (i==2) atractiveParameter = new AtractiveTermSchwartzentruber(this, getSchwartzentruberParams());
+        else if (i==3) atractiveParameter = new AtractiveTermMollerup(this, getSchwartzentruberParams());
+        else if (i==4) atractiveParameter = new AtractiveTermMatCop(this, getMatiascopemanParams());
+        else if (i==5) atractiveParameter = new AtractiveTermRk(this);
+        else{ System.out.println("error selecting a interaction term");}
+    }
+    
+    public AtractiveTermInterface getAtractiveTerm(){
+        return this.atractiveParameter;
+    }
+    
+    
+    double reducedTemperature(double temperature){
+        return temperature/criticalTemperature;
+    }
+    
+    double reducedPressure(double pressure){
+        return pressure/criticalPressure;
+    }
+    
+    
+    public double geta(){
+        return a;
+    }
+    
+    public double getb(){
+        return b;
+    }
+    
+    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return 	phase.Fn()+phase.FB()*getBi()+phase.FD()*getAi();
+    }
+    
+    
+    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return 	(phase.FBT()+phase.FBD()*phase.getAT())*getBi()+phase.FDT()*getAi()+phase.FD()*getAiT();
+    }
+    
+    
+    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return 	phase.FnV()+phase.FBV()*getBi()+phase.FDV()*getAi();
+    }
+    
+    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
+        return  phase.FnB()*(getBi()+comp_Array[j].getBi())
+        +phase.FBD()*(getBi()*comp_Array[j].getAi()+comp_Array[j].getBi()*getAi())
+        +phase.FB()*getBij(j)+ phase.FBB()*getBi()*comp_Array[j].getBi()
+        + phase.FD()*getAij(j);
+    }
+    
+    
+    public double getAi(){
+        return Ai;
+    }
+    
+    public double getAiT(){
+        return AiT;
+    }
+    
+    
+    public double getBi(){
+        return Bi;
+    }
+    
+    public double getBij(int j){
+        return Bij[j];
+    }
+    
+    public double getAij(int j){
+        return Aij[j];
+    }
+    
+    public double getaDiffT(){
+        return aDiffT;
+    }
+    
+    
+    public double getaDiffDiffT(){
+        return aDiffDiffT;
+    }
+    
+    public double getaT(){
+        return aT;
+    }
+    
+    public double getVoli(){
+        return voli;
+    }
+    
+    
+    public double fugcoef(PhaseInterface phase){
+        double temperature = phase.getTemperature(), pressure=phase.getPressure();
+        int numberOfComponents = phase.getNumberOfComponents();
+        double vol = phase.getMolarVolume();
+        logFugasityCoeffisient = dFdN(phase, numberOfComponents, temperature, pressure)-Math.log(pressure*vol/(R*temperature));
+        fugasityCoeffisient = Math.exp(dFdN(phase, numberOfComponents, temperature, pressure)-Math.log(pressure*vol/(R*temperature)));
+        return fugasityCoeffisient;//Math.exp(dFdN(phase, numberOfComponents, temperature, pressure, phasetype)-Math.log(pressure*vol/(R*temperature)));
+    }
+    
+    public double logfugcoefdP(PhaseInterface phase){
+        double temperature = phase.getTemperature(), pressure=phase.getPressure();
+        int numberOfComponents = phase.getNumberOfComponents();
+        double vol,voli, b, a, yaij=0, coef;
+        vol = phase.getMolarVolume();
+        voli = getVoli();
+        dfugdp = voli /R/temperature - 1/pressure;
+        return dfugdp;
+    }
+    
+    
+    
+    public double logfugcoefdT(PhaseInterface phase){
+        double temperature = phase.getTemperature(), pressure=phase.getPressure();
+        int numberOfComponents = phase.getNumberOfComponents();
+        double vol, voli, b, a, yaij=0, coef;
+        vol = phase.getMolarVolume();
+        voli = getVoli();
+        dfugdt = (this.dFdNdT(phase, numberOfComponents, temperature, pressure) + 1/temperature - voli/R/temperature*(-R*temperature*phase.dFdTdV()+pressure/temperature));
+        return dfugdt;
+    }
+    
+    public double[] logfugcoefdN(PhaseInterface phase){
+        double temperature = phase.getTemperature(), pressure=phase.getPressure();
+        int numberOfComponents = phase.getNumberOfComponents();
+        double vol, voli, b, a, yaij=0, coef;
+        ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
+        vol = phase.getMolarVolume();
+        voli = getVoli();
+        for(int i=0;i<numberOfComponents;i++){
+            dfugdn[i] = (this.dFdNdN(i, phase, numberOfComponents, temperature, pressure) + 1.0/phase.getNumberOfMolesInPhase() - voli/R/temperature*(-R*temperature*comp_Array[i].dFdNdV(phase, numberOfComponents, temperature, pressure)+R*temperature/(vol*phase.getNumberOfMolesInPhase())));
+            dfugdx[i] = dfugdn[i]*(phase.getNumberOfMolesInPhase());
+        }
+        //  System.out.println("diffN: " + 1 +  dfugdn[2]);
+        return dfugdn;
+    }
+    
+    public double getAder() {
+        return aDern;
+    }
+    public void setAder(double val){
+        aDern = val;
+    }
+    
+    public double getdAdndn(int j){
+        return dAdndn[j];
+    }
+    public void setdAdndn(int jComp, double val){
+        dAdndn[jComp] = val;
+    }
+    
+    public void setdAdT(double val){
+        aDerT = val;
+    }
+    
+    public double getdAdT(){
+        return aDerT;
+    }
+    
+    public void setdAdTdn(double val){
+        aDerTn = val;
+    }
+    
+    public double getdAdTdn(){
+        return aDerTn;
+    }
+    
+    public double getdAdTdT(){
+        return aDerT;
+    }
+    
+    public void setdAdTdT(double val){
+        aDerTT = val;
+    }
+    
+    public double getBder() {
+        return bDern;
+    }
+    public void setBder(double val) {
+        bDern=val;
+    }
+    
+    public double getdBdndn(int j){
+        return dBdndn[j];
+    }
+    
+    public void setdBdndn(int jComp, double val) {
+        dBdndn[jComp] = val;
+    }
+    
+    public double getdBdT(){
+        return 1;
+    }
+    public void setdBdTdT(double val) {}
+    
+    public double getdBdndT(){
+        return bDerTn;
+    }
+    public void setdBdndT(double val) {
+        bDerTn = val;
+    }
+    
+    
+    public double alpha(double temperature){
+        return atractiveParameter.alpha(temperature);
+    }
+    
+    public double aT(double temperature){
+        return atractiveParameter.aT(temperature);
+    }
+    
+    public double diffalphaT(double temperature) {
+        return atractiveParameter.diffalphaT(temperature);
+    }
+    
+    public double diffdiffalphaT(double temperature) {
+        return atractiveParameter.diffdiffalphaT(temperature);
+    }
+    
+    public double diffaT(double temperature) {
+        return atractiveParameter.diffaT(temperature);
+    }
+    
+    public double diffdiffaT(double temperature) {
+        return atractiveParameter.diffdiffaT(temperature);
+    }
+    
+    public double[] getDeltaEosParameters(){
+        double[] param = {delta1,delta2 };
+        return param;
+    }
+    
+    /** Setter for property a.
+     * @param a New value of property a.
+     */
+    public void seta(double a) {
+        this.a = a;
+    }
+    
+    
+    /** Setter for property b.
+     * @param b New value of property b.
+     */
+    public void setb(double b) {
+        this.b = b;
+    }
+    
+}

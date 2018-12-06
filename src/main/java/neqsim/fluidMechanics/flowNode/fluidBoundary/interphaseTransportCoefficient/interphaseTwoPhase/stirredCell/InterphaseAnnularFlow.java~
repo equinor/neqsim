@@ -1,0 +1,33 @@
+/*
+ * FrictionFactorBaseClass.java
+ *
+ * Created on 12. juni 2001, 19:58
+ */
+
+package fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow;
+
+import fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.*;
+import fluidMechanics.flowNode.*;
+import MathLib.generalMath.*;
+import fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.*;
+import fluidMechanics.flowNode.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class InterphaseAnnularFlow extends InterphaseStratifiedFlow{
+    
+    /** Creates new FrictionFactorBaseClass
+     * All frictionfactors are the fanning frictionfactor.
+     */
+    
+    public InterphaseAnnularFlow() {
+    }
+    
+    public InterphaseAnnularFlow(FlowNodeInterface node) {
+        //      flowNode = node;
+    }
+    
+    
+}

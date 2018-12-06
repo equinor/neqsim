@@ -1,0 +1,22 @@
+/*
+ * AtractiveTermInterface.java
+ *
+ * Created on 13. mai 2001, 21:54
+ */
+
+package thermo.component.atractiveEosTerm;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public interface AtractiveTermInterface {
+    public double alpha(double temperature);
+    public double aT(double temperature);
+    public double diffalphaT(double temperature);
+    public double diffdiffalphaT(double temperature);
+    public double diffaT(double temperature) ;
+    public double diffdiffaT(double temperature);
+}
+

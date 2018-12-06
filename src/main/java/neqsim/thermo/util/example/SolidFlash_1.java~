@@ -1,0 +1,29 @@
+package thermo.util.example;
+
+import dataPresentation.*;
+import thermo.system.*;
+import thermodynamicOperations.*;
+import com.jrefinery.chart.*;
+import thermo.*;
+import thermo.phase.*;
+
+public class SolidFlash{
+    public static void main(String args[]){
+        SystemInterface testSystem = new SystemSrkSchwartzentruberEos(270.98015, 10.013259);
+        //  testSystem.setMultiPhaseCheck(true);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        dataHandeling output = new dataHandeling();
+        testSystem.addComponent("methane", 10.0);
+        //testSystem.addComponent("MEG", 1.0210951);
+        testSystem.addComponent("methanol", 0.5);
+        testSystem.addComponent("water", 100.0);
+        
+        testSystem.setSolidPhaseCheck(true);
+       
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(4);
+        // testOps.freezingPointTemperatureFlash();
+        testOps.TPflash();
+        testSystem.display();
+    }
+}

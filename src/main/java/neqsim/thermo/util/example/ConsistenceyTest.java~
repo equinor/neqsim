@@ -1,0 +1,22 @@
+package thermo.util.example;
+
+import thermo.system.*;
+import thermo.*;
+
+public class ConsistenceyTest{
+    
+    /** This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]){
+        SystemInterface testSystem = new SystemSrkEos(310.0,10);
+        testSystem.addComponent("methane", 10.0);
+        testSystem.addComponent("CO2", 10.0);
+        
+        testSystem.setMixingRule(4);
+        testSystem.init(0);
+        testSystem.init(1);
+        ThermodynamicModelTest testModel = new ThermodynamicModelTest(testSystem);
+        testModel.runTest();
+    }
+    
+}

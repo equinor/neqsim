@@ -1,0 +1,77 @@
+/*
+ * FrictionFactorBaseClass.java
+ *
+ * Created on 12. juni 2001, 19:58
+ */
+
+package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphaseReactorFlow;
+
+import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class InterphasePackedBed extends InterphaseReactorFlow implements neqsim.thermo.ThermodynamicConstantsInterface{
+
+    private static final long serialVersionUID = 1000;
+    
+    /** Creates new FrictionFactorBaseClass
+     * All frictionfactors are the fanning frictionfactor.
+     */
+    
+    public InterphasePackedBed() {
+    }
+    
+    public InterphasePackedBed(FlowNodeInterface node) {
+        //      flowNode = node;
+    }
+    
+    
+    public double calcWallFrictionFactor(int phase, FlowNodeInterface node){
+        System.out.println("no def");
+        return 0;
+    }
+    
+    public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node){
+        System.out.println("no def");
+        return 0;
+    }
+    
+    
+    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node){
+        System.out.println("no def");
+        return 0;
+    }
+    
+    public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node){
+        return 100.1;
+    }
+    
+    
+    public double calcWallMassTransferCoefficient(int phase, double schmidtNumber,  FlowNodeInterface node){
+        System.out.println("no def");
+        return 0;
+    }
+    
+    public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,  FlowNodeInterface node){
+        double redMassTrans = 0;
+        double massTrans=0;
+        if(phase==1){
+            //massTrans = 0.0002;
+            redMassTrans = 0.0051 * Math.pow(node.getReynoldsNumber(phase),0.67) * Math.pow(schmidtNumber, -0.5)*Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()*node.getGeometry().getPacking().getSize(),0.4);
+            massTrans = redMassTrans*Math.pow(node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity()*gravity  , 1.0/3.0);
+            System.out.println("mas trans liq " + massTrans);
+        }
+        if(phase==0){
+            redMassTrans = 3.6 * Math.pow(node.getReynoldsNumber(phase),0.7) * Math.pow(schmidtNumber, 0.33) * Math.pow(node.getGeometry().getPacking().getSurfaceAreaPrVolume()*node.getGeometry().getPacking().getSize() , -2.0);
+            massTrans = redMassTrans * node.getGeometry().getPacking().getSurfaceAreaPrVolume() * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity() / schmidtNumber;
+            System.out.println("mas trans gas " + massTrans);
+        }
+        return massTrans;
+    }
+    
+    
+    
+}

@@ -1,0 +1,20 @@
+/*
+ * processSystem.java
+ *
+ * Created on 21. august 2001, 16:28
+ */
+
+package processSimulation;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class processSystem {
+
+    /** Creates new processSystem */
+    public processSystem() {
+    }
+
+}

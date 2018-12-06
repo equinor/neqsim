@@ -1,0 +1,149 @@
+/*
+ * EosMixingRules.java
+ *
+ * Created on 4. juni 2000, 12:38
+ */
+
+package thermo.mixingRule;
+
+import thermo.component.*;
+import thermo.*;
+import thermo.phase.*;
+import java.util.*;
+import MathLib.JamaLinAlg.*;
+import java.io.*;
+
+/**
+ * @author  Even Solbraa
+ * @version
+ */
+public class CPAMixing extends Object implements Cloneable, java.io.Serializable, ThermodynamicConstantsInterface{
+    
+    public double intparam[][];
+    public int[][] scheme4C = {     {0,0,1,1},
+    {0,0,1,1},
+    {1,1,0,0},
+    {1,1,0,0}};
+    
+    public int[][] scheme2B = {      {0,1},
+    {1,0}};
+    
+    /** Creates new EosMixingRules */
+    
+    public CPAMixing() {
+    }
+    
+    public Object clone(){
+        CPAMixing clonedSystem = null;
+        try{
+            clonedSystem = (CPAMixing) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        return clonedSystem;
+    }
+    
+    
+    public class CPA_Radoch_base implements CPAMixingInterface{
+        double eps = 12000.76;
+        double beta = 0.03;
+        protected double[][] epsab = {{0,eps,eps,eps},{eps,0,eps,eps},{eps,eps,0,eps},{eps,eps,eps,0}};
+        protected double[][] betamat = {{0,beta,beta,beta},{beta,0,beta,beta},{beta,beta,0,beta},{beta,beta,beta,0}};
+        
+        public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+            return 1.0;
+        }
+        
+    }
+    
+    public class CPA_Radoch extends CPA_Radoch_base implements CPAMixingInterface{
+        
+        public double getCrossAssociationEnergy(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp){
+            return (phase.getComponent(compnumb1).getAssociationEnergy()+phase.getComponent(compnumb2).getAssociationEnergy())/2.0;
+        }
+        
+        public double getCrossAssociationVolume(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp){
+            return Math.sqrt(phase.getComponent(compnumb1).getAssociationVolume()*phase.getComponent(compnumb2).getAssociationVolume());
+        }
+        
+        public double gfunc(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+            return (2.0-phase.getb()/4.0/phase.getMolarVolume())/(2.0*Math.pow(1.0-phase.getb()/4.0/phase.getMolarVolume(),3.0));
+        }
+        
+        public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp){
+            return (Math.exp(getCrossAssociationEnergy(siteNumber1,siteNumber2, compnumb1,compnumb2, phase, temperature, pressure, numbcomp)/(R*phase.getTemperature()))-1.0)*(((ComponentEosInterface)phase.getComponent(compnumb1)).getb()+((ComponentEosInterface)phase.getComponent(compnumb2)).getb())/2.0*getCrossAssociationVolume(siteNumber1,siteNumber2, compnumb1,compnumb2, phase, temperature, pressure, numbcomp)*gfunc(siteNumber1,siteNumber2, compnumb1,compnumb2, phase, temperature, pressure, numbcomp);
+        }
+        
+        public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+            int[][] assosScheme = phase.getComponent(compnumb).getNumberOfAssociationSites()==2?scheme2B:scheme4C;
+            double Xi=0.0;
+            double temp=0.0, temp2=0.0;
+            for(int i=0;i<phase.getNumberOfComponents();i++){
+                temp2=0.0;
+                for(int j=0;j<phase.getComponent(i).getNumberOfAssociationSites();j++){
+                    if(assosScheme[siteNumber][j]==0 && compnumb==i){}
+                    else{
+                        System.out.println("ij " + i+" "+j );
+                        double delatSite = calcDelta(siteNumber,j, compnumb,i,phase,temperature,pressure,numbcomp);
+                        temp2 +=((ComponentCPAInterface)phase.getComponent(i)).getXsite()[j]*delatSite;
+                    }
+                }
+                //phase.getComponent(i).getClass();
+                temp +=phase.getComponent(i).getNumberOfMolesInPhase()*temp2;
+            }
+            Xi = 1.0/(1.0+1.0/phase.getTotalVolume()*temp);
+            
+            //System.out.println("Xi " + Xi);
+            return Xi;
+        }
+        //        public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        //            double Xi=0.0;
+        //            for(int i=0;i<phase.getNumberOfComponents();i++){
+        //                for(int j=0;j<phase.getComponent(i).getNumberOfAssociationSites();j++){
+        //                    double delatSite = calcDelta(siteNumber,j, compnumb,i,phase,temperature,pressure,numbcomp);
+        //                    //System.out.println("delta " + delatSite);
+        //                    //                    System.out.println("vol " + phase.getTotalVolume());
+        //                    if(Math.abs(delatSite)>1e-15 && !Double.isNaN(delatSite))
+        //                        Xi += (-1.0+Math.sqrt(1.0+4.0*phase.getComponent(compnumb).getx()*delatSite/(phase.getMolarVolume())))/(2.0*phase.getComponent(compnumb).getx()*delatSite/phase.getMolarVolume());
+        //                }
+        //            }
+        //            //System.out.println("Xi " + Xi);
+        //            return Xi;
+        //        }
+        
+    }
+    
+    public class CPAs_Radoch extends CPA_Radoch{
+        public double gfunc(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+            return 1.0/(1.0-1.9/4.0*phase.getB()/phase.getTotalVolume());
+        }
+    }
+    
+    public CPAMixingInterface getMixingRule(int i){
+        if(i==1){
+            return new CPA_Radoch();}
+        else if(i==2){
+            return new CPAs_Radoch();}
+        else return new CPA_Radoch();
+    }
+    
+    
+    public CPAMixingInterface getMixingRule(int i, PhaseInterface phase){
+        if(i==1){
+            return new CPA_Radoch();}
+        else if(i==2){
+            return new CPAs_Radoch();}
+        else return new CPA_Radoch();
+    }
+    
+    public CPAMixingInterface resetMixingRule(int i, PhaseInterface phase){
+        if(i==1){
+            return new CPA_Radoch();}
+        else if(i==2){
+            return new CPAs_Radoch();}
+        else return new CPA_Radoch();
+    }
+    
+}

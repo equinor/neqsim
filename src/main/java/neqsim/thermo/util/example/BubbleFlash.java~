@@ -1,0 +1,41 @@
+package thermo.util.example;
+/*
+ * TPflash.java
+ *
+ * Created on 27. september 2001, 09:43
+ */
+
+import thermo.system.*;
+import thermodynamicOperations.*;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class BubbleFlash {
+    
+    /** Creates new TPflash */
+    public BubbleFlash() {
+    }
+    public static void main(String args[]){
+        SystemInterface testSystem = new SystemSrkCPA(125.15,1.2300);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+       testSystem.addComponent("methane", 5.1);
+       // testSystem.addComponent("methanol", 50);
+        testSystem.createDatabase(true);
+        // 1- orginal no interaction 2- classic w interaction
+        // 3- Huron-Vidal 4- Wong-Sandler
+        testSystem.setMixingRule(2);
+        
+        try{
+            testOps.bubblePointPressureFlash(false);
+        }
+        catch(Exception e){
+            System.out.println(e.toString());
+        }
+        
+        testSystem.display();
+        
+    }
+}

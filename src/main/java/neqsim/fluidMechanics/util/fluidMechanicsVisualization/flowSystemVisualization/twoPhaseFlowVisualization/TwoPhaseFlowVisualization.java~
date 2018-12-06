@@ -1,0 +1,24 @@
+/*
+ * OnePhaseFlowVisualization.java
+ *
+ * Created on 26. oktober 2000, 20:08
+ */
+
+package fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class OnePhaseFlowVisualization extends fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
+
+    /** Creates new OnePhaseFlowVisualization */
+    public OnePhaseFlowVisualization() {
+    }
+    
+     public OnePhaseFlowVisualization(int nodes, int timeSteps){
+        super(nodes, timeSteps);
+    }
+
+}

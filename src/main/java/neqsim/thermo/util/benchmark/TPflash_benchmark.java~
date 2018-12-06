@@ -1,0 +1,46 @@
+package thermo.util.benchmark;
+
+import dataPresentation.*;
+import thermo.system.*;
+import thermodynamicOperations.*;
+
+
+public class TPflash_benchmark{
+    
+    /** This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]){
+        
+        double[][] points;
+        
+        SystemInterface testSystem = new SystemSrkEos(303.15, 10.01325);
+        //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15, 1.01325);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testSystem.addComponent("methane", 100.0);
+        testSystem.addComponent("water", 100.0);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(2);
+        System.out.println("start benchmark TPflash......");
+        
+        long time = System.currentTimeMillis();
+        for(int i=0;i<5000;i++){
+            testOps.TPflash();
+        }
+        System.out.println("Time taken for benchmark flash = " +(System.currentTimeMillis()-time));
+        testOps.displayResult();
+        
+        // time for 5000 flash calculations
+        // Results Dell Portable PIII 750 MHz - JDK 1.3.1:
+        //  mixrule 1 (Classic - no interaction):    8.9 sec
+        //  mixrule 2 (Classic):    7.811 sec
+        // mixrule 4 (Huron-Vidal2):    34.6 sec
+        //  mixrule 6 (Wong-Sandler):    37.4 sec
+        
+        //        // system:
+        //        SystemSrkEos testSystem = new SystemSrkEos(273.15, 1.01);
+        //        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        //        testSystem.addComponent("methane", 100.0);
+        //        testSystem.addComponent("water", 100.0);
+        //        testSystem.setMixingRule(1);
+    }
+}

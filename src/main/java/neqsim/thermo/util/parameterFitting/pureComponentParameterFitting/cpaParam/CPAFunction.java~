@@ -1,0 +1,67 @@
+/*
+ * Test.java
+ *
+ * Created on 22. januar 2001, 22:59
+ */
+
+package thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
+
+import thermo.system.*;
+import thermo.phase.*;
+import thermodynamicOperations.*;
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class CPAFunction extends LevenbergMarquardtFunction {
+    
+    /** Creates new Test */
+    public CPAFunction() {
+    }
+    
+    public double calcValue(double[] dependentValues){
+        system.setTemperature(dependentValues[0]);
+        //system.init(0);
+        //system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
+        //System.out.println("pres from antoine: " + system.getPressure());
+        try{
+            thermoOps.bubblePointPressureFlash(false);
+        }
+        catch(Exception e){
+            System.out.println(e.toString());
+        }
+         System.out.println("pres: " + system.getPressure());
+        return system.getPressure();
+    }
+    
+    public double calcTrueValue(double val){
+        return val;
+    }
+    
+    public void setFittingParams(int i, double value){
+        params[i] = value;
+        if(i==1){
+            system.getPhases()[0].getComponents()[0].seta(value*1e4);
+            system.getPhases()[1].getComponents()[0].seta(value*1e4);
+        }
+        if(i==0){
+            system.getPhases()[0].getComponents()[0].setb(value);
+            system.getPhases()[1].getComponents()[0].setb(value);
+        }
+        if(i==2){
+            system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
+            system.getPhases()[1].getComponents()[0].getAtractiveTerm().setm(value);
+        }
+        if(i==4){
+            system.getPhase(0).getComponent(0).setAssociationEnergy(value);
+            system.getPhase(1).getComponent(0).setAssociationEnergy(value);
+        }
+        if(i==3){
+            system.getPhase(0).getComponent(0).setAssociationVolume(value);
+            system.getPhase(1).getComponent(0).setAssociationVolume(value);
+        }
+    }
+}

@@ -1,0 +1,34 @@
+package thermo.util.example;
+/*
+ * TPflash.java
+ *
+ * Created on 27. september 2001, 09:43
+ */
+
+import thermo.system.*;
+import thermodynamicOperations.*;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class tempML {
+    
+    /** Creates new TPflash */
+    public tempML() {
+    }
+    public static void main(String args[]){
+        //    SystemInterface testSystem = new SystemSrkEos(280.15,10.00);
+        //    SystemInterface testSystem = new SystemPrEos(280.15,10.00);
+        SystemInterface testSystem = new SystemSrkEos(293.15,1.0);
+        testSystem.addComponent("water", 10);
+        testSystem.init(0);
+        testSystem.init(3);
+        
+        System.out.println("part mol ent: " + testSystem.getPhase(1).getComponent(0).getEnthalpy(293.15));
+        System.out.println("fudt: " + testSystem.getPhase(1).getComponent(0).getdfugdt());
+        System.out.println("dPdV: " + testSystem.getPhase(1).getdPdVTn());
+        System.out.println("voli: " + testSystem.getPhase(1).getComponent(0).getVoli());
+    }
+}

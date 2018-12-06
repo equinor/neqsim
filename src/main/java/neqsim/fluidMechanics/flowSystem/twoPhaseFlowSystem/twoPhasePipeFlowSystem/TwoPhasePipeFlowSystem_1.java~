@@ -1,0 +1,267 @@
+package fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem;
+
+import thermo.system.*;
+import fluidMechanics.*;
+import fluidMechanics.geometryDefinitions.pipe.*;
+import fluidMechanics.flowSystem.*;
+import thermodynamicOperations.*;
+import fluidMechanics.flowSystem.twoPhaseFlowSystem.*;
+import fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.*;
+import MathLib.JamaLinAlg.*;
+import fluidMechanics.flowNode.*;
+import fluidMechanics.geometryDefinitions.*;
+import fluidMechanics.flowLeg.pipeLeg.*;
+import fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.annularFlow.*;
+import fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.stratifiedFlow.*;
+import fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.onePhaseFlowVisualization.pipeFlowVisualization.*;
+
+//import guiAuto.*;
+import util.util.*;
+import dataPresentation.*;
+import dataPresentation.JFreeChart.*;
+
+public class TwoPhasePipeFlowSystem extends TwoPhaseFlowSystem {
+    
+    public TwoPhasePipeFlowSystem(){
+    }
+    
+    public void createSystem(){
+        //  thermoSystem.init(1);
+        thermoSystem.setTemperature(this.getInletTemperature());
+        thermoSystem.setPressure(this.getInletPressure());
+        
+        flowLeg = new PipeLeg[this.getNumberOfLegs()];
+        
+        for(int i=0;i<getNumberOfLegs();i++){
+            flowLeg[i] = new PipeLeg();
+        }
+        
+        flowNode = new FlowNodeInterface[totalNumberOfNodes];
+        flowNode[0] = new StratifiedFlowNode(thermoSystem, equipmentGeometry[0]);
+        flowNode[totalNumberOfNodes-1] =  flowNode[0].getNextNode();
+        
+        super.createSystem();
+        this.setNodes();
+    }
+    
+    
+    public void init(){
+        for(int j = 0;j<getTotalNumberOfNodes();j++){
+            flowNode[j].setInterphaseModelType(1);
+            flowNode[j].initFlowCalc();
+            flowNode[j].init();
+        }
+        
+        for(int j = 0;j<getTotalNumberOfNodes();j++){
+            for(int phase=0; phase<2; phase++){
+                flowNode[j].setVelocityOut(phase, this.flowNode[j].getVelocity(phase));
+            }
+        }
+        
+        for(int k = 1;k<getTotalNumberOfNodes();k++){
+            for(int phase=0; phase<2; phase++){
+                this.flowNode[k].setVelocityIn(phase, ((DoubleCloneable) this.flowNode[k-1].getVelocityOut(phase)));
+            }
+        }
+    }
+    
+    public void solveSteadyState(int solverType){
+        double[] times = {0.0};
+        display = new PipeFlowVisualization(this.getTotalNumberOfNodes(),1);
+        getTimeSeries().setTimes(times);
+        SystemInterface[] systems = {flowNode[0].getBulkSystem()};
+        getTimeSeries().setInletThermoSystems(systems);
+        getTimeSeries().setNumberOfTimeStepsInInterval(1);
+        double[] outletFlowRates = {0.0, 0.0};
+        getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
+        
+       
+        flowSolver = new fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.steadyStateTwoPhasePipeFlowSolver.SteadyStateTwoPhasePipeFlowSolver(this, getSystemLength(), this.getTotalNumberOfNodes(), false);
+        flowSolver.setSolverType(solverType);
+        flowSolver.solveTDMA();
+    }
+    
+    public void solveTransient(int type){
+        //   pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(), getTotalNumberOfNodes());
+        //   pipeSolve.solveTDMA();
+    }
+    
+    
+    /*
+    public double calcdn(){
+        for(int i=0;i<bulkSystem.getPhases()[0].getNumberOfComponents();i++){
+            dn[i] = 8e4*liquidBinaryMassTransferCoeffisient[i][i]*(bulkSystem.getPhases()[0].getComponents()[i].getx()- interphaseSystem.getPhases()[0].getComponents()[i].getx());
+           // System.out.println( "dn: " + i + "  "  + dn[i]);
+        }
+        return 1;
+    }
+     */
+    public void calcFluxes(){
+        double[] dn;
+        for(int j = 0;j<getTotalNumberOfNodes()-1;j++){
+            flowNode[j].init();
+            // dn = flowNode[j].calcFluxes();
+            flowNode[j+1].setBulkSystem(flowNode[j].getBulkSystem());
+            flowNode[j+1].setInterphaseSystem(flowNode[j].getInterphaseSystem());
+            //  flowNode[j+1].setFluxes(dn);
+            //    for(int i=0;i<flowNode[j].getBulkSystem().getPhases()[0].getNumberOfComponents();i++){
+            //     flowNode[j+1].getBulkSystem().getPhases()[0].addMoles(i, -dn[i]*1000);
+            //      flowNode[j+1].getBulkSystem().getPhases()[1].addMoles(i, +dn[i]*1000);
+            //          System.out.println("dn : " + dn[i]);
+            //    }
+        }
+    }
+    /*
+    public FlowNodeInterface getNextNode(){
+        AnnularFlow newNode = (AnnularFlow) this.clone();
+     
+        for(int i=0;i<bulkSystem.getPhases()[0].getNumberOfComponents();i++){
+            newNode.getBulkSystem().getPhases()[0].addMoles(i, -dn[i]);
+            newNode.getBulkSystem().getPhases()[1].addMoles(i, +dn[i]);
+        }
+     
+        return newNode;
+    }
+     
+     */
+    public void displayResult(){
+        
+        double[][] pressuresAndlengths = new double[2][getTotalNumberOfNodes()];
+        double[][] velocityAndlengths = new double[2][getTotalNumberOfNodes()];
+        double[][] fracAndlengths = new double[2][getTotalNumberOfNodes()];
+        double[][] fracAndlengths2 = new double[2][getTotalNumberOfNodes()];
+        double[][] points = new double[22][getTotalNumberOfNodes()];;
+        /*
+        for(int i = 0;i<getTotalNumberOfNodes();i++){
+            pressuresAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            pressuresAndlengths[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getPressure();
+            velocityAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            velocityAndlengths[1][i] = flowNode[i].getVelocity();
+            fracAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            fracAndlengths[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[1].getx()*1e6;
+            fracAndlengths2[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            fracAndlengths2[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[2].getx()*18.02/(flowNode[i].getBulkSystem().getPhases()[0].getMolarMass()*1000)*100;
+         
+        }*/
+        
+        for(int i = 0;i<getTotalNumberOfNodes();i++){
+            pressuresAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            pressuresAndlengths[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[0].getx();
+        /*    velocityAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            velocityAndlengths[1][i] = flowNode[i].getVelocity();
+            fracAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            fracAndlengths[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[1].getx()*1e6;
+            fracAndlengths2[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            fracAndlengths2[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[1].getx()/4.52782e-5*57.969/140245.0*0.018*40e6;
+         */
+        }
+        
+        /*
+        for(int i = 0;i<getTotalNumberOfNodes();i++){
+            points[0][i] = flowNode[i].getDistanceToCenterOfNode();
+            points[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[0].getx();
+            points[2][i] = flowNode[i].getInterphaseSystem().getPhases()[0].getComponents()[0].getx();
+            points[3][i] = flowNode[i].getInterphaseSystem().getPhases()[1].getComponents()[0].getx();
+            points[4][i] = flowNode[i].getBulkSystem().getPhases()[1].getComponents()[0].getx();
+         
+            points[5][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[1].getx();
+            points[6][i] = flowNode[i].getInterphaseSystem().getPhases()[0].getComponents()[1].getx();
+            points[7][i] = flowNode[i].getInterphaseSystem().getPhases()[1].getComponents()[1].getx();
+            points[8][i] = flowNode[i].getBulkSystem().getPhases()[1].getComponents()[1].getx();
+         
+            points[9][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[2].getx();
+            points[10][i] = flowNode[i].getInterphaseSystem().getPhases()[0].getComponents()[2].getx();
+            points[11][i] = flowNode[i].getInterphaseSystem().getPhases()[1].getComponents()[2].getx();
+            points[12][i] = flowNode[i].getBulkSystem().getPhases()[1].getComponents()[2].getx();
+         
+            points[13][i] = flowNode[i].getBulkSystem().getPhases()[0].getComponents()[3].getx();
+            points[14][i] = flowNode[i].getInterphaseSystem().getPhases()[0].getComponents()[3].getx();
+            points[15][i] = flowNode[i].getInterphaseSystem().getPhases()[1].getComponents()[3].getx();
+            points[16][i] = flowNode[i].getBulkSystem().getPhases()[1].getComponents()[3].getx();
+         
+            points[17][i] = flowNode[i].getLiquidSuperficialVelocity();
+            points[18][i] = flowNode[i].getGasSuperficialVelocity();
+            points[19][i] = flowNode[i].getBulkSystem().getPhases()[0].getTemperature();
+            points[20][i] = flowNode[i].getBulkSystem().getPhases()[0].getPressure();
+         
+            points[21][i] = flowNode[i].getBulkSystem().getPhases()[0].getMolarMass()*flowNode[i].getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()/flowNode[i].getBulkSystem().getPhases()[1].getNumberOfMolesInPhase()*40.0e6;
+            System.out.println("Q liq/ Q gas " + points[21][i]);
+            //points[22][i] = flowNode[i].getGasSuperficialVelocity();
+            // points[23][i] = flowNode[i].getBulkSystem().getPhases()[0].getTemperature();
+            // points[24][i] = flowNode[i].getBulkSystem().getPhases()[0].getPressure();
+         
+        }*/
+        
+        dataHandeling output= new dataHandeling();
+        output.printToFile(points,"Alt1_NonEquilibrium.txt");
+        
+        String[] navn= {"Pressure"};
+        String title2= "";
+        String title = "Pressure in pipe";
+        graph2b graph2 = new graph2b(pressuresAndlengths, navn, title, "Length [km]", "Pressure [bar]");
+        graph2.show();
+        /*
+        String[] navn2 = {"Velocity"};
+        String title3 = "Gas-velocity";
+        //    System.out.println("start flash");
+        //    System.out.println("Tferdig..");
+        graph2b graph3 = new graph2b(velocityAndlengths, navn2, title3, "Length [meter]", "Velocity [m/s]");
+        graph3.show();
+         
+        String[] navn3 = {"ppm oxygen"};
+        String title4 = "ppm oxygen in MEG";
+        //    System.out.println("start flash");
+        //    System.out.println("Tferdig..");
+        graph2b graph4 = new graph2b(fracAndlengths, navn3, title4, "Length [meter]", "oxygen [ppm]");
+        graph4.show();
+         
+        String[] navn4 = {"Liter liq. / MSm^3 gas"};
+        String title5 = "Liter liq. / MSm^3 gas";
+        //    System.out.println("start flash");
+        //    System.out.println("Tferdig..");
+        graph2b graph5 = new graph2b(fracAndlengths2, navn4, title5, "Length [meter]", "Liter liq. / MSm^3 gas");
+        graph5.show();*/
+    }
+    
+    
+    public static void main(String[] args) {
+        // Initierer et nyt rørsystem
+        FlowSystemInterface pipe = new TwoPhasePipeFlowSystem();
+        
+        // Definerer termodyanmikken5
+        SystemInterface testSystem = new SystemSrkEos(295.3, 5.0);    // initierer et system som benytter SRK tilstandsligning
+        // med trykk 305.3 K og 125 bar
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);                  // gjør termodyanmiske Flash rutiner tilgjengelige
+        testSystem.addComponent("methane", 0.11152181, 0);
+     //   testSystem.addComponent("ethane", 0.0011152181, 0);
+        testSystem.addComponent("water", 0.04962204876, 1);
+        testSystem.setMixingRule(3);
+        // benytter klassiske blandingsregler
+        
+        pipe.setInletThermoSystem(testSystem);                               // setter termodyanmikken for rørsystemet
+        pipe.setNumberOfLegs(5);                                        // deler inn røret i et gitt antall legger
+        pipe.setNumberOfNodesInLeg(40);                                 // setter antall nodepunkter (beregningspunkter/grid) pr. leg
+        double[] height = {0,0,0,0,0,0};
+        double[] length = {0.0, 0.1, 0.2, 0.3, 0.5, 0.7};
+        double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
+        
+        pipe.setLegHeights(height);                                     // setter inn høyde for hver leg-ende
+        pipe.setLegPositions(length);                                  // setter avstand til hver leg-ende
+        pipe.setLegOuterTemperatures(outerTemperature);
+        
+        GeometryDefinitionInterface [] pipeGemometry = new PipeData[5];    // Deffinerer geometrien for røret
+        double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
+        for(int i=0;i<pipeDiameter.length;i++) pipeGemometry[i] = new PipeData(pipeDiameter[i]);
+        pipe.setEquipmentGeometry(pipeGemometry);                      // setter inn rørgeometrien for hver leg
+        // utfører bergninger
+        pipe.createSystem();
+        pipe.init();
+        
+        pipe.solveSteadyState(2);
+        // pipe.calcFluxes();
+        pipe.print();
+        // pipe.displayResult();
+        // testOps.TPflash();
+        // testOps.displayResult();
+    }
+}

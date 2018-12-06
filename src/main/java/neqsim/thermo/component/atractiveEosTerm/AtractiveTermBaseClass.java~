@@ -1,0 +1,78 @@
+/*
+ * AtractiveTermBaseClass.java
+ *
+ * Created on 13. mai 2001, 21:58
+ */
+
+package thermo.component.atractiveEosTerm;
+
+import thermo.component.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable{
+    
+    ComponentEosInterface component;
+    protected double m;
+    protected double parameters[] = new double[3];
+    /** Creates new AtractiveTermBaseClass */
+    public AtractiveTermBaseClass(ComponentEosInterface component) {
+        this.component = component;
+    }
+    
+    public void setm(double val){
+        this.m = val;
+    }
+    
+    public Object clone(){
+        AtractiveTermBaseClass atractiveTerm = null;
+        try{
+            atractiveTerm = (AtractiveTermBaseClass) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        // atractiveTerm.parameters = (double[]) parameters.clone();
+        // System.arraycopy(parameters,0, atractiveTerm.parameters, 0, parameters.length);
+        return atractiveTerm;
+    }
+    
+    public void init(){
+    }
+    
+    public double diffdiffalphaT(double temperature) {
+        return 0;
+    }
+    
+    public double diffdiffaT(double temperature) {
+        return 0;
+    }
+    
+    public double aT(double temperature){
+        return component.geta();
+    }
+    
+    public double alpha(double temperature) {
+        return 1.0;
+    }
+    
+    public double diffaT(double temperature) {
+        return 0.0;
+    }
+    
+    public double diffalphaT(double temperature) {
+        return 0.0;
+    }
+    
+    public void setParameters(int i, double val){
+        parameters[i] = val;
+    }
+    
+    public double getParameters(int i){
+        return parameters[i];
+    }
+    
+}

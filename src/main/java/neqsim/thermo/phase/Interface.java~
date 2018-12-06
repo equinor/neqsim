@@ -1,0 +1,17 @@
+/*
+ * Interface.java
+ *
+ * Created on 19. november 2001, 10:44
+ */
+
+package thermo.phase;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public interface Interface {
+
+}
+

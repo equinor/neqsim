@@ -1,0 +1,20 @@
+/*
+ * UnitBase.java
+ *
+ * Created on 25. januar 2002, 20:21
+ */
+
+package Templates.Classes;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class Class {
+
+    /** Creates new UnitBase */
+    public Class () {
+    }
+
+}

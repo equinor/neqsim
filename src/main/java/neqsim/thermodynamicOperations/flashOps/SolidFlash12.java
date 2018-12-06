@@ -1,0 +1,346 @@
+/*
+ * Copyright 2018 ESOL.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * TPflash.java
+ *
+ * Created on 2. oktober 2000, 22:26
+ */
+package neqsim.thermodynamicOperations.flashOps;
+
+import Jama.*;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class SolidFlash12 extends TPflash implements java.io.Serializable {
+
+    private static final long serialVersionUID = 1000;
+
+    //   SystemInterface clonedSystem;
+    boolean multiPhaseTest = false;
+    double dQdbeta[];
+    double Qmatrix[][];
+    double E[];
+    double Q = 0;
+    int solidsNumber = 0;
+    int solidIndex = 0;
+
+    /** Creates new TPflash */
+    public SolidFlash12() {
+    }
+
+    public SolidFlash12(SystemInterface system) {
+        super(system);
+    }
+
+    public void calcMultiPhaseBeta() {
+    }
+
+    public void setXY() {
+        for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+            for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+                if (i != solidIndex) {
+                    system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz() / E[i] / system.getPhase(k).getComponent(i).getFugasityCoeffisient());
+                } else {
+                    system.getPhase(k).getComponent(i).setx(system.getPhases()[3].getComponent(i).getFugasityCoefficient() / system.getPhase(k).getComponent(i).getFugasityCoeffisient());
+                }
+            }
+        }
+    }
+
+    public void checkX() {
+        for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
+            double x = 0.0;
+            for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+                x += system.getPhase(k).getComponent(i).getx();
+            }
+            System.out.println("x tot " + x + " PHASE " + k);
+            if (x < 1.0 - 1e-6) {
+                //System.out.println("removing phase " + k);
+                system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));
+                system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
+                system.setNumberOfPhases(system.getNumberOfPhases() - 1);
+                system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
+                system.init(1);
+                calcE();
+                setXY();
+                return;
+            }
+        }
+    }
+
+    public void calcE() {
+        E = new double[system.getPhases()[0].getNumberOfComponents()];
+
+        for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+            E[i] = 0.0;
+            for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+                E[i] += system.getBeta(k) / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
+            }
+        }
+    }
+
+    public double calcQ() {
+        Q = 0;
+        double betaTotal = 0;
+        dQdbeta = new double[system.getNumberOfPhases() - solidsNumber];
+        Qmatrix = new double[system.getNumberOfPhases() - solidsNumber][system.getNumberOfPhases() - solidsNumber];
+
+        for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+            betaTotal += system.getBeta(k);
+        }
+
+        Q = betaTotal;
+        for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+            if (i != solidIndex) {
+                Q -= Math.log(E[i]) * system.getPhase(0).getComponents()[i].getz();
+            }
+        }
+
+        for (int i = 0; i < solidsNumber; i++) {
+            Q += system.getPhase(0).getComponent(solidIndex).getz() * (1 - Math.log(system.getPhase(0).getComponent(solidIndex).getz() / system.getPhases()[3].getComponent(solidIndex).getFugasityCoefficient()));
+            for (int j = 0; j < system.getNumberOfPhases() - solidsNumber; j++) {
+                Q -= system.getBeta(j) * system.getPhases()[3].getComponent(solidIndex).getFugasityCoefficient() / system.getPhase(j).getComponent(solidIndex).getFugasityCoefficient();
+            }
+        }
+
+        for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+            dQdbeta[k] = 1.0;
+            for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+                if (i == solidIndex) {
+                    dQdbeta[k] -= system.getPhases()[3].getComponents()[solidIndex].getFugasityCoeffisient() / system.getPhase(k).getComponent(solidIndex).getFugasityCoeffisient();
+                } else {
+                    dQdbeta[k] -= system.getPhase(0).getComponent(i).getz() / E[i] / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
+                }
+            }
+        }
+
+
+        for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
+            for (int j = 0; j < system.getNumberOfPhases() - solidsNumber; j++) {
+                Qmatrix[i][j] = 0.0;
+                for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
+                    if (k != solidIndex) {
+                        Qmatrix[i][j] += system.getPhase(0).getComponent(k).getz() / (E[k] * E[k] * system.getPhase(j).getComponent(k).getFugasityCoeffisient() * system.getPhase(i).getComponent(k).getFugasityCoeffisient());
+                    }
+                }
+            }
+        }
+        return Q;
+    }
+
+    public void solveBeta() {
+        double oldBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
+        double newBeta[] = new double[system.getNumberOfPhases() - solidsNumber];
+        int iter = 0;
+        Matrix ans = new Matrix(system.getNumberOfPhases() - solidsNumber, 1);
+        do {
+            system.init(1);
+            calcE();
+            //setXY();
+            calcQ();
+
+            oldBeta = new double[system.getNumberOfPhases() - solidsNumber];
+            newBeta = new double[system.getNumberOfPhases() - solidsNumber];
+            iter++;
+            for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+                oldBeta[k] = system.getBeta(k);
+            }
+
+            Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
+//            Matrix betaMatrixTemp = new Matrix(oldBeta, 1).transpose();
+            Matrix dQM = new Matrix(dQdbeta, 1);
+            Matrix dQdBM = new Matrix(Qmatrix);
+
+            try {
+                ans = dQdBM.solve(dQM.transpose());
+            } catch (Exception e) {
+                // ans = dQdBM.solve(dQM.transpose());
+            }
+            dQM.print(10, 10);
+            dQdBM.print(10, 10);
+            ans.print(30, 30);
+            double betaReductionFactor = 1.0;
+//            betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
+            //           betaMatrixTemp.print(10, 2);
+
+//            double minBetaTem = 1000000;
+            //           int minBetaIndex = 0;
+
+            /*            for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
+            if (betaMatrixTemp.get(i, 0) < minBetaTem) {
+            minBetaTem = betaMatrixTemp.get(i, 0);
+            minBetaIndex = i;
+            }
+            }*/
+
+            /*           for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+            if ((minBetaTem < -1.0E-10)) {
+            betaReductionFactor = 1 - betaMatrixTemp.get(minBetaIndex, 0) / ans.get(minBetaIndex, 0);
+            }
+            }*/
+
+
+            betaMatrix.minusEquals(ans.times((iter + 1.0) / (100.0 + iter)));
+            //betaMatrix.print(10, 2);
+
+            for (int k = 0; k < system.getNumberOfPhases() - solidsNumber; k++) {
+                system.setBeta(k, betaMatrix.get(k, 0));
+                if (betaMatrix.get(k, 0) < 0) {
+                    system.setBeta(k, 1e-9);
+                }
+                if (betaMatrix.get(k, 0) > 1) {
+                    system.setBeta(k, 1 - 1e-9);
+                }
+            }
+            calcE();
+            setXY();
+            calcSolidBeta();
+        } while ((ans.norm2() > 1e-8 && iter < 100) || iter < 2);
+
+        system.init(1);
+        setXY();
+    }
+
+    public void checkGibbs() {
+        double gibbs1 = 0, gibbs2 = 0;
+        for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+            system.setPhaseType(i, 0);
+            system.init(1);
+            gibbs1 = system.getPhase(i).getGibbsEnergy();
+            system.setPhaseType(i, 1);
+            system.init(1);
+            gibbs2 = system.getPhase(i).getGibbsEnergy();
+            if (gibbs1 < gibbs2) {
+                system.setPhaseType(i, 0);
+            } else {
+                system.setPhaseType(i, 1);
+            }
+            system.init(1);
+        }
+    }
+
+    public void calcSolidBeta() {
+        double tempVar = system.getPhase(0).getComponents()[solidIndex].getz();
+        double beta = 1.0;
+        for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+            tempVar -= system.getBeta(i) * system.getPhase(3).getComponent(solidIndex).getFugasityCoeffisient() / system.getPhase(i).getComponent(solidIndex).getFugasityCoeffisient();
+            beta -= system.getBeta(i);
+        }
+        if (tempVar > 0 && tempVar < 1.0) {
+            system.setBeta(system.getNumberOfPhases() - 1, tempVar);
+        }
+
+    }
+
+    public void run() {
+
+
+        int iter = 0;
+
+        ThermodynamicOperations ops = new ThermodynamicOperations(system);
+        system.setSolidPhaseCheck(false);
+        ops.TPflash();
+        system.setSolidPhaseCheck(true);
+        if (checkAndAddSolidPhase() == 0) {
+            return;
+        }
+
+        if (system.getPhase(0).getNumberOfComponents() <= 2) {
+            solvebeta1();
+        }
+        do {
+            iter++;
+            this.solveBeta();
+            //checkX();
+        } while (iter < 1);
+
+    }
+
+    public int checkAndAddSolidPhase() {
+
+        double[] solidCandidate = new double[system.getPhases()[0].getNumberOfComponents()];
+
+        for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+
+            if (system.getTemperature() > system.getPhase(0).getComponent(k).getTriplePointTemperature()) {
+                solidCandidate[k] = -10;
+            } else {
+
+                solidCandidate[k] = system.getPhase(0).getComponents()[k].getz();
+                system.getPhases()[3].getComponent(k).setx(1.0);
+
+                for (int i = 0; i < system.getNumberOfPhases(); i++) {
+                    solidCandidate[k] -= system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]) / system.getPhase(i).getComponent(k).getFugasityCoeffisient();
+                }
+            }
+        }
+
+
+        for (int i = 0; i < solidCandidate.length; i++) {
+            if (solidCandidate[i] > 0.0) {
+                system.getPhases()[3].getComponent(i).setx(1.0);
+                solidIndex = i;
+                solidsNumber++;
+            } else {
+                system.getPhases()[3].getComponent(i).setx(0.0);
+            }
+        }
+
+        for (int i = 0; i < solidsNumber; i++) {
+            system.setNumberOfPhases(system.getNumberOfPhases() + 1);
+            system.setPhaseIndex(system.getNumberOfPhases() - 1, 3);
+            system.setBeta(system.getNumberOfPhases() - 1, solidCandidate[solidIndex]);
+            //system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 2) - solidCandidate[solidIndex]);
+        }
+        return solidsNumber;
+    }
+
+    public double solvebeta1() {
+        double numberOfMolesFreeze = system.getPhase(0).getComponent(solidIndex).getNumberOfmoles();
+        double solidCandidate = 0;
+        int iter = 0;
+        double dn=-0.01;
+        double solidCandidateOld=0;
+        do {
+            solidCandidateOld = solidCandidate;
+            system.addComponent(system.getPhase(0).getComponent(solidIndex).getComponentName(), dn);
+            ThermodynamicOperations ops = new ThermodynamicOperations(system);
+       //     system.init(0);
+            system.setSolidPhaseCheck(false);
+            ops.TPflash();
+       //     system.setSolidPhaseCheck(true);
+
+            iter++;
+            solidCandidate = system.getPhase(0).getComponents()[solidIndex].getz();
+            for (int i = 0; i < system.getNumberOfPhases(); i++) {
+                solidCandidate -= system.getPhases()[3].getComponent(solidIndex).fugcoef(system.getPhases()[3]) / system.getPhase(i).getComponent(solidIndex).getFugasityCoeffisient();
+            }
+            double dsoliddn = (solidCandidate-solidCandidateOld)/dn;
+            dn = -0.5*solidCandidate/dsoliddn;
+            System.out.println("solid cand " + solidCandidate);
+        } while (solidCandidate>1e-5 && iter < 50);
+
+        return 1.0;
+    }
+}
+
+

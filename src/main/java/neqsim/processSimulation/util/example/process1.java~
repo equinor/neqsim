@@ -1,0 +1,50 @@
+package processSimulation.util.example;
+import processSimulation.processEquipment.stream.*;
+import processSimulation.processEquipment.separator.*;
+import processSimulation.processEquipment.valve.*;
+import processSimulation.processEquipment.mixer.*;
+import thermodynamicOperations.*;
+
+public class process1{
+    
+    /** This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]){
+        
+        thermo.system.SystemInterface testSystem = new thermo.system.SystemSrkEos((273.15+25.0),20.00);
+        testSystem.addComponent("CO2", 18.00);
+        testSystem.addComponent("water", 1200.0);
+        testSystem.setMixingRule(2);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testOps.TPflash();
+        
+        Stream stream_1 = new Stream("Stream1", testSystem);
+        
+        MixerInterface mixer = new StaticMixer("Mixer 1");
+        mixer.addStream(stream_1);
+        Stream stream_3 = mixer.getOutStream();
+        stream_3.setName("stream3");
+        
+        Separator separator = new Separator("Separator 1", stream_3);
+        Stream stream_2 = separator.getGasOutStream();
+        stream_2.setName("stream2");
+        
+        mixer.addStream(stream_2);
+        
+        processSimulation.processSystem.ProcessSystem operations = new processSimulation.processSystem.ProcessSystem();
+        operations.add(stream_1);
+        operations.add(stream_2);
+        operations.add(mixer);
+        operations.add(stream_3);
+        operations.add(separator);
+        
+        for(int i=0;i<400;i++){
+            operations.run();
+        }
+         operations.displayResult();
+         for(int i=0;i<10;i++){
+            operations.run();
+        }
+         operations.displayResult();
+    }
+}

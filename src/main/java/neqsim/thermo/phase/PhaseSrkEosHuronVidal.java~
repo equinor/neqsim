@@ -1,0 +1,55 @@
+/*
+ * PhaseSrkEosHuronVidal.java
+ *
+ * Created on 12. juli 2000, 22:40
+ */
+
+package thermo.phase;
+
+import thermo.component.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public class PhaseSrkEosHuronVidal extends PhaseSrkEos implements PhaseGEInterface, PhaseGEEosInterface {
+
+    public PhaseGEInterface gePhase;
+    
+    /** Creates new PhaseSrkEosHuronVidal */
+    public PhaseSrkEosHuronVidal(int GEphase){
+    super();
+    if(GEphase==1){
+        gePhase = new PhaseGEUniquacmodifiedHV();}
+        else{
+        gePhase = new PhaseGENRTLmodifiedHV();
+    }
+    
+     mixRule = mixSelect.getMixingRule(3); // 3 - Huron vidal
+  }
+  
+  public void addcomponent(String componentName, double moles,double molesInPhase,  int compNumber){
+    componentArray[compNumber] = new ComponentSrkHuronVidal(componentName, moles, molesInPhase, compNumber);
+    gePhase.addcomponent(componentName, moles, molesInPhase, compNumber);
+    numberOfComponents++;
+  }
+
+  public void init(double temperature, double pressure, double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta){ // type = 0 start init type =1 gi nye betingelser
+	
+        super.init(temperature, pressure, totalNumberOfMoles, numberOfComponents, type, phase, beta); // type = 0 start init type =1 gi nye betingelser
+        gePhase.init(temperature, pressure, totalNumberOfMoles, numberOfComponents, type, phase, beta);
+      }
+   
+  public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
+    return gePhase.getExessGibbsEnergy(phase, numberOfComponents, temperature, pressure, phasetype);
+    }
+    
+  public PhaseGEInterface getGEphase(){
+    return gePhase;
+  }
+ 
+
+  
+
+}

@@ -1,0 +1,17 @@
+/*
+ * PhysicalPropertiesInterface.java
+ *
+ * Created on 29. oktober 2000, 16:14
+ */
+
+package physicalProperties.physicalPropertyMethods;
+import thermo.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public interface ConductivityInterface extends ThermodynamicConstantsInterface {
+     public double calcConductivity();
+}

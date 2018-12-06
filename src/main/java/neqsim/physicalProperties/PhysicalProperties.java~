@@ -1,0 +1,108 @@
+/*
+ * PhysicalProperties.java
+ *
+ * Created on 29. oktober 2000, 16:13
+ */
+
+package physicalProperties;
+
+import thermo.phase.*;
+import thermo.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public abstract class PhysicalProperties extends java.lang.Object implements PhysicalPropertiesInterface, java.io.Serializable, ThermodynamicConstantsInterface, Cloneable {
+    
+    public PhaseInterface phase;
+    protected int binaryDiffusionCoefficientMethod;
+    protected int multicomponentDiffusionMethod;
+    
+    public double omegaVisc[];
+    public double relativeViscosity[];
+    public double pureComponentViscosity[];
+    public double binaryDiffusionCoeffisients[][];
+    public double binaryMolecularDiameter[][];
+    public double binaryEnergyParameter[][];
+    public double binaryMolecularMass[][];
+    public double Fc[];
+    public double tempBeta=0, tempAlpha=0, tempZ=0, conductivity=0, density=0, viscosity=0, kinematicViscosity=0;
+    public double binaryLennardJonesOmega[][];
+    public double pureComponentConductivity[];
+    
+    
+    public ConductivityInterface conductivityNew;
+    public ViscosityInterface viscosityNew;
+    public DiffusivityInterface diffusivityNew;
+    public DensityInterface densityNew;
+    
+    /** Creates new PhysicalProperties */
+    public PhysicalProperties() {
+    }
+    
+    public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+        this.phase = phase;
+        this.binaryDiffusionCoefficientMethod = binaryDiffusionCoefficientMethod;
+        this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
+    }
+    
+    
+    public Object clone(){
+        PhysicalProperties properties = null;
+        
+        try{
+            properties = (PhysicalProperties) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        return properties;
+    }
+    
+    
+    public void setBinaryDiffusionCoefficientMethod(int i){
+        binaryDiffusionCoefficientMethod = i;
+    }
+    
+    public void setMulticomponentDiffusionMethod(int i){
+        multicomponentDiffusionMethod = i;
+    }
+    
+    
+    public double calcKinematicViscosity(){
+        kinematicViscosity = viscosity/ phase.getDensity();
+        return kinematicViscosity;
+    }
+    
+    public void init(){
+        density = densityNew.calcDensity();
+        viscosity = viscosityNew.calcViscosity();
+        kinematicViscosity = calcKinematicViscosity();
+        diffusivityNew.calcDiffusionCoeffisients(binaryDiffusionCoefficientMethod ,multicomponentDiffusionMethod);
+        conductivity = conductivityNew.calcConductivity();
+    }
+    
+    
+    public double getViscosity(){
+        return viscosity;
+    }
+    
+    public double getConductivity(){
+        return conductivity;
+    }
+    
+    
+    public double getDensity(){
+        return density;
+    }
+    
+    public double getKinematicViscosity(){
+        return kinematicViscosity;
+    }
+    
+    public double getDiffusionCoeffisient(int i, int j){
+        return binaryDiffusionCoeffisients[i][j];
+    }
+}

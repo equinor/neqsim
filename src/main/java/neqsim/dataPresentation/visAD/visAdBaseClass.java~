@@ -1,0 +1,21 @@
+/*
+ * visAdBaseClass.java
+ *
+ * Created on 24. mai 2001, 19:46
+ */
+
+package dataPresentation.visAD;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class visAdBaseClass implements visAdInterface{
+    
+    /** Creates new visAdBaseClass */
+    public visAdBaseClass() {
+    }
+    public void init() throws RemoteException, VisADException{
+    }
+}

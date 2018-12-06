@@ -1,0 +1,20 @@
+/*
+ * Class.java
+ *
+ * Created on 19. november 2001, 11:43
+ */
+
+package Templates.Classes;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class Class {
+
+    /** Creates new Class */
+    public Class () {
+    }
+
+}

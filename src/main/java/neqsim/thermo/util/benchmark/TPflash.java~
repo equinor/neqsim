@@ -1,0 +1,30 @@
+package util.benchmark;
+
+import dataPresentation.*;
+import thermo.system.*;
+import thermodynamicOperations.*;
+import com.jrefinery.chart.*;
+
+
+public class TPflash{
+    
+    /** This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]){
+        
+        double[][] points;
+        
+        SystemSrkEos testSystem = new SystemSrkEos(273.15, 1);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testSystem.addComponent("methane", 100.0);
+        testSystem.addComponent("water", 100.0);
+        testSystem.setMixingRule(2);
+        
+        long time = System.currentTimeMillis();
+        for(int i=0;i<5000;i++){
+            testOps.TPflash();
+        }
+        System.out.println("Time taken for benchmark flash = " +(System.currentTimeMillis()-time));
+        testOps.displayResult();
+    }
+}

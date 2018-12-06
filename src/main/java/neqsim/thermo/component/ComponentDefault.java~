@@ -1,0 +1,37 @@
+/*
+ * ComponentEos.java
+ *
+ * Created on 14. mai 2000, 21:27
+ */
+
+package thermo.component;
+
+import thermo.phase.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class ComponentDefault extends Component{
+    
+    
+    public ComponentDefault() {
+    }
+    
+    public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return 0.0;
+    }
+    
+    public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return 0.0;
+    }
+    
+    public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return 0.0;
+    }
+    
+    public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
+        return new double[2];
+    }
+    
+}

@@ -1,0 +1,118 @@
+import dataPresentation.*;
+import thermo.system.*;
+import thermo.*;
+import thermo.phase.*;
+import thermodynamicOperations.*;
+import com.jrefinery.chart.*;
+import thermo.mixingRule.*;
+
+public class Testfile_2{
+    
+    /** This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]){
+        
+        double[][] points;
+        
+        //SystemInterface testSystem = new SystemSrkEos(310.0,10);
+        //   ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        
+        SystemInterface testSystem = new SystemFurstElectrolyteEos(320.0,10);
+       // SystemInterface testSystem = new SystemSrkEos(300.0,10);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        
+        testSystem.addComponent("CO2", 2.1);
+        testSystem.addComponent("water", 100.0);
+       testSystem.addComponent("MDEA", 10.0);
+        
+       testSystem.chemicalReactionInit();
+       testSystem.setMixingRule(4);
+       testSystem.init(0);
+        
+        //testSystem.init(1);
+        testSystem.getChemicalReactionOperations().solveChemEq(0);
+        testSystem.getChemicalReactionOperations().solveChemEq(1);
+        /*
+            ((HVmixingRuleInterface) ((PhaseEosInterface)testSystem.getPhases()[0]).getMixingRule()).setHVDijParameter(0,1, -700);
+            ((HVmixingRuleInterface) ((PhaseEosInterface)testSystem.getPhases()[1]).getMixingRule()).setHVDijParameter(0,1, -700);
+         
+            ((HVmixingRuleInterface) ((PhaseEosInterface)testSystem.getPhases()[0]).getMixingRule()).setHVDijParameter(1,0, 260);
+            ((HVmixingRuleInterface) ((PhaseEosInterface)testSystem.getPhases()[1]).getMixingRule()).setHVDijParameter(1,0, 260);
+         */
+        
+        //testSystem.init(3);
+        testOps.TPflash();
+        //  testOps.displayResult();
+        
+        System.out.println("Tferdig.. " +testSystem.getPhases()[1].getComponents()[0].getFugasityCoeffisient());
+        System.out.println("Tferdig.. " +testSystem.getPhases()[1].getPureComponentFugacity(0));
+        System.out.println("Tferdig.. inf dillute:  " +testSystem.getPhases()[1].getInfiniteDiluteFugacity(0,1));
+        
+        System.out.println("activity.. solvent " +testSystem.getPhases()[1].getComponents()[0].getFugasityCoeffisient()/testSystem.getPhases()[1].getPureComponentFugacity(0));
+        System.out.println("activity..inf dil " +testSystem.getPhases()[1].getComponents()[0].getFugasityCoeffisient()/testSystem.getPhases()[1].getInfiniteDiluteFugacity(0,1));
+        
+        System.out.println("activity.. solvent " +testSystem.getPhases()[1].getComponents()[1].getFugasityCoeffisient()/testSystem.getPhases()[1].getPureComponentFugacity(1));
+        System.out.println("activity..inf dil " +testSystem.getPhases()[1].getComponents()[1].getFugasityCoeffisient()/testSystem.getPhases()[1].getInfiniteDiluteFugacity(1,0));
+        
+        ThermodynamicModelTest testModel = new ThermodynamicModelTest(testSystem);
+        testModel.runTest();
+/*
+    String[] navn1= {"bubble point", "dew point"};
+    System.out.println("start flash");
+    points  =  testSystem.calcPXcurve(173, 50);
+    output.printToFile(points,"test.txt");
+     System.out.println("Tferdig..");
+   graph2b graph1 = new graph2b(points, navn1, "Px-graph [etahne-propane]", "Molefraction propane [-]", "Pressure [bar]");
+   graph1.show();
+ 
+ */
+        
+  /*
+    String[] navn= {"bubble point", "dew point"};
+     System.out.println("start flash");
+    //points =  testSystem.calcBubblePointTemperatureLine(15, 20, 10);
+    points =  testSystem.calcBubblePointPressureLine(153.7, 170, 15);
+  //  points  =  testSystem.calcPXcurve(210, 50);
+    output.printToFile(points,"test.txt");
+     System.out.println("Tferdig..");
+    graph2b graph2 = new graph2b(points, navn, "PT-graph", "Temperature [K]", "Pressure [bar]");
+    graph2.show();
+   */
+        //graph2b graph = new graph2b();
+        //graph.show();
+/*
+    String[] navn3= {"bubble point", "dew point"};
+    System.out.println("start flash");
+    points  =  testSystem6.calcPXcurve(343, 50);
+    output.printToFile(points,"test.txt");
+     System.out.println("Tferdig..");
+   graph2b graph3 = new graph2b(points, navn3, "Px-graph [etahnol-water] 343 K", "Molefraction water [-]", "Pressure [bar]");
+   graph3.show();
+ 
+ 
+ 
+ 
+    String[] navn4= {"bubble point", "dew point"};
+    System.out.println("start flash");
+    points  =  testSystem6.calcTXcurve(0.6, 50);
+    output.printToFile(points,"test.txt");
+     System.out.println("Tferdig..");
+   graph2b graph4 = new graph2b(points, navn4, "Tx-graph [etahnol-water] 0.6 bar", "Molefraction water [-]", "Temperature [K]");
+   graph4.show();
+ 
+ 
+//   points = testSystem8.calcTXsurf3D(1.0,0);
+ //  output.printToFile(points,"TXbubble.txt");
+ //     points = testSystem8.calcTXsurf3D(1.0,1);
+ //  output.printToFile(points,"TXdew.txt");
+      points = testSystem8.calcPXsurf3D(360,0);
+   output.printToFile(points,"PXbubble.txt");
+      points = testSystem8.calcPXsurf3D(360,1);
+   output.printToFile(points,"PXdew.txt");
+ 
+  //  points = testSystem8.calcPXcurve2(363);
+    //output.printToFile(points,"test2.txt");
+ */
+    }
+    
+}

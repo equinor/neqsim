@@ -1,0 +1,42 @@
+/*
+ * Test.java
+ *
+ * Created on 22. januar 2001, 22:59
+ */
+
+package thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
+
+import thermo.system.*;
+import thermo.phase.*;
+import thermodynamicOperations.*;
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class CPAFunctionDens extends CPAFunction {
+    
+    int phasetype = 1;
+    /** Creates new Test */
+    public CPAFunctionDens(){
+    }
+    
+    public CPAFunctionDens(int phase){
+        phasetype = phase;
+    }
+    
+     public double calcTrueValue(double val){
+        return val;
+    }
+    
+    public double calcValue(double[] dependentValues){
+        system.setTemperature(dependentValues[0]);
+        system.init(0);
+        system.init(1);
+        system.initPhysicalProperties();
+        return system.getPhase(phasetype).getPhysicalProperties().getDensity();
+    }
+    
+}

@@ -1,0 +1,43 @@
+/*
+ * FurstElectrolyteConstants.java
+ *
+ * Created on 29. oktober 2001, 14:08
+ */
+
+package thermo.util.constants;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class FurstElectrolyteConstants{
+    
+    //public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6, -25.314e-6, -0.05813e-6, -44.383e-6};
+    public static double[] furstParams = { 0.0000001116, 0.0000053822, 0.0000691846, 0.0000049520, -0.0000000605, -0.0000216352};
+    //  public static double[] furstParams = {0.10688e-6, 6.5665e-6, 35.09e-6, 6.004e-6, -0.04304e-6, -27.510e-6};
+    //public static double[] furstParams = {8.806E-8, 6.905E-6, 2.064E-5, 2.285E-4, -5.531E-8, -4.321E-5};
+    //public static double[] furstParams = {8.806E-8, 6.905E-6, 35.09e-6, 6.004e-6, -5.531E-8, -4.321E-5};
+    ////public static double[] furstParams = {8.717E-8, 8.309E-6, 2.435E-5, 2.024E-4, -5.757E-8, -5.693E-5};
+    // public static double[] furstParams = {9.8647e-8, 6.9638e-6, 7.713e-5, -2.501e-5, -5.813E-8, -4.447E-5};;//{9.8647e-8, 6.9638e-6, 7.713E-5, -2.501E-5, -5.813E-8, -4.447E-5};
+    //  public static double[] furstParams = {9.463E-8, 6.694E-6, -1.021E-5, 4.137E-4, -5.172E-8, -5.832E-5};
+    public static double[] furstParamsCPA = {0.0000001609, 0.0000030046, 0.0000381464, 0.0000121911, -0.0000000391, 0.0000000261};
+    
+    /** Creates new FurstElectrolyteConstants */
+    public FurstElectrolyteConstants() {
+    }
+    
+    public static void setFurstParam(int i, double value){
+        furstParams[i] = value;
+    }
+    
+    public static double getFurstParam(int i){
+        return furstParams[i];
+    }
+    
+    public static void setFurstParams(String type){
+        if(type.equals("electrolyteCPA")){
+            furstParams = furstParamsCPA;
+        }
+    }
+}

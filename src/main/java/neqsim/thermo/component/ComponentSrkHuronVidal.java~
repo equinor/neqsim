@@ -1,0 +1,86 @@
+/*
+ * ComponentSrkHuronVidal.java
+ *
+ * Created on 12. juli 2000, 22:37
+ */
+
+package thermo.component;
+
+import thermo.phase.*;
+import MathLib.nonLinearSolver.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public class ComponentSrkHuronVidal extends ComponentSrk {
+
+    /** Creates new ComponentSrkHuronVidal */
+    public ComponentSrkHuronVidal() {
+    }
+
+    public ComponentSrkHuronVidal(String component_name, double moles, double molesInPhase, int compnumber){
+        super(component_name, moles, molesInPhase, compnumber);
+      }
+  
+  public ComponentSrkHuronVidal(int number, double TC, double PC, double M, double a, double moles) {
+   super(number, TC, PC, M, a, moles);
+  }
+  
+  public void init(double temperature,double pressure,double totalNumberOfMoles,double beta,int type){
+    super.init(temperature, pressure, totalNumberOfMoles, beta, type);
+  }
+  
+  
+    
+  public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,int phasetype){
+        /*
+	double vol, b, a, yaij=0, coef; 
+	double[] frac;
+	int j;
+        int i = componentNumber;
+        ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
+        
+        PhaseGEEosInterface phaseny = (PhaseGEEosInterface) phase.getPhase();
+        
+        PhaseGEInterface GEPhase = phaseny.getGEphase();
+        ComponentGEInterface[] GEcomp_Array = (ComponentGEInterface[]) GEPhase.getcomponentArray();
+        
+        for (j=0; j < numberOfComponents; j++){
+	  GEcomp_Array[j].setx(comp_Array[j].getx());
+	}
+        
+        int Number_of_Components = numberOfComponents;
+  
+        double[][] intparam;
+
+	//intparam = new double[10][10];
+
+	b= phase.calcB(phase, temperature, pressure,Number_of_Components);
+        a=phase.calcA(phase, temperature, pressure, Number_of_Components);
+        
+        vol = phase.molarVolume(pressure, temperature, a, b, phasetype);
+        double Z = pressure*vol/(R*temperature);
+        
+        double  A = a * pressure/(R*R*temperature*temperature);
+        double B = b * pressure/(R*temperature);
+        
+                
+                coef = Math.exp(comp_Array[i].getb()/b*(Z-1) - Math.log(Z-B) - (comp_Array[i].geta()/(comp_Array[i].getb()*R*temperature) 
+                + Math.log(GEcomp_Array[i].getGamma(phase, Number_of_Components, temperature, pressure, phasetype))/(-Math.log(2)))*Math.log((vol+b)/vol));
+        
+        //(Z+(1+Math.pow(2,0.5))*B)/
+          //      (Z+(1-Math.pow(2,0.5))*B)));
+                
+            fugasityCoeffisient = coef;
+            //System.out.println("fugcoef : " + fugasityCoeffisient);
+           // System.out.println("gamma : " + GEcomp_Array[i].getGamma(GEPhase, Number_of_Components, temperature, pressure, phasetype));
+            */
+        
+	return coef;
+}
+
+
+
+}

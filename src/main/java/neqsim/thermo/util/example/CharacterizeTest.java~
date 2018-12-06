@@ -1,0 +1,75 @@
+package thermo.util.example;
+/*
+ * TPflash.java
+ *
+ * Created on 27. september 2001, 09:43
+ */
+
+import thermo.system.*;
+import thermodynamicOperations.*;
+
+/*
+ *
+ * @author  esol
+ * @version
+ */
+public class CharacterizeTest {
+    
+    /** Creates new TPflash */
+    public CharacterizeTest() {
+    }
+    public static void main(String args[]){
+        SystemInterface testSystem = new SystemSrkEos(305,1.01325);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        
+        //testSystem.addComponent("nitrogen", 10.10);
+        //testSystem.addComponent("CO2", 5.1);
+        //testSystem.addComponent("n-heptane", 10.0);
+        //testSystem.addComponent("water", 0.001);
+        testSystem.addComponent("methane", 100.399);
+        testSystem.addComponent("ethane", 10.399);
+        testSystem.addComponent("propane", 10.399);
+        testSystem.addComponent("n-hexane", 3.399);
+        testSystem.addComponent("n-pentane", 1.399);
+        testSystem.addComponent("benzene", 1.399);
+        testSystem.addComponent("n-nonane", 0.399);
+        //testSystem.addComponent("n-octane", 1.399);
+        testSystem.addComponent("n-heptane", 2.399);
+        testSystem.addComponent("toluene", 0.399);
+   //     testSystem.addComponent("nC10", 0.1);
+   //     testSystem.addComponent("nC11", 0.1);
+     //   testSystem.addComponent("nC12", 0.1);
+        
+        testSystem.init(0);
+        testSystem.characterize();
+        
+        testSystem.getCharacterization().generatePlusFractions(10,100,0.021,150.0);
+//        testSystem.addPlusFraction(7,15);
+//        testSystem.createDatabase(true);
+//        
+//        testSystem.calcKIJ(true);
+//        testSystem.setMixingRule(2);
+//        testSystem.init(0);
+////        testSystem.removeComponent("ethane");
+////        testSystem.removeComponent("n-pentane");
+////        testSystem.removeComponent("nC10");
+//        //testSystem.createDatabase(true);
+//        testSystem.getCharacterization().removeTBPfraction();
+//        testSystem.getCharacterization().generatePlusFractions(10,180,0.1,300.0);
+//        testSystem.getCharacterization().addPseudoTBPfraction(15,19);
+//        testSystem.createDatabase(true);
+//        //testSystem.init(0);
+//        //testSystem.getCharacterization().removeTBPfraction();
+//        //testSystem.addPlusFraction(8,13);
+//        //testSystem.init(0);
+//        
+//        try{
+//            testOps.TPflash();
+//            testSystem.display();
+//            testSystem.write("c:/testFlash.txt","c:/testFlash.txt",true);
+//        }
+//        catch(Exception e){
+//            System.out.println(e.toString());
+//        }
+    }
+}

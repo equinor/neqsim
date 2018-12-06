@@ -1,0 +1,22 @@
+/*
+ * OperationInterafce.java
+ *
+ * Created on 2. oktober 2000, 22:14
+ */
+
+package thermodynamicOperations;
+
+import thermo.system.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public interface OperationInterface extends Runnable {
+    public void displayResult();
+    public double[][] getPoints(int i);
+    public void createNetCdfFile(String name);
+    public void printToFile(String name);
+   
+}
+

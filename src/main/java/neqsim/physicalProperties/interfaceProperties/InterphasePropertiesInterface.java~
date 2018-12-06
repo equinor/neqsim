@@ -1,0 +1,17 @@
+/*
+ * InterphasePropertiesInterface.java
+ *
+ * Created on 13. august 2001, 13:13
+ */
+
+package physicalProperties.interfaceProperties;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public interface InterphasePropertiesInterface {
+    public void init();
+}
+

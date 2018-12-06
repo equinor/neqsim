@@ -1,0 +1,20 @@
+/*
+ * FiniteVolumeBoundary.java
+ *
+ * Created on 8. august 2001, 13:46
+ */
+
+package fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class FiniteVolumeBoundary {
+
+    /** Creates new FiniteVolumeBoundary */
+    public FiniteVolumeBoundary() {
+    }
+
+}

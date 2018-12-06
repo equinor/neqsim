@@ -1,0 +1,55 @@
+/*
+ * Test.java
+ *
+ * Created on 22. januar 2001, 22:59
+ */
+
+package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class ClassicAcentricDens extends ClassicAcentricFunction {
+
+    private static final long serialVersionUID = 1000;
+    
+    int phasetype = 1;
+    /** Creates new Test */
+    public ClassicAcentricDens(){
+    }
+    
+    public ClassicAcentricDens(int phase){
+        phasetype = phase;
+    }
+    
+     public double calcTrueValue(double val){
+        return val;
+    }
+    
+//    public double calcValue(double[] dependentValues){
+//        system.setTemperature(dependentValues[0]);
+//        system.init(0);
+//        system.init(1);
+//        system.initPhysicalProperties();
+//        return system.getPhase(phasetype).getPhysicalProperties().getDensity();
+//    }
+    
+    public double calcValue(double[] dependentValues){
+        system.setTemperature(dependentValues[0]);
+        system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
+        //System.out.println("pres from antoine: " + system.getPressure());
+        system.init(0);
+        system.init(1);
+        try{
+            thermoOps.bubblePointPressureFlash(false);
+        }
+        catch(Exception e){
+            System.out.println(e.toString());
+        }
+        // System.out.println("pres: " + system.getPressure());
+        system.initPhysicalProperties();
+        return system.getPhase(phasetype).getPhysicalProperties().getDensity();
+    }
+}

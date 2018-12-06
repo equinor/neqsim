@@ -1,0 +1,63 @@
+/*
+ * testPointbase.java
+ *
+ * Created on 1. november 2001, 08:56
+ */
+
+import java.sql.*;
+import com.pointbase.net.*;
+import java.io.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class testPointbase implements util.util.FileSystemSettings{
+    
+    /** Creates new testPointbase */
+    public testPointbase() {
+         try{
+            netServer s = new netServer();
+            s.startServer(9092);
+            //new netServerWindowManager(s);
+            Thread p = new Thread(s);
+            Thread.sleep(1000);
+        }
+        catch(Exception e){
+            System.out.println("er " + e.toString());
+        }
+        System.out.println("starting.....");
+    }
+    
+    public Connection openConnection(String database) throws SQLException, ClassNotFoundException{
+        Class.forName("com.pointbase.jdbc.jdbcUniversalDriver");
+        return DriverManager.getConnection("jdbc:pointbase://localhost:9092/"+ database + ",database.home="+defaultDatabaseRootRoot,"PUBLIC","PUBLIC");
+    }
+    
+    public ResultSet getResultSet(String database, String sqlString){
+        ResultSet result = null;
+        try{
+            //Class.forName("com.pointbase.jdbc.jdbcUniversalDriver");
+            Connection databaseConnection = this.openConnection(database);
+            //databaseConnection.setAutoCommit(false);
+            Statement statement = databaseConnection.createStatement();
+            
+            result =  statement.executeQuery(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("extends " + e.toString());
+        }
+        return result;
+    }
+    
+    public static void main(String[] args){
+        testPointbase database = new testPointbase();
+        ResultSet dataSet =  database.getResultSet("NeqSimPointbase",  "SELECT * FROM component where name='water'");
+        try{
+            dataSet.next();
+            System.out.println("dataset " + dataSet.getString("molarmass"));
+        }
+        catch(Exception e){System.out.println("failed " + e.toString());}
+        
+    }
+}

@@ -1,0 +1,218 @@
+/*
+ * ChemicalReactionOperations.java
+ *
+ * Created on 4. februar 2001, 20:06
+ */
+
+package chemicalReactions;
+
+import thermo.system.*;
+import thermo.component.*;
+import chemicalReactions.chemicalReaction.*;
+import java.util.*;
+import java.io.*;
+import MathLib.JamaLinAlg.*;
+import chemicalReactions.chemicalEquilibrium.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class ChemicalReactionOperations extends Object implements thermo.ThermodynamicConstantsInterface {
+    
+    
+    SystemInterface system;
+    ComponentInterface[] components;
+    ChemicalReactionList reactionList = new ChemicalReactionList();
+    String[] componentNames;
+    String[] allComponentNames;
+    String[] elements;
+    double[][] Amatrix;
+    double[] nVector;
+    int iter = 0;
+    double[] bVector;
+    double[] chemRefPot;
+    double[] newMoles;
+    double[] referencePotentials;
+    double inertMoles=0.0;
+    ChemicalEquilibrium solver;
+    LinearProgrammingChemicalEquilibrium initCalc;
+    /** Creates new ChemicalReactionOperations */
+    public ChemicalReactionOperations() {
+    }
+    
+    public ChemicalReactionOperations(SystemInterface system) {
+        initCalc = new LinearProgrammingChemicalEquilibrium();
+        
+        for(int i=0;i<3;i++){
+            this.system = system;
+            componentNames = system.getComponentNames();
+            reactionList.readReactions();
+            reactionList.removeJunkReactions(componentNames);
+            allComponentNames = reactionList.getAllComponents();
+            this.addNewComponents();
+        }
+        
+        components = new ComponentInterface[allComponentNames.length];
+        if(components.length>0){
+            setReactiveComponents();
+            reactionList.checkReactions(system,components);
+            chemRefPot = calcChemRefPot();
+            elements = this.getAllElements();
+            initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this);
+            setComponents();
+            Amatrix = initCalc.getA();
+            nVector = calcNVector();
+            bVector = calcBVector();
+            newMoles = initCalc.generateInitialEstimates(system,bVector,calcInertMoles());
+        }
+    }
+    
+    public void setComponents(){
+        for(int j=0;j<components.length;j++){
+            system.getPhases()[1].getComponents()[components[j].getComponentNumber()] = components[j];
+        }
+    }
+    
+    public void setReactiveComponents(){
+        int k=0;
+        for(int j=0;j<componentNames.length;j++) {
+            String name = componentNames[j];
+            for(int i=0; i<allComponentNames.length;i++) {
+                if(name.equals(allComponentNames[i])){
+                    components[k++] = system.getPhases()[1].getComponents()[j];
+                    System.out.println("added: " +k +" " + j);
+                }
+            }
+        }
+    }
+    
+    public double calcInertMoles(){
+        double reactiveMoles =0;
+        for(int j=0;j<components.length;j++) {
+            reactiveMoles += components[j].getNumberOfMolesInPhase();
+        }
+        inertMoles = system.getPhases()[1].getNumberOfMolesInPhase()-reactiveMoles;
+        System.out.println("inertmoles = " + inertMoles);
+        if(inertMoles<0) inertMoles=1e-10;
+        return inertMoles;
+    }
+    
+    public void sortReactiveComponents(){
+        ComponentInterface tempComp;
+        for(int i=0;i<components.length;i++){
+            for(int j=i+1;j<components.length;j++){
+                if(components[j].getGibbsEnergyOfFormation()<components[i].getGibbsEnergyOfFormation()){
+                    tempComp = components[i];
+                    components[i] = components[j];
+                    components[j] = tempComp;
+                    System.out.println("swich : " + i + " " + j);
+                }
+            }
+        }
+    }
+    
+    public void addNewComponents(){
+        boolean newComp;
+        int p=0;
+        
+        for(int i=0; i<allComponentNames.length;i++) {
+            String name = allComponentNames[i];
+            newComp = true;
+            
+            for(int j=0;j<componentNames.length;j++) {
+                if(name.equals(componentNames[j])){
+                    newComp = false;
+                    break;
+                }
+            }
+            if(newComp){
+                system.addComponent(name,1.0e-10);
+                System.out.println("new component added: " + name);
+            }
+        }
+    }
+    
+    public String[] getAllElements(){
+        HashSet elements = new HashSet();
+        for(int j=0;j<components.length;j++){
+            for(int i=0; i<components[j].getElements().getElementNames().length;i++){
+                elements.add(components[j].getElements().getElementNames()[i]);
+            }
+        }
+        
+        String[] elementList = new String[elements.size()];
+        int k=0;
+        Iterator newe = elements.iterator();
+        while(newe.hasNext()){
+            elementList[k++] = (String) newe.next();
+        }
+        return elementList;
+    }
+    
+    
+    public boolean hasRections(){
+        if(components.length>0) return true;
+        else return false;
+    }
+    
+    public double[] calcNVector(){
+        double[] nvec = new double[components.length];
+        for(int i=0;i<components.length;i++){
+            nvec[i] = components[i].getNumberOfMolesInPhase();
+        }
+        return nvec;
+    }
+    
+    public double[] calcBVector(){
+        Matrix tempA = new Matrix(Amatrix);
+        Matrix tempB = new Matrix(nVector,1);
+        Matrix tempN = tempA.times(tempB.transpose()).transpose();
+        System.out.println("b matrix: ");
+        tempN.print(10,2);
+        return tempN.getArray()[0];
+    }
+    
+    public double[] calcChemRefPot(){
+        double[] referencePotentials = new double[components.length];
+        new Matrix(reactionList.createReactionMatrix(system,components));
+        double[] newreferencePotentials = reactionList.calcReferencePotentials(system, components);
+        if(newreferencePotentials!=null){
+            for(int i=0;i<newreferencePotentials.length;i++) {
+                referencePotentials[i] = newreferencePotentials[i];
+                System.out.println("ref.pot: " + newreferencePotentials[i]);
+                //    System.out.println("ref.pot: " + components[i].getComponentNumber());
+            }
+            return referencePotentials;
+        }
+        else {
+            return null;
+        }
+    }
+    
+    public void updateMoles(){
+        double changeMoles=0.0;
+        for(int i=0;i<components.length;i++){
+            changeMoles += (newMoles[i]-system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
+            system.getPhases()[1].addMolesChemReac(components[i].getComponentNumber(),(newMoles[i]-system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()));
+        }
+        
+        system.initTotalNumberOfMoles(changeMoles);
+    }
+    
+    public void solveChemEq(){
+       
+        system.init(1);
+        bVector = calcBVector();
+        newMoles = initCalc.generateInitialEstimates(system,bVector,calcInertMoles());
+        system.init_x_y();
+        system.initBeta();
+        system.init(1);
+        solver = new ChemicalEquilibrium(system.getTemperature(), system.getPressure(), Amatrix, bVector, system, components);
+        solver.solve();
+        //  newMoles = solver.getMoles();
+        ///  this.updateMoles();
+        //  system.init_x_y();
+        //  system.initBeta();
+    }
+}

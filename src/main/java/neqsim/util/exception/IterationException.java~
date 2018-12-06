@@ -1,0 +1,32 @@
+/*
+ * IterationException.java
+ *
+ * Created on 1. mai 2001, 12:56
+ */
+
+package util.exception.iterationException;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version 
+ */
+public class IterationException extends util.exception.ThermoException {
+
+    /**
+     * Creates new <code>IterationException</code> without detail message.
+     */
+    public IterationException() {
+    }
+
+
+    /**
+     * Constructs an <code>IterationException</code> with the specified detail message.
+     * @param msg the detail message.
+     */
+    public IterationException(String msg) {
+        super(msg);
+    }
+}
+
+

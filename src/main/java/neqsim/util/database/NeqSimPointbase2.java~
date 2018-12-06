@@ -1,0 +1,105 @@
+package util.database;
+
+/*
+ * testPointbase.java
+ *
+ * Created on 1. november 2001, 08:56
+ */
+
+import java.sql.*;
+import java.io.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class NeqSimPointbase implements util.util.FileSystemSettings{
+    
+    static boolean started = false;
+    protected Connection databaseConnection;
+    Statement statement;
+    /** Creates new testPointbase */
+    public NeqSimPointbase() {
+//        if(!started){
+//            try{
+//                netServer s = new netServer();
+//                s.startServer(9092);
+//                Thread p = new Thread(s);
+//                Thread.sleep(500);
+//            }
+//            catch(Exception e){
+//                System.out.println("err: " + e.toString());
+//            }
+//            started = true;
+//            System.out.println("database started...");
+//        }
+    }
+    
+    
+    public Connection openConnection(String database) throws SQLException, ClassNotFoundException{
+        //Class.forName("com.pointbase.jdbc.jdbcUniversalDriver");
+        Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+        //DriverManager.getConnection("jdbc:odbc:" + database);
+        //return DriverManager.getConnection("jdbc:pointbase://localhost:9092/"+ database + ",database.home="+defaultDatabaseRootRoot,"PUBLIC","PUBLIC");
+        return DriverManager.getConnection("jdbc:odbc:" + "NeqSimDataBase");//,"PUBLIC","PUBLIC");
+    }
+    
+    public Connection getConnection(){
+        return databaseConnection;
+    }
+    
+    public ResultSet getResultSet(String database, String sqlString){
+        ResultSet result = null;
+        try{
+            databaseConnection = this.openConnection(database);
+            statement = databaseConnection.createStatement();
+            result =  statement.executeQuery(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("extends " + e.toString());
+        }
+        return result;
+    }
+    
+    public ResultSet getResultSet(String sqlString){
+        ResultSet result = null;
+        try{
+            if(databaseConnection==null){
+                databaseConnection = this.openConnection("NeqSimPointbase");
+                statement = databaseConnection.createStatement();
+            }
+            result =  statement.executeQuery(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("extends " + e.toString());
+        }
+        return result;
+    }
+    
+    public void execute(String sqlString){
+        ResultSet result = null;
+        try{
+            if(databaseConnection==null){
+                databaseConnection = this.openConnection("NeqSimPointbase");
+                statement = databaseConnection.createStatement();
+            }
+            statement.execute(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("extends " + e.toString());
+        }
+    }
+    
+    public static void main(String[] args){
+        NeqSimPointbase database = new NeqSimPointbase();
+//        ResultSet dataSet =  database.getResultSet("NeqSimPointbase",  "SELECT * FROM comp where name='water'");
+         ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM comp where name='water'");
+        try{
+            dataSet.next();
+            System.out.println("dataset " + dataSet.getString("molarmass"));
+        }
+        catch(Exception e){System.out.println("failed " + e.toString());}
+        System.out.println("ok");
+        
+    }
+}

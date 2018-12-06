@@ -1,0 +1,110 @@
+/*
+ * Stream.java
+ *
+ * Created on 12. mars 2001, 13:11
+ */
+
+package processSimulation.processEquipment.stream;
+
+import processSimulation.processEquipment.*;
+import thermo.system.*;
+import thermodynamicOperations.flashOps.*;
+import java.util.*;
+import thermodynamicOperations.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import java.text.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class Stream extends Object implements StreamInterface, Cloneable{
+    
+    protected SystemInterface thermoSystem;
+    protected ThermodynamicOperations thermoOps;
+    protected int streamNumber=0;
+    protected static int numberOfStreams=0;
+    protected String name = new String();
+    protected StreamInterface stream = null;
+    
+    /** Creates new Stream */
+    public Stream() {
+    }
+    
+    public Stream(SystemInterface thermoSystem) {
+        this.thermoSystem = thermoSystem;
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+    
+    public Stream(StreamInterface stream) {
+        this.stream = stream;
+        thermoSystem = stream.getThermoSystem();
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+    
+    public Stream(String name, SystemInterface thermoSystem) {
+        this.thermoSystem = thermoSystem;
+        this.name = name;
+        numberOfStreams++;
+        streamNumber = numberOfStreams;
+    }
+    
+    public Object clone(){
+        Stream clonedSystem = null;
+        try{
+            clonedSystem = (Stream) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        clonedSystem.thermoSystem = getThermoSystem();
+        return clonedSystem;
+    }
+    
+    
+    public void setName(String name){
+        this.name = name;
+    }
+    
+    public double getTemperature(){
+        return thermoSystem.getTemperature();
+    }
+    
+    public double getPressure(){
+        return thermoSystem.getPressure();
+    }
+    
+    public double getMolarRate(){
+        return thermoSystem.getNumberOfMoles();
+    }
+    
+    public void setThermoSystem(SystemInterface thermoSystem){
+        this.thermoSystem = (SystemInterface) thermoSystem;
+    }
+    
+    public SystemInterface getThermoSystem(){
+        return this.thermoSystem;
+    }
+    
+    public void run(){
+        System.out.println("start flashing stream... " + streamNumber);
+        if(stream!=null) thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+        thermoOps = new ThermodynamicOperations(thermoSystem);
+        thermoOps.TPflash();
+        System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
+        System.out.println("beta: " + thermoSystem.getBeta());
+    }
+    
+    public void displayResult(){
+        thermoSystem.display(name);
+    }
+    
+    public String getName() {
+        return name;
+    }    
+    
+}

@@ -1,0 +1,104 @@
+package util.database;
+
+/*
+ * testPointbase.java
+ *
+ * Created on 1. november 2001, 08:56
+ */
+
+import java.sql.*;
+import java.io.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class NeqSimPointbase implements util.util.FileSystemSettings{
+    
+    static boolean started = false;
+    protected Connection databaseConnection;
+    public static boolean useOnlineBase = false;
+    Statement statement;
+    /** Creates new testPointbase */
+    public NeqSimPointbase() {
+    }
+    /** Creates new NeqSimDataBase */
+    
+    public Connection openConnection(String database) throws SQLException, ClassNotFoundException{
+        if(useOnlineBase){
+            Class.forName("org.gjt.mm.mysql.Driver");
+            return DriverManager.getConnection("jdbc:mysql:" + database);
+        }
+        else{
+            Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+            String dir="";
+            if(System.getProperty("NeqSim.home")==null){
+                dir = "c:\\Documents and Settings\\ESOL\\neqsim";
+            }
+            else{
+                dir =  System.getProperty("NeqSim.home");
+            }
+            return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="+dir+"\\data\\NeqSimDatabase.mdb");
+            //return DriverManager.getConnection("jdbc:odbc:" + database);
+        }
+    }
+    
+    public Connection getConnection(){
+        return databaseConnection;
+    }
+    
+    public ResultSet getResultSet(String database, String sqlString){
+        ResultSet result = null;
+        try{
+            databaseConnection = this.openConnection(database);
+            statement = databaseConnection.createStatement();
+            result =  statement.executeQuery(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("error in NeqSimDataBase " +e.toString());
+            System.out.println("The database must be rgistered on the local DBMS to work.");
+        }
+        return result;
+    }
+    
+    public ResultSet getResultSet(String sqlString){
+        ResultSet result = null;
+        try{
+            if(databaseConnection==null){
+                databaseConnection = this.openConnection("NeqSimDataBase");
+                statement = databaseConnection.createStatement();
+            }
+            result =  statement.executeQuery(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("error in NeqSimDataBase " +e.toString());
+            System.out.println("The database must be rgistered on the local DBMS to work.");
+        }
+        return result;
+    }
+    
+    public void execute(String sqlString){
+        ResultSet result = null;
+        try{
+            if(databaseConnection==null){
+                databaseConnection = this.openConnection("NeqSimDataBase");
+                statement = databaseConnection.createStatement();
+            }
+            statement.execute(sqlString);
+        }
+        catch(Exception e){
+            System.out.println("extends " + e.toString());
+        }
+    }
+    
+    public static void main(String[] args){
+        NeqSimPointbase database = new NeqSimPointbase();
+        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM comp where name='water'");
+        try{
+            dataSet.next();
+            System.out.println("dataset " + dataSet.getString("molarmass"));
+        }
+        catch(Exception e){System.out.println("failed " + e.toString());}
+        System.out.println("ok");
+    }
+}

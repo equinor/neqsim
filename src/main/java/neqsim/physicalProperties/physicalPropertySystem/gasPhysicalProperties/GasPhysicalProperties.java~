@@ -1,0 +1,51 @@
+/*
+ * GasPhysicalProperties.java
+ *
+ * Created on 29. oktober 2000, 16:18
+ */
+
+package physicalProperties.physicalPropertySystem.gasPhysicalProperties;
+
+import physicalProperties.*;
+import thermo.phase.*;
+import thermo.*;
+import physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.*;
+import physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity.*;
+import physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.*;
+import physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class GasPhysicalProperties extends physicalProperties.physicalPropertySystem.PhysicalProperties {
+    
+        public GasPhysicalProperties() {
+        }
+        
+        public GasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+            super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
+            conductivityCalc = new physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod(this);
+            viscosityCalc = new physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity.ChungViscosityMethod(this);
+            diffusivityCalc = new physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(this);
+            //diffusivityCalc = new physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(this);
+           
+            densityCalc = new physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(this);
+            this.init(this);
+        }
+        
+        
+        public Object clone(){
+            GasPhysicalProperties properties = null;
+            
+            try{
+                properties = (GasPhysicalProperties) super.clone();
+            }
+            catch(Exception e) {
+                e.printStackTrace(System.err);
+            }
+            return properties;
+        }
+        
+}

@@ -1,0 +1,25 @@
+/*
+ * FluidBoundaryNodeReactive.java
+ *
+ * Created on 8. august 2001, 14:50
+ */
+
+package fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundaryNode.fluidBoundaryNonReactiveNode;
+import fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundaryNode.*;
+import thermo.system.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class FluidBoundaryNodeReactive extends FluidBoundaryNode{
+    
+    /** Creates new FluidBoundaryNodeReactive */
+    public FluidBoundaryNodeReactive() {
+    }
+    
+    public FluidBoundaryNodeReactive(SystemInterface system) {
+        super(system);
+    }
+    
+}

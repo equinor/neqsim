@@ -1,0 +1,313 @@
+package chemicalReactions.chemicalEquilibriaum;
+
+import javax.swing.*;
+import java.awt.*;
+import java.applet.*;
+import MathLib.JamaLinAlg.*;
+import thermo.system.*;
+import thermo.component.*;
+//import Jama.*;
+
+public class ChemicalEquilibrium {
+    SystemInterface system;
+    double[] nVector;
+    double[] n_mol;
+    double d_n_t=0;
+    int NSPEC=2, NELE=2;
+    double R=8.314;
+    Matrix x_solve;
+    double n_t=0.0, agemo=0, kronDelt=0;
+    ComponentInterface[] components;
+    double [][] M_matrix = new double[NSPEC][NSPEC];
+    Matrix M_Jama_matrix;
+    Matrix A_Jama_matrix;
+    Matrix nmu;
+    Matrix AMA_matrix; // = new double[NELE][NELE];
+    Matrix dn_matrix;
+    Matrix AMU_matrix;
+    double d_n[] = new double[NSPEC];
+    double activityVec[] = new double[NSPEC];
+    double[] n0;
+    double [][] A_matrix;
+    double chem_ref[];
+    int waterNumb=0;
+    int upMoles=0;
+    //double chem_pot_dilute[];
+    ///double chem_pot_pure[];
+    double b_element[];
+    Matrix A_solve;
+    Matrix b_solve;
+    double[] chem_pot;
+    Matrix chem_pot_Jama_Matrix;
+    int phasenumb=1;
+    
+    
+    public ChemicalEquilibrium(double [][] A_matrix, double b_element[], SystemInterface system, ComponentInterface[] components, int phase) {
+        this.system = system;
+        phasenumb = phase;
+        this.A_matrix = A_matrix;
+        this.b_element = b_element;
+        this.components = components;
+        NSPEC = components.length;
+        NELE  = b_element.length;
+        n_mol = new double[components.length];
+        activityVec = new double[NSPEC];
+        this.chem_ref = new double[components.length];
+        A_solve = new Matrix(NELE+1, NELE+1);
+        b_solve = new Matrix(NELE+1,1);
+        chem_ref = new double[NSPEC];
+        chem_pot = new double[NSPEC];
+        //chem_pot_dilute = new double[NSPEC];
+        //chem_pot_pure = new double[NSPEC];
+        M_matrix = new double[NSPEC][NSPEC];
+        d_n = new double[NSPEC];
+        
+        for(int i=0;i<components.length;i++) {
+            if(components[i].getComponentName().equals("water")) {
+                waterNumb = i;
+                break;
+            }
+        }
+        system.init(1,phasenumb);
+        calcRefPot();
+        for(int j=0;j<NSPEC;j++) {
+            d_n[j] = 0;
+        }
+        
+    }
+    
+    public void calcRefPot(){
+        for(int i=0;i<components.length;i++) {
+            this.chem_ref[i] = 0;
+            this.chem_ref[i] = components[i].getReferencePotential()/(R*system.getPhase(phasenumb).getTemperature());
+            activityVec[i]=1.0;
+            if(components[i].calcActivity()){
+                activityVec[i] = system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(), components[waterNumb].getComponentNumber());
+              
+              System.out.println(" name " +components[i].getName() + " act " + activityVec[i]);
+                //if(components[i].getComponentName().equals("MDEAplus")) activityVec[i]=1.0;
+            }
+        }
+    }
+    
+    public void chemSolve(){
+        n_t = system.getPhases()[phasenumb].getNumberOfMolesInPhase();
+        
+        for(int i=0;i<NSPEC;i++) {
+            n_mol[i] = system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase();
+            for(int k=0;k<NSPEC;k++) {
+                if (k==i){
+                    kronDelt = 1.0;
+                }
+                else {
+                    kronDelt=0.0;
+                }
+                M_matrix[i][k] = kronDelt /system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase();// + system.getPhases()[1].getComponents()[i].getdfugdn(k);
+                // System.out.println("dfugdn " +system.getPhases()[1].getComponents()[i].getdfugdn(k));
+            }
+        }
+        //printComp();
+        
+        M_Jama_matrix = new Matrix(M_matrix);
+        A_Jama_matrix = new Matrix(A_matrix);
+        double activity = 1.0;
+        for(int i=0;i<NSPEC;i++) {
+            //system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),waterNumb);
+            activity = activityVec[i];//system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(), components[waterNumb].getComponentNumber());
+            //System.out.println("name " + system.getPhase(phasenumb).getComponent(components[i].getComponentNumber()).getComponentName() + " act " + activity);
+            //if(activity>100) activity=100.0;
+            //if(activity<1e-3) activity=1e-3;
+            
+            //System.out.println("act " + activity + " comp " + components[i].getComponentName());
+            chem_pot[i] = chem_ref[i] + Math.log(system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(activity);
+        }
+        
+        chem_pot_Jama_Matrix = new Matrix(chem_pot,1);
+        
+        AMA_matrix = A_Jama_matrix.times(M_Jama_matrix.inverse().times(A_Jama_matrix.transpose()));
+        AMU_matrix = A_Jama_matrix.times(M_Jama_matrix.inverse().times(chem_pot_Jama_Matrix.transpose()));
+        Matrix nmol = new Matrix(n_mol,1);
+        nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
+        
+        A_solve.setMatrix(0, NELE-1, 0 , NELE-1, AMA_matrix);
+        A_solve.setMatrix(0, NELE-1, NELE , NELE, new Matrix(b_element,1).transpose());
+        A_solve.setMatrix(NELE, NELE, 0 , NELE-1, new Matrix(b_element,1));
+        A_solve.set(NELE,NELE,0.0);
+        
+        b_solve.setMatrix(0,NELE-1,0,0, AMU_matrix);
+        b_solve.setMatrix(NELE,NELE,0,0, nmu);
+        
+        x_solve = A_solve.solve(b_solve);
+        //   d_n_t = x_solve.get(NELE,0)*n_t;
+        
+        dn_matrix = M_Jama_matrix.inverse().times((A_Jama_matrix.transpose().times(x_solve.getMatrix(0,NELE-1,0,0))).minus(chem_pot_Jama_Matrix.transpose())).plus(new Matrix(n_mol,1).transpose().times(x_solve.get(NELE,0)));
+        d_n = dn_matrix.transpose().getArray()[0];
+    }
+    
+    
+    public void updateMoles(){
+        upMoles++;
+        double changeMoles=0.0;
+        for(int i=0;i<components.length;i++){
+            system.addComponent(components[i].getComponentNumber(), (n_mol[i]-system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()), phasenumb);
+        }
+        system.initBeta(); // this was added for mass trans calc
+        system.init_x_y();
+    }
+    
+    
+    public boolean solve(){
+        double error=0, errOld=1e10, thisError=0;
+        double p=1.0;
+        boolean negN=false;
+        double maxError=1e-6;
+        upMoles=0;
+        double old=0;
+        
+        do{
+            p++;
+            errOld = error;
+            error=0;
+            this.chemSolve();
+            double step1 = step();
+            for(int i=0;i<NSPEC;i++) {
+                // if (Math.abs(dn_matrix.get(i,0))/system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()>1e-10){
+                thisError = Math.abs(dn_matrix.get(i,0))/system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase();
+                error += thisError;//
+                n_mol[i] =  dn_matrix.get(i,0)* step1  + system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase();
+                // }
+            }
+            updateMoles();
+           // System.out.println("error " + error);
+            if(Math.abs(error)<=maxError){
+                system.initBeta();
+                system.init(1,phasenumb);
+                //calcRefPot();
+            }
+        }
+        while(((Math.abs(errOld)>maxError && Math.abs(error)>maxError) && p<100) || p<5);
+        if(p>98){
+            System.out.println("iter " + p + "err " +error); //return false;
+        }
+        if(p==1000) System.out.println("to many iterations " + error);
+        if(Double.isNaN(error)){
+            System.out.println("error . NaN in chemSolve() ");
+            System.out.println("pressure " + system.getPressure());
+        }
+        //system.initBeta();
+        system.init(1,phasenumb);
+        //printComp();
+        return true;
+        
+        //        System.out.println("error " + error);
+        //        for(int j=0; j<NSPEC;j++) {
+        //            System.out.println(" SVAR : " + n_mol[j]+ "   " +(dn_matrix.get(j,0)/n_mol[j]) + " moles:  " + system.getPhases()[1].getComponents()[components[j].getComponentNumber()].getNumberOfMolesInPhase() +"  tot moles: " + system.getPhases()[1].getNumberOfMolesInPhase());
+        //        }
+        //   System.out.println(" Ntot: " + n_t);
+        //        calcRefPot();
+        //        for(int i=0;i<NSPEC;i++) {
+        //            if(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getReferenceStateType().equals("solvent")){
+        //                chem_pot[i] = chem_ref[i] + Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]);
+        //                System.out.println("solvent activ: "+ i + " " +  system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]);
+        //            }
+        //            else{
+        //                chem_pot[i] = chem_ref[i] + Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_dilute[i]);
+        //                System.out.println("solute activ : " + i + " " + system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_dilute[i]);
+        //            }
+        //        }
+    }
+    
+    public void printComp(){
+        for(int j=0; j<NSPEC;j++) {
+            System.out.println(" SVAR : " + n_mol[j]);
+            double activity = system.getPhase(1).getActivityCoefficient(components[j].getComponentNumber(), components[waterNumb].getComponentNumber());
+            System.out.println("act " + activity + " comp " + components[j].getComponentName());
+        }
+    }
+    
+    public double[] getMoles(){
+        return n_mol;
+    }
+    
+    
+    public double step(){
+        double step=1.0;
+        int i, check=0;
+        double[] n_omega = new double[NSPEC];
+        double[] chem_pot_omega = new double[NSPEC];
+        double[] chem_pot = new double[NSPEC];
+        double G_1=0.0, G_0=0.0;
+        
+        for(i = 0;i<NSPEC;i++){
+            n_omega[i] = n_mol[i]+d_n[i];
+            //System.out.println("nomega " + n_omega[i] );
+            if (n_omega[i]<0){
+                check = i;
+                
+                step = innerStep(i, n_omega, check, step, true);
+                //  System.out.println("step2 ... " + step);
+                return step;
+            }
+            else {
+                //                chem_pot_omega[i] = R*T*(chem_ref[i]+ Math.log(n_omega[i]/n_t) + Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]));
+                //                chem_pot[i] = R*T*(chem_ref[i] + Math.log(n_mol[i]/n_t)+ Math.log(system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]));
+                //
+                if(system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getReferenceStateType().equals("solvent")){
+                    chem_pot[i] = R*system.getPhase(phasenumb).getTemperature()*(chem_ref[i] + Math.log(system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(activityVec[i]));//system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
+                    //   System.out.println("solvent activ: "+ i + " " +  system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_pure[i]);
+                }
+                else{
+                    chem_pot[i] = R*system.getPhase(phasenumb).getTemperature()*(chem_ref[i] + Math.log(system.getPhases()[phasenumb].getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase()) - Math.log(n_t) + Math.log(activityVec[i]));//system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
+                    //   System.out.println("solute activ : " + i + " " + system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugasityCoeffisient()/chem_pot_dilute[i]);
+                }
+            }
+        }
+        
+        G_1 = 0.0;
+        for(i=0;i<NSPEC;i++){
+            G_1 += chem_pot_omega[i] * d_n[i];
+        }
+        //System.out.println("G1 " +G_1);
+        
+        if(G_1>0){
+            G_0 = 0.0;
+            for(i=0;i<NSPEC;i++) {
+                G_0 += chem_pot[i]*d_n[i];
+            }
+            step = G_0/(G_0-G_1);
+            // System.out.println("step G " + step);
+        }
+        
+        step = innerStep(i, n_omega,check, step, false);
+        //System.out.println("step ... " + step);
+        
+        
+        return step;
+    }
+    
+    
+    
+    public double innerStep(int i, double[] n_omega, int check, double step, boolean test) {
+        if (test){
+            agemo = (-n_mol[i]/d_n[i])*(1-0.01);
+            
+            for(i=check;i<NSPEC;i++){
+                n_omega[i] = n_mol[i]+d_n[i];
+                
+                if (n_omega[i]<0) {
+                    step = (-n_mol[i]/d_n[i])*(1-0.01);
+                    if (step<agemo){
+                        agemo = step;
+                    }
+                }
+            }
+            
+            step = agemo;
+            
+            if (step>1) {
+                step = 1.0;
+            }
+        }
+        return step;
+    }
+}

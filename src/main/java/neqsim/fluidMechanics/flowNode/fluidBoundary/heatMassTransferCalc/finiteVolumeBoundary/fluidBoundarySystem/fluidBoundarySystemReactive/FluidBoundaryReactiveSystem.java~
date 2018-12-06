@@ -1,0 +1,20 @@
+/*
+ * FluidBoundarySystemReactive.java
+ *
+ * Created on 8. august 2001, 13:56
+ */
+
+package fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.fluidBoundaryReactiveSystem;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class FluidBoundaryReactiveSystem {
+
+    /** Creates new FluidBoundarySystemReactive */
+    public FluidBoundaryReactiveSystem() {
+    }
+
+}

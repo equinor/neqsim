@@ -1,0 +1,53 @@
+/*
+ * Test.java
+ *
+ * Created on 22. januar 2001, 22:59
+ */
+
+package statistics.parameterFitting.nonLinearParameterFitting;
+
+import statistics.parameterFitting.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class TestFunction extends BaseFunction {
+    
+    /** Creates new Test */
+    public TestFunction() {
+//        params = new double[2];
+//        params[0] = -10.0;
+//        params[1] = 0.0;
+    }
+    
+    public double calcValue(double[] dependentValues){
+        return 3.0*params[0]*params[1]-2.0*params[0]*dependentValues[0]-dependentValues[0];
+    }
+    
+    public void setFittingParams(int i, double value){
+        params[i] = value;
+    }
+    
+    public double getFittingParams(int i){
+        return params[i];
+    }
+    
+    public double[] getFittingParams(){
+        return params;
+    }
+    
+    public int getNumberOfFittingParams(){
+        return params.length;
+    }
+    
+    public void setFittingParams(double[] value){
+        for(int i=0;i<value.length;i++){
+            params[i] = value[i];
+        }
+    }
+    
+    public void setFittingParam(int parameterNumber, double parameterVal){
+        params[parameterNumber] =  parameterVal;
+    }
+}

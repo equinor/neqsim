@@ -1,0 +1,147 @@
+package fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem;
+
+import thermo.system.*;
+import fluidMechanics.*;
+import fluidMechanics.geometryDefinitions.pipe.*;
+import fluidMechanics.flowSystem.*;
+import thermodynamicOperations.*;
+import fluidMechanics.flowSystem.onePhaseFlowSystem.*;
+import fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.*;
+import MathLib.JamaLinAlg.*;
+import fluidMechanics.flowNode.*;
+import fluidMechanics.geometryDefinitions.*;
+import fluidMechanics.flowLeg.pipeLeg.*;
+import dataPresentation.JFreeChart.*;
+import fluidMechanics.flowSolver.onePhaseFlowSolver.onePhasePipeFlowSolver.steadystateOnePhasePipeFlowSolver.*;
+
+
+public class PipeFlowSystem extends OnePhaseFlowSystem
+{
+    
+    public PipeFlowSystem(){
+    }
+    
+    
+    public void createSystem(){
+        thermoSystem.setTemperature(this.getInletTemperature());
+        thermoSystem.setPressure(this.getInletPressure());
+        thermoSystem.init(0);
+        thermoSystem.init(1);
+        flowLeg = new PipeLeg[this.getNumberOfLegs()];
+        
+        for(int i=0;i<getNumberOfLegs();i++){
+            flowLeg[i] = new PipeLeg();
+        }
+        
+        flowNode = new onePhasePipeFlowNode[totalNumberOfNodes];
+        System.out.println("nodes: " + totalNumberOfNodes);
+        flowNode[0] = new onePhasePipeFlowNode(thermoSystem, this.equipmentGeometry[0], this.getInletTotalNormalVolumetricFlowRate());
+        flowNode[totalNumberOfNodes-1] =  flowNode[0].getNextNode();
+        
+        super.createSystem();
+        this.setNodes();
+        
+        velocity = new double[getTotalNumberOfNodes()];
+        velocity[0] =  flowNode[0].getVelocity();
+        for(int i = 0;i<getTotalNumberOfNodes();i++){
+            velocity[i] = flowNode[i].getVelocity();
+        }
+    }
+    
+    
+    public void init(){
+        
+    }
+    
+    public void solveSteadyState(){
+        //  SteadystateOnePhasePipeFlowSolver pipeSolve = new SteadystateOnePhasePipeFlowSolver(this, getSystemLength(), getTotalNumberOfNodes());
+        SteadystateOnePhasePipeFlowSolver pipeSolve = new SteadystateOnePhasePipeFlowSolver(this, getSystemLength(), getTotalNumberOfNodes());
+        
+        pipeSolve.solveTDMA();
+    }
+    
+    
+    public void displayResult(){
+        
+        double[][] pressuresAndlengths = new double[2][getTotalNumberOfNodes()];
+        double[][] velocityAndlengths = new double[2][getTotalNumberOfNodes()];
+        double[][] temperatureAndlengths = new double[2][getTotalNumberOfNodes()];
+        
+        for(int i = 0;i<getTotalNumberOfNodes();i++){
+            pressuresAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode()/1000;
+            pressuresAndlengths[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getPressure();
+            velocityAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode()/1000;
+            velocityAndlengths[1][i] = flowNode[i].getVelocity();
+            temperatureAndlengths[0][i] = flowNode[i].getDistanceToCenterOfNode()/1000;
+            temperatureAndlengths[1][i] = flowNode[i].getBulkSystem().getPhases()[0].getTemperature()-273.15;
+        }
+        
+        String[] navn= {"Pressure"};
+        String title2= "";
+        String title = "Pressure in pipe";
+        //    System.out.println("start flash");
+        //    System.out.println("Tferdig..");
+        graph2b graph2 = new graph2b(pressuresAndlengths, navn, title, "Length [km]", "Pressure [bar]");
+        graph2.show();
+        
+        String[] navn2 = {"Velocity"};
+        String title3 = "Gas-velocity";
+        //    System.out.println("start flash");
+        //    System.out.println("Tferdig..");
+        graph2b graph3 = new graph2b(velocityAndlengths, navn2, title3, "Length [km]", "Velocity [m/s]");
+        graph3.show();
+        
+        String[] navn3 = {"Temperature"};
+        String title4 = "Temperature";
+        //    System.out.println("start flash");
+        //    System.out.println("Tferdig..");
+        graph2b graph4 = new graph2b(temperatureAndlengths, navn3, title4, "Length [km]", "Temperature [C]");
+        graph4.show();
+    }
+    
+    
+    public static void main(String[] args)
+    {
+        System.out.println("Starter.....");
+        double pipeLength = 750000;
+        double pipeDiameter = 1.0;
+        double volFlow = 4.2*180;
+        
+        //        PipeFlowSystem pipe = new PipeFlowSystem(testSystem, numberOfNodes);
+        FlowSystemInterface pipe = new PipeFlowSystem();
+        
+        SystemInterface testSystem = new SystemSrkEos();
+        testSystem.addComponent("methane", 100.0);
+        testSystem.addComponent("ethane", 0.10);
+       // testSystem.addComponent("n-butane", 0.5);
+        
+        pipe.setThermoSystem(testSystem);
+        pipe.setSystemLength(pipeLength);
+        pipe.setInletTemperature(290.15);
+        pipe.setInletPressure(200);
+     //   pipe.setEndPressure(80);
+        pipe.setNumberOfLegs(10);
+        pipe.setNumberOfNodesInLeg(20);
+        pipe.setInletTotalNormalVolumetricFlowRate(volFlow);
+        
+        double[] height = {0,0,0,0,0,0,0,0,0,0,0};
+        double[] length = {0,100000,200000,300000,470000,500000,600000,700000,720000,730000,750000};
+        pipe.setLegHeights(height);
+        pipe.setLegPositions(length);
+        
+        GeometryDefinitionInterface[] pipeGeometry = new PipeData[10];
+        for(int i=0;i<pipeGeometry.length;i++) {
+            pipeGeometry[i] = new PipeData(pipeDiameter);
+            pipeGeometry[i].setDiameter(1.0);
+            pipeGeometry[i].setInnerSurfaceRoughness(0.000005);
+        }
+        pipe.setEquipmentGeometry(pipeGeometry);
+        
+        
+        pipe.createSystem();
+        pipe.init();
+        pipe.solveSteadyState();
+        //    pipe.print();
+        pipe.displayResult();
+    }
+}

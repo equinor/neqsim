@@ -1,0 +1,98 @@
+package fluidMechanics.geometryDefinitions.pipe;
+import fluidMechanics.geometryDefinitions.*;
+
+public class PipeData extends GeometryDefinition implements  thermo.ThermodynamicConstantsInterface{
+    
+    public double  diameter=0, radius=0, innerSurfaceRoughness=0.000005, nodeLength=0, area = 0, relativeRoughnes=0;
+    public double[] layerConductivity,layerThickness;
+    
+    
+    
+    public PipeData() {
+    }
+    
+    public PipeData(double diameter) {
+        this.diameter = diameter;
+        this.radius = diameter/2.0;
+        this.nodeLength = nodeLength;
+        this.area = pi * Math.pow(radius,2);
+        this.relativeRoughnes = innerSurfaceRoughness/diameter;
+        
+    }
+    public PipeData(double diameter, double roughness) {
+        this.diameter = diameter;
+        this.radius = diameter/2.0;
+        this.nodeLength = nodeLength;
+        this.area = pi * Math.pow(radius,2);
+        this.relativeRoughnes = roughness/diameter;
+    }
+    
+    public void setDiameter(double diameter){
+        this.diameter = diameter;
+        this.radius = diameter/2.0;
+        this.area = pi * Math.pow(radius,2);
+        
+    }
+    
+    public void setNodeLength(double nodeLength){
+        this.nodeLength = nodeLength;
+    }
+    
+    public void setInnerSurfaceRoughness(double innerSurfaceRoughness){
+        this.innerSurfaceRoughness = innerSurfaceRoughness;
+    }
+    
+    public void init(){
+        this.radius = diameter/2.0;
+        this.area = pi * Math.pow(radius,2.0);
+        this.relativeRoughnes = innerSurfaceRoughness/diameter;
+    }
+    
+    public Object clone(){
+        GeometryDefinitionInterface clonedPipe = null;
+        try{
+            clonedPipe = (PipeData) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        return clonedPipe;
+    }
+    
+    public double getDiameter(){
+        return diameter;
+    }
+    
+    
+    public double getArea(){
+        return area;
+    }
+    
+    public double getRadius(){
+        return radius;
+    }
+    
+    public double getInnerSurfaceRoughness(){
+        return innerSurfaceRoughness;
+    }
+    
+    public double getRelativeRoughnes(){
+        return relativeRoughnes;
+    }
+    
+    public double getRelativeRoughnes(double diameter){
+        return innerSurfaceRoughness/diameter;
+    }
+    
+    public double getCircumference(){
+        return 2*pi*radius;
+    }
+    
+    public double getNodeLength(){
+        return nodeLength;
+    }
+    
+    
+    
+}

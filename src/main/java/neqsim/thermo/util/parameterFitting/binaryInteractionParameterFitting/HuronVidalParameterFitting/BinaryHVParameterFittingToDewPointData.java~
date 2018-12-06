@@ -1,0 +1,53 @@
+/*
+ * Test.java
+ *
+ * Created on 22. januar 2001, 22:59
+ */
+
+package thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
+
+import thermo.system.*;
+import thermodynamicOperations.*;
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+import thermo.system.*;
+import thermo.mixingRule.*;
+import thermo.phase.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction{
+    
+    int phase = 1;
+    int type = 1;
+    /** Creates new Test */
+    public BinaryHVParameterFittingToDewPointData() {
+    }
+    
+    public BinaryHVParameterFittingToDewPointData(int phase, int type) {
+        this.phase = phase;
+        this.type = type;
+    }
+    
+    public double calcValue(double[] dependentValues){
+        try{
+            if(system.getTemperature()>3.0){
+                thermoOps.dewPointTemperatureFlash();
+            }
+            else{
+                thermoOps.freezingPointTemperatureFlash();
+            }
+            
+        }
+        catch(Exception e){
+            System.out.println("err dew pont");
+        }
+        return system.getTemperature();
+    }
+    
+    public double calcTrueValue(double val){
+        return val;
+    }
+}

@@ -1,0 +1,68 @@
+/*
+ * bubblePointFlash.java
+ *
+ * Created on 14. oktober 2000, 16:30
+ */
+
+package thermodynamicOperations.flashOps.saturationOps;
+
+
+import thermodynamicOperations.*;
+import thermo.system.*;
+import thermo.phase.*;
+import thermo.component.*;
+
+public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFlash{
+    
+    /** Creates new bubblePointFlash */
+    public HydrateFormationTemperatureFlash() {
+    }
+    
+    public HydrateFormationTemperatureFlash(SystemInterface system) {
+        super(system);
+    }
+    
+    
+    public void run(){
+        double olfFug=0.0;
+        //system.setHydrateCheck(true);
+        ThermodynamicOperations ops = new ThermodynamicOperations(system);
+        system.getPhase(3).getComponent("water").setx(1.0);
+        system.init(0);
+        system.init(1);
+        int iter = 0;
+        do{
+            iter++;
+            olfFug = system.getPhase(3).getFugacity("water");
+            ops.TPflash();
+            setFug();
+            system.getPhase(3).getComponent("water").fugcoef(system.getPhase(3));
+            system.getPhase(3).getComponent("water").setx(1.0);
+            system.init(1);
+            system.getPhase(3).getComponent("water").setx(1.0);
+            System.out.println("diff " + (system.getPhase(3).getFugacity("water")/system.getPhase(0).getFugacity("water")));
+            if((system.getPhase(3).getFugacity("water")/system.getPhase(0).getFugacity("water"))<1.0){
+                System.out.println("fug forskjell  " + system.getPhase(3).getFugacity("water")/system.getPhase(0).getFugacity("water"));
+                system.setTemperature(system.getTemperature()+(1-system.getPhase(3).getFugacity("water")/system.getPhase(0).getFugacity("water")));
+            }
+            else{
+                system.setTemperature(system.getTemperature()-(1-system.getPhase(3).getFugacity("water")/system.getPhase(0).getFugacity("water")));
+            }
+            
+            System.out.println("temperature " + system.getTemperature());
+            //System.out.println("x water " + system.getPhase(3).getComponent("water").getx());
+        }
+        while(Math.abs((olfFug-system.getPhase(3).getFugacity("water"))/olfFug)>1e-6 && iter<100);
+    }
+    
+    public void setFug(){
+        for(int i=0;i<system.getPhase(0).getNumberOfComponents();i++){
+            ((ComponentHydrate)system.getPhase(3).getComponent(i)).setRefFug(i,system.getPhase(0).getFugacity(i));
+        }
+    }
+    
+    public void printToFile(String name) {}
+    
+    
+    
+}

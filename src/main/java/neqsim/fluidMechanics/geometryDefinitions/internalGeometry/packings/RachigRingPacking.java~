@@ -1,0 +1,25 @@
+/*
+ * PallRingPacking.java
+ *
+ * Created on 25. august 2001, 23:58
+ */
+
+package fluidMechanics.geometryDefinitions.internalGeometry.packings;
+
+import fluidMechanics.geometryDefinitions.internalGeometry.packings.*;
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class RachigRingPacking extends Packing{
+
+    /** Creates new PallRingPacking */
+    public RachigRingPacking() {
+    }
+    
+    public RachigRingPacking(String name){
+        super(name);
+    }
+
+}

@@ -1,0 +1,25 @@
+/*
+ * FUnctionInterface.java
+ *
+ * Created on 30. januar 2001, 21:40
+ */
+
+package statistics;
+
+import thermo.system.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public interface FunctionInterface extends Cloneable {
+    public double calcValue(double[] dependentValues);
+    public void setFittingParams(int i, double value);
+    public double getFittingParams(int i);
+    public double[] getFittingParams();
+    public int getNumberOfFittingParams();
+    public void setFittingParams(double[] value);
+    public void setThermodynamicSystem(SystemInterface system);
+}
+

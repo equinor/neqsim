@@ -1,0 +1,20 @@
+/*
+ * OnePhaseFlowNodeVisualization.java
+ *
+ * Created on 5. august 2001, 16:29
+ */
+
+package fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization;
+
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class OnePhaseFlowNodeVisualization {
+
+    /** Creates new OnePhaseFlowNodeVisualization */
+    public OnePhaseFlowNodeVisualization() {
+    }
+
+}

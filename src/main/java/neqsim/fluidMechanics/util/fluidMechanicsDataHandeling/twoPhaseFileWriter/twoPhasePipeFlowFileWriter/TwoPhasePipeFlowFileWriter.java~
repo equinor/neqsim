@@ -1,0 +1,21 @@
+/*
+ * OnePhaseFileWriter.java
+ *
+ * Created on 27. oktober 2000, 22:27
+ */
+
+package fluidMechanics.util.fluidMechanicsDataHandeling.twoPhaseFileWriter.twoPhasePipeFlowFileWriter;
+
+import fluidMechanics.util.fluidMechanicsDataHandeling.*;
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public class TwoPhasePipeFlowFileWriter extends FileWriterBaseClass{
+
+    /** Creates new OnePhaseFileWriter */
+    public TwoPhasePipeFlowFileWriter() {
+    }
+
+}

@@ -1,0 +1,88 @@
+/*
+ * Separator.java
+ *
+ * Created on 12. mars 2001, 19:48
+ */
+
+package processSimulation.processEquipment.splitter;
+
+import processSimulation.processEquipment.*;
+import thermo.system.*;
+import thermodynamicOperations.flashOps.*;
+import java.util.*;
+import thermodynamicOperations.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import java.awt.*;
+import processSimulation.processEquipment.stream.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class Splitter extends Object implements ProcessEquipmentInterface, SplitterInterface{
+    
+    SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
+    ThermodynamicOperations thermoOps;
+    Stream inletStream;
+    StreamInterface[] splitStream;
+    String name= new String();
+    protected int splitNumber;
+    
+    /** Creates new Separator */
+    public Splitter() {
+    }
+    
+    public Splitter(Stream inletStream) {
+        this.setInletStream(inletStream);
+    }
+    
+    public Splitter(String name, Stream inletStream, int i) {
+        this.name = name;
+        setSplitNumber(i);
+        this.setInletStream(inletStream);
+    }
+    
+    public void setSplitNumber(int i){
+        splitNumber = i;
+        this.setInletStream(inletStream);
+    }
+    
+    public void setName(String name){
+        this.name = name;
+    }
+    
+    public void setInletStream(Stream inletStream){
+        this.inletStream = inletStream;
+        splitStream = new Stream[splitNumber];
+        for(int i=0;i<splitNumber;i++){
+            splitStream[i] = new Stream("Split Stream", (SystemInterface)inletStream.getThermoSystem().clone());
+        }
+    }
+    
+    
+    public Stream getSplitStream(int i){
+        return (Stream)splitStream[i];
+    }
+    
+    public void run(){
+        for(int i=0;i<splitNumber;i++){
+            thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+            splitStream[i].setThermoSystem(thermoSystem);
+            for(int j=0;j<inletStream.getThermoSystem().getPhase(0).getNumberOfComponents();j++){
+                double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
+                splitStream[i].getThermoSystem().addComponent(inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentName(),  moles*1.0/(double)splitNumber - moles);
+            }
+            splitStream[i].getThermoSystem().init(0);
+            splitStream[i].getThermoSystem().init(3);
+        }
+    }
+    
+    public void displayResult(){
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+}

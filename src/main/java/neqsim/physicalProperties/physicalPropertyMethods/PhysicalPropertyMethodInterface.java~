@@ -1,0 +1,19 @@
+/*
+ * PhysicalPropertyMethodInterface.java
+ *
+ * Created on 21. august 2001, 13:20
+ */
+
+package physicalProperties.physicalPropertyMethods;
+import thermo.phase.*;
+/**
+ *
+ * @author  esol
+ * @version 
+ */
+public interface PhysicalPropertyMethodInterface extends Cloneable{
+     public Object clone();
+     public void setPhase(PhaseInterface phase);
+
+}
+

@@ -1,0 +1,27 @@
+/*
+ * PhysicalPropertiesInterface.java
+ *
+ * Created on 29. oktober 2000, 16:14
+ */
+
+package physicalProperties.physicalPropertyMethods;
+import thermo.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public interface PhysicalPropertyMethodsInterface extends Cloneable{
+    
+    public double getViscosity();
+    public double getConductivity();
+    public double getKinematicViscosity();
+    public double getDensity();
+    public double getDiffusionCoeffisient(int i, int j);
+    public void init();
+    public Object clone();
+    public void setBinaryDiffusionCoefficientMethod(int i);
+    public void setMulticomponentDiffusionMethod(int i);
+    
+}

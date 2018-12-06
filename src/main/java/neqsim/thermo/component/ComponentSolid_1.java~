@@ -1,0 +1,97 @@
+/*
+ * SolidComponent.java
+ *
+ * Created on 18. august 2001, 12:45
+ */
+
+package thermo.component;
+import thermo.phase.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class ComponentSolid extends Component{
+    double dpdt=0;
+    /** Creates new SolidComponent */
+    public ComponentSolid() {
+    }
+    
+    public ComponentSolid(String component_name, double moles, double molesInPhase, int compnumber){
+        super(component_name, moles, molesInPhase, compnumber);
+    }
+    
+    /** Uses Claperyons equation to calculate the solid fugacity
+     */
+    public double fugcoef(PhaseInterface phase){
+        return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+    }
+    
+    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres){
+        //        System.out.println("heat of vap" + getPureComponentHeatOfVaporization(298));
+        //                        System.out.println("density liq " + normalLiquidDensity*1000);
+        //                        System.out.println("density sol " + getPureComponentSolidDensity(getMeltingPointTemperature()));
+        if(phase.getRefPhase()==null){
+            System.out.println("init ref phase");
+            phase.initRefPhases(true);
+        }
+        
+        double dvol = 0.0;
+        if(temp>this.getTriplePointTemperature() || componentName.equals("water")){
+            //System.out.println("above tripple point temp");
+            System.out.println("sol dens " + getPureComponentSolidDensity(getMeltingPointTemperature()));
+            System.out.println("liq dens " + (normalLiquidDensity*1000));
+            dvol = -(1.0/getPureComponentSolidDensity(getMeltingPointTemperature())-1.0/(normalLiquidDensity*1000))*molarMass;
+            dpdt = heatOfFusion*molarMass*1e3/(temp*dvol);
+            if(componentName.equals("methane")) dpdt *= 100.0;
+        }
+        else{
+            //System.out.println("under tripple point pres");
+            double normalDensity = pres*1e5/(8.314*temp)*molarMass;
+            dvol = 1.0/(getPureComponentSolidDensity(getMeltingPointTemperature())-normalDensity)*molarMass;
+            dpdt = (heatOfFusion+getHeatOfVapourization(temp))/(temp*dvol);
+        }
+        double oldPres = phase.getPressure();
+        if(this.getTriplePointPressure()+1e-5*dpdt*(temp-this.getTriplePointTemperature())>0){
+            phase.setPressure(this.getTriplePointPressure()+1e-5*dpdt*(temp-this.getTriplePointTemperature()));
+            double purfug = phase.getPureComponentFugacity(componentNumber);
+            if(Double.isNaN(purfug)){
+                System.out.println("purfug NaN");
+                purfug=1.0;
+            }
+            //fugasityCoeffisient = (this.getTriplePointPressure()+0*1e-5*dpdt*(temp-this.getTriplePointTemperature()))*purfug/pres;
+            if(componentName.equals("water")) fugasityCoeffisient = (this.getTriplePointPressure()+1e-5*dpdt*(temp-this.getTriplePointTemperature()))*purfug/oldPres;
+            else fugasityCoeffisient = 1e5;
+            if(componentName.equals("water")){
+                System.out.println("trip pres " + this.getTriplePointPressure());
+                System.out.println("dp " + (1e-5*dpdt*(temp-this.getTriplePointTemperature())));
+                System.out.println("pres "+ pres);
+            }
+            //System.out.println("fugcoef " + fugasityCoeffisient);
+            //System.out.println("fug wat" + phase.getPureComponentFugacity(componentNumber));
+            phase.setPressure(oldPres);
+        }
+        else{
+            fugasityCoeffisient = 1e5;
+        }
+        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        return fugasityCoeffisient;
+    }
+    
+    public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres){
+        double dvol = 1.0/(getPureComponentSolidDensity(getMeltingPointTemperature())-normalLiquidDensity*1000)*molarMass;
+        double dpdt = heatOfFusion/(temp*dvol);
+        dfugdt = Math.log(1e-5*dpdt/pres);
+        return dfugdt;
+    }
+    
+    public double getdpdt(){
+        return dpdt;
+    }
+    
+    public double getMolarVolume(){
+        return getPureComponentSolidDensity(getMeltingPointTemperature())/molarMass;
+    }
+    
+    
+}

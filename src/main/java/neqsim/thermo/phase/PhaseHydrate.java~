@@ -1,0 +1,48 @@
+/*
+ * PhaseHydrate.java
+ *
+ * Created on 18. august 2001, 12:50
+ */
+
+package thermo.phase;
+
+import thermo.component.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class PhaseHydrate extends Phase{
+    
+    /** Creates new PhaseHydrate */
+    public PhaseHydrate() {
+    }
+    
+    
+    public Object clone(){
+        PhaseHydrate clonedPhase = null;
+        try{
+            clonedPhase = (PhaseHydrate) super.clone();
+        }
+        catch(Exception e) {
+            e.printStackTrace(System.err);
+        }
+        
+        return clonedPhase;
+    }
+    
+    public double molarVolume(double pressure, double temperature, double A, double B, int phase) throws util.exception.IsNaNException, util.exception.TooManyIterationsException {
+        return 1.0;
+    }
+    
+    public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
+        super.addcomponent(molesInPhase);
+        componentArray[compNumber] = new ComponentHydrateKluda(componentName, moles, molesInPhase, compNumber);
+    }
+    
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta){ // type = 0 start init type =1 gi nye betingelser
+        super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+    }
+    
+    public void resetMixingRule(int type){}
+}

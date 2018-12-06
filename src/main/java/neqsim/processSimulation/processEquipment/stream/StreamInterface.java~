@@ -1,0 +1,28 @@
+/*
+ * StreamInterface.java
+ *
+ * Created on 21. august 2001, 22:49
+ */
+
+package processSimulation.processEquipment.stream;
+
+import processSimulation.processEquipment.*;
+import thermo.system.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public interface StreamInterface  extends ProcessEquipmentInterface{
+    public void run();
+    public SystemInterface getThermoSystem();
+    public void setThermoSystem(SystemInterface thermoSystem);
+    public void setName(String name);
+    public double getTemperature();
+    public double getMolarRate();
+    public double getPressure();
+    public Object clone();
+    public String getName();
+    
+}
+

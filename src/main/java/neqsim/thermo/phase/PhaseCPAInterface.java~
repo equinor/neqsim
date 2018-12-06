@@ -1,0 +1,19 @@
+/*
+ * PhaseEosInterface.java
+ *
+ * Created on 5. juni 2000, 19:20
+ */
+
+package thermo.phase;
+
+import thermo.component.*;
+import thermo.mixingRule.*;
+
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public interface PhaseCPAInterface extends PhaseEosInterface{
+    
+}

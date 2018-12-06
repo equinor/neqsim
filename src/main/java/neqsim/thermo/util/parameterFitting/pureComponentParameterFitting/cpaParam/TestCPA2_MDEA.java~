@@ -1,0 +1,160 @@
+/*
+ * TestAcentric.java
+ *
+ * Created on 23. januar 2001, 22:08
+ */
+
+package thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
+
+import statistics.parameterFitting.nonLinearParameterFitting.*;
+import statistics.parameterFitting.*;
+import thermo.system.*;
+import thermo.component.*;
+import java.sql.*;
+import util.database.*;
+import java.util.*;
+/**
+ *
+ * @author  Even Solbraa
+ * @version
+ */
+public class TestCPA2_MDEA extends java.lang.Object {
+    
+    /** Creates new TestAcentric */
+    public TestCPA2_MDEA() {
+    }
+    
+    
+    public static void main(String[] args){
+        
+        ArrayList sampleList = new ArrayList();
+        
+        // inserting samples from database
+        NeqSimDataBase database = new NeqSimDataBase();
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water'");
+        //double guess[] = {23939.4738048507, 1.5971863018, 0.63623134978, 0.00292037583};//, 1002.0};
+        //double guess[] = {1.443602687, 1.1002, 0.7808762847, 0.0500028765} // water - srk-cpa
+        //double guess[] = {1.4563608786, 1.3855596964, 0.6641553237, 0.0464737892}; // water - pr-cpa
+       // double guess[] = {13.214563608786, 39.1263855596964, 1.1692641553237, 0.0464737892};// MDEA
+        double guess[] = {10.7868041046, 35.4196575954, 0.9493396585, 0.0113384707};// MDEA
+        //double guess[] = {1.4515, 0.67359, 0.0692, 1.2277};//co2
+        double bounds[][] = {{0,3.0055},{0,8.0055},{0.00001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
+        
+        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<304.2");
+        
+        try{
+            System.out.println("adding....");
+            while(dataSet.next()){
+                CPAFunction function = new CPAFunction();
+                SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("VapourPressure")));
+                //SystemInterface testSystem = new SystemSrkEos(280, 0.001);
+                testSystem.addComponent(dataSet.getString("ComponentName"), 1.0);
+                testSystem.createDatabase(true);
+                testSystem.setMixingRule(2);
+                //testSystem.init(0);
+                
+                double temp = testSystem.getTemperature();
+                double val = testSystem.getPressure();
+                
+                double sample1[] = {temp};  // temperature
+                double standardDeviation1[] = {0.1}; // std.dev temperature    // presure std.dev pressure
+                
+                double stddev = val/100.0;
+                double logVal = Math.log(val);
+                SampleValue sample = new SampleValue(val, stddev, sample1, standardDeviation1);
+                
+                //function.setBounds(bounds);
+                sample.setFunction(function);
+                sample.setThermodynamicSystem(testSystem);
+                function.setInitialGuess(guess);
+                sample.setReference(dataSet.getString("Reference"));
+                sampleList.add(sample);
+            }
+        }
+        catch(Exception e){
+            System.out.println("database error" + e);
+        }
+        
+        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' AND Temperature>273.15 ORDER BY Temperature");
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<304.2");
+        try{
+            System.out.println("adding....");
+            while(dataSet.next()){
+                CPAFunctionDens function = new  CPAFunctionDens(1);
+                SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")), 1.1);
+                //SystemInterface testSystem = new SystemSrkEos(280, 0.001);
+                double temp = testSystem.getTemperature();
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
+                //testSystem.setPressure(Double.parseDouble(dataSet.getString("VapourPressure")));
+                testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
+                testSystem.setTemperature(temp);
+                testSystem.setMixingRule(1);
+                //testSystem.init(0);
+                System.out.println("adding2....");
+                //double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
+                double dens = Double.parseDouble(dataSet.getString("Density"));
+                double sample1[] = {temp};  // temperature
+                double standardDeviation1[] = {0.1}; // std.dev temperature    // presure std.dev pressure
+                SampleValue sample = new SampleValue(dens, dens/100.0, sample1, standardDeviation1);
+                //double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978, 0.0292037583};
+                
+                // double guess[] = {9.341E4,1.953E0,1.756E-1,92.69,0.129};
+                function.setInitialGuess(guess);
+                sample.setFunction(function);
+                sample.setThermodynamicSystem(testSystem);
+                sample.setReference(dataSet.getString("Reference"));
+                sampleList.add(sample);
+            }
+        }
+        catch(Exception e){
+            System.out.println("database error" + e);
+        }
+        
+        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<304.2");
+        
+        try{
+            System.out.println("adding....");
+            while(!dataSet.next()){
+                CPAFunctionDens function = new  CPAFunctionDens(0);
+                SystemInterface testSystem = new SystemPrCPA(280, 5.001);
+                double temp = Double.parseDouble(dataSet.getString("Temperature"));
+                //SystemInterface testSystem = new SystemSrkEos(280, 0.001);
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);             // legger til komponenter til systemet
+                testSystem.setPressure(Double.parseDouble(dataSet.getString("VapourPressure"))+0.5);
+                testSystem.setTemperature(temp);
+                testSystem.setMixingRule(2);
+                testSystem.init(0);
+                double dens = Double.parseDouble(dataSet.getString("gasdensity"));
+                double sample1[] = {temp};  // temperature
+                double standardDeviation1[] = {0.1}; // std.dev temperature    // presure std.dev pressure
+                SampleValue sample = new SampleValue(dens, dens/100.0, sample1, standardDeviation1);
+                //double guess[] = {46939.4738048507, 1.5971863018, 0.7623134978, 0.0292037583};
+                
+                // double guess[] = {9.341E4,1.953E0,1.756E-1,92.69,0.129};
+                function.setInitialGuess(guess);
+                sample.setFunction(function);
+                sample.setThermodynamicSystem(testSystem);
+                sample.setReference(dataSet.getString("Reference"));
+                sampleList.add(sample);
+            }
+        }
+        catch(Exception e){
+            System.out.println("database error" + e);
+        }
+        
+        SampleSet sampleSet = new SampleSet(sampleList);
+        
+        LevenbergMarquardt optim = new LevenbergMarquardt();
+        optim.setSampleSet(sampleSet);
+        
+        // do simulations
+        optim.solve();
+        //optim.runMonteCarloSimulation();
+        optim.displayCurveFit();
+        optim.writeToTextFile("c:/test.txt");
+    }
+}

@@ -1,0 +1,17 @@
+/*
+ * DataReaderInterface.java
+ *
+ * Created on 1. februar 2001, 11:38
+ */
+
+package statistics.experimentalSampleCreation.readDataFromFile;
+
+/**
+ *
+ * @author  even solbraa
+ * @version 
+ */
+public interface DataReaderInterface {
+
+}
+

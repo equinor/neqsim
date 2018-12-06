@@ -1,0 +1,81 @@
+/*
+ * SolidComponent.java
+ *
+ * Created on 18. august 2001, 12:45
+ */
+
+package thermo.component;
+import thermo.phase.*;
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class ComponentSolid extends Component{
+    double dpdt=1.0;
+    /** Creates new SolidComponent */
+    public ComponentSolid() {
+    }
+    
+    public ComponentSolid(String component_name, double moles, double molesInPhase, int compnumber){
+        super(component_name, moles, molesInPhase, compnumber);
+    }
+    
+    /** Uses Claperyons equation to calculate the solid fugacity
+     */
+    public double fugcoef(PhaseInterface phase){
+        dfugdt(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+    }
+    
+    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres){
+        if(componentName.equals("water")){
+            double solvol = 1.0/(780*0.92)*getMolarMass();
+            //System.out.println("sol vol " + solvol);
+            fugasityCoeffisient = (getSolidVaporPressure(temp)*Math.exp(solvol/(R*temp)*((pres-getSolidVaporPressure(temp)))*1e5))/pres;
+           // if(temp>273.15) fugasityCoeffisient = 10000*fugasityCoeffisient;
+        }
+        else if(componentName.equals("MEG")){
+            double solvol = 1.0/1030.0*getMolarMass();
+            //System.out.println("vap pres meg = " + getSolidVaporPressure(temp));
+            fugasityCoeffisient = (getSolidVaporPressure(temp)*Math.exp(solvol/(R*temp)*((pres-getSolidVaporPressure(temp)))*1e5))/pres;
+        }
+        else if(componentName.equals("S8")){
+            double solvol = 1.0/(180.0)*getMolarMass();
+            //System.out.println("vap pres meg = " + getSolidVaporPressure(temp)');
+            fugasityCoeffisient = (getSolidVaporPressure(temp)*10*Math.exp(solvol/(R*temp)*((pres-getSolidVaporPressure(temp)*10))*1e5))/pres;
+        }
+        else fugasityCoeffisient = 1e5;
+        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        return fugasityCoeffisient;
+    }
+    
+    public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres){
+        if(componentName.equals("water")){
+           // double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
+             double solvol = 1.0/(780*0.92)*getMolarMass();
+           
+            dfugdt = Math.log((getSolidVaporPressuredT(temp)*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp))))/pres);
+        }
+        else if(componentName.equals("MEG")){
+            double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
+            dfugdt = Math.log((getSolidVaporPressuredT(temp))/pres);
+        }
+         else if(componentName.equals("S8")){
+            double solvol = 1.0/(180.0)*getMolarMass();
+            dfugdt = Math.log((getSolidVaporPressuredT(temp)*10*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp)*10)))/pres);
+        }
+        else dfugdt=0;
+        return dfugdt;
+    }
+    
+    public double getdpdt(){
+        return dpdt;
+    }
+    
+    public double getMolarVolume(){
+        return getPureComponentSolidDensity(getMeltingPointTemperature())/molarMass;
+    }
+    
+    
+}

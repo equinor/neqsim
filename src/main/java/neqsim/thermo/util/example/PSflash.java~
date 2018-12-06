@@ -1,0 +1,47 @@
+package thermo.util.example;
+/*
+ * TPflash.java
+ *
+ * Created on 27. september 2001, 09:43
+ */
+
+import thermo.system.*;
+import thermodynamicOperations.*;
+
+/**
+ *
+ * @author  esol
+ * @version
+ */
+public class PSflash {
+    
+    /** Creates new TPflash */
+    public PSflash() {
+    }
+    
+    public static void main(String args[]){
+            SystemInterface testSystem = new SystemSrkEos(280.15,10.00);
+        //    SystemInterface testSystem = new SystemPrEos(280.15,10.00);
+        //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(290.15,10.00);
+        
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testSystem.addComponent("methane", 50);
+        //       testSystem.addComponent("ethane", 50);
+        //        testSystem.addComponent("CO2", 50);
+        //testSystem.addComponent("water", 50);
+        
+        // 1- orginal no interaction 2- classic w interaction
+        // 3- Huron-Vidal 4- Wong-Sandler
+        testSystem.setMixingRule(2);
+        
+        testOps.TPflash();
+        
+        double entropy = testSystem.getEntropy();
+        //double enthalpy = testSystem.getEnthalpy();
+        
+        testOps.PSflash(entropy-1.0);
+        //testOps.PHflash(enthalpy-10.0, 0);
+        
+        testOps.displayResult();
+    }
+}
