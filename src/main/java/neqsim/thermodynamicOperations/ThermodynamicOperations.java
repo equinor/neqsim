@@ -29,6 +29,7 @@ import javax.swing.JTable;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
+import neqsim.thermodynamicOperations.flashOps.TPflash;
 import neqsim.thermodynamicOperations.flashOps.PHflash;
 import neqsim.thermodynamicOperations.flashOps.PHflashSingleComp;
 import neqsim.thermodynamicOperations.flashOps.PHsolidFlash;

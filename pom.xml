@@ -17,7 +17,7 @@
       <name>Netbeans rep</name>
       <url>http://bits.netbeans.org/maven2/</url>
    </repository>
-<repository>
+   <repository>
          <id>boundless</id>
          <url>https://repo.boundlessgeo.com/main/</url>
     </repository> 
@@ -31,13 +31,14 @@
 	
 	
 	<dependencies>
+	<!--
 		<dependency>
 			<groupId>lp</groupId>
 			<artifactId>lp</artifactId>
 			<version>1.0</version>
 			<scope>system</scope>
 			<systemPath>${basedir}/dist/lib/lp.zip</systemPath>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>org.netbeans.external</groupId>  <!-- OK! -->
 			<artifactId>AbsoluteLayout</artifactId>

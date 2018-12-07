@@ -24,6 +24,10 @@ package neqsim.chemicalReactions.chemicalEquilibriaum;
 import Jama.*;
 import java.util.*;
 import lp.*;
+import org.apache.commons.math3.optim.linear.*;
+import org.apache.commons.math3.optim.MaxIter;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.PointValuePair;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -379,39 +383,51 @@ public class LinearProgrammingChemicalEquilibrium extends Object implements neqs
     
     
     }*/
-
-    // Method added by Neeraj
+    
+    
+        // Method updated to use Apache Commons Math 3 by Marlene 07.12.18
     public double[] generateInitialEstimates(SystemInterface system, double[] bVector, double inertMoles, int phase) {
-        solve lpSolve = new solve();
-        lprec lpIn = new lprec(bVector.length, components.length); //To be changed by Neeraj in future
         int i, j;
+        double rhs = 0.0;
         Matrix mutemp = new Matrix(chemRefPot, 1).times(1.0 / (R * system.getPhase(phase).getTemperature())).copy();
         double v[] = new double[components.length + 1];
-        double rhs;
-        int compNumb = system.getPhase(phase).getNumberOfComponents();
-        double lp_solution[] = new double[compNumb];
         for (i = 0; i < components.length; i++) {
             v[i + 1] = mutemp.get(0, i);
         }
-        lpSolve.set_obj_fn(lpIn, v);
-        lpSolve.set_minim(lpIn);
+        LinearObjectiveFunction f = new LinearObjectiveFunction(v, 0.0);
+        List<LinearConstraint> cons = new ArrayList();
         for (j = 0; j < bVector.length; j++) {
             for (i = 0; i < components.length; i++) {
                 v[i + 1] = Amatrix[j][i];
             }
             rhs = bVector[j];
-            lpSolve.add_constraint(lpIn, v, EQ, rhs);
+            cons.add(new LinearConstraint(v, Relationship.EQ, rhs));
         }
-        int result = lpSolve.solve(lpIn);
-
-        if (result != constant.OPTIMAL) {
-            System.out.println("no optimal solution");
+        
+        NonNegativeConstraint nonneg = new NonNegativeConstraint(true);
+        LinearConstraintSet consSet = new LinearConstraintSet(cons);
+        SimplexSolver solver = new SimplexSolver();
+        PointValuePair optimal = null;
+        try{
+        optimal = solver.optimize(new MaxIter(1000), f, consSet, GoalType.MINIMIZE, nonneg);
+        }catch(NoFeasibleSolutionException exp){
+              System.out.println("no feasible solution");
+              return null;
+        }catch(Exception exp){
+              System.out.println("linear optimization failed");
+              return null;
         }
-        for (i = 0; i < compNumb; i++) {
-            lp_solution[i] = lpIn.getBestSolution(lpIn.rows + i + 1);
-            //System.out.println("sol "+i+" "+lp_solution[i]);
+        
+        int compNumb = system.getPhase(phase).getNumberOfComponents();
+        double lp_solution[] = new double[compNumb];
+        double[] temp = optimal.getPoint();
+        for (i = 0; i < compNumb - (compNumb - components.length); i++){
+            lp_solution[i] = temp[i+1];
         }
+        
         return lp_solution;
+                
+           
 
     }
 }
