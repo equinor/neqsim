@@ -23,7 +23,7 @@ steps:
 - task: GithubRelease@0
   inputs:
     gitHubConnection: marlenelund
-    repositoryName: neqsimsource
+    repositoryName: Statoil/neqsimsource
     action: 'create' # Options: create, edit, discard
     target: '$(build.sourceVersion)' # Required when action == create || action == edit
     tagSource: 'auto' # Required when action == create. Options: auto, manual
