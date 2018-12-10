@@ -17,6 +17,7 @@
 
 # Package Files #
 *.jar
+!NeqSimSource.jar
 *.war
 *.nar
 *.ear
