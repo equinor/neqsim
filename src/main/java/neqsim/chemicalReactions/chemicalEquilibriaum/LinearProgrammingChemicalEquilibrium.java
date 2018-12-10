@@ -23,7 +23,6 @@ package neqsim.chemicalReactions.chemicalEquilibriaum;
 
 import Jama.*;
 import java.util.*;
-import lp.*;
 import org.apache.commons.math3.optim.linear.*;
 import org.apache.commons.math3.optim.MaxIter;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
@@ -37,7 +36,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author  Even Solbraa
  * @version
  */
-public class LinearProgrammingChemicalEquilibrium extends Object implements neqsim.thermo.ThermodynamicConstantsInterface, java.io.Serializable, lp.constant {
+public class LinearProgrammingChemicalEquilibrium extends Object implements neqsim.thermo.ThermodynamicConstantsInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
