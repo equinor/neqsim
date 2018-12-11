@@ -25,7 +25,16 @@
         <id>unidata-all</id>
         <url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url> 
     </repository> 
-
+	<repository>
+	  <id>dev-azure-com-mllu-neqsimartifactsfeed</id>
+	  <url>https://pkgs.dev.azure.com/MLLU/_packaging/NeqSimArtifactsFeed/maven/v1</url>
+	  <releases>
+		<enabled>true</enabled>
+	  </releases>
+	  <snapshots>
+		<enabled>true</enabled>
+	  </snapshots>
+	</repository>
 	
 	</repositories>
 	
