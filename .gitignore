@@ -44,7 +44,7 @@ buildNumber.properties
 **/nbproject/private/
 build/
 nbbuild/
-dist/
+#dist/
 nbdist/
 .nb-gradle/
 
