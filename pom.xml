@@ -38,6 +38,19 @@
 	
 	</repositories>
 	
+	<distributionManagement>
+	  <repository>
+		<id>dev-azure-com-mllu-neqsimartifactsfeed</id>
+		<url>https://pkgs.dev.azure.com/MLLU/_packaging/NeqSimArtifactsFeed/maven/v1</url>
+		<releases>
+			<enabled>true</enabled>
+		</releases>
+		<snapshots>
+			<enabled>true</enabled>
+		</snapshots>
+	  </repository>
+	<distributionManagement>
+	
 	
 	<dependencies>
 	<!--
