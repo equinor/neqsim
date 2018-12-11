@@ -18,4 +18,12 @@ steps:
     testResultsFiles: '**/TEST-*.xml'
     goals: 'package'
 
-    
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: '**/$(BuildConfiguration)/**/?(*.jar)'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: NeqSimSourceBuildOutput
