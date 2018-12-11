@@ -43,6 +43,7 @@ buildNumber.properties
 ### NetBeans ###
 **/nbproject/private/
 build/
+dist/
 nbbuild/
 #dist/
 nbdist/
