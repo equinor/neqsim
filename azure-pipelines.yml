@@ -21,16 +21,16 @@ steps:
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)\target'
-    contents: '**/$(BuildConfiguration)/**/?(*.jar)'
+    contents: '?(*.jar)'
     targetFolder: '$(Build.ArtifactStagingDirectory)'
 - task: PublishBuildArtifacts@1
   inputs:
-    pathtoPublish: '$(Build.SourcesDirectory)'
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
     artifactName: 'NeqSimSourceBuildOutput'
-- task: DownloadBuildArtifacts@0
-  inputs:
-    buildType: 'current'
-    downloadType: 'single'
-    artifactName: 'NeqSimSourceBuildOutput'
-    downloadPath: '$(System.ArtifactsDirectory)'
+#- task: DownloadBuildArtifacts@0
+#  inputs:
+#    buildType: 'current'
+#    downloadType: 'single'
+#    artifactName: 'NeqSimSourceBuildOutput'
+#    downloadPath: '$(System.ArtifactsDirectory)'
     
