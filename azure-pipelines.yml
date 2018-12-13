@@ -27,10 +27,4 @@ steps:
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)' 
     artifactName: 'NeqSimSourceBuildOutput'
-#- task: DownloadBuildArtifacts@0
-#  inputs:
-#    buildType: 'current'
-#    downloadType: 'single'
-#    artifactName: 'NeqSimSourceBuildOutput'
-#    downloadPath: '$(System.ArtifactsDirectory)'
-    
+
