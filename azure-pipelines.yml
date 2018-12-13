@@ -18,8 +18,6 @@ steps:
     testResultsFiles: '**/TEST-*.xml'
     goals: 'package'
 
- - powershell: gci env:* | sort-object name | Format-Table -AutoSize | Out-File $env:BUILD_ARTIFACTSTAGINGDIRECTORY/environment-variables.txt   
-    
 - task: CopyFiles@2
   inputs:
     sourceFolder: '$(Build.SourcesDirectory)/target'
