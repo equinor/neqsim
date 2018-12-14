@@ -339,18 +339,7 @@ public class TPflash extends Flash implements java.io.Serializable {
         }
 
         setNewK();
-
-        double gasgib = system.getPhase(0).getGibbsEnergy();
-        system.setPhaseType(0, 0);
-        system.init(1, 0);
-        double liqgib = system.getPhase(0).getGibbsEnergy();
-
-        if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
-            system.setPhaseType(0, 1);
-        }
-
-        //   system.calc_x_y();
-        system.init(1);
+        
         gibbsEnergy = system.getGibbsEnergy();
         gibbsEnergyOld = gibbsEnergy;
 
@@ -443,8 +432,19 @@ public class TPflash extends Flash implements java.io.Serializable {
         //        System.out.println("clonedSystem G : " +clonedSystem.calcGibbsEnergy());
         //        System.out.println("system G : " + system.calcGibbsEnergy());
         ///system.init(3);
+        
+        double gasgib = system.getPhase(0).getGibbsEnergy();
+        system.setPhaseType(0, 0);
+        system.init(1, 0);
+        double liqgib = system.getPhase(0).getGibbsEnergy();
+
+        if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
+            system.setPhaseType(0, 1);
+        }
+        system.init(1);
+
         if (system.doMultiPhaseCheck()) {
-            TPmultiflash operation = new TPmultiflash(system, true);
+            TPmultiflash operation = new TPmultiflash(system,true);
             operation.run();
         }
         if (solidCheck) {

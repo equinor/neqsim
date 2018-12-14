@@ -112,7 +112,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
             //System.out.println("V/b" + (getVolume()/getB()) + " Z " + getZ());
             double sumHydrocarbons = 0.0, sumAqueous = 0.0;
             for (int i = 0; i < numberOfComponents; i++) {
-                if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()) {
+                if (getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction()) {
                     sumHydrocarbons += getComponent(i).getx();
                 } else {
                     sumAqueous += getComponent(i).getx();
@@ -237,8 +237,11 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
             System.out.println("b negative in volume calc");
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
-
+        boolean changeFase = false;
+        double error=1.0, errorOld=1.0e10;
+        
         do {
+            errorOld = error;
             iterations++;
             BonVold = BonV;
             BonV2 = BonV * BonV;
@@ -262,19 +265,30 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
             } else {
                 BonV += d1 * (0.1);
             }
-/*
-            if (BonV > 10) {
+
+            if (BonV > 100) {
                 BonV = 1.0 - 1.0e-4;
-                BonVold = 10;
+                BonVold = 100;
             }
             if (BonV < 0) {
-                BonV = 1.0e-4;
+                BonV = Math.abs(BonV);
+                //BonV = 1.0e-10;
                 BonVold = 10;
+            }
+
+            error = Math.abs((BonV - BonVold)/BonVold);
+            //System.out.println("error " + error);
+            /*
+            if (error>errorOld && !changeFase) {
+                changeFase = true;
+                BonVold = 10.0;
+                BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
             }
 */
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-        } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 200);
+             // System.out.println("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));
+        } while (Math.abs((BonV - BonVold)/BonVold) > 1.0e-10 && iterations < 200);
         //System.out.println("pressure " + Z*R*temperature/molarVolume);
         //System.out.println("error in volume " + (-pressure+R*temperature/molarVolume-R*temperature*dFdV()) + " firstterm " + (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
         if (iterations >= 200) {
@@ -410,13 +424,15 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
         return getCvres() + R * (-temperature / R * Math.pow(getdPdTVn(), 2.0) / getdPdVTn() - numberOfMolesInPhase);
     }
-    
-     /**
-     * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
+
+    /**
+     * method to return real gas isentropic exponent (kappa = -
+     * Cp/Cv*(v/p)*dp/dv
+     *
      * @return kappa
      */
-    public double getKappa(){
-        return -getCp()/getCv()*getVolume()/pressure*getdPdVTn();
+    public double getKappa() {
+        return -getCp() / getCv() * getVolume() / pressure * getdPdVTn();
     }
 
     /**
@@ -486,7 +502,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     public double FT() {
-        return getA() * getf() / temperature / temperature;
+        return getA() * getf() / (temperature * temperature);
     }
 
     public double FV() {
@@ -502,20 +518,20 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     public double gb() {
-        return -1.0 / (numberOfMolesInPhase * molarVolume - getB());
+        return -1.0 / (numberOfMolesInPhase * molarVolume - B);
     }
 
     public double fb() {
-        return -(getf() + numberOfMolesInPhase * molarVolume * fv()) / getB();
+        return -(f + numberOfMolesInPhase * molarVolume * fv()) / B;
     }
 
     public double gV() {
-        return getb() / (molarVolume * (numberOfMolesInPhase * molarVolume - getB()));
+        return getb() / (molarVolume * (numberOfMolesInPhase * molarVolume - B));
         //1/(numberOfMolesInPhase*getMolarVolume()-getB())-1/(numberOfMolesInPhase*getMolarVolume());
     }
 
     public double fv() {
-        return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * getB()) * (numberOfMolesInPhase * molarVolume + delta2 * getB()));
+        return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * B) * (numberOfMolesInPhase * molarVolume + delta2 * B));
     }
     ////// NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
 
@@ -590,9 +606,9 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     public double fVV() {
-        double val1 = (numberOfMolesInPhase * molarVolume + delta1 * getB());
-        double val2 = (numberOfMolesInPhase * molarVolume + delta2 * getB());
-        return 1.0 / (R * getB() * (delta1 - delta2)) * (-1.0 / (val1 * val1) + 1.0 / (val2 * val2));
+        double val1 = (numberOfMolesInPhase * molarVolume + delta1 * B);
+        double val2 = (numberOfMolesInPhase * molarVolume + delta2 * B);
+        return 1.0 / (R * B * (delta1 - delta2)) * (-1.0 / (val1 * val1) + 1.0 / (val2 * val2));
     }
 
     public double fVVV() {

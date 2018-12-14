@@ -34,7 +34,7 @@ public class TestDiffusivity extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM BinaryLiquidDiffusionCoefficientData WHERE ComponentSolute='CO2' AND ComponentSolvent='water'");
+        ResultSet dataSet =  database.getResultSet("SELECT * FROM BinaryLiquidDiffusionCoefficientData WHERE ComponentSolute='CO2' AND ComponentSolvent='water'");
         
         try{
             System.out.println("adding....");

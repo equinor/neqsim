@@ -44,7 +44,7 @@ public class TestCPA_TEG extends java.lang.Object {
        
         //double guess[] = {2.97, 3.7359, 0.0692, 0.0787};//, 0.01787};//co2
 //double guess[] = {0.1};//
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='TEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='TEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
 
         try {
             System.out.println("adding....");
@@ -77,7 +77,7 @@ public class TestCPA_TEG extends java.lang.Object {
             System.out.println("database error" + e);
         }
 
-        dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM PureComponentDensity WHERE ComponentName='TEG' AND Temperature>173.15 ORDER BY Temperature");
+        dataSet = database.getResultSet( "SELECT * FROM PureComponentDensity WHERE ComponentName='TEG' AND Temperature>173.15 ORDER BY Temperature");
         try {
             System.out.println("adding....");
             while (dataSet.next()) {
@@ -112,7 +112,7 @@ public class TestCPA_TEG extends java.lang.Object {
         }
 
 
-        dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM PureComponentCpHeatCapacity WHERE ComponentName='TEG' AND Temperature>263.15 ORDER BY Temperature");
+        dataSet = database.getResultSet( "SELECT * FROM PureComponentCpHeatCapacity WHERE ComponentName='TEG' AND Temperature>263.15 ORDER BY Temperature");
         try {
             System.out.println("adding....");
             while (dataSet.next()) {

@@ -35,9 +35,9 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-     //  ResultSet dataSet =  database.getResultSet("NeqSimDatabase",  "SELECT * FROM CO2watersolubility WHERE pressureMPA<6 AND reference IN ('[18]', '[35]', '[36]', '[37]', '[38]', '[39]', '[40]', '[41]','[42]')");
+     //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2watersolubility WHERE pressureMPA<6 AND reference IN ('[18]', '[35]', '[36]', '[37]', '[38]', '[39]', '[40]', '[41]','[42]')");
         
-       ResultSet dataSet =  database.getResultSet("NeqSimDatabase",  "SELECT * FROM CO2watersolubility WHERE pressureMPA<5 AND reference IN ('[18]', '[35]', '[36]', '[37]', '[38]', '[39]', '[40]', '[41]','[42]', '[32]', '[33]', '[34]')");
+       ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2watersolubility WHERE pressureMPA<5 AND reference IN ('[18]', '[35]', '[36]', '[37]', '[38]', '[39]', '[40]', '[41]','[42]', '[32]', '[33]', '[34]')");
         
         try{
             int p=0;
@@ -85,7 +85,7 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
         
         
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND ID<3000 AND Temperature>250 AND Pressure<700000000 AND Temperature<420 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");
+        dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND ID<3000 AND Temperature>250 AND Pressure<700000000 AND Temperature<420 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");
         
         try{
             int p=0;

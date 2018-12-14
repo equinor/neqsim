@@ -37,7 +37,7 @@ public class TestBinaryHVParameterFittingToEquilibriumData_CH4 extends java.lang
              
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CH4MDEA"); 
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CH4MDEA"); 
         double guess[] = {500, -500, 1e-10, 1e-10, 0.3}; 
         try{
            

@@ -34,7 +34,7 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object{
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2CH4MDEA");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2CH4MDEA");
         
         double ID, x1, x2, x3, x4, y1, y2, y3, y4, temperature, pressure, loading;
        

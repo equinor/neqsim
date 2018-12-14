@@ -35,7 +35,7 @@ public class TestCPAParameterFittingToDewPointData extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM waterdewpointpaper WHERE gascomponent='nitrogen' AND reference='Gil'");
         
         
         try{

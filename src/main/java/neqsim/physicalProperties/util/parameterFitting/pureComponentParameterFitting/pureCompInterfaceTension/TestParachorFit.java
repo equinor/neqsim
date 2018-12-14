@@ -32,7 +32,7 @@ public class TestParachorFit extends java.lang.Object {
         ArrayList sampleList = new ArrayList();
 
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM PureComponentSurfaceTension WHERE ComponentName='MEG'");
+        ResultSet dataSet = database.getResultSet("SELECT * FROM PureComponentSurfaceTension WHERE ComponentName='MEG'");
 
         try {
             System.out.println("adding....");

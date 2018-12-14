@@ -26,7 +26,7 @@ public class TestSolidComplexFunction {
         ArrayList sampleList = new ArrayList();
         NeqSimDataBase database = new NeqSimDataBase();
 
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM comlexSolidFreezingData WHERE Component1='TEG' AND Component2='water'");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM comlexSolidFreezingData WHERE Component1='TEG' AND Component2='water'");
         //  double parameterGuess[] = {0.1640550024};//, 7578.080};//, 245.0};
         double parameterGuess[] = {0.119803125, 4482.0};
 

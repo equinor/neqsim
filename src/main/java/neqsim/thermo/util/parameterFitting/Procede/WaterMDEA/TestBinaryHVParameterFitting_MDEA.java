@@ -45,7 +45,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
         //double guess[] = {733.1497651631, -1100.3362377120, -6.0060055689, 5.0938556111, 0.2082636701}; // Ans 2 using Heat of mixing as well
         double guess[] = {-5596.6518968945, 3995.5032952165, 10.9677849623, -8.0407258862, 0.2703018372}; 
         
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM WaterMDEA WHERE ID<62");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEA WHERE ID<62");
         /*try{
             int i=0;
             System.out.println("adding....");
@@ -88,7 +88,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
         }
         
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM WaterMDEA WHERE ID>61 AND ID<87");
+        dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEA WHERE ID>61 AND ID<87");
       
         try{
             int i=0;
@@ -131,7 +131,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             System.out.println("database error" + e);
         }*/
         
-        /*dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM WaterMDEA WHERE ID>86");
+        /*dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEA WHERE ID>86");
       
         try{
             int i=0;
@@ -174,7 +174,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             System.out.println("database error" + e);
         }*/
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM WaterMDEAactivity WHERE ID<20");
+        dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEAactivity WHERE ID<20");
         try{
             int i=0;
             System.out.println("adding....");
@@ -213,7 +213,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             System.out.println("database error" + e);
         }
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM WaterMDEAactivity WHERE ID>19");
+        dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEAactivity WHERE ID>19");
         try{
             int i=0;
             System.out.println("adding....");

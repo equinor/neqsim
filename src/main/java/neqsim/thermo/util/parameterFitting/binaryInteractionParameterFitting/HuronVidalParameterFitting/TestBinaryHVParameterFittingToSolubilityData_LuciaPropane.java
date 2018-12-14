@@ -35,7 +35,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature>270 AND Temperature<600 AND Pressure<7000000000 AND L2<>NULL AND L2>0.000000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature>270 AND Temperature<600 AND Pressure<7000000000 AND L2<>NULL AND L2>0.000000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
         
         try{
             int p=0;
@@ -70,7 +70,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
             System.out.println("database error" + e);
         }
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND ID<3000 AND Temperature>250 AND Pressure<7000000000 AND Temperature<600 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND ID<3000 AND Temperature>250 AND Pressure<7000000000 AND Temperature<600 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
         try{
             int p=0;
             System.out.println("adding....");
@@ -100,7 +100,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
             System.out.println("database error" + e);
         }
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature>270 AND Temperature<400 AND Pressure<700000000 AND L1<>NULL ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature>270 AND Temperature<400 AND Pressure<700000000 AND L1<>NULL ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
         
         try{
             int p=0;

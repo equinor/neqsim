@@ -31,7 +31,7 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(true);
     }
     
-    public SystemElectrolyteCPAstatoil(double T, double P) {
+    public SystemElectrolyteCPAstatoil(double T, double P)  {
         super(T,P);
         attractiveTermNumber = 15;
         modelName = "Electrolyte-CPA-EOS-statoil";

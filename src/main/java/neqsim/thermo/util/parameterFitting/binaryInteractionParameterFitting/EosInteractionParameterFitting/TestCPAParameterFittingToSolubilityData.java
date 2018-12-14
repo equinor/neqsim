@@ -36,8 +36,8 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>283.15 AND Temperature<373.15 AND Pressure<60.01325");
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='MEG'");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>283.15 AND Temperature<373.15 AND Pressure<60.01325");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='MEG'");
         double parameterGuess[] = {0.07,0.1340991545744328435900};//, 0.000117974}; //cpa
                
         try {
@@ -71,7 +71,7 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM BinaryEquilibriumData WHERE Component1='methane' AND Component2='MEG'");
+        dataSet = database.getResultSet( "SELECT * FROM BinaryEquilibriumData WHERE Component1='methane' AND Component2='MEG'");
         try {
             int p = 0;
             System.out.println("adding....");

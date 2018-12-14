@@ -49,7 +49,7 @@ public class CO2_MDEA {
         double ID, pressure, temperature, x1,x2,x3, bias;
        
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2WaterMDEA WHERE ID>196 AND ID<231");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2WaterMDEA WHERE ID>196 AND ID<231");
  
         try{
             

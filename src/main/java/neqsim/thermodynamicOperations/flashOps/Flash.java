@@ -34,20 +34,20 @@ import neqsim.thermodynamicOperations.OperationInterface;
 abstract class Flash extends BaseOperation implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    public double[] minGibsPhaseLogZ;
-    public double[] minGibsLogFugCoef;
 
     SystemInterface system;
-    int i = 0, j = 0, nummer = 0, iterations = 0, maxNumberOfIterations = 100;
+    SystemInterface minimumGibbsEnergySystem;
+
+    public double[] minGibsPhaseLogZ;
+    public double[] minGibsLogFugCoef;
+    int i = 0, j = 0, iterations = 0, maxNumberOfIterations = 100;
     double gibbsEnergy = 0, gibbsEnergyOld = 0;
     double Kold = 0, deviation = 0, g0 = 0, g1 = 0;
-    double lnOldOldOldK[], lnOldOldK[], lnK[];
-    double lnOldK[];
+    double lnOldOldOldK[], lnOldOldK[], lnK[], lnOldK[];
     double oldoldDeltalnK[], oldDeltalnK[], deltalnK[];
     double tm[];
-    int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
+    int lowestGibbsEnergyPhase = 0;
     sysNewtonRhapsonTPflash secondOrderSolver;
-    SystemInterface minimumGibbsEnergySystem;
     protected boolean solidCheck = false, stabilityCheck = false;
     boolean findLowesGibsPhaseIsChecked = false;
 
@@ -90,7 +90,6 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         double[] alpha = null;
         Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
         Matrix df = null;
-        Matrix identitytimesConst = null;
         int maxiterations = 50;
         double oldErr = 1.0;
 
@@ -100,34 +99,24 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 
         SystemInterface clonedSystem = minimumGibbsEnergySystem;//(SystemInterface) minimumGibbsEnergySystem.clone();
         clonedSystem.setTotalNumberOfMoles(1.0);
-        clonedSystem.init(1);
+        //clonedSystem.init(1);
         sumw[1] = 0.0;
         sumw[0] = 0.0;
 
         for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-            double xliq = clonedSystem.getPhase(0).getComponent(i).getz() / clonedSystem.getPhase(0).getComponent(i).getK();
-            if (xliq > 1) {
-                xliq = 1.0;
-            }
-            double ygas = clonedSystem.getPhase(0).getComponent(i).getK() * clonedSystem.getPhase(0).getComponent(i).getz();
-            if (ygas > 1) {
-                ygas = 1.0;
-            }
-            clonedSystem.getPhase(0).getComponent(i).setx(ygas);
-            clonedSystem.getPhase(1).getComponent(i).setx(xliq);
-
-            sumw[1] += clonedSystem.getPhase(1).getComponent(i).getx();
-            sumw[0] += clonedSystem.getPhase(0).getComponent(i).getx();
+            sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz() / clonedSystem.getPhase(0).getComponent(i).getK();
+            sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK() * clonedSystem.getPhase(0).getComponent(i).getz();
         }
 
         for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-            clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(1).getComponent(i).getx() / sumw[1]);
-            clonedSystem.getPhase(0).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getx() / sumw[0]);
+            double xliq = clonedSystem.getPhase(0).getComponent(i).getz() / clonedSystem.getPhase(0).getComponent(i).getK();
+            double ygas = clonedSystem.getPhase(0).getComponent(i).getK() * clonedSystem.getPhase(0).getComponent(i).getz();
+            clonedSystem.getPhase(1).getComponent(i).setx(xliq / sumw[1]);
+            clonedSystem.getPhase(0).getComponent(i).setx(ygas / sumw[0]);
         }
 
         for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
             for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-
                 Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
                 logWi[i] = Math.log(Wi[j][i]);
             }
@@ -176,44 +165,34 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                             logWi[i] = d[i] - clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient();
                             error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
                             Wi[j][i] = Math.exp(logWi[i]);
-                            //System.out.println("Wi " + Wi[j][i] + " fugcoef " + clonedSystem.getPhase(j).getComponent(i).getFugasityCoeffisient());
                         }
-                        //System.out.println("tmSP " + tmSP);
                     }
-
-                    //System.out.println("err  sucs sub" + error[j]);
                 } else {
                     if (!secondOrderStabilityAnalysis) {
-                        clonedSystem.init(3, j);
                         alpha = new double[system.getPhases()[0].getNumberOfComponents()];
                         df = new Matrix(system.getPhases()[0].getNumberOfComponents(), system.getPhases()[0].getNumberOfComponents());
-                        identitytimesConst = Matrix.identity(system.getPhases()[0].getNumberOfComponents(), system.getPhases()[0].getNumberOfComponents());
                         secondOrderStabilityAnalysis = true;
                     }
 
+                    clonedSystem.init(3, j);
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
                         alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
                     }
 
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-                        f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + clonedSystem.getPhases()[j].getComponents()[i].getLogFugasityCoeffisient() - d[i]));
+                        f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i]) + clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
                         for (int k = 0; k < clonedSystem.getPhases()[0].getNumberOfComponents(); k++) {
-                            double kronDelt = (i == k) ? 1.0 : 0.0;
-                            df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.getPhases()[j].getComponents()[i].getdfugdn(k));// * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                            double kronDelt = (i == k) ? 1.5 : 0.0; // adding 0.5 to diagonal
+                            df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.getPhase(j).getComponent(i).getdfugdn(k));// * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
                         }
                     }
-                    // f.print(10, 10);
-                    //  df.print(10, 10);
-                    Matrix dx = df.plus(identitytimesConst).solve(f).times(-1.0);
-                    //dx.print(10, 10);
+                    Matrix dx = df.solve(f).times(-1.0);
 
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-                        double alphaNew = alpha[i] + dx.get(i, 0);
-                        Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
+                        Wi[j][i] = Math.pow((alpha[i] + dx.get(i, 0)) / 2.0, 2.0);
                         logWi[i] = Math.log(Wi[j][i]);
                         error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
                     }
-
                     //System.out.println("err newton " + error[j]);
                 }
 
@@ -228,8 +207,9 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                     deltalogWi[i] = logWi[i] - oldlogw[i];
                     clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
                 }
-               // System.out.println("err " + error[j]);
+                //System.out.println("err " + error[j]);
             } while ((f.norm1() > 1e-6 && iterations < maxiterations && error[j] < oldErr) || (iterations % 7) == 0 || iterations < 3);
+
             //System.out.println("err " + error[j]);
             //System.out.println("iterations " + iterations);
             //System.out.println("f.norm1() " + f.norm1());

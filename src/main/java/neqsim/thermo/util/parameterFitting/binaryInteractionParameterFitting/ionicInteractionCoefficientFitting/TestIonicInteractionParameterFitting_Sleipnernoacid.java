@@ -33,8 +33,8 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.la
         ArrayList sampleList = new ArrayList();
         
         NeqSimDataBase database = new NeqSimDataBase();
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2KurCor WHERE Reference = 'Rho1997' AND Temperature = 323.15 ");
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM Sleipner");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2KurCor WHERE Reference = 'Rho1997' AND Temperature = 323.15 ");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM Sleipner");
         try{
             int i=0;
             System.out.println("adding....");

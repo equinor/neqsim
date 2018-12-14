@@ -35,7 +35,7 @@ public class H2S_Water {
         double aad;
         
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM H2SWater");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM H2SWater");
         
        
          try{
