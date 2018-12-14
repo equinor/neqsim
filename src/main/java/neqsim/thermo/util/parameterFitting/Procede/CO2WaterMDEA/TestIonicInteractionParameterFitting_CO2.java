@@ -35,7 +35,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2WaterMDEA WHERE ID<231");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2WaterMDEA WHERE ID<231");
         
         // Water, HCO3-, MDEA, CO2, Co3--
       
@@ -107,7 +107,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
         }
        
        
-       dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2WaterMDEA WHERE ID>230");
+       dataSet =  database.getResultSet(  "SELECT * FROM CO2WaterMDEA WHERE ID>230");
       
         try{
             int i=0;
@@ -175,7 +175,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
         }
         
       
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2WaterMDEAtest");
+        dataSet =  database.getResultSet(  "SELECT * FROM CO2WaterMDEAtest");
         
         try{
             int i=0;

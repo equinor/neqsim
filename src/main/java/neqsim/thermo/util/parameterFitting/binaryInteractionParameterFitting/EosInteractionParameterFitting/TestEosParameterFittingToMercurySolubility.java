@@ -37,7 +37,7 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
 
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='mercury' AND ComponentSolvent='MEG'");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='mercury' AND ComponentSolvent='MEG'");
         //   double parameterGuess[] = {0.13}; // mercury-methane
         // double parameterGuess[] = {0.0496811275399517}; // mercury-methane
         // double parameterGuess[] = {0.0704}; // mercury-ethane

@@ -48,7 +48,7 @@ public class TestHydrateFunction extends java.lang.Object {
 
         //ljeps,  ljdiam,a
 
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM HydratePureComp WHERE GuestMolecule='methane' AND Type<>'IHV' AND Pressure<57  AND Temperature>273.15");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM HydratePureComp WHERE GuestMolecule='methane' AND Type<>'IHV' AND Pressure<57  AND Temperature>273.15");
         //
         int numb = 0;
         try {

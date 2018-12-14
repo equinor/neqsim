@@ -34,8 +34,8 @@ public class TestIonicInteractionParameterFittingCo2nacl extends java.lang.Objec
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM co2wation WHERE comp3='K+' AND temperature>340 AND pressure<190");
-        //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM co2wation WHERE comp3='K+' AND temperature>340 AND pressure<190");
+        //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
         //double guess[] = {-0.0000110329, -0.1238487876};//Na+
         //double guess[] = {0.0000258505};//Na+ all temp
         //double guess[] = {0.0000080642};//Na+ 40

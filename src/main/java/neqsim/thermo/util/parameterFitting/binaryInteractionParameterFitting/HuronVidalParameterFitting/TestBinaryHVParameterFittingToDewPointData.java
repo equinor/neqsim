@@ -35,8 +35,8 @@ public class TestBinaryHVParameterFittingToDewPointData extends java.lang.Object
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM dewpointquaternary WHERE temperature>173.1 AND x4>0.0000021 ORDER BY x4,pressure");
-        //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM dewpointquaternary WHERE temperature>173.1 AND x4>0.0000021 ORDER BY x4,pressure");
+        //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         //    testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
         //    testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
         try{

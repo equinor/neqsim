@@ -34,7 +34,7 @@ public class TestRacketFit extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentDensity WHERE ComponentName='MEG'");
+        ResultSet dataSet =  database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MEG'");
         //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         
         try{

@@ -35,12 +35,12 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
-       // ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
-        // ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='ethane' AND Temperature<390 AND Pressure<10000000 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature<390 AND Pressure<15000000 AND L2<>NULL AND L2>0.0000000001 AND ID>2204 AND ID<2410 ORDER BY Temperature,Pressure");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature>410.15 AND Pressure<100000000 AND L2<>NULL AND L2>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+       // ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND Temperature<390 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
+        // ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='ethane' AND Temperature<390 AND Pressure<10000000 AND L2<>NULL AND L2>0.0000000001 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature<390 AND Pressure<15000000 AND L2<>NULL AND L2>0.0000000001 AND ID>2204 AND ID<2410 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
       
         try{
             int p=0;
@@ -84,13 +84,13 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
             e.printStackTrace();
         }
         
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<380 AND Pressure<100000000 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature>273.15 AND Pressure<153000000 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
-       // dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND Temperature>310 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
-       // dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='ethane' AND Temperature<390 AND Pressure<10000000 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
-       // dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature<390 AND Pressure<15000000 AND Y<>NULL AND Y>0.000000001 AND ID>2204 AND ID<2410 ORDER BY Temperature,Pressure");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
+        //dataSet =  database.getResultSet(  "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<380 AND Pressure<100000000 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='methane' AND Temperature>273.15 AND Pressure<153000000 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+       // dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='nitrogen' AND Temperature<390 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+        //dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='CO2' AND Temperature>310 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+       // dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='ethane' AND Temperature<390 AND Pressure<10000000 AND Y<>NULL AND Y>0.000000001 ORDER BY Temperature,Pressure");
+       // dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature<390 AND Pressure<15000000 AND Y<>NULL AND Y>0.000000001 AND ID>2204 AND ID<2410 ORDER BY Temperature,Pressure");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
         try{
             int p=0;
             System.out.println("adding....");

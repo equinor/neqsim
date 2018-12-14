@@ -67,7 +67,7 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
         String nameList[] = {"methane", "ethane", "propane", "n-butane", "i-butane", "n-pentane", "c-hexane", "benzene", "n-heptane"};
         
         for(int compNumb=0;compNumb<nameList.length;compNumb++){
-            dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='" + nameList[compNumb] + "' AND VapourPressure>0 ORDER BY Temperature ASC"); 
+            dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='" + nameList[compNumb] + "' AND VapourPressure>0 ORDER BY Temperature ASC"); 
             
             try{
                 System.out.println("adding....");
@@ -101,7 +101,7 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
         
         
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0");//"0 AND reference='Mørch2004gas1'");
+        dataSet =  database.getResultSet(  "SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0");//"0 AND reference='Mørch2004gas1'");
         
         try{
             System.out.println("adding....");

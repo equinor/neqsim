@@ -34,7 +34,7 @@ public class TestConductivityFit extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentConductivityData WHERE ComponentName='TEG'");
+        ResultSet dataSet =  database.getResultSet("SELECT * FROM PureComponentConductivityData WHERE ComponentName='TEG'");
         //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         
         try{

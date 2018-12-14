@@ -34,7 +34,7 @@ public class TestIonicInteractionParameterFittingAcid extends java.lang.Object{
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM Sleipner");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM Sleipner");
         int error=1;
         double ID, x1, x2, x3, x4, temperature, pressure;
         

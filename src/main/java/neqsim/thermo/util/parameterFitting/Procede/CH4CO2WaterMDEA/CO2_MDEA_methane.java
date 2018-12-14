@@ -54,7 +54,7 @@ public class CO2_MDEA_methane {
         double temperature = 313.0;*/
         
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PatrickCO2");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PatrickCO2");
         
               
         try{

@@ -36,7 +36,7 @@ public class TestSolidAntoine extends java.lang.Object {
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
         
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature");
         
         try{
             System.out.println("adding....");
