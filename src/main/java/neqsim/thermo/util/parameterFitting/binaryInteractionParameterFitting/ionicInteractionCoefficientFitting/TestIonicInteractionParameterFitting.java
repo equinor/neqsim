@@ -34,12 +34,12 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2KurCor WHERE Reference<>'Bahiri1984' AND Temperature<373.15 ORDER BY wtMDEA,Temperature,Reference,loading");
-//        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2KurCor WHERE Reference<>'Bahiri1984' AND Temperature<393.15 AND loading>0.05 AND loading<1.2  AND VapourPressure1<15.0 AND wtMDEA>40 AND wtMDEA<60 ORDER BY wtMDEA,Temperature,Reference,loading");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2KurCor WHERE Reference<>'Bahiri1984' AND Temperature<373.15 ORDER BY wtMDEA,Temperature,Reference,loading");
+//        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2KurCor WHERE Reference<>'Bahiri1984' AND Temperature<393.15 AND loading>0.05 AND loading<1.2  AND VapourPressure1<15.0 AND wtMDEA>40 AND wtMDEA<60 ORDER BY wtMDEA,Temperature,Reference,loading");
 //
-//        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2KurCor WHERE Reference<>'Bahiri1984' AND wtMDEA>40.0 AND Temperature>=280.15 AND Temperature<=470.15 AND loading>0.00002 AND VapourPressure1<25.0 ORDER BY wtMDEA,Temperature,Reference");
-//        //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
-//        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2KurCor WHERE Reference='Austgen1991'  AND loading>0.01");
+//        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2KurCor WHERE Reference<>'Bahiri1984' AND wtMDEA>40.0 AND Temperature>=280.15 AND Temperature<=470.15 AND loading>0.00002 AND VapourPressure1<25.0 ORDER BY wtMDEA,Temperature,Reference");
+//        //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
+//        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2KurCor WHERE Reference='Austgen1991'  AND loading>0.01");
 //
 //        try{
 //            int i=0;
@@ -90,7 +90,7 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
         
         
         double guess[] = { -0.0001868490, -0.0006868943, -0.0000210224, -0.0002324934, 0.0005};
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND PressureCO2<'20' AND Reference<>'GPA'");
         
         try{
             int i=0;
@@ -147,7 +147,7 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
             System.out.println("database error" + e);
         }
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");
+        dataSet =  database.getResultSet(  "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");
         
         try{
             int i=0;

@@ -35,8 +35,8 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<363.15 AND Pressure<60.01325 ORDER BY Temperature,Pressure");
-        //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<363.15 AND Pressure<60.01325 ORDER BY Temperature,Pressure");
+        //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         //    testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
         //    testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
         try{

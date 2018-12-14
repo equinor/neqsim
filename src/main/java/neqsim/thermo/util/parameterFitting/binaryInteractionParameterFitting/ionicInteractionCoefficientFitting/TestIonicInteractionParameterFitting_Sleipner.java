@@ -33,8 +33,8 @@ public class TestIonicInteractionParameterFitting_Sleipner extends java.lang.Obj
         ArrayList sampleList = new ArrayList();
         
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM Sleipner");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM Sleipneracid");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM Sleipner");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM Sleipneracid");
         
         try{
             int i=0;

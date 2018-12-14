@@ -34,7 +34,7 @@ public class TestMassTransfer extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure<100");
+        ResultSet dataSet =  database.getResultSet("SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure<100");
         
         try{
             System.out.println("adding....");

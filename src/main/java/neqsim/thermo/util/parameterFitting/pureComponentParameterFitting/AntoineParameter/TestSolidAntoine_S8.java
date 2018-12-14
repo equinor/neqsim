@@ -36,7 +36,7 @@ public class TestSolidAntoine_S8 extends java.lang.Object {
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
         
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
         
         try{
             System.out.println("adding....");

@@ -37,7 +37,7 @@ public class TestIonicInteractionParameterFittingMDEAPiperazine extends java.lan
         
         
         double guess[] = {0.0007757516};//, -0.00013534324};//, -0.000210224};//, -0.0002324934, 0.0005};
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM CO2waterPZ");// WHERE Temperature<393.15 AND PressureCO2<4");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM CO2waterPZ");// WHERE Temperature<393.15 AND PressureCO2<4");
         
         try{
             int i=0;

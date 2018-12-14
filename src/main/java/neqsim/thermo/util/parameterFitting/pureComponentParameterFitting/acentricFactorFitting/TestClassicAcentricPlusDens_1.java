@@ -35,10 +35,10 @@ public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
         
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<65.5 AND Reference='Perry1998'");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5");
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' ORDER BY Reference,Temperature");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<65.5 AND Reference='Perry1998'");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' ORDER BY Reference,Temperature");
         double guess[] = {1.242};//
         try{
             System.out.println("adding....");
@@ -71,10 +71,10 @@ public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<65.5 AND Reference='Perry1998'");
-        // dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5");
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' ORDER BY Temperature ASC");
+        //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<65.5 AND Reference='Perry1998'");
+        // dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5");
+        //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
+        dataSet =  database.getResultSet(  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' ORDER BY Temperature ASC");
         try{
             System.out.println("adding....");
             while(!dataSet.next()){

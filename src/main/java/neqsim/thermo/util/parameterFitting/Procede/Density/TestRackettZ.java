@@ -35,7 +35,7 @@ public class TestRackettZ extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'");
                
         try{
             System.out.println("adding....");

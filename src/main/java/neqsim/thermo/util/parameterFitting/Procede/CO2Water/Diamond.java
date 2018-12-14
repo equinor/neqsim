@@ -43,7 +43,7 @@ public class Diamond {
         double temperature, x, pressure, ID;
 
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM Diamond");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM Diamond");
 
         try {
             while (dataSet.next()) {

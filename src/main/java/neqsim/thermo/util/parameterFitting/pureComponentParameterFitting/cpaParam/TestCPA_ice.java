@@ -38,7 +38,7 @@ public class TestCPA_ice extends java.lang.Object {
         //1,6297102017 1,1253994266 1,1701135830 0,0701182891
         double bounds[][] = {{0,3.0055},{0,8.0055},{0.00001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
         
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM SolidVapourPressure WHERE ComponentName='water' ORDER BY Temperature");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM SolidVapourPressure WHERE ComponentName='water' ORDER BY Temperature");
         
         try{
             System.out.println("adding....");
@@ -73,7 +73,7 @@ public class TestCPA_ice extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM SolidVapourPressure WHERE ComponentName='water' ORDER BY Temperature");
+        dataSet =  database.getResultSet(  "SELECT * FROM SolidVapourPressure WHERE ComponentName='water' ORDER BY Temperature");
         
         try{
             System.out.println("adding....");
@@ -108,7 +108,7 @@ public class TestCPA_ice extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' ORDER BY Temperature");
+        dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' ORDER BY Temperature");
        
         try{
             System.out.println("adding....");
@@ -141,7 +141,7 @@ public class TestCPA_ice extends java.lang.Object {
         }
         
         
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
         
         try{
             System.out.println("adding....");

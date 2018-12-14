@@ -34,7 +34,7 @@ public class TestViscosityFit extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentViscosity WHERE ComponentName='MEG' ORDER BY Temperature");
+        ResultSet dataSet =  database.getResultSet("SELECT * FROM PureComponentViscosity WHERE ComponentName='MEG' ORDER BY Temperature");
        
         try{
             System.out.println("adding....");

@@ -32,7 +32,7 @@ public class TestInfluenceParamGTFunction extends java.lang.Object {
         ArrayList sampleList = new ArrayList();
 
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM PureComponentSurfaceTension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')");// AND ComponentName<>'nC10'  AND ComponentName<>'nC11'  AND ComponentName<>'nC12'  AND ComponentName<>'nC13'");
+        ResultSet dataSet = database.getResultSet("SELECT * FROM PureComponentSurfaceTension2 WHERE ComponentName IN ('n-pentane','ethane','methane', 'propane','CO2', 'c-hexane','M-cy-C5', 'n-pentane','n-hexane', 'n-nonane','nC10')");// AND ComponentName<>'nC10'  AND ComponentName<>'nC11'  AND ComponentName<>'nC12'  AND ComponentName<>'nC13'");
         boolean includePureCompData = true;
 
         //double guess[] = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157}; // SRK param

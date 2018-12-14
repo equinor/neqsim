@@ -35,7 +35,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
         ArrayList sampleList = new ArrayList();
 
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-decane'");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-decane'");
 
         double parameterGuess[] = {188.385052774267, -0.84022345};//, 2630.871733876947};
 
@@ -70,7 +70,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
 
-        dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-heptane'");
+        dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-heptane'");
 
         try {
             int p = 0;
@@ -103,7 +103,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-         dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-octane'");
+         dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-octane'");
 
         try {
             int p = 0;
@@ -136,7 +136,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-hexane'");
+        dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-hexane'");
 
         try {
             int p = 0;
@@ -169,7 +169,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-          dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-pentane'");
+          dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-pentane'");
 
         try {
             int p = 0;
@@ -202,7 +202,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-         dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='butane'");
+         dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='butane'");
 
         try {
             int p = 0;
@@ -235,7 +235,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        dataSet = database.getResultSet("NeqSimDataBase", "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='propane'");
+        dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='propane'");
 
         try {
             int p = 0;

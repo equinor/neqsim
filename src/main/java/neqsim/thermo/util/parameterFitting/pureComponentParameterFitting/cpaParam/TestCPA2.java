@@ -34,7 +34,7 @@ public class TestCPA2 extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        //ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water'");
+        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water'");
         //double guess[] = {23939.4738048507, 1.5971863018, 0.63623134978, 0.00292037583};//, 1002.0};
        // double guess[] = { 1.4403259969, 0.8551003534, 1.2240339308, 0.0871385903}; // water - srk-cpa
         //double guess[] = {1.4563608786, 1.3855596964, 0.6641553237, 0.0464737892}; // water - pr-cpa
@@ -46,10 +46,10 @@ public class TestCPA2 extends java.lang.Object {
         //double guess[] = {2.97, 3.7359, 0.0692, 0.0787};//, 0.01787};//co2
         double bounds[][] = {{0,3.0055},{0,8.0055},{0.00001,10.001},{-1.0015,1.0015},{-320.0015,320.0015},{-320.901,320.900195},{-1.0,1000},{-0.800001,0.8},{-80000.01,20000.8},{-0.01,10.6},{-0.01,0.0015},{-0.01,0.0015}};
         
-       // ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
-       // ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
-       // ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
-        ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
+       // ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+       // ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+       // ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
         
         try{
             System.out.println("adding....");
@@ -84,10 +84,10 @@ public class TestCPA2 extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' AND Temperature>273.15 ORDER BY Temperature");
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
+        //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' AND Temperature>273.15 ORDER BY Temperature");
+        //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
+        dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
         try{
             System.out.println("adding....");
             while(dataSet.next()){
@@ -121,8 +121,8 @@ public class TestCPA2 extends java.lang.Object {
             System.out.println("database error" + e);
         }
         
-        //dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
-        dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
+        //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
+        dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
         
         try{
             System.out.println("adding....");
