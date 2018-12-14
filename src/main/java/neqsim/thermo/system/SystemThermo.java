@@ -92,8 +92,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         interfaceProp = new InterfaceProperties(this);
     }
 
-    public SystemThermo(double T, double P) {
+    public SystemThermo(double T, double P) throws neqsim.util.exception.InvalidInputException {
         this();
+        if (T < 0.0 || P < 0.0){
+            throw new neqsim.util.exception.InvalidInputException();
+        }
         beta[0] = 1.0;
         beta[1] = 1.0;
         beta[2] = 1.0;
