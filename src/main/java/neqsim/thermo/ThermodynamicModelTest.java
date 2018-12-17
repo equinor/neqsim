@@ -7,11 +7,8 @@
 package neqsim.thermo;
 
 import neqsim.thermo.system.SystemInterface;
-<<<<<<< HEAD
-=======
 import org.apache.log4j.Logger;
 
->>>>>>> d513bfc34a3a5b0f3adcf7e295d7265c5457b12a
 /**
  *
  * @author  Even Solbraa
