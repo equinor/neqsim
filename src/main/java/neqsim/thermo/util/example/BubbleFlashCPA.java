@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class BubbleFlashCPA {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(BubbleFlashCPA.class);
 
     /**
      * Creates new TPflash
@@ -75,13 +77,13 @@ public class BubbleFlashCPA {
             //testOps.bubblePointPressureFlash(false);
             testOps.TPflash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
         testSystem.saveFluid(37);
         testSystem.display();
         testSystem.clone();
-        System.out.println("activity " + testSystem.getPhase(1).getActivityCoefficient(0));
+        logger.info("activity " + testSystem.getPhase(1).getActivityCoefficient(0));
 
         //        thermo.ThermodynamicModelTest testModel = new thermo.ThermodynamicModelTest(testSystem);
         //        testModel.runTest();

@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class BubbleFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(BubbleFlash.class);
     
     /** Creates new TPflash */
     public BubbleFlash() {
@@ -46,7 +48,7 @@ public class BubbleFlash {
             testOps.constantPhaseFractionPressureFlash(1.0);
              testSystem.display();
         }catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
       //  System.out.println("wt% MEG " + 100*testSystem.getPhase(1).getComponent("MEG").getx()*testSystem.getPhase(1).getComponent("MEG").getMolarMass()/testSystem.getPhase(1).getMolarMass());

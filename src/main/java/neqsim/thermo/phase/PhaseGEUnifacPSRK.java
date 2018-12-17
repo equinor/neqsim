@@ -9,6 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacPSRK;
 import neqsim.thermo.component.ComponentGEUniquac;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -18,6 +19,7 @@ import neqsim.thermo.component.ComponentGEUniquac;
 public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PhaseGEUnifacPSRK.class);
     
     /** Creates new PhaseGEUniquac */
     
@@ -90,11 +92,11 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
                 catch (Exception e) {
                     e.printStackTrace();
                     String err = e.toString();
-                    System.out.println(err);
+                    logger.error(err);
                 }
             }
         }
-        System.out.println("finished finding interaction coefficient...B");
+        logger.info("finished finding interaction coefficient...B");
     }
     
     public void calccij(){
@@ -124,11 +126,11 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
                 catch (Exception e) {
                     e.printStackTrace();
                     String err = e.toString();
-                    System.out.println(err);
+                    logger.error(err);
                 }
             }
         }
-        System.out.println("finished finding interaction coefficient...C");
+        logger.info("finished finding interaction coefficient...C");
     }
     
     

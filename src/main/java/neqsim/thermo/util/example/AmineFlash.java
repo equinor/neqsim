@@ -19,6 +19,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -33,6 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class AmineFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(AmineFlash.class);
     
     /** Creates new TPflash */
     public AmineFlash() {
@@ -61,14 +63,14 @@ public class AmineFlash {
             testOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println("err " + e.toString());
+            logger.error("err " + e.toString());
         }
         double molprMDEA = (molMDEA/(1.0+0.30*molMDEA));
-        System.out.println("mol % MDEA " + molprMDEA);
-        System.out.println("molCO2/liter " + loading*molprMDEA/testSystem.getPhase(1).getMolarMass()*density/1e3);
-        System.out.println("pressure "+ testSystem.getPressure());
-        System.out.println("pH "+ testSystem.getPhase(1).getpH());
-         System.out.println("Henrys Constant CO2 " + testSystem.calcHenrysConstant("CO2"));//
+        logger.info("mol % MDEA " + molprMDEA);
+        logger.info("molCO2/liter " + loading*molprMDEA/testSystem.getPhase(1).getMolarMass()*density/1e3);
+        logger.info("pressure "+ testSystem.getPressure());
+        logger.info("pH "+ testSystem.getPhase(1).getpH());
+        logger.info("Henrys Constant CO2 " + testSystem.calcHenrysConstant("CO2"));//
         testSystem.display();
     }
 }

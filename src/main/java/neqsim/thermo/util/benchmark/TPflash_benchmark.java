@@ -29,9 +29,7 @@ public class TPflash_benchmark {
     /**
      * This method is just meant to test the thermo package.
      */
-    public static void main(String args[]) {
-        logger.info("test");
-        
+    public static void main(String args[]) { 
         double[][] points;
 
         SystemInterface testSystem = new SystemSrkEos(283.15, 35.01325);
@@ -42,14 +40,14 @@ public class TPflash_benchmark {
 
         testSystem.addComponent("nitrogen", 0.0028941);
         testSystem.addComponent("CO2", 0.054069291);
-       testSystem.addComponent("methane", 0.730570915);
+        testSystem.addComponent("methane", 0.730570915);
         testSystem.addComponent("ethane", 0.109004002);
         testSystem.addComponent("propane", 0.061518891);
         testSystem.addComponent("n-butane", 0.0164998);
         testSystem.addComponent("i-butane", 0.006585);
         testSystem.addComponent("n-pentane", 0.005953);
         testSystem.addComponent("i-pentane", 0.0040184);
-       testSystem.addTBPfraction("C6", 0.006178399, 86.17801 / 1000.0, 0.6639999);
+        testSystem.addTBPfraction("C6", 0.006178399, 86.17801 / 1000.0, 0.6639999);
         testSystem.addComponent("water", 0.0027082);
  //       testSystem.addComponent("TEG", 1.0);
    //     testSystem.addTBPfraction("C7",1.0,250.0/1000.0,0.9);
@@ -59,10 +57,10 @@ public class TPflash_benchmark {
         testSystem.autoSelectMixingRule();
         long multTime = System.currentTimeMillis();
          testSystem.setMultiPhaseCheck(true);
-         System.out.println("Time taken for setMultiPhaseCheck = " + (System.currentTimeMillis() - multTime));
+        logger.info("Time taken for setMultiPhaseCheck = " + (System.currentTimeMillis() - multTime));
          
         //    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-        System.out.println("start benchmark TPflash......");
+        logger.info("start benchmark TPflash......");
 
         testSystem.init(0);
         long time = System.currentTimeMillis();
@@ -74,13 +72,13 @@ public class TPflash_benchmark {
             //     testSystem.init(1);
         }
         testSystem.initPhysicalProperties();
-        System.out.println("Viscosity:"+  testSystem.getViscosity());
+        logger.info("Viscosity:"+  testSystem.getViscosity());
         
-        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testSystem.display();
-        System.out.println("gas " + testSystem.getPhase(0).getNumberOfMolesInPhase() + " oil "+ testSystem.getPhase(1).getNumberOfMolesInPhase() + " water "+ testSystem.getPhase(2).getNumberOfMolesInPhase());
-        System.out.println(testSystem.getPhase(0).getDensity());
-        System.out.println(testSystem.getPhase(0).getMolarMass()/testSystem.getPhase(0).getDensity());
+        logger.info("gas " + testSystem.getPhase(0).getNumberOfMolesInPhase() + " oil "+ testSystem.getPhase(1).getNumberOfMolesInPhase() + " water "+ testSystem.getPhase(2).getNumberOfMolesInPhase());
+        logger.info(testSystem.getPhase(0).getDensity());
+        logger.info(testSystem.getPhase(0).getMolarMass()/testSystem.getPhase(0).getDensity());
         testSystem.display();
 
        //     testSystem.saveObjectToFile("c:/temp/test2.neqsim", "test2.neqsim");

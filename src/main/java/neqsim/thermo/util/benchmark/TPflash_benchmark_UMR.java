@@ -19,10 +19,12 @@ package neqsim.thermo.util.benchmark;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class TPflash_benchmark_UMR {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflash_benchmark_UMR.class);
 
     /**
      * This method is just meant to test the thermo package.
@@ -49,7 +51,7 @@ public class TPflash_benchmark_UMR {
         testSystem.setMultiPhaseCheck(true);
         long time = System.currentTimeMillis();
         testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-        System.out.println("Time taken for reading parameters = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for reading parameters = " + (System.currentTimeMillis() - time));
         
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         time = System.currentTimeMillis();
@@ -64,7 +66,7 @@ public class TPflash_benchmark_UMR {
                 e.printStackTrace();
             }
         }
-        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testSystem.display();
 
         // base case - 31/8-2013 8:37  reading parameters 19312  flash 702  - running on AC

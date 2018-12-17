@@ -7,6 +7,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentBWRS;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -19,6 +20,8 @@ public class PhaseBWRSEos extends PhaseSrkEos{
     
     int OP = 9;
     int OE = 6;
+    
+    static Logger logger = Logger.getLogger(PhaseBWRSEos.class);
     
     /** Creates new P((ComponentBWRS)componentArray[0]).getBP(i)haseSrkEos */
     public PhaseBWRSEos() {
@@ -228,7 +231,7 @@ public class PhaseBWRSEos extends PhaseSrkEos{
     public double calcPressure2(){
         // System.out.println("here............");
         double temp=0.0;
-        System.out.println("molar density " + getMolarDensity());
+        logger.info("molar density " + getMolarDensity());
         for(int i=0;i<OP;i++){
             temp += ((ComponentBWRS)componentArray[0]).getBP(i)*Math.pow(getMolarDensity(),1.0+i);
         }
@@ -252,7 +255,7 @@ public class PhaseBWRSEos extends PhaseSrkEos{
                 temp += Math.exp(-((ComponentBWRS)componentArray[0]).getGammaBWRS()*Math.pow(moldens[j],2.0))*((ComponentBWRS)componentArray[0]).getBE(i)*Math.pow(moldens[j],3.0+2.0*i);
             }
             pres[j] = temp/100.0;
-            System.out.println("moldens " + moldens[j]*16.01  + "  pres " + pres[j]);
+            logger.info("moldens " + moldens[j]*16.01  + "  pres " + pres[j]);
         }
     }
     
@@ -369,7 +372,7 @@ public class PhaseBWRSEos extends PhaseSrkEos{
             iterations++;
             guesPres = -R*temperature*dFdV() + R*temperature/getMolarVolume();
             guesPresdV = -R*temperature*dFdVdV() - getNumberOfMolesInPhase()*R*temperature/Math.pow(getTotalVolume(),2.0);
-            System.out.println("gues pres " + guesPres);
+            logger.info("gues pres " + guesPres);
             setMolarVolume(getMolarVolume() - 1.0 / (guesPresdV * getNumberOfMolesInPhase()) * (guesPres - pressure) / 50.0);
             Z = pressure*getMolarVolume()/(R*temperature);
         }
