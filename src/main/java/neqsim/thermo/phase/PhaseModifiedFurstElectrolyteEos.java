@@ -7,6 +7,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -21,6 +22,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos implements neq
     double gamma=0, diElectricConstantdV=0, diElectricConstantdVdV=0, alphaLRdVdV=0, diElectricConstantdT=0, diElectricConstantdTdT=0.0, diElectricConstantdTdV=0;
     neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
     double sr2On = 1.0, lrOn = 1.0, bornOn= 1.0;
+    
+    static Logger logger = Logger.getLogger(PhaseModifiedFurstElectrolyteEos.class);
     //double gammLRdV=0.0;
     // PhaseInterface[] refPhase;// = new PhaseInterface[10];
     
@@ -299,7 +302,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos implements neq
         double d1=0, d2=0;
         Btemp = getB();
         Dtemp = getA();
-        if(Btemp<=0){System.out.println("b negative in volume calc");}
+        if(Btemp<=0){logger.info("b negative in volume calc");}
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
         
@@ -322,7 +325,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos implements neq
                 BonV += d2;
                 double hnew = h +d2*-h/d1;
                 if(Math.abs(hnew)>Math.abs(h)){
-                    System.out.println("volume correction needed....");
+                    logger.info("volume correction needed....");
                     BonV = phase== 1 ? 2.0/(2.0+temperature/getPseudoCriticalTemperature()):pressure*getB()/(numberOfMolesInPhase*temperature*R);
                 }
             }

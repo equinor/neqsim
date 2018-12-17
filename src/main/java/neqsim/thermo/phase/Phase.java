@@ -27,6 +27,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import static neqsim.thermo.ThermodynamicConstantsInterface.referencePressure;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -56,6 +57,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     int phaseType = 0, phaseTypeAtLastPhysPropUpdate = 0;
     protected String phaseTypeName = "gas";
     String phaseTypeNameAtLastPhysPropUpdate = "";
+    static Logger logger = Logger.getLogger(Phase.class);
 
     // Class methods
     /**
@@ -103,13 +105,13 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                     temp.add(this.componentArray[i]);
                 }
             }
-            System.out.println("length " + temp.size());
+            logger.info("length " + temp.size());
             for (int i = 0; i < temp.size(); i++) {
                 this.componentArray[i] = (ComponentInterface) temp.get(i);
                 this.getComponent(i).setComponentNumber(i);
             }
         } catch (Exception e) {
-            System.out.println("not able to remove " + componentName);
+            logger.error("not able to remove " + componentName);
         }
 
         //        componentArray = (ComponentInterface[])temp.toArray();
@@ -354,7 +356,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.CO2waterPhysicalProperties(this, 0, 0);
             }
         } else if (type == 5) {
-            System.out.println("Physical properties:    Amine model");
+            logger.info("Physical properties:    Amine model");
             if (phaseTypeName.equals("gas")) {
                 physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
             } else {
@@ -364,7 +366,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             //System.out.println("Physical properties:    common HC model");
             physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(this, 0, 0);
         } else {
-            System.out.println("error selecting physical properties model.\n Continue using default model...");
+            logger.error("error selecting physical properties model.\n Continue using default model...");
             setPhysicalProperties();
         }
         phaseTypeAtLastPhysPropUpdate = phaseType;
@@ -650,22 +652,22 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     public double getHresTP() {
-        System.out.println("feil Hres");
+        logger.error("error Hres");
         return 0;
     }
 
     public double getHresdP() {
-        System.out.println(" getHresdP feil Hres - not implemented?");
+        logger.error(" getHresdP error Hres - not implemented?");
         return 0;
     }
 
     public double getGresTP() {
-        System.out.println("feil Gres");
+        logger.error("error Gres");
         return 0;
     }
 
     public double getSresTV() {
-        System.out.println("feil Hres");
+        logger.error("error Hres");
         return 0;
     }
 
@@ -1322,7 +1324,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 return -neqsim.MathLib.generalMath.GeneralMath.log10(componentArray[i].getx() * getActivityCoefficient(i));
             }
         }
-        System.out.println("no H3Oplus");
+        logger.info("no H3Oplus");
         return 7.0;
     }
 
@@ -1337,10 +1339,10 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                     return componentArray[i];
                 }
             }
-            System.out.println("could not find component... " + name + " ..returning null");
+            logger.error("could not find component... " + name + " ..returning null");
         } catch (Exception e) {
-            System.out.println("component not found.... " + name);
-            System.out.println("returning first component..." + componentArray[0].getName());
+            logger.error("component not found.... " + name);
+            logger.error("returning first component..." + componentArray[0].getName());
             e.printStackTrace();
         }
         return componentArray[0];

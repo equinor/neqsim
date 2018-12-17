@@ -3,10 +3,12 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class HydrateFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(HydrateFlash.class);
 
     public static void main(String args[]) {
  //       SystemInterface testSystem = new SystemSrkCPAstatoil(288.15, 100.450);
@@ -118,7 +120,7 @@ public class HydrateFlash {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
         //   System.out.println("temperature " + (testSystem.getTemperature() - 273.15));

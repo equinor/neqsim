@@ -20,6 +20,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  * @author Even Solbraa
@@ -43,6 +44,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
     public double nEOSkij = 3.0;
     public static boolean calcEOSInteractionParameters = false;
     private int bmixType = 0;
+    
+    static Logger logger = Logger.getLogger(EosMixingRules.class);
 
     /**
      * Creates new EosMixingRules
@@ -1785,7 +1788,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                                 dataSet.close();
                             }
                         } catch (Exception e) {
-                            System.out.println("err closing dataSet IN MIX...");
+                            logger.error("err closing dataSet IN MIX...");
                             e.printStackTrace();
                         }
                     }
@@ -1802,7 +1805,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                 database.getConnection().close();
             }
         } catch (Exception e) {
-            System.out.println("error closing database.....");
+            logger.error("error closing database.....");
             e.printStackTrace();
         }
 

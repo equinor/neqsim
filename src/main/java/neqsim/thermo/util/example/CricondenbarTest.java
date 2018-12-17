@@ -7,6 +7,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CricondenbarTest {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CricondenbarTest.class);
 
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(249.02, 50.0);
@@ -32,6 +34,7 @@ public class CricondenbarTest {
         testSystem.init(1);
         testSystem.display();
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        
 
         try {
            // testSystem.setTemperature(250.0);
@@ -40,7 +43,7 @@ public class CricondenbarTest {
 
 
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
     }

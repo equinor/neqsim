@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentDesmukhMather;
 import neqsim.thermo.component.ComponentGEInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -23,6 +24,8 @@ public class PhaseDesmukhMather extends PhaseGE {
     double[][] aij;
     double[][] bij;
     /** Creates new PhaseGENRTLmodifiedHV */
+    
+    static Logger logger = Logger.getLogger(PhaseDesmukhMather.class);
     
     public PhaseDesmukhMather() {
         super();
@@ -80,8 +83,8 @@ public class PhaseDesmukhMather extends PhaseGE {
                     }
                 } catch (Exception e) {
                     String err = e.toString();
-                    System.out.println("comp names " + component_name);
-                    System.out.println(err);
+                    logger.info("comp names " + component_name);
+                    logger.error(err);
                 }
             }
         }

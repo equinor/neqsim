@@ -8,6 +8,7 @@ package neqsim.thermo.phase;
 import java.util.Arrays;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -25,6 +26,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
     boolean checkedGroups = false;
+    static Logger logger = Logger.getLogger(PhaseGEUnifac.class);
 
     public PhaseGEUnifac() {
         super();
@@ -51,7 +53,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         if (!checkedGroups) {
             checkGroups();
         }
-        System.out.println("checking unifac groups...");
+        logger.info("checking unifac groups...");
         calcaij();
     }
 
@@ -83,18 +85,18 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
                     aij[i][j] = Double.parseDouble(dataSet.getString("n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
                     if (Math.abs(aij[i][j]) < 1e-6) {
-                        System.out.println(" i " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + " j " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + "  aij " + aij[i][j]);
+                        logger.info(" i " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + " j " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + "  aij " + aij[i][j]);
                     }
                     dataSet.close();
                     database.getConnection().close();
                 } catch (Exception e) {
                     e.printStackTrace();
                     String err = e.toString();
-                    System.out.println(err);
+                    logger.error(err);
                 }
             }
         }
-        System.out.println("finished finding interaction coefficient...A");
+        logger.info("finished finding interaction coefficient...A");
     }
 
     public void checkGroups() {

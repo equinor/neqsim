@@ -9,6 +9,7 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -24,6 +25,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     public EosMixingRulesInterface mixRule;
     double uEOS = 0, wEOS = 0;
     newtonRhapson solver;
+    static Logger logger = Logger.getLogger(PhaseEos.class);
     // Class methods
 
     public Object clone() {
@@ -234,7 +236,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         int iterations = 0;
 
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
 

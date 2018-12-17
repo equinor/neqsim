@@ -37,8 +37,8 @@ public class FreezeMEGwater {
             e.printStackTrace();
         }
         testSystem.display();
-        System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
-        System.out.println("act water " + testSystem.getPhase(1).getActivityCoefficient(1));
+//        System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
+//        System.out.println("act water " + testSystem.getPhase(1).getActivityCoefficient(1));
 //        System.out.println("act MEG " + testSystem.getPhase(1).getActivityCoefficient(0));
 //        try{
 //        testOps.bubblePointPressureFlash(false);

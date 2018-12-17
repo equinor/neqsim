@@ -6,6 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -26,8 +27,8 @@ public class ComponentHydrateKluda extends Component {
     double cavNumb[][] = new double[2][2]; //[structure][cavitytype]
     double cavprwat[][] = new double[2][2]; //[structure][cavitytype]
     double reffug[] = new double[20];
+    static Logger logger = Logger.getLogger(ComponentHydrateKluda.class);
 
-    ;
 
     /** Creates new Class */
     public ComponentHydrateKluda() {
@@ -85,13 +86,13 @@ public class ComponentHydrateKluda extends Component {
                     for (int j = 0; j < phase.getNumberOfComponents(); j++) {
                         //System.out.println(phase.getComponent(j));
                         tempy += ((ComponentHydrateKluda) phase.getComponent(j)).calcYKI(hydrateStructure, cavType, phase);
-                        System.out.println("tempny " + tempy);
+                        logger.info("tempny " + tempy);
                         //System.out.println("temp ny " + this);//phase.getComponent(j));
                     }
                     val += cavprwat[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                 }
-                System.out.println("val " + (val));
-                System.out.println("fugasityCoeffisient bef " + fugasityCoeffisient);
+                logger.info("val " + (val));
+                logger.info("fugasityCoeffisient bef " + fugasityCoeffisient);
                 double solvol = 1.0 / 906.0 * getMolarMass();
                 fugasityCoeffisient = Math.exp(val) * getEmptyHydrateStructureVapourPressure(hydrateStructure, temp) * Math.exp(solvol / (R * temp) * ((pres - getEmptyHydrateStructureVapourPressure(hydrateStructure, temp))) * 1e5) / pres;
                 //fugasityCoeffisient = getAntoineVaporPressure(temp)/pres;
@@ -99,7 +100,7 @@ public class ComponentHydrateKluda extends Component {
                 //logFugasityCoeffisient += val*boltzmannConstant/R;
 
                 //fugasityCoeffisient = Math.exp(logFugasityCoeffisient);
-                System.out.println("fugasityCoeffisient " + fugasityCoeffisient);
+                logger.info("fugasityCoeffisient " + fugasityCoeffisient);
             } while (Math.abs((fugasityCoeffisient - fugold) / fugold) > 1e-8);
         } else {
             fugasityCoeffisient = 1e5;
