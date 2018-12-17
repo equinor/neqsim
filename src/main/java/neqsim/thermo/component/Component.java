@@ -30,6 +30,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.referenceTemperature
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 abstract class Component extends Object implements ComponentInterface, ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
 
@@ -95,6 +96,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
     protected double epsikSAFT = 0;
     private double associationVolumeSAFT;
     private double associationEnergySAFT = 0;
+    static Logger logger = Logger.getLogger(Component.class);
 
     /**
      * Creates new Component
@@ -137,7 +139,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
             index = 1000 + componentNumber;
             CASnumber = "00-00-0";
         } catch (Exception e) {
-            System.out.println("error in inserting to database");
+            logger.error("error in inserting to database");
             e.printStackTrace();
         } finally {
             try {
@@ -148,7 +150,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("error closing database.....");
+                logger.error("error closing database.....");
                 e.printStackTrace();
             }
         }
@@ -169,7 +171,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     //   if(dataSet.isAfterLast()) dataSet.next(); 
                 } catch (Exception e) {
                     dataSet.close();
-                    System.out.println("no parameters in tempcomp -- trying comp.. " + component_name);
+                    logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
@@ -353,7 +355,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
             }
             componentNumber = compnumber;
         } catch (Exception e) {
-            System.out.println("error in comp");
+            logger.error("error in comp");
             e.printStackTrace();
         } finally {
             try {
@@ -367,7 +369,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("error closing database.....");
+                logger.error("error closing database.....");
                 e.printStackTrace();
             }
         }
@@ -1134,11 +1136,11 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
     }
 
     public void seta(double a) {
-        System.out.println("no method set a");
+        logger.error("no method set a");
     }
 
     public void setb(double b) {
-        System.out.println("no method set b");
+        logger.error("no method set b");
     }
 
     /**

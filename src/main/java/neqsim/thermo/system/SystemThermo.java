@@ -92,7 +92,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         interfaceProp = new InterfaceProperties(this);
     }
 
+<<<<<<< HEAD
     public SystemThermo(double T, double P) {
+=======
+    public SystemThermo(double T, double P)  {
+>>>>>>> d513bfc34a3a5b0f3adcf7e295d7265c5457b12a
         this();
         beta[0] = 1.0;
         beta[1] = 1.0;

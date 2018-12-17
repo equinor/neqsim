@@ -20,16 +20,18 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class TPflash_benchmark {
-
+    static Logger logger = Logger.getLogger(TPflash_benchmark.class);
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
+        logger.info("test");
+        
         double[][] points;
 
         SystemInterface testSystem = new SystemSrkEos(283.15, 35.01325);

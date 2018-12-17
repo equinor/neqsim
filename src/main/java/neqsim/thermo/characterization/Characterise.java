@@ -21,6 +21,7 @@
 package neqsim.thermo.characterization;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -37,6 +38,7 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
     protected String TBPFractionModelName = "PedersenSRK";
     protected LumpingModel lumpingModelSelector = null;
     protected TBPfractionModel TBPfractionModelSelector;
+    static Logger logger = Logger.getLogger(Characterise.class);
 
     /**
      * Creates a new instance of TBPCharacterize
@@ -103,9 +105,9 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
         if (plusFractionModel.hasPlusFraction()) {
 
             if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
-                System.out.println("plus fraction molar mass too heavy for " + plusFractionModel.getName());
+                logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
                 plusFractionModel = plusFractionModelSelector.getModel("heavyOil");
-                System.out.println("changing to " + plusFractionModel.getName());
+                logger.info("changing to " + plusFractionModel.getName());
             }
             plusFractionModel.characterizePlusFraction(TBPfractionModel);
             lumpingModel.generateLumpedComposition(this);

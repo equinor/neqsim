@@ -69,15 +69,15 @@ public class NetCdf2D {
         tempdim.add(latD);
         
         Variable t = ncfile.addVariable(null, latD.getName(), ucar.ma2.DataType.DOUBLE, tempdim);
-        t.addAttribute(new ucar.nc2.Attribute("units", "degrees_north"));
+    //    t.addAttribute(new ucar.nc2.Attribute("units", "degrees_north"));
         
         for(int i=0;i<yLength;i++){
             lonD.add(ncfile.addDimension(null,yName2[i], yvalues2[i].length));
             Variable u = ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
-            u.addAttribute(new Attribute("units", "degrees_east"));
+      //      u.addAttribute(new Attribute("units", "degrees_east"));
         }
         
-        ncfile.addGroupAttribute(null, new Attribute("title", "Example Data"));
+     //   ncfile.addGroupAttribute(null, new Attribute("title", "Example Data"));
         
         
         

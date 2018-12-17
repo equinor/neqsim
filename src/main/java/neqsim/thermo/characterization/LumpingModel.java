@@ -22,6 +22,7 @@ package neqsim.thermo.characterization;
 
 import java.io.Serializable;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -32,6 +33,7 @@ public class LumpingModel implements Serializable {
     int numberOfLumpedComponents = 7;
     String name = "";
     transient SystemInterface system = null;
+    static Logger logger = Logger.getLogger(LumpingModel.class);
 
     public LumpingModel(SystemInterface system) {
         this.system = system;
@@ -93,7 +95,7 @@ public class LumpingModel implements Serializable {
                     denstemp1 += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass();
                     denstemp2 += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass() / system.getPhase(0).getComponent(name).getNormalLiquidDensity();
                     system.removeComponent(name);
-                    System.out.println("removing component " + name);
+                    logger.info("removing component " + name);
                     ii--;
                 }
 

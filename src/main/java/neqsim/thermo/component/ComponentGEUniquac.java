@@ -6,6 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,8 @@ public class ComponentGEUniquac extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
     double r = 0, q = 0;
+    
+    static Logger logger = Logger.getLogger(ComponentGEUniquac.class);
 
     /**
      * Creates new ComponentGEUniquac
@@ -55,7 +58,7 @@ public class ComponentGEUniquac extends ComponentGE {
             database.getConnection().close();
         } catch (Exception e) {
             String err = e.toString();
-            System.out.println(err);
+            logger.error(err);
         }
 
 

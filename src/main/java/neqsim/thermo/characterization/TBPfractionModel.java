@@ -6,6 +6,7 @@ package neqsim.thermo.characterization;
 
 import java.io.Serializable;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -14,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TBPfractionModel implements Serializable {
     private static final long serialVersionUID = 1000;    
     String name = "";
+    static Logger logger = Logger.getLogger(TBPfractionModel.class);
 
     public TBPfractionModel() {
     }
@@ -63,7 +65,7 @@ public class TBPfractionModel implements Serializable {
             double acs = calcAcentricFactor(molarMass, density);//thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
             double criticaVol = (0.2918 - 0.0928 * acs) * 8.314 * TC / PC * 10.0;
             if (criticaVol < 0) {
-                System.out.println("acentric factor in calc critVol " + acs);
+                logger.info("acentric factor in calc critVol " + acs);
                 criticaVol = (0.2918 - 0.0928) * 8.314 * TC / PC * 10.0;
             }
             return criticaVol;
@@ -249,12 +251,12 @@ public class TBPfractionModel implements Serializable {
         if (name.equals("PedersenSRK")) {
             return new PedersenTBPModelSRK();
         } else if (name.equals("PedersenSRKHeavyOil")) {
-            System.out.println("using SRK heavy oil TBp.................");
+            logger.info("using SRK heavy oil TBp.................");
             return new PedersenTBPModelSRKHeavyOil();
         } else if (name.equals("PedersenPR")) {
             return new PedersenTBPModelPR();
         } else if (name.equals("PedersenPRHeavyOil")) {
-            System.out.println("using PR heavy oil TBp.................");
+            logger.info("using PR heavy oil TBp.................");
             return new PedersenTBPModelPRHeavyOil();
         } else if (name.equals("RiaziDaubert")) {
             return new RiaziDaubert();
