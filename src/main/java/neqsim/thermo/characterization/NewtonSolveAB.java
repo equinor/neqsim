@@ -18,6 +18,7 @@ package neqsim.thermo.characterization;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class NewtonSolveAB extends Object implements java.io.Serializable {
     private static final long serialVersionUID = 1000;    
@@ -27,6 +28,7 @@ public class NewtonSolveAB extends Object implements java.io.Serializable {
     Matrix sol,dx;
     int numberOfComponents=0;
     TBPCharacterize characterizeClass;
+    static Logger logger = Logger.getLogger(NewtonSolveAB.class);
     
     SystemInterface system = null;
     
@@ -98,13 +100,15 @@ public class NewtonSolveAB extends Object implements java.io.Serializable {
             setJac();
             Jac.print(10,2);
             dx=Jac.solve(fvec);
-            System.out.println("dx ");
+            logger.info("dx: ");
             dx.print(10,3);
+           // System.out.println("dx ");
+           // dx.print(10,3);
             sol.minusEquals(dx.times(iter/(iter+100.0)));
             characterizeClass.setPlusCoefs(sol.transpose().copy().getArray()[0]);
         }
         while(((dx.norm2()/sol.norm2()<1e-6 || iter<15000) && iter<50000));
-        System.out.println("ok char");
+        logger.info("ok char: ");
         sol.print(10,10);
     }
 }

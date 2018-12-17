@@ -2,6 +2,7 @@ package neqsim.thermo.characterization;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class NewtonSolveCDplus extends Object implements java.io.Serializable {
     private static final long serialVersionUID = 1000;    
@@ -12,6 +13,7 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
     int numberOfComponents = 0;
     PlusCharacterize characterizeClass;
     SystemInterface system = null;
+    static Logger logger = Logger.getLogger(NewtonSolveCDplus.class);
 
     public NewtonSolveCDplus() {
     }
@@ -43,10 +45,10 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
         }
         densSum = mSum / densSum;
         double lengthPlus = characterizeClass.getLastPlusFractionNumber() - characterizeClass.getFirstPlusFractionNumber();
-        System.out.println("diff " + lengthPlus);
+        logger.info("diff " + lengthPlus);
         //Dtot /= lengthPlus;
         // System.out.println("Dtot "+ Dtot);
-        System.out.println("zsum " + zSum);
+        logger.info("zsum " + zSum);
         //        System.out.println("zplus " + characterizeClass.getZPlus());
         fvec.set(0, 0,
                 zSum - characterizeClass.getZPlus());
@@ -135,13 +137,13 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
         do {
             iter++;
             setfvec();
-            System.out.println("fvec ");
+            logger.info("fvec: ");
             fvec.print(10, 17);
             setJac();
             Jac.print(10, 6);
             //     System.out.println("rank " + Jac.rank());
             dx = Jac.solve(fvec);
-            System.out.println("dx ");
+            logger.info("dx: ");
             dx.print(10, 3);
             if (iter < 10) {
                 sol.minusEquals(dx.times((iter) / (iter + 5000.0)));
@@ -152,7 +154,7 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
             //sol.print(10,10);
             characterizeClass.setCoefs(sol.transpose().copy().getArray()[0]);
         } while (((fvec.norm2() > 1e-6 || iter < 15) && iter < 3000));
-        System.out.println("ok char");
+        logger.info("ok char: ");
         sol.print(10, 10);
     }
 }
