@@ -94,7 +94,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         interfaceProp = new InterfaceProperties(this);
     }
 
-    public SystemThermo(double T, double P)  {
+    public SystemThermo(double T, double P) {
         this();
         beta[0] = 1.0;
         beta[1] = 1.0;
@@ -593,6 +593,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 refSystem.getPhase(i).getComponent(0).setAcentricFactor(acs);
                 refSystem.getPhase(i).getComponent(0).setTC(TC);
                 refSystem.getPhase(i).getComponent(0).setPC(PC);
+                refSystem.getPhase(i).getComponent(0).setComponentType("TBPfraction");
+                refSystem.getPhase(i).getComponent(0).setIsTBPfraction(true);
                 if (characterization.getTBPModel().isCalcm()) {
                     refSystem.getPhase(i).getComponent(0).getAtractiveTerm().setm(m);
                     acs = refSystem.getPhase(i).getComponent(0).getAcentricFactor();
@@ -602,6 +604,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             refSystem.setTemperature(273.15 + 15.0);
             refSystem.setPressure(1.01325);
             refSystem.init(1);
+            //refSystem.display();
             racketZ = characterization.getTBPModel().calcRacketZ(refSystem, molarMass * 1000.0, density);
 
             //System.out.println("vol ok");
@@ -638,9 +641,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).setAtractiveTerm(attractiveTermNumber);
             getPhase(i).getComponent(componentName).setMolarMass(molarMass);
-            getPhase(i).getComponent(componentName).setComponentType("HC");
+            getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
             getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
-            getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
+            getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB-273.15);
             getPhase(i).getComponent(componentName).setAcentricFactor(refSystem.getPhase(i).getComponent(0).getAcentricFactor());
             getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
             getPhase(i).getComponent(componentName).setRacketZ(racketZ);
@@ -2730,7 +2733,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
         try {
-            java.sql.Connection con = database.openConnection("NeqSimDatabase");
+            java.sql.Connection con = database.openConnection("NeqSimDataBase");
 
             java.sql.PreparedStatement ps = con.prepareStatement(
                     "REPLACE INTO fluid_blobdb (ID, FLUID) VALUES (?,?)");

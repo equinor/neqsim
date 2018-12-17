@@ -32,7 +32,7 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
     
-    public SystemCSPsrkEos(double T, double P) {
+    public SystemCSPsrkEos(double T, double P){
         super(T,P);
         modelName = "CSPsrk-EOS";
         attractiveTermNumber = 0;
@@ -43,7 +43,7 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
     
-    public SystemCSPsrkEos(double T, double P, boolean solidCheck) {
+    public SystemCSPsrkEos(double T, double P, boolean solidCheck){
         this(T,P);
         modelName = "CSPsrk-EOS";
         attractiveTermNumber = 0;

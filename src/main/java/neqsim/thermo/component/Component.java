@@ -74,7 +74,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
     protected double[] dfugdn = new double[MAX_NUMBER_OF_COMPONENTS];
     public double[] dfugdx = new double[MAX_NUMBER_OF_COMPONENTS];
     double AntoineA = 0, AntoineB = 0, AntoineC = 0, AntoineD = 0, AntoineE = 0;
-    private double CpA = 0;
+    private double CpA = 100.0;
     private double CpB = 0;
     private double CpC = 0;
     private double CpD = 0;
@@ -82,9 +82,9 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
     private double[] CpSolid = new double[5];
     private double[] CpLiquid = new double[5];
     private double heatOfFusion = 0.0;
-    double triplePointDensity = 0.0, triplePointPressure = 0.0;
-    private double triplePointTemperature = 0.0;
-    double meltingPointTemperature = 0.0;
+    double triplePointDensity = 10.0, triplePointPressure = 0.0;
+    private double triplePointTemperature = 1000.0;
+    double meltingPointTemperature = 110.0;
     private double idealGasEnthalpyOfFormation = 0.0;
     double idealGasGibsEnergyOfFormation = 0.0, idealGasAbsoluteEntropy = 0.0;
     double Hsub = 0.0;
