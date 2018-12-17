@@ -72,7 +72,7 @@ public class ComponentHydrate extends Component {
                     dataSet.getString("FORMULA");
                 } catch (Exception e) {
                     dataSet.close();
-                    System.out.println("no parameters in tempcomp -- trying comp.. " + component_name);
+                    logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
@@ -81,7 +81,7 @@ public class ComponentHydrate extends Component {
                 sphericalCoreRadiusHydrate = Double.parseDouble(dataSet.getString("SphericalCoreRadiusHYDRATE"));
             }
         } catch (Exception e) {
-            System.out.println("error in comp");
+            logger.error("error in comp");
             e.printStackTrace();
         } finally {
             try {
@@ -95,7 +95,7 @@ public class ComponentHydrate extends Component {
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("error closing database.....");
+                logger.error("error closing database.....");
                 e.printStackTrace();
             }
         }

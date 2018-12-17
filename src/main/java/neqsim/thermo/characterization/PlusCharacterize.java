@@ -6,6 +6,7 @@
 package neqsim.thermo.characterization;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -28,6 +29,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
     double[] plusCoefs = {0.0007774204804, -0.02390179};
     transient SystemInterface system = null;
+    static Logger logger = Logger.getLogger(PlusCharacterize.class);
 
     /** Creates a new instance of TBPCharacterize */
     public PlusCharacterize() {
@@ -100,7 +102,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
                 e.toString();
             }
         }
-        System.out.println("first plus fraction number " + firstPlusFractionNumber);
+        logger.info("first plus fraction number " + firstPlusFractionNumber);
 
         //      NewtonSolveABCDplus solver = new NewtonSolveABCDplus(system, this);
         //NewtonSolveCDplus solver2 = new NewtonSolveCDplus(system, this);
@@ -135,9 +137,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
                     Dtot += (getDensPlus() - this.getCoef(2)) / Math.log(i);// (this.getCoef(2)+this.getCoef(3)*Math.log(i)-this.getCoef(2))/Math.log(i);
                 }
                 double lengthPlus = this.getLastPlusFractionNumber() - this.getFirstPlusFractionNumber();
-                System.out.println("length plus " + lengthPlus);
+                logger.info("length plus " + lengthPlus);
                 Dtot /= lengthPlus;
-                System.out.println("D " + Dtot);
+                logger.info("D " + Dtot);
                 this.coefs[3] = Dtot;
             }
             firsttime = false;
@@ -400,9 +402,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         for (int i = 0; i < list.size(); i++) {
             try {
                 system.removeComponent((String) list.get(i));
-                System.out.println("removing " + list.get(i));
+                logger.info("removing " + list.get(i));
             } catch (Exception e) {
-                System.out.println("not able to remove " + list.get(i));
+                logger.error("not able to remove " + list.get(i));
                 //return;
             }
         }

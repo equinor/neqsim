@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     protected double gamma = 0, gammaRefCor = 0;
     protected double lngamma = 0, dlngammadt = 0, dlngammadp = 0,dlngammadtdt=0.0;
     protected double[] dlngammadn;
+    static Logger logger = Logger.getLogger(ComponentGE.class);
 
     /** Creates new ComponentGE */
     public ComponentGE() {
@@ -30,7 +32,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     }
 
     public double fugcoef(PhaseInterface phase) {
-        System.out.println("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+        logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
         if (referenceStateType.equals("solvent")) {
             fugasityCoeffisient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
             gammaRefCor = gamma;
@@ -67,7 +69,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
 
         if (referenceStateType.equals("solvent")) {
             dfugdt = dlngammadt + getLogAntoineVaporPressuredT(temperature);
-            System.out.println("sjekk denne dfug dt - antoine");
+            logger.info("check this dfug dt - antoine");
         } else {
             dfugdt = dlngammadt + getHenryCoefdT(temperature);
         }

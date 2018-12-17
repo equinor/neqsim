@@ -6,6 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentHydrateBallard extends ComponentHydrate {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ComponentHydrateBallard.class);
 
     /** Creates new Class */
     public ComponentHydrateBallard() {
@@ -69,11 +71,11 @@ public class ComponentHydrateBallard extends ComponentHydrate {
                 }
                 val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
             }
-            System.out.println("val " + val + " wateralphaRef " + wateralphaRef + " calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) "+ calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) + " " +calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure) );
+            logger.info("val " + val + " wateralphaRef " + wateralphaRef + " calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) "+ calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) + " " +calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure) );
             fugasityCoeffisient = alphaWater * Math.exp(wateralphaRef + val + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) - calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure)) / (pres);
             //System.out.println("fugcoef " + tempfugcoef + "structure " + (hydrateStruct+1));
 
-            System.out.println("structure " + (hydrateStructure + 1));
+            logger.info("structure " + (hydrateStructure + 1));
         } else {
             fugasityCoeffisient = 1e50;
         }
@@ -122,10 +124,10 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         }
         //System.out.println("integral " + val);
         if (Double.isNaN(val)) {
-            System.out.println("val NaN ...");
+            logger.error("val NaN ...");
         }
         if (Double.isInfinite(val)) {
-            System.out.println("val Infinite ...");
+            logger.error("val Infinite ...");
         }
         return val;
     }
@@ -137,10 +139,10 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         pot = Math.exp(-pot / (phase.getTemperature())) * radius * radius;
 
         if (Double.isNaN(pot)) {
-            System.out.println("pot NaN ...");
+            logger.error("pot NaN ...");
         }
         if (Double.isInfinite(pot)) {
-            System.out.println("pot Infinite ...");
+            logger.error("pot Infinite ...");
         }
         return pot;
     }
@@ -153,10 +155,10 @@ public class ComponentHydrateBallard extends ComponentHydrate {
 //        System.out.println("diff2 " + diff2);
 //        System.out.println("delt " + delt);
         if (Double.isNaN(delt)) {
-            System.out.println("delt NaN ...");
+            logger.error("delt NaN ...");
         }
         if (Double.isInfinite(delt)) {
-            System.out.println("delt Infinite ...");
+            logger.error("delt Infinite ...");
         }
         return delt;
     }

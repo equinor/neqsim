@@ -6,6 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -18,6 +19,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
     double Ak[][] = new double[2][2]; //[structure][cavitytype]
     double Bk[][] = new double[2][2]; //[structure][cavitytype]
+    static Logger logger = Logger.getLogger(ComponentHydrateGF.class);
 
     public ComponentHydrateGF() {
     }
@@ -35,7 +37,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 } catch (Exception e) {
-                    System.out.println("noo parameters in tempcomp -- trying comp.. " + component_name);
+                    logger.info("noo parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
@@ -49,14 +51,14 @@ public class ComponentHydrateGF extends ComponentHydrate {
                 Ak[1][1] = Double.parseDouble(dataSet.getString("A2_LargeGF"));
                 Bk[1][1] = Double.parseDouble(dataSet.getString("B2_LargeGF"));
             } catch (Exception e) {
-                System.out.println("error in ComponentHydrateGF");
+                logger.error("error in ComponentHydrateGF");
                 e.printStackTrace();
             } finally {
                 try {
                     dataSet.close();
                     database.getConnection().close();
                 } catch (Exception e) {
-                    System.out.println("error closing database.....");
+                    logger.error("error closing database.....");
                     //e.printStackTrace();
                 }
             }

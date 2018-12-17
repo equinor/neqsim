@@ -27,6 +27,7 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwuCoonParam;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermUMRPRU;
 import neqsim.thermo.component.atractiveEosTerm.AttractiveTermTwuCoonStatoil;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -48,6 +49,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface, 
     protected double dAdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
     protected double dBdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
     protected AtractiveTermInterface atractiveParameter;
+    static Logger logger = Logger.getLogger(ComponentEos.class);
 
     public ComponentEos() {
     }
@@ -150,8 +152,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface, 
             }
         }
         else {
-            System.out.println("error selecting an alpha formultaion term");
-            System.out.println("ok seting alpha function");
+            logger.error("error selecting an alpha formultaion term");
+            logger.info("ok setting alpha function");
         }
     }
 

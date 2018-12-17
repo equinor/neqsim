@@ -77,7 +77,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
             database.getConnection().close();
         } catch (Exception e) {
             String err = e.toString();
-            System.out.println(err);
+            logger.error(err);
         }
         unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
@@ -313,7 +313,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         lngamma = lngammaResidual + lngammaCombinational;
 
         if (Double.isNaN(lngamma)) {
-            System.out.println("gamma NaN......");
+            logger.error("gamma NaN......");
             lngamma = 0.0;
             gamma = 1.0;
             dlngammadt = 0;

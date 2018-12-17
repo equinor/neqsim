@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -24,6 +25,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     double[] xsiteOld = new double[0];
     double[] xsitedV = new double[0];
     double[] xsitedT = new double[0];
+    static Logger logger = Logger.getLogger(ComponentElectrolyteCPAOld.class);
 
     public ComponentElectrolyteCPAOld() {
     }
@@ -39,9 +41,9 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         xsiteOld = new double[numberOfAssociationSites];
         xsitedT = new double[numberOfAssociationSites];
         if (numberOfAssociationSites != 0 && cpaon == 1) {
-            System.out.println("ass sites: " + numberOfAssociationSites);
-            System.out.println("aSRK " + a + " aCPA " + aCPA);
-            System.out.println("bSRK " + b + " bCPA " + bCPA);
+            logger.info("ass sites: " + numberOfAssociationSites);
+            logger.info("aSRK " + a + " aCPA " + aCPA);
+            logger.info("bSRK " + b + " bCPA " + bCPA);
             for (int j = 0; j < getNumberOfAssociationSites(); j++) {
                 setXsite(j, 1.0);
                 setXsiteOld(j, 1.0);

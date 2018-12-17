@@ -8,6 +8,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseBWRSEos;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -34,6 +35,8 @@ public class ComponentBWRS extends ComponentSrk{
     double gammaBWRS = 0.0;
     
     PhaseBWRSEos refPhaseBWRS = null;
+    
+    static Logger logger = Logger.getLogger(ComponentBWRS.class);
     
     /** Creates new System_SRK_EOS
      * Ev liten fil ja.
@@ -68,14 +71,14 @@ public class ComponentBWRS extends ComponentSrk{
             }
             rhoc = Double.parseDouble(dataSet.getString("rhoc"));
             gammaBWRS = 1.0/(rhoc*rhoc);
-            System.out.println("gamma " + gammaBWRS);
+            logger.info("gamma " + gammaBWRS);
             dataSet.close();
             database.getConnection().close();
         }
         
         catch (Exception e) {
             String err = e.toString();
-            System.out.println(err);
+            logger.error(err);
         }
     }
     

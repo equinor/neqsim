@@ -7,6 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -18,6 +19,7 @@ public class ComponentDesmukhMather extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
     private double deshMathIonicDiameter = 1.0;
+    static Logger logger = Logger.getLogger(ComponentDesmukhMather.class);
     /** Creates new ComponentGENRTLmodifiedHV */
     public ComponentDesmukhMather() {
     }
@@ -36,14 +38,14 @@ public class ComponentDesmukhMather extends ComponentGE {
                     dataSet.getString("FORMULA");
                 } catch (Exception e) {
                     dataSet.close();
-                    System.out.println("no parameters in tempcomp -- trying comp.. " + component_name);
+                    logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
             }
         } catch (Exception e) {
-            System.out.println("error in comp");
+            logger.error("error in comp");
             e.printStackTrace();
         } finally {
             try {
@@ -57,7 +59,7 @@ public class ComponentDesmukhMather extends ComponentGE {
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("error closing database.....");
+                logger.error("error closing database.....");
                 e.printStackTrace();
             }
         }
@@ -87,7 +89,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         //System.out.println("temp2 "+ -2.303*A*Math.pow(getIonicCharge(),2.0)*Math.sqrt(Iion)/(1.0+B*Math.sqrt(Iion)));
         gamma = getMolality(phase)*((PhaseDesmukhMather)phase).getSolventMolarMass()*Math.exp(lngamma)/getx();
         lngamma = Math.log(gamma);
-        System.out.println("gamma " + componentName + " " + gamma);
+        logger.info("gamma " + componentName + " " + gamma);
         return gamma;
     }
 
