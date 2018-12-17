@@ -20,11 +20,11 @@ public class propaneCoolingCycle {
     
     public static void main(String args[]) {
         
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 50.0), 25.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
         testSystem.addComponent("propane", 4759.0, "kg/hr");
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(2);
         
+        testSystem.setMixingRule(2);
         
         Stream stream_1 = new Stream("Stream1", testSystem);
         stream_1.setSpecification("bubT");
@@ -38,7 +38,7 @@ public class propaneCoolingCycle {
         
         Stream stream_2 = new Stream(cooler.getOutStream());
         stream_2.setSpecification("dewT");
-        stream_2.getThermoSystem().setTemperature(273.15 - 10.0);
+        stream_2.getThermoSystem().setTemperature(273.15  - 30.0);
         stream_2.run();
         
         
@@ -67,7 +67,11 @@ public class propaneCoolingCycle {
         operations.add(heater);
         
         operations.run();
-        operations.displayResult();
+        stream_1.displayResult();
+        JTvalve.displayResult();
+        compressor1.displayResult();
+      //  stream_2.displayResult();
+       // operations.displayResult();
         
         System.out.println("compressor work" + compressor1.getEnergy());
         System.out.println("compressor isentropic ef " + compressor1.getIsentropicEfficiency());

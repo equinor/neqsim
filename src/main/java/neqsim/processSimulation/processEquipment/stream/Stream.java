@@ -16,14 +16,30 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
 
+    /**
+     * @return the gasQuality
+     */
+    public double getGasQuality() {
+        return gasQuality;
+    }
+
+    /**
+     * @param gasQuality the gasQuality to set
+     */
+    public void setGasQuality(double gasQuality) {
+        this.gasQuality = gasQuality;
+    }
+
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface thermoSystem;
     protected ThermodynamicOperations thermoOps;
     protected int streamNumber = 0;
     protected static int numberOfStreams = 0;
+    private double gasQuality = 0.5;
     protected String name = new String();
     protected StreamInterface stream = null;
+
     /**
      * Creates new Stream
      */
@@ -170,6 +186,19 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         } else if (specification.equals("dewT")) {
             try {
                 thermoOps.dewPointPressureFlash();
+            } catch (Exception e) {
+                e.printStackTrace();
+                thermoOps.TPflash();
+            }
+        } else if (specification.equals("gas quality")) {
+            try {
+                thermoSystem.init(0);
+                thermoSystem.init(2);
+                double gasEnthalpy = thermoSystem.getPhase(0).getEnthalpy();
+                double liquidEnthalpy = thermoSystem.getPhase(1).getEnthalpy();
+                
+                double enthalpySpec = getGasQuality()*gasEnthalpy+ (1.0-getGasQuality())*liquidEnthalpy;
+                thermoOps.PHflash(enthalpySpec);
             } catch (Exception e) {
                 e.printStackTrace();
                 thermoOps.TPflash();

@@ -344,7 +344,7 @@ public class TPflash extends Flash implements java.io.Serializable {
         gibbsEnergyOld = gibbsEnergy;
 
         int accelerateInterval = 7;
-        int newtonLimit = 240;
+        int newtonLimit = 20;
         int timeFromLastGibbsFail = 0;
 
         double chemdev = 0, oldChemDiff = 1.0, diffChem = 1.0;
@@ -390,6 +390,7 @@ public class TPflash extends Flash implements java.io.Serializable {
                     timeFromLastGibbsFail++;
                     setNewK();
                 }
+                //System.out.println("iterations " + iterations + " error " + deviation);
             } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
             // System.out.println("iterations " + iterations + " error " + deviation);
             if (system.isChemicalSystem()) {
