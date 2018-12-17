@@ -31,7 +31,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
 
     private static final long serialVersionUID = 1000;
 
-    private static String dataBaseType = "MSAccessUCanAccess"; //"MSAccess";// //"MSAccessUCanAccess";//"mySQL";//"oracle", "oracleST" , "mySQLNTNU";
+    private static String dataBaseType = "mySQL"; //"MSAccess";// //"MSAccessUCanAccess";//"mySQL";//"oracle", "oracleST" , "mySQLNTNU";
     private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
     private static String username = "remote";
     private static String password = "remote";
