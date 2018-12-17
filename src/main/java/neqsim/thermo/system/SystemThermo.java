@@ -92,11 +92,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         interfaceProp = new InterfaceProperties(this);
     }
 
-<<<<<<< HEAD
-    public SystemThermo(double T, double P) {
-=======
+
     public SystemThermo(double T, double P)  {
->>>>>>> d513bfc34a3a5b0f3adcf7e295d7265c5457b12a
         this();
         beta[0] = 1.0;
         beta[1] = 1.0;
@@ -2676,7 +2673,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         SystemThermo tempSystem = null;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         try {
-            java.sql.Connection con = database.openConnection();
+            java.sql.Connection con = database.openConnection("NeqSimDatabase");
             String sqlStr = "SELECT FLUID FROM fluid_blobdb WHERE ID=" + Integer.toString(ID);
             java.sql.PreparedStatement ps = con.prepareStatement(sqlStr);
             rs = ps.executeQuery();
@@ -2735,7 +2732,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
 
         try {
-            java.sql.Connection con = database.openConnection();
+            java.sql.Connection con = database.openConnection("NeqSimDataBase");
 
             java.sql.PreparedStatement ps = con.prepareStatement(
                     "REPLACE INTO fluid_blobdb (ID, FLUID) VALUES (?,?)");
