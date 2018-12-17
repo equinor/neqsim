@@ -14,6 +14,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -38,6 +39,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
     private SimpleMatrix KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
     DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;//new DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);
 
+    static Logger logger = Logger.getLogger(PhaseElectrolyteCPA.class);
     /**
      * Creates new PhaseSrkEos
      */
@@ -732,7 +734,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         Btemp
                 = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 
@@ -854,7 +856,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         double d1 = 0, d2 = 0;
         double Btemp = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 
@@ -974,7 +976,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         Btemp
                 = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 

@@ -23,6 +23,7 @@
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -37,6 +38,9 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
     protected double m;
     protected double parameters[] = new double[3];
     protected double parametersSolid[] = new double[3];
+    
+    static Logger logger = Logger.getLogger(AtractiveTermBaseClass.class);
+    
     /** Creates new AtractiveTermBaseClass */
     public AtractiveTermBaseClass(ComponentEosInterface component) {
         this.component = component;
@@ -44,7 +48,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
     
     public void setm(double val){
          this.m = val;
-         System.out.println("does not solve for accentric when new m is set... in AccentricBase class");
+         logger.info("does not solve for accentric when new m is set... in AccentricBase class");
     }
     
     public Object clone(){

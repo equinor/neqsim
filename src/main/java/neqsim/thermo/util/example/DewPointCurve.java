@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * PhaseEnvelope.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class DewPointCurve {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(DewPointCurve.class);
 
     /**
      * Creates new PhaseEnvelope
@@ -77,7 +79,7 @@ public class DewPointCurve {
             //  System.out.println("condensation rate: " + testOps.dewPointTemperatureCondensationRate() * 1e6 + " mg/K/Sm^3");
             //  System.out.println("condensation rate: " + testOps.dewPointTemperatureCondensationRate() * 1e6 * 1.0 / testSystem.getPressure() * testSystem.getPhase(0).getZ() * testSystem.getTemperature() / 288.15 + " mg/K/Sm^3");
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
 
         //testSystem.dewPointCondensationRate()

@@ -9,6 +9,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentPCSAFTa;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -28,6 +29,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     double gcpav = 0.0, lngcpa = 0.0, gcpavv = 1.0, gcpavvv = 0.0, gcpa = 0.0;
     int[][][] selfAccociationScheme = null;
     int[][][][] crossAccociationScheme = null;
+    static Logger logger = Logger.getLogger(PhasePCSAFTa.class);
 
     /** Creates new PhaseSrkEos */
     public PhasePCSAFTa() {
@@ -260,7 +262,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         Btemp = getB();
         Dtemp = getA();
         if (Btemp <= 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;

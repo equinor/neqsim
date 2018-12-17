@@ -10,6 +10,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
+import org.apache.log4j.Logger;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.SparseStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
@@ -42,6 +43,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     SparseStore<Double> corr2Matrix2 = null, corr3Matrix2 = null, corr4Matrix2 = null;//new DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);
     MatrixStore<Double> hessianInvers2 = null;
     final BasicMatrix.Factory<PrimitiveMatrix> mtrxFactory = PrimitiveMatrix.FACTORY;
+    
+    static Logger logger = Logger.getLogger(PhaseSrkCPAojAlgo.class);
 
     //private transient SimpleMatrix KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
     // DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;//new DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);
@@ -770,7 +773,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         double d1 = 0, d2 = 0;
         double Btemp = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 
@@ -889,7 +892,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         Btemp
                 = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 

@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class FreezingPoint {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(FreezingPoint.class);
 
     /** Creates new TPflash */
     public FreezingPoint() {
@@ -56,7 +58,7 @@ public class FreezingPoint {
         testSystem2.init(0);
         testSystem2.init(1);
 
-        System.out.println("activity coefficient water in teg " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("activity coefficient water in teg " + testSystem.getPhase(1).getActivityCoefficient(1));
         try {
             //  testOps.freezingPointTemperatureFlash();
             // testOps.waterDewPointTemperatureFlash();
@@ -70,10 +72,10 @@ public class FreezingPoint {
             testOps2.bubblePointTemperatureFlash();
             testSystem2.display();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
             e.printStackTrace();
         }
-        System.out.println("wt% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx() * testSystem.getPhase(1).getComponent("methanol").getMolarMass() / (testSystem.getPhase(1).getComponent("methanol").getx() * testSystem.getPhase(1).getComponent("methanol").getMolarMass() + testSystem.getPhase(1).getComponent("water").getx() * testSystem.getPhase(1).getComponent("water").getMolarMass()));
-        System.out.println("mol% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx());
+        logger.info("wt% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx() * testSystem.getPhase(1).getComponent("methanol").getMolarMass() / (testSystem.getPhase(1).getComponent("methanol").getx() * testSystem.getPhase(1).getComponent("methanol").getMolarMass() + testSystem.getPhase(1).getComponent("water").getx() * testSystem.getPhase(1).getComponent("water").getMolarMass()));
+        logger.info("mol% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx());
     }
 }

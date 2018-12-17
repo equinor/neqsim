@@ -9,6 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -21,6 +22,8 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
     
     public EosMixingRules mixSelect = new EosMixingRules();
     public EosMixingRulesInterface mixRuleEos;
+    
+    static Logger logger = Logger.getLogger(PhaseGE.class);
     
     /** Creates new PhaseGE */
     public PhaseGE() {
@@ -75,7 +78,7 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
     
     
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
-        System.out.println("this getExxess should never be used.......");
+        logger.error("this getExxess should never be used.......");
         return 0;
     }
     
@@ -84,7 +87,7 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
     }
     
     public double getExessGibbsEnergy(){
-        System.out.println("this getExxess should never be used.......");
+        logger.error("this getExxess should never be used.......");
         return 0;
     }
     

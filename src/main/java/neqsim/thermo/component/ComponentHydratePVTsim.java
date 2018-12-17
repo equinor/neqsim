@@ -6,6 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -18,6 +19,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     double Ak[][] = new double[2][2]; //[structure][cavitytype]
     double Bk[][] = new double[2][2]; //[structure][cavitytype]
+    static Logger logger = Logger.getLogger(ComponentHydratePVTsim.class);
 
     public ComponentHydratePVTsim() {
     }
@@ -29,13 +31,13 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         java.sql.ResultSet dataSet = null;
         try {
             if (!component_name.equals("default")) {
-                System.out.println("reading hydrate parameters ..............");
+                logger.info("reading hydrate parameters ..............");
                 try {
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 } catch (Exception e) {
                     dataSet.close();
-                    System.out.println("no parameters in tempcomp -- trying comp.. " + component_name);
+                    logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
@@ -50,14 +52,14 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 Bk[1][1] = Double.parseDouble(dataSet.getString("HydrateB2Large"));
             }
         } catch (Exception e) {
-            System.out.println("error in ComponentHydratePVTsim");
+            logger.error("error in ComponentHydratePVTsim");
             e.printStackTrace();
         } finally {
             try {
                 dataSet.close();
                 database.getConnection().close();
             } catch (Exception e) {
-                System.out.println("error closing comp hydrate database....." + component_name);
+                logger.error("error closing comp hydrate database....." + component_name);
                // e.printStackTrace();
             }
         }
@@ -101,7 +103,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     double refWaterFugacity = refPhase.getComponent("water").fugcoef(refPhase) * pres;
                     double alphaWater = reffug[getComponentNumber()];
                     double wateralphaRef = Math.log(refWaterFugacity / alphaWater);
-                    System.out.println("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater + " refFug " + refWaterFugacity);
+                    logger.info("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater + " refFug " + refWaterFugacity);
                    
 
                     double val = 0.0;
@@ -116,8 +118,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                         }
                         val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
                     }
-                    System.out.println("val " + val + " structure " + hydrateStructure);
-                    System.out.println("emty " + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
+                    logger.info("val " + val + " structure " + hydrateStructure);
+                    logger.info("emty " + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
                     //   tempfugcoef = refWaterFugacity * Math.exp(val + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStruct) + wateralphaRef) / (pres);
                     fugasityCoeffisient = alphaWater * Math.exp(val + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure) + wateralphaRef) / pres;
                     if (fugasityCoeffisient < maxFug) {

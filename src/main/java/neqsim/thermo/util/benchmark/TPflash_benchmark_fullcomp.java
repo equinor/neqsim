@@ -19,10 +19,12 @@ package neqsim.thermo.util.benchmark;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class TPflash_benchmark_fullcomp {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflash_benchmark_fullcomp.class);
 
     /** This method is just meant to test the thermo package.
      */
@@ -61,7 +63,7 @@ public class TPflash_benchmark_fullcomp {
         testSystem.setHydrateCheck(true);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(9);
-        System.out.println("start benchmark TPflash......");
+        logger.info("start benchmark TPflash......");
         long time = System.currentTimeMillis();
         for (int i = 0; i < 1; i++) {
             testOps.TPflash();
@@ -72,7 +74,7 @@ public class TPflash_benchmark_fullcomp {
                 e.printStackTrace();
             }
         }
-        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testOps.displayResult();
 
         // time for 5000 flash calculations

@@ -10,6 +10,7 @@ import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -30,6 +31,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
     int[][][][] crossAccociationScheme = null;
     double dFdVdXdXdVtotal = 0.0;
     double dFCPAdXdXdTtotal = 0.0, dFCPAdTdT = 0.0;
+    
+    static Logger logger = Logger.getLogger(PhaseElectrolyteCPAOld.class);
 
     /** Creates new PhaseSrkEos */
     public PhaseElectrolyteCPAOld() {
@@ -351,7 +354,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         Btemp = getB();
         Dtemp = getA();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
@@ -427,7 +430,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         Btemp = getB();
         Dtemp = getA();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
@@ -512,12 +515,12 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
             double factor1 = 1.0e0, factor2 = 1.0e0;
             err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
 
-            System.out.println("pressure " + -R * temperature * dFdV + " " + R * temperature / getMolarVolume());
+            logger.info("pressure " + -R * temperature * dFdV + " " + R * temperature / getMolarVolume());
             //-pressure;
             dErrdV = -R * temperature * dFdVdV - R * temperature * numberOfMolesInPhase / Math.pow(getVolume(), 2.0);
 
-            System.out.println("errdV " + dErrdV);
-            System.out.println("err " + err);
+            logger.info("errdV " + dErrdV);
+            logger.info("err " + err);
 
             deltaV = -err / dErrdV;
 

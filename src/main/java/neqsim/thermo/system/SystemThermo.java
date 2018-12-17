@@ -35,6 +35,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseWax;
+import org.apache.log4j.Logger;
 
 /*
  * This is the base class of the System classes. The purpose of this class is to
@@ -85,6 +86,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     private boolean multiphaseWaxCheck = false;
     Object pdfDocument = null;
     private boolean forcePhaseTypes = false;
+    static Logger logger = Logger.getLogger(SystemThermo.class);
 
     public SystemThermo() {
         phaseArray = new PhaseInterface[6];
@@ -434,7 +436,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 }
             }
         } catch (Exception e) {
-            System.out.println("error....." + fluidName + " has no phase .... " + phaseName + " ..... returning phase number 0");
+            logger.error("error....." + fluidName + " has no phase .... " + phaseName + " ..... returning phase number 0");
         }
         return phaseToSystem(0);
 
@@ -512,7 +514,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             stddens = Double.parseDouble(dataSet.getString("stddens"));
             boilp = Double.parseDouble(dataSet.getString("normboil"));
         } catch (Exception e) {
-            System.out.println("failed " + e.toString());
+            logger.error("failed " + e.toString());
         } finally {
             try {
                 dataSet.close();
@@ -545,9 +547,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             val2 = Double.parseDouble(dataSet.getString("stoc2")) * value;
             this.addComponent(name1, val1);
             this.addComponent(name2, val2);
-            System.out.println("ok adding salts. Ions: " + name1 + ", " + name2);
+            logger.info("ok adding salts. Ions: " + name1 + ", " + name2);
         } catch (Exception e) {
-            System.out.println("failed " + e.toString());
+            logger.error("failed " + e.toString());
         }
     }
 
@@ -682,7 +684,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             stddens = Double.parseDouble(dataSet.getString("stddens"));
             boilp = Double.parseDouble(dataSet.getString("normboil"));
         } catch (Exception e) {
-            System.out.println("failed " + e.toString());
+            logger.error("failed " + e.toString());
         } finally {
             try {
                 dataSet.close();
@@ -1476,7 +1478,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 return phaseArray[phase];
             }
         }
-        System.out.println("No gas phase at current state.");
+        logger.info("No gas phase at current state.");
         return null;
     }
 
@@ -1486,7 +1488,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 return phaseArray[phase];
             }
         }
-        System.out.println("No liquid phase at current state.");
+        logger.info("No liquid phase at current state.");
         return null;
     }
 
@@ -2435,8 +2437,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             database.execute("delete FROM COMPTEMP");
             database.execute("delete FROM INTERTEMP");
         } catch (Exception e) {
-            System.out.println("error in SystemThermo Class...resetDatabase() method");
-            System.out.println("error in comp");
+            logger.error("error in SystemThermo Class...resetDatabase() method");
+            logger.error("error in comp");
             e.printStackTrace();
         } finally {
             try {
@@ -2447,7 +2449,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("error closing database.....");
+                logger.error("error closing database.....");
                 e.printStackTrace();
             }
         }
@@ -2483,7 +2485,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 }
             }
         } catch (Exception e) {
-            System.out.println("error in SystemThermo Class...createDatabase() method");
+            logger.error("error in SystemThermo Class...createDatabase() method");
             e.printStackTrace();
         } finally {
             try {
@@ -2494,7 +2496,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("error closing database.....");
+                logger.error("error closing database.....");
                 e.printStackTrace();
             }
 
@@ -2663,7 +2665,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             out.close();
 
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
     }
 
@@ -2697,7 +2699,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("err closing database IN MIX...");
+                logger.error("err closing database IN MIX...");
                 e.printStackTrace();
             }
         }
@@ -2723,7 +2725,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             out.close();
 
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         byte[] byteObject = fout.toByteArray();
         ByteArrayInputStream inpStream = new ByteArrayInputStream(byteObject);
@@ -2761,7 +2763,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("err closing database IN MIX...");
+                logger.error("err closing database IN MIX...");
                 e.printStackTrace();
             }
         }
@@ -2779,7 +2781,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             out.close();
 
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         // database.execute("INSERT INTO fluid_blobdb VALUES ('1'," + sqlString + ")");
     }
@@ -2795,7 +2797,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             tempSystem = (SystemThermo) objectinputstream.readObject();
 
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return tempSystem;
     }
@@ -2982,7 +2984,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     sqlString += ", '0'";
                 }
 
-                System.out.println(sqlString);
+                logger.error(sqlString);
 
                 database.execute("INSERT INTO SYSTEMREPORT VALUES (" + sqlString + ")");
             }
@@ -3002,7 +3004,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 sqlString += ", '0'";
             }
 
-            System.out.println(sqlString);
+            logger.error(sqlString);
 
             database.execute("INSERT INTO SYSTEMREPORT VALUES (" + sqlString + ")");
 
@@ -3031,7 +3033,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             //dataSet.updateString(1,"tesst");
             database.getConnection().close();
         } catch (Exception e) {
-            System.out.println("failed " + e.toString());
+           logger.error("failed " + e.toString());
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -3041,7 +3043,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                System.out.println("err closing database IN MIX...");
+                logger.error("err closing database IN MIX...");
                 e.printStackTrace();
             }
         }
@@ -3183,12 +3185,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 } else if (componentType.equals("Plus")) {
                     addPlusFraction(dataSet.getString("ComponentName"), Double.parseDouble(dataSet.getString("Rate")), Double.parseDouble(dataSet.getString("MolarMass")) / 1000.0, Double.parseDouble(dataSet.getString("Density")));
                 } else {
-                    System.out.println("component type need to be specified for ... " + dataSet.getString("ComponentName"));
+                    logger.error("component type need to be specified for ... " + dataSet.getString("ComponentName"));
                 }
             }
         } catch (Exception e) {
             String err = e.toString();
-            System.out.println(err);
+            logger.error(err);
         }
     }
 
@@ -3241,14 +3243,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             } else if (model.equals("SRK-TwuCoon-Param-EOS")) {
                 tempModel = new SystemSrkTwuCoonParamEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
             } else {
-                System.out.println("model : " + model + " not defined.....");
+                logger.error("model : " + model + " not defined.....");
             }
             //tempModel.getCharacterization().setTBPModel("RiaziDaubert");
             tempModel.useVolumeCorrection(true);
 
-            System.out.println("created class " + tempModel);
+            logger.info("created class " + tempModel);
             for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
-                System.out.println("adding " + getPhase(0).getComponent(i).getName() + " moles " + getPhase(0).getComponent(i).getNumberOfmoles() + " isPlus " + getPhase(0).getComponent(i).isIsPlusFraction() + " isTBP " + getPhase(0).getComponent(i).isIsTBPfraction());
+                logger.info("adding " + getPhase(0).getComponent(i).getName() + " moles " + getPhase(0).getComponent(i).getNumberOfmoles() + " isPlus " + getPhase(0).getComponent(i).isIsPlusFraction() + " isTBP " + getPhase(0).getComponent(i).isIsTBPfraction());
                 if (getPhase(0).getComponent(i).isIsTBPfraction()) {
                     tempModel.addTBPfraction(getPhase(0).getComponent(i).getName(), getPhase(0).getComponent(i).getNumberOfmoles(), getPhase(0).getComponent(i).getMolarMass(), getPhase(0).getComponent(i).getNormalLiquidDensity());
                 } else if (getPhase(0).getComponent(i).isIsPlusFraction()) {
@@ -3261,13 +3263,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             //   if (tempModel.getCharacterization().characterize()) {
             //tempModel.addPlusFraction(6, 100);
             //   }
-            System.out.println("creatore database ......");
-            System.out.println("done ... creatore database ......");
+            logger.info("creatore database ......");
+            logger.info("done ... creatore database ......");
             tempModel.createDatabase(true);
-            System.out.println("done ... set mixing rule ......");
+            logger.info("done ... set mixing rule ......");
             tempModel.autoSelectMixingRule();
             if (model.equals("Electrolyte-ScRK-EOS")) {// || model.equals("Electrolyte-CPA-EOS-statoil")) {
-                System.out.println("chemical reaction init......");
+                logger.info("chemical reaction init......");
                 tempModel.setMultiPhaseCheck(false);
                 tempModel.chemicalReactionInit();
             } else {
@@ -3285,7 +3287,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             return setModel("Electrolyte-ScRK-EOS");
         } else if (this.getPhase(0).hasComponent("water") || this.getPhase(0).hasComponent("methanol") || this.getPhase(0).hasComponent("MEG") || this.getPhase(0).hasComponent("TEG") || this.getPhase(0).hasComponent("ethanol") || this.getPhase(0).hasComponent("DEG")) {
             if (this.getPhase(0).hasComponent("Na+") || this.getPhase(0).hasComponent("K+") || this.getPhase(0).hasComponent("Br-") || this.getPhase(0).hasComponent("Mg++") || this.getPhase(0).hasComponent("Cl-") || this.getPhase(0).hasComponent("Ca++") || this.getPhase(0).hasComponent("Fe++") || this.getPhase(0).hasComponent("SO4--")) {
-                System.out.println("model elect");
+                logger.info("model elect");
                 return setModel("Electrolyte-CPA-EOS-statoil");
             } else {
                 return setModel("CPAs-SRK-EOS-statoil");
@@ -3295,14 +3297,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         } else if (this.getPhase(0).hasComponent("mercury")) {
             return setModel("SRK-TwuCoon-Statoil-EOS");
         } else {
-            System.out.println("no model");
+            logger.info("no model");
             return setModel("SRK-EOS");
 
         }
     }
 
     public void autoSelectMixingRule() {
-        System.out.println("setting mixing rule");
+        logger.info("setting mixing rule");
         if (modelName.equals("CPAs-SRK-EOS") || modelName.equals("CPA-SRK-EOS") || modelName.equals("Electrolyte-CPA-EOS-statoil") || modelName.equals("CPAs-SRK-EOS-statoil")) {
             this.setMixingRule(10);
             //System.out.println("mix rule 10");
@@ -3448,7 +3450,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
     public double calcHenrysConstant(String component) {
         if (numberOfPhases != 2) {
-            System.out.println("cant calculated Henrys constant - two phases must be present.");
+            logger.error("cant calculated Henrys constant - two phases must be present.");
             return 0;
         } else {
             int compNumb = getPhase(getPhaseIndex(0)).getComponent(component).getComponentNumber();

@@ -10,6 +10,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
+import org.apache.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -30,6 +31,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PhaseSrkCPA.class);
 
     public CPAMixing cpaSelect = new CPAMixing();
     public CPAMixingInterface cpamix;
@@ -533,7 +535,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         double d1 = 0, d2 = 0;
         double Btemp = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
 
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
@@ -977,7 +979,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         Btemp
                 = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 
@@ -1643,7 +1645,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         double d1 = 0, d2 = 0;
         double Btemp = getB();
         if (Btemp < 0) {
-            System.out.println("b negative in volume calc");
+            logger.info("b negative in volume calc");
         }
         calcDelta();
 
