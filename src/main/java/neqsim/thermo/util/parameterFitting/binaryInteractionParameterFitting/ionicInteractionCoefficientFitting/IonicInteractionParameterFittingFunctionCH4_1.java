@@ -25,7 +25,7 @@ public class IonicInteractionParameterFittingFunctionCH4_1 extends IonicInteract
             //System.out.println("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+        //    System.out.println(e.toString());
         }
         return system.getPressure()*system.getPhase(0).getComponent(1).getx();
     }

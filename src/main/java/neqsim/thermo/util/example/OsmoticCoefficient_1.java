@@ -61,9 +61,9 @@ public class OsmoticCoefficient_1 {
         double meanact2 = testSystem.getPhase(1).getActivityCoefficient(4,1);
         //         testSystem.getPhase(1).getActivityCoefficient(3);
         //         testSystem.getPhase(1).getActivityCoefficient(3);
-        System.out.println("mean ionic activity: " + meanact);
-        System.out.println("Na+ ionic activity: " + meanact2);
-        System.out.println("osmotic coefficient: " + osmCoef);
+        //System.out.println("mean ionic activity: " + meanact);
+        //System.out.println("Na+ ionic activity: " + meanact2);
+        //System.out.println("osmotic coefficient: " + osmCoef);
         
         //        thermo.ThermodynamicModelTest testModel = new thermo.ThermodynamicModelTest(testSystem);
         //        testModel.runTest();

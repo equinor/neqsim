@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFittingCH4.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFittingCH4(){
@@ -43,7 +45,6 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object{
 
         try{
             int i=0;
-            System.out.println("adding....");
             while(dataSet.next() && i<100){
                 i++;
                 IonicInteractionParameterFittingFunctionCH4 function = new IonicInteractionParameterFittingFunctionCH4();
@@ -75,14 +76,13 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         //dataSet =  database.getResultSet(  "SELECT * FROM Co2Ch4MDEA WHERE loading<1.9 AND temperature<453.15 AND pressure<210 AND wt<70");
         //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");AND Reference='Lemoine2000'
         dataSet =  database.getResultSet(  "SELECT * FROM Co2Ch4MDEA WHERE loading<1.9");// AND temperature=313.15 AND pressure<210 AND wt=50");
         try{
             int i=0;
-            System.out.println("adding....");
             while(!dataSet.next() && i<100){
                 i++;
                 IonicInteractionParameterFittingFunctionCH4_1 function = new IonicInteractionParameterFittingFunctionCH4_1();
@@ -114,7 +114,7 @@ public class TestIonicInteractionParameterFittingCH4 extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         SampleSet sampleSet = new SampleSet(sampleList);
         optim.setSampleSet(sampleSet);

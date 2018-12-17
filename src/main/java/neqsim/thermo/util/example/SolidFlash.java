@@ -3,10 +3,12 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class SolidFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SolidFlash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(269.671, 1.00);
@@ -54,7 +56,7 @@ public class SolidFlash {
             //  testSystem.display();
             //testOps.TPflash();
         } catch (Exception e) {
-            System.out.println("error");
+            logger.error("error");
             e.printStackTrace();
         }
     }

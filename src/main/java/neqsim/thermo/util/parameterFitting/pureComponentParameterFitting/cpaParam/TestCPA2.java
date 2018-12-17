@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPA;
 public class TestCPA2 extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPA2.class);
     
     /** Creates new TestAcentric */
     public TestCPA2() {
@@ -52,7 +54,6 @@ public class TestCPA2 extends java.lang.Object {
         ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
         
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 CPAFunction function = new CPAFunction();
                 SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("VapourPressure")));
@@ -81,7 +82,7 @@ public class TestCPA2 extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' AND Temperature>273.15 ORDER BY Temperature");
@@ -89,7 +90,6 @@ public class TestCPA2 extends java.lang.Object {
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
         dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 CPAFunctionDens function = new  CPAFunctionDens(1);
                 SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")), 1.1);
@@ -101,7 +101,6 @@ public class TestCPA2 extends java.lang.Object {
                 testSystem.setTemperature(temp);
                 testSystem.setMixingRule(1);
                 //testSystem.init(0);
-                System.out.println("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 //double dens = Double.parseDouble(dataSet.getString("Density"));
                 double sample1[] = {temp};  // temperature
@@ -118,14 +117,13 @@ public class TestCPA2 extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND Temperature>273.15 AND Temperature<620.15 ORDER BY Temperature");
         dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='CO2' AND VapourPressure>5 AND Temperature<300.2");
         
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 CPAFunctionDens function = new  CPAFunctionDens(0);
                 SystemInterface testSystem = new SystemSrkCPA(280, 5.001);
@@ -151,7 +149,7 @@ public class TestCPA2 extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

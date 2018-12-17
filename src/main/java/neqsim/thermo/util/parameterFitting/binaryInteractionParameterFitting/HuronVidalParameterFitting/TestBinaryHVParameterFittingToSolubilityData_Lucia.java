@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestBinaryHVParameterFittingToSolubilityData_Lucia extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToSolubilityData_Lucia.class);
 
     /**
      * Creates new TestAcentric
@@ -43,7 +45,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia extends java.lan
         //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='H2S' AND Temperature>250 AND Temperature<420 AND Pressure<10000000 AND L2<>NULL AND L2>0.000000001 ORDER BY Temperature,Pressure");
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 150) {
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(1, 1);
@@ -93,10 +95,10 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia extends java.lan
                 // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //, 1.239}; //WS
                 function.setInitialGuess(parameterGuess);
                 sampleList.add(sample);
-                System.out.println("liq points " + p);
+                logger.info("liq points " + p);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         dataSet = database.getResultSet( "SELECT * FROM LuciaData8 WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
@@ -108,7 +110,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia extends java.lan
         //    testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 150) {
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(0, 0);
@@ -159,7 +161,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia extends java.lan
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestHydrateFunction extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestHydrateFunction.class);
 
     /** Creates new TestAcentric */
     public TestHydrateFunction() {
@@ -52,7 +54,7 @@ public class TestHydrateFunction extends java.lang.Object {
         //
         int numb = 0;
         try {
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && numb < 6) {
                 numb++;
                 HydrateFunction function = new HydrateFunction();
@@ -81,7 +83,7 @@ public class TestHydrateFunction extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error: " + e);
+            logger.error("database error: " + e);
             e.printStackTrace();
         }
 

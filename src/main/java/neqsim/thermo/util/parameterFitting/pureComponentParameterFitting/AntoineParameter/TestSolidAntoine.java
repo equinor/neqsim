@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestSolidAntoine extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestSolidAntoine.class);
     
     /** Creates new TestAcentric */
     public TestSolidAntoine() {
@@ -40,7 +42,6 @@ public class TestSolidAntoine extends java.lang.Object {
         ResultSet dataSet =  database.getResultSet(  "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MEG' ORDER BY FreezingTemperature");
         int i=0;
         try{
-            System.out.println("adding....");
             while(dataSet.next() && i<4){
                 i++;
                 AntoineSolidFunction function = new  AntoineSolidFunction();
@@ -67,7 +68,7 @@ public class TestSolidAntoine extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

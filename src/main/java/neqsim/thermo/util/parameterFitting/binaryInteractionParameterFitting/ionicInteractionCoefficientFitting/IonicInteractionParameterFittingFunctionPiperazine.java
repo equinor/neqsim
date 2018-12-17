@@ -8,6 +8,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 public class IonicInteractionParameterFittingFunctionPiperazine extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunctionPiperazine() {
@@ -28,7 +30,7 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
             // System.out.println("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getPressure()*system.getPhases()[0].getComponent(0).getx();
     }

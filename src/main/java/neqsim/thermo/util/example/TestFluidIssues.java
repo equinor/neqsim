@@ -3,10 +3,12 @@ package  neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class TestFluidIssues {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestFluidIssues.class);
 
     /**
      * This method is just meant to test the thermo package.
@@ -24,7 +26,7 @@ public class TestFluidIssues {
        // testSystem.addComponent("TEG", 100.0);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
-        System.out.println("start benchmark TPflash......");
+        logger.info("start benchmark TPflash......");
 
         long time = System.currentTimeMillis();
         testOps.TPflash();
@@ -38,7 +40,7 @@ public class TestFluidIssues {
         testSystem.setMixingRule(10);
         testOps.TPflash();
 
-        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testOps.displayResult();
 
         // time for 5000 flash calculations

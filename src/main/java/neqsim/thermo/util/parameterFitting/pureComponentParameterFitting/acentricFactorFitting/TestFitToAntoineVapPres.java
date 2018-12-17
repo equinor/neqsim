@@ -12,6 +12,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -20,6 +21,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestFitToAntoineVapPres extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestFitToAntoineVapPres.class);
     
     /** Creates new TestAcentric */
     public TestFitToAntoineVapPres() {
@@ -33,7 +35,6 @@ public class TestFitToAntoineVapPres extends java.lang.Object {
         
         
         try{
-            System.out.println("adding....");
             for(int i=0;i<30;i++){
                 AcentricFunctionScwartzentruber function = new  AcentricFunctionScwartzentruber();
                 //double guess[] = {0.5212918734, -1.1520807481, -0.0138898820};        // Piperazine
@@ -64,7 +65,7 @@ public class TestFitToAntoineVapPres extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.info("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

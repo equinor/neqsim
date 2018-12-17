@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestUNIFAC {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestUNIFAC.class);
     
     /** Creates new TPflash */
     public TestUNIFAC() {
@@ -45,20 +47,20 @@ public class TestUNIFAC {
         testSystem.setMixingRule("HV","UNIFAC_PSRK");
         testSystem.init(0); 
         testSystem.init(1);
-        System.out.println(testSystem.getPhase(1).getActivityCoefficient(0));
-        System.out.println("gibbs " + testSystem.getPhase(1).getExessGibbsEnergy());
+        logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
+        logger.info("gibbs " + testSystem.getPhase(1).getExessGibbsEnergy());
         try{
              //testOps.bubblePointPressureFlash(false);
              testOps.dewPointPressureFlash();
              //testOps.bubblePointTemperatureFlash();
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
             e.printStackTrace();
         }
         testSystem.display();
-        System.out.println(testSystem.getPhase(1).getActivityCoefficient(0));
-        System.out.println("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
+        logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
+        logger.info("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
     }
     
 }

@@ -8,6 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class TVPexample {
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TVPexample.class);
     public TVPexample(){};
     
     public static void main(String[] args) {
@@ -41,7 +43,7 @@ public class TVPexample {
         try{
         testOps.bubblePointPressureFlash(false);
         }catch(Exception e){
-            System.out.println("Exception thrown in bubble point flash");
+            logger.error("Exception thrown in bubble point flash");
             }
         testSystem.display();
         

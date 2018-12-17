@@ -6,6 +6,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 
@@ -22,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Water_MDEA {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Water_MDEA.class);
     
     /** Creates a new instance of Sleipneracetate */
     public Water_MDEA() {
@@ -39,7 +41,7 @@ public class Water_MDEA {
             p = new PrintStream(outfile);
             p.close();
         }catch(IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         
             
@@ -78,11 +80,11 @@ public class Water_MDEA {
                 
             }
             catch(Exception e){
-                System.out.println(e.toString());
+                logger.error(e.toString());
             }
            
             double hm = testSystem.getPhase(1).getEnthalpy();
-            System.out.println(hm);
+            logger.info(hm);
             
             try{
                 outfile = new FileOutputStream("C:/java/NeqSimSource/water_MDEA.txt",true);
@@ -90,13 +92,13 @@ public class Water_MDEA {
                 p.println(ID+" "+pressure+" "+testSystem.getPressure());
                 
             }catch(FileNotFoundException e) {
-                System.out.println("Could not find file");
+                logger.error("Could not find file");
                 e.printStackTrace();
             }
             
             }
        }catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
             }
             
             //  }
@@ -105,7 +107,7 @@ public class Water_MDEA {
             //}
                         
             
-        System.out.println("Finished");
+        logger.info("Finished");
         }
 
 }

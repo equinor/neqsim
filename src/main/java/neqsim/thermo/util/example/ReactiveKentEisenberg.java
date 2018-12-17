@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ReactiveKentEisenberg {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ReactiveKentEisenberg.class);
     
     /** Creates new TPflash */
     public ReactiveKentEisenberg() {
@@ -43,12 +45,12 @@ public class ReactiveKentEisenberg {
             for(int i=0;i<1;i++){
                 testSystem.addComponent("H2S", 0.01);
                 ops.bubblePointPressureFlash(false);
-                System.out.println("pres H2S "+ testSystem.getPressure()*testSystem.getPhase(0).getComponent("H2S").getx());
+                logger.info("pres H2S "+ testSystem.getPressure()*testSystem.getPhase(0).getComponent("H2S").getx());
             }
             //ops.TPflash();
         }
         catch(Exception e){}
         testSystem.display();
-        System.out.println("pH " + testSystem.getPhase(1).getpH());
+        logger.info("pH " + testSystem.getPhase(1).getpH());
     }
 }

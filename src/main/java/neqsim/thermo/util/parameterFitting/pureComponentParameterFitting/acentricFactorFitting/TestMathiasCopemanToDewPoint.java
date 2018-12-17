@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkMathiasCopeman;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -23,6 +24,7 @@ import neqsim.thermo.system.SystemSrkMathiasCopeman;
 public class TestMathiasCopemanToDewPoint extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestMathiasCopemanToDewPoint.class);
     
     /** Creates new TestAcentric */
     public TestMathiasCopemanToDewPoint() {
@@ -70,9 +72,8 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
             dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='" + nameList[compNumb] + "' AND VapourPressure>0 ORDER BY Temperature ASC"); 
             
             try{
-                System.out.println("adding....");
                 long numerOfPoint = 3;
-                System.out.println("point " + numerOfPoint);
+                logger.error("point " + numerOfPoint);
                 int i=0;
                 while(dataSet.next()){
                     i++;
@@ -95,7 +96,7 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
                     }
                 }
             } catch(Exception e){
-                System.out.println("database error" + e);
+                logger.error("database error" + e);
             }
         }
         
@@ -104,9 +105,8 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
         dataSet =  database.getResultSet(  "SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0");//"0 AND reference='Mørch2004gas1'");
         
         try{
-            System.out.println("adding....");
             long numerOfPoint = 1;
-            System.out.println("point " + numerOfPoint);
+            logger.info("point " + numerOfPoint);
             int i=0;
             while(dataSet.next() && i < 100){
                 i++;
@@ -139,7 +139,7 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
                 }
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         

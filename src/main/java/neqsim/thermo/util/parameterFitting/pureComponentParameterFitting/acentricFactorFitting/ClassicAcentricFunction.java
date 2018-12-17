@@ -7,6 +7,7 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 public class ClassicAcentricFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ClassicAcentricFunction.class);
     
     /** Creates new Test */
     public ClassicAcentricFunction() {
@@ -32,7 +34,7 @@ public class ClassicAcentricFunction extends LevenbergMarquardtFunction {
             thermoOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         // System.out.println("pres: " + system.getPressure());
         return Math.log(system.getPressure());

@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,8 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPAParameterFittingToSolubilityData.class);
+    
 
     /**
      * Creates new TestAcentric
@@ -42,7 +45,7 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
                
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 200) {
                 p++;
                 CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData();
@@ -68,13 +71,13 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet = database.getResultSet( "SELECT * FROM BinaryEquilibriumData WHERE Component1='methane' AND Component2='MEG'");
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 0) {
                 p++;
                 CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData(0,1);
@@ -101,7 +104,7 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
 

@@ -9,6 +9,7 @@ package neqsim.thermo.util.parameterFitting.Procede.CH4MDEA;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
+    static Logger logger = Logger.getLogger(BinaryHVParameterFittingFunction_CH4.class);
     
     /** Creates new Test */
     public BinaryHVParameterFittingFunction_CH4() {
@@ -35,7 +37,7 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
             thermoOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getPressure();
        

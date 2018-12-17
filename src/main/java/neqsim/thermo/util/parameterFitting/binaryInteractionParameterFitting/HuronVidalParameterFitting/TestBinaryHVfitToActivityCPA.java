@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cloneable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVfitToActivityCPA.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVfitToActivityCPA() {
@@ -65,7 +67,7 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
                 testSystem2.init(0);
                 testSystem2.init(2);
                 double activ = testSystem2.getPhase(1).getActivityCoefficient(0);
-                System.out.println("activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("methanol").getx());
+                logger.info("activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("methanol").getx());
                 
                 function.setInitialGuess(parameterGuess);
                 double sample1[] = { testSystem2.getPhase(1).getComponent("methanol").getx(), testSystem.getTemperature()};
@@ -101,7 +103,7 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
                 testSystem2.init(0);
                 testSystem2.init(2);
                 double activ = testSystem2.getPhase(1).getActivityCoefficient(0);
-                System.out.println("activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("MEG").getx());
+                logger.info("activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("MEG").getx());
                 
                 function.setInitialGuess(parameterGuess);
                 double sample1[] = { numb/1000.0, testSystem.getTemperature()};
@@ -137,7 +139,7 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
                 testSystem2.init(0);
                 testSystem2.init(2);
                 double activ = testSystem2.getPhase(1).getActivityCoefficient(0);
-                System.out.println("activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("MEG").getx());
+                logger.info("activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("MEG").getx());
                 function.setInitialGuess(parameterGuess);
                 double sample1[] = { numb/1000.0, testSystem.getTemperature()};
                 double standardDeviation1[] = {1.0};

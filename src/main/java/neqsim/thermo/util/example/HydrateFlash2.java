@@ -3,10 +3,12 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class HydrateFlash2 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(HydrateFlash2.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 -150, 2.0);
@@ -50,7 +52,7 @@ public class HydrateFlash2 {
         testOps.setRunAsThread(true);
             //testOps.hydrateEquilibriumLine(10.0, 200.0);
              boolean isFinished = testOps.waitAndCheckForFinishedCalculation(100000);
-                System.out.println("finished? " + isFinished);
+                logger.info("finished? " + isFinished);
             //testSystem.setTemperature(240.0);
             // testOps.freezingPointTemperatureFlash();
             // testSystem.display();

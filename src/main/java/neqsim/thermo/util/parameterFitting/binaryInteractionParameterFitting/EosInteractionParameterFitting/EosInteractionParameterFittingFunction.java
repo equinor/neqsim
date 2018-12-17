@@ -39,7 +39,7 @@ public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFu
         calcK =  system.getPhases()[0].getComponents()[0].getK();
         
         double diff = expK-calcK;
-        System.out.println("diff: " + diff);
+       // System.out.println("diff: " + diff);
         return diff;
     }
     

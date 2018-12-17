@@ -9,6 +9,7 @@ package neqsim.thermo.util.test;
 
 import junit.framework.*;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author ESOL
@@ -16,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
 public class ModelTest extends TestCase {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ModelTest.class);
     
     SystemInterface testSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
@@ -57,7 +59,7 @@ public class ModelTest extends TestCase {
         testSystem.init(0);
         testSystem.init(1);
         double activ1 = testSystem.getPhase(1).getActivityCoefficient(0);
-        System.out.println("activity = " + activ1);
+        logger.info("activity = " + activ1);
         testSystem.init(0);
         testSystem.init(1);
         double activ2 = testSystem.getPhase(1).getActivityCoefficient(0);
@@ -68,11 +70,11 @@ public class ModelTest extends TestCase {
         testSystem.init(0);
         testSystem.init(1);
         double dens1 = testSystem.getPhase(0).getDensity();
-        System.out.println("density gas start = " + dens1);
+        logger.info("density gas start = " + dens1);
         testSystem.init(0);
         testSystem.init(1);
         double dens2 = testSystem.getPhase(1).getDensity();
-        System.out.println("density liq start = " + dens2);
+        logger.info("density liq start = " + dens2);
         assertTrue(dens2>dens1);
     }
     
@@ -90,7 +92,7 @@ public class ModelTest extends TestCase {
         testSystem.init(0);
         testSystem.init(1);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-        System.out.println("components " + testSystem.getPhase(0).getNumberOfComponents());
+        logger.info("components " + testSystem.getPhase(0).getNumberOfComponents());
         assertTrue(fugTest.checkFugasityCoeffisients());
     }
     
@@ -98,7 +100,7 @@ public class ModelTest extends TestCase {
         testSystem.init(0);
         testSystem.init(3);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-        System.out.println("components " + testSystem.getPhase(0).getNumberOfComponents());
+        logger.info("components " + testSystem.getPhase(0).getNumberOfComponents());
         assertTrue(fugTest.checkFugasityCoeffisientsDT());
     }
     
@@ -106,7 +108,7 @@ public class ModelTest extends TestCase {
         testSystem.init(0);
         testSystem.init(3);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-        System.out.println("components " + testSystem.getPhase(0).getNumberOfComponents());
+        logger.info("components " + testSystem.getPhase(0).getNumberOfComponents());
         assertTrue(fugTest.checkFugasityCoeffisientsDP());
     }
     
@@ -114,7 +116,7 @@ public class ModelTest extends TestCase {
         testSystem.init(0);
         testSystem.init(3);
         fugTest = new neqsim.thermo.ThermodynamicModelTest(testSystem);
-        System.out.println("components " + testSystem.getPhase(0).getNumberOfComponents());
+        logger.info("components " + testSystem.getPhase(0).getNumberOfComponents());
         assertTrue(fugTest.checkFugasityCoeffisientsDn());
     }
     

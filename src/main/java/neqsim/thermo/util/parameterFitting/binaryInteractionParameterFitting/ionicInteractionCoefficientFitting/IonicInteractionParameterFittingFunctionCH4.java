@@ -10,6 +10,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -19,6 +20,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunctionCH4() {
@@ -27,10 +29,10 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
     public double calcValue(double[] dependentValues){
         try{
             thermoOps.bubblePointPressureFlash(false);
-            //System.out.println("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
+            //logger.info("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getPressure();
     }

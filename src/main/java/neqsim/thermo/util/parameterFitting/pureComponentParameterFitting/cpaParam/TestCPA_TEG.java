@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestCPA_TEG extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPA_TEG.class);
 
     /**
      * Creates new TestAcentric
@@ -47,7 +49,6 @@ public class TestCPA_TEG extends java.lang.Object {
         ResultSet dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='TEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
 
         try {
-            System.out.println("adding....");
             while (dataSet.next()) {
                 CPAFunction function = new CPAFunction();
                 SystemInterface testSystem = new SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("VapourPressure")));
@@ -74,12 +75,11 @@ public class TestCPA_TEG extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         dataSet = database.getResultSet( "SELECT * FROM PureComponentDensity WHERE ComponentName='TEG' AND Temperature>173.15 ORDER BY Temperature");
         try {
-            System.out.println("adding....");
             while (dataSet.next()) {
                 CPAFunctionDens function = new CPAFunctionDens(1);
                 SystemInterface testSystem = new SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("Temperature")), 1.1);
@@ -92,7 +92,6 @@ public class TestCPA_TEG extends java.lang.Object {
                 testSystem.setTemperature(temp);
                 testSystem.setMixingRule(1);
                 //testSystem.init(0);
-                System.out.println("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("Density"));
                 //double dens = Double.parseDouble(dataSet.getString("Density"));
                 double sample1[] = {temp};  // temperature
@@ -108,13 +107,12 @@ public class TestCPA_TEG extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
 
         dataSet = database.getResultSet( "SELECT * FROM PureComponentCpHeatCapacity WHERE ComponentName='TEG' AND Temperature>263.15 ORDER BY Temperature");
         try {
-            System.out.println("adding....");
             while (dataSet.next()) {
                 CPAFunctionCp function = new CPAFunctionCp(1);
                 SystemInterface testSystem = new SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("Temperature")), 1.1);
@@ -127,7 +125,6 @@ public class TestCPA_TEG extends java.lang.Object {
                 testSystem.setTemperature(temp);
                 testSystem.setMixingRule(1);
                 //testSystem.init(0);
-                System.out.println("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("HeatCapacityCp"));
                 //double dens = Double.parseDouble(dataSet.getString("Density"));
                 double sample1[] = {temp};  // temperature
@@ -143,7 +140,7 @@ public class TestCPA_TEG extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
 

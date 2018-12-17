@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryUMRPRUFittingToSolubilityData.class);
 
     /**
      * Creates new TestAcentric
@@ -41,7 +43,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 31) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -54,7 +56,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -67,14 +69,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-heptane'");
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 60) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -87,7 +89,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -100,14 +102,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
          dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-octane'");
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 50) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -120,7 +122,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -133,14 +135,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.info("database error" + e);
         }
         
         dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-hexane'");
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.error("adding....");
             while (dataSet.next() && p < 30) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -153,7 +155,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -166,14 +168,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
           dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='n-pentane'");
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 30) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -186,7 +188,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -199,14 +201,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
          dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='butane'");
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p <30) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -219,7 +221,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -232,14 +234,14 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet = database.getResultSet( "SELECT * FROM binarySolubilityData WHERE ComponentSolute='Hg' AND ComponentSolvent='propane'");
 
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 30) {
                 p++;
                 UMRPRUFunction function = new UMRPRUFunction();
@@ -252,7 +254,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
 
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.info("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01};
@@ -265,7 +267,7 @@ public class TestBinaryUMRPRUFittingToSolubilityData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

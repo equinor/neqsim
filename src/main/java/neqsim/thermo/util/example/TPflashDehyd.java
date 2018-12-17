@@ -4,6 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TPflashDehyd {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflashDehyd.class);
 
     /**
      * Creates new TPflash
@@ -55,10 +57,10 @@ public class TPflashDehyd {
             testSystem.addFluid(testSystem2);
             testOps.TPflash();
             //testSystem.display();
-            System.out.println("ppm water" + testSystem.getPhase(0).getComponent("water").getx() * 1e6);
+            logger.info("ppm water" + testSystem.getPhase(0).getComponent("water").getx() * 1e6);
             testSystem = testSystem.phaseToSystem(1);
             testOps = new ThermodynamicOperations(testSystem);
-            System.out.println("nuber of moles " + testSystem.getNumberOfMoles() + " moleFrac MEG " + testSystem.getPhase(0).getComponent("MEG").getx());
+            logger.info("nuber of moles " + testSystem.getNumberOfMoles() + " moleFrac MEG " + testSystem.getPhase(0).getComponent("MEG").getx());
         }
 
         //testSystem.display();

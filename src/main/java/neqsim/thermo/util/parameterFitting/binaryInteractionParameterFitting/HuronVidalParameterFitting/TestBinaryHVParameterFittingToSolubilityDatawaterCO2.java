@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToSolubilityDatawaterCO2.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFittingToSolubilityDatawaterCO2() {
@@ -41,7 +43,6 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
         
         try{
             int p=0;
-            System.out.println("adding....");
             while(dataSet.next() && p<550){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(1,10);
@@ -70,10 +71,10 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
                 //double parameterGuess[] ={13694.7303713825, -807.1129937507, -10.4589547972, -10.9746096153};
                 function.setInitialGuess(parameterGuess);
                 sampleList.add(sample);
-                System.out.println("liq points " + p);
+                logger.info("liq points " + p);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         
@@ -89,7 +90,6 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
         
         try{
             int p=0;
-            System.out.println("adding....");
             while(!dataSet.next() && p<100){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(0,0);
@@ -113,10 +113,10 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
                 function.setInitialGuess(parameterGuess);
                 sample.setDescription(Double.toString(testSystem.getTemperature()));
                 sampleList.add(sample);
-                System.out.println("gas points " + p);
+                logger.info("gas points " + p);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         

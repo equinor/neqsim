@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 public class IonicInteractionParameterFittingFunction_Sleipner extends LevenbergMarquardtFunction implements ThermodynamicConstantsInterface{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction_Sleipner.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction_Sleipner() {
@@ -30,13 +32,13 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
     public double calcValue(double[] dependentValues){
         try{
             thermoOps.bubblePointPressureFlash(false);
-            //System.out.println("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
+            //logger.info("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
               
-        //System.out.println("pressure "+system.getPressure());
+        //logger.info("pressure "+system.getPressure());
         return system.getPressure();
     }
     
@@ -94,10 +96,10 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
             j++;
         }
         while(!system.getPhases()[1].getComponents()[j-1].getComponentName().equals("Ac-"));
-        //System.out.println("Acetate "+system.getPhase(1).getComponent(AcidnegNumb).getNumberOfmoles());
-        //System.out.println("HCO3- " + system.getPhase(1).getComponent(HCO3Numb).getx());
-        //System.out.println("Ac- " + system.getPhase(1).getComponent(AcidnegNumb).getx());
-        //System.out.println("HAc " + system.getPhase(1).getComponent(AcidNumb).getx());
+        //logger.info("Acetate "+system.getPhase(1).getComponent(AcidnegNumb).getNumberOfmoles());
+        //logger.info("HCO3- " + system.getPhase(1).getComponent(HCO3Numb).getx());
+        //logger.info("Ac- " + system.getPhase(1).getComponent(AcidnegNumb).getx());
+        //logger.info("HAc " + system.getPhase(1).getComponent(AcidNumb).getx());
         
         if(i==1){
             ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[0]).getElectrolyteMixingRule().setWijParameter(AcidnegNumb, MDEAplusNumb,value);
@@ -142,8 +144,8 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
             double para0 = (g12-g22)/R;
             double para1 = (g12-g11)/R;
             
-            //System.out.println("para0 "+ para0);
-            //System.out.println("para1 "+ para1);
+            //logger.info("para0 "+ para0);
+            //logger.info("para1 "+ para1);
             
             ((HVmixingRuleInterface) ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).setHValphaParameter(AcidNumb,MDEANumb,0.0);
             ((HVmixingRuleInterface) ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()).setHValphaParameter(AcidNumb,MDEANumb,0.0);

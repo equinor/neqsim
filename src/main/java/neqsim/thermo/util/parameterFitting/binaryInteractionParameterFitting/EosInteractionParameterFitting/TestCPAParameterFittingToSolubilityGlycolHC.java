@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPAParameterFittingToSolubilityGlycolHC.class);
     
     /** Creates new TestAcentric */
     public TestCPAParameterFittingToSolubilityGlycolHC() {
@@ -44,7 +46,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
         
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(!dataSet.next() && p<50){
                 p++;
                 CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData();
@@ -71,14 +73,14 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM HCGlycolLLdata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure");
         
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(!dataSet.next() && p<50){
                 p++;
                 CPAParameterFittingToSolubilityData_Vap function = new CPAParameterFittingToSolubilityData_Vap();
@@ -103,7 +105,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

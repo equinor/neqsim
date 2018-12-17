@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * PhaseEnvelope.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestGERGwater {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestGERGwater.class);
 
     /** Creates new PhaseEnvelope */
     public TestGERGwater() {
@@ -51,7 +53,7 @@ public class TestGERGwater {
             testOps.waterDewPointTemperatureFlash();
             testSystem.display();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
 
     }

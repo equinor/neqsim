@@ -47,7 +47,7 @@ public class OsmoticCoefficient {
         //System.out.println("furst 1 " +((PhaseModifiedFurstElectrolyteEos)testSystem.getPhase(0)).reInitFurstParam();
         //        //        System.out.println("volume " + testSystem.getPhase(1).getMolarVolume());
          double osmCoef = testSystem.getPhase(1).getOsmoticCoefficientOfWater();
-         System.out.println("osmotic coefficient: " + osmCoef);
+         //System.out.println("osmotic coefficient: " + osmCoef);
         //
 //        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 //        try{
@@ -58,7 +58,7 @@ public class OsmoticCoefficient {
         testSystem.display();
         
     
-        System.out.println("wt% water " + testSystem.getPhase(1).getWtFrac(0)*100);
+        //System.out.println("wt% water " + testSystem.getPhase(1).getWtFrac(0)*100);
 //        double meanact = testSystem.getPhase(1).getMeanIonicActivity(2,3);
 //        double meanact2 = testSystem.getPhase(1).getActivityCoefficient(3,1);
 //        //         testSystem.getPhase(1).getActivityCoefficient(3);

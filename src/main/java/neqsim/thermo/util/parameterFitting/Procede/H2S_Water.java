@@ -5,6 +5,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 
@@ -21,6 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class H2S_Water {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(H2S_Water.class);
     
     /** Creates a new instance of Sleipneracetate */
     public H2S_Water() {
@@ -42,7 +44,7 @@ public class H2S_Water {
             
               while(dataSet.next()){
                 i++;
-                System.out.println ("Adding.... "+i);
+                logger.info("Adding.... "+i);
                                 
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(300, 1);
                 
@@ -71,20 +73,20 @@ public class H2S_Water {
                     testOps.bubblePointPressureFlash(false);
                 }
                 catch(Exception e){
-                    System.out.println(e.toString());
+                    logger.error(e.toString());
                 }
                 
                 aad = (pressure-testSystem.getPressure())/pressure*100;
-                System.out.println(ID+" "+pressure+" "+testSystem.getPressure()+" "+aad);
+                logger.info(ID+" "+pressure+" "+testSystem.getPressure()+" "+aad);
                 
                 
                  }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
-        System.out.println("Finished");
+        logger.info("Finished");
             
         }
     }

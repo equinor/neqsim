@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -14,6 +16,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
 public class FreezeSolidFunction extends HuronVidalFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(FreezeSolidFunction.class);
     
     /** Creates new Test */
     public FreezeSolidFunction() {
@@ -25,7 +28,7 @@ public class FreezeSolidFunction extends HuronVidalFunction {
             thermoOps.freezingPointTemperatureFlash();
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getTemperature();
     }

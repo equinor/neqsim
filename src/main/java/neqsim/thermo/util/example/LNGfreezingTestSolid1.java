@@ -37,12 +37,12 @@ public class LNGfreezingTestSolid1 {
         
         testSystem.getPhase(3).getComponent("benzene").setHeatOfFusion(6000);
         try {
-                System.out.println("heat of fusion " +  testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
+             //   System.out.println("heat of fusion " +  testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
          
              testOps.TPSolidflash();
-             System.out.println("heat of fusion " +  testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
-          //// testOps.displayResult();
-           // testOps.freezingPointTemperatureFlash();
+            // System.out.println("heat of fusion " +  testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
+            // testOps.displayResult();
+            // testOps.freezingPointTemperatureFlash();
             testSystem.display();
             // testOps.freezingPointTemperatureFlash();
             //     testOps.TPflash();

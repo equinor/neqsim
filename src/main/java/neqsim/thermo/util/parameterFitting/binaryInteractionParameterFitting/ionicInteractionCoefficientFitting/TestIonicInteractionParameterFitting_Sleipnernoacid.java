@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFitting_Sleipnernoacid.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFitting_Sleipnernoacid(){
@@ -37,7 +39,6 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.la
         ResultSet dataSet =  database.getResultSet(  "SELECT * FROM Sleipner");
         try{
             int i=0;
-            System.out.println("adding....");
             while(dataSet.next()){
                 i++;
                 
@@ -81,7 +82,7 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.la
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class LNGfilling {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(LNGfilling.class);
     
     /** Creates new TPflash */
     public LNGfilling() {
@@ -54,7 +56,7 @@ public class LNGfilling {
             testOps.hydrateFormationTemperature(2);
             testSystem.display();
         } catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
 //        System.out.println("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
         //System.out.println("wt%MEG " + testSystem.getPhase(1).getComponent("MEG").getMolarMass()*testSystem.getPhase(1).getComponent("MEG").getx()/testSystem.getPhase(1).getMolarMass());

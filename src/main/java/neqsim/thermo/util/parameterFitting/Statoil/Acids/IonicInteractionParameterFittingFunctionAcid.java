@@ -9,6 +9,7 @@ package neqsim.thermo.util.parameterFitting.Statoil.Acids;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunctionAcid.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunctionAcid() {
@@ -34,7 +36,7 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
         try{
             thermoOps.bubblePointPressureFlash(false);
         } catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
         return system.getPressure();

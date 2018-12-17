@@ -6,6 +6,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * Sleipneracetate.java
@@ -19,6 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Diamond {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Diamond.class);
 
     /**
      * Creates a new instance of Sleipneracetate
@@ -38,7 +40,7 @@ public class Diamond {
             p = new PrintStream(outfile);
             p.close();
         } catch (IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         double temperature, x, pressure, ID;
 
@@ -61,12 +63,12 @@ public class Diamond {
                 testSystem.init(0);
                 testSystem.init(1);
 
-                System.out.println(ID);
+                logger.info(ID);
                 ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
                 try {
                     testOps.bubblePointPressureFlash(false);
                 } catch (Exception e) {
-                    System.out.println(e.toString());
+                    logger.error(e.toString());
                 }
 
                 //System.out.println(testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx());
@@ -76,15 +78,15 @@ public class Diamond {
                     p.println(ID + " " + x + " " + pressure + " " + testSystem.getPressure());
                     p.close();
                 } catch (FileNotFoundException e) {
-                    System.out.println("Could not find file");
-                    System.err.println("Could not read from Patrick.txt" + e.getMessage());
+                    logger.error("Could not find file");
+                    logger.error("Could not read from Patrick.txt" + e.getMessage());
                 }
             }
 
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
-        System.out.println("Finished");
+        logger.info("Finished");
 
     }
 }

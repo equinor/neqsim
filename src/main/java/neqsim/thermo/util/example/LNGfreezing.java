@@ -43,7 +43,7 @@ public class LNGfreezing {
             //thermodynamicOperations.flashOps.saturationOps.freezingPointTemperatureFlash operation = new thermodynamicOperations.flashOps.saturationOps.freezingPointTemperatureFlash(testSystem);
             //System.out.println("funk " + operation.calcFunc());
             testOps.freezingPointTemperatureFlash();
-            System.out.println("freeze temperature " + (testSystem.getTemperature() - 273.15));
+          //  System.out.println("freeze temperature " + (testSystem.getTemperature() - 273.15));
             // testOps.TPSolidflash();
             testSystem.display();
         } catch (Exception e) {

@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemCSPsrkEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestCSPsrk {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCSPsrk.class);
     
     /** Creates new TPflash */
     public TestCSPsrk() {
@@ -59,9 +61,9 @@ public class TestCSPsrk {
             testOps.bubblePointPressureFlash();
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
-        System.out.println(testSystem.getTemperature()-273.15);
+        logger.info(testSystem.getTemperature()-273.15);
     }
 }

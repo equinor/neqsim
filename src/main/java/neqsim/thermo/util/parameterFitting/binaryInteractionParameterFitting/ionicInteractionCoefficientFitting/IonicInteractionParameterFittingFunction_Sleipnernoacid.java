@@ -8,6 +8,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 public class IonicInteractionParameterFittingFunction_Sleipnernoacid extends LevenbergMarquardtFunction implements ThermodynamicConstantsInterface{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction_Sleipnernoacid.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction_Sleipnernoacid() {
@@ -28,7 +30,7 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid extends Lev
             //System.out.println("pressure: " + system.getPressure());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
       
        return system.getPressure();

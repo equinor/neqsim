@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestIonicInteractionParameterFittingCo2nacl extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFittingCo2nacl.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFittingCo2nacl(){
@@ -46,7 +48,6 @@ public class TestIonicInteractionParameterFittingCo2nacl extends java.lang.Objec
         
         try{
             int i=0;
-            System.out.println("adding....");
             while(dataSet.next() && i<403){
                 i++;
                 IonicInteractionParameterFittingFunctionCo2nacl function = new IonicInteractionParameterFittingFunctionCo2nacl();
@@ -74,7 +75,7 @@ public class TestIonicInteractionParameterFittingCo2nacl extends java.lang.Objec
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

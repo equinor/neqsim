@@ -4,6 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 
@@ -20,6 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Jamal {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Jamal.class);
     
     /** Creates a new instance of Sleipneracetate */
     public Jamal() {
@@ -37,7 +39,7 @@ public class Jamal {
             p = new PrintStream(outfile);
             p.close();
         }catch(IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         double temperature, x,pressure;
         
@@ -57,7 +59,7 @@ public class Jamal {
                 try{
                     testOps.bubblePointPressureFlash(false);
                 } catch(Exception e){
-                    System.out.println(e.toString());
+                    logger.error(e.toString());
                 }
                 
                 
@@ -69,12 +71,12 @@ public class Jamal {
                     p.println(temperature + " "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx()/x);
                     p.close();
                 }catch(FileNotFoundException e) {
-                    System.out.println("Could not find file");
+                    logger.error("Could not find file");
                     
                     System.err.println("Could not read from Patrick.txt"+ e.getMessage());
                 }
            
-        System.out.println("Finished");
+        logger.info("Finished");
         
     }
     }

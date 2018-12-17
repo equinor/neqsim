@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestFurstIonicParameterFunction extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestFurstIonicParameterFunction.class);
     
     /** Creates new TestAcentric */
     public TestFurstIonicParameterFunction() {
@@ -45,7 +47,7 @@ public class TestFurstIonicParameterFunction extends java.lang.Object {
         //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'");
         int numb = 0;
         try{
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next() && numb<22265){
                 numb++; 
 
@@ -81,7 +83,7 @@ public class TestFurstIonicParameterFunction extends java.lang.Object {
             //dataSet =  database.getResultSet(  "SELECT * FROM ionicData WHERE ion1<>'H3Oplus2' AND IonicActivity>=0.01");
             //dataSet =  database.getResultSet(  "SELECT * FROM ionicData WHERE Description IN ('NaCl','LiCl','Sr2Br','Sr2I') AND IonicActivity>=0.01");
             dataSet =  database.getResultSet(  "SELECT * FROM ionicData WHERE ion1='Na+' AND ion2='Cl-'");
-            System.out.println("setting new for activity");
+            logger.info("setting new for activity");
             while(!dataSet.next()){
                 FurstIonicParameterFunction_Activity function = new  FurstIonicParameterFunction_Activity();
                 function.setInitialGuess(guess);
@@ -110,7 +112,7 @@ public class TestFurstIonicParameterFunction extends java.lang.Object {
             
             
             dataSet =  database.getResultSet(  "SELECT * FROM saltdens WHERE ion1='Na+' AND ion2='Cl-'");
-            System.out.println("fitting to ionic density");
+            logger.info("fitting to ionic density");
             while(!dataSet.next()){
                 FurstIonicParameterFunction_Density function = new  FurstIonicParameterFunction_Density();
                 function.setInitialGuess(guess);
@@ -137,14 +139,14 @@ public class TestFurstIonicParameterFunction extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error: " + e);
+            logger.error("database error: " + e);
             e.printStackTrace();
         }
         
         
         //        double sample1[] = {0.1};
         //        for(int i=0;i<sampleList.size();i++){
-        //            System.out.println("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+        //            logger.info("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
         //        }
         
         SampleSet sampleSet = new SampleSet(sampleList);

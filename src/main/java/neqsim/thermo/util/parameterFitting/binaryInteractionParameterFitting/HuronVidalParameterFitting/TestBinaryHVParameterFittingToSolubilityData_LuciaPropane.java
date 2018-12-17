@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToSolubilityData_LuciaPropane.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFittingToSolubilityData_LuciaPropane() {
@@ -39,7 +41,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
         
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next() && p<100){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData();
@@ -67,13 +69,13 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND ID<3000 AND Temperature>250 AND Pressure<7000000000 AND Temperature<600 AND Y<>NULL AND Y>0.0000000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next() && p<100){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(0,0);
@@ -97,14 +99,14 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM LuciaData8 WHERE Component='propane' AND Temperature>270 AND Temperature<400 AND Pressure<700000000 AND L1<>NULL ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
         
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(!dataSet.next() && p<10){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(0,0);
@@ -132,7 +134,7 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane extends j
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

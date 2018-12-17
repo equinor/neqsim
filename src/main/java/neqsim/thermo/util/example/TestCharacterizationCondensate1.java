@@ -9,6 +9,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  *
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestCharacterizationCondensate1 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCharacterizationCondensate1.class);
 
     /**
      * Creates new TPflash
@@ -78,7 +80,7 @@ public class TestCharacterizationCondensate1 {
             //           testOps.hydrateFormationTemperature();
 //            testOps.dewPointTemperatureFlash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         System.out.println("activity coeffisient " + testSystem.getPhase(1).getActivityCoefficient(1));
         testSystem.display();

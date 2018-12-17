@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAs;
 public class TestCPA extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPA.class);
     
     /** Creates new TestAcentric */
     public TestCPA() {
@@ -38,7 +40,6 @@ public class TestCPA extends java.lang.Object {
         //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 CPAFunction function = new  CPAFunction();
                 
@@ -72,13 +73,12 @@ public class TestCPA extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'");
         
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 CPAFunctionDens function = new  CPAFunctionDens();
                 SystemInterface testSystem = new SystemSrkCPAs(280, 0.001);
@@ -105,7 +105,7 @@ public class TestCPA extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

@@ -7,6 +7,7 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CPAFunctionStatoil.class);
     
     /** Creates new Test */
     public CPAFunctionStatoil() {
@@ -29,7 +31,7 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
         try{
             thermoOps.bubblePointPressureFlash(false);
         } catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         // System.out.println("pres: " + system.getPressure());
         return system.getPressure();

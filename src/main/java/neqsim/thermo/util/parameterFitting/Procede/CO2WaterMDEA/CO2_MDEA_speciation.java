@@ -4,6 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * Sleipneracetate.java
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CO2_MDEA_speciation {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CO2_MDEA_speciation.class);
 
     /**
      * Creates a new instance of Sleipneracetate
@@ -36,7 +38,7 @@ public class CO2_MDEA_speciation {
             p = new PrintStream(outfile);
             p.close();
         } catch (IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
 
         FileOutputStream outfile1;
@@ -46,7 +48,7 @@ public class CO2_MDEA_speciation {
             p1 = new PrintStream(outfile1);
             p1.close();
         } catch (IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
 
         int i = 0, j, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0, CO3Numb = 0, OHNumb = 0;
@@ -122,15 +124,15 @@ public class CO2_MDEA_speciation {
             j++;
         } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA+"));
 
-        System.out.println("CO2 number " + CO2Numb);
+        logger.info("CO2 number " + CO2Numb);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
             testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
-        System.out.println("Pressure " + testSystem.getPressure());
+        logger.info("Pressure " + testSystem.getPressure());
 
         nCO2 = testSystem.getPhase(1).getComponent(CO2Numb).getx();
         nMDEA = testSystem.getPhase(1).getComponent(MDEANumb).getx();
@@ -154,7 +156,7 @@ public class CO2_MDEA_speciation {
             //p.println(loading+" "+testSystem.getPressure()+" "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
             p.close();
         } catch (FileNotFoundException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
 
             System.err.println("Could not read from Patrick.txt" + e.getMessage());
         }
@@ -164,7 +166,7 @@ public class CO2_MDEA_speciation {
             p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3 + " " + aOH);
             p1.close();
         } catch (FileNotFoundException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
             System.err.println("Could not read from Patrick.txt" + e.getMessage());
         }
 
@@ -175,6 +177,6 @@ public class CO2_MDEA_speciation {
         }
 
         //}
-        System.out.println("Finished");
+        logger.info("Finished");
     }
 }

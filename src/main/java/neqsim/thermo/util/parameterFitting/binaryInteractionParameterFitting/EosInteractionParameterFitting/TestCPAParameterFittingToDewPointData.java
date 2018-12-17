@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestCPAParameterFittingToDewPointData extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPAParameterFittingToDewPointData.class);
     
     /** Creates new TestAcentric */
     public TestCPAParameterFittingToDewPointData() {
@@ -40,7 +42,7 @@ public class TestCPAParameterFittingToDewPointData extends java.lang.Object {
         
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next() && p<500){
                 p++;
                 CPAParameterFittingToDewPointData function = new CPAParameterFittingToDewPointData();
@@ -72,7 +74,7 @@ public class TestCPAParameterFittingToDewPointData extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);
