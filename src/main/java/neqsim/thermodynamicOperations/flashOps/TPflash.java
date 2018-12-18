@@ -339,7 +339,7 @@ public class TPflash extends Flash implements java.io.Serializable {
         }
 
         setNewK();
-        
+
         gibbsEnergy = system.getGibbsEnergy();
         gibbsEnergyOld = gibbsEnergy;
 
@@ -348,9 +348,9 @@ public class TPflash extends Flash implements java.io.Serializable {
         int timeFromLastGibbsFail = 0;
 
         double chemdev = 0, oldChemDiff = 1.0, diffChem = 1.0;
-
         do {
             iterations = 0;
+            boolean newtonFailed = false;
             do {
                 iterations++;
 
@@ -365,13 +365,17 @@ public class TPflash extends Flash implements java.io.Serializable {
                     }
                 } else if (iterations >= newtonLimit
                         && Math.abs(system.getPhase(0).getPressure()
-                                - system.getPhase(1).getPressure()) < 1e-5) {
+                                - system.getPhase(1).getPressure()) < 1e-5 && !newtonFailed) {
                     if (iterations == newtonLimit) {
                         secondOrderSolver
                                 = new sysNewtonRhapsonTPflash(system, 2,
                                         system.getPhases()[0].getNumberOfComponents());
                     }
-                    deviation = secondOrderSolver.solve();
+                    try {
+                        deviation = secondOrderSolver.solve();
+                    } catch (Exception e) {
+                        sucsSubs();
+                    }
                 } else {
                     sucsSubs();
                 }
@@ -433,7 +437,7 @@ public class TPflash extends Flash implements java.io.Serializable {
         //        System.out.println("clonedSystem G : " +clonedSystem.calcGibbsEnergy());
         //        System.out.println("system G : " + system.calcGibbsEnergy());
         ///system.init(3);
-        
+
         double gasgib = system.getPhase(0).getGibbsEnergy();
         system.setPhaseType(0, 0);
         system.init(1, 0);
@@ -445,7 +449,7 @@ public class TPflash extends Flash implements java.io.Serializable {
         system.init(1);
 
         if (system.doMultiPhaseCheck()) {
-            TPmultiflash operation = new TPmultiflash(system,true);
+            TPmultiflash operation = new TPmultiflash(system, true);
             operation.run();
         }
         if (solidCheck) {

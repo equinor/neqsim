@@ -375,7 +375,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     public void resetPhysicalProperties() {
-        neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties.mixingRule = null;
+        physicalProperty.setMixingRuleNull();
         physicalProperty = null;
     }
 
