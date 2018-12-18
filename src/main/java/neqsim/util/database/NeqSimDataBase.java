@@ -21,6 +21,7 @@ package neqsim.util.database;
  * Created on 1. november 2001, 08:56
  */
 import java.sql.*;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -30,6 +31,7 @@ import java.sql.*;
 public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(NeqSimDataBase.class);
 
     private static String dataBaseType = "mySQL"; //"MSAccess";// //"MSAccessUCanAccess";//"mySQL";//"oracle", "oracleST" , "mySQLNTNU";
     private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
@@ -57,7 +59,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
             databaseConnection = this.openConnection();
             statement = databaseConnection.createStatement();
         } catch (Exception ex) {
-            System.out.println("SQLException " + ex.getMessage());
+            logger.error("SQLException " + ex.getMessage());
+            throw new RuntimeException(ex);
 
         }
     }
@@ -96,19 +99,19 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                 return DriverManager.getConnection(getConnectionString(), username, password);
             }
         } catch (Exception ex) {
-            System.out.println("SQLException.. " + ex.getMessage());
-            System.out.println("error loading NeqSimDataBase... " + ex.toString());
-            System.out.println("Could not find database..");
-        } finally {
-            try {
+            logger.error("error loading NeqSimDataBase... " + ex.toString());
+            throw new RuntimeException(ex);
+        }  finally {
+           try {
                 if (ctx != null) {
                     ctx.close();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-            }
+                logger.error("error", e);
+           }
         }
-        return null;
+        
+ 
     }
 
     public Connection getConnection() {
@@ -120,9 +123,9 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
             ResultSet result = getStatement().executeQuery(sqlString);
             return result;
         } catch (Exception e) {
-            System.out.println("error loading NeqSimbataBase " + e.toString());
+            logger.error("error loading NeqSimbataBase " + e.toString());
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     public void execute(String sqlString) {
@@ -133,9 +136,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
             }
             getStatement().execute(sqlString);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("error in NeqSimDataBase " + e.toString());
-            System.out.println("The database must be rgistered on the local DBMS to work.");
+            logger.error("error in NeqSimDataBase " + e.toString(), e);
+            logger.error("The database must be rgistered on the local DBMS to work.");
         }
     }
 
@@ -164,7 +166,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }
         } catch (Exception ex) {
-            System.out.println("error loading database driver.. " + ex.toString());
+            logger.error("error loading database driver.. " + ex.toString());
         }
     }
 

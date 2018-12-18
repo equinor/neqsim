@@ -96,6 +96,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
     public SystemThermo(double T, double P) {
         this();
+        if (T < 0.0 || P < 0.0){
+            logger.error("Negative input temperature or pressure");
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+        }
         beta[0] = 1.0;
         beta[1] = 1.0;
         beta[2] = 1.0;
@@ -515,6 +520,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             boilp = Double.parseDouble(dataSet.getString("normboil"));
         } catch (Exception e) {
             logger.error("failed " + e.toString());
+            throw new RuntimeException(e);
         } finally {
             try {
                 dataSet.close();
@@ -562,6 +568,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      * @param density density of the component in g/cm3
      */
     public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density) {
+        if (density < 0.0 || molarMass < 0.0){
+            logger.error("Negative input molar mass or density.");
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+            
+        }
+        
         SystemInterface refSystem = null;
         double TC = 0.0, PC = 0.0, m = 0.0, TB = 0.0, acs = 0.0;
         double penelouxC = 0.0;
@@ -749,6 +762,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
 
         if (addForFirstTime) {
+            if (moles < 0.0){
+            logger.error("Negative input number of moles of component: " + componentName);
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+            }
             // System.out.println("adding " + componentName);
             componentNames.add(componentName);
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -776,6 +794,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
 
         if (addForFirstTime) {
+            if (moles < 0.0){
+                logger.error("Negative input number of moles.");
+                neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+                throw new RuntimeException(e);
+            }
+            
             componentNames.add(componentName);
             double k = 1.0;
             setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);

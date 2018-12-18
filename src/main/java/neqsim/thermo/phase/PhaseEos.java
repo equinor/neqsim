@@ -87,13 +87,15 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
                     setMolarVolume(molarVolume(pressure, temperature, getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase, phase));
                 }
             } catch (Exception e) {
-                logger.error("too many iterations in volume calc!", e);
-                logger.info("A " + A);
-                logger.info("B " + B);
-                logger.info("moles " + numberOfMolesInPhase);
-                logger.info("molarVolume " + getMolarVolume());
-                logger.info("setting molar volume to ideal gas molar volume.............");
-                setMolarVolume((R * temperature) / pressure);
+                logger.error("Failed to solve for molarVolume within the iteration limit.");
+                throw new RuntimeException(e);
+              //  logger.error("too many iterations in volume calc!", e);
+              //  logger.info("A " + A);
+              //  logger.info("B " + B);
+              //  logger.info("moles " + numberOfMolesInPhase);
+              //  logger.info("molarVolume " + getMolarVolume());
+              //  logger.info("setting molar volume to ideal gas molar volume.............");
+              //  setMolarVolume((R * temperature) / pressure);
                 //System.exit(0);
             }
 

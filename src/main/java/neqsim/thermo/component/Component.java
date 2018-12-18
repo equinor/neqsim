@@ -168,11 +168,16 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     dataSet.getString("ID");
                     //   if(dataSet.isAfterLast()) dataSet.next(); 
                 } catch (Exception e) {
+                    try{
                     dataSet.close();
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
-                    dataSet.next();
+                    dataSet.next(); 
+                    }catch (Exception e2){
+                        throw new RuntimeException(e2);
+                    }
                 }
+         
                 setComponentType(dataSet.getString("comptype"));
                 setCASnumber(dataSet.getString("CASnumber"));
                 index = Integer.parseInt(dataSet.getString("compindex"));

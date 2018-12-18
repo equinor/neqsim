@@ -38,7 +38,7 @@ public class TPflash_benchmark {
         //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15, 1.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        testSystem.addComponent("nitrogen", 0.0028941);
+        testSystem.addComponent("nitrogen", -0.0028941);
         testSystem.addComponent("CO2", 0.054069291);
         testSystem.addComponent("methane", 0.730570915);
         testSystem.addComponent("ethane", 0.109004002);
