@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestParachorFit extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestParachorFit.class);
 
     /** Creates new TestAcentric */
     public TestParachorFit() {
@@ -35,7 +37,6 @@ public class TestParachorFit extends java.lang.Object {
         ResultSet dataSet = database.getResultSet("SELECT * FROM PureComponentSurfaceTension WHERE ComponentName='MEG'");
 
         try {
-            System.out.println("adding....");
             while (dataSet.next()) {
                 ParachorFunction function = new ParachorFunction();
                 double guess[] = {207.2}; // methane
@@ -59,7 +60,7 @@ public class TestParachorFit extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

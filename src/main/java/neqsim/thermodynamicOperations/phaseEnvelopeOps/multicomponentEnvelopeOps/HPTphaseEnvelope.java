@@ -29,6 +29,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 /**
@@ -47,6 +48,7 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
     JFrame mainFrame;
     JPanel mainPanel;
     double startPressure=1, endPressure=0, startTemperature=160, endTemperature=0;
+    static Logger logger = Logger.getLogger(HPTphaseEnvelope.class);
     
     /** Creates new bubblePointFlash */
     public HPTphaseEnvelope() {
@@ -99,7 +101,7 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
             plot.setZvals(points);
             plot.init();
         } catch(Exception e){
-            System.out.println("plotting failed");
+            logger.error("plotting failed");
         }
     }
     

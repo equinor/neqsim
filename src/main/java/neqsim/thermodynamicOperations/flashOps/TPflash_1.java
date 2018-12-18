@@ -23,6 +23,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -32,6 +33,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TPflash_1 extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflash_1.class);
     
     
     SystemInterface clonedSystem;
@@ -80,10 +82,10 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
         }
         catch(Exception e){
             e.printStackTrace(System.err);
-            System.out.println("error in beta calc" + e.toString());
+            logger.error("error in beta calc" + e.toString());
         }
         if((system.getBeta()>1.0-1e-9 || system.getBeta()<1e-9)) {
-            return; //{System.out.println("beta outside range in TPflash-sucsSubs..returning ");};return;stabilityCheck();
+            return; //{logger.info("beta outside range in TPflash-sucsSubs..returning ");};return;stabilityCheck();
         }
         system.calc_x_y();
         system.init(1);
@@ -329,13 +331,13 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
                 
                 if((gibbsEnergy-gibbsEnergyOld)/Math.abs(gibbsEnergy)>1e-6 && !system.isChemicalSystem()){
                     resetK();
-                    System.out.println("reset K..");
+                    logger.info("reset K..");
                 }
                 
-                //System.out.println("deviation: " + deviation);
+                //logger.info("deviation: " + deviation);
             }
             while ((deviation>1e-8) && (iterations < maxNumberOfIterations));
-            //System.out.println("iterations " + iterations);
+            //logger.info("iterations " + iterations);
             if(system.isChemicalSystem()){
                 chemdev=0.0;
                 
@@ -354,14 +356,14 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
                     }
                 }
             }
-            //System.out.println("chemdev: " + chemdev + "  iter: " + totiter);
+            //logger.info("chemdev: " + chemdev + "  iter: " + totiter);
             totiter++;
         }
         while((chemdev>1e-6 && totiter<100) || totiter<2);
         
-//        System.out.println("iterations : " + totiter);
-//        System.out.println("clonedSystem G : " +clonedSystem.calcGibbsEnergy());
-//        System.out.println("system G : " + system.calcGibbsEnergy());
+//        logger.info("iterations : " + totiter);
+//        logger.info("clonedSystem G : " +clonedSystem.calcGibbsEnergy());
+//        logger.info("system G : " + system.calcGibbsEnergy());
         
         system.init(3);
         if(system.doMultiPhaseCheck()){

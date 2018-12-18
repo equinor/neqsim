@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestInfluenceParamGTFunction extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestInfluenceParamGTFunction.class);
 
     /** Creates new TestAcentric */
     public TestInfluenceParamGTFunction() {
@@ -42,7 +44,6 @@ public class TestInfluenceParamGTFunction extends java.lang.Object {
         //double guess[] = {-5.2897559010400935E-17, 7.103588505598196E-17};//, 1.1161368619, 0.8363538313}; // PR param
 
         try {
-            System.out.println("adding....");
             while (dataSet.next() && includePureCompData) {
                 InfluenceParamGTFunction function = new InfluenceParamGTFunction();
                 function.setInitialGuess(guess);
@@ -68,13 +69,13 @@ public class TestInfluenceParamGTFunction extends java.lang.Object {
 
                 Double.toString(sample.getFunction().calcValue(new double[0]));
                 //double influenceParam = ((GTSurfaceTension) testSystem.getInterphaseProperties().getSurfaceTensionModel(0)).getInfluenceParameter(surfTens / 1.0e3, 0);
-                //System.out.println(testSystem.getTemperature() + " " + influenceParam);
+                //logger.error(testSystem.getTemperature() + " " + influenceParam);
                 //double factor = influenceParam / (testSystem.getPhase(0).getComponent(0).getAtractiveTerm().aT(testSystem.getTemperature()) * 1.0e-5) / Math.pow(((ComponentEosInterface) testSystem.getPhase(0).getComponent(0)).calcb() * 1e-5, 2.0 / 3.0);
                 //sample.setDescription((1.0 - testSystem.getTemperature() / testSystem.getPhase(0).getComponent(0).getTC()) + "  " + Double.toString(factor));
                 sample.setReference(testSystem.getPhase(0).getComponent(0).getComponentName());
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
 /*
@@ -82,7 +83,7 @@ public class TestInfluenceParamGTFunction extends java.lang.Object {
         boolean includeBinaryData = false;
 
         try {
-            System.out.println("adding....");
+            logger.error("adding....");
             while (dataSet.next() && includeBinaryData) {
                 InfluenceParamGTFunctionBinaryData function = new InfluenceParamGTFunctionBinaryData();
                 function.setInitialGuess(guess);
@@ -108,13 +109,13 @@ public class TestInfluenceParamGTFunction extends java.lang.Object {
 
                 Double.toString(sample.getFunction().calcValue(new double[0]));
                 double influenceParam = ((GTSurfaceTension) testSystem.getInterphaseProperties().getSurfaceTensionModel(0)).getInfluenceParameter(surfTens / 1.0e3, 0);
-                System.out.println(testSystem.getTemperature() + " " + influenceParam);
+                logger.error(testSystem.getTemperature() + " " + influenceParam);
                 double factor = influenceParam / (testSystem.getPhase(0).getComponent(0).getAtractiveTerm().aT(testSystem.getTemperature()) * 1.0e-5) / Math.pow(((ComponentEosInterface) testSystem.getPhase(0).getComponent(0)).calcb() * 1e-5, 2.0 / 3.0);
                 sample.setDescription((1.0 - testSystem.getTemperature() / testSystem.getPhase(0).getComponent(0).getTC()) + "  " + Double.toString(factor));
                 sample.setReference("binary data");
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 */
         SampleSet sampleSet = new SampleSet(sampleList);

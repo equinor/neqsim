@@ -7,10 +7,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class WATcalc extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(WATcalc.class);
 
     /** Creates new bubblePointFlash */
     public WATcalc() {
@@ -52,9 +54,9 @@ public class WATcalc extends constantDutyTemperatureFlash {
                 system.setTemperature(system.getTemperature() - 0.1);
             }
             deltaT = system.getTemperature() - oldTemp;
-            System.out.println("sumx " + sumx + " deltaT "+ deltaT + " dT "+dT + " temperature " + system.getTemperature());
+            logger.info("sumx " + sumx + " deltaT "+ deltaT + " dT "+dT + " temperature " + system.getTemperature());
         } while (Math.abs(sumx - 1.0) > 1e-8 && iter<100);
-        System.out.println("sumx " + sumx);
+        logger.info("sumx " + sumx);
 
         system.setNumberOfPhases(system.getNumberOfPhases() + 1);
         system.setPhaseIndex(system.getNumberOfPhases() - 1, 5);

@@ -22,6 +22,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -31,6 +32,7 @@ import neqsim.thermo.system.SystemInterface;
 public class VUflashQfunc extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(VUflashQfunc.class);
 
     double Vspec = 0, Uspec = 0.0;
     Flash tpFlash;
@@ -77,12 +79,12 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
             oldPres = nyPres;
             oldTemp = nyTemp;
             system.init(3);
-                        System.out.println("dQdP: " + calcdQdP());
- System.out.println("dQdT: " + calcdQdT());
+                        logger.info("dQdP: " + calcdQdP());
+ logger.info("dQdT: " + calcdQdT());
             nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdP() / calcdQdPP();
             nyTemp = oldTemp + (iterations) / (iterations + 10.0) * calcdQdT() / calcdQdTT();
-            System.out.println("volume: " + system.getVolume());
-             System.out.println("inernaleng: " + system.getInternalEnergy());
+            logger.info("volume: " + system.getVolume());
+             logger.info("inernaleng: " + system.getInternalEnergy());
             system.setPressure(nyPres);
             system.setTemperature(nyTemp);
             tpFlash.run();
@@ -92,8 +94,8 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
 
     public void run() {
         tpFlash.run();
-        System.out.println("internaleng: " + system.getInternalEnergy());
-        System.out.println("volume: " + system.getVolume());
+        logger.info("internaleng: " + system.getInternalEnergy());
+        logger.info("volume: " + system.getVolume());
         solveQ();
 
     }

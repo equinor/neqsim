@@ -5,6 +5,7 @@
 package neqsim.physicalProperties.interfaceProperties.solidAdsorption;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -13,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PotentialTheoryAdsorption.class);
 
     transient SystemInterface system;
     double[] eps0;// = 7.458;//7.630; // J/mol
@@ -72,19 +74,19 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         totalSurfaceExcess = 0.0;
         for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
             totalSurfaceExcess += surfaceExcess[comp];
-            //    System.out.println("surface excess " + surfaceExcess[comp]);
+            //    logger.info("surface excess " + surfaceExcess[comp]);
         }
         for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
             surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
-            System.out.println("surface excess molfrac " + surfaceExcessMolFraction[comp] + " mol/kg adsorbent " + surfaceExcess[comp]);
+            logger.error("surface excess molfrac " + surfaceExcessMolFraction[comp] + " mol/kg adsorbent " + surfaceExcess[comp]);
         }
-        System.out.println("pressure " + tempSystem.getPressure());
+        logger.info("pressure " + tempSystem.getPressure());
         /*
         error = fugacityField[comp][i] - fugComp;
-        System.out.println("error " + error);
+        logger.info("error " + error);
         tempSystem.getPhase(phase).setPressure(tempSystem.getPhase(phase).getPressure() + error);
         tempSystem.init(3);
-        System.out.println("i " + i + " fug " + fugacityField[comp][i]);
+        logger.info("i " + i + " fug " + fugacityField[comp][i]);
          * */
     }
 
@@ -100,10 +102,10 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 beta[comp] = Double.parseDouble(dataSet.getString("z0")) ;
                 z0[comp] = Double.parseDouble(dataSet.getString("beta"));
 
-                System.out.println("adsorption parameters read ok for " + system.getPhase(0).getComponent(comp).getComponentName() + " eps " + eps0[comp]);
+                logger.info("adsorption parameters read ok for " + system.getPhase(0).getComponent(comp).getComponentName() + " eps " + eps0[comp]);
             } catch (Exception e) {
-                System.out.println("Component not found in adsorption DB " + system.getPhase(0).getComponent(comp).getComponentName() + " on solid " + solidMaterial);
-                System.out.println("using default parameters");
+                logger.info("Component not found in adsorption DB " + system.getPhase(0).getComponent(comp).getComponentName() + " on solid " + solidMaterial);
+                logger.info("using default parameters");
                 eps0[comp] = 7.2;
                 beta[comp] = 2.0;
                 z0[comp] = 3.2;
@@ -114,7 +116,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                         dataSet.close();
                     }
                 } catch (Exception e) {
-                    System.out.println("error closing adsorption database.....");
+                    logger.error("error closing adsorption database.....");
                     e.printStackTrace();
                 }
 

@@ -30,6 +30,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -38,6 +39,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorWaterStudentsPH.class);
 
     SystemInterface thermoSystem = null, gasSystem = null, oilSystem = null, waterSystem = null;
     ThermodynamicOperations thermoOps = null;
@@ -226,7 +228,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
     @SuppressWarnings("empty-statement")
     public void run() {
         calcRSWTOB();
-        System.out.println("RSWTOB " + RSWTOB);
+        logger.info("RSWTOB " + RSWTOB);
         nProps = 29;
         props = new double[nProps][pressures.length][enthalpies.length];
         units = new String[nProps];
@@ -261,25 +263,25 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
             for (int i = 0; i < pressures.length; i++) {
                 thermoSystem.setPressure(pressures[i]);
                 try {
-                    System.out.println("PHflash... " + thermoSystem.getTemperature() + " pressure " + thermoSystem.getPressure());
+                    logger.info("PHflash... " + thermoSystem.getTemperature() + " pressure " + thermoSystem.getPressure());
                     thermoOps.PHflash(enthalpies[j], 0);
-                    System.out.println( " temperature " + thermoSystem.getTemperature() + " enthalpy "+ enthalpies[j]);
+                    logger.info( " temperature " + thermoSystem.getTemperature() + " enthalpy "+ enthalpies[j]);
                     thermoSystem.init(3);
                     thermoSystem.initPhysicalProperties();
                     acceptedFlash = true;
                 } catch (Exception e) {
                     acceptedFlash = false;
-                    System.out.println("fail temperature " + thermoSystem.getTemperature() + " fail pressure " + thermoSystem.getPressure());
+                    logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure " + thermoSystem.getPressure());
 
                     thermoSystem.display();
                     e.printStackTrace();
                 }
 
                 /*
-                 System.out.println("water density " + thermoSystem.getPhase(2).getPhysicalProperties().getDensity());
-                 System.out.println("RSW " + thermoSystem.getPhase(0).getComponent("water").getx() * thermoSystem.getPhase(0).getComponent("water").getMolarMass() / thermoSystem.getPhase(0).getMolarMass());
-                 System.out.println("surf tens oil-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2));
-                 System.out.println("surf tens gas-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2));
+                 logger.info("water density " + thermoSystem.getPhase(2).getPhysicalProperties().getDensity());
+                 logger.info("RSW " + thermoSystem.getPhase(0).getComponent("water").getx() * thermoSystem.getPhase(0).getComponent("water").getMolarMass() / thermoSystem.getPhase(0).getMolarMass());
+                 logger.info("surf tens oil-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2));
+                 logger.info("surf tens gas-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2));
                  */
                 int k = 0;
                 if (thermoSystem.hasPhaseType("gas") && acceptedFlash) {
@@ -1081,24 +1083,24 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
 
             }
         }
-        System.out.println("Finished TPflash...");
+        logger.info("Finished TPflash...");
         if (thermoSystem.getPhase(0).hasComponent("water")) {
             thermoSystem.removeComponent("water");
         }
       //  bubP = calcBubP(enthalpies);
       //  dewP = calcDewP(enthalpies);
         //bubT = calcBubT(enthalpies);
-        System.out.println("Finished creating arrays");
+        logger.info("Finished creating arrays");
         // BicubicSplineInterpolatingFunction funcGasDens = interpolationFunc.interpolate(pressures, enthalpies, props[0]);
-        // System.out.println("interpolated value " + funcGasDens.value(40, 298.0));
+        // logger.info("interpolated value " + funcGasDens.value(40, 298.0));
     }
 
     public void displayResult() {
-        System.out.println("TC " + TC + " PC " + PC);
+        logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < enthalpies.length; j++) {
-                System.out.println("pressure " + pressureLOG[i] + " enthalpy " + enthalpiesLOG[j]);// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " enthalpy " + enthalpiesLOG[j]);// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
             }
         }
         writeOLGAinpFile(fileName);
@@ -1182,7 +1184,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
                 if (names[k] == null) {
                     continue;
                 }
-                System.out.println("Writing variable: " + names[k]);
+                logger.info("Writing variable: " + names[k]);
                 writer.write(names[k] + " (" + units[k] + ")\n");
                 for (int i = 0; i < pressures.length; i++) {
                     //thermoSystem.setPressure(pressures[i]);
@@ -1697,7 +1699,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
              if (names[k] == null) {
              continue;
              }
-             System.out.println("Writing variable: " + names[k]);
+             logger.info("Writing variable: " + names[k]);
              writer.write(names[k] + " (" + units[k] + ")\n");
              for (int i = 0; i < pressures.length; i++) {
              //thermoSystem.setPressure(pressures[i]);

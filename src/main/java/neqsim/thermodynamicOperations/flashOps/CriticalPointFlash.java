@@ -7,6 +7,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.thermo.system.SystemInterface;
 public class CriticalPointFlash extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CriticalPointFlash.class);
 
     SimpleMatrix Mmatrix = null;
     SimpleMatrix HeidemannMmatrix = null;
@@ -64,7 +66,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                 }
             }
             HeidemannMmatrix.print();
-            System.out.println("Q det " + HeidemannMmatrix.determinant() + " temperature " + system.getTemperature()+ " pressure " + system.getPressure());
+            logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature " + system.getTemperature()+ " pressure " + system.getPressure());
         }
     }
 
@@ -168,7 +170,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                 }
                 double oldTemp = system.getTemperature();
                 system.setTemperature(oldTemp + dT);
-                System.out.println("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
+                logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
             } while (Math.abs(dT) > 1e-8 && iter < 112);// && (Math.abs(dT) < Math.abs(dTOld) || iter < 3));
 
              double dVc = Vc0 / 100.0;
@@ -187,7 +189,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
              dVOld = dVc;
              dVc = -valstart / ddetdV;
              system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
-             System.out.println("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart + " pressure " + system.getPressure());
+             logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart + " pressure " + system.getPressure());
              } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
              
         }

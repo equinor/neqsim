@@ -26,6 +26,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import Jama.*;
 import java.util.*;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -34,6 +35,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPmultiflash_1.class);
     
     //   SystemInterface clonedSystem;
     boolean multiPhaseTest = false;
@@ -180,7 +182,7 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
         
         lowestGibbsEnergyPhase = 0;
         
-        // System.out.println("low gibbs phase " + lowestGibbsEnergyPhase);
+        // logger.info("low gibbs phase " + lowestGibbsEnergyPhase);
         
         for (int k=0;k<minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents();k++){
             sumz += minimumGibbsEnergySystem.getPhases()[1].getComponents()[k].getz();
@@ -192,10 +194,10 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
         for (int k=0;k<minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents();k++){
             for (int i=0;i<minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents();i++){
                 ((SystemInterface) clonedSystem.get(k)).getPhases()[1].getComponents()[i].setx(((SystemInterface) clonedSystem.get(k)).getPhases()[1].getComponents()[i].getx()/sumw[0]);
-                //  System.out.println("x: " +  ((SystemInterface) clonedSystem.get(k)).getPhases()[0].getComponents()[i].getx());
+                //  logger.info("x: " +  ((SystemInterface) clonedSystem.get(k)).getPhases()[0].getComponents()[i].getx());
             }
             d[k] = Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k].getx())+ Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[k].getFugasityCoeffisient());
-            // System.out.println("dk: " + d[k]);
+            // logger.info("dk: " + d[k]);
         }
         
         for (int j=0;j<minimumGibbsEnergySystem.getPhases()[1].getNumberOfComponents();j++){
@@ -212,7 +214,7 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
                     err += Math.abs(logWi[i]-oldlogw[i]);
                     Wi[j][i] = Math.exp(logWi[i]);
                 }
-                // System.out.println("err: " + err);
+                // logger.info("err: " + err);
                 sumw[j] = 0;
                 
                 for (int i=0;i<system.getPhases()[1].getNumberOfComponents();i++){
@@ -230,9 +232,9 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
             for (int i=0;i<system.getPhases()[1].getNumberOfComponents();i++){
                 tm[j] -= Math.exp(logWi[i]);
                 x[j][i] = ((SystemInterface) clonedSystem.get(j)).getPhases()[1].getComponents()[i].getx();
-                //  System.out.println("txji: " + x[j][i]);
+                //  logger.info("txji: " + x[j][i]);
             }
-            System.out.println("tm: " + tm[j]);
+            logger.info("tm: " + tm[j]);
         }
         int unstabcomp = 0;
         for (int k=0;k<system.getPhases()[1].getNumberOfComponents();k++){
@@ -249,13 +251,13 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
         }
         //
         
-        //    System.out.println("STABILITY ANALYSIS: ");
-        //    System.out.println("tm1: " + tm[0] + "  tm2: " + tm[1]);*/
+        //    logger.info("STABILITY ANALYSIS: ");
+        //    logger.info("tm1: " + tm[0] + "  tm2: " + tm[1]);*/
     }
     
     
     public void run(){
-        System.out.println("Starting multiphase-flash....");
+        logger.info("Starting multiphase-flash....");
         stabilityAnalysis();
         system.init(1);
         
@@ -279,7 +281,7 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
                 for (i=0;i<system.getPhases()[0].getNumberOfComponents();i++){
                     chemdev += Math.abs(xchem[i]-system.getPhases()[phase].getComponents()[i].getx());
                 }
-                System.out.println("chemdev: " + chemdev);
+                logger.info("chemdev: " + chemdev);
             }
         }
     }

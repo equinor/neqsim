@@ -6,10 +6,13 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(HCdewPointPressureFlash.class);
+    
 
     /** Creates new bubblePointFlash */
     public HCdewPointPressureFlash() {
@@ -27,7 +30,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         int iterations = 0, maxNumberOfIterations = 500;
         double xold = 0, xtotal = 1, xoldold=0;
         double deriv = 0, funk = 0;
-        //System.out.println("starting");
+        //logger.info("starting");
         system.init(0);
         system.setBeta(0, 1.0 - 1e-10);
         system.setBeta(1, 1e-10);
@@ -90,9 +93,9 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
             }
             system.setPressure(newPres);
 
-            System.out.println("iter " + iterations + " pressure " + system.getPressure() + " xtotal " + xtotal);
+            logger.info("iter " + iterations + " pressure " + system.getPressure() + " xtotal " + xtotal);
         } while ((((Math.abs(xtotal) - 1.0) > 1e-10) || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9) && (iterations < maxNumberOfIterations));
-        //System.out.println("iter " + iterations + " XTOT " +xtotal + " k " +system.getPhases()[1].getComponents()[0].getK());
+        //logger.info("iter " + iterations + " XTOT " +xtotal + " k " +system.getPhases()[1].getComponents()[0].getK());
         if (Math.abs(xtotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
             setSuperCritical(true);
         }

@@ -8,6 +8,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
@@ -15,6 +16,8 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
     double wtfrac = 0.5;
     String inhibitor = "MEG";
+    
+    static Logger logger = Logger.getLogger(HydrateInhibitorwtFlash.class);
 
     /**
      * Creates new bubblePointFlash
@@ -71,7 +74,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                 }
                 error = -(wtp - wtfrac);
 
-                System.out.println("error " + error);
+                logger.info("error " + error);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -106,7 +109,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         try {
             testOps.hydrateInhibitorConcentrationSet("MEG", 0.99);
             double cons = 100 * testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles() * testSystem.getPhase(0).getComponent("MEG").getMolarMass() / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles() * testSystem.getPhase(0).getComponent("MEG").getMolarMass() + testSystem.getPhase(0).getComponent("water").getNumberOfmoles() * testSystem.getPhase(0).getComponent("water").getMolarMass());
-            System.out.println("hydrate inhibitor concentration " + cons + " wt%");
+            logger.info("hydrate inhibitor concentration " + cons + " wt%");
         } catch (Exception e) {
             e.toString();
         }

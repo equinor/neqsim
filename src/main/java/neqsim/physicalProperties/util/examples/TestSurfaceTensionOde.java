@@ -7,6 +7,7 @@ package neqsim.physicalProperties.util.examples;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestSurfaceTensionOde {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestSurfaceTensionOde.class);
 
     public static void main(String args[]) {
 
@@ -39,7 +41,7 @@ public class TestSurfaceTensionOde {
         try {
             testOps.TPflash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
     }

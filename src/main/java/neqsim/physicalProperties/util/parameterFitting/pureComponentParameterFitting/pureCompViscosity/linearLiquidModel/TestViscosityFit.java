@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestViscosityFit extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestViscosityFit.class);
     
     /** Creates new TestAcentric */
     public TestViscosityFit() {
@@ -37,7 +39,6 @@ public class TestViscosityFit extends java.lang.Object {
         ResultSet dataSet =  database.getResultSet("SELECT * FROM PureComponentViscosity WHERE ComponentName='MEG' ORDER BY Temperature");
        
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 ViscosityFunction function = new ViscosityFunction();
                 //double guess[] = {-66.2, 11810, 0.1331, -0.0000983}; //mdea
@@ -46,7 +47,7 @@ public class TestViscosityFit extends java.lang.Object {
               //    double guess[] = { -53.92523097004079, 9741.992308,0,0.106066223998382}; //TEG
                 function.setInitialGuess(guess);
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                //System.out.println("component " + dataSet.getString("ComponentName"));
+                //logger.info("component " + dataSet.getString("ComponentName"));
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);             // legger til komponenter til systemet
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
                 testSystem.createDatabase(true);
@@ -63,12 +64,12 @@ public class TestViscosityFit extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         double sample1[] = {0.1};
         for(int i=0;i<sampleList.size();i++){
-        //   System.out.println("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+        //   logger.info("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

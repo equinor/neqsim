@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -35,6 +36,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorWaterKeywordFormat.class);
 
     SystemInterface thermoSystem = null;
     ThermodynamicOperations thermoOps = null;
@@ -190,7 +192,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     
     public void run() {
 
-        System.out.println("Start creating arrays");
+        logger.info("Start creating arrays");
         calcRSWTOB();
         nProps = 29;
         props = new double[nProps][pressures.length][temperatures.length];
@@ -282,16 +284,16 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         bubP = calcBubP(temperatures);
         //  dewP = calcDewP(temperatures);
         bubT = calcBubT(temperatures);
-        System.out.println("Finished creating arrays");
+        logger.info("Finished creating arrays");
         initCalc();
     }
 
     public void displayResult() {
-        System.out.println("TC " + TC + " PC " + PC);
+        logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                System.out.println("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
             }
         }
         writeOLGAinpFile("");

@@ -9,6 +9,7 @@ package neqsim.thermodynamicOperations.chemicalEquilibrium;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.OperationInterface;
 public class ChemicalEquilibrium extends BaseOperation implements OperationInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ChemicalEquilibrium.class);
     
     SystemInterface system;
     /** Creates a new instance of ChemicalEquilibrium */
@@ -55,7 +57,7 @@ public class ChemicalEquilibrium extends BaseOperation implements OperationInter
             system.getChemicalReactionOperations().setDeltaReactionHeat(newHeat-oldHeat);
         }
         if(iter>50) {
-            System.out.println("iter : " + iter +" in chemicalequilibrium" );
+            logger.info("iter : " + iter +" in chemicalequilibrium" );
         }
     }
     

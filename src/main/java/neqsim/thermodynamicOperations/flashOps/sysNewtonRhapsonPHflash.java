@@ -20,10 +20,12 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializable, ThermodynamicConstantsInterface{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(sysNewtonRhapsonPHflash.class);
     int neq=0,iter=0;
     int ic02p=-100, ic03p=-100, testcrit=0, npCrit=0;
     double beta = 0, ds=0,dTmax=1,dPmax=1, avscp = 0.1, TC1=0, TC2=0,PC1=0,PC2=0;
@@ -65,7 +67,7 @@ public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializa
         Xgij=new Matrix(neq+2,4);
         setu();
         uold = u.copy();
-        //   System.out.println("Spec : " +speceq);
+        //   logger.info("Spec : " +speceq);
         solver = new  newtonRhapson();
         solver.setOrder(3);
     }
@@ -172,15 +174,15 @@ public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializa
         }
         
         //    dt = Math.exp(u.get(numberOfComponents+1,0)) - system.getTemperature();
-        //     System.out.println("temperature: " + system.getTemperature());
-        //    System.out.println("pressure: " + system.getPressure());
+        //     logger.info("temperature: " + system.getTemperature());
+        //    logger.info("pressure: " + system.getPressure());
         //     system.init(1);
         //      v1 = system.getVolume();
         //  system.setPressure(Math.exp(u.get(numberOfComponents+1,0)));
-        System.out.println("temperature: " + system.getTemperature());
+        logger.info("temperature: " + system.getTemperature());
         system.setTemperature(Math.exp(u.get(numberOfComponents,0) + Math.log(system.getTemperature())));
         system.setPressure(Math.exp(u.get(numberOfComponents+1,0) + Math.log(system.getPressure())));
-        System.out.println("etter temperature: " + system.getTemperature());
+        logger.info("etter temperature: " + system.getTemperature());
         
         system.init(3);
     }
@@ -199,12 +201,12 @@ public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializa
             u = Jac.solve(fvec.times(-1.0));
             //u.equals(dx.timesEquals(1.0));
             fvec.print(10,10);
-            System.out.println("iter: "+iter);
+            logger.info("iter: "+iter);
         }
         while (fvec.norm2()>1.e-10 && iter<1000);// && Double.isNaN(dx.norm2()));
-        System.out.println("iter: "+iter);
-        System.out.println("temperature: " + system.getTemperature());
-        System.out.println("pressure: " + system.getPressure());
+        logger.info("iter: "+iter);
+        logger.info("temperature: " + system.getTemperature());
+        logger.info("pressure: " + system.getPressure());
         init();
         return iter;
     }

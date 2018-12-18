@@ -5,6 +5,9 @@
  */
 
 package neqsim.physicalProperties.physicalPropertyMethods;
+
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  esol
@@ -13,6 +16,7 @@ package neqsim.physicalProperties.physicalPropertyMethods;
 public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethodInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PhysicalPropertyMethod.class);
     
     /** Creates new PhysicalPropertyMethod */
     public PhysicalPropertyMethod() {
@@ -35,7 +39,7 @@ public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethod
     }
     
     public void tuneModel(double val, double temperature, double pressure){
-        System.out.println("model tuning not implemented!");
+        logger.error("model tuning not implemented!");
     }
     // should contain phase objects ++ get diffusivity methods .. more ?
 }

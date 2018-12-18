@@ -12,6 +12,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 //import dataPresentation.
@@ -23,6 +24,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class FreezeOut extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(FreezeOut.class);
     public double[] FCompTemp = new double[10];
     public String[] FCompNames = new String[10];
     public boolean noFreezeFlash = true;
@@ -59,11 +61,11 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
           trpTemp = testSystem.getPhases()[0].getComponents()[k].getTriplePointTemperature();
              if(noFreezeFlash){
                      testSystem.setTemperature(trpTemp);
-                     System.out.println("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName() );
+                     logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName() );
                     }
              else{
                     testSystem.setTemperature(FCompTemp[k]); //øker hastigheten når det kun sjekkes for en komponent
-                    System.out.println("starting at Temperature  " + system.getTemperature());
+                    logger.info("starting at Temperature  " + system.getTemperature());
                     }
           
           SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(216,1);
@@ -84,9 +86,9 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
           }
           do{
               iterations++;
-              System.out.println("-------------"); 
+              logger.info("-------------"); 
               temp=testSystem.getTemperature();
-              System.out.println("temperature " +temp);
+              logger.info("temperature " +temp);
               if(temp>trpTemp+0.01) {
                   temp=trpTemp;
               }
@@ -102,14 +104,14 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
               }
                     solvol = 1.0/soldens*testSystem.getPhase(0).getComponent(k).getMolarMass();
                     
-                    System.out.println("solid density "+ soldens);
+                    logger.info("solid density "+ soldens);
                     testSystem.setTemperature(temp);                    
                     testSystem2.setTemperature(temp);
                     testSystem2.setPressure(Pvapsolid);
                     testOps.TPflash();
                     testOps2.TPflash();
                     
-                    System.out.println("Partial pressure " +testSystem.getPhase(1).getComponent(k).getx()*testSystem.getPressure());
+                    logger.info("Partial pressure " +testSystem.getPhase(1).getComponent(k).getx()*testSystem.getPressure());
                     
                     
                     SolidFug = Pvapsolid*testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient()*Math.exp(solvol/(R*temp)*(pres-Pvapsolid));
@@ -119,8 +121,8 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
           FugRatio=SolidFug/FluidFug;
                     
           OldTemp = testSystem.getTemperature();
-          System.out.println("Temperature " + OldTemp);
-          System.out.println("FugRatio solid/fluidphase " +FugRatio);
+          logger.info("Temperature " + OldTemp);
+          logger.info("FugRatio solid/fluidphase " +FugRatio);
           
           
           if(1<(FugRatio)){
@@ -157,7 +159,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
          testSystem.setTemperature(newTemp);
             }//do løkke
       while(((Math.abs(FugRatio-1)>=0.00001 && iterations<100)) && noFreezeliq && SolidForms);
-            System.out.println("noFreezeliq: "+ noFreezeliq+ " SolidForms: " + SolidForms);  
+            logger.info("noFreezeliq: "+ noFreezeliq+ " SolidForms: " + SolidForms);  
             
             if(noFreezeliq && SolidForms){
             testSystem.setTemperature(OldTemp);
@@ -166,14 +168,14 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
             else if(!noFreezeliq){
             testSystem.setTemperature(OldTemp);
             FCompTemp[k] = OldTemp;
-            System.out.println("Freezing Temperature not found");
+            logger.error("Freezing Temperature not found");
             }
             else{
              testSystem.setTemperature(1000);
              FCompTemp[k] = OldTemp;
              }
           
-          System.out.println("Iterations :" + iterations);
+          logger.info("Iterations :" + iterations);
                     
           }//end Ifløkke    
           }//end for 
@@ -214,10 +216,10 @@ public void printToFile(String name) {
 
             }
             catch (SecurityException e) {
-            System.out.println("writeFile: caught security exception");
+            logger.error("writeFile: caught security exception");
             }
             catch (IOException ioe) {
-	    System.out.println("writeFile: caught i/o exception");            
+	    logger.error("writeFile: caught i/o exception");            
             }   
     
     

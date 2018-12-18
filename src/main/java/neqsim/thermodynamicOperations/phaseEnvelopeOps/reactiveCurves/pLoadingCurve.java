@@ -13,6 +13,7 @@ import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.OperationInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermodynamicOperations.OperationInterface;
 public class pLoadingCurve extends Object implements OperationInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(pLoadingCurve.class);
     
     SystemInterface system;
     int i, j=0, nummer=0, iterations=0,maxNumberOfIterations=10000;
@@ -97,9 +99,9 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
                 points[k+2][i] = system.getPhases()[1].getComponents()[k].getx();
                 points[k+2+system.getPhases()[1].getNumberOfComponents()][i] = system.getPhases()[1].getActivityCoefficient(k,1);
             }
-            System.out.println("point: " + points[0][i] + "  " + points[1][i]);
+            logger.info("point: " + points[0][i] + "  " + points[1][i]);
             system.setPressure(points[1][i]);
-            System.out.println("ph: " + system.getPhases()[1].getpH());
+            logger.info("ph: " + system.getPhases()[1].getpH());
             system.addComponent(0, inscr, 1);
         }
         mainFrame.setVisible(false);
@@ -112,7 +114,7 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
         
         double TC = system.getTC();
         double PC = system.getPC();
-        System.out.println("tc : " + TC + "  PC : " + PC);
+        logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn= {"CO2 fugacity", "","",""};
         String title2= "";
         String title = "CO2 vapour pressure";

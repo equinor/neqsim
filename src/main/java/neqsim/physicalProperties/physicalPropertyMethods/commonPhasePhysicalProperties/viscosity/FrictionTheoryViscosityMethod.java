@@ -5,6 +5,8 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author esol
@@ -31,6 +33,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
     {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
 
     protected double kaprr_fconst = 1.35994e-8;
+    static Logger logger = Logger.getLogger(FrictionTheoryViscosityMethod.class);
 
     //PR
     //    protected double kapac_fconst = -0.140464;
@@ -95,8 +98,8 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
             // frictional term
             Prepulsive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureRepulsive();
             Patractive = ((neqsim.thermo.phase.PhaseEosInterface) phase.getPhase()).getPressureAtractive();
-            //        System.out.println("P rep " + Prepulsive);
-            //        System.out.println("P atr " + Patractive);
+            //        logger.info("P rep " + Prepulsive);
+            //        logger.info("P atr " + Patractive);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -167,7 +170,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
             double critVol = phase.getPhase().getPhase().getComponents()[i].getCriticalVolume();
 
             pureComponentViscosity[i] = 40.785 * Math.sqrt(phase.getPhase().getComponents()[i].getMolarMass() * 1000.0 * phase.getPhase().getTemperature()) / (Math.pow(critVol, 2.0 / 3.0) * omegaVisc[i]) * Fc[i];
-            //System.out.println("visk " + pureComponentViscosity[i]);
+            //logger.info("visk " + pureComponentViscosity[i]);
         }
     }
 
@@ -183,19 +186,19 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
             iter++;
             phase.getPhase().initPhysicalProperties();
             calcVisc = calcViscosity();
-            System.out.println("visc " + calcVisc);
+            logger.info("visc " + calcVisc);
             err = ((calcVisc - val) / calcVisc);
-            System.out.println("err " + err);
+            logger.info("err " + err);
 
             if (phase.getPhase().hasPlusFraction() || phase.getPhase().hasTBPFraction()) {
-                System.out.println("has plus fraction ");
+                logger.info("has plus fraction ");
                 for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
                     if (phase.getPhase().getComponent(i).isIsPlusFraction() || phase.getPhase().getComponent(i).isIsTBPfraction()) {
                         phase.getPhase().getComponent(i).setCriticalViscosity(phase.getPhase().getComponent(i).getCriticalViscosity() * (1 - err));
                     }
                 }
             } else {
-                System.out.println("no plus fraction ");
+                logger.info("no plus fraction ");
                 for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
                     phase.getPhase().getComponent(i).setCriticalViscosity(phase.getPhase().getComponent(i).getCriticalViscosity() * (1 - err));
                 }

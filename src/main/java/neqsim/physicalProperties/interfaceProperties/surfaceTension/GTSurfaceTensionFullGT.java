@@ -12,6 +12,7 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 //import static easyjcckit.QuickPlot.*;
 import neqsim.thermo.system.SystemInterface;
 import no.uib.cipr.matrix.*;
+import org.apache.log4j.Logger;
 
 /**
  * @brief Solving for the surface tension by direct Newton method.
@@ -25,6 +26,7 @@ import no.uib.cipr.matrix.*;
 public class GTSurfaceTensionFullGT {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(GTSurfaceTensionFullGT.class);
 
     private int ncomp;           // Number of components.
     private SystemInterface sys; // Local work copy of flashed system.
@@ -358,7 +360,7 @@ public class GTSurfaceTensionFullGT {
 
             //System.out.printf("Sigma=%.12f\n",sigma);
             if (!NDEBUG) {
-                System.out.printf("Sigma=%.12f\n", sigma);
+                logger.info("Sigma= " + sigma);
             }
 
             sum_ztmp = 0.0;
@@ -671,7 +673,7 @@ public class GTSurfaceTensionFullGT {
             maxerr = Math.max(maxerr, Math.abs(mueq[i] / mueq2[i] - 1.0));
         }
         if (maxerr > reltol) {
-            System.out.printf("Flash is not properly solved.  Maximum relative error in chemical potential: %e > %e\n", maxerr, reltol);
+            logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
             throw new RuntimeException("Flash not solved!");
         }
     }

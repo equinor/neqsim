@@ -8,6 +8,7 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePCSAFTRahmat;
 import neqsim.thermo.phase.PhasePureComponentSolid;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -19,6 +20,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 public class SystemPCSAFT extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SystemPCSAFT.class);
 
     //  SystemSrkEos clonedSystem;
     public SystemPCSAFT() {
@@ -110,7 +112,7 @@ public class SystemPCSAFT extends SystemSrkEos {
             getPhase(phaseIndex[i]).getComponent(componentName).setmSAFTi(mSaft);
             getPhase(phaseIndex[i]).getComponent(componentName).setEpsikSAFT(epskSaftm / mSaft);
             getPhase(phaseIndex[i]).getComponent(componentName).setSigmaSAFTi(Math.pow(msigm / mSaft, 1.0 / 3.0) / 1.0e10);
-            System.out.println("Saft parameters: m " + mSaft + " epsk " + epskSaftm / mSaft + " sigma " + Math.pow(msigm / mSaft, 1.0 / 3.0));
+            logger.info("Saft parameters: m " + mSaft + " epsk " + epskSaftm / mSaft + " sigma " + Math.pow(msigm / mSaft, 1.0 / 3.0));
         }
     }
 

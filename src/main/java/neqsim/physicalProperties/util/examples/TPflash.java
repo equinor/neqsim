@@ -3,6 +3,7 @@ package neqsim.physicalProperties.util.examples;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TPflash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflash.class);
 
     /**
      * Creates new TPflash
@@ -76,7 +78,7 @@ public class TPflash {
             //  testSystem.tuneModel("viscosity",1.5e-4,0);
             //testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
         testSystem.initPhysicalProperties();
@@ -86,7 +88,7 @@ public class TPflash {
             //  testSystem.tuneModel("viscosity",1.5e-4,0);
             //testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
         testSystem.initPhysicalProperties();

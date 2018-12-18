@@ -12,6 +12,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 //import dataPresentation.
@@ -23,6 +24,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class FugTestConstP extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(FugTestConstP.class);
     public double temp=0.0, pres=0.0;
     public SystemInterface testSystem, testSystem2;
     public ThermodynamicOperations testOps, testOps2;
@@ -72,28 +74,28 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                    CCequation=false;
                } 
                     for(int i=0;i<20;i++){
-                    System.out.println("--- calculating --- "+compName+" at "); 
+                    logger.info("--- calculating --- "+compName+" at "); 
                     temp=trpTemp+2-i*trpTemp/40;
                     testSystem.setTemperature(temp);
                     testSystem2.setTemperature(temp);
-                    System.out.println("temperature " + temp);
+                    logger.info("temperature " + temp);
                     if(temp>trpTemp+0.1) {
                         temp=trpTemp;
                     }
                     //Vapor pressure estiamtion
                     if(CCequation){
                         Pvapsolid = testSystem.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
-                        System.out.println("pvap solid CC " +Pvapsolid);
+                        logger.info("pvap solid CC " +Pvapsolid);
                         }
                     else{
                         Pvapsolid = testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
-                        System.out.println("pvap solid Antonie " +Pvapsolid);
+                        logger.info("pvap solid Antonie " +Pvapsolid);
                         }
                     soldens = testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp)*1000;
                     if(soldens>2000) {
                         soldens = 1000;
                     }
-                    System.out.println("Solid_vapour_____solid density"+ soldens);
+                    logger.info("Solid_vapour_____solid density"+ soldens);
                     solvol = 1.0/soldens*testSystem.getPhase(0).getComponent(k).getMolarMass();
                     SolidFug = Pvapsolid*Math.exp(solvol/(R*temp)*(pres-Pvapsolid));
                     
@@ -145,13 +147,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
 //                pr_writer.flush(); 
 //                pr_writer.close();
 //         
-//            System.out.println("Successful attempt to write to " + myFile);
+//            logger.error("Successful attempt to write to " + myFile);
 //            }
 //            catch (SecurityException e) {
-//            System.out.println("writeFile: caught security exception");
+//            logger.error("writeFile: caught security exception");
 //            }
 //            catch (IOException ioe) {
-//	    System.out.println("writeFile: caught i/o exception");            
+//	    logger.error("writeFile: caught i/o exception");            
 //            }
 //              
     

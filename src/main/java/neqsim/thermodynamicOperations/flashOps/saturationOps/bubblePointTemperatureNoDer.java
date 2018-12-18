@@ -7,10 +7,12 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(bubblePointTemperatureNoDer.class);
     
     /** Creates new bubblePointFlash */
     public bubblePointTemperatureNoDer() {
@@ -29,7 +31,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash{
         int iterations=0, maxNumberOfIterations = 1000;
         double yold=0, ytotal=1;
         double deriv=0, funk=0;
-        //System.out.println("starting");
+        //logger.info("starting");
         
         system.init(0);
         system.setNumberOfPhases(2);
@@ -78,7 +80,7 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash{
                     }
                     system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
                     system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getz());
-                    //System.out.println("y err " + Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
+                    //logger.info("y err " + Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
                 }
                 while(Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold)>1e-4);
                 ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK()-1.0);
@@ -94,17 +96,17 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash{
             if(ytotal<0.8) {
                 ytotal=0.8;
             }
-            // System.out.println("y tot " + ytotal);
+            // logger.info("y tot " + ytotal);
             
  //           system.setTemperature(system.getTemperature() + 0.05*(1.0/ytotal*system.getTemperature()-system.getTemperature()));
              system.setTemperature(system.getTemperature() + 0.1*system.getTemperature()*(1.0-ytotal));
             //            for (int i=0;i<system.getPhases()[1].getNumberOfComponents();i++){
             //                system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getx()+0.5*(system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getx()*1.0/ytotal-system.getPhases()[0].getComponents()[i].getx()));
             //            }
-         //   System.out.println("temperature " + system.getTemperature());
+         //   logger.info("temperature " + system.getTemperature());
         }
         while((((Math.abs(ytotal)-1.0) > 1e-9) || Math.abs(oldTemp-system.getTemperature())/oldTemp>1e-8) && (iterations < maxNumberOfIterations));
-        //System.out.println("iter " + iterations);
+        //logger.info("iter " + iterations);
         if(Math.abs(ytotal-1.0)>=1e-5 || ktot<1e-3 &&system.getPhase(0).getNumberOfComponents()>1) {
             setSuperCritical(true);
         }

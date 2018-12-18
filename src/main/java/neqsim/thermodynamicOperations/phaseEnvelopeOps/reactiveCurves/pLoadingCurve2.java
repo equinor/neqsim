@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -23,6 +24,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class pLoadingCurve2 extends BaseOperation implements OperationInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(pLoadingCurve2.class);
     
     SystemInterface system;
     int i, j=0, nummer=0, iterations=0,maxNumberOfIterations=10000;
@@ -96,9 +98,9 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
                 testOps.bubblePointPressureFlash(false);
             }
             catch(Exception e){
-                System.out.println(e.toString());
+                logger.info(e.toString());
             }
-            System.out.println("beta " + system.getBeta());
+            logger.info("beta " + system.getBeta());
             points[0][i] = (inscr*(i-1))/molMDEA;
             points[1][i] = (system.getPressure());
             points[2][i] = (system.getPressure()*system.getPhase(0).getComponent(0).getx());
@@ -107,9 +109,9 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
                 points[k+3][i] = system.getPhases()[1].getComponents()[k].getx();
                 points[k+3+system.getPhases()[1].getNumberOfComponents()][i] = system.getPhase(1).getActivityCoefficient(k,1);//,1);
             }
-            System.out.println("point: " + points[0][i] + " tot pres  " + points[1][i] +" CO2 pres  " + points[2][i]);
+            logger.info("point: " + points[0][i] + " tot pres  " + points[1][i] +" CO2 pres  " + points[2][i]);
             system.setPressure(points[1][i]);
-            System.out.println("ph: " + system.getPhases()[1].getpH());
+            logger.info("ph: " + system.getPhases()[1].getpH());
             system.addComponent("CO2", inscr);
         }
         mainFrame.setVisible(false);
@@ -122,7 +124,7 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
         
         double TC = system.getTC();
         double PC = system.getPC();
-        System.out.println("tc : " + TC + "  PC : " + PC);
+        logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn= {"CO2 fugacity", "","",""};
         String title2= "";
         String title = "CO2 vapour pressure";

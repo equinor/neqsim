@@ -23,6 +23,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -32,6 +33,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class PHsolidFlash extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PHsolidFlash.class);
 
     Flash tpFlash;
     int refluxPhase = 0;
@@ -48,7 +50,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
     }
 
     public void run() {
-        //System.out.println("enthalpy: " + system.getEnthalpy());
+        //logger.info("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
         double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
@@ -63,7 +65,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
             t_old = system.getTemperature();
             system.init(3);
             f_func = enthalpyspec - system.getEnthalpy();
-            System.out.println("entalp diff " + f_func);
+            logger.info("entalp diff " + f_func);
             df_func_dt = (f_func - f_func_old) / (t_old - t_oldold);
 
             err = Math.abs(f_func);
@@ -83,7 +85,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
             }
             tpFlash.run();
 
-//            System.out.println("temp " + system.getTemperature() + " err " + err);
+//            logger.info("temp " + system.getTemperature() + " err " + err);
         } while (Math.abs(dt) > 1e-8 && iter<200);
 
     }

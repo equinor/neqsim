@@ -248,7 +248,7 @@ public class thermoBean3 extends Object implements java.io.Serializable {
         tempVar.createDatabase(true);
         tempVar.TPflash();
         tempVar.setName("temp");
-        System.out.println("prop " + tempVar.property("molefraction", "water", 0));
+        //System.out.println("prop " + tempVar.property("molefraction", "water", 0));
     }
 
 }

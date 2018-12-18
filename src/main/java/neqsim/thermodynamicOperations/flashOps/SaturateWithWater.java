@@ -24,6 +24,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -33,6 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SaturateWithWater extends QfuncFlash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SaturateWithWater.class);
 
     Flash tpFlash;
 
@@ -91,9 +93,9 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
             hasAq = system.hasPhaseType("aqueous");
         } while ((i < 50 && Math.abs(dn) > 1e-6) || !hasAq && i<50);
         if(i==50) {
-            System.out.println("could not find solution - in water sturate : dn  " + dn);
+            logger.error("could not find solution - in water sturate : dn  " + dn);
         }
-        //System.out.println("i " + i + " dn " + dn);
+        //logger.info("i " + i + " dn " + dn);
         // system.display();
         system.removePhase(system.getNumberOfPhases() - 1);
         tpFlash.run();
@@ -126,7 +128,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
             testSystem.display();
           //  testOps.TPflash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
     }

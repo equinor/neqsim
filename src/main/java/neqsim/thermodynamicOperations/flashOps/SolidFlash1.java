@@ -24,6 +24,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -33,6 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SolidFlash1 extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SolidFlash1.class);
 
     //   SystemInterface clonedSystem;
     boolean multiPhaseTest = false;
@@ -76,9 +78,9 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 x += system.getPhase(k).getComponent(i).getx();
             }
-            System.out.println("x tot " + x + " PHASE " + k);
+            logger.info("x tot " + x + " PHASE " + k);
             if (x < 1.0 - 1e-6) {
-                //System.out.println("removing phase " + k);
+                //logger.info("removing phase " + k);
                 system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));
                 system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
                 system.setNumberOfPhases(system.getNumberOfPhases() - 1);
@@ -214,14 +216,14 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
                 // ans = dQdBM.solve(dQM.transpose());
             }
             dQdBM.print(10, 10);
-            System.out.println("BetaStep:  ");
+            logger.info("BetaStep:  ");
             ans.print(30, 30);
 
             betaReductionFactor = 1.0;
-            System.out.println("Oldbeta befor update");
+            logger.info("Oldbeta befor update");
             betaMatrix.print(10, 10);
             betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
-            System.out.println("Beta before multiplying reduction Factoer");
+            logger.info("Beta before multiplying reduction Factoer");
             betaMatrixTemp.print(10, 2);
 
             double minBetaTem = 1000000;
@@ -239,10 +241,10 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
                     betaReductionFactor = 1.0 + betaMatrixTemp.get(minBetaTemIndex, 0) / ans.get(minBetaTemIndex, 0);
                 }
             }
-            System.out.println("Reduction Factor " + betaReductionFactor);
+            logger.info("Reduction Factor " + betaReductionFactor);
             betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
 
-            System.out.println("Beta after multiplying reduction Factoer");
+            logger.info("Beta after multiplying reduction Factoer");
             betaMatrixTemp.print(10, 2);
 
             betaMatrixOld = betaMatrix.copy();
@@ -250,7 +252,7 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
             boolean deactivatedPhase = false;
             for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
                 system.setBeta(i, betaMatrix.get(i, 0));
-                System.out.println("Fluid Phase fraction" + system.getBeta(i));
+                logger.info("Fluid Phase fraction" + system.getBeta(i));
                 if (Math.abs(system.getBeta(i)) < 1.0e-10) {
                     FluidPhaseActiveDescriptors[i] = 0;
                     deactivatedPhase = true;
@@ -259,11 +261,11 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
 
             Qnew = calcQ();
 
-            System.out.println("Qold = " + Qold);
-            System.out.println("Qnew = " + Qnew);
+            logger.info("Qold = " + Qold);
+            logger.info("Qnew = " + Qnew);
 
             if (Qnew > Qold + 1.0e-10 && !deactivatedPhase) {
-                System.out.println("Qnew > Qold...............................");
+                logger.info("Qnew > Qold...............................");
                 int iter2 = 0;
                 do {
                     iter2++;
@@ -313,7 +315,7 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
         }
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);
-            System.out.println("Solid PhaseFraction  " + tempVar);
+            logger.info("Solid PhaseFraction  " + tempVar);
         }
         return tempVar;
     }
@@ -352,7 +354,7 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
             /*
              for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
              if (FluidPhaseActiveDescriptors[i] == 0) {
-             System.out.println("dQdB " + i + " " + dQdbeta[i]);
+             logger.info("dQdB " + i + " " + dQdbeta[i]);
              if (dQdbeta[i] < 0) {
              FluidPhaseActiveDescriptors[i] = 1;
              }
@@ -431,7 +433,7 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
             }
             double dsoliddn = (solidCandidate - solidCandidateOld) / dn;
             dn = -0.5 * solidCandidate / dsoliddn;
-            System.out.println("solid cand " + solidCandidate);
+            logger.info("solid cand " + solidCandidate);
         } while (solidCandidate > 1e-5 && iter < 50);
 
         return 1.0;

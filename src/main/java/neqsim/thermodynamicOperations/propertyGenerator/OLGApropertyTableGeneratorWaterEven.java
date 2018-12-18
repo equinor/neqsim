@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -35,6 +36,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorWaterEven.class);
 
     SystemInterface thermoSystem = null;
     ThermodynamicOperations thermoOps = null;
@@ -186,7 +188,7 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
 
     public void run() {
         calcRSWTOB();
-        System.out.println("RSWTOB " + RSWTOB);
+        logger.info("RSWTOB " + RSWTOB);
         nProps = 29;
         props = new double[nProps][pressures.length][temperatures.length];
         units = new String[nProps];
@@ -199,7 +201,7 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
             for (int i = 0; i < pressures.length; i++) {
                 thermoSystem.setPressure(pressures[i]);
                 try {
-                    //System.out.println("TPflash... " + thermoSystem.getTemperature() + " pressure " + thermoSystem.getPressure());
+                    //logger.info("TPflash... " + thermoSystem.getTemperature() + " pressure " + thermoSystem.getPressure());
                     thermoOps.TPflash();
                     // thermoSystem.createTable("test");
                     thermoSystem.init(3);
@@ -211,17 +213,17 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
                     acceptedFlash = true;
                 } catch (Exception e) {
                     acceptedFlash = false;
-                    System.out.println("fail temperature " + thermoSystem.getTemperature() + " fail pressure " + thermoSystem.getPressure());
+                    logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure " + thermoSystem.getPressure());
 
                     thermoSystem.display();
                     e.printStackTrace();
                 }
 
                 /*
-                 System.out.println("water density " + thermoSystem.getPhase(2).getPhysicalProperties().getDensity());
-                 System.out.println("RSW " + thermoSystem.getPhase(0).getComponent("water").getx() * thermoSystem.getPhase(0).getComponent("water").getMolarMass() / thermoSystem.getPhase(0).getMolarMass());
-                 System.out.println("surf tens oil-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2));
-                 System.out.println("surf tens gas-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2));
+                 logger.info("water density " + thermoSystem.getPhase(2).getPhysicalProperties().getDensity());
+                 logger.info("RSW " + thermoSystem.getPhase(0).getComponent("water").getx() * thermoSystem.getPhase(0).getComponent("water").getMolarMass() / thermoSystem.getPhase(0).getMolarMass());
+                 logger.info("surf tens oil-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(1, 2));
+                 logger.info("surf tens gas-water  " + thermoSystem.getInterphaseProperties().getSurfaceTension(0, 2));
                  */
                 int k = 0;
                 if (thermoSystem.hasPhaseType("gas") && acceptedFlash) {
@@ -328,11 +330,11 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
                  } catch (Exception e) {
                  e.printStackTrace();
                  }
-                 // System.out.println("xcoef " + j);
+                 // logger.info("xcoef " + j);
                  //  xcoef.print(10, 10);
-                 //System.out.println("dss: "  +ds * dxds.get(speceq, 0));
+                 //logger.info("dss: "  +ds * dxds.get(speceq, 0));
                  // specVal = xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0)));
-                 // System.out.println("vall" + vall);
+                 // logger.info("vall" + vall);
                  }
                  }
                  */
@@ -564,22 +566,22 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
 
             }
         }
-        System.out.println("Finished TPflash...");
+        logger.info("Finished TPflash...");
         if (thermoSystem.getPhase(0).hasComponent("water")) {
             thermoSystem.removeComponent("water");
         }
         bubP = calcBubP(temperatures);
         dewP = calcDewP(temperatures);
         //bubT = calcBubT(temperatures);
-        System.out.println("Finished creating arrays");
+        logger.info("Finished creating arrays");
     }
 
     public void displayResult() {
-        System.out.println("TC " + TC + " PC " + PC);
+        logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                System.out.println("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
             }
         }
         writeOLGAinpFile("");
@@ -663,7 +665,7 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
                 if (names[k] == null) {
                     continue;
                 }
-                System.out.println("Writing variable: " + names[k]);
+                logger.info("Writing variable: " + names[k]);
                 writer.write(names[k] + " (" + units[k] + ")\n");
                 for (int i = 0; i < pressures.length; i++) {
                     //thermoSystem.setPressure(pressures[i]);
@@ -1176,7 +1178,7 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
              if (names[k] == null) {
              continue;
              }
-             System.out.println("Writing variable: " + names[k]);
+             logger.info("Writing variable: " + names[k]);
              writer.write(names[k] + " (" + units[k] + ")\n");
              for (int i = 0; i < pressures.length; i++) {
              //thermoSystem.setPressure(pressures[i]);

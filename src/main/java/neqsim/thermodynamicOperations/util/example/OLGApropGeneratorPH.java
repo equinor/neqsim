@@ -23,6 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -31,6 +32,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropGeneratorPH {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(OLGApropGeneratorPH.class);
     
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(383.15, 1.0);
@@ -48,7 +50,7 @@ public class OLGApropGeneratorPH {
             //   testOps.TPflash();
             testSystem.display();
             double maxEnthalpy = testSystem.getEnthalpy();
-           System.out.println( " maxEnthalpy " +maxEnthalpy);
+           logger.info( " maxEnthalpy " +maxEnthalpy);
             testOps.bubblePointTemperatureFlash();
             testSystem.display();
             double minEnthalpy = testSystem.getEnthalpy();
@@ -59,7 +61,7 @@ public class OLGApropGeneratorPH {
             testOps.displayResult();
         } catch (Exception e) {
             testSystem.display();
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
     }

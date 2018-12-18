@@ -9,10 +9,12 @@ import java.io.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(freezingPointTemperatureFlash.class);
 
     public boolean noFreezeFlash = true;
     public int Niterations = 0;
@@ -41,7 +43,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
         int numbComponents = system.getPhases()[0].getNumberOfComponents();
 
         for (int k = 0; k < numbComponents; k++) {
-            // System.out.println("Cheking all the components " + k);
+            // logger.info("Cheking all the components " + k);
             if (system.getPhase(0).getComponent(k).doSolidCheck()) {
                 ops.TPflash(false);
                 SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
@@ -66,13 +68,13 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
         boolean SolidForms = false;
 
         for (int k = 0; k < numbComponents; k++) {
-            // System.out.println("Cheking all the components " + k);
+            // logger.info("Cheking all the components " + k);
             if (system.getPhase(0).getComponent(k).doSolidCheck()) {
                 SolidForms = true;
                 FCompNames[k] = system.getPhase(0).getComponent(k).getComponentName();
                 if (noFreezeFlash) {
                     //system.setTemperature(trpTemp - 0.8);
-                    System.out.println("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName());
+                    logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName());
                 }
 
                 funkOld = 0.0;
@@ -90,7 +92,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                     for (int i = 0; i < system.getNumberOfPhases(); i++) {
                         funk -= system.getPhase(i).getBeta() * SolidFugCoeff / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
                     }
-                    System.out.println("funk " + funk);
+                    logger.info("funk " + funk);
                     if (iterations > 1) {// && oldPhaseType == system.getPhase(0).getPhaseType()) {
                         deriv = (funk - funkOld) / (system.getTemperature() - oldTemperature);
                     } else {
@@ -100,15 +102,15 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                         //deriv = Math.signum(deriv) * Math.abs(funk) * (10.0 / (1.0 * iterations));
                     }
 
-                    System.out.println("phase type " + system.getPhase(0).getPhaseType());
+                    logger.info("phase type " + system.getPhase(0).getPhaseType());
                     newTemp = system.getTemperature() - 0.9 * funk / deriv;
-                    System.out.println("temperature " + system.getTemperature());
+                    logger.info("temperature " + system.getTemperature());
                     oldTemperature = system.getTemperature();
                     funkOld = funk;
                     system.setTemperature(newTemp);
                 } while (Math.abs(funk) >= 1e-12 && iterations < maxNumberOfIterations);
                 FCompTemp[k] = newTemp;
-                //System.out.println("iterations " + iterations);
+                //logger.info("iterations " + iterations);
 
                 if (system.getTemperature() < minTemperature) {
                     minTemperature = oldTemperature;
@@ -149,9 +151,9 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
             pr_writer.close();
 
         } catch (SecurityException e) {
-            System.out.println("writeFile: caught security exception");
+            logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {
-            System.out.println("writeFile: caught i/o exception");
+            logger.error("writeFile: caught i/o exception");
         }
 
 
