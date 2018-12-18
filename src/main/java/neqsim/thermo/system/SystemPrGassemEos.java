@@ -82,7 +82,7 @@ public class SystemPrGassemEos extends SystemPrEos {
             clonedSystem = (SystemPrGassemEos) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         //        clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();

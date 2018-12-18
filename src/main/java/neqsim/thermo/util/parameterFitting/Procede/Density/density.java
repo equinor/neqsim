@@ -71,7 +71,7 @@ public class density {
             }catch(FileNotFoundException e) {
                 logger.error("Could not find file");
                 
-                System.err.println("Could not write to Patrick.txt" + e.getMessage());
+                logger.error("Could not write to Patrick.txt" + e.getMessage());
             } 
             
         }

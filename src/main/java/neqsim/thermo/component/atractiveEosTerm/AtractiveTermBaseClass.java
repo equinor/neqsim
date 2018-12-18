@@ -57,7 +57,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
             atractiveTerm = (AtractiveTermBaseClass) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         // atSystem.out.println("m " + m);ractiveTerm.parameters = (double[]) parameters.clone();

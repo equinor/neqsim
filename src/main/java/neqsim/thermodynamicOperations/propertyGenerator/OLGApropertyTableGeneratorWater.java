@@ -125,7 +125,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
             TC = thermoSystem.getTC() - 273.15;
             PC = thermoSystem.getPC() * 1e5;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 
@@ -140,7 +140,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                 bubP[i] = thermoSystem.getPressure();
                 bubPLOG[i] = bubP[i] * 1e5;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubP[i] = 0;
             }
         }
@@ -158,7 +158,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                 dewP[i] = thermoSystem.getPressure();
                 dewPLOG[i] = dewP[i] * 1e5;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 dewP[i] = 0;
             }
         }
@@ -174,7 +174,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                 thermoOps.bubblePointTemperatureFlash();
                 bubT[i] = thermoSystem.getPressure();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubT[i] = 0.0;
             }
         }
@@ -248,7 +248,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                     logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure " + thermoSystem.getPressure());
 
                     thermoSystem.display();
-                    e.printStackTrace();
+                    logger.error("error",e);
                 }
 
                 /*

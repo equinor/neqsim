@@ -81,8 +81,7 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
             system.calcBeta();
         }
         catch(Exception e){
-            e.printStackTrace(System.err);
-            logger.error("error in beta calc" + e.toString());
+            logger.error("error in beta calc" + e.toString(), e);
         }
         if((system.getBeta()>1.0-1e-9 || system.getBeta()<1e-9)) {
             return; //{logger.info("beta outside range in TPflash-sucsSubs..returning ");};return;stabilityCheck();
@@ -118,7 +117,7 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
             system.calcBeta();
         }
         catch(Exception e){
-            e.printStackTrace(System.err);
+            logger.error("error",e);
         }
         
         system.calc_x_y();
@@ -154,7 +153,7 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
             setNewK();
         }
         catch(Exception e){
-            e.printStackTrace(System.err);
+            logger.error("error",e);
         }
         
     }
@@ -188,7 +187,7 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
             system.calcBeta();
         }
         catch(Exception e){
-            e.printStackTrace(System.err);
+            logger.error("error",e);
         }
         
 //        if(system.getBeta()<1e-9){
@@ -218,7 +217,7 @@ public class TPflash_1 extends Flash implements java.io.Serializable {
 //                    system.calcBeta();
 //                }
 //                catch(Exception e){
-//                    e.printStackTrace(System.err);
+//                    logger.error("error",e);
 //                }
 //            }
 //            while(err>1e-6 && it<5);

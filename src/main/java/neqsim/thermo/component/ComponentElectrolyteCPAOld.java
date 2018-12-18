@@ -85,7 +85,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         try {
             clonedComponent = (ComponentElectrolyteCPAOld) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         clonedComponent.xsite = xsite.clone();
         System.arraycopy(this.xsite, 0, clonedComponent.xsite, 0, xsite.length);

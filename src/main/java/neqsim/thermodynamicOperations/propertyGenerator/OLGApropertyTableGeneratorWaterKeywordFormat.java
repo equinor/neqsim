@@ -89,7 +89,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
             TC = thermoSystem.getTC() - 273.15;
             PC = thermoSystem.getPC() * 1e5;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
 
 //thermoOps.ge
@@ -106,7 +106,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 bubP[i] = thermoSystem.getPressure();
                 bubPLOG[i] = bubP[i] * 1e5;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubP[i] = 0;
             }
         }
@@ -124,7 +124,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 dewP[i] = thermoSystem.getPressure();
                 dewPLOG[i] = dewP[i] * 1e5;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 dewP[i] = 0;
             }
         }
@@ -142,7 +142,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 bubT[i] = thermoSystem.getTemperature();
                 bubTLOG[i] = bubT[i] - 273.15;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubT[i] = 0.0;
             }
         }
@@ -226,7 +226,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 try {
                     thermoOps.TPflash();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("error",e);
                 }
                 thermoSystem.init(3);
                 thermoSystem.initPhysicalProperties();

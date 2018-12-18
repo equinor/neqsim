@@ -101,7 +101,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
             //        logger.info("P rep " + Prepulsive);
             //        logger.info("P atr " + Patractive);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error", e);
         }
         double kaprmx = 0.0;
         double kapamx = 0.0;

@@ -67,49 +67,49 @@
 			<version>10.12.1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>log4j</groupId>                   
+			<groupId>log4j</groupId>        
 			<artifactId>log4j</artifactId>
-			<version>1.2.17</version>
+			<version>1.2.17</version> 
 		</dependency>
 		<dependency>									
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-cdense</artifactId>		
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>                                  
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-core</artifactId>			
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>				
 			<artifactId>ejml-ddense</artifactId>		
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>				
 			<artifactId>ejml-dsparse</artifactId>		
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>       
 			<artifactId>ejml-experimental</artifactId>	
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>		
             <artifactId>ejml-fdense</artifactId>			
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>				
 			<artifactId>ejml-simple</artifactId>		
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>org.ejml</groupId>           
 			<artifactId>ejml-zdense</artifactId>		
-			<version>0.34</version>
+			<version>0.37</version>
 		</dependency>
 		<dependency>
 			<groupId>com.lowagie</groupId>                  

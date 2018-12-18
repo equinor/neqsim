@@ -101,7 +101,7 @@ public class PhaseEnvelope {
             // testOps.dewPointPressureFlash();
             //testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         testSystem.display();
         //   thermo.ThermodynamicModelTest testModel = new thermo.ThermodynamicModelTest(testSystem);

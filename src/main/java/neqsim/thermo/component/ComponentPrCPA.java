@@ -73,7 +73,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         try {
             clonedComponent = (ComponentPrCPA) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         return clonedComponent;

@@ -57,7 +57,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos implements neq
         try{
             clonedPhase = (PhaseModifiedFurstElectrolyteEos) super.clone();
         } catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
     //     clonedPhase.electrolyteMixingRule = (thermo.mixingRule.ElectrolyteMixingRulesInterface) electrolyteMixingRule.clone();
         

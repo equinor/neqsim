@@ -78,7 +78,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         try {
             referenceSystem.init(1);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error", e);
         }
         //  double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 1.0/10.0;
         double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * referenceSystem.getLowestGibbsEnergyPhase().getMolarMass() * 1e2;

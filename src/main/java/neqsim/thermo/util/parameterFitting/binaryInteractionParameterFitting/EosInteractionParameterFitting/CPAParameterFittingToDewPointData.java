@@ -9,6 +9,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Eo
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -18,6 +19,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CPAParameterFittingToDewPointData.class);
     
     /** Creates new Test */
     public CPAParameterFittingToDewPointData() {
@@ -30,7 +32,7 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
         thermoOps.waterPrecipitationTemperature();
         }
         catch(Exception e){
-            e.printStackTrace();
+            logger.error("error",e);
             
         }
         //System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());

@@ -27,7 +27,7 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
         try {
             atractiveTerm = (AtractiveTermUMRPRU) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         return atractiveTerm;

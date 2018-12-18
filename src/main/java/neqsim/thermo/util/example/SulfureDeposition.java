@@ -146,7 +146,7 @@ public class SulfureDeposition {
             logger.info("ppm (wt) S8 total " + testSystem.getPhase(0).getComponent("S8").getz() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass() * 1e6);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
             logger.error(e.toString());
         }
         testSystem.display();

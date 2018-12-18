@@ -71,7 +71,7 @@ public class TPflash_benchmark_fullcomp {
             //    testOps.hydrateFormationTemperature();
             //    testOps.calcTOLHydrateFormationTemperature();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
             }
         }
         logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));

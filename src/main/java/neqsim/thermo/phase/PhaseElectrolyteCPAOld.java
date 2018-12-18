@@ -44,7 +44,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         try {
             clonedPhase = (PhaseElectrolyteCPAOld) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
 

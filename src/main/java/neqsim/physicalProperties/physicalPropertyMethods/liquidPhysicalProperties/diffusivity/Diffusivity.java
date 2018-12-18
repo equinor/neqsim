@@ -5,6 +5,10 @@
  */
 
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
+
+import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.Conductivity;
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -13,6 +17,8 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
 abstract class Diffusivity  extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Diffusivity.class);
+
     
     double[][] binaryDiffusionCoeffisients;
     double[] effectiveDiffusionCoefficient;
@@ -36,7 +42,7 @@ abstract class Diffusivity  extends neqsim.physicalProperties.physicalPropertyMe
             properties = (Diffusivity) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.",e);
         }
         
         properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();

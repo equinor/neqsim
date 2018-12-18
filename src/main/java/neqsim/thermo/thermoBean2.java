@@ -30,6 +30,7 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -37,6 +38,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class thermoBean2 extends Object implements java.io.Serializable {
       private static final long serialVersionUID = 1000;
+      static Logger logger = Logger.getLogger(thermoBean2.class);
     private static final String PROP_SAMPLE_PROPERTY = "SampleProperty";
     
     private String sampleProperty;
@@ -134,7 +136,7 @@ public class thermoBean2 extends Object implements java.io.Serializable {
             testOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
     
@@ -144,7 +146,7 @@ public class thermoBean2 extends Object implements java.io.Serializable {
             testOps.dewPointPressureFlash();
         }
         catch(Exception e){
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
     
@@ -154,7 +156,7 @@ public class thermoBean2 extends Object implements java.io.Serializable {
             testOps.bubblePointTemperatureFlash();
         }
         catch(Exception e){
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
     
@@ -164,7 +166,7 @@ public class thermoBean2 extends Object implements java.io.Serializable {
             testOps.dewPointTemperatureFlash();
         }
         catch(Exception e){
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
     public synchronized SystemInterface getSystem(){

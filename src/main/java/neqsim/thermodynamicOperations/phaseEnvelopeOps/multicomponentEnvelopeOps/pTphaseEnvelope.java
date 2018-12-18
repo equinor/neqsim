@@ -355,7 +355,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 file2.createFile();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 
@@ -365,7 +365,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         try {
             opsHyd.hydrateEquilibriumLine(10.0, 300.0);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
 
         double[][] hydData = opsHyd.getData();

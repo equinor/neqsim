@@ -12,6 +12,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ import neqsim.util.database.NeqSimDataBase;
 public class TestSolidComplexFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestSolidComplexFunction.class);
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
@@ -55,7 +57,7 @@ public class TestSolidComplexFunction {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

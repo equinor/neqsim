@@ -127,7 +127,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             try {
                 phaseArray[i] = phaseArray[i].getClass().getDeclaredConstructor().newInstance();
             } catch (Exception e) {
-                System.err.println("err " + e.toString());
+                logger.error("err " + e.toString());
             }
             phaseArray[i].setTemperature(oldTemp);
             phaseArray[i].setPressure(oldPres);
@@ -146,7 +146,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             clonedSystem = (SystemThermo) super.clone();
             //clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations) chemicalReactionOperations.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         clonedSystem.beta = beta.clone();
@@ -525,7 +525,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error", e);
 
             }
         }
@@ -624,7 +624,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             //
             //
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
 
         double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);//0.2918-0.0928* acs)*8.314*TC/PC*10.0;
@@ -689,7 +689,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             try {
                 dataSet.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
 
             }
         }
@@ -2364,7 +2364,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
             }
             table[getPhases()[0].getNumberOfComponents() + 15][6] = "[N/m]";
 
@@ -2390,7 +2390,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 table[getPhases()[0].getNumberOfComponents() + 23][i + 2] = ((PhaseEosInterface) getPhase(i)).getMixingRuleName();
             } catch (Exception e) {
                 table[getPhases()[0].getNumberOfComponents() + 23][i + 2] = "?";
-                //e.printStackTrace();
+                //logger.error("error",e);
             }
             table[getPhases()[0].getNumberOfComponents() + 23][6] = "-";
 
@@ -2439,7 +2439,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         } catch (Exception e) {
             logger.error("error in SystemThermo Class...resetDatabase() method");
             logger.error("error in comp");
-            e.printStackTrace();
+            logger.error("error",e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -2449,8 +2449,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("error closing database.....");
-                e.printStackTrace();
+                logger.error("error closing database.....", e);
             }
         }
     }
@@ -2485,8 +2484,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 }
             }
         } catch (Exception e) {
-            logger.error("error in SystemThermo Class...createDatabase() method");
-            e.printStackTrace();
+            logger.error("error in SystemThermo Class...createDatabase() method", e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -2496,8 +2494,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("error closing database.....");
-                e.printStackTrace();
+                logger.error("error closing database.....", e);
             }
 
         }
@@ -2560,7 +2557,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 getPhase(phase).getComponent(solidComponent).setSolidCheck(true);
                 getPhase(3).getComponent(solidComponent).setSolidCheck(true);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
             }
         }
         numberOfPhases = oldphase;
@@ -2689,7 +2686,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 ins.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -2699,8 +2696,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("err closing database IN MIX...");
-                e.printStackTrace();
+                logger.error("err closing database IN MIX..., e");
+                logger.error("error",e);
             }
         }
 
@@ -2753,7 +2750,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             
              */
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -2763,8 +2760,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("err closing database IN MIX...");
-                e.printStackTrace();
+                logger.error("err closing database IN MIX...", e);
             }
         }
         // database.execute("INSERT INTO fluid_blobdb VALUES ('1'," + sqlString + ")");
@@ -3043,8 +3039,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("err closing database IN MIX...");
-                e.printStackTrace();
+                logger.error("err closing database IN MIX...", e);
             }
         }
 
@@ -3097,7 +3092,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
             pdfDocument.getDocument().add(anchor);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         pdfDocument.getDocument().close();
         this.pdfDocument = pdfDocument;
@@ -3277,7 +3272,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         return tempModel;
     }
@@ -3352,7 +3347,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     }
                     //   }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("error",e);
                 }
                 if (getPhase(i).getPhysicalProperties().calcDensity() < getPhase(i - 1).getPhysicalProperties().calcDensity()) {
                     int tempIndex1 = getPhaseIndex(i - 1);

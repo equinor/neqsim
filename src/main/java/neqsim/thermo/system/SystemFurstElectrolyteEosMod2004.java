@@ -45,7 +45,7 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
             clonedSystem = (SystemFurstElectrolyteEosMod2004) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         //        clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();

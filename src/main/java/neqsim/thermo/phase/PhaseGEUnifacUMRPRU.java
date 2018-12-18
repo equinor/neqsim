@@ -136,9 +136,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     dataSet.close();
                     database.getConnection().close();
                 } catch (Exception e) {
-                    e.printStackTrace();
                     String err = e.toString();
-                    logger.error(err);
+                    logger.error(err, e);
                 }
             }
         }
@@ -171,9 +170,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     dataSet.close();
                     database.getConnection().close();
                 } catch (Exception e) {
-                    e.printStackTrace();
                     String err = e.toString();
-                    logger.error(err);
+                    logger.error(err, e);
                 }
             }
         }
@@ -206,9 +204,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     dataSet.close();
                     database.getConnection().close();
                 } catch (Exception e) {
-                    e.printStackTrace();
                     String err = e.toString();
-                    logger.error(err);
+                    logger.error(err, e);
                 }
             }
         }

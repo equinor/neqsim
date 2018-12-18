@@ -86,8 +86,7 @@ public class WaxFlash {
             //  testSystem.display();
             //testOps.TPflash();
         } catch (Exception e) {
-            logger.error("error");
-            e.printStackTrace();
+            logger.error("error", e);
         }
         double waxVOlumeFrac = 0;
         if (testSystem.hasPhaseType("wax")) {

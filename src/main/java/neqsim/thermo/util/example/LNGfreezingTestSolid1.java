@@ -3,10 +3,12 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class LNGfreezingTestSolid1 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(LNGfreezingTestSolid1.class);
     
     public static void main(String args[]) {
        //   SystemInterface testSystem = new SystemUMRPRUMCEos(225.8488, 10.0);
@@ -47,7 +49,7 @@ public class LNGfreezingTestSolid1 {
             // testOps.freezingPointTemperatureFlash();
             //     testOps.TPflash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 }

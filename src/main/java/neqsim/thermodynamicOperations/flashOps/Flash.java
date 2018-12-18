@@ -274,8 +274,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
             try {
                 stabilityAnalysis();
             } catch (Exception e) {
-                logger.error("error ");
-                e.printStackTrace();
+                logger.error("error ", e);
             }
         }
         if (!(tm[0] < -1e-4) && !(tm[1] < -1e-4) || system.getPhase(0).getNumberOfComponents() == 1) {
@@ -299,7 +298,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
             try {
                 system.calcBeta();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
             }
             system.calc_x_y();
             system.init(1);

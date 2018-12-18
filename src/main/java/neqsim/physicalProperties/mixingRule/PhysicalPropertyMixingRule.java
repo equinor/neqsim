@@ -150,8 +150,7 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
                                 database.getConnection().close();
                             }
                         } catch (Exception e) {
-                            logger.error("error closing database.....");
-                            e.printStackTrace();
+                            logger.error("error closing database.....", e);
                         }
                     }
                 }

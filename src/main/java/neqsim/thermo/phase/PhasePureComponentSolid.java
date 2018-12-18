@@ -24,7 +24,7 @@ public class PhasePureComponentSolid extends PhaseSolid{
         try{
             clonedPhase = (PhasePureComponentSolid) super.clone();
         } catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         return clonedPhase;

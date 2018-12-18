@@ -116,8 +116,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                         dataSet.close();
                     }
                 } catch (Exception e) {
-                    logger.error("error closing adsorption database.....");
-                    e.printStackTrace();
+                    logger.error("error closing adsorption database.....", e);
                 }
 
             }

@@ -125,7 +125,7 @@ public class TPflash extends Flash implements java.io.Serializable {
                 system.setBeta(oldBeta);
             }
             logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
-            e.printStackTrace(System.err);
+            logger.error("error",e);
         }
 
         system.calc_x_y();
@@ -159,7 +159,7 @@ public class TPflash extends Flash implements java.io.Serializable {
             system.calc_x_y();
             system.init(1);
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("error",e);
         }
     }
 
@@ -237,7 +237,7 @@ public class TPflash extends Flash implements java.io.Serializable {
         try {
             system.calcBeta();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("error",e);
         }
         system.calc_x_y();
         system.init(1);

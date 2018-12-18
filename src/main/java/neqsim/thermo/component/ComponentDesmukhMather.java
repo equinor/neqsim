@@ -45,8 +45,7 @@ public class ComponentDesmukhMather extends ComponentGE {
                 deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));
             }
         } catch (Exception e) {
-            logger.error("error in comp");
-            e.printStackTrace();
+            logger.error("error in comp", e);
         } finally {
             try {
                 if (dataSet != null) {
@@ -59,8 +58,7 @@ public class ComponentDesmukhMather extends ComponentGE {
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("error closing database.....");
-                e.printStackTrace();
+                logger.error("error closing database.....", e);
             }
         }
     }

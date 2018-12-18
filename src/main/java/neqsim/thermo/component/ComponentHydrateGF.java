@@ -51,8 +51,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                 Ak[1][1] = Double.parseDouble(dataSet.getString("A2_LargeGF"));
                 Bk[1][1] = Double.parseDouble(dataSet.getString("B2_LargeGF"));
             } catch (Exception e) {
-                logger.error("error in ComponentHydrateGF");
-                e.printStackTrace();
+                logger.error("error in ComponentHydrateGF", e);
             } finally {
                 try {
                     dataSet.close();

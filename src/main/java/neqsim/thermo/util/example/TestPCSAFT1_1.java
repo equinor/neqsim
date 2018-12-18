@@ -51,8 +51,7 @@ public class TestPCSAFT1_1 {
                     testOps.dewPointTemperatureFlash();
                     logger.info("pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
                 } catch (Exception e) {
-                    logger.error(e.toString());
-                    e.printStackTrace();
+                    logger.error(e.toString(), e);
                 }
             }
         }

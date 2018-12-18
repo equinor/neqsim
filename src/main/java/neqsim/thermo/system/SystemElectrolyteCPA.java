@@ -51,7 +51,7 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
             clonedSystem = (SystemElectrolyteCPA) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         //        for(int i = 0; i < numberOfPhases; i++) {

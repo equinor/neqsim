@@ -6,6 +6,7 @@
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompInterfaceTension;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(InfluenceParamGTFunctionBinaryData.class);
 
     public InfluenceParamGTFunctionBinaryData() {
         params = new double[1];
@@ -25,7 +27,7 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         try {
             thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(), "dewPointTemperature", system.getTemperature());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error", e);
         }
         system.initPhysicalProperties();
         return system.getInterphaseProperties().getSurfaceTension(0,1) * 1e3;

@@ -52,8 +52,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 Bk[1][1] = Double.parseDouble(dataSet.getString("HydrateB2Large"));
             }
         } catch (Exception e) {
-            logger.error("error in ComponentHydratePVTsim");
-            e.printStackTrace();
+            logger.error("error in ComponentHydratePVTsim", e);
         } finally {
             try {
                 dataSet.close();

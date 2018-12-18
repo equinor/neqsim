@@ -61,6 +61,7 @@ public class TPflash_benchmark {
          
         //    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         logger.info("start benchmark TPflash......");
+        
 
         testSystem.init(0);
         long time = System.currentTimeMillis();

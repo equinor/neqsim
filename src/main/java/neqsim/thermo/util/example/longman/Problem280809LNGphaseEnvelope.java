@@ -8,6 +8,7 @@ package neqsim.thermo.util.example.longman;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Problem280809LNGphaseEnvelope {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Problem280809LNGphaseEnvelope.class);
 
     public Problem280809LNGphaseEnvelope(){
 
@@ -42,7 +44,7 @@ public class Problem280809LNGphaseEnvelope {
             testOps.displayResult();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         testSystem.display();
         //System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));

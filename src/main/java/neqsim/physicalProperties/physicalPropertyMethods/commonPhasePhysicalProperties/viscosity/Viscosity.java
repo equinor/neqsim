@@ -6,6 +6,9 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 //import physicalProperties.gasPhysicalProperties.*;
+
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -14,6 +17,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalPro
 abstract class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod implements  neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Viscosity.class);
     
     
     /** Creates new Conductivity */
@@ -31,7 +35,7 @@ abstract class Viscosity extends neqsim.physicalProperties.physicalPropertyMetho
             properties = (Viscosity) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.",e);
         }
         
         return properties;

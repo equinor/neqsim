@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -14,6 +16,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
 public class BinaryHVParameterFittingToSolubilityData extends  HuronVidalFunction{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(BinaryHVParameterFittingToSolubilityData.class);
     
     int phase = 1;
     int type = 1;
@@ -37,7 +40,7 @@ public class BinaryHVParameterFittingToSolubilityData extends  HuronVidalFunctio
             try{
                 thermoOps.bubblePointPressureFlash(true);
             } catch(Exception e){
-                e.printStackTrace();
+                logger.error("error",e);
                 return system.getPressure()*system.getPhase(0).getComponents()[0].getx();
             }
             return system.getPressure()*system.getPhase(0).getComponents()[0].getx();

@@ -129,7 +129,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
             TC = thermoSystem.getTC() - 273.15;
             PC = thermoSystem.getPC() * 1e5;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 
@@ -144,7 +144,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
                 bubP[i] = thermoSystem.getPressure();
 
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubP[i] = 0;
                 return bubP;
             }
@@ -163,7 +163,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
                 thermoOps.dewPointPressureFlashHC();
                 dewP[i] = thermoSystem.getPressure();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 dewP[i] = 0;
                 return dewP;
             }
@@ -182,7 +182,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
                 thermoOps.bubblePointTemperatureFlash();
                 bubT[i] = thermoSystem.getPressure();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubT[i] = 0.0;
             }
         }
@@ -274,7 +274,7 @@ public class OLGApropertyTableGeneratorWaterStudentsPH extends neqsim.thermodyna
                     logger.info("fail temperature " + thermoSystem.getTemperature() + " fail pressure " + thermoSystem.getPressure());
 
                     thermoSystem.display();
-                    e.printStackTrace();
+                    logger.error("error",e);
                 }
 
                 /*

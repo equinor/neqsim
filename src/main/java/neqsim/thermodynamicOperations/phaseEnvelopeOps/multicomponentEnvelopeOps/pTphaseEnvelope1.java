@@ -325,7 +325,7 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
                 file2.createFile();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 

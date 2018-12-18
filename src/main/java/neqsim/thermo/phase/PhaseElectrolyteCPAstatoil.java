@@ -31,7 +31,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA implements P
         try {
             clonedPhase = (PhaseElectrolyteCPAstatoil) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         return clonedPhase;
     }

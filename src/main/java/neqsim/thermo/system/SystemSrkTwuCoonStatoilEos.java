@@ -34,7 +34,7 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
             clonedSystem = (SystemSrkTwuCoonStatoilEos) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
 //        

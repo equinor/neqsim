@@ -7,6 +7,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density;
 
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.G
 public class Density extends GasPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Density.class);
     
     /** Creates new Density */
     public Density() {
@@ -32,7 +34,7 @@ public class Density extends GasPhysicalPropertyMethod implements neqsim.physica
             properties = (Density) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.",e);
         }
         
         return properties;

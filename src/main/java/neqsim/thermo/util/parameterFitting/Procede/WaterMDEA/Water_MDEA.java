@@ -92,8 +92,7 @@ public class Water_MDEA {
                 p.println(ID+" "+pressure+" "+testSystem.getPressure());
                 
             }catch(FileNotFoundException e) {
-                logger.error("Could not find file");
-                e.printStackTrace();
+                logger.error("Could not find file", e);
             }
             
             }

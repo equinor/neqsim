@@ -158,7 +158,7 @@ public class CO2_MDEA_speciation {
         } catch (FileNotFoundException e) {
             logger.error("Could not find file");
 
-            System.err.println("Could not read from Patrick.txt" + e.getMessage());
+            logger.error("Could not read from Patrick.txt" + e.getMessage());
         }
         try {
             outfile1 = new FileOutputStream("C:/java/NeqSimSource/activity.txt", true);
@@ -167,7 +167,7 @@ public class CO2_MDEA_speciation {
             p1.close();
         } catch (FileNotFoundException e) {
             logger.error("Could not find file");
-            System.err.println("Could not read from Patrick.txt" + e.getMessage());
+            logger.error("Could not read from Patrick.txt" + e.getMessage());
         }
 
         if (loading < 0.1) {

@@ -393,7 +393,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
             getThermoOperationThread().join(maxTime);
             getThermoOperationThread().interrupt();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         boolean didFinish = !getThermoOperationThread().isInterrupted();
         //getThermoOperationThread().stop();
@@ -404,7 +404,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             getThermoOperationThread().join();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 
@@ -439,7 +439,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
              * systemTemp.setPressure(pressure[i]); systemTemp.init(0);
              * systemTemp.display(); try {
              * opsTemp.hydrateFormationTemperature(); } catch (Exception e) {
-             * e.printStackTrace(); } systemTemp.display(); hydTemps[i] =
+             * logger.error("error",e); } systemTemp.display(); hydTemps[i] =
              * systemTemp.getTemperature();
              *
              */
@@ -459,7 +459,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             opsTemp.hydrateFormationTemperature();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         systemTemp.display();
         return hydTemps;
@@ -473,7 +473,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             opsTemp.hydrateFormationTemperature();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         systemTemp.display();
         system.setTemperature(systemTemp.getTemperature());
@@ -852,7 +852,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             dewPointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         system.setTemperature(system.getTemperature() - dT);
         TPflash();
@@ -860,7 +860,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             dewPointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         return condensationRate / dT;
     }

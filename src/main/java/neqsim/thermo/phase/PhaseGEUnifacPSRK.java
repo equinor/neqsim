@@ -90,9 +90,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
                 }
                 
                 catch (Exception e) {
-                    e.printStackTrace();
                     String err = e.toString();
-                    logger.error(err);
+                    logger.error(err, e);
                 }
             }
         }
@@ -124,9 +123,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
                 }
                 
                 catch (Exception e) {
-                    e.printStackTrace();
                     String err = e.toString();
-                    logger.error(err);
+                    logger.error(err, e);
                 }
             }
         }

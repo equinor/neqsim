@@ -52,7 +52,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         try {
             clonedPhase = (PhaseSrkCPA) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
         //clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
@@ -666,7 +666,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             try {
                 CommonOps_DDRM.invert(hessianMatrix, hessianInvers);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error", e);
                 return false;
             }
 
@@ -767,7 +767,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         try {
             //molarVolume(pressure, temperature, A, B, phaseType);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error", e);
         }
         double BonVold = BonV;
         double Btemp = 0, Dtemp = 0, h = 1, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;

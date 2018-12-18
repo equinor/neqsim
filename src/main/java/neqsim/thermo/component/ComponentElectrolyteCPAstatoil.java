@@ -40,7 +40,7 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
         try {
             clonedComponent = (ComponentElectrolyteCPAstatoil) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         return clonedComponent;

@@ -139,8 +139,7 @@ public class TestFurstIonicParameterFunction extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            logger.error("database error: " + e);
-            e.printStackTrace();
+            logger.error("database error: ", e);
         }
         
         

@@ -354,7 +354,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
                 xcoef = a.solve(xg.transpose());
             } catch (Exception e) {
                 xcoef = xcoefOld.copy();
-                e.printStackTrace();
+                logger.error("error",e);
             }
             // logger.info("xcoef " + j);
             //  xcoef.print(10, 10);
@@ -492,7 +492,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
 
                 dx = Jac.solve(fvec);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 return;
             }
             u.minusEquals(dx);
@@ -521,7 +521,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
                    solve(np);
                 }
                  catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("error",e);
                     return;
                 }
                 return;

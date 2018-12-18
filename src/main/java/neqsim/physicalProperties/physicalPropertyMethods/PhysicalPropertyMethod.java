@@ -29,7 +29,7 @@ public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethod
             properties = (PhysicalPropertyMethod) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         return properties;

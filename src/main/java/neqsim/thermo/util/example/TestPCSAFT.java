@@ -53,8 +53,7 @@ public class TestPCSAFT {
             //testOps.bubblePointPressureFlash(false);
 
         } catch (Exception e) {
-            logger.error(e.toString());
-            e.printStackTrace();
+            logger.error(e.toString(), e);
         }
         testSystem.display();
         double entropy = testSystem.getEntropy();

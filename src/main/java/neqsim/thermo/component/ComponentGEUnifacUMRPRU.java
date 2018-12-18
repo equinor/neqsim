@@ -9,6 +9,7 @@ import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -18,6 +19,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ComponentGEUnifacUMRPRU.class);
 
     int numberOfUnifacSubGroups = 139;
     double[][] aij = null, aijdT = null, aijdTdT = null;
@@ -62,7 +64,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
                 dataSet.close();
                 dataSet = database.getResultSet(("SELECT * FROM UNIFACcompUMRPRU WHERE Name='" + component_name + "'"));
                 dataSet.next();
-                e.printStackTrace();
+                logger.error("Something went wrong. Closing database.", e);
             }
             unifacGroups.clear();
             for (int p = 1; p < numberOfUnifacSubGroups; p++) {

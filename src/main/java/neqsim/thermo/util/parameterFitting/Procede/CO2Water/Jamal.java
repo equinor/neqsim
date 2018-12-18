@@ -73,7 +73,7 @@ public class Jamal {
                 }catch(FileNotFoundException e) {
                     logger.error("Could not find file");
                     
-                    System.err.println("Could not read from Patrick.txt"+ e.getMessage());
+                    logger.error("Could not read from Patrick.txt"+ e.getMessage());
                 }
            
         logger.info("Finished");

@@ -83,8 +83,7 @@ public class TestUNIFAC_1 {
                 //logger.info("Pressure " + testSystem.getPressure() + " " + (testSystem.getPhase(1).getComponent(0).getx()*testSystem.getPhase(1).getComponent(0).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0) + " " + (testSystem2.getPhase(1).getComponent(0).getx()*testSystem2.getPhase(1).getComponent(0).getMolarMass()/testSystem2.getPhase(1).getMolarMass()*100.0) + "  percent MDEA succefully reclaimed "+ percentBack+ "  percent Piperazine succefully reclaimed "+ percentBackPip+ "  percent water succefully reclaimed "+ percentBackWater);
                 //testOps.bubblePointTemperatureFlash();
             } catch(Exception e){
-                logger.error(e.toString());
-                e.printStackTrace();
+                logger.error(e.toString(), e);
             }
         }
         testSystem.display();

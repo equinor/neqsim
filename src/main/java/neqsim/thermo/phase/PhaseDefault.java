@@ -38,7 +38,7 @@ public class PhaseDefault extends Phase{
             componentArray[compNumber] = defComponent.getClass().newInstance();
         }
         catch(Exception e){
-            System.err.println("err " + e.toString());
+            logger.error("err " + e.toString());
         }
         componentArray[compNumber].createComponent(componentName, moles, molesInPhase, compNumber);
     }
