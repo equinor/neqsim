@@ -1925,9 +1925,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         //System.out.println("new phase type: cha " + newPhaseType);
         int newPhaseType = 1;
         if (allowPhaseShift) {
-            if (phaseTypeName.equals("gas")) {
+            if (phaseTypeName.equals("gas") || phaseTypeName.equals("vapour")) {
                 newPhaseType = 1;
-            } else if (phaseTypeName.equals("liquid")) {
+            } else if (phaseTypeName.equals("liquid") || phaseTypeName.equals("oil") || phaseTypeName.equals("aqueous")) {
+                newPhaseType = 0;
+            }
+            else{
                 newPhaseType = 0;
             }
             phaseType[phaseIndex[phaseToChange]] = newPhaseType;

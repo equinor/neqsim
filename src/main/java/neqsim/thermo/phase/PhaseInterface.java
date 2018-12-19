@@ -21,7 +21,7 @@ public interface PhaseInterface extends Cloneable {
 
     public double getCp0();
 
-    public void resetPhysicalProperties();
+      public void resetPhysicalProperties();
 
     /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant.

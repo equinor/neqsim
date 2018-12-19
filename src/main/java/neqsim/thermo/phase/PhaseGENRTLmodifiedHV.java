@@ -83,7 +83,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
             if(type==0) {
                 GE += phase.getComponents()[i].getx()*Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij, intparam, mixRule));
             }
-            if(type==1) {
+            else if(type==1) {
                 GE += phase.getComponents()[i].getx()* Math.log(((ComponentGENRTLmodifiedHV) componentArray[i]).getGamma(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij, DijT, intparam, mixRule));
             }
         }

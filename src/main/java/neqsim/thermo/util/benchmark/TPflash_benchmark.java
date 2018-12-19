@@ -23,13 +23,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
 
 public class TPflash_benchmark {
+
     static Logger logger = Logger.getLogger(TPflash_benchmark.class);
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
-    public static void main(String args[]) { 
+    public static void main(String args[]) {
         double[][] points;
 
         SystemInterface testSystem = new SystemSrkEos(283.15, 35.01325);
@@ -49,13 +50,12 @@ public class TPflash_benchmark {
         testSystem.addComponent("i-pentane", 0.0040184);
         testSystem.addTBPfraction("C6", 0.006178399, 86.17801 / 1000.0, 0.6639999);
         testSystem.addComponent("water", 0.0027082);
- //       testSystem.addComponent("TEG", 1.0);
-   //     testSystem.addTBPfraction("C7",1.0,250.0/1000.0,0.9);
+        //       testSystem.addComponent("TEG", 1.0);
+        //     testSystem.addTBPfraction("C7",1.0,250.0/1000.0,0.9);
 
         testSystem.createDatabase(true);
 //        testSystem.setMixingRule(2);
         testSystem.autoSelectMixingRule();
-         
         //    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         logger.info("start benchmark TPflash......");
         
@@ -72,12 +72,9 @@ public class TPflash_benchmark {
 
         logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testSystem.display();
-   
-       //     testSystem.saveObjectToFile("c:/temp/test2.neqsim", "test2.neqsim");
         //    SystemInterface testSystem2 = testSystem.readObjectFromFile("c:/temp/test2.neqsim", "test2.neqsim");
-            
         /// testSystem2.init(3);
-     //       testSystem2.display();
+        //       testSystem2.display();
         //  testSystem2.init(0);
         // testSystem2.init(3);
         // time for 5000 flash calculations

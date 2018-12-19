@@ -21,6 +21,7 @@
  */
 package neqsim.thermo.phase;
 
+import neqsim.physicalProperties.PhysicalPropertiyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import static neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS;
 import static neqsim.thermo.ThermodynamicConstantsInterface.R;
@@ -43,7 +44,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     private boolean constantPhaseVolume = false;
     public int numberOfComponents = 0, physicalPropertyType = 0;
     protected boolean useVolumeCorrection = true;
-    public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface physicalProperty = null;
+    public neqsim.physicalProperties.PhysicalPropertiyHandler physicalPropertiyHandler = null;
     public double numberOfMolesInPhase = 0;
     protected double molarVolume = 1.0, phaseVolume = 1.0;
     public boolean chemSyst = false;
@@ -54,9 +55,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     int mixingRuleNumber = 0;
     double temperature = 0, pressure = 0;
     transient PhaseInterface[] refPhase = null;
-    int phaseType = 0, phaseTypeAtLastPhysPropUpdate = 0;
+    int phaseType = 0;
     protected String phaseTypeName = "gas";
-    String phaseTypeNameAtLastPhysPropUpdate = "";
     static Logger logger = Logger.getLogger(Phase.class);
 
     // Class methods
@@ -85,9 +85,10 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             clonedPhase.componentArray[i] = (ComponentInterface) this.componentArray[i].clone();
         }
         //System.out.println("cloed length: " + componentArray.length);
-        if (this.physicalProperty != null) {
-            clonedPhase.physicalProperty = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) this.physicalProperty.clone();
+        if (physicalPropertiyHandler != null) {
+            clonedPhase.physicalPropertiyHandler = ((neqsim.physicalProperties.PhysicalPropertiyHandler) this.physicalPropertiyHandler.clone());
         }
+
         return clonedPhase;
     }
 
@@ -124,7 +125,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         numberOfMolesInPhase = 0.0;
         for (int i = 0; i < getNumberOfComponents(); i++) {
             this.getComponent(i).setNumberOfMolesInPhase(0.0);
-             this.getComponent(i).setNumberOfmoles(0.0);
+            this.getComponent(i).setNumberOfmoles(0.0);
         }
     }
 
@@ -218,7 +219,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public double getTemperature() {
         return temperature;
     }
-    
+
     /**
      * method to return pressure of a phase
      *
@@ -227,8 +228,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public double getPressure() {
         return pressure;
     }
-    
-     /**
+
+    /**
      * method to return pressure in a given unit
      *
      * @param unit The unit as a string. Supported units are bara, barg, Pa and
@@ -282,7 +283,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         this.pressure = pres;
     }
 
-     /**
+    /**
      * method to set the temperature of a phase
      *
      * @param temp in unit Kelvin
@@ -292,7 +293,11 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
-        return physicalProperty;
+        if (physicalPropertiyHandler == null) {
+            return null;
+        } else {
+            return physicalPropertiyHandler.getPhysicalProperty(this);
+        }
     }
 
     public void init() {
@@ -325,82 +330,41 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * Model 0 Orginal/default 1 Water 2 Glycol 3 Amine
      */
     public void setPhysicalProperties(int type) {
-        physicalPropertyType = type;
-        //System.out.println("phase type: " + phaseType);
-        if (phaseTypeName.equals("aqueous")) {
-            physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(this, 0, 0);
-            // return;
-        } else if (type == 0) {
-            //System.out.println("Physical properties:    Default model..." + phaseType);
-            if (phaseTypeName.equals("gas")) {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
-            } else {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(this, 0, 0);
-            }
-        } else if (type == 1) {
-            //System.out.println("Physical properties:    Water model");
-            if (phaseTypeName.equals("gas")) {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
-            } else {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.WaterPhysicalProperties(this, 0, 0);
-            }
-        } else if (type == 2) {
-            //System.out.println("Physical properties:    Glycol model");
-            if (phaseTypeName.equals("gas")) {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
-            } else {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.GlycolPhysicalProperties(this, 0, 0);
-            }
-        } else if (type == 3) {
-            //System.out.println("Physical properties:    Amine model");
-            if (phaseTypeName.equals("gas")) {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
-            } else {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.AminePhysicalProperties(this, 0, 0);
-            }
-        } else if (type == 4) {
-            //System.out.println("Physical properties:    Amine model");
-            if (phaseTypeName.equals("gas")) {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
-            } else {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.CO2waterPhysicalProperties(this, 0, 0);
-            }
-        } else if (type == 5) {
-            logger.info("Physical properties:    Amine model");
-            if (phaseTypeName.equals("gas")) {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties.GasPhysicalProperties(this, 0, 0);
-            } else {
-                physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties.LiquidPhysicalProperties(this, 0, 0);
-            }
-        } else if (type == 6) {
-            //System.out.println("Physical properties:    common HC model");
-            physicalProperty = new neqsim.physicalProperties.physicalPropertySystem.commonPhasePhysicalProperties.DefaultPhysicalProperties(this, 0, 0);
-        } else {
-            logger.error("error selecting physical properties model.\n Continue using default model...");
-            setPhysicalProperties();
+        if (physicalPropertiyHandler == null) {
+            physicalPropertiyHandler = new PhysicalPropertiyHandler();
         }
-        phaseTypeAtLastPhysPropUpdate = phaseType;
-        phaseTypeNameAtLastPhysPropUpdate = phaseTypeName;
-        //initPhysicalProperties();
+        physicalPropertiyHandler.setPhysicalProperties(this, type);
+
     }
 
     public void resetPhysicalProperties() {
-        neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties.mixingRule = null;
-        physicalProperty = null;
+        physicalPropertiyHandler = null;
     }
 
     public void initPhysicalProperties() {
-        if (physicalProperty == null || phaseTypeAtLastPhysPropUpdate != phaseType || !phaseTypeNameAtLastPhysPropUpdate.equals(phaseTypeName)) {
-            this.setPhysicalProperties();
+        if (physicalPropertiyHandler == null) {
+            physicalPropertiyHandler = new PhysicalPropertiyHandler();
         }
-        physicalProperty.init(this);
+
+        if (physicalPropertiyHandler.getPhysicalProperty(this) == null) {
+            setPhysicalProperties(physicalPropertyType);
+        }
+        getPhysicalProperties().init(this);
     }
 
     public void initPhysicalProperties(String type) {
-        if (physicalProperty == null || phaseTypeAtLastPhysPropUpdate != phaseType || !phaseTypeNameAtLastPhysPropUpdate.equals(phaseTypeName)) {
-            this.setPhysicalProperties();
+        if (physicalPropertiyHandler == null) {
+            physicalPropertiyHandler = new PhysicalPropertiyHandler();
         }
-        physicalProperty.init(this, type);
+        if (physicalPropertiyHandler.getPhysicalProperty(this) == null) {
+            setPhysicalProperties(physicalPropertyType);
+        }
+
+        //   if (physicalProperty == null || phaseTypeAtLastPhysPropUpdate != phaseType || !phaseTypeNameAtLastPhysPropUpdate.equals(phaseTypeName)) {
+        //        this.setPhysicalProperties();
+        ////   }
+        //  physicalProperty.init(this, type);
+        getPhysicalProperties().init(this, type);
     }
 
     public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
@@ -460,16 +424,17 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             componentArray[k].setAtractiveTerm(i);
         }
     }
-    
-     /**
-     * method to return molar volume of the phase
-     * note: without Peneloux volume correction
+
+    /**
+     * method to return molar volume of the phase note: without Peneloux volume
+     * correction
+     *
      * @return volume in unit m3*1e5
      */
     public double getMolarVolume() {
         return molarVolume;
     }
-    
+
     public int getNumberOfComponents() {
         return numberOfComponents;
     }
@@ -711,7 +676,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         // System.out.println("Cp res:" + this.getCpres() + " Cp0: " + getCp0());
         return getCp0() * numberOfMolesInPhase + this.getCpres();
     }
-    
+
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
@@ -738,7 +703,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return refCp * conversionFactor;
     }
-    
+
     /**
      * method to return specific heat capacity (Cv)
      *
@@ -747,8 +712,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public double getCv() {
         return getCp0() * numberOfMolesInPhase - R * numberOfMolesInPhase + getCvres();
     }
-    
-     /**
+
+    /**
      * method to return specific heat capacity (Cv) in a given unit
      *
      * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK
@@ -775,23 +740,25 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return refCv * conversionFactor;
     }
 
-     /**
+    /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant
+     *
      * @return kappa
      */
-    public double getKappa(){
-        return getCp()/getCv();
+    public double getKappa() {
+        return getCp() / getCv();
     }
-    
-     /**
+
+    /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant.
      * The method calculates it as Cp (real) /Cv (real)
+     *
      * @return gamma
      */
-    public double getGamma(){
-        return getCp()/getCv();
+    public double getGamma() {
+        return getCp() / getCv();
     }
-    
+
     /**
      * method to return enthalpy of a phase in unit Joule
      */
@@ -799,7 +766,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return getHID() * numberOfMolesInPhase + this.getHresTP();
     }
 
-     /**
+    /**
      * method to return phase enthalpy in a given unit
      *
      * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
@@ -826,7 +793,6 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return refEnthalpy * conversionFactor;
     }
 
-    
     public double getEnthalpydP() {
         return this.getHresdP();
     }
@@ -858,8 +824,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return ion;
     }
-    
-     /**
+
+    /**
      * method to return entropy of the phase
      */
     public double getEntropy() {
@@ -877,8 +843,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
 
         return tempVar * numberOfMolesInPhase - numberOfMolesInPhase * R * Math.log(pressure / referencePressure) + tempVar2 * numberOfMolesInPhase + this.getSresTP();
     }
-    
-     /**
+
+    /**
      * method to return entropy of the phase
      *
      * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK
@@ -904,7 +870,6 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return refEntropy * conversionFactor;
     }
-    
 
     public double getEntropydP() {
         return getdPdTVn() / getdPdVTn();
@@ -914,7 +879,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return getCp() / temperature;
     }
 
-     /**
+    /**
      * method to return viscosity of the phase
      *
      * @return viscosity in unit kg/msec
@@ -943,8 +908,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return refViscosity * conversionFactor;
     }
-    
-     /**
+
+    /**
      * method to return conductivity of a phase
      *
      * @return conductivity in unit W/m*K
@@ -973,7 +938,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return refConductivity * conversionFactor;
     }
-    
+
     public void initRefPhases(boolean onlyPure) {
         if (refPhase == null) {
             initRefPhases(onlyPure, "water");
@@ -1215,9 +1180,9 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase
-     * note: implemented in phaseEos
-     * 
+     * method to get the Joule Thomson Coefficient of a phase note: implemented
+     * in phaseEos
+     *
      * @return Joule Thomson coefficient in K/bar
      */
     public double getJouleThomsonCoefficient() {
@@ -1225,24 +1190,23 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     /**
-     * method to get density of a phase
-     * note: does not use Peneloux volume correction
-     * 
+     * method to get density of a phase note: does not use Peneloux volume
+     * correction
+     *
      * @return density with unit kg/m3
      */
     public double getDensity() {
         return 1.0 / getMolarVolume() * getMolarMass() * 1.0e5;
     }
-    
-     /**
-     * method to get density of a fluid
-     * note: with Peneloux volume correction
-     * 
+
+    /**
+     * method to get density of a fluid note: with Peneloux volume correction
+     *
      * @param unit The unit as a string. Supported units are kg/m3, mol/m3
      * @return density in specified unit
      */
     public double getDensity(String unit) {
-         double refDensity = getPhysicalProperties().getDensity(); // density in kg/m3
+        double refDensity = getPhysicalProperties().getDensity(); // density in kg/m3
         double conversionFactor = 1.0;
         switch (unit) {
             case "kg/m3":
@@ -1562,7 +1526,6 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public final void setPhaseType(int phaseType) {
         this.phaseType = phaseType;
     }
-    
 
     public void setMolarVolume(double molarVolume) {
         this.molarVolume = molarVolume;
@@ -1576,9 +1539,9 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         phaseVolume = volume;
     }
 
-     /**
-     * method to return phase volume
-     * note: without Peneloux volume correction
+    /**
+     * method to return phase volume note: without Peneloux volume correction
+     *
      * @return volume in unit m3*1e5
      */
     public double getTotalVolume() {
@@ -1588,24 +1551,24 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return getMolarVolume() * getNumberOfMolesInPhase();
     }
 
-     /**
-     * method to return phase volume
-     * note: without Peneloux volume correction
+    /**
+     * method to return phase volume note: without Peneloux volume correction
+     *
      * @return volume in unit m3*1e5
      */
     public double getVolume() {
         return getTotalVolume();
     }
-    
-     /**
-     * method to return phase volume with Peneloux volume correction
-     * need to call initPhysicalProperties() before this method is called
+
+    /**
+     * method to return phase volume with Peneloux volume correction need to
+     * call initPhysicalProperties() before this method is called
+     *
      * @return volume in unit m3
      */
     public double getCorrectedVolume() {
         return getMolarMass() / getPhysicalProperties().getDensity() * getNumberOfMolesInPhase();
     }
-
 
     public boolean hasPlusFraction() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1638,9 +1601,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     /**
-     * method to get the speed of sound of a phase
-     * note: implemented in phaseEos
-     * 
+     * method to get the speed of sound of a phase note: implemented in phaseEos
+     *
      * @return speed of sound in m/s
      */
     public double getSoundSpeed() {

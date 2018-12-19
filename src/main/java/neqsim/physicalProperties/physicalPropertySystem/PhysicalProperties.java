@@ -24,7 +24,7 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
     public PhaseInterface phase;
     protected int binaryDiffusionCoefficientMethod;
     protected int multicomponentDiffusionMethod;
-    public static neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule;
+    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule;
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface conductivityCalc;
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface viscosityCalc;
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface diffusivityCalc;
