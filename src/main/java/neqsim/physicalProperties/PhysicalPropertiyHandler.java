@@ -28,9 +28,10 @@ public class PhysicalPropertiyHandler implements Cloneable, java.io.Serializable
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties = null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface aqueousPhysicalProperties = null;
     static Logger logger = Logger.getLogger(PhysicalPropertiyHandler.class);
+    private static final long serialVersionUID = 1000;
 
     public PhysicalPropertiyHandler() {
-       
+
     }
 
     public void setPhysicalProperties(PhaseInterface phase, int type) {
@@ -89,6 +90,7 @@ public class PhysicalPropertiyHandler implements Cloneable, java.io.Serializable
             clonedHandler = (PhysicalPropertiyHandler) super.clone();
         } catch (Exception e) {
             // e.printStackTrace(System.err);
+             logger.error(e.getMessage());
         }
         try {
             if (gasPhysicalProperties != null) {
