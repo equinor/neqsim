@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object implements Cloneable{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVfitToActivityCoefficientDB.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVfitToActivityCoefficientDB() {
@@ -66,13 +68,12 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM BinaryFreezingPointData WHERE ComponentSolvent1='MDEA' ORDER BY FreezingTemperature");
         
         try{
-            System.out.println("adding....");
             while(!dataSet.next()){
                 FreezeSolidFunction function = new  FreezeSolidFunction();
                 //double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398, -7.2410712156, 0.2127650110};
@@ -99,7 +100,7 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         

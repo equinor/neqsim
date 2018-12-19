@@ -7,10 +7,12 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class bubblePointPressureFlash extends constantDutyPressureFlash{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(bubblePointPressureFlash.class);
     
     /** Creates new bubblePointFlash */
     public bubblePointPressureFlash() {
@@ -28,7 +30,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash{
         int iterations=0, maxNumberOfIterations = 500;
         double yold=0, ytotal=1, deriv=0, funk=0;
         boolean chemSolved = true;
-        //System.out.println("starting");
+        //logger.info("starting");
         //system.setPressure(1.0);
         system.init(0);
         system.setNumberOfPhases(2);
@@ -82,7 +84,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash{
                         }
                         system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
                         system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getz());
-                        //System.out.println("y err " + Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
+                        //logger.info("y err " + Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold));
                     }
                     while(Math.abs(system.getPhases()[0].getComponents()[i].getx()-yold)/yold>1e-8);
                     ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK()-1.0);
@@ -92,7 +94,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash{
                         system.getPhases()[0].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getK()*system.getPhases()[1].getComponents()[i].getz());
                     } else{
                         system.init(0);
-                        System.out.println("k err. : nan" );
+                        logger.error("k err. : nan" );
                     }
                 }
                 
@@ -100,7 +102,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash{
                 for (int i=0;i<system.getPhases()[0].getNumberOfComponents();i++){
                     ytotal += system.getPhases()[0].getComponents()[i].getx();
                 }
-                //zSystem.out.println("ytot " + ytotal + "  pres " + system.getPressure());
+                //zlogger.info("ytot " + ytotal + "  pres " + system.getPressure());
                 
                 //system.getPhase(0).normalize();
                 
@@ -121,7 +123,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash{
                     run();
                     return;
                 }
-                //System.out.println("iter in bub calc " + iterations + " pres " + system.getPressure()+ " ytot " + ytotal + "  chem iter " + chemIter);
+                //logger.info("iter in bub calc " + iterations + " pres " + system.getPressure()+ " ytot " + ytotal + "  chem iter " + chemIter);
                 
             }
             while(((((Math.abs(ytotal-1.0)) > 1e-7) || Math.abs(oldPres-system.getPressure())/oldPres>1e-6) && (iterations < maxNumberOfIterations)) || iterations<5);
@@ -131,16 +133,16 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash{
                 system.setBeta(1, 1.0-1e-10);
                 system.setBeta(0, 1e-10);
             }
-            //System.out.println("iter in bub calc " + iterations + " pres " + system.getPressure()+ "  chem iter " + chemIter);
+            //logger.info("iter in bub calc " + iterations + " pres " + system.getPressure()+ "  chem iter " + chemIter);
             
         }
         while((Math.abs(oldChemPres - system.getPressure())/oldChemPres>1e-6 || chemIter<2 || !chemSolved) && chemIter<20);
         // if(system.getPressure()>300) system.setPressure(300.0);
-        //System.out.println("iter in bub calc " + iterations + " pres " + system.getPressure()+ "  chem iter " + chemIter);
-        //        System.out.println("iter " + iterations + " XTOT " +ytotal + " ktot " +ktot);
+        //logger.info("iter in bub calc " + iterations + " pres " + system.getPressure()+ "  chem iter " + chemIter);
+        //        logger.info("iter " + iterations + " XTOT " +ytotal + " ktot " +ktot);
         system.init(1);
         if(Math.abs(ytotal-1.0)>1e-4 || ktot<1e-3 && system.getPhase(0).getNumberOfComponents()>1){
-            System.out.println("ytot " + Math.abs(ytotal-1.0));
+            logger.info("ytot " + Math.abs(ytotal-1.0));
             setSuperCritical(true);
         }
     }

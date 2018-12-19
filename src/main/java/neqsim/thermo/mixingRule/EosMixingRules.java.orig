@@ -43,7 +43,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
         try {
             clonedSystem = (EosMixingRules) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         //        clonedSystem.intparam = (double[][]) intparam.clone();
@@ -287,7 +287,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicVdW) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             return clonedSystem;
@@ -412,7 +412,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicSRK) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             //     clonedSystem.intparam = (double[][]) clonedSystem.intparam.clone();
@@ -476,7 +476,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             return clonedSystem;
@@ -512,7 +512,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             return clonedSystem;

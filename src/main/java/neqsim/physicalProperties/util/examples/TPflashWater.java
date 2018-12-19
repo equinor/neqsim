@@ -3,6 +3,7 @@ package neqsim.physicalProperties.util.examples;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TPflashWater {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflashWater.class);
 
     /**
      * Creates new TPflash
@@ -45,7 +47,7 @@ public class TPflashWater {
             testOps.TPflash();
           
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
         //    System.out.println("surftens 0-2 " + testSystem.getInterphaseProperties().getSurfaceTension(0,2));

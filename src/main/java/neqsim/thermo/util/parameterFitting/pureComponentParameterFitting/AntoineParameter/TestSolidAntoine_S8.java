@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestSolidAntoine_S8 extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestSolidAntoine_S8.class);
     
     /** Creates new TestAcentric */
     public TestSolidAntoine_S8() {
@@ -39,7 +41,6 @@ public class TestSolidAntoine_S8 extends java.lang.Object {
         ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
         
         try{
-            System.out.println("adding....");
             while(dataSet.next()){
                 AntoineSolidFunctionS8 function = new  AntoineSolidFunctionS8();
                 //double guess[] = {8.046, -4600.0, -144.0};     // S8
@@ -60,7 +61,7 @@ public class TestSolidAntoine_S8 extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

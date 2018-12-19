@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ReactiveTPflash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ReactiveTPflash.class);
 
     /**
      * Creates new TPflash
@@ -49,7 +51,7 @@ public class ReactiveTPflash {
         testSystem.init(0);
         testSystem.init(1);
         //testSystem.init(1);
-        System.out.append("activity coefficiet " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("activity coefficiet " + testSystem.getPhase(1).getActivityCoefficient(1));
 //        System.out.println("wt% MDEA " + 100*testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()/(testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()+testSystem.getPhase(1).getComponent("water").getx()*testSystem.getPhase(1).getComponent("water").getMolarMass()));
 //        System.out.println("wt% Piperazine " + testSystem.getPhase(1).getComponent("Piperazine").getx()*testSystem.getPhase(1).getComponent("Piperazine").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
@@ -63,8 +65,8 @@ public class ReactiveTPflash {
         } catch (Exception e) {
         }
         testSystem.display();
-        System.out.println("pH " + testSystem.getPhase(1).getpH());
-        System.out.append("activity coefficiet water " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("pH " + testSystem.getPhase(1).getpH());
+        logger.info("activity coefficiet water " + testSystem.getPhase(1).getActivityCoefficient(1));
 //        
 //        for(int i=0;i<23;i++){
 //            try{

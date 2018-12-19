@@ -13,6 +13,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
@@ -24,6 +25,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     public int compnr;
     public String name ="Frz";
     public boolean CCequation = true;
+    static Logger logger = Logger.getLogger(freezingPointTemperatureFlashTR.class);
     /** Creates new bubblePointFlash */
     public freezingPointTemperatureFlashTR() {
     }
@@ -63,11 +65,11 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                     
                     if(noFreezeFlash){
                     system.setTemperature(system.getPhases()[0].getComponents()[k].getTriplePointTemperature());
-                    System.out.println("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName() );
+                    logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName() );
                     }
                 else{
                     system.setTemperature(system.getTemperature());
-                    System.out.println("starting at Temperature  " + system.getTemperature());
+                    logger.info("starting at Temperature  " + system.getTemperature());
                     }
                 
                 //init reference system for vapor fugacity
@@ -108,7 +110,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                     
                     soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp)*1000;
                     
-                    System.out.println("Solid density"+ soldens);
+                    logger.info("Solid density"+ soldens);
                     
                     if(soldens>2000) {
                         soldens = 1000;
@@ -143,7 +145,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                     else {
                         newTemp = system.getTemperature() + 0.5*(iterations/(10.0+iterations))*funk;
                     }
-                    System.out.println("newTEmp  " + newTemp);
+                    logger.info("newTEmp  " + newTemp);
                     if(newTemp>(trpTemp+5)){
                         system.setTemperature(system.getPhases()[0].getComponents()[k].getTriplePointTemperature()+0.4);
                     }
@@ -154,16 +156,16 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                     else {
                         system.setTemperature(newTemp);
                     } 
-                    System.out.println("funk " + funk);
-                    System.out.println("temperature " + system.getTemperature());
+                    logger.info("funk " + funk);
+                    logger.info("temperature " + system.getTemperature());
                     }
                 //while(false);
                 while((Math.abs(funk)>=0.001 && iterations<100));
                 //while((Math.abs(funk)>=0.000001 && iterations<100));
                 FCompTemp[k]=system.getTemperature();
-                System.out.println("iterations " + iterations);
+                logger.info("iterations " + iterations);
                 Niterations = iterations;
-                //System.out.println("funk " + funk + k + " " + system.getTemperature());
+                //logger.info("funk " + funk + k + " " + system.getTemperature());
                 if(system.getTemperature()<minTemperature) {
                     minTemperature=system.getTemperature();
                     }
@@ -176,10 +178,10 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         system.setTemperature(maxTemperature);
         //system.setSolidPhaseCheck(true);
         //ops.TPflash();
-        //System.out.println("final funk:"+ Testfunk); 
+        //logger.info("final funk:"+ Testfunk); 
         //system.display();
-        //System.out.println("min freezing temp " + minTemperature);
-        //System.out.println("max freezing temp " + maxTemperature);
+        //logger.info("min freezing temp " + minTemperature);
+        //logger.info("max freezing temp " + maxTemperature);
     }
     
     public void printToFile(String name) {
@@ -209,10 +211,10 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
 
             }
             catch (SecurityException e) {
-            System.out.println("writeFile: caught security exception");
+            logger.info("writeFile: caught security exception");
             }
             catch (IOException ioe) {
-	    System.out.println("writeFile: caught i/o exception");            
+	    logger.info("writeFile: caught i/o exception");            
             }   
     
     

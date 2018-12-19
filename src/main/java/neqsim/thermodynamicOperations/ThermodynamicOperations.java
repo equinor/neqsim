@@ -74,6 +74,7 @@ import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -91,6 +92,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
     String fileName = null;
     private boolean runAsThread = false;
     protected String[][] resultTable = null;
+    static Logger logger = Logger.getLogger(ThermodynamicOperations.class);
 
     /**
      * Creates new thermoOps
@@ -391,7 +393,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
             getThermoOperationThread().join(maxTime);
             getThermoOperationThread().interrupt();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         boolean didFinish = !getThermoOperationThread().isInterrupted();
         //getThermoOperationThread().stop();
@@ -402,7 +404,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             getThermoOperationThread().join();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 
@@ -437,7 +439,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
              * systemTemp.setPressure(pressure[i]); systemTemp.init(0);
              * systemTemp.display(); try {
              * opsTemp.hydrateFormationTemperature(); } catch (Exception e) {
-             * e.printStackTrace(); } systemTemp.display(); hydTemps[i] =
+             * logger.error("error",e); } systemTemp.display(); hydTemps[i] =
              * systemTemp.getTemperature();
              *
              */
@@ -457,7 +459,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             opsTemp.hydrateFormationTemperature();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         systemTemp.display();
         return hydTemps;
@@ -471,7 +473,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             opsTemp.hydrateFormationTemperature();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         systemTemp.display();
         system.setTemperature(systemTemp.getTemperature());
@@ -520,7 +522,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         if (system.getTemperature() > 298.15) {
             system.setTemperature(273.0 + 25.0);
         }
-        //System.out.println("guess hydrate temperature " + system.getTemperature());
+        //logger.info("guess hydrate temperature " + system.getTemperature());
         operation = new HydrateFormationTemperatureFlash(system);
 
         for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
@@ -531,7 +533,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         } else {
             run();
         }
-        //System.out.println("Hydrate structure " + (((ComponentHydrate) system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
+        //logger.info("Hydrate structure " + (((ComponentHydrate) system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
 
     }
 
@@ -657,13 +659,13 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         double newTemperature = system.getTemperature(), oldTemperature = newTemperature;
         int iterations = 0;
         if (specification.equals("dewPointTemperature")) {
-            //System.out.println("new temperature " + newTemperature);
+            //logger.info("new temperature " + newTemperature);
             do {
                 iterations++;
                 system.init(0);
                 dewPointTemperatureFlash();
                 newTemperature = system.getTemperature();
-                // System.out.println("new temperature " + newTemperature);
+                // logger.info("new temperature " + newTemperature);
                 double oldMoles = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
                 if (iterations > 1) {
                     system.addComponent(componentName, -(iterations / (30.0 + iterations)) * (newTemperature - spec) / ((newTemperature - oldTemperature) / dn));
@@ -850,7 +852,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             dewPointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         system.setTemperature(system.getTemperature() - dT);
         TPflash();
@@ -858,7 +860,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             dewPointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         return condensationRate / dT;
     }
@@ -867,7 +869,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             getThermoOperationThread().join();
         } catch (Exception e) {
-            System.out.println("Thread did not finish");
+            logger.error("Thread did not finish");
         }
         getOperation().displayResult();
     }

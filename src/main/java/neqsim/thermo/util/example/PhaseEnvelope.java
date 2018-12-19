@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * PhaseEnvelope.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class PhaseEnvelope {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PhaseEnvelope.class);
 
     /**
      * Creates new PhaseEnvelope
@@ -99,7 +101,7 @@ public class PhaseEnvelope {
             // testOps.dewPointPressureFlash();
             //testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         testSystem.display();
         //   thermo.ThermodynamicModelTest testModel = new thermo.ThermodynamicModelTest(testSystem);
@@ -107,7 +109,7 @@ public class PhaseEnvelope {
 
         //System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));
         //    testOps.displayResult();
-        System.out.println("Cricondenbar " + testOps.get("cricondenbar")[0] + " " + testOps.get("cricondenbar")[1]);
-        System.out.println("Cricondentherm " + testOps.get("cricondentherm")[0] + " " + testOps.get("cricondentherm")[1]);
+        logger.info("Cricondenbar " + testOps.get("cricondenbar")[0] + " " + testOps.get("cricondenbar")[1]);
+        logger.info("Cricondentherm " + testOps.get("cricondentherm")[0] + " " + testOps.get("cricondentherm")[1]);
     }
 }

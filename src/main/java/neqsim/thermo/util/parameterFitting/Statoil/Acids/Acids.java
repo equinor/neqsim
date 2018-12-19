@@ -4,6 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * Sleipneracetate.java
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Acids {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Acids.class);
 
     /**
      * Creates a new instance of Sleipneracetate
@@ -36,7 +38,7 @@ public class Acids {
             p = new PrintStream(outfile);
             p.close();
         } catch (IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
 
         FileOutputStream outfile1;
@@ -46,7 +48,7 @@ public class Acids {
             p1 = new PrintStream(outfile1);
             p1.close();
         } catch (IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
 
         int j;
@@ -134,13 +136,13 @@ public class Acids {
                 j++;
             } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("Ac-"));
 
-            System.out.println("CO2 number " + CO2Numb);
+            logger.info("CO2 number " + CO2Numb);
 
             ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
             try {
                 testOps.bubblePointPressureFlash(false);
             } catch (Exception e) {
-                System.out.println(e.toString());
+                logger.error(e.toString());
             }
 
             nCO2 = testSystem.getPhase(1).getComponent(CO2Numb).getx();
@@ -168,7 +170,7 @@ public class Acids {
                 p.println(loading + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx() + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH + " " + nHAc + " " + nAcn);
                 p.close();
             } catch (FileNotFoundException e) {
-                System.out.println("Could not find file " + e.getMessage());
+                logger.error("Could not find file " + e.getMessage());
             } 
 
             try {
@@ -177,7 +179,7 @@ public class Acids {
                 p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3 + " " + aOH + " " + aHAc + " " + aAcn);
                 p1.close();
             } catch (FileNotFoundException e) {
-                System.out.println("Could not find file" + e.getMessage());
+                logger.error("Could not find file" + e.getMessage());
             }
 
             if (loading < 0.1) {
@@ -188,7 +190,7 @@ public class Acids {
 
         }
 
-        System.out.println("Finished");
+        logger.info("Finished");
 
     }
 }

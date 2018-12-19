@@ -27,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -35,6 +36,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorWaterKeywordFormat.class);
 
     SystemInterface thermoSystem = null;
     ThermodynamicOperations thermoOps = null;
@@ -87,7 +89,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
             TC = thermoSystem.getTC() - 273.15;
             PC = thermoSystem.getPC() * 1e5;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
 
 //thermoOps.ge
@@ -104,7 +106,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 bubP[i] = thermoSystem.getPressure();
                 bubPLOG[i] = bubP[i] * 1e5;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubP[i] = 0;
             }
         }
@@ -122,7 +124,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 dewP[i] = thermoSystem.getPressure();
                 dewPLOG[i] = dewP[i] * 1e5;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 dewP[i] = 0;
             }
         }
@@ -140,7 +142,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 bubT[i] = thermoSystem.getTemperature();
                 bubTLOG[i] = bubT[i] - 273.15;
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
                 bubT[i] = 0.0;
             }
         }
@@ -190,7 +192,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
     
     public void run() {
 
-        System.out.println("Start creating arrays");
+        logger.info("Start creating arrays");
         calcRSWTOB();
         nProps = 29;
         props = new double[nProps][pressures.length][temperatures.length];
@@ -224,7 +226,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
                 try {
                     thermoOps.TPflash();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("error",e);
                 }
                 thermoSystem.init(3);
                 thermoSystem.initPhysicalProperties();
@@ -282,16 +284,16 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         bubP = calcBubP(temperatures);
         //  dewP = calcDewP(temperatures);
         bubT = calcBubT(temperatures);
-        System.out.println("Finished creating arrays");
+        logger.info("Finished creating arrays");
         initCalc();
     }
 
     public void displayResult() {
-        System.out.println("TC " + TC + " PC " + PC);
+        logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                System.out.println("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]); // + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
             }
         }
         writeOLGAinpFile("");

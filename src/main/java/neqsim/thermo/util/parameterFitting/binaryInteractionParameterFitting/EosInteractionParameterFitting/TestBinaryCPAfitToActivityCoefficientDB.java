@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 public class TestBinaryCPAfitToActivityCoefficientDB extends java.lang.Object implements Cloneable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryCPAfitToActivityCoefficientDB.class);
 
     /**
      * Creates new TestAcentric
@@ -67,7 +69,7 @@ public class TestBinaryCPAfitToActivityCoefficientDB extends java.lang.Object im
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
 

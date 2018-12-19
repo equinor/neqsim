@@ -5,6 +5,8 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author Even Solbraa
@@ -13,6 +15,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
 public class Conductivity extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Conductivity.class);
 
     double conductivity = 0;
     public double[] pureComponentConductivity;
@@ -34,7 +37,7 @@ public class Conductivity extends neqsim.physicalProperties.physicalPropertyMeth
         try {
             properties = (Conductivity) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.",e);
         }
 
         return properties;

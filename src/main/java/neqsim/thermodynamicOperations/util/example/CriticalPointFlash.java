@@ -24,6 +24,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -32,6 +33,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CriticalPointFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CriticalPointFlash.class);
 
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 15, 10.01325);
@@ -47,7 +49,7 @@ public class CriticalPointFlash {
         try {
             testOps.criticalPointFlash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
     }

@@ -8,10 +8,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(addIonToScaleSaturation.class);
     String saltName="", scaleSaltName="", nameOfIonToBeAdded="";
     int phaseNumber = 1;
     String[][] resultTable = null;
@@ -26,7 +28,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash{
         this.saltName = saltName;
         this.scaleSaltName = scaleSaltName;
         this.nameOfIonToBeAdded = nameOfIonToBeAdded;
-        System.out.println("ok ");
+        logger.info("ok ");
     }
     
     public void run(){
@@ -78,13 +80,13 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash{
                 
                 if(system.getPhase(phaseNumber).hasComponent(name1) && system.getPhase(phaseNumber).hasComponent(name2)){
                     numb++;
-                    System.out.println("reaction added: " + name1 + " " + name2);
-                    System.out.println("theoretic Ksp = " + ksp);
+                    logger.info("reaction added: " + name1 + " " + name2);
+                    logger.info("theoretic Ksp = " + ksp);
                     double oldScalePotentialFactor=1.0, error=1.0;
                     int iterations=0;
                     do{
                         iterations++;
-                        System.out.println("theoretic lnKsp = " + Math.log(ksp));
+                        logger.info("theoretic lnKsp = " + Math.log(ksp));
                         int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
                         int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
                         int waterompNumb = system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
@@ -93,34 +95,34 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash{
                         double x2 =system.getPhase(phaseNumber).getComponent(name2).getx()/(system.getPhase(phaseNumber).getComponent(waterompNumb).getx()*system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
                         double kspReac= Math.pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1,waterompNumb)*x1,stoc1)*Math.pow(x2*system.getPhase(phaseNumber).getActivityCoefficient(compNumb2,waterompNumb),stoc2);
                         double stocKsp = Math.pow(x1,stoc1)*Math.pow(x2,stoc2);
-                        System.out.println("calc Ksp " + kspReac);
-                        System.out.println("stoc Ksp " + stocKsp);
-                        System.out.println("activity " + kspReac/stocKsp);
-                        System.out.println("mol/kg " + x1);
+                        logger.info("calc Ksp " + kspReac);
+                        logger.info("stoc Ksp " + stocKsp);
+                        logger.info("activity " + kspReac/stocKsp);
+                        logger.info("mol/kg " + x1);
                         
                         double scalePotentialFactor = kspReac/ksp;
                         
                         
                         error = (scalePotentialFactor-oldScalePotentialFactor)/scalePotentialFactor*100;
                         oldScalePotentialFactor=scalePotentialFactor;
-                        System.out.println("Scale potential factor " + scalePotentialFactor);
+                        logger.info("Scale potential factor " + scalePotentialFactor);
                         resultTable[numb][0] = name1+ " " +name2;
                         resultTable[numb][1] = Double.toString(scalePotentialFactor);
                         resultTable[numb][2] = "";
                         
                         if(saltName.equals(scaleSaltName)){
-                            System.out.println("error " + error);
-                            System.out.println("pH : " + system.getPhase(phaseNumber).getpH());
+                            logger.info("error " + error);
+                            logger.info("pH : " + system.getPhase(phaseNumber).getpH());
                             system.addComponent(nameOfIonToBeAdded, (1.0-scalePotentialFactor)/100000.0, phaseNumber);
                             ops.TPflash();
-                            System.out.println("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
-                            System.out.println("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
+                            logger.info("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
+                            logger.info("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
                         }
                     }
                     while(saltName.equals(scaleSaltName) && Math.abs(error)>1e-6 && iterations<200);//
                 }
             }
-        }catch(Exception e){System.out.println("failed " + e.toString());}
+        }catch(Exception e){logger.info("failed " + e.toString());}
         
         if(system.getPhase(phaseNumber).hasComponent("MEG")){
             system.addComponent("MEG", numberOfMolesMEG*0.9999,phaseNumber);
@@ -133,12 +135,12 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash{
     public void printToFile(String name) {}
     
     public String[][] getResultTable(){
-        System.out.println("checking table...scale " +resultTable[0][0]);
-        System.out.println("checking table...scale " +resultTable[0][1]);
-        System.out.println("checking table...scale " +resultTable[0][2]);
-        System.out.println("checking table...scale " +resultTable[1][0]);
-        System.out.println("checking table...scale " +resultTable[1][1]);
-        System.out.println("checking table...scale " +resultTable[1][2]);
+        logger.info("checking table...scale " +resultTable[0][0]);
+        logger.info("checking table...scale " +resultTable[0][1]);
+        logger.info("checking table...scale " +resultTable[0][2]);
+        logger.info("checking table...scale " +resultTable[1][0]);
+        logger.info("checking table...scale " +resultTable[1][1]);
+        logger.info("checking table...scale " +resultTable[1][2]);
         return resultTable;
     }
     

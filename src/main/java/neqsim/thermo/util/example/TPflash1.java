@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TPflash1 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPflash1.class);
 
     /**
      * Creates new TPflash
@@ -56,7 +58,7 @@ public class TPflash1 {
             try {
                 //   testOps.waterDewPointTemperatureMultiphaseFlash();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
             }
             //testSystem.init(0);
             //     testSystem.init(1);
@@ -91,7 +93,7 @@ public class TPflash1 {
             try {
                 //   testOps.waterDewPointTemperatureMultiphaseFlash();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error",e);
             }
             //testSystem.init(0);
             //     testSystem.init(1);

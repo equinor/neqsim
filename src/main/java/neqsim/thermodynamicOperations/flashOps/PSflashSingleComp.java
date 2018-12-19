@@ -50,7 +50,7 @@ public class PSflashSingleComp extends Flash implements java.io.Serializable {
         try {
             bubOps.dewPointTemperatureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         system.init(3);
         double gasEntropy = system.getPhase(0).getEntropy()/system.getPhase(0).getNumberOfMolesInPhase()*system.getTotalNumberOfMoles();

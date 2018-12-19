@@ -8,6 +8,7 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.linear.*;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import org.apache.commons.math3.linear.*;
 public class GTSurfaceTensionSimple extends SurfaceTension {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(GTSurfaceTensionSimple.class);
     
     int ite_step = 200;
     SystemInterface localSystem = null;
@@ -138,7 +140,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                 try {
                     ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error("error",e);
                 }
             }
             
@@ -208,7 +210,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                         ans2 = solver1.solve(bRealMatrix);
                         
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        logger.error("error",e);
                     }
                 }
                 

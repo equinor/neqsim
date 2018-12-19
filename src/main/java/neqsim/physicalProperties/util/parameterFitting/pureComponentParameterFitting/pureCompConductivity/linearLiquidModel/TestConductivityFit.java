@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestConductivityFit extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestConductivityFit.class);
     
     /** Creates new TestAcentric */
     public TestConductivityFit() {
@@ -39,7 +41,7 @@ public class TestConductivityFit extends java.lang.Object {
         
         try{
             
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 ConductivityFunction function = new ConductivityFunction();
                 double guess[] = {-0.384,0.00525,-0.00000637};
@@ -60,12 +62,12 @@ public class TestConductivityFit extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         double sample1[] = {0.1};
         for(int i=0;i<sampleList.size();i++){
-            System.out.println("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+            logger.info("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

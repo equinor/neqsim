@@ -177,7 +177,7 @@ public class ComponentSolid extends ComponentSrk {
             refPhase.getComponent(componentName).setAtractiveTerm(phase.getComponent(componentName).getAtractiveTermNumber());
             refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error occured", e);
         }
     }
 }

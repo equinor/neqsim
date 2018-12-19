@@ -61,10 +61,10 @@ public class PS_PH_flash {
         // double entropy = testSystem.getEntropy(); //
         //System.out.println("entropy spec" + entropy); 
         double enthalpy = testSystem.getEntropy();
-        System.out.println("enthalpy spec" + enthalpy);
+        // System.out.println("enthalpy spec" + enthalpy);
 
         double entropy = testSystem.getEntropy();
-        System.out.println("entropy spec" + entropy);
+        // System.out.println("entropy spec" + entropy);
 
         //   testSystem.setPressure(20.894745);
         testOps.PHflash(enthalpy, 0);

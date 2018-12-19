@@ -19,6 +19,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -34,6 +35,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TVflash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TVflash.class);
     
     /** Creates new TPflash */
     public TVflash() {
@@ -65,7 +67,7 @@ public class TVflash {
             // testOps.PVrefluxFlash(0.05, 1);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
     }
 }

@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestVHflash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestVHflash.class);
     
     /** Creates new TPflash */
     public TestVHflash() {
@@ -68,22 +70,22 @@ public class TestVHflash {
             testSystem2.display();
             testSystem3.display();
             testSystem4.display();
-            //System.out.println("Cp " + testSystem.getPhase(0).getCp()/testSystem.getPhase(0).getNumberOfMolesInPhase());
+            //logger.info("Cp " + testSystem.getPhase(0).getCp()/testSystem.getPhase(0).getNumberOfMolesInPhase());
             
 //
-            System.out.println("Volume Nitrogen " + testSystem.getPhase(0).getMolarMass()*testSystem.getNumberOfMoles()/testSystem.getPhase(0).getPhysicalProperties().getDensity());
-            System.out.println("Volume Liquid Methane " +  testSystem2.getPhase(0).getMolarMass()*testSystem2.getNumberOfMoles()/testSystem2.getPhase(0).getPhysicalProperties().getDensity());
-            System.out.println("Volume Nitrogen from vacum breaker system " + testSystem4.getPhase(0).getMolarMass()*testSystem4.getNumberOfMoles()/testSystem4.getPhase(0).getPhysicalProperties().getDensity());
+            logger.info("Volume Nitrogen " + testSystem.getPhase(0).getMolarMass()*testSystem.getNumberOfMoles()/testSystem.getPhase(0).getPhysicalProperties().getDensity());
+            logger.info("Volume Liquid Methane " +  testSystem2.getPhase(0).getMolarMass()*testSystem2.getNumberOfMoles()/testSystem2.getPhase(0).getPhysicalProperties().getDensity());
+            logger.info("Volume Nitrogen from vacum breaker system " + testSystem4.getPhase(0).getMolarMass()*testSystem4.getNumberOfMoles()/testSystem4.getPhase(0).getPhysicalProperties().getDensity());
 //
             testOps3.VHflash(testSystem.getEnthalpy()+testSystem2.getEnthalpy(), testSystem.getVolume());
             testSystem3.display();
-//            System.out.println("total number of moles " + testSystem3.getTotalNumberOfMoles() );
+//            logger.info("total number of moles " + testSystem3.getTotalNumberOfMoles() );
         } catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
-//        System.out.println("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
-        //System.out.println("wt%MEG " + testSystem.getPhase(1).getComponent("MEG").getMolarMass()*testSystem.getPhase(1).getComponent("MEG").getx()/testSystem.getPhase(1).getMolarMass());
-//        System.out.println("fug" +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
+//        logger.info("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
+        //logger.info("wt%MEG " + testSystem.getPhase(1).getComponent("MEG").getMolarMass()*testSystem.getPhase(1).getComponent("MEG").getx()/testSystem.getPhase(1).getMolarMass());
+//        logger.info("fug" +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
     }
 }
 //        testSystem = testSystem.setModel("GERG-water");
@@ -94,13 +96,13 @@ public class TestVHflash {
 //          testSystem.setMultiPhaseCheck(true);
 //        testOps.setSystem(testSystem);
 //
-//        System.out.println("new model name " + testSystem.getModelName());
+//        logger.info("new model name " + testSystem.getModelName());
 //        try{
 //            testOps.TPflash();
 //            testSystem.display();
 //        }
 //        catch(Exception e){
-//            System.out.println(e.toString());
+//            logger.info(e.toString());
 //        }
 //    }
 //}

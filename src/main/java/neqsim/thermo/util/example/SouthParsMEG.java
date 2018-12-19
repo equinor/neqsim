@@ -3,11 +3,13 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 public class SouthParsMEG{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SouthParsMEG.class);
     public static void main(String args[]){
         SystemInterface testSystem = new SystemSrkCPAs(273.15+20, 10.0);
         
@@ -49,7 +51,7 @@ public class SouthParsMEG{
         testOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            e.printStackTrace();
+            logger.error("error",e);
         }
         testSystem.display();
         

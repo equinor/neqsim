@@ -11,6 +11,7 @@ import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 public class IonicInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction() {
@@ -28,10 +30,10 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
     public double calcValue(double[] dependentValues){
         try{
             thermoOps.bubblePointPressureFlash(false);
-            // System.out.println("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
+            // logger.info("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getPressure()*system.getPhases()[0].getComponent(0).getx();
     }
@@ -82,11 +84,11 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
             j++;
         }
         while(!system.getPhases()[0].getComponents()[j-1].getComponentName().equals("water"));
-        //        System.out.println("water numb " + Waternumb);
-        //        System.out.println("co2 numb " + CO2Numb);
-        //        System.out.println("MDEA numb " + MDEANumb);
-        //        System.out.println("HCO3numb numb " + HCO3numb);
-        //        System.out.println("MDEAplusNumb numb " + MDEAplusNumb);
+        //        logger.info("water numb " + Waternumb);
+        //        logger.info("co2 numb " + CO2Numb);
+        //        logger.info("MDEA numb " + MDEANumb);
+        //        logger.info("HCO3numb numb " + HCO3numb);
+        //        logger.info("MDEAplusNumb numb " + MDEAplusNumb);
         
         if(i==0){
             ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[0]).getElectrolyteMixingRule().setWijParameter(MDEAplusNumb,CO2Numb, value);

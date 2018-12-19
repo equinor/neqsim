@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestElectrolyteCPAstatoil {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestElectrolyteCPAstatoil.class);
 
     /**
      * Creates new TPflash
@@ -58,12 +60,12 @@ public class TestElectrolyteCPAstatoil {
             testSystem.display();
             //   testOps.checkScalePotential(1);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
-        System.out.println("pH" + testSystem.getPhase(1).getpH());
+        logger.info("pH" + testSystem.getPhase(1).getpH());
         // System.out.println("Mean ionic activity coefficient Na+Cl- " + testSystem.getPhase(1).getMeanIonicActivity(2, 3));
         //   System.out.println("Osmotic coefficient " + testSystem.getPhase(1).getOsmoticCoefficientOfWater());
-        System.out.println("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
-        System.out.println("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
+        logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
     }
 }

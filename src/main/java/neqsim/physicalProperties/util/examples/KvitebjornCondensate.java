@@ -3,6 +3,7 @@ package neqsim.physicalProperties.util.examples;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class KvitebjornCondensate {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(KvitebjornCondensate.class);
 
     /**
      * Creates new TPflash
@@ -66,11 +68,11 @@ public class KvitebjornCondensate {
             // testOps.bubblePointPressureFlash(false);
             // testOps.dewPointPressureFlash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         //testSystem.initPhysicalProperties();
         testSystem.display();
-        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
 
     }
 }

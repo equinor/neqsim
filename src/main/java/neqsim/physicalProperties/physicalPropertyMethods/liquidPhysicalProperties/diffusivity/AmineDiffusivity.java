@@ -5,6 +5,9 @@
  */
 
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
+
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -13,6 +16,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
 public class AmineDiffusivity extends SiddiqiLucasMethod{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(AmineDiffusivity.class);
     
     /** Creates new Conductivity */
     
@@ -35,7 +39,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod{
             effectiveDiffusionCoefficient[liquidPhase.getPhase().getComponent("MDEA").getComponentNumber()] = 0.0207*Math.exp(-2360.7/liquidPhase.getPhase().getTemperature() - 24.727e-5*molConsMDEA)*1e-4;
         }
         catch(Exception e){
-            System.out.println("error eff diff calc " + e.toString());
+            logger.error("error eff diff calc " + e.toString());
         }
     }
     

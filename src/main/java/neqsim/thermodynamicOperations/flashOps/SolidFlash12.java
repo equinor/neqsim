@@ -24,6 +24,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -33,6 +34,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SolidFlash12 extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SolidFlash12.class);
 
     //   SystemInterface clonedSystem;
     boolean multiPhaseTest = false;
@@ -72,9 +74,9 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 x += system.getPhase(k).getComponent(i).getx();
             }
-            System.out.println("x tot " + x + " PHASE " + k);
+            logger.info("x tot " + x + " PHASE " + k);
             if (x < 1.0 - 1e-6) {
-                //System.out.println("removing phase " + k);
+                //logger.info("removing phase " + k);
                 system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));
                 system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
                 system.setNumberOfPhases(system.getNumberOfPhases() - 1);
@@ -336,7 +338,7 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
             }
             double dsoliddn = (solidCandidate-solidCandidateOld)/dn;
             dn = -0.5*solidCandidate/dsoliddn;
-            System.out.println("solid cand " + solidCandidate);
+            logger.info("solid cand " + solidCandidate);
         } while (solidCandidate>1e-5 && iter < 50);
 
         return 1.0;

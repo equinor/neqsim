@@ -62,7 +62,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         try {
             clonedPhase = (PhaseSrkCPA) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         clonedPhase.activeAccosComp = activeAccosComp.clone();
         System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0, activeAccosComp.length);
@@ -795,7 +795,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             try {
                 hessianInvers = hessianMatrix.invert();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error", e);
                 return false;
             }
             if (solvedX) {
@@ -900,7 +900,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         try {
             //molarVolume(pressure, temperature, A, B, phaseType);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error", e);
         }
         double BonVold = BonV;
         double Btemp = 0, Dtemp = 0, h = 1, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
@@ -1553,7 +1553,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             try {
                 hessianInvers = hessianMatrix.invert();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("error", e);
                 return false;
             }
 

@@ -4,6 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 
@@ -20,6 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Water_MDEA1 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Water_MDEA1.class);
     
     /** Creates a new instance of Sleipneracetate */
     public Water_MDEA1() {
@@ -37,7 +39,7 @@ public class Water_MDEA1 {
             p = new PrintStream(outfile);
             p.close();
         }catch(IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         double temperature=40+273.16;
         double pressure = 1.0;
@@ -59,19 +61,19 @@ public class Water_MDEA1 {
                 testOps.bubblePointPressureFlash(false);
                 }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
         //double aMDEA = testSystem.getPhase(1).getActivityCoefficient(1);
         //double awater = testSystem.getPhase(1).getActivityCoefficient(0);
         //double yMDEA = testSystem.getPhase(0).getComponent(1).getx();
         //double Hm = testSystem.getPhase(1).getHresTP();
-        //System.out.println("Activity MDEA "+aMDEA+" "+yMDEA);
-        System.out.println("pressure "+testSystem.getPressure());
+        //logger.info("Activity MDEA "+aMDEA+" "+yMDEA);
+        logger.info("pressure "+testSystem.getPressure());
         
-        /*System.out.println("Excess Heat kJ "+Hm/1000);
-        System.out.println("Excess Heat kJ "+testSystem.getPhase(1).getComponent(0).getHresTP(temperature)/1000);
-        System.out.println("Excess Heat kJ "+testSystem.getPhase(1).getComponent(1).getHresTP(temperature)/1000);
+        /*logger.info("Excess Heat kJ "+Hm/1000);
+        logger.info("Excess Heat kJ "+testSystem.getPhase(1).getComponent(0).getHresTP(temperature)/1000);
+        logger.info("Excess Heat kJ "+testSystem.getPhase(1).getComponent(1).getHresTP(temperature)/1000);
         */
         try{
                 outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt",true);
@@ -81,12 +83,12 @@ public class Water_MDEA1 {
                 //p.println(x+" "+aMDEA+" "+awater);
                 p.close();
             }catch(FileNotFoundException e) {
-                System.out.println("Could not find file" + e.getMessage());
+                logger.error("Could not find file" + e.getMessage());
             }
             
 
         }
-        System.out.println("Finished");
+        logger.info("Finished");
             
         }
     }

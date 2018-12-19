@@ -77,7 +77,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         try {
             clonedPhase = (Phase) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         clonedPhase.componentArray = this.componentArray.clone();
@@ -141,6 +141,16 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public void addMolesChemReac(int component, double dn, double totdn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMolesChemReac(dn, totdn);
+        if(numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase()<0.0){
+            logger.error("Negative number of moles in phase.");
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+        }
+        if(getComponent(component).getNumberOfMolesInPhase()<0.0){
+            logger.error("Negative number of moles of component " + component);
+            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+        }
     }
 
     public void setProperties(PhaseInterface phase) {
@@ -976,7 +986,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             try {
                 refPhase[i] = this.getClass().newInstance();
             } catch (Exception e) {
-                System.err.println("err " + e.toString());
+                logger.error("err " + e.toString());
             }
             refPhase[i].setTemperature(temperature);
             refPhase[i].setPressure(pressure);
@@ -1342,8 +1352,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             logger.error("could not find component... " + name + " ..returning null");
         } catch (Exception e) {
             logger.error("component not found.... " + name);
-            logger.error("returning first component..." + componentArray[0].getName());
-            e.printStackTrace();
+            logger.error("returning first component..." + componentArray[0].getName(), e);
         }
         return componentArray[0];
     }

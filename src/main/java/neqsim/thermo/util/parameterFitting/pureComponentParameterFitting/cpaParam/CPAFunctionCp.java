@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -14,6 +16,7 @@ package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaPar
 public class CPAFunctionCp extends CPAFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CPAFunctionCp.class);
     
     int phasetype = 1;
     /** Creates new Test */
@@ -42,7 +45,7 @@ public class CPAFunctionCp extends CPAFunction {
             thermoOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         system.init(3);
         // System.out.println("pres: " + system.getPressure());

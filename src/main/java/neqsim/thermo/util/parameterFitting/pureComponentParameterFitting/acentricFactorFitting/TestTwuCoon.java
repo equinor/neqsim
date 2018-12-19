@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestTwuCoon extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestTwuCoon.class);
 
     /** Creates new TestAcentric */
     public TestTwuCoon() {
@@ -44,7 +46,6 @@ public class TestTwuCoon extends java.lang.Object {
         // String ComponentName = "neon";
 
         try {
-            System.out.println("adding....");
             //for(int i=0;i<30;i++){
             TwuCoon function = new TwuCoon();
             //  double guess[] = {1.4136010682288083,-0.6059654485151583,1.1018149483163808};  // CO2 chi sqr 0.45 
@@ -103,7 +104,7 @@ public class TestTwuCoon extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

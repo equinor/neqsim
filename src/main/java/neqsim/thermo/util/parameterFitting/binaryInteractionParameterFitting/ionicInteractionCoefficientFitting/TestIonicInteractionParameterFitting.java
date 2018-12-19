@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestIonicInteractionParameterFitting extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFitting.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFitting(){
@@ -43,7 +45,6 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
 //
 //        try{
 //            int i=0;
-//            System.out.println("adding....");
 //            while(dataSet.next() && i<450){
 //                i++;
 //                IonicInteractionParameterFittingFunction function = new IonicInteractionParameterFittingFunction();
@@ -83,7 +84,7 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
 //            }
 //        }
 //        catch(Exception e){
-//            System.out.println("database error" + e);
+//            logger.error("database error" + e);
 //        }
         
         
@@ -94,7 +95,6 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
         
         try{
             int i=0;
-            System.out.println("adding....");
             while(dataSet.next() && i<25){
                 int ID = Integer.parseInt(dataSet.getString("ID"));
                 if((ID>56 && ID<64) || (ID>92 && ID<101) || (ID>123 && ID<131)) {  //75 wt% amine
@@ -144,14 +144,13 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM CO2waterMDEA2 WHERE Temperature<'393.15' AND Pressure<'20' AND Reference<>'GPA'");
         
         try{
             int i=0;
-            System.out.println("adding....");
             while(dataSet.next() && i<2){
                 int ID = Integer.parseInt(dataSet.getString("ID"));
                 if((ID>56 && ID<64) || (ID>92 && ID<101) || (ID>123 && ID<131)) {  //75 wt% amine
@@ -201,7 +200,7 @@ public class TestIonicInteractionParameterFitting extends java.lang.Object{
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

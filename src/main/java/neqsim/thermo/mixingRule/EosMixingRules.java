@@ -58,7 +58,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
         try {
             clonedSystem = (EosMixingRules) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         //        clonedSystem.intparam = (double[][]) intparam.clone();
@@ -316,7 +316,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicVdW) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             return clonedSystem;
@@ -453,7 +453,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicSRK) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             //     clonedSystem.intparam = (double[][]) clonedSystem.intparam.clone();
@@ -534,7 +534,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             return clonedSystem;
@@ -797,7 +797,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
             } catch (Exception e) {
-                e.printStackTrace(System.err);
+                logger.error("Cloning failed.", e);
             }
 
             return clonedSystem;
@@ -1788,8 +1788,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                                 dataSet.close();
                             }
                         } catch (Exception e) {
-                            logger.error("err closing dataSet IN MIX...");
-                            e.printStackTrace();
+                            logger.error("err closing dataSet IN MIX...", e);
                         }
                     }
                 }
@@ -1805,8 +1804,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                 database.getConnection().close();
             }
         } catch (Exception e) {
-            logger.error("error closing database.....");
-            e.printStackTrace();
+            logger.error("error closing database.....", e);
         }
 
         if (i == 2) {

@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TPMultiFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TPMultiFlash.class);
 
     /**
      * Creates new TPflash
@@ -115,7 +117,7 @@ public class TPMultiFlash {
             //     newSyst.display();
             //testOps.bubblePointPressureFlash();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         //System.out.println("Henrys Constant " + 1.0/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
 //        System.out.println("water fugacity " + testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getComponent("water").getFugasityCoefficient()*testSystem.getPressure());

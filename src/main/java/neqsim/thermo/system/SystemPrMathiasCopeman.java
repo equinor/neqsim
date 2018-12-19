@@ -42,7 +42,7 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
             clonedSystem = (SystemPrMathiasCopeman) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
 //        

@@ -8,10 +8,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFlash{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(freezingPointTemperatureFlashOld.class);
     
     /** Creates new bubblePointFlash */
     public freezingPointTemperatureFlashOld() {
@@ -44,7 +46,7 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
                     system.getPhase(3).getComponent(k).fugcoef(system.getPhase(3));
                     
                     funk =  system.getPhases()[0].getComponents()[k].getz();
-                    System.out.println("phase " + system.getNumberOfPhases());
+                    logger.info("phase " + system.getNumberOfPhases());
                     
                     for(int i=0;i<system.getNumberOfPhases();i++){
                         funk -= system.getPhases()[i].getBeta()*system.getPhases()[3].getComponents()[k].getFugasityCoeffisient()/system.getPhases()[i].getComponents()[k].getFugasityCoeffisient();
@@ -61,12 +63,12 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
                     
                     system.setTemperature(system.getTemperature() + 0.5*(iterations/(10.0+iterations))*funk/deriv);
                     
-                    System.out.println("funk/deriv " + funk/deriv);
-                    System.out.println("temperature " + system.getTemperature());
+                    logger.info("funk/deriv " + funk/deriv);
+                    logger.info("temperature " + system.getTemperature());
                 }
                 while((Math.abs(funk/deriv)>=1e-6 && iterations<100));
                 
-                //System.out.println("funk " + funk + k + " " + system.getTemperature());
+                //logger.info("funk " + funk + k + " " + system.getTemperature());
                 if(system.getTemperature()<minTemperature) {
                     minTemperature=system.getTemperature();
                 }
@@ -77,8 +79,8 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
         }
         
         system.setTemperature(maxTemperature);
-        //System.out.println("min freezing temp " + minTemperature);
-        //System.out.println("max freezing temp " + maxTemperature);
+        //logger.info("min freezing temp " + minTemperature);
+        //logger.info("max freezing temp " + maxTemperature);
     }
     
     public void printToFile(String name) {}

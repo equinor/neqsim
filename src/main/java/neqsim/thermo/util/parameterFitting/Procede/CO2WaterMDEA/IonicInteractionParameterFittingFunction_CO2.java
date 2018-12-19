@@ -9,6 +9,7 @@ package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction_CO2() {
@@ -35,7 +37,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
             thermoOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         if (type == 0)
         {
@@ -77,7 +79,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         while(!system.getPhases()[1].getComponents()[j-1].getComponentName().equals("CO2"));
         
         if(CO2Numb !=0) {
-            System.out.println("-------------ERROR in CO2 number------------");
+            logger.error("-------------ERROR in CO2 number------------");
         }
         
         j=0;

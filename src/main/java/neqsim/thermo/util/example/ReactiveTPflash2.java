@@ -9,6 +9,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  esol
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ReactiveTPflash2 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ReactiveTPflash2.class);
     
     /** Creates new TPflash */
     public ReactiveTPflash2() {
@@ -47,8 +49,8 @@ public class ReactiveTPflash2 {
                 double den = imax-1.0;
                 double methane = max - (max-min) / den * i;
                 double co2 = min + (max-min)/ den * i;
-                System.out.println(methane);
-                System.out.println(co2);
+             //   System.out.println(methane);
+             //   System.out.println(co2);
                 testSystem.addComponent("methane", methane);
                 testSystem.addComponent("CO2", co2);
                 testSystem.addComponent("water", 50.0);
@@ -87,7 +89,7 @@ public class ReactiveTPflash2 {
             out.close();
         }
         catch(Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
 //

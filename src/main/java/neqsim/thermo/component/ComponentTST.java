@@ -50,7 +50,7 @@ public class ComponentTST extends ComponentEos{
             clonedComponent = (ComponentTST) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         return clonedComponent;

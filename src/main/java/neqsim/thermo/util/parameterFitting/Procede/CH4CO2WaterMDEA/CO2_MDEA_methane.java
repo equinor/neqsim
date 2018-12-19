@@ -6,6 +6,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 
@@ -22,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CO2_MDEA_methane {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CO2_MDEA_methane.class);
     
     /** Creates a new instance of Sleipneracetate */
     public CO2_MDEA_methane() {
@@ -40,7 +42,7 @@ public class CO2_MDEA_methane {
             //p.println("");
             p.close();
         }catch(IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         
         
@@ -62,7 +64,7 @@ public class CO2_MDEA_methane {
             while(dataSet.next()){
                 
                 i += 1;
-                System.out.println("Adding.... "+i);
+                logger.info("Adding.... "+i);
                 
                 double ID = Double.parseDouble(dataSet.getString("ID"));
                 double pressureCO2 = Double.parseDouble(dataSet.getString("PressureCO2"));
@@ -148,7 +150,7 @@ public class CO2_MDEA_methane {
                         
                     }
                     catch(Exception e){
-                        System.out.println(e.toString());
+                        logger.error(e.toString());
                     }
                     Pold = testSystem.getPressure();
                     //System.out.println("Pold "+Pold);
@@ -163,7 +165,7 @@ public class CO2_MDEA_methane {
                         
                     }
                     catch(Exception e){
-                        System.out.println(e.toString());
+                        logger.error(e.toString());
                     }
                     
                     Pnew = testSystem.getPressure();
@@ -183,7 +185,7 @@ public class CO2_MDEA_methane {
                 }while(!testSystem.getPhases()[1].getComponents()[j-1].getComponentName().equals("CO2"));
                 
                 double aad = (pressureCO2-testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx())/pressureCO2*100;
-                System.out.println(ID+" "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx() + " " + pressureCO2+" "+aad);
+                logger.info(ID+" "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx() + " " + pressureCO2+" "+aad);
                 /*//System.out.println(testSystem.getPhase(1).getComponent(CO2Numb).getx()/testSystem.getPhase(1).getComponent(MDEANumb).getx());
                 System.out.println("HCO3 "+testSystem.getPhase(1).getComponent(HCO3Numb).getx()+" "+testSystem.getPhase(0).getComponent(HCO3Numb).getx());
                 System.out.println("CO2 "+testSystem.getPhase(1).getComponent(CO2Numb).getx()+" "+testSystem.getPhase(0).getComponent(CO2Numb).getx());
@@ -204,8 +206,8 @@ public class CO2_MDEA_methane {
                     //p.println(ID+" "+pressure+" "+" "+testSystem.getPressure()+" "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
                     p.close();
                 }catch(FileNotFoundException e) {
-                    System.out.println("Could not find file"+e.getMessage());
-                    System.err.println("Could not read from Patrick.txt"+e.getMessage());
+                    logger.error("Could not find file"+e.getMessage());
+                    logger.error("Could not read from Patrick.txt"+e.getMessage());
                 }
                 
                 
@@ -214,14 +216,14 @@ public class CO2_MDEA_methane {
            // }
         }
             catch(Exception e){
-                System.out.println("database error " + e);
+                logger.error("database error " + e);
             }
             
             //  }
             //   }
             //     }
             //}
-            System.out.println("Finished");
+            logger.info("Finished");
             
         }
     }

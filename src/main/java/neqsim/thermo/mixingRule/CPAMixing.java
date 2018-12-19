@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  * @author Even Solbraa
@@ -19,6 +20,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class CPAMixing extends Object implements Cloneable, java.io.Serializable, ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CPAMixing.class);
 
     int[][] assosSchemeType = null; // 0- ER  - 1 - CR1
     double[][] cpaBetaCross = null;
@@ -36,7 +38,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
         try {
             clonedSystem = (CPAMixing) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         return clonedSystem;
@@ -325,7 +327,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
                         //System.out.println("ass scheme " + assosSchemeType[l][k]);
                         //System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        logger.error("error", e);
                     } 
                 }
             }
@@ -339,7 +341,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
                 database.getConnection().close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error", e);
         }
 
         if (i == 1) {

@@ -2,6 +2,7 @@ package neqsim.thermo.util.parameterFitting.Procede.Density;
 import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /*
  *
@@ -10,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 public class density {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(density.class);
     
     /** Creates a new instance of Sleipneracetate */
     public density() {
@@ -26,7 +28,7 @@ public class density {
             p = new PrintStream(outfile);
             p.close();
         }catch(IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         
         double n1, n2, n3, x1, x2, x3, total;
@@ -67,9 +69,9 @@ public class density {
                 p.println(loading+" "+testSystem.getPhase(1).getPhysicalProperties().getDensity()/1000);
                 p.close();
             }catch(FileNotFoundException e) {
-                System.out.println("Could not find file");
+                logger.error("Could not find file");
                 
-                System.err.println("Could not write to Patrick.txt" + e.getMessage());
+                logger.error("Could not write to Patrick.txt" + e.getMessage());
             } 
             
         }

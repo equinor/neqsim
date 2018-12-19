@@ -6,6 +6,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 
 
@@ -22,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CO2_MDEA {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CO2_MDEA.class);
     
     /** Creates a new instance of Sleipneracetate */
     public CO2_MDEA() {
@@ -40,7 +42,7 @@ public class CO2_MDEA {
             //p.println("");
             p.close();
         }catch(IOException e) {
-            System.out.println("Could not find file");
+            logger.error("Could not find file");
         }
         
         
@@ -55,7 +57,7 @@ public class CO2_MDEA {
             
             while(dataSet.next()){
                 i += 1;
-                System.out.println("Adding.... "+i);
+                logger.info("Adding.... "+i);
                 
                 ID = Double.parseDouble(dataSet.getString("ID"));
                 pressure = Double.parseDouble(dataSet.getString("PressureCO2"));
@@ -68,7 +70,7 @@ public class CO2_MDEA {
                 /*if((ID>56 && ID<64) || (ID>92 && ID<101) || (ID>123 && ID<131))  //75 wt% amine
                     continue;              
                 */
-                System.out.println("................ID............ "+ID);
+                logger.info("................ID............ "+ID);
                 SystemInterface testSystem = new SystemFurstElectrolyteEos(temperature, pressure);
                 
                 testSystem.addComponent("CO2",x1);
@@ -122,32 +124,32 @@ public class CO2_MDEA {
                     testOps.bubblePointPressureFlash(false);
                 }
                 catch(Exception e){
-                    System.out.println(e.toString());
+                    logger.error(e.toString());
                 }
                 
                 bias = (pressure-testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx())/pressure*100;
                 //bias = (pressure-testSystem.getPressure())/pressure*100;
                 
-                //System.out.println("Bias "+bias);
-                //System.out.println("Act "+testSystem.getPhase(1).getActivityCoefficient(MDEAHpNumb, WaterNumb));
-                //System.out.println("Pressure CO2 "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
+                //logger.info("Bias "+bias);
+                //logger.info("Act "+testSystem.getPhase(1).getActivityCoefficient(MDEAHpNumb, WaterNumb));
+                //logger.info("Pressure CO2 "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
                 try{
                     outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt",true);
                     p = new PrintStream(outfile);
                     p.println(ID+" "+pressure+" "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
                     p.close();
                 }catch(FileNotFoundException e) {
-                    System.out.println("Could not find file"+e.getMessage());
+                    logger.error("Could not find file"+e.getMessage());
                 }
                 
                 }       
                 
             }
             catch(Exception e){
-                System.out.println("database error " + e);
+                logger.error("database error " + e);
             }
             
-            System.out.println("Finished");
+            logger.info("Finished");
             
         }
     }

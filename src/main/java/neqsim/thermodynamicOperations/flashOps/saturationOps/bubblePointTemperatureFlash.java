@@ -6,10 +6,12 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(bubblePointTemperatureFlash.class);
 
     /**
      * Creates new bubblePointFlash
@@ -34,7 +36,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
         system.setNumberOfPhases(2);
         do {
             system.setTemperature((system.getTemperature() + system.getTemperature() / ytotal) / 10);
-            //   System.out.println("temp . " + system.getTemperature());
+            //   logger.info("temp . " + system.getTemperature());
             funk = 0;
             deriv = 0;
             ytotal = 0;
@@ -56,8 +58,8 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                 deriv += system.getPhases()[1].getComponents()[i].getx() * system.getPhases()[1].getComponents()[i].getK() * (system.getPhases()[1].getComponents()[i].getdfugdt() - system.getPhases()[0].getComponents()[i].getdfugdt());
             }
 
-            //  System.out.println("FUNK: " + funk);
-            // System.out.println("temp: " + system.getTemperature());
+            //  logger.info("FUNK: " + funk);
+            // logger.info("temp: " + system.getTemperature());
             // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
             system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
 

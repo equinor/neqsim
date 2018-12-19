@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFitting_CO2.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFitting_CO2(){
@@ -47,7 +49,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
         //double guess[] = {1e-10, 1e-10, 1e-10, 1e-10, 1e-10}; //Debye - Huckle type equation
         try{
             int i=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 i++;
                 IonicInteractionParameterFittingFunction_CO2 function = new IonicInteractionParameterFittingFunction_CO2();
@@ -84,7 +86,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
                 testSystem.addComponent("water",x2);
                 
                 
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.chemicalReactionInit();
                 testSystem.createDatabase(true);
@@ -103,7 +105,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
        
        
@@ -112,7 +114,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
         try{
             int i=0;
             
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 i++;
                 
@@ -133,7 +135,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
                 testSystem.addComponent("CO2",x1);
                 testSystem.addComponent("water",x2);
                 testSystem.addComponent("MDEA", x3);
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 if(ID == 294 || ID ==295) {
                     continue;    //convergence problem
@@ -171,7 +173,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
       
@@ -179,7 +181,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
         
         try{
             int i=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 i++;
                 IonicInteractionParameterFittingFunction_CO2 function = new IonicInteractionParameterFittingFunction_CO2();
@@ -201,7 +203,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
                 testSystem.addComponent("water",x2);
                 
                 
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.chemicalReactionInit();
                 testSystem.createDatabase(true);
@@ -220,7 +222,7 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
        
         SampleSet sampleSet = new SampleSet(sampleList);

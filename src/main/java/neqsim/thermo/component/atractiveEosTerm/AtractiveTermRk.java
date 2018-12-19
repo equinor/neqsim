@@ -28,7 +28,7 @@ public class AtractiveTermRk extends AtractiveTermBaseClass{
             atractiveTerm = (AtractiveTermRk) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         return atractiveTerm;

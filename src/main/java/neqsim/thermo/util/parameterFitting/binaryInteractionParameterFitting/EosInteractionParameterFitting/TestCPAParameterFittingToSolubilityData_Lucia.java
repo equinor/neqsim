@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkCPA;
 public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCPAParameterFittingToSolubilityData_Lucia.class);
     
     /** Creates new TestAcentric */
     public TestCPAParameterFittingToSolubilityData_Lucia() {
@@ -44,7 +46,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
       
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(!dataSet.next() && p<50){
                 p++;
                 CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData();
@@ -80,8 +82,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
-            e.printStackTrace();
+            logger.error("database error", e);
         }
         
         //dataSet =  database.getResultSet(  "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<380 AND Pressure<100000000 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
@@ -93,7 +94,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
         //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='methane' AND ComponentSolvent='water'");
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next() && p<150){
                 p++;
                 CPAParameterFittingToSolubilityData_Vap function = new CPAParameterFittingToSolubilityData_Vap();
@@ -127,8 +128,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
-            e.printStackTrace();
+            logger.error("database error", e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

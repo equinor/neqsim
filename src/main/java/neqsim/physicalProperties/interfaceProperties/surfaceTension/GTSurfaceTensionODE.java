@@ -9,8 +9,10 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  * @date 2014-03-26
  */
+import static neqsim.physicalProperties.interfaceProperties.surfaceTension.GTSurfaceTensionFullGT.logger;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
+import org.apache.log4j.Logger;
 import org.ejml.data.*;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -31,6 +33,7 @@ import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(GTSurfaceTensionODE.class);
 
     private boolean initialized = false;
     private int ncomp;           // Number of components.
@@ -134,7 +137,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             maxerr = Math.max(maxerr, Math.abs(this.mueq[i] / mueq2[i] - 1.0));
         }
         if (maxerr > this.reltol) {
-            System.out.printf("Flash is not properly solved.  Maximum relative error in chemical potential: %e > %e\n", maxerr, this.reltol);
+            logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
             throw new RuntimeException("Flash not solved!");
         }
         this.initialized = true;
@@ -340,9 +343,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             normf = NormOps_DDRM.normP2(b);
         }
         if (iter >= this.maxit) {
-            System.out.printf("norm(f): %e\n", normf);
+            //System.out.printf("norm(f): %e\n", normf);
             for (i = 0; i < this.ncomp - 1; i++) {
-                System.out.printf("f[%d]: %e\n", i, f[this.algidx[i]]);
+                logger.info("f[" + i + "]: " + f[this.algidx[i]]);
             }
             throw new RuntimeException("Failed to solve for density");
         }

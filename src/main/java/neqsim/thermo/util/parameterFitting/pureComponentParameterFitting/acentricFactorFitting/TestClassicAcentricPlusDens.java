@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemRKEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemRKEos;
 public class TestClassicAcentricPlusDens extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestClassicAcentricPlusDens.class);
     
     /** Creates new TestAcentric */
     public TestClassicAcentricPlusDens() {
@@ -41,7 +43,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC"); 
        double guess[] = {0.04};//
         try{
-            System.out.println("adding....");
+            logger.info("adding....");
             while(!dataSet.next()){
                 ClassicAcentricFunction function = new  ClassicAcentricFunction();
                 //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(280, 0.001);
@@ -68,7 +70,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<65.5 AND Reference='Perry1998'");
@@ -76,7 +78,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
         dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC"); 
         try{
-            System.out.println("adding....");
+            logger.info("adding....");
             while(!dataSet.next()){
                 ClassicAcentricDens function = new  ClassicAcentricDens(1);
                 //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(280, 0.001);
@@ -88,7 +90,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("VapourPressure")));
                 testSystem.init(0);
                 testSystem.setMixingRule(1);
-                System.out.println("adding2....");
+                logger.info("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("liquiddensity"));
                 double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))};  // temperature
                 double standardDeviation1[] = {0.1}; // std.dev temperature    // presure std.dev pressure
@@ -101,7 +103,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<65.5 AND Reference='Perry1998'");
@@ -109,7 +111,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
         //dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
         dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='nitrogen' AND VapourPressure>0 ORDER BY Temperature ASC"); 
         try{
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 ClassicAcentricDens function = new  ClassicAcentricDens(0);
                 //SystemInterface testSystem = new SystemSrkEos(280, 0.001);
@@ -133,7 +135,7 @@ public class TestClassicAcentricPlusDens extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

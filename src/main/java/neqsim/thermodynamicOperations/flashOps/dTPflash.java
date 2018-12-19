@@ -7,6 +7,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
 public class dTPflash extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(dTPflash.class);
     String[] flashComp = null;
     
     //   SystemInterface clonedSystem;
@@ -50,7 +52,7 @@ public class dTPflash extends TPflash implements java.io.Serializable {
                         system.getPhase(1).getComponent(i).setx(system.getPhase(1).getComponent(i).getx()*(system.getPhase(0).getComponent(i).getx()*system.getPhase(0).getComponent(i).getFugasityCoefficient()*system.getPhase(0).getPressure())/(system.getPhase(1).getComponent(i).getx()*system.getPhase(1).getComponent(i).getFugasityCoefficient()*system.getPhase(1).getPressure()));
                         fracdiff += system.getPhase(1).getComponent(i).getz()-system.getPhase(1).getComponent(i).getx();
                         hasgot = true;
-                        //System.out.println("x " + system.getPhase(1).getComponent(i).getx());
+                        //logger.info("x " + system.getPhase(1).getComponent(i).getx());
                     }
                 }
                 //if(!hasgot) system.getPhase(1).getComponent(i).setx(1e-16);
@@ -59,14 +61,14 @@ public class dTPflash extends TPflash implements java.io.Serializable {
             //system.setBeta(0.5+fracdiff);
             
             system.getPhase(1).normalize();
-            System.out.println("diff " + diff);
+            logger.info("diff " + diff);
         }
         while (diff>1e-10 && iterations < 1000);
         
         
         
         if(diff>1e-10) {
-            System.out.println("not able to converge dPflash....continueing....");
+            logger.error("not able to converge dPflash....continuing....");
         }
         
         

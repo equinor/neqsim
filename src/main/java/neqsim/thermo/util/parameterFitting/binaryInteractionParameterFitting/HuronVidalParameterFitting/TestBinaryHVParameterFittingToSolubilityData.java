@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToSolubilityData.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFittingToSolubilityData() {
@@ -41,7 +43,7 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
         //    testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
         try{
             int p=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next() && p<12){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData();
@@ -68,7 +70,7 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
                 // testSystem.addComponent("methane", 1.1);
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                System.out.println("pressure " + testSystem.getPressure());
+                logger.error("pressure " + testSystem.getPressure());
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
                 double standardDeviation1[] = {0.01}; // std.dev temperature    // presure std.dev pressure
@@ -89,7 +91,7 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

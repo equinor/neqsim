@@ -23,6 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -31,6 +32,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class VLSolidTPFLash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(VLSolidTPFLash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemPrEos(208.2 , 18.34);
@@ -77,13 +79,13 @@ public class VLSolidTPFLash {
            // testOps.freezingPointTemperatureFlash();
             //testSystem.display();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.init(3);
         //  testSystem.display();
-        //    System.out.println("enthalpy CO2 solid " + testSystem.getPhase(2).getEnthalpy() + " index " + testSystem.getPhaseIndex(2));
-        System.out.println("total enthalpy " + (testSystem.getEnthalpy() - entalp));
-        System.out.println("out temperature " + (testSystem.getTemperature() - 273.15));
+        //    logger.info("enthalpy CO2 solid " + testSystem.getPhase(2).getEnthalpy() + " index " + testSystem.getPhaseIndex(2));
+        logger.info("total enthalpy " + (testSystem.getEnthalpy() - entalp));
+        logger.info("out temperature " + (testSystem.getTemperature() - 273.15));
         //    testSystem.display();
     }
 }

@@ -19,6 +19,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -27,6 +28,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVParameterFitting_MDEA .class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFitting_MDEA(){
@@ -48,7 +50,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
         ResultSet dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEA WHERE ID<62");
         /*try{
             int i=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 BinaryHVParameterFittingFunction_MDEA function = new BinaryHVParameterFittingFunction_MDEA();
                 function.setInitialGuess(guess);
@@ -66,7 +68,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
                 testSystem.addComponent("water",x1);
                 testSystem.addComponent("MDEA", x2);
                 
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
@@ -84,7 +86,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.info("database error" + e);
         }
         
         
@@ -93,7 +95,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
         try{
             int i=0;
             
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 i++;
                 
@@ -110,7 +112,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
                 SystemInterface testSystem = new SystemFurstElectrolyteEos(temperature, 1.0);
                 testSystem.addComponent("water",x1);
                 testSystem.addComponent("MDEA", x2);
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
@@ -128,7 +130,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.info("database error" + e);
         }*/
         
         /*dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEA WHERE ID>86");
@@ -136,7 +138,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
         try{
             int i=0;
             
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 i++;
                 
@@ -153,7 +155,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
                 SystemInterface testSystem = new SystemFurstElectrolyteEos(temperature, 1.0);
                 testSystem.addComponent("water",x1);
                 testSystem.addComponent("MDEA", x2);
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
@@ -171,13 +173,13 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.info("database error" + e);
         }*/
         
         dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEAactivity WHERE ID<20");
         try{
             int i=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 BinaryHVParameterFittingFunction_MDEA function = new BinaryHVParameterFittingFunction_MDEA(1,3);
                 function.setInitialGuess(guess);
@@ -192,7 +194,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
                 testSystem.addComponent("water",x1);
                 testSystem.addComponent("MDEA", 1-x1);
                 
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
@@ -210,13 +212,13 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.info("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM WaterMDEAactivity WHERE ID>19");
         try{
             int i=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 BinaryHVParameterFittingFunction_MDEA function = new BinaryHVParameterFittingFunction_MDEA(1,4);
                 function.setInitialGuess(guess);
@@ -231,7 +233,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
                 testSystem.addComponent("water",x1);
                 testSystem.addComponent("MDEA", 1-x1);
                 
-                System.out.println("...........ID............."+ ID);
+                logger.info("...........ID............."+ ID);
                 
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
@@ -249,7 +251,7 @@ public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

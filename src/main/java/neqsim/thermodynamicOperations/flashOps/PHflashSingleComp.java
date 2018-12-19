@@ -55,7 +55,7 @@ public class PHflashSingleComp extends Flash implements java.io.Serializable {
                 return;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         system.init(3);
         double gasEnthalpy = system.getPhase(0).getEnthalpy() / system.getPhase(0).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();

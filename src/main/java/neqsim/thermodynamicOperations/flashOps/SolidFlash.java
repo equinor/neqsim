@@ -23,6 +23,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -32,6 +33,7 @@ import neqsim.thermo.system.SystemInterface;
 public class SolidFlash extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SolidFlash.class);
 
     //   SystemInterface clonedSystem;
     boolean multiPhaseTest = false;
@@ -84,9 +86,9 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 x += system.getPhase(k).getComponent(i).getx();
             }
-            System.out.println("x tot " + x + " PHASE " + k);
+            logger.info("x tot " + x + " PHASE " + k);
             if (x < 1.0 - 1e-6) {
-                //System.out.println("removing phase " + k);
+                //logger.info("removing phase " + k);
                 system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));
                 system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
                 system.setNumberOfPhases(system.getNumberOfPhases() - 1);
@@ -107,14 +109,14 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
                 E[i] += system.getBeta(k) / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
             }
-            //System.out.println("Ei " +E[i]);
+            //logger.info("Ei " +E[i]);
             //if(
         }
         // E[solidComponent] += system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient();
         E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz() / system.getPhases()[3].getComponents()[solidComponent].getFugasityCoeffisient();
-        //        System.out.println("Ei " +E[solidComponent]);
-        //        System.out.println("fug " +system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient());
-        //        System.out.println("zi " +system.getPhase(0).getComponent(solidComponent).getz());
+        //        logger.info("Ei " +E[solidComponent]);
+        //        logger.info("fug " +system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient());
+        //        logger.info("zi " +system.getPhase(0).getComponent(solidComponent).getz());
     }
 
     public double calcQ() {
@@ -247,11 +249,11 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);
         }
-        //System.out.println("beta " + tempVar);
+        //logger.info("beta " + tempVar);
     }
 
     public void run() {
-        //System.out.println("starting ");
+        //logger.info("starting ");
         system.setNumberOfPhases(system.getNumberOfPhases());
         double oldBeta = 0.0;
         int iter = 0;
@@ -267,7 +269,7 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
             if (system.getNumberOfPhases() > 1) {
                 this.solveBeta(true);
             } else {
-                //System.out.println("setting beta ");
+                //logger.info("setting beta ");
                 system.setBeta(0, 1.0 - 1e-10);
                 system.reset_x_y();
                 system.init(1);
@@ -275,10 +277,10 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
             
             //system.display();
             checkX();
-            //System.out.println("iter " + iter);
+            //logger.info("iter " + iter);
         } while ((Math.abs(system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) > 1e-3 && !(iter > 20)) || iter < 4);
         //checkX();
-        //System.out.println("iter " + iter);
+        //logger.info("iter " + iter);
         //system.setNumberOfPhases(system.getNumberOfPhases()+1);
     }
 }

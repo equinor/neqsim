@@ -94,7 +94,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
             clonedSystem = (SystemSrkCPAstatoil) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         

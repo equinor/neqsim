@@ -38,7 +38,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass{
             atractiveTerm = (AtractiveTermTwuCoon) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         
         return atractiveTerm;

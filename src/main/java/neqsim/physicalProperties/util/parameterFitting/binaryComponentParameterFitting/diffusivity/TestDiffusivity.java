@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestDiffusivity extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestDiffusivity.class);
     
     /** Creates new TestAcentric */
     public TestDiffusivity() {
@@ -37,7 +39,7 @@ public class TestDiffusivity extends java.lang.Object {
         ResultSet dataSet =  database.getResultSet("SELECT * FROM BinaryLiquidDiffusionCoefficientData WHERE ComponentSolute='CO2' AND ComponentSolvent='water'");
         
         try{
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 DiffusivityFunction function = new DiffusivityFunction();
                 double guess[] = {0.001};
@@ -60,12 +62,12 @@ public class TestDiffusivity extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 //        
 //        double sample1[] = {0.1};
 //        for(int i=0;i<sampleList.size();i++){
-//            System.out.println("ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+//            logger.info"ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
 //        }
         
         SampleSet sampleSet = new SampleSet(sampleList);

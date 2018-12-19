@@ -54,7 +54,7 @@ public class TestBinaryHVfitToActivityUNIFAC extends java.lang.Object implements
             testSystem2.init(0);
             testSystem2.init(1);
             double activ = testSystem2.getPhase(1).getActivityCoefficient(0);
-            System.out.println("activity " + activ);
+           // System.out.println("activity " + activ);
             
             
             //double parameterGuess[] ={4600.679072303, -1200.64471708, -3.89, 1.9};//Piperazine - water

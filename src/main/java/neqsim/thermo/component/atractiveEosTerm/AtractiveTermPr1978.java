@@ -33,7 +33,7 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
         try {
             atractiveTerm = (AtractiveTermPr1978) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         return atractiveTerm;

@@ -28,6 +28,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 import org.jfree.chart.JFreeChart;
 
 /**
@@ -38,6 +39,7 @@ import org.jfree.chart.JFreeChart;
 public class pTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(pTphaseEnvelope.class);
 
     double maxPressure = 500.0;
     double[][] copiedPoints = null;
@@ -145,7 +147,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 temp = system.getPhase(0).getComponent(speceq).getTC()-20.0;
             }
             //temp =  system.getTemperature();//
-            System.out.println("antoine temperature: " + system.getTemperature());
+            logger.info("antoine temperature: " + system.getTemperature());
             system.setPressure(pres);
 
             //system.setBeta(1e-10);
@@ -175,8 +177,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
             system.setBeta(phaseFraction);
             system.setPressure(pres);
             system.setTemperature(temp);
-            System.out.println("start pressure: " + system.getPressure());
-            System.out.println("start temperature: " + system.getTemperature());
+            logger.info("start pressure: " + system.getPressure());
+            logger.info("start temperature: " + system.getTemperature());
 
             //system.setBeta(0,phaseFraction);
             sysNewtonRhapsonPhaseEnvelope nonLinSolver = new sysNewtonRhapsonPhaseEnvelope(system, 2, system.getPhase(0).getNumberOfComponents());
@@ -221,11 +223,11 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                             return;
                         }
                     }
-                    //         System.out.println("avbryter" +  np);
+                    //         logger.info("avbryter" +  np);
                     break;
                 }
-                //    System.out.println("Ideal pres: " + getPressure());
-                // System.out.println("temp: " + system.getTemperature());
+                //    logger.info("Ideal pres: " + getPressure());
+                // logger.info("temp: " + system.getTemperature());
                 points[0][np - 1] = system.getTemperature();
                 points[1][np - 1] = system.getPressure();
                 pointsH[np - 1] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
@@ -241,7 +243,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 points2[4] = copiedPoints[0];
                 points2[5] = copiedPoints[1];
             }
-            System.out.println("ncr: " + ncr + "  ncr2 . " + ncr2);
+            logger.info("ncr: " + ncr + "  ncr2 . " + ncr2);
             points2[0] = new double[ncr + 1];
             points2[1] = new double[ncr + 1];
             pointsH2[0] = new double[ncr + 1];
@@ -353,7 +355,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 file2.createFile();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
     }
 
@@ -363,7 +365,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         try {
             opsHyd.hydrateEquilibriumLine(10.0, 300.0);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
 
         double[][] hydData = opsHyd.getData();
@@ -382,7 +384,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         }
         double TC = system.getTC();
         double PC = system.getPC();
-        System.out.println("tc : " + TC + "  PC : " + PC);
+        logger.info("tc : " + TC + "  PC : " + PC);
 
         String title2 = "";
         String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
@@ -390,8 +392,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
         String title5 = "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
 
-        //    System.out.println("start flash");
-        //    System.out.println("Tferdig..");
+        //    logger.info("start flash");
+        //    logger.info("Tferdig..");
 
 
 
@@ -435,7 +437,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
         double TC = system.getTC();
         double PC = system.getPC();
-        System.out.println("tc : " + TC + "  PC : " + PC);
+        logger.info("tc : " + TC + "  PC : " + PC);
         String title2 = "";
         //String title = "PT-graph. TC=" + title2.valueOf(nf.format(TC)) + "K, PC=" + title2.valueOf(nf.format(PC) + " bara");
         String title = "";//Phase envelope";

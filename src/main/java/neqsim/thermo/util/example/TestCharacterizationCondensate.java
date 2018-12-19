@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestCharacterizationCondensate {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestCharacterizationCondensate.class);
 
     /**
      * Creates new TPflash
@@ -65,7 +67,7 @@ public class TestCharacterizationCondensate {
             //           testOps.hydrateFormationTemperature();
 //            testOps.dewPointTemperatureFlash();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         testSystem.display();
     }

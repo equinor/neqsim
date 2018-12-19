@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -14,6 +16,7 @@ package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentr
 public class ClassicAcentricDens extends ClassicAcentricFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ClassicAcentricDens.class);
     
     int phasetype = 1;
     /** Creates new Test */
@@ -46,7 +49,7 @@ public class ClassicAcentricDens extends ClassicAcentricFunction {
             thermoOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         // System.out.println("pres: " + system.getPressure());
         system.initPhysicalProperties();

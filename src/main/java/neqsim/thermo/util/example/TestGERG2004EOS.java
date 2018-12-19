@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * PhaseEnvelope.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestGERG2004EOS {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestGERG2004EOS.class);
     
     /** Creates new PhaseEnvelope */
     public TestGERG2004EOS() {
@@ -59,7 +61,7 @@ public class TestGERG2004EOS {
  //           testOps.freezingPointTemperatureFlash();
             testSystem.display();
         } catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         
       //  standards.gasQuality.Draft_GERG2004 temp2 = new standards.gasQuality.Draft_GERG2004(testSystem);

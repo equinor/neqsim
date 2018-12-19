@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestEosParameterFittingToMercurySolubility extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestEosParameterFittingToMercurySolubility.class);
 
     /**
      * Creates new TestAcentric
@@ -47,7 +49,7 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
         //double parameterGuess[] = {  0.016529772608}; // mercury-nitrogen
         try {
             int p = 0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while (dataSet.next() && p < 40) {
                 p++;
                 CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData(0, 0);
@@ -73,7 +75,7 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);

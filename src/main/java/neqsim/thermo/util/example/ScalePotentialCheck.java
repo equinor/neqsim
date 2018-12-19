@@ -12,6 +12,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,6 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ScalePotentialCheck {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ScalePotentialCheck.class);
 
     /**
      * Creates a new instance of ScalePotentialCheck
@@ -74,11 +76,11 @@ public class ScalePotentialCheck {
             testOps.display();
             // testOps.addIonToScaleSaturation(1,"FeCO3","Fe++");
            // testOps.display();
-            System.out.println(testOps.getResultTable());
+            logger.info(testOps.getResultTable());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
-        System.out.println("pH " + testSystem.getPhase("aqueous").getpH());
+        logger.info("pH " + testSystem.getPhase("aqueous").getpH());
         // testSystem.display();
 
     }

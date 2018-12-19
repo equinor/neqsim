@@ -3,10 +3,12 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class WaxFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(WaxFlash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.0 + 12, 4.0);
@@ -84,8 +86,7 @@ public class WaxFlash {
             //  testSystem.display();
             //testOps.TPflash();
         } catch (Exception e) {
-            System.out.println("error");
-            e.printStackTrace();
+            logger.error("error", e);
         }
         double waxVOlumeFrac = 0;
         if (testSystem.hasPhaseType("wax")) {

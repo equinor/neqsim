@@ -50,7 +50,7 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos impleme
             clonedPhase = (PhaseModifiedFurstElectrolyteEosMod2004) super.clone();
         }
         catch(Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         // clonedPhase.electrolyteMixingRule = (thermo.mixingRule.ElectrolyteMixingRulesInterface) electrolyteMixingRule.clone();
         

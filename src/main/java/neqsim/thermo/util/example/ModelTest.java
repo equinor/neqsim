@@ -4,6 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -19,6 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ModelTest {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(ModelTest.class);
 
     /**
      * Creates new TPflash
@@ -80,7 +82,7 @@ public class ModelTest {
 
         double numCp = (ent1 - ent2) / 0.002;
 
-        System.out.println("Cp " + cp + " numCp " + numCp);
+        logger.info("Cp " + cp + " numCp " + numCp);
 
     }
 }

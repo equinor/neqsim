@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestUNIFAC_1 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestUNIFAC_1.class);
     
     /** Creates new TPflash */
     public TestUNIFAC_1() {
@@ -48,13 +50,13 @@ public class TestUNIFAC_1 {
         testSystem.init(0);
         testSystem.init(1);
         
-        System.out.println("wt% TEG " + (testSystem.getPhase(1).getComponent(0).getx()*testSystem.getPhase(1).getComponent(0).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
-        System.out.println("wt% MDEA " + (testSystem.getPhase(1).getComponent(1).getx()*testSystem.getPhase(1).getComponent(1).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
-        System.out.println("wt% Piperazine " + (testSystem.getPhase(1).getComponent(2).getx()*testSystem.getPhase(1).getComponent(2).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
-        System.out.println("wt% water " + (testSystem.getPhase(1).getComponent(3).getx()*testSystem.getPhase(1).getComponent(3).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
+        logger.info("wt% TEG " + (testSystem.getPhase(1).getComponent(0).getx()*testSystem.getPhase(1).getComponent(0).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
+        logger.info("wt% MDEA " + (testSystem.getPhase(1).getComponent(1).getx()*testSystem.getPhase(1).getComponent(1).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
+        logger.info("wt% Piperazine " + (testSystem.getPhase(1).getComponent(2).getx()*testSystem.getPhase(1).getComponent(2).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
+        logger.info("wt% water " + (testSystem.getPhase(1).getComponent(3).getx()*testSystem.getPhase(1).getComponent(3).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0));
         
-        System.out.println(testSystem.getPhase(1).getActivityCoefficient(0));
-        System.out.println("gibbs " + testSystem.getPhase(1).getExessGibbsEnergy());
+        logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
+        logger.info("gibbs " + testSystem.getPhase(1).getExessGibbsEnergy());
         for(int i=0;i<2000;i++){
             try{
                 //testOps.bubblePointPressureFlash(false);
@@ -70,24 +72,23 @@ public class TestUNIFAC_1 {
                 testSystem2.init(0);
                 testSystem2.init(1);
                 testSystem.init(1);
-                System.out.println("teg act " + testSystem.getPhase(1).getActivityCoefficient(0));
-                System.out.println("MDEA act " + testSystem.getPhase(1).getActivityCoefficient(1));
-                System.out.println("Piperazine act " + testSystem.getPhase(1).getActivityCoefficient(2));
-                System.out.println("water act " + testSystem.getPhase(1).getActivityCoefficient(3));
+                logger.info("teg act " + testSystem.getPhase(1).getActivityCoefficient(0));
+                logger.info("MDEA act " + testSystem.getPhase(1).getActivityCoefficient(1));
+                logger.info("Piperazine act " + testSystem.getPhase(1).getActivityCoefficient(2));
+                logger.info("water act " + testSystem.getPhase(1).getActivityCoefficient(3));
                 double percentBack = (testSystem2.getPhase(0).getComponent(1).getNumberOfmoles())/0.1*100.0;
                 double percentBackPip = (testSystem2.getPhase(0).getComponent(2).getNumberOfmoles())/0.015*100.0;
                 double percentBackWater = (testSystem2.getPhase(0).getComponent(3).getNumberOfmoles())/0.765*100.0;
                 
-                //System.out.println("Pressure " + testSystem.getPressure() + " " + (testSystem.getPhase(1).getComponent(0).getx()*testSystem.getPhase(1).getComponent(0).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0) + " " + (testSystem2.getPhase(1).getComponent(0).getx()*testSystem2.getPhase(1).getComponent(0).getMolarMass()/testSystem2.getPhase(1).getMolarMass()*100.0) + "  percent MDEA succefully reclaimed "+ percentBack+ "  percent Piperazine succefully reclaimed "+ percentBackPip+ "  percent water succefully reclaimed "+ percentBackWater);
+                //logger.info("Pressure " + testSystem.getPressure() + " " + (testSystem.getPhase(1).getComponent(0).getx()*testSystem.getPhase(1).getComponent(0).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0) + " " + (testSystem2.getPhase(1).getComponent(0).getx()*testSystem2.getPhase(1).getComponent(0).getMolarMass()/testSystem2.getPhase(1).getMolarMass()*100.0) + "  percent MDEA succefully reclaimed "+ percentBack+ "  percent Piperazine succefully reclaimed "+ percentBackPip+ "  percent water succefully reclaimed "+ percentBackWater);
                 //testOps.bubblePointTemperatureFlash();
             } catch(Exception e){
-                System.out.println(e.toString());
-                e.printStackTrace();
+                logger.error(e.toString(), e);
             }
         }
         testSystem.display();
-        System.out.println(testSystem.getPhase(1).getActivityCoefficient(0));
-        System.out.println("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
+        logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
+        logger.info("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
     }
     
 }

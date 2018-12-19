@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SulfureDeposition {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(SulfureDeposition.class);
 
     /**
      * Creates new TPflash
@@ -134,18 +136,18 @@ public class SulfureDeposition {
          //   testOps.freezingPointTemperatureFlash();
           //  ((thermo.phase.PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
 
-            System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
-            System.out.println("mol S8/mol gas (ppb) " + testSystem.getPhase(0).getComponent("S8").getx() * 1e9);
-            System.out.println("mg S8/Sm^3 gas " + testSystem.getPhase(0).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() * 1e6 * (101325 / (8.315 * 288.15)));
+            logger.info("temperature " + (testSystem.getTemperature() - 273.15));
+            logger.info("mol S8/mol gas (ppb) " + testSystem.getPhase(0).getComponent("S8").getx() * 1e9);
+            logger.info("mg S8/Sm^3 gas " + testSystem.getPhase(0).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() * 1e6 * (101325 / (8.315 * 288.15)));
 
-            System.out.println("wt% S8 in gas " + testSystem.getPhase(0).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(0).getMolarMass() * 100);
-            System.out.println("wt% S8 in oil " + testSystem.getPhase(1).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100);
-          //  System.out.println("ppb (wt) S8 in water " + testSystem.getPhase(2).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(2).getMolarMass() * 1e9);
-            System.out.println("ppm (wt) S8 total " + testSystem.getPhase(0).getComponent("S8").getz() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass() * 1e6);
+            logger.info("wt% S8 in gas " + testSystem.getPhase(0).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(0).getMolarMass() * 100);
+            logger.info("wt% S8 in oil " + testSystem.getPhase(1).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100);
+          //  logger.info("ppb (wt) S8 in water " + testSystem.getPhase(2).getComponent("S8").getx() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getPhase(2).getMolarMass() * 1e9);
+            logger.info("ppm (wt) S8 total " + testSystem.getPhase(0).getComponent("S8").getz() * testSystem.getPhase(0).getComponent("S8").getMolarMass() / testSystem.getMolarMass() * 1e6);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(e.toString());
+            logger.error("error",e);
+            logger.error(e.toString());
         }
         testSystem.display();
     }

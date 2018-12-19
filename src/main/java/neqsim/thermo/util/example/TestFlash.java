@@ -18,6 +18,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -26,6 +27,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestFlash.class);
 
     public static void main(String[] args) {
 
@@ -298,80 +300,80 @@ public class TestFlash {
             }
         }
 
-        System.out.println("Time taken for 10 flash calcs [ms] = " + (System.currentTimeMillis() - time));
+        logger.info("Time taken for 10 flash calcs [ms] = " + (System.currentTimeMillis() - time));
 
         int t = 0;
         int k = 0;
-        System.out.printf("Mix Number of Phases                      %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Pressure [Pa]                         %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Temperature [K]                       %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Mole Percent                          %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Weight Percent                        %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Molar Volume               [m3/mol]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Volume Percent                        %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Density                    [kg/m3]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Z Factor                              %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Molecular Weight           [g/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Enthalpy                   [J/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Entropy                    [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Heat Capacity-Cp           [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Heat Capacity-Cv           [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Mix Kappa (Cp/Cv)                     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix JT Coefficient             [K/Pa]     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Velocity of Sound          [m/s]      %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Viscosity [Pa s] eller     [kg/(m*s)] %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Mix Thermal Conductivity        W/mK]     %.10f\n", fluidProperties[t][k++]);
-        //System.out.printf("\n");
-        System.out.printf("Gas Mole Percent                          %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Weight Percent                        %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Molar Volume               [m3/mol]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Volume Percent                        %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Density                    [kg/m3]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Z Factor                              %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Molecular Weight           [g/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Enthalpy                   [J/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Entropy                    [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Heat Capacity-Cp           [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Heat Capacity-Cv           [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Gas Kappa (Cp/Cv)                     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas JT Coefficient             [K/Pa]     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Velocity of Sound          [m/s]      %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Viscosity [Pa s] eller     [kg/(m*s)] %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Gas Thermal Conductivity       [W/mK]     %.10f\n", fluidProperties[t][k++]);
-        //System.out.printf("\n");
-        System.out.printf("Liquid Mole Percent                       %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Weight Percent                     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Molar Volume            [m3/mol]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Volume Percent                     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Density                 [kg/m3]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Z Factor                           %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Molecular Weight        [g/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Enthalpy                [J/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Entropy                 [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Heat Capacity-Cp        [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Heat Capacity-Cv        [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Liquid Kappa (Cp/Cv)               %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid JT Coefficient          [K/Pa]     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Velocity of Sound       [m/s]      %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Viscosity [Pa s] eller  [kg/(m*s)] %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Liquid Thermal Conductivity    [W/mK]     %.10f\n", fluidProperties[t][k++]);
-        //System.out.printf("\n");
-        System.out.printf("Aqueous Mole Percent                      %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Weight Percent                    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Molar Volume           [m3/mol]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Volume Percent                    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Density                [kg/m3]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Z Factor                          %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Molecular Weight       [g/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Enthalpy               [J/mol]    %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Entropy                [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Heat Capacity-Cp       [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Heat Capacity-Cv       [J/molK]   %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Aqueous Kappa (Cp/Cv)             %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous JT Coefficient         [K/Pa]     %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Velocity of Sound      [m/s]      %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Viscosity [Pa s] eller [kg/(m*s)] %.10f\n", fluidProperties[t][k++]);
-        System.out.printf("Aqueous Thermal Conductivity   [W/mK]     %.10f\n", fluidProperties[t][k++]);
+        logger.info("Mix Number of Phases                            " + fluidProperties[t][k++]);
+        logger.info("Mix Pressure [Pa]                         " + fluidProperties[t][k++]);
+        logger.info("Mix Temperature [K]                       " + fluidProperties[t][k++]);
+        logger.info("Mix Mole Percent                          " + fluidProperties[t][k++]);
+        logger.info("Mix Weight Percent                        " + fluidProperties[t][k++]);
+        logger.info("Mix Molar Volume               [m3/mol]   " + fluidProperties[t][k++]);
+        logger.info("Mix Volume Percent                        " + fluidProperties[t][k++]);
+        logger.info("Mix Density                    [kg/m3]    " + fluidProperties[t][k++]);
+        logger.info("Mix Z Factor                              " + fluidProperties[t][k++]);
+        logger.info("Mix Molecular Weight           [g/mol]    " + fluidProperties[t][k++]);
+        logger.info("Mix Enthalpy                   [J/mol]    " + fluidProperties[t][k++]);
+        logger.info("Mix Entropy                    [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Mix Heat Capacity-Cp           [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Mix Heat Capacity-Cv           [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Mix Mix Kappa (Cp/Cv)                     " + fluidProperties[t][k++]);
+        logger.info("Mix JT Coefficient             [K/Pa]     " + fluidProperties[t][k++]);
+        logger.info("Mix Velocity of Sound          [m/s]      " + fluidProperties[t][k++]);
+        logger.info("Mix Viscosity [Pa s] eller     [kg/(m*s)] " + fluidProperties[t][k++]);
+        logger.info("Mix Thermal Conductivity        W/mK]     " + fluidProperties[t][k++]);
+        //logger.info("\n");
+        logger.info("Gas Mole Percent                          " + fluidProperties[t][k++]);
+        logger.info("Gas Weight Percent                        " + fluidProperties[t][k++]);
+        logger.info("Gas Molar Volume               [m3/mol]   " + fluidProperties[t][k++]);
+        logger.info("Gas Volume Percent                        " + fluidProperties[t][k++]);
+        logger.info("Gas Density                    [kg/m3]    " + fluidProperties[t][k++]);
+        logger.info("Gas Z Factor                              " + fluidProperties[t][k++]);
+        logger.info("Gas Molecular Weight           [g/mol]    " + fluidProperties[t][k++]);
+        logger.info("Gas Enthalpy                   [J/mol]    " + fluidProperties[t][k++]);
+        logger.info("Gas Entropy                    [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Gas Heat Capacity-Cp           [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Gas Heat Capacity-Cv           [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Gas Gas Kappa (Cp/Cv)                     " + fluidProperties[t][k++]);
+        logger.info("Gas JT Coefficient             [K/Pa]     " + fluidProperties[t][k++]);
+        logger.info("Gas Velocity of Sound          [m/s]      " + fluidProperties[t][k++]);
+        logger.info("Gas Viscosity [Pa s] eller     [kg/(m*s)] " + fluidProperties[t][k++]);
+        logger.info("Gas Thermal Conductivity       [W/mK]     " + fluidProperties[t][k++]);
+        //logger.info("\n");
+        logger.info("Liquid Mole Percent                       " + fluidProperties[t][k++]);
+        logger.info("Liquid Weight Percent                     " + fluidProperties[t][k++]);
+        logger.info("Liquid Molar Volume            [m3/mol]   " + fluidProperties[t][k++]);
+        logger.info("Liquid Volume Percent                     " + fluidProperties[t][k++]);
+        logger.info("Liquid Density                 [kg/m3]    " + fluidProperties[t][k++]);
+        logger.info("Liquid Z Factor                           " + fluidProperties[t][k++]);
+        logger.info("Liquid Molecular Weight        [g/mol]    " + fluidProperties[t][k++]);
+        logger.info("Liquid Enthalpy                [J/mol]    " + fluidProperties[t][k++]);
+        logger.info("Liquid Entropy                 [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Liquid Heat Capacity-Cp        [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Liquid Heat Capacity-Cv        [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Liquid Liquid Kappa (Cp/Cv)               " + fluidProperties[t][k++]);
+        logger.info("Liquid JT Coefficient          [K/Pa]     " + fluidProperties[t][k++]);
+        logger.info("Liquid Velocity of Sound       [m/s]      " + fluidProperties[t][k++]);
+        logger.info("Liquid Viscosity [Pa s] eller  [kg/(m*s)] " + fluidProperties[t][k++]);
+        logger.info("Liquid Thermal Conductivity    [W/mK]     " + fluidProperties[t][k++]);
+        //logger.info("\n");
+        logger.info("Aqueous Mole Percent                      " + fluidProperties[t][k++]);
+        logger.info("Aqueous Weight Percent                    " + fluidProperties[t][k++]);
+        logger.info("Aqueous Molar Volume           [m3/mol]   " + fluidProperties[t][k++]);
+        logger.info("Aqueous Volume Percent                    " + fluidProperties[t][k++]);
+        logger.info("Aqueous Density                [kg/m3]    " + fluidProperties[t][k++]);
+        logger.info("Aqueous Z Factor                          " + fluidProperties[t][k++]);
+        logger.info("Aqueous Molecular Weight       [g/mol]    " + fluidProperties[t][k++]);
+        logger.info("Aqueous Enthalpy               [J/mol]    " + fluidProperties[t][k++]);
+        logger.info("Aqueous Entropy                [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Aqueous Heat Capacity-Cp       [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Aqueous Heat Capacity-Cv       [J/molK]   " + fluidProperties[t][k++]);
+        logger.info("Aqueous Aqueous Kappa (Cp/Cv)             " + fluidProperties[t][k++]);
+        logger.info("Aqueous JT Coefficient         [K/Pa]     " + fluidProperties[t][k++]);
+        logger.info("Aqueous Velocity of Sound      [m/s]      " + fluidProperties[t][k++]);
+        logger.info("Aqueous Viscosity [Pa s] eller [kg/(m*s)] " + fluidProperties[t][k++]);
+        logger.info("Aqueous Thermal Conductivity   [W/mK]     " + fluidProperties[t][k++]);
 
     }
 }

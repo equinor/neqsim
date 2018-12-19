@@ -95,7 +95,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         try {
             clonedComponent = (ComponentElectrolyteCPA) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         clonedComponent.xsite = xsite.clone();

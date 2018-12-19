@@ -23,6 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -31,6 +32,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class MEGwaterComplexFlash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(MEGwaterComplexFlash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 +50, 1.0);
@@ -44,7 +46,7 @@ public class MEGwaterComplexFlash {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
         testSystem.init(0);
-        // System.out.println("fug "  +Math.log(testSystem.getPhase(1).getComponent("TEG").getFugasityCoefficient()));
+        // logger.info("fug "  +Math.log(testSystem.getPhase(1).getComponent("TEG").getFugasityCoefficient()));
         testSystem.setSolidPhaseCheck("water");
         //  testSystem.setMultiPhaseCheck(true);
         double entdiff = 0;
@@ -57,11 +59,10 @@ public class MEGwaterComplexFlash {
            testOps.calcSolidComlexTemperature("TEG", "water");
             testSystem.display();
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(e.toString());
+            logger.error(e.toString(), e);
         }
-        System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
-        System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(2));
-        System.out.println("activity TEG " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("temperature " + (testSystem.getTemperature() - 273.15));
+        logger.info("activity water " + testSystem.getPhase(1).getActivityCoefficient(2));
+        logger.info("activity TEG " + testSystem.getPhase(1).getActivityCoefficient(1));
     }
 }

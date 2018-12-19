@@ -40,7 +40,7 @@ public class SystemDefault extends SystemThermo {
                 phaseArray[i] = phaseType.getClass().newInstance();
             }
             catch(Exception e){
-                System.err.println("err " + e.toString());
+                logger.error("err " + e.toString());
             }
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);

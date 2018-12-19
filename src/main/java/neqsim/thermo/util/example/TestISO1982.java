@@ -9,6 +9,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestISO1982 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestISO1982.class);
     
     /** Creates a new instance of TestISO1982 */
     public TestISO1982() {
@@ -34,6 +36,6 @@ public class TestISO1982 {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testOps.TPflash();
         
-        System.out.println("ISO calc: " + testSystem.getStandard("ISO1982").getValue("Energy", "KJ/Sm3"));
+        logger.info("ISO calc: " + testSystem.getStandard("ISO1982").getValue("Energy", "KJ/Sm3"));
     }
 }

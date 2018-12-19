@@ -5,6 +5,8 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author Even Solbraa
@@ -13,6 +15,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
 public class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(Viscosity.class);
 
     public double[] pureComponentViscosity;
 
@@ -33,7 +36,7 @@ public class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods
         try {
             properties = (Viscosity) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.",e);
         }
 
         return properties;

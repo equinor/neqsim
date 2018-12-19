@@ -23,6 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -31,6 +32,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class OLGApropGenerator {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(OLGApropGenerator.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15, 10.0);
@@ -62,7 +64,7 @@ public class OLGApropGenerator {
 
         } catch (Exception e) {
             testSystem.display();
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
 
     }

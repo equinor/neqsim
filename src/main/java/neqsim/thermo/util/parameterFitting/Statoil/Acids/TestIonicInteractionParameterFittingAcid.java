@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemInterface;
 public class TestIonicInteractionParameterFittingAcid extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFittingAcid.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFittingAcid(){
@@ -42,7 +44,7 @@ public class TestIonicInteractionParameterFittingAcid extends java.lang.Object{
         
         try{
             int i=0;
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 i++;
                 IonicInteractionParameterFittingFunctionAcid function = new IonicInteractionParameterFittingFunctionAcid();
@@ -85,7 +87,7 @@ public class TestIonicInteractionParameterFittingAcid extends java.lang.Object{
                 sampleList.add(sample);
             }
         } catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         

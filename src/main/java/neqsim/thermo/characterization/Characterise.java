@@ -71,7 +71,7 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
             clonedSystem = (Characterise) super.clone();
             //clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations) chemicalReactionOperations.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
         return clonedSystem;
     }

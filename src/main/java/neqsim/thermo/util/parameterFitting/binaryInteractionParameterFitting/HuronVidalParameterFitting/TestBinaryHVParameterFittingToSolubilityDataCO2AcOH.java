@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToSolubilityDataCO2AcOH.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFittingToSolubilityDataCO2AcOH() {
@@ -39,7 +41,7 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH extends java.la
         
         try{
             
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData();
                 double parameterGuess[] = {2500,-1500,-0.1,-0.1,0.03};
@@ -76,7 +78,7 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH extends java.la
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

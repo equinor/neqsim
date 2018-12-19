@@ -55,12 +55,10 @@ public class TPflash_benchmark {
         testSystem.createDatabase(true);
 //        testSystem.setMixingRule(2);
         testSystem.autoSelectMixingRule();
-        long multTime = System.currentTimeMillis();
-         testSystem.setMultiPhaseCheck(true);
-        logger.info("Time taken for setMultiPhaseCheck = " + (System.currentTimeMillis() - multTime));
          
         //    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         logger.info("start benchmark TPflash......");
+        
 
         testSystem.init(0);
         long time = System.currentTimeMillis();
@@ -71,16 +69,10 @@ public class TPflash_benchmark {
             //testSystem.init(0);
             //     testSystem.init(1);
         }
-        testSystem.initPhysicalProperties();
-        logger.info("Viscosity:"+  testSystem.getViscosity());
-        
+
         logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testSystem.display();
-        logger.info("gas " + testSystem.getPhase(0).getNumberOfMolesInPhase() + " oil "+ testSystem.getPhase(1).getNumberOfMolesInPhase() + " water "+ testSystem.getPhase(2).getNumberOfMolesInPhase());
-        logger.info(testSystem.getPhase(0).getDensity());
-        logger.info(testSystem.getPhase(0).getMolarMass()/testSystem.getPhase(0).getDensity());
-        testSystem.display();
-
+   
        //     testSystem.saveObjectToFile("c:/temp/test2.neqsim", "test2.neqsim");
         //    SystemInterface testSystem2 = testSystem.readObjectFromFile("c:/temp/test2.neqsim", "test2.neqsim");
             

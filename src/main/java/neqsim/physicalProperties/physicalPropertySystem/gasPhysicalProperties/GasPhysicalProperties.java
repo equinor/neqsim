@@ -6,6 +6,7 @@
 package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -15,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(GasPhysicalProperties.class);
 
     public GasPhysicalProperties() {
     }
@@ -40,7 +42,7 @@ public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPro
         try {
             properties = (GasPhysicalProperties) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.",e);
         }
         return properties;
     }

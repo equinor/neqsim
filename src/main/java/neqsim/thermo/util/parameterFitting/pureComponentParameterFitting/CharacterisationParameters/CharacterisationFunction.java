@@ -7,6 +7,7 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.CharacterisationParameters;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -16,6 +17,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 public class CharacterisationFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(CharacterisationFunction.class);
     
     /** Creates new Test */
     public CharacterisationFunction() {
@@ -30,7 +32,7 @@ public class CharacterisationFunction extends LevenbergMarquardtFunction {
             thermoOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return Math.log(system.getPressure());
     }

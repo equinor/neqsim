@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestPCSAFT1_1 {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestPCSAFT1_1.class);
 
     /** Creates new TPflash */
     public TestPCSAFT1_1() {
@@ -47,10 +49,9 @@ public class TestPCSAFT1_1 {
                 testSystem.init(0);
                 try {
                     testOps.dewPointTemperatureFlash();
-                    System.out.println("pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
+                    logger.info("pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
                 } catch (Exception e) {
-                    System.out.println(e.toString());
-                    e.printStackTrace();
+                    logger.error(e.toString(), e);
                 }
             }
         }

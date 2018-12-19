@@ -8,6 +8,7 @@ package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.hydrat
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.component.ComponentHydrate;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import neqsim.thermo.component.ComponentHydrate;
 public class HydrateFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(HydrateFunction.class);
     
     /** Creates new Test */
     public HydrateFunction() {
@@ -28,7 +30,7 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
             thermoOps.hydrateFormationTemperature(1);
             //System.out.println("temperature " + system.getTemperature());
         } catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getTemperature();
     }

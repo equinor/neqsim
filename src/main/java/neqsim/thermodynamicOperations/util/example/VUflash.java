@@ -3,6 +3,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class VUflash {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(VUflash.class);
 
     /** Creates new TPflash */
     public VUflash() {
@@ -44,15 +46,15 @@ public class VUflash {
             testOps.TPflash();
             testSystem.display();
 
-            System.out.println("Volume " + testSystem.getVolume()*1.1 + " internalEnergy " + testSystem.getInternalEnergy());
+            logger.info("Volume " + testSystem.getVolume()*1.1 + " internalEnergy " + testSystem.getInternalEnergy());
          //   testSystem.setPressure(5);
            // testOps.PHflash(testSystem.getEnthalpy(), 0);
              testOps.VUflash(testSystem.getInternalEnergy(), testSystem.getVolume()*1.1);
-            System.out.println("Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
+            logger.info("Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
 
             testSystem.display();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
     }
 }

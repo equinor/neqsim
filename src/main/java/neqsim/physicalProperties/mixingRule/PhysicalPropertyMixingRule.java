@@ -8,6 +8,7 @@ package neqsim.physicalProperties.mixingRule;
 import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import neqsim.thermo.phase.PhaseInterface;
 public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(PhysicalPropertyMixingRule.class);
 
     public double[][] Gij;
 
@@ -102,7 +104,7 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
             }
             catch (Exception e) {
                 String err = e.toString();
-                System.out.println(err);
+                logger.error(err);
             }
 
         }
@@ -113,7 +115,7 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
         if (Gij != null) {
             return;
         }
-        // System.out.println("reading mix Gij viscosity..");
+        // logger.info("reading mix Gij viscosity..");
         Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         neqsim.util.database.NeqSimDataBase database = null;
         java.sql.ResultSet dataSet;
@@ -136,9 +138,9 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
                         Gij[k][l] = Gij[l][k];
                         database.getConnection().close();
                     } catch (Exception e) {
-                        System.out.println("err in phys prop.....");
+                        logger.error("err in phys prop.....");
                         String err = e.toString();
-                        System.out.println(err);
+                        logger.error(err);
                     } finally {
                         try {
                             if (database.getStatement() != null) {
@@ -148,8 +150,7 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
                                 database.getConnection().close();
                             }
                         } catch (Exception e) {
-                            System.out.println("error closing database.....");
-                            e.printStackTrace();
+                            logger.error("error closing database.....", e);
                         }
                     }
                 }

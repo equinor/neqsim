@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  * TPflash.java
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestGEHenry {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestGEHenry.class);
     
     /** Creates new TPflash */
     public TestGEHenry() {
@@ -40,8 +42,7 @@ public class TestGEHenry {
            // testOps.bubblePointPressureFlash(false);//(false);
         }
         catch(Exception e){
-            System.out.println(e.toString());
-            e.printStackTrace();
+            logger.error(e.toString(), e);
         }
         testSystem.display();
     }

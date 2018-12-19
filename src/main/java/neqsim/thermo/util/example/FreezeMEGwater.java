@@ -4,10 +4,12 @@ import neqsim.dataPresentation.dataHandeling;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 public class FreezeMEGwater {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(FreezeMEGwater.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 10.0,1.0);
@@ -34,7 +36,7 @@ public class FreezeMEGwater {
             testOps.freezingPointTemperatureFlash();
             //         testOps.calcSolidComlexTemperature("TEG", "water");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("error",e);
         }
         testSystem.display();
 //        System.out.println("temperature " + (testSystem.getTemperature() - 273.15));

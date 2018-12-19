@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
+import org.apache.log4j.Logger;
+
 /**
  *
  * @author  Even Solbraa
@@ -14,6 +16,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 public class IonicInteractionParameterFittingFunction_1 extends IonicInteractionParameterFittingFunction {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction_1.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction_1() {
@@ -25,7 +28,7 @@ public class IonicInteractionParameterFittingFunction_1 extends IonicInteraction
             // System.out.println("pres " + system.getPressure()*system.getPhases()[0].getComponent(0).getx());
         }
         catch(Exception e){
-            System.out.println(e.toString());
+            logger.error(e.toString());
         }
         return system.getPressure();
     }

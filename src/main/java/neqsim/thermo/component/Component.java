@@ -139,8 +139,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
             index = 1000 + componentNumber;
             CASnumber = "00-00-0";
         } catch (Exception e) {
-            logger.error("error in inserting to database");
-            e.printStackTrace();
+            logger.error("error in inserting to database", e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -150,8 +149,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("error closing database.....");
-                e.printStackTrace();
+                logger.error("error closing database.....", e);
             }
         }
     }
@@ -170,11 +168,16 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     dataSet.getString("ID");
                     //   if(dataSet.isAfterLast()) dataSet.next(); 
                 } catch (Exception e) {
+                    try{
                     dataSet.close();
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
-                    dataSet.next();
+                    dataSet.next(); 
+                    }catch (Exception e2){
+                        throw new RuntimeException(e2);
+                    }
                 }
+         
                 setComponentType(dataSet.getString("comptype"));
                 setCASnumber(dataSet.getString("CASnumber"));
                 index = Integer.parseInt(dataSet.getString("compindex"));
@@ -355,8 +358,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
             }
             componentNumber = compnumber;
         } catch (Exception e) {
-            logger.error("error in comp");
-            e.printStackTrace();
+            logger.error("error in comp", e);
         } finally {
             try {
                 if (dataSet != null) {
@@ -369,8 +371,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     database.getConnection().close();
                 }
             } catch (Exception e) {
-                logger.error("error closing database.....");
-                e.printStackTrace();
+                logger.error("error closing database.....", e);
             }
         }
 
@@ -385,7 +386,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
         try {
             clonedComponent = (Component) super.clone();
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            logger.error("Cloning failed.", e);
         }
 
         return clonedComponent;

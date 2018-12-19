@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class TestRacketFit extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestRacketFit.class);
     
     /** Creates new TestAcentric */
     public TestRacketFit() {
@@ -38,7 +40,7 @@ public class TestRacketFit extends java.lang.Object {
         //  ResultSet dataSet =  database.getResultSet("NeqSimDataBase",  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         
         try{
-            System.out.println("adding....");
+            logger.info("adding....");
             while(dataSet.next()){
                 RacketFunction function = new RacketFunction();
                 double guess[] = {0.3211};
@@ -58,7 +60,7 @@ public class TestRacketFit extends java.lang.Object {
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

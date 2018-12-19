@@ -9,6 +9,7 @@ import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import org.apache.log4j.Logger;
 
 /*
  *
@@ -18,6 +19,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TestPCSAFT {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestPCSAFT.class);
 
     /** Creates new TPflash */
     public TestPCSAFT() {
@@ -51,8 +53,7 @@ public class TestPCSAFT {
             //testOps.bubblePointPressureFlash(false);
 
         } catch (Exception e) {
-            System.out.println(e.toString());
-            e.printStackTrace();
+            logger.error(e.toString(), e);
         }
         testSystem.display();
         double entropy = testSystem.getEntropy();
@@ -63,14 +64,14 @@ public class TestPCSAFT {
            // testOps.PHflash(oldEnthalpy-10000, 0);
             testOps.PSflash(entropy);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            logger.error(e.toString());
             e.printStackTrace();
         }
             testSystem.display();
       //  System.out.println("enthalpy " + (testSystem.getEnthalpy() - oldEnthalpy));
-        System.out.println("fuagcity gas" + testSystem.getPhase(0).getFugacity(0));
-        System.out.println("fuagcity liquid" + testSystem.getPhase(1).getFugacity(0));
-        System.out.println("K " + testSystem.getPhase(1).getComponent(0).getFugasityCoefficient() / testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
+        logger.info("fuagcity gas" + testSystem.getPhase(0).getFugacity(0));
+        logger.info("fuagcity liquid" + testSystem.getPhase(1).getFugacity(0));
+        logger.info("K " + testSystem.getPhase(1).getComponent(0).getFugasityCoefficient() / testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
 
 
     }

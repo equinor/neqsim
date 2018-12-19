@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
+import org.apache.log4j.Logger;
 /**
  *
  * @author  Even Solbraa
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestBinaryWSParameterFittingToSolubilityData_Lucia.class);
     
     /** Creates new TestAcentric */
     public TestBinaryWSParameterFittingToSolubilityData_Lucia() {
@@ -40,7 +42,6 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
         
         try{
             int p=0;
-            System.out.println("adding....");
             while(dataSet.next() && p<100){
                 p++;
                 BinaryWSParameterFittingToSolubilityData function = new BinaryWSParameterFittingToSolubilityData();
@@ -87,7 +88,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         dataSet =  database.getResultSet(  "SELECT * FROM LuciaData WHERE Component='methane' AND ID<3000 AND Temperature<520 AND Y<>NULL AND Y>0.00000001 ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
@@ -98,7 +99,6 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
         //    testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
         try{
             int p=0;
-            System.out.println("adding....");
             while(dataSet.next() && p<100){
                 p++;
                 BinaryWSParameterFittingToSolubilityData function = new BinaryWSParameterFittingToSolubilityData(0,0);
@@ -144,7 +144,7 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
             }
         }
         catch(Exception e){
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
         
         SampleSet sampleSet = new SampleSet(sampleList);

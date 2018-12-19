@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -22,6 +23,7 @@ import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
 public class TestAcentricSchwartzentruber extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
+    static Logger logger = Logger.getLogger(TestAcentricSchwartzentruber.class);
 
     /**
      * Creates new TestAcentric
@@ -44,7 +46,6 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
         ResultSet dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='mercury' AND VapourPressure<40 ORDER BY Reference,Temperature");
         //ResultSet dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='TEG' AND VapourPressure<0.5 ORDER BY Reference,Temperature");
         try {
-            System.out.println("adding....");
             while (dataSet.next()) {
                 //AcentricFunctionScwartzentruber function = new AcentricFunctionScwartzentruber();
                 TwuCoon function = new TwuCoon();
@@ -75,7 +76,7 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
                 sampleList.add(sample);
             }
         } catch (Exception e) {
-            System.out.println("database error" + e);
+            logger.error("database error" + e);
         }
 
         SampleSet sampleSet = new SampleSet(sampleList);
