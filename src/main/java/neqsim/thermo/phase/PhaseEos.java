@@ -28,6 +28,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     static Logger logger = Logger.getLogger(PhaseEos.class);
     // Class methods
 
+    @Override
     public Object clone() {
         PhaseEos clonedPhase = null;
         try {
