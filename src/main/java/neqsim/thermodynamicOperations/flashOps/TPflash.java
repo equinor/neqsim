@@ -350,7 +350,6 @@ public class TPflash extends Flash implements java.io.Serializable {
         double chemdev = 0, oldChemDiff = 1.0, diffChem = 1.0;
         do {
             iterations = 0;
-            boolean newtonFailed = false;
             do {
                 iterations++;
 
@@ -365,7 +364,7 @@ public class TPflash extends Flash implements java.io.Serializable {
                     }
                 } else if (iterations >= newtonLimit
                         && Math.abs(system.getPhase(0).getPressure()
-                                - system.getPhase(1).getPressure()) < 1e-5 && !newtonFailed) {
+                                - system.getPhase(1).getPressure()) < 1e-5) {
                     if (iterations == newtonLimit) {
                         secondOrderSolver
                                 = new sysNewtonRhapsonTPflash(system, 2,
