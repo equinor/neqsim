@@ -138,6 +138,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         } catch (Exception e) {
             logger.error("error in NeqSimDataBase " + e.toString(), e);
             logger.error("The database must be rgistered on the local DBMS to work.");
+            throw new RuntimeException(e);
         }
     }
 
@@ -167,6 +168,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
             }
         } catch (Exception ex) {
             logger.error("error loading database driver.. " + ex.toString());
+            throw new RuntimeException(ex);
         }
     }
 
@@ -232,24 +234,17 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         neqsim.util.database.NeqSimDataBase.setUsername("remote");
         neqsim.util.database.NeqSimDataBase.setPassword("remote");
 
-        NeqSimDataBase database
-                = new NeqSimDataBase();
+        NeqSimDataBase database= new NeqSimDataBase();
 
-        ResultSet dataSet
-                = database
-                        .getResultSet("SELECT * FROM COMP WHERE NAME='methane'");
+        ResultSet dataSet= database.getResultSet("SELECT * FROM COMP WHERE NAME='methane'");
 
         try {
-            dataSet
-                    .next();
-            System.out
-                    .println("dataset " + dataSet
-                            .getString("molarmass"));
+            dataSet.next();
+            logger.info("dataset " + dataSet.getString("molarmass"));
 
         } catch (Exception e) {
-            System.out
-                    .println("failed " + e
-                            .toString());
+            logger.error("failed " + e.toString());
+            throw new RuntimeException(e);
         }
 
     }
