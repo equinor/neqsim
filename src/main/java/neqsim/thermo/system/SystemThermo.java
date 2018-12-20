@@ -96,7 +96,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
     public SystemThermo(double T, double P) {
         this();
-        if (T < 0.0 || P < 0.0){
+        if (T < 0.0 || P < 0.0) {
             logger.error("Negative input temperature or pressure");
             neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
@@ -568,13 +568,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      * @param density density of the component in g/cm3
      */
     public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density) {
-        if (density < 0.0 || molarMass < 0.0){
+        if (density < 0.0 || molarMass < 0.0) {
             logger.error("Negative input molar mass or density.");
             neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
-            
+
         }
-        
+
         SystemInterface refSystem = null;
         double TC = 0.0, PC = 0.0, m = 0.0, TB = 0.0, acs = 0.0;
         double penelouxC = 0.0;
@@ -637,7 +637,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             //
             //
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
 
         double critVol = characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);//0.2918-0.0928* acs)*8.314*TC/PC*10.0;
@@ -656,7 +656,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             getPhase(i).getComponent(componentName).setMolarMass(molarMass);
             getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
             getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
-            getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB-273.15);
+            getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
             getPhase(i).getComponent(componentName).setAcentricFactor(refSystem.getPhase(i).getComponent(0).getAcentricFactor());
             getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
             getPhase(i).getComponent(componentName).setRacketZ(racketZ);
@@ -702,7 +702,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             try {
                 dataSet.close();
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
 
             }
         }
@@ -762,10 +762,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
 
         if (addForFirstTime) {
-            if (moles < 0.0){
-            logger.error("Negative input number of moles of component: " + componentName);
-            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
-            throw new RuntimeException(e);
+            if (moles < 0.0) {
+                logger.error("Negative input number of moles of component: " + componentName);
+                neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+                throw new RuntimeException(e);
             }
             // System.out.println("adding " + componentName);
             componentNames.add(componentName);
@@ -794,12 +794,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
 
         if (addForFirstTime) {
-            if (moles < 0.0){
+            if (moles < 0.0) {
                 logger.error("Negative input number of moles.");
                 neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
                 throw new RuntimeException(e);
             }
-            
+
             componentNames.add(componentName);
             double k = 1.0;
             setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
@@ -1465,6 +1465,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         calcInterfaceProperties();
     }
 
+    public void initPhysicalProperties(String propertyName) {
+        for (int i = 0; i < numberOfPhases; i++) {
+            getPhase(i).initPhysicalProperties(propertyName);
+        }
+    }
+
     public void resetPhysicalProperties() {
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).resetPhysicalProperties();
@@ -1555,6 +1561,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
         for (int i = 0; i < maxNumberOfPhases; i++) {
             getPhase(i).setMixingRule(type);
+            getPhase(i).initPhysicalProperties();
             // getPhase(i).getPhysicalProperties().getMixingRule().initMixingRules(getPhase(i));
         }
     }
@@ -1929,8 +1936,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 newPhaseType = 1;
             } else if (phaseTypeName.equals("liquid") || phaseTypeName.equals("oil") || phaseTypeName.equals("aqueous")) {
                 newPhaseType = 0;
-            }
-            else{
+            } else {
                 newPhaseType = 0;
             }
             phaseType[phaseIndex[phaseToChange]] = newPhaseType;
@@ -2391,7 +2397,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     }
                 }
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
             table[getPhases()[0].getNumberOfComponents() + 15][6] = "[N/m]";
 
@@ -2466,7 +2472,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         } catch (Exception e) {
             logger.error("error in SystemThermo Class...resetDatabase() method");
             logger.error("error in comp");
-            logger.error("error",e);
+            logger.error("error", e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -2584,7 +2590,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 getPhase(phase).getComponent(solidComponent).setSolidCheck(true);
                 getPhase(3).getComponent(solidComponent).setSolidCheck(true);
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
         }
         numberOfPhases = oldphase;
@@ -2713,7 +2719,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 ins.close();
             }
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -2724,7 +2730,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 }
             } catch (Exception e) {
                 logger.error("err closing database IN MIX..., e");
-                logger.error("error",e);
+                logger.error("error", e);
             }
         }
 
@@ -2777,7 +2783,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             
              */
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -3056,7 +3062,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             //dataSet.updateString(1,"tesst");
             database.getConnection().close();
         } catch (Exception e) {
-           logger.error("failed " + e.toString());
+            logger.error("failed " + e.toString());
         } finally {
             try {
                 if (database.getStatement() != null) {
@@ -3119,7 +3125,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
             pdfDocument.getDocument().add(anchor);
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         pdfDocument.getDocument().close();
         this.pdfDocument = pdfDocument;
@@ -3299,7 +3305,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             }
 
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         return tempModel;
     }
@@ -3374,7 +3380,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                     }
                     //   }
                 } catch (Exception e) {
-                    logger.error("error",e);
+                    logger.error("error", e);
                 }
                 if (getPhase(i).getPhysicalProperties().calcDensity() < getPhase(i - 1).getPhysicalProperties().calcDensity()) {
                     int tempIndex1 = getPhaseIndex(i - 1);

@@ -16,8 +16,6 @@ import org.apache.log4j.Logger;
  */
 public abstract class PhysicalProperties extends java.lang.Object implements PhysicalPropertiesInterface, java.io.Serializable, ThermodynamicConstantsInterface, Cloneable {
 
-   
-   
     private static final long serialVersionUID = 1000;
     static Logger logger = Logger.getLogger(PhysicalProperties.class);
 
@@ -54,12 +52,13 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
         try {
             properties = (PhysicalProperties) super.clone();
         } catch (Exception e) {
-            logger.error("Cloning failed.",e);
+            logger.error("Cloning failed.", e);
         }
         properties.densityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface) densityCalc.clone();
         properties.diffusivityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface) diffusivityCalc.clone();
         properties.viscosityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface) viscosityCalc.clone();
         properties.conductivityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface) conductivityCalc.clone();
+        properties.mixingRule = (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface) mixingRule.clone();
         return properties;
     }
 
@@ -70,7 +69,7 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
     public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule() {
         return mixingRule;
     }
-    
+
     public void setMixingRuleNull() {
         mixingRule = null;
     }
@@ -141,14 +140,11 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
     public void init(PhaseInterface phase, String type) {
         if (type.equals("density")) {
             density = densityCalc.calcDensity();
-        }
-        else if (type.equals("viscosity")) {
+        } else if (type.equals("viscosity")) {
             viscosity = viscosityCalc.calcViscosity();
-        }
-        else if (type.equals("conductivity")) {
+        } else if (type.equals("conductivity")) {
             conductivity = conductivityCalc.calcConductivity();
-        }
-        else {
+        } else {
             init(phase);
         }
     }

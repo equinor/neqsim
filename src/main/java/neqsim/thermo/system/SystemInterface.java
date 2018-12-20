@@ -18,6 +18,8 @@ public interface SystemInterface extends Cloneable {
 
     public void removePhaseKeepTotalComposition(int specPhase);
 
+    public void initPhysicalProperties(String propertyName);
+
     /**
      * method to return the volume fraction of a phase note: without Peneloux
      * volume correction

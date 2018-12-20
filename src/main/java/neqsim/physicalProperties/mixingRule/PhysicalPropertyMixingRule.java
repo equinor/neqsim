@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
  * @author esol
  * @version
  */
-public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface, java.io.Serializable {
+public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = Logger.getLogger(PhysicalPropertyMixingRule.class);
@@ -26,6 +26,23 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
      * Creates new PhysicalPropertyMixingRule
      */
     public PhysicalPropertyMixingRule() {
+    }
+
+    public Object clone() {
+        PhysicalPropertyMixingRule mixRule = null;
+
+        try {
+            mixRule = (PhysicalPropertyMixingRule) super.clone();
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
+        }
+        
+        double[][] Gij2 = Gij.clone();
+        for (int i = 0; i < Gij2.length; i++) {
+            Gij2[i] = Gij2[i].clone();
+        }
+        mixRule.Gij = Gij2;
+        return mixRule;
     }
 
     public double getViscosityGij(int i, int j) {
@@ -40,81 +57,7 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
         return this;
     }
 
-    public void initMixingRules2(PhaseInterface phase) {
-        Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-        StringTokenizer tokenizer;
-        String token;
-        /*
-        for(int k=0; k<phase.getNumberOfComponents(); k++){
-            String nameOfComponent = phase.getComponents()[k].getComponentName();
-            ClassLoader c1 = this.getClass().getClassLoader();
-            String name = "data/componentData/" + nameOfComponent + ".txt";
-            InputStreamReader reader = new InputStreamReader(c1.getResourceAsStream(name));
-            BufferedReader file = new BufferedReader(reader);
-            
-            try	{
-                c1 = this.getClass().getClassLoader();
-                reader = new InputStreamReader(c1.getResourceAsStream(name));
-                file = new BufferedReader(reader);
-                long filepointer = 0;
-                int index;
-                //long length = file.length();
-                String s;
-                
-                for(int l=0; l<phase.getNumberOfComponents(); l++){
-                    if(l==k){
-                        Gij[k][l]=0.0;
-                    }
-                    else{
-                        //                        file = new RandomAccessFile(path, "r");
-                        c1 = this.getClass().getClassLoader();
-                        reader = new InputStreamReader(c1.getResourceAsStream(name));
-                        file = new BufferedReader(reader);
-                        s = file.readLine();
-                        s = file.readLine();
-                        s = file.readLine();
-                        s = file.readLine();
-                        do {
-                            s = file.readLine();
-                            tokenizer = new StringTokenizer(s);
-                            index = Integer.parseInt(tokenizer.nextToken());
-                        }
-                        while (!(index==phase.getComponents()[l].getIndex()));
-                        
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken() ;
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        tokenizer.nextToken() ;
-                        tokenizer.nextToken();
-                        tokenizer.nextToken();
-                        Gij[k][l] = Double.parseDouble( tokenizer.nextToken()) ;
-                    }
-                }
-                file.close();
-            }
-            catch (Exception e) {
-                String err = e.toString();
-                logger.error(err);
-            }
-
-        }
-        **/
-    }
-
     public void initMixingRules(PhaseInterface phase) {
-        if (Gij != null) {
-            return;
-        }
         // logger.info("reading mix Gij viscosity..");
         Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         neqsim.util.database.NeqSimDataBase database = null;
@@ -131,9 +74,8 @@ public class PhysicalPropertyMixingRule implements PhysicalPropertyMixingRuleInt
                         dataSet = database.getResultSet("SELECT * FROM INTER WHERE (COMP1='" + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name + "')");
                         if (dataSet.next()) {
                             Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
-                        }
-                        else{
-                           Gij[l][k] = 0.0; 
+                        } else {
+                            Gij[l][k] = 0.0;
                         }
                         Gij[k][l] = Gij[l][k];
                         database.getConnection().close();
