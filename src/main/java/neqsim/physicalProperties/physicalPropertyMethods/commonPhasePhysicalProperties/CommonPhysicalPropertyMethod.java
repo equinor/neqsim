@@ -15,7 +15,7 @@ public class CommonPhysicalPropertyMethod extends neqsim.physicalProperties.phys
 
     private static final long serialVersionUID = 1000;
     
-    transient protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase;
+    protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase;
     
     public CommonPhysicalPropertyMethod() {
         super();

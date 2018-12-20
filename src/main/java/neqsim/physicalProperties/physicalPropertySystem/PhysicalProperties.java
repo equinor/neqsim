@@ -16,13 +16,20 @@ import org.apache.log4j.Logger;
  */
 public abstract class PhysicalProperties extends java.lang.Object implements PhysicalPropertiesInterface, java.io.Serializable, ThermodynamicConstantsInterface, Cloneable {
 
+    /**
+     * @param mixingRule the mixingRule to set
+     */
+    public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule) {
+        this.mixingRule = mixingRule;
+    }
+
     private static final long serialVersionUID = 1000;
     static Logger logger = Logger.getLogger(PhysicalProperties.class);
 
     public PhaseInterface phase;
     protected int binaryDiffusionCoefficientMethod;
     protected int multicomponentDiffusionMethod;
-    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule;
+    private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule = null;
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface conductivityCalc;
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface viscosityCalc;
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface diffusivityCalc;
@@ -40,10 +47,6 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
         this.phase = phase;
         this.binaryDiffusionCoefficientMethod = binaryDiffusionCoefficientMethod;
         this.multicomponentDiffusionMethod = multicomponentDiffusionMethod;
-        if (mixingRule == null) {
-            mixingRule = new neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule();
-            mixingRule.initMixingRules(phase);
-        }
     }
 
     public Object clone() {
@@ -58,7 +61,7 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
         properties.diffusivityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface) diffusivityCalc.clone();
         properties.viscosityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface) viscosityCalc.clone();
         properties.conductivityCalc = (neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface) conductivityCalc.clone();
-        properties.mixingRule = (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface) mixingRule.clone();
+        if(mixingRule!=null) properties.mixingRule = (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface) mixingRule.clone();
         return properties;
     }
 
@@ -71,7 +74,7 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
     }
 
     public void setMixingRuleNull() {
-        mixingRule = null;
+        setMixingRule(null);
     }
 
     public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel() {

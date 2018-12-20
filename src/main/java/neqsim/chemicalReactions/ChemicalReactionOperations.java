@@ -40,7 +40,7 @@ public class ChemicalReactionOperations extends Object implements neqsim.thermo.
 
     private static final long serialVersionUID = 1000;
     
-    transient SystemInterface system;
+    SystemInterface system;
     ComponentInterface[] components;
     ChemicalReactionList reactionList = new ChemicalReactionList();
     String[] componentNames;

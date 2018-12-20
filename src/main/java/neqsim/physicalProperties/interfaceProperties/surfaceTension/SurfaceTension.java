@@ -18,7 +18,7 @@ public class SurfaceTension  extends InterfaceProperties implements SurfaceTensi
 
     private static final long serialVersionUID = 1000;
     
-    transient protected SystemInterface system;
+    protected SystemInterface system;
     /** Creates new SurfaceTension */
     public SurfaceTension() {
     }

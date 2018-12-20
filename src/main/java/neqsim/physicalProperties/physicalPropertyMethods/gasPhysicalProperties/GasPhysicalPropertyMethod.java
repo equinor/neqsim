@@ -15,7 +15,7 @@ public class GasPhysicalPropertyMethod extends neqsim.physicalProperties.physica
 
     private static final long serialVersionUID = 1000;
     
-    transient protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase;
+    protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase;
     public double binaryMolecularDiameter[][];
     public double binaryEnergyParameter[][];
     public double binaryMolecularMass[][];

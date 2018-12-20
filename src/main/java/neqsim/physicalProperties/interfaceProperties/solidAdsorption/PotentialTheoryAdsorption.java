@@ -16,7 +16,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = Logger.getLogger(PotentialTheoryAdsorption.class);
 
-    transient SystemInterface system;
+    SystemInterface system;
     double[] eps0;// = 7.458;//7.630; // J/mol
     double[] z0;// = 3.284;// * 1e-3; // m^3/kg
     double[] beta;// = 2.0;

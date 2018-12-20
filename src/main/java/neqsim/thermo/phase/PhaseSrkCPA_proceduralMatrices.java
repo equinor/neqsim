@@ -37,7 +37,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     int[] moleculeNumber = null, assSiteNumber = null;
     private double[][] gvector = null, delta = null, deltaNog = null, deltadT = null, deltadTdT = null;
     private double[][][] Klkni = null;
-    private transient DMatrixRMaj KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
+    private DMatrixRMaj KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
     DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;//new DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);
     static Logger logger = Logger.getLogger(PhaseSrkCPA_proceduralMatrices.class);
     /**

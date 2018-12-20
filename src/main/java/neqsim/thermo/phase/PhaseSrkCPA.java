@@ -36,13 +36,13 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     public CPAMixing cpaSelect = new CPAMixing();
     public CPAMixingInterface cpamix;
     double gcpavv = 0.0, gcpavvv = 0.0, gcpa = 0.0, hcpatot = 1.0, FCPA = 0.0, dFCPAdTdV, dFCPAdTdT = 0.0, dFCPAdT = 0, dFCPAdV = 0, dFCPAdVdV = 0.0, dFCPAdVdVdV = 0.0;
-    double gcpav = 0.0, tempTotVol=0;
-    private double[] dFdNtemp ={0,0};
+    double gcpav = 0.0, tempTotVol = 0;
+    private double[] dFdNtemp = {0, 0};
     int cpaon = 1, oldTotalNumberOfAccociationSites = 0;
     int totalNumberOfAccociationSites = 0;
     int[][][] selfAccociationScheme = null;
     int[][][][] crossAccociationScheme = null;
-    int[] activeAccosComp = new int[100];
+    int[] activeAccosComp = null;//new int[100];
     private double[] lngi;
     int[] moleculeNumber = null, assSiteNumber = null;
     private double[][] gvector = null, delta = null, deltaNog = null, deltadT = null, deltadTdT = null;
@@ -57,6 +57,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         super();
     }
 
+    @Override
     public Object clone() {
         PhaseSrkCPA clonedPhase = null;
         try {
@@ -78,6 +79,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         boolean changedAssosiationStatus = false;
 
         if (type == 0) {
+            activeAccosComp = new int[numberOfComponents];
             for (int i = 0; i < numberOfComponents; i++) {
                 if (componentArray[i].getNumberOfmoles() < 1e-50) {
                     componentArray[i].setNumberOfAssociationSites(0);
@@ -662,8 +664,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         for (int k = 0; k < getNumberOfComponents(); k++) {
             tot2 = 0.0;
             tot3 = 0.0;
-           // temp = ((ComponentSrkCPA) getComponent(k)).calc_lngi(this);
-           // temp2 = ((ComponentSrkCPA) getComponent(k)).calc_lngidV(this);
+            // temp = ((ComponentSrkCPA) getComponent(k)).calc_lngi(this);
+            // temp2 = ((ComponentSrkCPA) getComponent(k)).calc_lngidV(this);
             for (int i = 0; i < getComponent(k).getNumberOfAssociationSites(); i++) {
                 tot2 -= 1.0 * ((ComponentSrkCPA) getComponent(k)).getXsitedV()[i];
                 tot3 += (1.0 - ((ComponentSrkCPA) getComponent(k)).getXsite()[i]) * 1.0;
@@ -671,7 +673,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             tot1 += 1.0 / 2.0 * tot2 * getComponent(k).getNumberOfMolesInPhase();
             tot4 += 0.5 * getComponent(k).getNumberOfMolesInPhase() * tot3;
         }
-        return new double[]{-tot1, - tot4};
+        return new double[]{-tot1, -tot4};
     }
 
     public double calc_hCPA() {
@@ -694,20 +696,20 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     public double calc_lngV() {
-        
+
         tempTotVol = getMolarVolume();
         // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() / ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
         return 1.0 / (2.0 - getB() / (4.0 * tempTotVol)) * getB() / (4.0 * tempTotVol * tempTotVol) - 3.0 / (1.0 - getB() / (4.0 * tempTotVol)) * getB() / (4.0 * tempTotVol * tempTotVol);
     }
 
     public double calc_lngVV() {
-        
+
         tempTotVol = getMolarVolume();
-        return 2.0 * (640.0 * Math.pow(tempTotVol, 3.0) - 216.0 * getB() * tempTotVol * tempTotVol + 24.0 * Math.pow(getB(), 2.0) * tempTotVol- Math.pow(getB(), 3.0)) * getB() / (tempTotVol * tempTotVol) / Math.pow(8.0 * tempTotVol - getB(), 2.0) / Math.pow(4.0 *tempTotVol - getB(), 2.0);
+        return 2.0 * (640.0 * Math.pow(tempTotVol, 3.0) - 216.0 * getB() * tempTotVol * tempTotVol + 24.0 * Math.pow(getB(), 2.0) * tempTotVol - Math.pow(getB(), 3.0)) * getB() / (tempTotVol * tempTotVol) / Math.pow(8.0 * tempTotVol - getB(), 2.0) / Math.pow(4.0 * tempTotVol - getB(), 2.0);
     }
 
     public double calc_lngVVV() {
-        
+
         tempTotVol = getMolarVolume();
         return 4.0 * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(tempTotVol, 4.0) * getB() - 4192.0 * Math.pow(tempTotVol, 3.0) * Math.pow(getB(), 2.0) + 528.0 * Math.pow(getB(), 3.0) * tempTotVol * tempTotVol - 36.0 * tempTotVol * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(tempTotVol, 5.0)) * getB() / (Math.pow(tempTotVol, 3.0)) / Math.pow(-8.0 * tempTotVol + getB(), 3.0) / Math.pow(-4.0 * tempTotVol + getB(), 3.0);
     }

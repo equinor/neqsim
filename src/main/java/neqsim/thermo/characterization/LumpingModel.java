@@ -32,7 +32,7 @@ public class LumpingModel implements Serializable {
     private static final long serialVersionUID = 1000;    
     int numberOfLumpedComponents = 7;
     String name = "";
-    transient SystemInterface system = null;
+    SystemInterface system = null;
     static Logger logger = Logger.getLogger(LumpingModel.class);
 
     public LumpingModel(SystemInterface system) {

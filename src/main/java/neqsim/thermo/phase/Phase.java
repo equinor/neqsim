@@ -21,7 +21,7 @@
  */
 package neqsim.thermo.phase;
 
-import neqsim.physicalProperties.PhysicalPropertiyHandler;
+import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import static neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS;
 import static neqsim.thermo.ThermodynamicConstantsInterface.R;
@@ -44,7 +44,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     private boolean constantPhaseVolume = false;
     public int numberOfComponents = 0, physicalPropertyType = 0;
     protected boolean useVolumeCorrection = true;
-    public neqsim.physicalProperties.PhysicalPropertiyHandler physicalPropertiyHandler = null;
+    public neqsim.physicalProperties.PhysicalPropertyHandler physicalPropertyHandler = null;
     public double numberOfMolesInPhase = 0;
     protected double molarVolume = 1.0, phaseVolume = 1.0;
     public boolean chemSyst = false;
@@ -54,7 +54,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     private int initType = 0;
     int mixingRuleNumber = 0;
     double temperature = 0, pressure = 0;
-    transient PhaseInterface[] refPhase = null;
+    PhaseInterface[] refPhase = null;
     int phaseType = 0;
     protected String phaseTypeName = "gas";
     static Logger logger = Logger.getLogger(Phase.class);
@@ -85,8 +85,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             clonedPhase.componentArray[i] = (ComponentInterface) this.componentArray[i].clone();
         }
         //System.out.println("cloed length: " + componentArray.length);
-        if (physicalPropertiyHandler != null) {
-            clonedPhase.physicalPropertiyHandler = ((neqsim.physicalProperties.PhysicalPropertiyHandler) this.physicalPropertiyHandler.clone());
+        if (physicalPropertyHandler != null) {
+            clonedPhase.physicalPropertyHandler = ((neqsim.physicalProperties.PhysicalPropertyHandler) this.physicalPropertyHandler.clone());
         }
 
         return clonedPhase;
@@ -293,10 +293,10 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
-        if (physicalPropertiyHandler == null) {
+        if (physicalPropertyHandler == null) {
             return null;
         } else {
-            return physicalPropertiyHandler.getPhysicalProperty(this);
+            return physicalPropertyHandler.getPhysicalProperty(this);
         }
     }
 
@@ -330,33 +330,33 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * Model 0 Orginal/default 1 Water 2 Glycol 3 Amine
      */
     public void setPhysicalProperties(int type) {
-        if (physicalPropertiyHandler == null) {
-            physicalPropertiyHandler = new PhysicalPropertiyHandler();
+        if (physicalPropertyHandler == null) {
+            physicalPropertyHandler = new PhysicalPropertyHandler();
         }
-        physicalPropertiyHandler.setPhysicalProperties(this, type);
+        physicalPropertyHandler.setPhysicalProperties(this, type);
 
     }
 
     public void resetPhysicalProperties() {
-        physicalPropertiyHandler = null;
+        physicalPropertyHandler = null;
     }
 
     public void initPhysicalProperties() {
-        if (physicalPropertiyHandler == null) {
-            physicalPropertiyHandler = new PhysicalPropertiyHandler();
+        if (physicalPropertyHandler == null) {
+            physicalPropertyHandler = new PhysicalPropertyHandler();
         }
 
-        if (physicalPropertiyHandler.getPhysicalProperty(this) == null) {
+        if (physicalPropertyHandler.getPhysicalProperty(this) == null) {
             setPhysicalProperties(physicalPropertyType);
         }
         getPhysicalProperties().init(this);
     }
 
     public void initPhysicalProperties(String type) {
-        if (physicalPropertiyHandler == null) {
-            physicalPropertiyHandler = new PhysicalPropertiyHandler();
+        if (physicalPropertyHandler == null) {
+            physicalPropertyHandler = new PhysicalPropertyHandler();
         }
-        if (physicalPropertiyHandler.getPhysicalProperty(this) == null) {
+        if (physicalPropertyHandler.getPhysicalProperty(this) == null) {
             setPhysicalProperties(physicalPropertyType);
         }
 
