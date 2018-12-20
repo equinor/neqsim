@@ -20,6 +20,8 @@ package neqsim.util.database;
  *
  * Created on 1. november 2001, 08:56
  */
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.sql.*;
 import org.apache.log4j.Logger;
 
@@ -43,7 +45,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     // connection string to MSAccess neqsim database jdbc:odbc:Driver={Microsoft Access Driver (*.mdb)};DBQ=C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase";
     // connection string to MSAccess neqsim database using UCanAccess "jdbc:ucanaccess://" + dataBasePathMSAccess + ";memory=true")
     // connection string to 
-    public static String dataBasePathMSAccess = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
+    public static String dataBasePath = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
 
     private Statement statement = null;
     protected Connection databaseConnection = null;
@@ -81,9 +83,12 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                     dir = System.getProperty("NeqSim.home");
                 }
                 return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
-            }
-            if (dataBaseType.equals("MSAccessUCanAccess")) {
-                return DriverManager.getConnection("jdbc:ucanaccess://" + dataBasePathMSAccess + ";memory=true");
+                
+            } else if (dataBaseType.equals("H2")) {
+                Path path = FileSystems.getDefault().getPath(dataBasePath);
+                return DriverManager.getConnection ("jdbc:h2:" + path.toAbsolutePath().toString() + ";DATABASE_TO_UPPER=false", "sa",""); 
+            } else if (dataBaseType.equals("MSAccessUCanAccess")) {
+                return DriverManager.getConnection("jdbc:ucanaccess://" + dataBasePath + ";memory=true");
             } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
                 return DriverManager.getConnection(getConnectionString(), username, password);
             } else if (dataBaseType.equals("oracle")) {
@@ -151,6 +156,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         try {
             if (dataBaseType.equals("MSAccess")) {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
+            } else if (dataBaseType.equals("H2")) {
+                Class.forName("org.h2.Driver"); 
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
                 Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
             } else if (dataBaseType.equals("mySQL")) {
@@ -224,7 +231,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
          */
 
         // example of how to use local Access database
-        NeqSimDataBase.dataBasePathMSAccess
+        NeqSimDataBase.dataBasePath
                 = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
         NeqSimDataBase.dataBaseType
                 = "MSAccessUCanAccess";
