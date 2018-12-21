@@ -2627,6 +2627,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             if (multiPhaseCheck) {
                 phaseArray[2] = (PhaseInterface) phaseArray[1].clone();
                 phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
+                phaseArray[2].resetPhysicalProperties();
+                phaseArray[2].initPhysicalProperties();
             }
         }
         this.multiPhaseCheck = multiPhaseCheck;
@@ -3374,11 +3376,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 }
 
                 try {
-                    //   if (change || getPhase(i).getPhysicalProperties() == null) {
-                    if (getPhase(i).getPhysicalProperties() == null) {
+                    if (change || getPhase(i).getPhysicalProperties() == null) {
                         getPhase(i).initPhysicalProperties("density");
                     }
-                    //   }
                 } catch (Exception e) {
                     logger.error("error", e);
                 }

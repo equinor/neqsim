@@ -81,14 +81,15 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
 
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperty(PhaseInterface phase) {
-        if (phase.getPhaseTypeName().equals("gas")) {
-            return gasPhysicalProperties;
-        } else if (phase.getPhaseTypeName().equals("oil")) {
-            return oilPhysicalProperties;
-        } else if (phase.getPhaseTypeName().equals("aqueous")) {
-            return aqueousPhysicalProperties;
-        } else {
-            return gasPhysicalProperties;
+        switch (phase.getPhaseTypeName()) {
+            case "gas":
+                return gasPhysicalProperties;
+            case "oil":
+                return oilPhysicalProperties;
+            case "aqueous":
+                return aqueousPhysicalProperties;
+            default:
+                return gasPhysicalProperties;
         }
     }
 
