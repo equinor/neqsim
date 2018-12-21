@@ -22,7 +22,7 @@ public class PhaseHydrate extends Phase {
      * Creates new PhaseHydrate
      */
     public PhaseHydrate() {
-        phaseTypeName = "hydrate S1";
+        phaseTypeName = "hydrate";
     }
     
     public PhaseHydrate(String fluidModel){

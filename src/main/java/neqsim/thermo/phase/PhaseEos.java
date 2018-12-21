@@ -275,8 +275,8 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
                 BonVold = 100;
             }
             if (BonV < 0) {
-                BonV = Math.abs(BonV);
-                //BonV = 1.0e-10;
+                //BonV = Math.abs(BonV);
+                BonV = 1.0e-10;
                 BonVold = 10;
             }
 

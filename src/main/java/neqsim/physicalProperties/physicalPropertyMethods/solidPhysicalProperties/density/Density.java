@@ -4,7 +4,8 @@
  * Created on 24. januar 2001, 19:49
  */
 
-package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density;
+package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.density;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -12,7 +13,7 @@ import org.apache.log4j.Logger;
  * @author  Even Solbraa
  * @version
  */
-public class Density extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface{
+public class Density extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface{
 
     private static final long serialVersionUID = 1000;
     static Logger logger = Logger.getLogger(Density.class);
@@ -47,10 +48,10 @@ public class Density extends neqsim.physicalProperties.physicalPropertyMethods.l
         double tempVar=0.0;
         if(liquidPhase.getPhase().useVolumeCorrection()){
             for(int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-                tempVar += liquidPhase.getPhase().getComponents()[i].getx()*(liquidPhase.getPhase().getComponents()[i].getVolumeCorrection()+liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()*(liquidPhase.getPhase().getTemperature()-288.15)) ;
+             //   tempVar += liquidPhase.getPhase().getComponents()[i].getx()*(liquidPhase.getPhase().getComponents()[i].getVolumeCorrection()+liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()*(liquidPhase.getPhase().getTemperature()-288.15)) ;
             }
         }
         //System.out.println("density correction tempvar " + tempVar);
-       return 1.0/(liquidPhase.getPhase().getMolarVolume()-tempVar)*liquidPhase.getPhase().getMolarMass()*1.0e5;
+       return 980.0;
     }
 }

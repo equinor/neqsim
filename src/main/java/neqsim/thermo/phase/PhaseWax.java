@@ -20,6 +20,7 @@ public class PhaseWax extends PhaseSolid {
     /** Creates new PhasePureComponentSolid */
     public PhaseWax() {
         super();
+        phaseTypeName = "wax";
     }
 
     public Object clone() {

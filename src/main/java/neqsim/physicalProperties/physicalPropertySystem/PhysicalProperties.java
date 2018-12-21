@@ -42,6 +42,10 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
      */
     public PhysicalProperties() {
     }
+    
+     public PhysicalProperties(PhaseInterface phase) {
+        this.phase = phase;
+    }
 
     public PhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
         this.phase = phase;

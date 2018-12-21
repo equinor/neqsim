@@ -15,6 +15,7 @@
  */
 package neqsim.physicalProperties;
 
+import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 import org.apache.log4j.Logger;
 
@@ -27,6 +28,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties = null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties = null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface aqueousPhysicalProperties = null;
+    private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhysicalProperties = null;
     private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule mixingRule = null;
     static Logger logger = Logger.getLogger(PhysicalPropertyHandler.class);
     private static final long serialVersionUID = 1000;
@@ -72,6 +74,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
                 setPhysicalProperties(phase, 0);
                 break;
         }
+        solidPhysicalProperties = new SolidPhysicalProperties(phase);
         mixingRule = new neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule();
         mixingRule.initMixingRules(phase);
         gasPhysicalProperties.setMixingRule(mixingRule);
@@ -88,6 +91,12 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
                 return oilPhysicalProperties;
             case "aqueous":
                 return aqueousPhysicalProperties;
+            case "solid":
+                return solidPhysicalProperties;
+            case "wax":
+                return solidPhysicalProperties;
+            case "hydrate":
+                return solidPhysicalProperties;
             default:
                 return gasPhysicalProperties;
         }
@@ -112,6 +121,9 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
             }
             if (aqueousPhysicalProperties != null) {
                 clonedHandler.aqueousPhysicalProperties = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) aqueousPhysicalProperties.clone();
+            }
+            if (solidPhysicalProperties != null) {
+                clonedHandler.solidPhysicalProperties = (neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface) solidPhysicalProperties.clone();
             }
             if (mixingRule != null) {
                 clonedHandler.mixingRule = (neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule) mixingRule.clone();
