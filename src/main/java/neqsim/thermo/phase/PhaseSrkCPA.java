@@ -65,8 +65,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        clonedPhase.activeAccosComp = activeAccosComp.clone();
-        System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0, activeAccosComp.length);
+        if (activeAccosComp != null) {
+            clonedPhase.activeAccosComp = activeAccosComp.clone();
+            System.arraycopy(this.activeAccosComp, 0, clonedPhase.activeAccosComp, 0, activeAccosComp.length);
+        }
         // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
         //clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
         // clonedPhase.cpamix = cpaSelect.getMixingRule(1, this);
