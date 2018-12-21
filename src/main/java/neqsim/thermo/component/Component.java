@@ -168,16 +168,16 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
                     dataSet.getString("ID");
                     //   if(dataSet.isAfterLast()) dataSet.next(); 
                 } catch (Exception e) {
-                    try{
-                    dataSet.close();
-                    logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
-                    dataSet.next(); 
-                    }catch (Exception e2){
+                    try {
+                        dataSet.close();
+                        logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+                        dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                        dataSet.next();
+                    } catch (Exception e2) {
                         throw new RuntimeException(e2);
                     }
                 }
-         
+
                 setComponentType(dataSet.getString("comptype"));
                 setCASnumber(dataSet.getString("CASnumber"));
                 index = Integer.parseInt(dataSet.getString("compindex"));
@@ -395,15 +395,31 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
     public void addMolesChemReac(double dn) {
         numberOfMoles += dn;
         numberOfMolesInPhase += dn;
+        if (numberOfMoles < 0) {
+            numberOfMoles = 0;
+        }
+        if (numberOfMolesInPhase < 0) {
+            numberOfMolesInPhase = 0;
+        }
     }
 
     public void addMolesChemReac(double dn, double totdn) {
         numberOfMoles += totdn;
         numberOfMolesInPhase += dn;
+
+        if (numberOfMoles < 0) {
+            numberOfMoles = 0;
+        }
+        if (numberOfMolesInPhase < 0) {
+            numberOfMolesInPhase = 0;
+        }
     }
 
     public void addMoles(double dn) {
         numberOfMolesInPhase += dn;
+        if (numberOfMolesInPhase < 0) {
+            numberOfMolesInPhase = 0;
+        }
     }
 
     public void setProperties(ComponentInterface component) {
