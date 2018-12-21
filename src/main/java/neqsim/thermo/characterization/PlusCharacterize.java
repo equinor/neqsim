@@ -28,7 +28,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     double[] SRKcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
     double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
     double[] plusCoefs = {0.0007774204804, -0.02390179};
-    transient SystemInterface system = null;
+    SystemInterface system = null;
     static Logger logger = Logger.getLogger(PlusCharacterize.class);
 
     /** Creates a new instance of TBPCharacterize */

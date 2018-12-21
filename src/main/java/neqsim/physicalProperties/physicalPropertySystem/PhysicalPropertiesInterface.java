@@ -16,9 +16,13 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
     public double getPureComponentViscosity(int i);
 
+    public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
+
+    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
+
     public double getViscosity();
-    
-      public void setMixingRuleNull();
+
+    public void setMixingRuleNull();
 
     public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
 
@@ -50,7 +54,6 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
     public void init(PhaseInterface phase, String type);
 
-    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
 
     public Object clone();
 

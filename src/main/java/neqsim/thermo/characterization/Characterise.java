@@ -29,7 +29,7 @@ import org.apache.log4j.Logger;
  */
 public class Characterise extends Object implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;    
-    transient SystemInterface system = null;
+     SystemInterface system = null;
      TBPCharacterize TBPCharacterise = null;
      private TBPModelInterface TBPfractionModel = null;
      private PlusFractionModel plusFractionModelSelector = null;

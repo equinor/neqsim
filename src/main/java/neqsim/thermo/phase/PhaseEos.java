@@ -85,7 +85,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
             phaseTypeName = phase == 0 ? "liquid" : "gas";
             try {
                 if (calcMolarVolume) {
-                    setMolarVolume(molarVolume(pressure, temperature, getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase, phase));
+                    molarVolume = molarVolume(pressure, temperature, getA() / numberOfMolesInPhase / numberOfMolesInPhase, getB() / numberOfMolesInPhase, phase);
                 }
             } catch (Exception e) {
                 logger.error("Failed to solve for molarVolume within the iteration limit.");
@@ -282,13 +282,13 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
             error = Math.abs((BonV - BonVold)/BonVold);
             //logger.info("error " + error);
-            /*
-            if (error>errorOld && !changeFase) {
+            
+            if (iterations>150 && error>errorOld && !changeFase) {
                 changeFase = true;
                 BonVold = 10.0;
                 BonV = phase == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
             }
-*/
+
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
              // logger.info("Math.abs((BonV - BonVold)) " + Math.abs((BonV - BonVold)));

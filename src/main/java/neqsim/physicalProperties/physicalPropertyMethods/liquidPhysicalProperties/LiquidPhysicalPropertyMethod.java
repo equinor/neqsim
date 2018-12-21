@@ -15,7 +15,7 @@ public class LiquidPhysicalPropertyMethod extends neqsim.physicalProperties.phys
 
     private static final long serialVersionUID = 1000;
     
-    transient protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase;
+    protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase;
     
     public LiquidPhysicalPropertyMethod() {
         super();

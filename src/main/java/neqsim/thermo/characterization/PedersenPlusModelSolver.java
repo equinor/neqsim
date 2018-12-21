@@ -11,7 +11,7 @@ public class PedersenPlusModelSolver extends Object implements java.io.Serializa
     Matrix fvecAB, fvecCD;
     Matrix solAB, solCD, dx;
     int numberOfComponents = 0;
-    transient PlusFractionModel.PedersenPlusModel characterizeClass;
+    PlusFractionModel.PedersenPlusModel characterizeClass;
     SystemInterface system = null;
     static Logger logger = Logger.getLogger(PedersenPlusModelSolver.class);
 

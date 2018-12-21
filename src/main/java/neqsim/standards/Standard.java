@@ -25,7 +25,7 @@ public abstract class Standard implements StandardInterface{
     protected String standardDescription = "Base Description";
     protected ContractInterface salesContract = new BaseContract();
     protected String[][] resultTable = null;
-    transient protected SystemInterface thermoSystem;
+    protected SystemInterface thermoSystem;
     protected ThermodynamicOperations thermoOps;
     private String referenceState = "real";  //"ideal"real
     

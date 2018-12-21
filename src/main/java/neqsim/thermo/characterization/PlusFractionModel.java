@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 public class PlusFractionModel implements Serializable {
     private static final long serialVersionUID = 1000;    
     private String name = "";
-    transient SystemInterface system = null;
+    SystemInterface system = null;
     double MPlus = 0.0, zPlus = 0.0, densPlus = 0.0;
     int firstPlusFractionNumber = 1;
     int lastPlusFractionNumber = 80;
