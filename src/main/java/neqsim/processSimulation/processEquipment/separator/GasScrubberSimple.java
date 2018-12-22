@@ -84,15 +84,19 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
-        calcLiquidCarryoverFraction();
-        thermoSystem.addLiquidToGas(getLiquidCarryoverFraction());
+        if (separatorSection.size() > 0) {
+            calcLiquidCarryoverFraction();
+            thermoSystem.addLiquidToGas(getLiquidCarryoverFraction());
+        }
         gasSystem = thermoSystem.phaseToSystem(0);
         gasSystem.setNumberOfPhases(1);
         gasOutStream.setThermoSystem(gasSystem);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        thermoSystem.addGasToLiquid(getGasCarryunderFraction());
-        liquidSystem = thermoSystem.phaseToSystem(1);
+        if (separatorSection.size() > 0) {
+            thermoSystem.addGasToLiquid(getGasCarryunderFraction());
+            liquidSystem = thermoSystem.phaseToSystem(1);
+        }
         liquidSystem.setNumberOfPhases(1);
         liquidOutStream.setThermoSystem(liquidSystem);
     }

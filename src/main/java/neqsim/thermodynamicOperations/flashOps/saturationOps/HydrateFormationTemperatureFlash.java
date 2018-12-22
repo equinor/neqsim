@@ -64,8 +64,8 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
             if (iter > 2 && Math.abs(diff) > Math.abs(oldDiff)) {
                 system.setTemperature((oldTemp + system.getTemperature()) / 2.0 );
             }
-            logger.info("diff " + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
-            logger.info("temperature " + system.getTemperature() + " iter " + iter);
+           // logger.info("diff " + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
+          //  logger.info("temperature " + system.getTemperature() + " iter " + iter);
             //logger.info("x water " + system.getPhase(4).getComponent("water").getx());
             try{
                 Thread.sleep(100);
@@ -107,14 +107,14 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
             }
 
             double diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
-            logger.info("iter " + iter + " diff " + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
+            //logger.info("iter " + iter + " diff " + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
             oldOldTemp = oldTemp;
             oldTemp = system.getTemperature();
 
             oldOldDiff = oldDiff;
             oldDiff = diff;
 
-            logger.info("temperature " + system.getTemperature());
+           // logger.info("temperature " + system.getTemperature());
             //logger.info("x water " + system.getPhase(4).getComponent("water").getx());
         } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100 || iter < 3);
     }

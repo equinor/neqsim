@@ -340,7 +340,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                     }
                     system.getPhases()[3].getComponents()[solid].setx(1.0);
                 }
-                logger.info("tempVar: " + tempVar[k]);
+                //logger.info("tempVar: " + tempVar[k]);
             }
         }
 

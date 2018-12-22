@@ -15,18 +15,18 @@ public class SolidPhysicalPropertyMethod extends neqsim.physicalProperties.physi
 
     private static final long serialVersionUID = 1000;
     
-    protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase;
+    protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase;
     
     public SolidPhysicalPropertyMethod() {
         super();
     }
     
-    public SolidPhysicalPropertyMethod(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+    public SolidPhysicalPropertyMethod(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super();
-        this.liquidPhase = liquidPhase;
+        this.solidPhase = solidPhase;
     }
     
-     public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase){
-        this.liquidPhase = phase;
+     public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase){
+        this.solidPhase = solidPhase;
     }
 }

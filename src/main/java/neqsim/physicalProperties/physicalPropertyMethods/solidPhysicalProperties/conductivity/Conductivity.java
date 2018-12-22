@@ -18,7 +18,6 @@ public class Conductivity extends neqsim.physicalProperties.physicalPropertyMeth
     static Logger logger = Logger.getLogger(Conductivity.class);
 
     double conductivity = 0;
-    public double[] pureComponentConductivity;
 
     /**
      * Creates new Conductivity
@@ -28,7 +27,6 @@ public class Conductivity extends neqsim.physicalProperties.physicalPropertyMeth
 
     public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
-        pureComponentConductivity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
     public Object clone() {
@@ -37,21 +35,20 @@ public class Conductivity extends neqsim.physicalProperties.physicalPropertyMeth
         try {
             properties = (Conductivity) super.clone();
         } catch (Exception e) {
-            logger.error("Cloning failed.",e);
+            logger.error("Cloning failed.", e);
         }
 
         return properties;
     }
 
     public double calcConductivity() {
-        double tempVar = 0, tempVar2 = 0;
-
-        conductivity = 0.0;
+        //using default value of parafin wax
+        if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
+            conductivity = 0.25;
+        } else {
+            conductivity = 2.18;
+        }
 
         return conductivity;
-    }
-
-    public void calcPureComponentConductivity() {
-       
     }
 }

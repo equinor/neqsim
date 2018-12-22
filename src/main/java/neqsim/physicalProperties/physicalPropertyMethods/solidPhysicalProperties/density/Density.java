@@ -24,7 +24,7 @@ public class Density extends neqsim.physicalProperties.physicalPropertyMethods.s
     }
     
     public Density(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
-        this.liquidPhase = liquidPhase;
+        this.solidPhase = liquidPhase;
     }
     
     public Object clone(){
@@ -46,12 +46,12 @@ public class Density extends neqsim.physicalProperties.physicalPropertyMethods.s
     public double calcDensity(){
         
         double tempVar=0.0;
-        if(liquidPhase.getPhase().useVolumeCorrection()){
-            for(int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-             //   tempVar += liquidPhase.getPhase().getComponents()[i].getx()*(liquidPhase.getPhase().getComponents()[i].getVolumeCorrection()+liquidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()*(liquidPhase.getPhase().getTemperature()-288.15)) ;
+        if(solidPhase.getPhase().useVolumeCorrection()){
+            for(int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
+                tempVar += solidPhase.getPhase().getComponents()[i].getx()*(solidPhase.getPhase().getComponents()[i].getVolumeCorrection()+solidPhase.getPhase().getComponents()[i].getVolumeCorrectionT()*(solidPhase.getPhase().getTemperature()-288.15)) ;
             }
         }
         //System.out.println("density correction tempvar " + tempVar);
-       return 980.0;
+       return 1.0/(solidPhase.getPhase().getMolarVolume()-tempVar)*solidPhase.getPhase().getMolarMass()*1e5;
     }
 }

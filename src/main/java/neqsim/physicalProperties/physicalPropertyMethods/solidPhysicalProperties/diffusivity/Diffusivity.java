@@ -28,8 +28,8 @@ public class Diffusivity  extends neqsim.physicalProperties.physicalPropertyMeth
     
     public Diffusivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
-        binaryDiffusionCoeffisients = new double[liquidPhase.getPhase().getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];
-        effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
+        binaryDiffusionCoeffisients = new double[solidPhase.getPhase().getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];
+        effectiveDiffusionCoefficient = new double[solidPhase.getPhase().getNumberOfComponents()];
         
     }
     
@@ -44,8 +44,8 @@ public class Diffusivity  extends neqsim.physicalProperties.physicalPropertyMeth
         }
         
         properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();
-        for(int i=0;i<liquidPhase.getPhase().getNumberOfComponents();i++){
-            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0, properties.binaryDiffusionCoeffisients[i], 0, liquidPhase.getPhase().getNumberOfComponents());
+        for(int i=0;i<solidPhase.getPhase().getNumberOfComponents();i++){
+            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0, properties.binaryDiffusionCoeffisients[i], 0, solidPhase.getPhase().getNumberOfComponents());
         }
         return properties;
     }

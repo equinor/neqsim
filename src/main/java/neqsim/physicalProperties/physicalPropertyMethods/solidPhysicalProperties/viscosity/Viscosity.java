@@ -5,6 +5,7 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.viscosity;
 
+import static java.lang.Double.NaN;
 import org.apache.log4j.Logger;
 
 /**
@@ -43,7 +44,7 @@ public class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods
 
     public double calcViscosity() {
 
-        double viscosity = 0.0;
+        double viscosity = NaN;
         return viscosity;
     }
 
