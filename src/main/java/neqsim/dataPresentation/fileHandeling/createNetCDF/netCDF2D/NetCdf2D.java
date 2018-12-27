@@ -54,6 +54,7 @@ public class NetCdf2D {
     
     
     public void createFile(){
+    	
         try {
         NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, fileName, null);
         }  catch (IOException e) {
@@ -75,6 +76,8 @@ public class NetCdf2D {
             lonD.add(ncfile.addDimension(null,yName2[i], yvalues2[i].length));
             Variable u = ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
       //      u.addAttribute(new Attribute("units", "degrees_east"));
+       
+       
         }
         
      //   ncfile.addGroupAttribute(null, new Attribute("title", "Example Data"));
@@ -107,6 +110,7 @@ public class NetCdf2D {
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
+        
     }
     
     public static void main(String[] args){

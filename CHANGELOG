@@ -4,5 +4,11 @@ Version 2018.1
 Version 2018.2
 - update base package to neqsim
 
-Version 2018.3 (in progress)
+Version 2018.3
 - updates on multithreading performance
+
+version 2018.4
+- included test framework (Junit5) as part of maven builds
+
+version 2018.5 (in progress)
+- stability and speed improvements
