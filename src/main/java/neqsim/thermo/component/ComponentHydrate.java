@@ -67,7 +67,6 @@ public class ComponentHydrate extends Component {
         java.sql.ResultSet dataSet = null;
         try {
             if (!component_name.equals("default")) {
-
                 try {
                     dataSet = database.getResultSet(("SELECT * FROM COMPTEMP WHERE name='" + component_name + "'"));
                     dataSet.next();

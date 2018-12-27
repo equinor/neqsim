@@ -140,14 +140,14 @@ public class PedersenPlusModelSolver extends Object implements java.io.Serializa
             setfvecAB();
             setJacAB();
             dx = JacAB.solve(fvecAB);
-            logger.info("dx: ");
-            dx.print(10, 3);
+            //logger.info("dx: ");
+            //dx.print(10, 3);
 
             solAB.minusEquals(dx.times((iter) / (iter + 50.0)));
             characterizeClass.setCoefs(solAB.transpose().copy().getArray()[0]);
         } while (((fvecAB.norm2() > 1e-6 || iter < 3) && iter < 200));
-        logger.info("ok char: ");
-        solAB.print(10, 10);
+        //logger.info("ok char: ");
+        //solAB.print(10, 10);
 
         iter = 0;
         do {
@@ -155,13 +155,13 @@ public class PedersenPlusModelSolver extends Object implements java.io.Serializa
             setfvecCD();
             setJacCD();
             dx = JacCD.solve(fvecCD);
-            logger.info("dxCD: ");
-            dx.print(10, 3);
+            //logger.info("dxCD: ");
+            //dx.print(10, 3);
 
             solCD.minusEquals(dx.times((iter) / (iter + 5.0)));
             characterizeClass.setCoefs(solCD.transpose().copy().getArray()[0][0], 2);
             characterizeClass.setCoefs(solCD.transpose().copy().getArray()[0][1], 3);
         } while (((fvecCD.norm2() > 1e-6 || iter < 3) && iter < 200));
-        solCD.print(10, 10);
+       // solCD.print(10, 10);
     }
 }

@@ -149,8 +149,9 @@ public class TBPfractionModel implements Serializable {
             return 97.58 * Math.pow(molarMass, 0.3323) * Math.pow(density, 0.04609);
         }
 
+        @Override
         public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density) {
-            double penelouxC = (thermoSystem.getPhase(1).getMolarVolume() - molarMass / (density * 10.0));
+            double penelouxC = (thermoSystem.getPhase(0).getMolarVolume() - molarMass / (density * 10.0));
             // System.out.println("peneloux c " + penelouxC);
             double TC = calcTC(molarMass, density);
             double TB = calcTB(molarMass, density);

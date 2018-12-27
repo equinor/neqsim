@@ -43,7 +43,7 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash{
             ops.hydrateFormationTemperature();
             }
             catch(Exception e){
-                logger.error("error",e);
+                //logger.error("error",e);
             }
             hydratePoints[0][i] = system.getTemperature();
             hydratePoints[1][i] = system.getPressure();
