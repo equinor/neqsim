@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*
+ /*
  * PHflash.java
  *
  * Created on 8. mars 2001, 10:56
@@ -73,7 +73,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (system.hasPhaseType("aqueous")) {
             lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
         } else {
-            lastdn = system.getPhase(0).getNumberOfMolesInPhase()/ 10.0;
+            lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 10.0;
         }
 
         do {
@@ -91,8 +91,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
             tpFlash.run();
             // system.display();
             hasAq = system.hasPhaseType("aqueous");
-        } while ((i < 50 && Math.abs(dn) > 1e-6) || !hasAq && i<50);
-        if(i==50) {
+        } while ((i < 50 && Math.abs(dn) > 1e-6) || !hasAq && i < 50);
+        if (i == 50) {
             logger.error("could not find solution - in water sturate : dn  " + dn);
         }
         //logger.info("i " + i + " dn " + dn);
@@ -102,34 +102,35 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
     }
 
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 120.0, 210.0);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 70.0, 150.0);
 
-        testSystem.addComponent("methane", 19.90);
-    //    testSystem.addComponent("ethane", 0.06);
-    //    testSystem.addComponent("propane", 0.02);
-     //   testSystem.addComponent("n-heptane", 2.02);
-        //       testSystem.addTBPfraction("C7", 0.10, 100.0 / 1000.0, 0.73);
-        //       testSystem.addTBPfraction("C8", 0.20, 130.0 / 1000.0, 0.773);
-        //     testSystem.addComponent("CO2", 0.02);
-              testSystem.addComponent("water", 1);
+        testSystem.addComponent("methane", 75.0);
+        testSystem.addComponent("ethane", 7.5);
+        testSystem.addComponent("propane", 4.0);
+        testSystem.addComponent("n-butane", 1.0);
+        testSystem.addComponent("i-butane", 0.6);
+        testSystem.addComponent("n-hexane", 0.3);
+        testSystem.addPlusFraction("C6", 1.3, 100.3 / 1000.0, 0.8232);
+       // testSystem.addComponent("water", 0.3);
+
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(9);
+        testSystem.setMixingRule(10);
         testSystem.setMultiPhaseCheck(true);
         testSystem.init(0);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
             testOps.TPflash();
-            testSystem.display();
+            //  testSystem.display();
             testOps.saturateWithWater();
-            testSystem.display();
+            //     testSystem.display();
             //   testSystem.addComponent("water", 1);
-            testOps.saturateWithWater();
+            //testOps.saturateWithWater();
             testSystem.display();
-          //  testOps.TPflash();
+            //  testOps.TPflash();
         } catch (Exception e) {
             logger.error(e.toString());
         }
-        testSystem.display();
+        // testSystem.display();
     }
 }

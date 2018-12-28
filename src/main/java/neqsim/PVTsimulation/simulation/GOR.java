@@ -100,7 +100,7 @@ public class GOR extends BasePVTsimulation {
         tempSystem.addTBPfraction("C18", 0.13, 251.0 / 1000.0, 0.844);
         tempSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854);
         tempSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
-    //    tempSystem.getCharacterization().characterisePlusFraction();
+        tempSystem.getCharacterization().characterisePlusFraction();
         tempSystem.createDatabase(true);
         tempSystem.setMixingRule(2);
 
