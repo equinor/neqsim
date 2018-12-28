@@ -1479,7 +1479,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
     
     public void resetPhysicalProperties() {
-        for (int i = 0; i < numberOfPhases; i++) {
+        for (int i = 0; i < maxNumberOfPhases; i++) {
             getPhase(i).resetPhysicalProperties();
         }
     }
