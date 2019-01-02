@@ -46,7 +46,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
 
     public class CPA_Radoch_base implements CPAMixingInterface {
 
-    private static final long serialVersionUID = 1000;
+        private static final long serialVersionUID = 1000;
 
         double eps = 12000.76;
         double beta = 0.03;
@@ -92,7 +92,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
 
     public class CPA_Radoch extends CPA_Radoch_base implements CPAMixingInterface {
 
-    private static final long serialVersionUID = 1000;
+        private static final long serialVersionUID = 1000;
 
         public double getCrossAssociationEnergy(int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             if (Math.abs(cpaEpsCross[compnumb1][compnumb2]) > 1e-10) {
@@ -265,7 +265,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
 
     public class PCSAFTa_Radoch extends CPA_Radoch implements CPAMixingInterface {
 
-    private static final long serialVersionUID = 1000;
+        private static final long serialVersionUID = 1000;
 
         public double getCrossAssociationEnergy(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             return (phase.getComponent(compnumb1).getAssociationEnergySAFT() + phase.getComponent(compnumb2).getAssociationEnergySAFT()) / 2.0;
@@ -302,7 +302,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
         assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         cpaBetaCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         cpaEpsCross = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
-        
+
         for (int k = 0; k < phase.getNumberOfComponents(); k++) {
             String component_name = phase.getComponents()[k].getComponentName();
             java.sql.ResultSet dataSet = null;
@@ -313,7 +313,11 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
                     try {
                         int templ = l, tempk = k;
                         //database = new util.database.NeqSimDataBase();
-                        dataSet = database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                        if (database.createTemporaryTables()) {
+                            dataSet = database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                        } else {
+                            dataSet = database.getResultSet("SELECT * FROM INTER WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                        }
                         if (dataSet.next()) {
                             assosSchemeType[k][l] = Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());
                             assosSchemeType[l][k] = assosSchemeType[k][l];
@@ -328,7 +332,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
                         //System.out.println("cpaEpsCross[k][l] " + cpaEpsCross[k][l]);
                     } catch (Exception e) {
                         logger.error("error", e);
-                    } 
+                    }
                 }
             }
 
@@ -385,7 +389,7 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
     public int[][] setCrossAssociationScheme(int compnumb, int compnumb2, PhaseInterface phase) {
         int[] comp1Scheme = new int[0];
         int[] comp2Scheme = new int[0];
-        if (phase.getComponent(compnumb).getOrginalNumberOfAssociationSites() * phase.getComponent(compnumb2).getOrginalNumberOfAssociationSites()> 0) {
+        if (phase.getComponent(compnumb).getOrginalNumberOfAssociationSites() * phase.getComponent(compnumb2).getOrginalNumberOfAssociationSites() > 0) {
 
             if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
                 comp1Scheme = charge4C;

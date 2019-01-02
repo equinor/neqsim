@@ -44,7 +44,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
     public double nEOSkij = 3.0;
     public static boolean calcEOSInteractionParameters = false;
     private int bmixType = 0;
-    
+
     static Logger logger = Logger.getLogger(EosMixingRules.class);
 
     /**
@@ -255,7 +255,6 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             double bij = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
-            
             bij = getbij(compArray[compNumb], compArray[compNumbj]);
             return (2.0 * bij - compArray[compNumb].getBi() - compArray[compNumbj].getBi()) / phase.getNumberOfMolesInPhase();
         }
@@ -467,9 +466,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
 
         public double getkij(double temperature, int i, int j) {
             return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
-            
- 
-            
+
             //impl ttype check
         }
 
@@ -556,8 +553,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             double intkijMix = (phase.getComponent(i).getNumberOfMolesInPhase() * intparamij[i][j] + phase.getComponent(j).getNumberOfMolesInPhase() * intparamji[i][j]) / tot;
             //System.out.println("kij "  + intkijMix + "  kijT " +(intkijMix + intparamT[i][j] * temperature));
 
-            
-            if (intparamTType[i][j] == 0 ) {
+            if (intparamTType[i][j] == 0) {
                 return intkijMix + intparamT[i][j] * temperature;
             } else if (intparamTType[i][j] == 1) {
                 //System.out.println("kj mix " + (intkijMix +intparamT[i][j] / temperature));
@@ -761,7 +757,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
     public class ClassicSRKT2 extends ClassicSRKT implements EosMixingRulesInterface, Cloneable, java.io.Serializable {
 
         private static final long serialVersionUID = 1000;
-        
+
         public double getkij(double temperature, int i, int j) {
             if (intparamTType[i][j] == 0) {
                 return intparam[i][j] + intparamT[i][j] * temperature;
@@ -1595,8 +1591,12 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                     java.sql.ResultSet dataSet = null;
                     try {
                         int templ = l, tempk = k;
-                        dataSet = database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                        if (database.createTemporaryTables()) {
+                            dataSet = database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                        } else {
+                            dataSet = database.getResultSet("SELECT * FROM INTER WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
 
+                        }
                         dataSet.next();
                         if (dataSet.getString("comp1").trim().equals(phase.getComponents()[l].getComponentName())) {
                             templ = k;
@@ -1639,20 +1639,20 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                             }
 
                         }
-                        
+
                         java.sql.ResultSetMetaData dataSetMD = dataSet.getMetaData();
                         int cols = dataSetMD.getColumnCount();
                         boolean hasKIJTTypeCPAcol = false;
                         String colname = "KIJTTypeCPA";
-                        for (int x = 1; x <= cols; x++){
-                            if(colname.equals(dataSetMD.getColumnName(x))){
+                        for (int x = 1; x <= cols; x++) {
+                            if (colname.equals(dataSetMD.getColumnName(x))) {
                                 hasKIJTTypeCPAcol = true;
-                              }
+                            }
                         }
-             //           System.out.println("class name " + phase.getClass().getName());
-                        if(!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs") || !hasKIJTTypeCPAcol){
-                        intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
-                        }else{
+                        //           System.out.println("class name " + phase.getClass().getName());
+                        if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs") || !hasKIJTTypeCPAcol) {
+                            intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
+                        } else {
                             intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTTypeCPA")); //TODO: implement in all dbs
                         }
                         intparamTType[l][k] = intparamTType[k][l];
@@ -1705,7 +1705,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                             intparam[k][l] = 0.08;
                         } else if ((phase.getComponents()[k].getComponentName().equals("water") && phase.getComponents()[l].isIsTBPfraction()) || (phase.getComponents()[l].getComponentName().equals("water") && phase.getComponents()[k].isIsTBPfraction())) {
                             intparam[k][l] = 0.2;
-                            
+
                             if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA") || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs") || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
                                 //  intparam[k][l] = -0.0685; // taken from Riaz et a. 2012
 
