@@ -513,6 +513,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(String componentName, double value, String name, int phase) {
+        if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+            logger.error("No component with name: " + componentName + " in database");
+            return;
+        }
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + componentName + "'"));
         double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
@@ -695,6 +699,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(String componentName, double value, String name) {
+        if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+            logger.error("No component with name: " + componentName + " in database");
+            return;
+        }
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + componentName + "'"));
         double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
@@ -741,6 +749,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(int componentIndex, double moles) {
+        if (componentIndex >= getPhase(0).getNumberOfComponents()) {
+            logger.error("componentIndex higher than number of components in database");
+            return;
+        }
         setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhase(i).addMolesChemReac(componentIndex, moles, moles);
@@ -757,7 +769,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      * the fluid
      */
     public void addComponent(String componentName, double moles) {
-        setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
+        if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+            logger.error("No component with name: " + componentName + " in database");
+            return;
+        }
         int index = 0;
 
         boolean addForFirstTime = true;
@@ -774,6 +789,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
                 throw new RuntimeException(e);
             }
+            setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
             // System.out.println("adding " + componentName);
             componentNames.add(componentName);
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -790,6 +806,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(String componentName, double moles, int phaseNumber) {
+          if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+            logger.error("No component with name: " + componentName + " in database");
+            return;
+        }
         int index = 0;
 
         boolean addForFirstTime = true;
@@ -827,6 +847,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(int index, double moles, int phaseNumber) {
+          if (index >= getPhase(0).getNumberOfComponents()) {
+            logger.error("componentIndex higher than number of components in database");
+            return;
+        }
         double k = 1.0;
 
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {

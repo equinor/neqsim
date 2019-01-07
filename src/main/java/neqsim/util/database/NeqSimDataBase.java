@@ -46,13 +46,12 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         this.createTemporaryTables = createTemporaryTables;
     }
 
-   
-
     private static final long serialVersionUID = 1000;
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
     private boolean createTemporaryTables = false;
     private static String dataBaseType = "Derby"; //"MSAccess";// //"MSAccessUCanAccess";//"mySQL";//"oracle", "oracleST" , "mySQLNTNU";"Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";//jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
+    //private static String connectionString = "jdbc:derby:C:/programming/NeqSimSourceCode/java/neqsim/data/webdb/neqsimthermodatabase";
     private static String username = "remote";
     private static String password = "remote";
     // connection string to Equinor mysql database "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
@@ -269,5 +268,45 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
             throw new RuntimeException(e);
         }
 
+    }
+
+    public static String[] getComponentNames() {
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = null;
+        String[] names = null;
+        try {
+            dataSet = database.getResultSet("select count(*) from COMP");
+            dataSet.next();
+            int size = dataSet.getInt(1);
+
+            dataSet = database.getResultSet(("SELECT * FROM COMP ORDER BY ID"));
+
+            names = new String[size];
+            for (int i = 0; i < size; i++) {
+                dataSet.next();
+                names[i] = dataSet.getString("name");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return names;
+    }
+
+    public static boolean hasComponent(String compName) {
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = null;
+        String[] names = null;
+        try {
+            dataSet = database.getResultSet("select count(*) from COMP WHERE NAME='" + compName + "'");
+            dataSet.next();
+            int size = dataSet.getInt(1);
+            if (size == 0) {
+                return false;
+            } else {
+                return true;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
