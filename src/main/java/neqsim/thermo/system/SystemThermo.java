@@ -798,6 +798,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             }
             numberOfComponents++;
         } else {
+            setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
             // System.out.println("adding chem reac " + componentName);
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {
                 getPhase(i).addMolesChemReac(index, moles, moles);
@@ -859,7 +860,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             } else {
                 k = 1e-30;
             }
-            getPhase(i).addMolesChemReac(index, moles * k, moles);
+            phaseArray[phaseIndex[i]].addMolesChemReac(index, moles * k, moles);
         }
         setTotalNumberOfMoles(getTotalNumberOfMoles() + moles);
     }
@@ -1555,7 +1556,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
     public final PhaseInterface getPhase(int i) {
         if (i >= getNumberOfPhases()) {
-            throw new RuntimeException();
+       //     throw new RuntimeException();
         }
         return phaseArray[phaseIndex[i]];
     }
