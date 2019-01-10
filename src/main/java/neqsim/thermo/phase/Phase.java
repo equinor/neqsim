@@ -905,6 +905,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             case "cP":
                 conversionFactor = 1.0e3;
                 break;
+            default:
+                 throw new RuntimeException();
         }
         return refViscosity * conversionFactor;
     }
@@ -935,6 +937,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             case "W/cmK":
                 conversionFactor = 0.01;
                 break;
+            default:
+                 throw new RuntimeException();
         }
         return refConductivity * conversionFactor;
     }
@@ -1215,6 +1219,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             case "mol/m3":
                 conversionFactor = 1.0 / getMolarMass();
                 break;
+            default:
+                 throw new RuntimeException();
         }
         return refDensity * conversionFactor;
     }

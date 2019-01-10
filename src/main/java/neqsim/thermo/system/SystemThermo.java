@@ -806,7 +806,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(String componentName, double moles, int phaseNumber) {
-          if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
+        if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
         }
@@ -847,7 +847,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void addComponent(int index, double moles, int phaseNumber) {
-          if (index >= getPhase(0).getNumberOfComponents()) {
+        if (index >= getPhase(0).getNumberOfComponents()) {
             logger.error("componentIndex higher than number of components in database");
             return;
         }
@@ -1554,6 +1554,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public final PhaseInterface getPhase(int i) {
+        if (i >= getNumberOfPhases()) {
+            throw new RuntimeException();
+        }
         return phaseArray[phaseIndex[i]];
     }
 
@@ -1731,6 +1734,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             case "cP":
                 conversionFactor = 1.0e3;
                 break;
+            default:
+                throw new RuntimeException();
         }
         return refViscosity * conversionFactor;
     }
@@ -1769,6 +1774,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             case "W/cmK":
                 conversionFactor = 0.01;
                 break;
+            default:
+                throw new RuntimeException();
         }
         return refConductivity * conversionFactor;
     }
@@ -1898,6 +1905,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             case "mol/m3":
                 conversionFactor = 1.0 / getMolarMass();
                 break;
+            default:
+                throw new RuntimeException();
         }
         return refDensity * conversionFactor;
     }
@@ -1932,6 +1941,25 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     public void setTemperature(double newTemperature) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhases()[i].setTemperature(newTemperature);
+        }
+    }
+
+    /**
+     * method to set the temperature of a fluid (same temperature for all
+     * phases)
+     *
+     * @param newTemperature in specified unit
+     * @param unit unit can be C or K (Celcius of Kelvin)
+     */
+    public void setTemperature(double newTemperature, String unit) {
+        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+            if (unit.equals("K")) {
+                getPhases()[i].setTemperature(newTemperature);
+            } else if (unit.equals("C")) {
+                getPhases()[i].setTemperature(newTemperature + 273.15);
+            } else {
+                throw new RuntimeException();
+            }
         }
     }
 
@@ -2014,9 +2042,34 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         return solidPhaseCheck;
     }
 
+    /**
+     * method to set the pressure of a fluid (same temperature for all phases)
+     *
+     * @param newPressure in specified unit
+     * @param unit unit can be C or K (Celcius of Kelvin)
+     */
     public final void setPressure(double newPressure) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             phaseArray[i].setPressure(newPressure);
+        }
+    }
+
+    /**
+     * method to set the pressure of a fluid (same temperature for all phases)
+     *
+     * @param newPressure in specified unit
+     * @param unit unit can be bar or atm
+     */
+    public final void setPressure(double newPressure, String unit) {
+        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+            if (unit.equals("bar")) {
+                phaseArray[i].setPressure(newPressure);
+            } else if (unit.equals("atm")) {
+                phaseArray[i].setPressure(newPressure - 0.01325);
+            }
+            else{
+                throw new RuntimeException();
+            }
         }
     }
 
@@ -3469,7 +3522,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
                 return getPhase(i);
             }
         }
-        return null;
+        throw new RuntimeException();
     }
 
     public int getPhaseNumberOfPhase(String phaseTypeName) {
