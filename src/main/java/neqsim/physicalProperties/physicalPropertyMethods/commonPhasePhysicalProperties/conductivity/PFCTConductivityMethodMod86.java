@@ -33,7 +33,6 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     public PFCTConductivityMethodMod86(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
         if (referenceSystem.getNumberOfMoles() < 1e-10) {
-            //System.out.println("here..");
             referenceSystem.addComponent("methane", 10.0);
             referenceSystem.init(0);
         }
@@ -48,7 +47,6 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
 
         double PCmix = 0.0, TCmix = 0.0, Mmix = 0.0;
         double alfa0 = 1.0, alfaMix = 1.0;
-        double par1 = 0.0, par2 = 0.0, par3 = 0.0, par4 = 0.0;
         double tempTC1 = 0.0, tempTC2 = 0.0;
         double tempPC1 = 0.0, tempPC2 = 0.0;
         double Mwtemp = 0.0, Mmtemp = 0.0;
@@ -69,7 +67,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         TCmix = tempTC1 / tempTC2;
         Mmix = (Mmtemp + 1.304e-4 * (Math.pow(Mwtemp / Mmtemp, 2.303) - Math.pow(Mmtemp, 2.303))) * 1e3; //phase.getPhase().getMolarMass();
 
-        if(Double.isNaN(PCmix) || Double.isNaN(TCmix)){
+        if (Double.isNaN(PCmix) || Double.isNaN(TCmix)) {
             PCmix = 1.0;
             TCmix = 273.15;
         }
@@ -91,23 +89,24 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         double T0 = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0 / alfaMix;
         double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfa0 / alfaMix;
 
-         if(Double.isNaN(T0) || Double.isNaN(P0)){
+        if (Double.isNaN(T0) || Double.isNaN(P0)) {
             P0 = 1.0;
             T0 = 273.15;
         }
-         
+
         double nstarRef = getRefComponentConductivity(T0, 1.01325);
-        double CpID = referenceSystem.getLowestGibbsEnergyPhase().getComponent(0).getCp0(referenceSystem.getTemperature()) * referenceSystem.getLowestGibbsEnergyPhase().getMolarMass();
+        double CpID = referenceSystem.getLowestGibbsEnergyPhase().getComponent(0).getCp0(referenceSystem.getTemperature());
         double rhorel = redDens;
         double Ffunc = 1.0 + 0.053432 * rhorel - 0.030182 * rhorel * rhorel - 0.029725 * rhorel * rhorel * rhorel;
-        double condIntRef = 1.18653 * nstarRef * (CpID - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R) * Ffunc;
+        referenceSystem.initPhysicalProperties("viscosity");
+        double condIntRef = 1.18653 * nstarRef * referenceSystem.getViscosity() * (CpID - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R) * Ffunc;
 
         double nstarMix = getRefComponentConductivity(phase.getPhase().getTemperature(), 1.01325);
-        double CpIDMix = phase.getPhase().getCp0() * phase.getPhase().getMolarMass();
+        double CpIDMix = phase.getPhase().getCp0();
         double critMolDensMix = 0.9;
         double rhorelMix = 1.0 / phase.getPhase().getMolarVolume() * phase.getPhase().getMolarMass() * 100.0 / critMolDensMix;
         double FfuncMix = 1.0 + 0.053432 * rhorelMix - 0.030182 * rhorelMix * rhorelMix - 0.029725 * rhorelMix * rhorelMix * rhorelMix;
-        double condIntMix = 1.18653 * nstarMix * (CpIDMix - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R) * FfuncMix;
+        double condIntMix = 1.18653 * nstarMix * phase.getViscosity() * (CpIDMix - 2.5 * neqsim.thermo.ThermodynamicConstantsInterface.R) * FfuncMix;
 
         double refConductivity = getRefComponentConductivity(T0, P0);
         //        System.out.println("m/mix " + Mmix/M0);
@@ -116,7 +115,9 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         // System.out.println("new condt " + conduct);
         // System.out.println("old condt " + refConductivity);
         // System.out.println("condt intMix " + condIntMix);
-        double conductivity = refConductivity * Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, -0.5) * alfaMix / alfa0;
+        // double conductivity = refConductivity * Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, -0.5) * alfaMix / alfa0;
+        double conductivity = Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, -0.5) * alfaMix / alfa0 * (refConductivity - condIntRef) + condIntMix;
+
         // System.out.println("condictivity  " + conductivity);
         return conductivity;
     }
@@ -127,7 +128,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         //System.out.println("ref temp " + temp);
         referenceSystem.setPressure(pres);
         //System.out.println("ref pres " + pres);
-        
+
         referenceSystem.init(1);
 
         double molDens = 1.0 / referenceSystem.getPhase(phaseTypeNumb).getMolarVolume() * 100.0;
