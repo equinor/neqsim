@@ -4,44 +4,36 @@
  *
  * Created on 27. september 2003, 19:51
  */
+package neqsim.thermo.util.example;
 
-package neqsim.thermo.util.test;
 
-import junit.framework.*;
+import static org.junit.jupiter.api.Assertions.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 /**
  *
  * @author ESOL
  */
-public class ElectrolyteScrkEosTest extends ModelTest {
+@Disabled public class ElectrolyteScrkEosTest extends ModelTestBase{
 
     private static final long serialVersionUID = 1000;
     
     
-    public ElectrolyteScrkEosTest(java.lang.String testName) {
-        super(testName);
+    
+    @BeforeAll
+    public static void setUp(){
+    	thermoSystem = new SystemFurstElectrolyteEos(298.15, 1.01325);
+    	thermoSystem.addComponent("Na+",0.01);
+    	thermoSystem.addComponent("Cl-",0.01);
+    	thermoSystem.addComponent("water",1.0);
+    	thermoSystem.createDatabase(true);
+    	thermoSystem.setMixingRule(1);
     }
     
-    public static Test suite() {
-        TestSuite suite = new TestSuite(ElectrolyteScrkEosTest.class);
-        return suite;
-    }
-    
-    public void setUp(){
-        testSystem = new SystemFurstElectrolyteEos(298.15, 1.01325);
-        testSystem.addComponent("Na+",0.01);
-        testSystem.addComponent("Cl-",0.01);
-        testSystem.addComponent("water",1.0);
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(1);
-    }
-    
-    public void tearDown(){
+    public static void tearDown(){
         
-    }
-    
-    public static void main(String args[]) {
-        junit.textui.TestRunner.run(suite());
     }
 }

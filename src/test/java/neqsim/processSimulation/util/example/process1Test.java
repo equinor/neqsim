@@ -8,13 +8,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import org.junit.jupiter.api.Disabled;
 
-class process1Test {
+@Disabled class process1Test {
 	
 	static neqsim.thermo.system.SystemInterface testSystem;
 	static neqsim.processSimulation.processSystem.ProcessSystem operations;
 
 	@BeforeAll
+        @Disabled 
 	public static void setUp() {
 		testSystem = new neqsim.thermo.system.SystemSrkCPA((273.15 + 25.0), 50.00);
 		testSystem.addComponent("methane", 180.00);
