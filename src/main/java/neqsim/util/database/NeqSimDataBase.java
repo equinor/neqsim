@@ -113,11 +113,13 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                 }
                 return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
 
-            } else if (dataBaseType.equals("H2")) {
+            } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 //  Path path = FileSystems.getDefault().getPath(dataBasePath);
                 //  return DriverManager.getConnection("jdbc:h2:" + path.toAbsolutePath().toString() + ";DATABASE_TO_UPPER=false", "sa", "");
                 return DriverManager.getConnection(connectionString, "sa", "");
-            } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby") || dataBaseType.equals("H2RT") || dataBaseType.equals("MSAccessUCanAccess")) {
+           } else if (dataBaseType.equals("MSAccessUCanAccess")) {
+                return DriverManager.getConnection("jdbc:ucanaccess://" + dataBasePath + ";memory=true");
+            } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
                 return DriverManager.getConnection(getConnectionString(), username, password);
             } else if (dataBaseType.equals("oracle")) {
                 return DriverManager.getConnection("jdbc:oracle:thin:@db13.statoil.no:10002:U461", "neqsim", "neqsim");
@@ -187,8 +189,16 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     }
 
     public static void setDataBaseType(String aDataBaseType) {
+        setDataBaseType(aDataBaseType, null);
+    }
+    
+    public static void setDataBaseType(String aDataBaseType, String connectionString) {
         dataBaseType = aDataBaseType;
 
+        if (connectionString!=null) {
+            NeqSimDataBase.connectionString = connectionString;
+        }
+      
         try {
             if (dataBaseType.equals("MSAccess")) {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
