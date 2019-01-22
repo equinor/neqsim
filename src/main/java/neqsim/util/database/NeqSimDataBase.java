@@ -47,21 +47,35 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     }
 
     private static final long serialVersionUID = 1000;
+    public static String dataBasePath = "", username = "remote", password = "remote";
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
     private boolean createTemporaryTables = false;
-    private static String dataBaseType = "Derby"; //"MSAccess";// //"MSAccessUCanAccess";//"mySQL";//"oracle", "oracleST" , "mySQLNTNU";"Derby";
-    private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";//jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
-    //private static String connectionString = "jdbc:derby:C:/programming/NeqSimSourceCode/java/neqsim/data/webdb/neqsimthermodatabase";
-    private static String username = "remote";
-    private static String password = "remote";
-    // connection string to Equinor mysql database "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
-    // connection string to local derby database "jdbc:derby://localhost:1527/neqsimthermodatabase"; alternative jdbc:derby:classpath:neqsim/data/neqsimthermodatabase
-    // connection string to NTNU database  public static String connectionString = "jdbc:mysql://iept1122.ivt.ntnu.no:3306/neqsimthermodatabase";
-    // connection string to MSAccess neqsim database jdbc:odbc:Driver={Microsoft Access Driver (*.mdb)};DBQ=C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase";
-    // connection string to MSAccess neqsim database using UCanAccess "jdbc:ucanaccess://" + dataBasePathMSAccess + ";memory=true")
-    // connection string to 
-    public static String dataBasePath = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
 
+    private static String dataBaseType = "Derby";
+    private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
+   // private static String connectionString = "jdbc:derby:C:/programming/NeqSimSourceCode/java/neqsim/data/webdb/neqsimthermodatabase";
+    //
+    //private static String dataBaseType = "H2RT";
+    //private static String connectionString = "jdbc:h2:C:/Users/esol/OneDrive - Statoil ASA/programming/neqsimsource/src/main/resources/data/neqsimH2DB/neqsim.db;DATABASE_TO_UPPER=false";
+    // private static String username = "sa";
+    // private static String password = "";    
+    //private static String dataBaseType ="MSAccess";
+    //public static String dataBasePath = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
+   // private static String dataBaseType = "MSAccessUCanAccess";
+   // public static String connectionString = "jdbc:ucanaccess://C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb;memory=true";
+    //
+    //private static String dataBaseType ="mySQLNTNU";
+    //private static String connectionString = "jdbc:mysql://iept1122.ivt.ntnu.no:3306/neqsimthermodatabase";
+    // private static String username = "remote";
+    // private static String password = "remote";
+    //
+    //private static String dataBaseType ="mySQL";
+    //private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
+    // private static String username = "remote";
+    // private static String password = "remote";  
+    //
+    //private static String dataBaseType ="mySQLNeqSimWeb";
+    //
     private Statement statement = null;
     protected Connection databaseConnection = null;
 
@@ -100,11 +114,10 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                 return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
 
             } else if (dataBaseType.equals("H2")) {
-                Path path = FileSystems.getDefault().getPath(dataBasePath);
-                return DriverManager.getConnection("jdbc:h2:" + path.toAbsolutePath().toString() + ";DATABASE_TO_UPPER=false", "sa", "");
-            } else if (dataBaseType.equals("MSAccessUCanAccess")) {
-                return DriverManager.getConnection("jdbc:ucanaccess://" + dataBasePath + ";memory=true");
-            } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
+                //  Path path = FileSystems.getDefault().getPath(dataBasePath);
+                //  return DriverManager.getConnection("jdbc:h2:" + path.toAbsolutePath().toString() + ";DATABASE_TO_UPPER=false", "sa", "");
+                return DriverManager.getConnection(connectionString, "sa", "");
+            } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby") || dataBaseType.equals("H2RT") || dataBaseType.equals("MSAccessUCanAccess")) {
                 return DriverManager.getConnection(getConnectionString(), username, password);
             } else if (dataBaseType.equals("oracle")) {
                 return DriverManager.getConnection("jdbc:oracle:thin:@db13.statoil.no:10002:U461", "neqsim", "neqsim");
@@ -165,12 +178,23 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         return dataBaseType;
     }
 
+    public static void setDataBaseType(String aDataBaseType, String connectionString) {
+        dataBaseType = aDataBaseType;
+        if (connectionString != null) {
+            NeqSimDataBase.connectionString = connectionString;
+        }
+        setDataBaseType(aDataBaseType);
+    }
+
     public static void setDataBaseType(String aDataBaseType) {
         dataBaseType = aDataBaseType;
+
         try {
             if (dataBaseType.equals("MSAccess")) {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
             } else if (dataBaseType.equals("H2")) {
+                Class.forName("org.h2.Driver");
+            } else if (dataBaseType.equals("H2RT")) {
                 Class.forName("org.h2.Driver");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
                 Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
@@ -250,8 +274,9 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         NeqSimDataBase.dataBaseType
                 = "MSAccessUCanAccess";
 
-        neqsim.util.database.NeqSimDataBase.setDataBaseType("Derby");
-        neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");//jdbc:mysql://tr-w33:3306/neqsimthermodatabase");"jdbc:derby://localhost:1527/neqsimthermodatabase"
+        neqsim.util.database.NeqSimDataBase.setDataBaseType("MSAccessUCanAccess");
+        //neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");//jdbc:mysql://tr-w33:3306/neqsimthermodatabase");"jdbc:derby://localhost:1527/neqsimthermodatabase"
+        //  neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");
         neqsim.util.database.NeqSimDataBase.setUsername("remote");
         neqsim.util.database.NeqSimDataBase.setPassword("remote");
 
