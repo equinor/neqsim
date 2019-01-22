@@ -180,14 +180,6 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         return dataBaseType;
     }
 
-    public static void setDataBaseType(String aDataBaseType, String connectionString) {
-        dataBaseType = aDataBaseType;
-        if (connectionString != null) {
-            NeqSimDataBase.connectionString = connectionString;
-        }
-        setDataBaseType(aDataBaseType);
-    }
-
     public static void setDataBaseType(String aDataBaseType) {
         setDataBaseType(aDataBaseType, null);
     }
