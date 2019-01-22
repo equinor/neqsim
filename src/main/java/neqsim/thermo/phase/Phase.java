@@ -1220,7 +1220,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 conversionFactor = 1.0 / getMolarMass();
                 break;
             default:
-                 throw new RuntimeException();
+                 throw new RuntimeException("Could not create conversion factor because molar mass is NULL or 0");
         }
         return refDensity * conversionFactor;
     }
