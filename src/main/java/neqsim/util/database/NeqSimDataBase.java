@@ -317,6 +317,19 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
             throw new RuntimeException(e);
         }
         return names;
+
+     public static String[] getComponentNames() {
+        NeqSimDataBase database = new NeqSimDataBase();
+        try {
+            List<String> names = new ArrayList<>();
+            ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID");
+            while (dataSet.next()) {
+                names.add(dataSet.getString("name"));
+            }
+            return names.toArray(new String[0]);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean hasComponent(String compName) {
