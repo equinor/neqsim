@@ -15,11 +15,13 @@
  */
 package neqsim.thermo.util.example;
 
+
 import static org.junit.jupiter.api.Assertions.*;
 
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 //import junit.framework.TestCase;
@@ -39,8 +41,10 @@ public class SrkEoSTest {
 	@BeforeAll
 	public static void setUp(){
 	        thermoSystem = new SystemSrkEos(298.0, 10.0);
-	        thermoSystem.addComponent("methane", 1.0);
-	        thermoSystem.addComponent("water", 1.0);
+	        thermoSystem.addComponent("methane", 10.0);
+	        thermoSystem.addComponent("ethane", 1.0);
+	        thermoSystem.addComponent("propane", 0.1);
+	        thermoSystem.addComponent("n-heptane", 10.1);
 	        thermoSystem.createDatabase(true);
 	        thermoSystem.setMixingRule(2);
 	}
@@ -51,6 +55,14 @@ public class SrkEoSTest {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.TPflash();
         assertEquals(thermoSystem.getNumberOfPhases(), 2);
+    }
+    
+    @Disabled
+    @Test
+    public void testSaturateWIthWater() {
+        ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
+        testOps.saturateWithWater();
+        assertTrue(thermoSystem.getPhase(0).hasComponent("water"));
     }
     
     @Test

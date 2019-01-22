@@ -5,43 +5,54 @@
  * Created on 27. september 2003, 19:51
  */
 
-package neqsim.thermo.util.test;
+package neqsim.thermo.util.example;
 
-import junit.framework.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 import neqsim.thermo.system.SystemElectrolyteCPA;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
  * @author ESOL
  */
-public class ElectrolyteCPAEosTest extends ModelTest {
+
+@Disabled public class ElectrolyteCPAEosTest extends ModelTestBase{
 
     private static final long serialVersionUID = 1000;
     
-    
-    public ElectrolyteCPAEosTest(java.lang.String testName) {
-        super(testName);
+   
+    @BeforeAll
+    public static void setUp(){
+    	thermoSystem = new SystemElectrolyteCPA(298.15, 1.01325);
+        thermoSystem.addComponent("methane",0.1);
+        thermoSystem.addComponent("Na+",0.001);
+        thermoSystem.addComponent("Cl-",0.001);
+        thermoSystem.addComponent("water",1.0);
+        thermoSystem.createDatabase(true);
+        thermoSystem.setMixingRule(1);
     }
     
-    public static Test suite() {
-        TestSuite suite = new TestSuite(ElectrolyteCPAEosTest.class);
-        return suite;
-    }
-    
-    public void setUp(){
-        testSystem = new SystemElectrolyteCPA(298.15, 1.01325);
-        testSystem.addComponent("Na+",0.001);
-        testSystem.addComponent("Cl-",0.001);
-        testSystem.addComponent("water",1.0);
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(1);
-    }
-    
-    public void tearDown(){
+    public static void tearDown(){
         
     }
     
-    public static void main(String args[]) {
-        junit.textui.TestRunner.run(suite());
+    @Test
+    public void testTPflash() {
+        ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
+        testOps.TPflash();
+        assertEquals(thermoSystem.getNumberOfPhases(), 2);
     }
+    @Test
+    public void initPhysicalProperties() {
+    	thermoSystem.initPhysicalProperties();
+        assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(), thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
+    }
+    
 }

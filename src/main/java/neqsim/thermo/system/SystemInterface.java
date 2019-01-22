@@ -19,7 +19,24 @@ public interface SystemInterface extends Cloneable {
     public void removePhaseKeepTotalComposition(int specPhase);
 
     public void initPhysicalProperties(String propertyName);
+    
+      /**
+     * method to set the pressure of a fluid (same temperature for all phases)
+     *
+     * @param newPressure in specified unit
+     * @param unit unit can be bar or atm
+     */
+    public void setPressure(double newPressure, String unit);
 
+      /**
+     * method to set the temperature of a fluid (same temperature for all
+     * phases)
+     *
+     * @param newTemperature in specified unit 
+     *  @param unit unit can be C or K (Celcius of Kelvin) 
+     */
+    public void setTemperature(double newTemperature, String unit);
+    
     /**
      * method to return the volume fraction of a phase note: without Peneloux
      * volume correction

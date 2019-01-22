@@ -135,7 +135,9 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
             if (isWaxFormer()) {
                 isW = 1;
             }
-            database.execute("insert into COMPTEMP VALUES (" + (1000 + componentNumber) + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + (1000 + componentNumber) + ", 'HC', " + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE() + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, " + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", " + getMeltingPointTemperature() + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', " + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT() + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+            if (database.createTemporaryTables()) {
+                database.execute("insert into COMPTEMP VALUES (" + (1000 + componentNumber) + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + (1000 + componentNumber) + ", 'HC', " + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + "," + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE() + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, " + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", " + getMeltingPointTemperature() + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', " + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT() + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+            }
             index = 1000 + componentNumber;
             CASnumber = "00-00-0";
         } catch (Exception e) {
@@ -163,7 +165,11 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
         try {
             if (!component_name.equals("default")) {
                 try {
-                    dataSet = database.getResultSet(("SELECT * FROM COMPTEMP WHERE name='" + component_name + "'"));
+                    if (database.createTemporaryTables()) {
+                        dataSet = database.getResultSet(("SELECT * FROM COMPTEMP WHERE name='" + component_name + "'"));
+                    } else {
+                        dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                    }
                     dataSet.next();
                     dataSet.getString("ID");
                     //   if(dataSet.isAfterLast()) dataSet.next(); 
