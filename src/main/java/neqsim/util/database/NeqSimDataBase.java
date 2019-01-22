@@ -20,9 +20,9 @@ package neqsim.util.database;
  *
  * Created on 1. november 2001, 08:56
  */
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.log4j.Logger;
 
 /**
@@ -49,7 +49,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     private static final long serialVersionUID = 1000;
     public static String dataBasePath = "", username = "remote", password = "remote";
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
-    private boolean createTemporaryTables = false;
+    private static boolean createTemporaryTables = false;
 
     private static String dataBaseType = "Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
@@ -296,27 +296,6 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
         }
 
     }
-
-    public static String[] getComponentNames() {
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = null;
-        String[] names = null;
-        try {
-            dataSet = database.getResultSet("select count(*) from COMP");
-            dataSet.next();
-            int size = dataSet.getInt(1);
-
-            dataSet = database.getResultSet(("SELECT * FROM COMP ORDER BY ID"));
-
-            names = new String[size];
-            for (int i = 0; i < size; i++) {
-                dataSet.next();
-                names[i] = dataSet.getString("name");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return names;
 
      public static String[] getComponentNames() {
         NeqSimDataBase database = new NeqSimDataBase();
