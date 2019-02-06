@@ -499,6 +499,38 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
     }
 
+    /**
+     * method to return flow rate of fluid
+     *
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     * m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     *
+     * @return flow rate in specified unit
+     */
+    public double getFlowRate(String flowunit) {
+        if (flowunit.equals("kg/sec")) {
+            return totalNumberOfMoles * getMolarMass();
+        } else if (flowunit.equals("kg/min")) {
+            return totalNumberOfMoles * getMolarMass() * 60.0;
+        } else if (flowunit.equals("kg/hr")) {
+            return totalNumberOfMoles * getMolarMass() * 3600.0;
+        } else if (flowunit.equals("m3/hr")) {
+            return getVolume() / 1.0e5 * 3600.0;
+        } else if (flowunit.equals("m3/min")) {
+            return getVolume() / 1.0e5 * 60.0;
+        } else if (flowunit.equals("m3/sec")) {
+            return getVolume() / 1.0e5;
+        } else if (flowunit.equals("mole/sec")) {
+            return totalNumberOfMoles;
+        } else if (flowunit.equals("mole/min")) {
+            return totalNumberOfMoles * 60.0;
+        } else if (flowunit.equals("mole/hr")) {
+            return totalNumberOfMoles * 3600.0;
+        } else {
+            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+        }
+    }
+
     public void changeComponentName(String name, String newName) {
 
         for (int i = 0; i < numberOfComponents; i++) {
@@ -2070,12 +2102,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      */
     public final void setPressure(double newPressure, String unit) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
-            if (unit.equals("bar")) {
+            if (unit.equals("bar") || unit.equals("bara")) {
                 phaseArray[i].setPressure(newPressure);
             } else if (unit.equals("atm")) {
                 phaseArray[i].setPressure(newPressure - 0.01325);
+            } else if (unit.equals("barg")) {
+                phaseArray[i].setPressure(newPressure + 1.01325);
             } else {
-                throw new RuntimeException();
+                throw new RuntimeException("setting new pressure could not be done. Specified unit might not be supported");
             }
         }
     }
@@ -2179,10 +2213,30 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     /**
+     * method to return fluid volume
+     *
+     * @param unit The unit as a string. Supported units are m3, litre
+     *
+     * @return volume in specified unit
+     */
+    public double getVolume(String unit) {
+        double conversionFactor = 1.0;
+        switch (unit) {
+            case "m3":
+                conversionFactor = 1.0;
+                break;
+            case "litre":
+                conversionFactor = 1000.0;
+                break;
+        }
+        return conversionFactor * getVolume()/1.0e5;
+    }
+
+    /**
      * method to return fluid volume with Peneloux volume correction need to
      * call initPhysicalProperties() before this method is called
      *
-     * @return volume in unit m3
+     * @return volume in specified unit
      */
     public double getCorrectedVolume() {
         double volume = 0;
@@ -2294,6 +2348,15 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      * @return kappa
      */
     public double getKappa() {
+        return getCp() / getCv();
+    }
+    
+       /**
+     * method to return heat capacity ratio/adiabatic index/Poisson constant
+     *
+     * @return kappa
+     */
+    public double getGamma() {
         return getCp() / getCv();
     }
 
