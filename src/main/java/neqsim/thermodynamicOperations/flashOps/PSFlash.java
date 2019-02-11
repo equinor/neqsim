@@ -83,6 +83,9 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
             oldTemp = nyTemp;
             system.init(2);
             nyTemp = oldTemp - factor * calcdQdT() / calcdQdTT();
+            if (nyTemp < 0) {
+                nyTemp = Math.abs(nyTemp);
+            }
             if (Double.isNaN(nyTemp)) {
                 nyTemp = oldTemp + 1.0;
             }

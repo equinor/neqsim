@@ -525,7 +525,7 @@ public interface SystemInterface extends Cloneable {
      * method to return molar volume of the fluid note: without Peneloux volume
      * correction
      *
-     * @return volume in unit m3*1e5
+     * @return molar volume volume in unit m3/mol*1e5
      */
     public double getMolarVolume();
 
