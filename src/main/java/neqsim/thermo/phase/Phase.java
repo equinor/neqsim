@@ -142,12 +142,12 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public void addMolesChemReac(int component, double dn, double totdn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMolesChemReac(dn, totdn);
-        if(numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase()<0.0){
+        if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
             logger.error("Negative number of moles in phase.");
             neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
         }
-        if(getComponent(component).getNumberOfMolesInPhase()<0.0){
+        if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
             logger.error("Negative number of moles of component " + component);
             neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
@@ -429,7 +429,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * method to return molar volume of the phase note: without Peneloux volume
      * correction
      *
-     * @return volume in unit m3*1e5
+     * @return molar volume volume in unit m3/mol*1e5
      */
     public double getMolarVolume() {
         return molarVolume;
@@ -906,7 +906,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 conversionFactor = 1.0e3;
                 break;
             default:
-                 throw new RuntimeException();
+                throw new RuntimeException();
         }
         return refViscosity * conversionFactor;
     }
@@ -938,7 +938,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 conversionFactor = 0.01;
                 break;
             default:
-                 throw new RuntimeException();
+                throw new RuntimeException();
         }
         return refConductivity * conversionFactor;
     }
@@ -1220,7 +1220,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 conversionFactor = 1.0 / getMolarMass();
                 break;
             default:
-                 throw new RuntimeException("Could not create conversion factor because molar mass is NULL or 0");
+                throw new RuntimeException("Could not create conversion factor because molar mass is NULL or 0");
         }
         return refDensity * conversionFactor;
     }

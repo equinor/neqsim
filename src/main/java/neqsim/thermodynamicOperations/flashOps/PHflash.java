@@ -14,96 +14,98 @@
  * limitations under the License.
  */
 
-/*
+ /*
  * PHflash.java
  *
  * Created on 8. mars 2001, 10:56
  */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
-public class PHflash  extends Flash implements java.io.Serializable {
+public class PHflash extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    
-    double Hspec=0;
+
+    double Hspec = 0;
     Flash tpFlash;
-    int type=0;
-    /** Creates new PHflash */
+    int type = 0;
+
+    /**
+     * Creates new PHflash
+     */
     public PHflash() {
     }
-    
+
     public PHflash(SystemInterface system, double Hspec, int type) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Hspec = Hspec;
         this.type = type;
     }
-    
-    public double calcdQdTT(){
-        double dQdTT = - system.getTemperature() * system.getTemperature() * system.getCp();
+
+    public double calcdQdTT() {
+        double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
         return dQdTT;
     }
-    
-    public double calcdQdT(){
-        double dQ = system.getEnthalpy()-Hspec;
+
+    public double calcdQdT() {
+        double dQ = system.getEnthalpy() - Hspec;
         return dQ;
     }
-    
-    public double solveQ(){
-        double oldTemp=1.0/system.getTemperature(), nyTemp=1.0/system.getTemperature();
-        double iterations=1;
-        double error=1.0,erorOld=10.0e10;
+
+    public double solveQ() {
+        double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+        double iterations = 1;
+        double error = 1.0, erorOld = 10.0e10;
         double factor = 0.8;
-        do{
-         if(error>erorOld){
+        do {
+            if (error > erorOld) {
                 factor /= 2.0;
-            }
-            else if(error<erorOld && factor<0.8){
+            } else if (error < erorOld && factor < 0.8) {
                 factor *= 1.1;
             }
             iterations++;
             oldTemp = nyTemp;
             system.init(2);
-            nyTemp = oldTemp - factor*calcdQdT()/calcdQdTT();
-           //f(Math.abs(1.0/nyTemp-1.0/oldTemp)>5.0) nyTemp = 1.0/(1.0/oldTemp + Math.signum(1.0/nyTemp-1.0/oldTemp)*5.0);
-            if(Double.isNaN(nyTemp)) {
-                nyTemp = oldTemp+1.0;
-         }
-            system.setTemperature(1.0/nyTemp);
+            nyTemp = oldTemp - factor * calcdQdT() / calcdQdTT();
+            if (nyTemp < 0) {
+                nyTemp = Math.abs(nyTemp);
+            }//f(Math.abs(1.0/nyTemp-1.0/oldTemp)>5.0) nyTemp = 1.0/(1.0/oldTemp + Math.signum(1.0/nyTemp-1.0/oldTemp)*5.0);
+            if (Double.isNaN(nyTemp)) {
+                nyTemp = oldTemp + 0.1;
+            }
+            system.setTemperature(1.0 / nyTemp);
             tpFlash.run();
             erorOld = error;
-            error = Math.abs((1.0/nyTemp-1.0/oldTemp)/(1.0/oldTemp));
-        }
-        while(error>1e-8 && iterations<500);
-        
-        return 1.0/nyTemp;
+            error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+        } while (error > 1e-8 && iterations < 500);
+
+        return 1.0 / nyTemp;
     }
-    
-    public void run(){
+
+    public void run() {
         tpFlash.run();
         //System.out.println("enthalpy start: " + system.getEnthalpy());
-        if(type==0){
+        if (type == 0) {
             solveQ();
-        } else{
-            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(),0);
+        } else {
+            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 0);
             secondOrderSolver.setSpec(Hspec);
             secondOrderSolver.solve(1);
-            
+
         }
         //System.out.println("enthalpy: " + system.getEnthalpy());
 //        System.out.println("Temperature: " + system.getTemperature());
     }
-    
-    public org.jfree.chart.JFreeChart getJFreeChart(String name){
+
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-    
+
 }

@@ -21,7 +21,7 @@ public interface PhaseInterface extends Cloneable {
 
     public double getCp0();
 
-      public void resetPhysicalProperties();
+    public void resetPhysicalProperties();
 
     /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant.
@@ -71,7 +71,7 @@ public interface PhaseInterface extends Cloneable {
      * method to return molar volume of the phase note: without Peneloux volume
      * correction
      *
-     * @return volume in unit m3*1e5
+     * @return molar volume volume in unit m3/mol*1e5
      */
     public double getMolarVolume();
 
