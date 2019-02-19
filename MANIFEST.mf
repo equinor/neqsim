@@ -1,8 +1,0 @@
-Manifest-Version: 1.0
-Ant-Version: Apache Ant 1.6.2
-Class-Path: . NeqSimPlugin.jar AbsoluteLayout.jar colt.jar jnumeric-current.jar jython.jar lax.jar visad.jar netcdfAll.jar skinlf.jar dawn.jar Jama-1.0.3.jar Jamlab.zip jext.jar ncBrowse.jar noaa_pmel.jar jfreechart-0.9.20.ja
- r jcommon-0.9.5.jar sql.jar servlet.jar gnujaxp.jar itext-1.02b.jar jdom.jar HTTPClient.jar prefsAll.jar gnujaxp.jar lp.zip units.jar ejml-0.21.jar commons-math3-3.0.jar mysql-connector-java-5.1.17-bin.jar
-Created-By: NetBeans IDE
-Specified-By: NeqSimProcject.jarContent
-Main-Class: guiAuto.graphicalUserInterface.mainFrame.ThermodynamicCalculator
-

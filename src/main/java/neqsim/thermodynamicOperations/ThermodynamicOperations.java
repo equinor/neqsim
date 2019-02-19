@@ -112,6 +112,20 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         operation = new SolidFlash1(system);
         getOperation().run();
     }
+    /**
+     * Method to perform a flash at given temperature, pressure and specified volume
+     * The number of moles in the system are changed to match the specified volume.
+     * @param volumeSpec is the specified  volume
+     * @param unit The unit as a string. units supported are m3, litre,
+     * 
+     */
+    public void TPVflash(double volumeSpec, String unit) {
+        unit = "m3";
+        TPflash();
+        double startVolume = system.getVolume(unit);
+        system.setTotalNumberOfMoles(system.getNumberOfMoles() * volumeSpec / startVolume);
+        system.init(3);
+    }
 
     public void TPflash() {
         operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, system.doSolidPhaseCheck());
@@ -219,8 +233,8 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
      * pressure
      *
      * @param Sspec is the entropy in the specified unit
-     * @param unit The unit as a string. units supported are J/K, J/molK,
-     * J/kgK and kJ/kgK
+     * @param unit The unit as a string. units supported are J/K, J/molK, J/kgK
+     * and kJ/kgK
      */
     public void PSflash(double Sspec, String unit) {
         double conversionFactor = 1.0;
@@ -393,7 +407,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
             getThermoOperationThread().join(maxTime);
             getThermoOperationThread().interrupt();
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         boolean didFinish = !getThermoOperationThread().isInterrupted();
         //getThermoOperationThread().stop();
@@ -404,7 +418,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             getThermoOperationThread().join();
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
     }
 
@@ -459,7 +473,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             opsTemp.hydrateFormationTemperature();
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         systemTemp.display();
         return hydTemps;
@@ -473,7 +487,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             opsTemp.hydrateFormationTemperature();
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         systemTemp.display();
         system.setTemperature(systemTemp.getTemperature());
@@ -852,7 +866,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             dewPointTemperatureFlash();
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         system.setTemperature(system.getTemperature() - dT);
         TPflash();
@@ -860,7 +874,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         try {
             dewPointTemperatureFlash();
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
         return condensationRate / dT;
     }

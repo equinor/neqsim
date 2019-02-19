@@ -15,10 +15,55 @@ public interface SystemInterface extends Cloneable {
     public void saveFluid(int ID);
 
     public void saveFluid(int ID, String text);
+    
+    public double getMoleFractionsSum();
 
     public void removePhaseKeepTotalComposition(int specPhase);
 
     public void initPhysicalProperties(String propertyName);
+
+    /**
+     * method to return heat capacity ratio/adiabatic index/Poisson constant
+     *
+     * @return kappa
+     */
+    public double getGamma();
+
+    /**
+     * method to return fluid volume
+     *
+     * @param unit The unit as a string. Supported units are m3, litre
+     *
+     * @return volume in unit m3*1e5
+     */
+    public double getVolume(String unit);
+
+    /**
+     * method to return flow rate of fluid
+     *
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     * m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     *
+     * @return flow rate in specified unit
+     */
+    public double getFlowRate(String flowunit);
+
+    /**
+     * method to set the pressure of a fluid (same temperature for all phases)
+     *
+     * @param newPressure in specified unit
+     * @param unit unit can be bar, bara, barg or atm
+     */
+    public void setPressure(double newPressure, String unit);
+
+    /**
+     * method to set the temperature of a fluid (same temperature for all
+     * phases)
+     *
+     * @param newTemperature in specified unit
+     * @param unit unit can be C or K (Celcius of Kelvin)
+     */
+    public void setTemperature(double newTemperature, String unit);
 
     /**
      * method to return the volume fraction of a phase note: without Peneloux
@@ -482,7 +527,7 @@ public interface SystemInterface extends Cloneable {
      * method to return molar volume of the fluid note: without Peneloux volume
      * correction
      *
-     * @return volume in unit m3*1e5
+     * @return molar volume volume in unit m3/mol*1e5
      */
     public double getMolarVolume();
 
