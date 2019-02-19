@@ -1958,6 +1958,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         }
         return Z;
     }
+    
+    public double getMoleFractionsSum(){
+        double sumz = 0.0;
+         for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
+             sumz += phaseArray[0].getComponent(i).getz();
+         }
+         return sumz;
+    }
 
     /**
      * method to get molar mass of a fluid phase

@@ -15,6 +15,8 @@ public interface SystemInterface extends Cloneable {
     public void saveFluid(int ID);
 
     public void saveFluid(int ID, String text);
+    
+    public double getMoleFractionsSum();
 
     public void removePhaseKeepTotalComposition(int specPhase);
 
