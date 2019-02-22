@@ -62,33 +62,41 @@ public class PHflash extends Flash implements java.io.Serializable {
     public double solveQ() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
-        double error = 1.0, erorOld = 10.0e10;
+        double error = 1.0, erorOld = 1.0e10;
         double factor = 0.8;
+        double newCorr = 1.0;
+
+        boolean correctFactor = true;
         do {
-            if (error > erorOld) {
-                factor = 0.5;
-            } else if (error < erorOld && factor < 0.8) {
-                factor *= 1.1;
+            if (error > erorOld && factor > 0.1 && correctFactor) {
+                factor *= 0.5;
+            } else if (error < erorOld && correctFactor) {
+                factor = 1.0;
             }
             iterations++;
             oldTemp = nyTemp;
             system.init(2);
-            nyTemp = oldTemp - factor * calcdQdT() / calcdQdTT();
+            newCorr = factor * calcdQdT() / calcdQdTT();
+            nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
                 nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-                factor = 0.2;
-            }
-            if (nyTemp < 0) {
+                correctFactor = false;
+            } else if (nyTemp < 0) {
                 nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-            }
-            if (Double.isNaN(nyTemp)) {
+                correctFactor = false;
+            } else if (Double.isNaN(nyTemp)) {
                 nyTemp = oldTemp + 0.1;
+                correctFactor = false;
+            } else {
+                correctFactor = true;
             }
             system.setTemperature(1.0 / nyTemp);
             tpFlash.run();
             erorOld = error;
             error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-        } while (error > 1e-8 && iterations < 500);
+           // System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
+
+        } while (((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
 
         return 1.0 / nyTemp;
     }
