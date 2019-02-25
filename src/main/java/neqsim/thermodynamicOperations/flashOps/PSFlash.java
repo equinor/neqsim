@@ -53,7 +53,7 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
-            return -system.getPhases()[0].getCp() / system.getTemperature();
+            return -system.getPhase(0).getCp() / system.getTemperature();
         }
 
         double dQdTT = 0.0;
@@ -72,33 +72,46 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
-        double factor = 0.5;
+        double factor = 0.8;
+        
+        boolean correctFactor = true;
+        double newCorr = 1.0;
         do {
-            if (error > erorOld) {
-                factor = 0.5;
-            } else if (error < erorOld && factor < 0.8) {
-                factor *= 1.1;
+            if (error > erorOld  && factor>0.1 && correctFactor) {
+                factor *= 0.5;
+            } else if (error < erorOld && correctFactor) {
+                factor = 1.0;
             }
+            
             iterations++;
             oldTemp = system.getTemperature();
             system.init(2);
-            nyTemp = oldTemp - factor * calcdQdT() / calcdQdTT();
+            newCorr = factor * calcdQdT() / calcdQdTT();
+            nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
                 nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-                factor = 0.2;
+               correctFactor = false;
             }
-            if (nyTemp < 0) {
+            else if (nyTemp < 0) {
                 nyTemp = Math.abs(system.getTemperature() - 10.0);
+                correctFactor = false;
             }
-            if (Double.isNaN(nyTemp)) {
+            else if (Double.isNaN(nyTemp)) {
                 nyTemp = oldTemp + 1.0;
+                correctFactor = false;
+            }
+            else{
+                correctFactor = true;
             }
 
             system.setTemperature(nyTemp);
             tpFlash.run();
             erorOld = error;
             error = Math.abs((nyTemp - oldTemp) / (nyTemp));
-        } while (error > 1e-8 && iterations < 500);
+            //if(error>erorOld) factor *= -1.0;
+            //  System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
+          newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
+        } while(((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }
 
@@ -108,7 +121,6 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
 
     public void run() {
         tpFlash.run();
-        //System.out.println("Entropy: " + system.getEntropy());
 
         if (type == 0) {
             solveQ();
