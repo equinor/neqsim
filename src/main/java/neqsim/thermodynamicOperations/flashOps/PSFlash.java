@@ -90,7 +90,6 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
                 nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-              //  factor = 0.2;
                correctFactor = false;
             }
             else if (nyTemp < 0) {
