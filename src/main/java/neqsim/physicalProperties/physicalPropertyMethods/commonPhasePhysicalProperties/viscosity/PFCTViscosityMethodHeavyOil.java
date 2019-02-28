@@ -84,54 +84,26 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         double T0 = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0 / alfaMix;
         double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfa0 / alfaMix;
         double refVisosity = 0.0;
-        if (T0 < 65.0) {
-            double Mw = Mwtemp / Mmtemp;
-            double Mn = Mmtemp;
+        if (T0 < 75.0) {
             double molM = 0.0;
-            if (Mwtemp / Mn <= 1.5) {
-                molM = Mn;
+            if (Mwtemp / Mmtemp / Mmtemp <= 1.5) {
+                molM = Mmtemp * 1e3;
             } else {
-                molM = Mn * Math.pow(Mw / (1.5 * Mn), 0.5);
+                molM = Mmtemp * Math.pow(Mwtemp / Mmtemp / (1.5 * Mmtemp), 0.5) * 1e3;
             }
-            molM = molM * 1e3;
             double sign = 1.0;
             if (phase.getPhase().getTemperature() > 564.49) {
                 sign = -1.0;
             }
             double termm = -0.07955 - sign * 0.01101 * molM - 371.8 / phase.getPhase().getTemperature() + 6.215 * molM / phase.getPhase().getTemperature();
-            refVisosity = Math.pow(10.0, termm);
-            refVisosity = refVisosity / 1.0e3;
-            //  System.out.println("refVisosityHO " + refVisosity);
-            refVisosity += refVisosity * 0.008 * (phase.getPhase().getPressure() - 1.0);
-           // refVisosity = refVisosity * Math.exp(0.00384 * (Math.pow(phase.getPhase().getPressure(),0.8226) - 1.0) / 0.8226);
-
-            double viscosity = refVisosity;// * Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
-            //  System.out.println("viscosityHO " + viscosity);
-            return viscosity;
-        } else if (T0 < 75.0) {
-            double Mw = Mwtemp / Mmtemp;
-            double Mn = Mmtemp;
-            double molM = 0.0;
-            if (Mwtemp / Mn <= 1.5) {
-                molM = Mn;
-            } else {
-                molM = Mn * Math.pow(Mw / (1.5 * Mn), 0.5);
-            }
-            molM = molM * 1e3;
-            double sign = 1.0;
-            if (phase.getPhase().getTemperature() > 564.49) {
-                sign = -1.0;
-            }
-            double termm = -0.07955 - sign * 0.01101 * molM - 371.8 / phase.getPhase().getTemperature() + 6.215 * molM / phase.getPhase().getTemperature();
-
-            refVisosity = Math.pow(10.0, termm);
-            refVisosity = refVisosity / 1.0e3;
-            //  System.out.println("refVisosityHO " + refVisosity);
-            refVisosity += refVisosity * 0.008 * (phase.getPhase().getPressure() - 1.0);
+            double HOviscosity = Math.pow(10.0, termm) * 1.0e-3;
+            HOviscosity += HOviscosity * 0.008 * (phase.getPhase().getPressure() - 1.0);
             // refVisosity = refVisosity * Math.exp(0.00384 * (Math.pow(phase.getPhase().getPressure(),0.8226) - 1.0) / 0.8226);
 
-            double HOviscosity = refVisosity;// * Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
-            //  System.out.println("viscosityHO " + viscosity);
+            if (T0 < 65) {
+                return HOviscosity;
+            }
+
             refVisosity = getRefComponentViscosity(T0, P0);
             double LOviscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0) * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
             return LOviscosity * (1.0 - (75 - T0) / 10.0) + HOviscosity * (75.0 - T0) / 10.0;
