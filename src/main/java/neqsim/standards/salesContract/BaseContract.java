@@ -46,7 +46,7 @@ public class BaseContract implements ContractInterface {
     public BaseContract(SystemInterface system, String terminal, String country) {
         int numb = 0;
         this.setContractName(contractName);
-        neqsim.util.database.NeqSimDataBaseMYSQL database = new neqsim.util.database.NeqSimDataBaseMYSQL();
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         try {
             dataSet = database.getResultSet("SELECT * FROM GASCONTRACTSPECIFICATIONS WHERE TERMINAL='" + terminal + "'" + " AND COUNTRY='" + country + "'");

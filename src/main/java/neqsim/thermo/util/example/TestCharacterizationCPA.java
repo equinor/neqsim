@@ -16,15 +16,15 @@ import org.apache.log4j.Logger;
  * @author  esol
  * @version
  */
-public class TestCharacterizationCPA_huldra {
+public class TestCharacterizationCPA {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestCharacterizationCPA_huldra.class);
+    static Logger logger = Logger.getLogger(TestCharacterizationCPA.class);
 
     /**
      * Creates new TPflash
      */
-    public TestCharacterizationCPA_huldra() {
+    public TestCharacterizationCPA() {
     }
 
     public static void main(String args[]) {

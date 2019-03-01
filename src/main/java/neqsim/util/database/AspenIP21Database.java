@@ -26,7 +26,7 @@ import java.sql.*;
  *
  * @author esol
  */
-public class AspenIP21StatoilDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -34,7 +34,7 @@ public class AspenIP21StatoilDatabase implements neqsim.util.util.FileSystemSett
     private static String dataBaseType = "Karsto";
     private Statement statement = null;
 
-    public AspenIP21StatoilDatabase() {
+    public AspenIP21Database() {
 
         try {
             if (dataBaseType.equals("Karsto")) {
@@ -59,7 +59,6 @@ public class AspenIP21StatoilDatabase implements neqsim.util.util.FileSystemSett
         javax.sql.DataSource ds = null;
 
         try {
-
             return DriverManager.getConnection("jdbc:odbc:Driver={AspenTech SQLplus};host=143.97.152.75;port=10014;ads=KAR_IP21;maxrows=100000;charint=Y;charfloat=N;chartime=Y;readonly=N;allfields=N;rowid=N;converterrors=Y;charisnull=Y;tibco=N");
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
@@ -90,7 +89,7 @@ public class AspenIP21StatoilDatabase implements neqsim.util.util.FileSystemSett
             ResultSet result = getStatement().executeQuery(sqlString);
             return result;
         } catch (Exception e) {
-            System.out.println("error in Karsto DB " + e.toString());
+            System.out.println("error in DB " + e.toString());
             System.out.println("The database must be rgistered on the local DBMS to work.");
         }
         return null;
@@ -101,7 +100,7 @@ public class AspenIP21StatoilDatabase implements neqsim.util.util.FileSystemSett
     }
 
     public static void main(String[] args) {
-        AspenIP21StatoilDatabase database = new AspenIP21StatoilDatabase();
+        AspenIP21Database database = new AspenIP21Database();
         ResultSet dataSet = database.getResultSet("Karsto", "SELECT * FROM IP_AnalogDef WHERE NAME='21TI1117'");
         try {
                      while (dataSet.next()) {
