@@ -41,5 +41,7 @@ Commons Math - for various mathematical operations (http://commons.apache.org/pr
 JFreeChart - for displaying charts (http://www.jfree.org/jfreechart/)
 Ucanaccess - for working with the local MSAccess database (http://ucanaccess.sourceforge.net/site.html)
 
+How to build NeqSim from source code
+NeqSim can easylly be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
 
 
