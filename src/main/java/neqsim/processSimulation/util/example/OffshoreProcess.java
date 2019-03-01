@@ -10,7 +10,7 @@ import neqsim.processSimulation.processEquipment.stream.NeqStream;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
-public class AsgardProcess{
+public class OffshoreProcess{
 
     private static final long serialVersionUID = 1000;
     

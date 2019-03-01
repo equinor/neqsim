@@ -8,7 +8,8 @@ public class gasPipeline {
 
     private static final long serialVersionUID = 1000;
 
-    /** This method is just meant to test the thermo package.
+    /**
+     * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
 
@@ -24,7 +25,7 @@ public class gasPipeline {
         double[] dima = {1.0, 1.0, 1.0};
         pipeline.setNumberOfLegs(dima.length - 1);
         pipeline.setPipeDiameters(dima);
-        pipeline.setLegPositions(new double[]{0, 70000,600000});
+        pipeline.setLegPositions(new double[]{0, 70000, 600000});
         pipeline.setHeightProfile(new double[]{0, 0, 0});
         pipeline.setPipeWallRoughness(new double[]{1e-5, 1e-5, 1e-5});
         pipeline.setOuterTemperatures(new double[]{277.0, 277.0, 277.0});
@@ -36,8 +37,8 @@ public class gasPipeline {
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
-     //   operations.add(pipeline);
-             operations.add(simplePipeline);
+        operations.add(pipeline);
+       // operations.add(simplePipeline);
 
         operations.run();
         pipeline.getOutStream().displayResult();

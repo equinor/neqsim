@@ -51,8 +51,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
 
-     private static String dataBaseType = "Derby";
-     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
+   //  private static String dataBaseType = "Derby";
+    // private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
     // private static String connectionString = "jdbc:derby:C:/programming/NeqSimSourceCode/java/neqsim/data/webdb/neqsimthermodatabase";
     //
     //private static String dataBaseType = "H2RT";
@@ -69,8 +69,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     // private static String username = "remote";
     // private static String password = "remote";
     //
-   // private static String dataBaseType = "mySQL";
-   // private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
+    private static String dataBaseType = "mySQL";
+    private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
     //  private static String username = "remote";
     //  private static String password = "remote";  
     //

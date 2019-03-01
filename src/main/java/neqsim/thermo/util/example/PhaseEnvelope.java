@@ -1,7 +1,9 @@
 package neqsim.thermo.util.example;
 
+import neqsim.thermo.system.SystemDefault;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
 
@@ -32,43 +34,48 @@ public class PhaseEnvelope {
         // SystemInterface testSystem = new SystemUMRPRUEos(225.65, 1.00);
         //SystemInterface testSystem = new SystemPrEos1978(223.15,50.00);
         //SystemInterface testSystem = new SystemPrGassemEos(253.15,50.00);
-        SystemInterface testSystem = new SystemSrkCPAstatoil(280, 41.00);
+        SystemInterface testSystem = new SystemSrkEos(280.0, 41.00);
         //SystemInterface testSystem = new SystemPrDanesh(273.15+80.0,100.00);
         //SystemInterface testSystem = new SystemPrEosDelft1998(223.15,50.00);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+
         //        testSystem.addComponent("nC10", 50.34);
-        testSystem.addComponent("nitrogen", 0.1545);
+      //  testSystem.addComponent("nitrogen", 0.1545);
         // testSystem.addComponent("H2S", 110.00821);
         //  testSystem.addComponent("CO2", 58.00821);
-        testSystem.addComponent("methane", 31.465);
-        testSystem.addComponent("ethane", 10.58);
-        testSystem.addComponent("propane", 4.1736);
-        testSystem.addComponent("i-butane", 0.008);
-        testSystem.addComponent("n-butane", 0.433);
-        testSystem.addComponent("i-pentane", 0.896);
+        testSystem.addComponent("methane", 90.0);
+      //  testSystem.addComponent("ethane", 10.58);
+        testSystem.addComponent("propane", 3.0);
+        testSystem.addComponent("i-butane", 10.8);
+        testSystem.addComponent("n-butane", 10.433);
+     //   testSystem.addComponent("i-pentane", 0.896);
      //   testSystem.addComponent("n-pentane", 1.242);
-     //    testSystem.addComponent("n-hexane", 1.587);
-       //    testSystem.addComponent("n-heptane", 0.068);
+     ///    testSystem.addComponent("n-hexane", 4.587);
+         
+         
+     //      testSystem.addComponent("n-heptane", 0.068);
         //      testSystem.addComponent("n-octane", 0.127);
         //    testSystem.addComponent("n-octane", 0.027);
-        // testSystem.addComponent("n-nonane", 0.003);
+         testSystem.addComponent("n-nonane", 0.0003);
         //    testSystem.addTBPfraction("C6", 1.587, 86.178 / 1000.0, 0.70255);
         //   testSystem.addTBPfraction("C7", 2.566, 91.5 / 1000.0, 0.738);
         //  testSystem.addTBPfraction("C8", 2.764, 101.2 / 1000.0, 0.765);
         //  testSystem.addTBPfraction("C9", 1.71, 119.1 / 1000.0, 0.781);
-     //      testSystem.addPlusFraction("C10", 10.647, 154.9 / 1000.0, 0.7871);
+        //   testSystem.addPlusFraction("C10", 0.647, 154.9 / 1000.0, 0.7871);
 
      //   testSystem.addComponent("water", 100.2);
         //   testSystem.addPlusFraction("C11", 22.1, 156.2 / 1000.0, 0.787278398);
         //  testSystem.getCharacterization().
+      
+        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
         testSystem.getCharacterization().characterisePlusFraction();
         //
         testSystem.createDatabase(true);
         // testSystem.setMultiPhaseCheck(true);
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
-        testSystem.setMixingRule(9);//"UNIFAC_UMRPRU");
+        testSystem.setMixingRule(2);//"UNIFAC_UMRPRU");
    //     testSystem.setHydrateCheck(true);
         // testSystem.setBmixType(0);
 

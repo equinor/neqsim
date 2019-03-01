@@ -18,7 +18,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  *
  * @author ESOL
  */
-public class SnohvitCO2RemovalModule extends ProcessModuleBaseClass {
+public class CO2RemovalModule extends ProcessModuleBaseClass {
 
     private static final long serialVersionUID = 1000;
     
@@ -27,7 +27,7 @@ public class SnohvitCO2RemovalModule extends ProcessModuleBaseClass {
     protected Separator inletSeparator = null;
     
     /** Creates a new instance of SnøhvitCO2RemovalModule */
-    public SnohvitCO2RemovalModule() {
+    public CO2RemovalModule() {
     }
     
     public void addInputStream(String streamName, StreamInterface stream){

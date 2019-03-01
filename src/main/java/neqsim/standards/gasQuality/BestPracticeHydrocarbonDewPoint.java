@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author  ESOL
  */
-public class StatoilBestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
+public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
 
     private static final long serialVersionUID = 1000;
     String dewPointTemperatureUnit = "C", pressureUnit="bar";
@@ -24,12 +24,12 @@ public class StatoilBestPracticeHydrocarbonDewPoint extends neqsim.standards.Sta
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
     /** Creates a new instance of Standard_ISO1992 */
-    public StatoilBestPracticeHydrocarbonDewPoint() {
+    public BestPracticeHydrocarbonDewPoint() {
         name = "StatoilBestPracticeHydrocarbonDewPoint";
         standardDescription = "hydrocarbon dew point calculation method";
     }
     
-    public StatoilBestPracticeHydrocarbonDewPoint(SystemInterface thermoSystem) {
+    public BestPracticeHydrocarbonDewPoint(SystemInterface thermoSystem) {
         this();
         
         System.out.println("setting model GERG water...");

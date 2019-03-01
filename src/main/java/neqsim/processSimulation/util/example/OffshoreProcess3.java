@@ -19,12 +19,12 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * @author esol
  */
-public class LUVAprocess {
+public class OffshoreProcess3 {
 
     private static final long serialVersionUID = 1000;
 
     public static void main(String[] args) {
-        double reservoirTemperature = 350.0, reservoirPressure = 210.0;
+        double reservoirTemperature = 350.0, reservoirPressure = 110.0;
         SystemInterface testSystem = new SystemSrkEos(reservoirTemperature, reservoirPressure);
 
      //   testSystem.addComponent("nitrogen", 0.9);

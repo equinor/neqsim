@@ -17,10 +17,10 @@ public class SolidFlash {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // dataHandeling output = new dataHandeling();
         //   testSystem.addComponent("water", 1.0-0.1525);
-        testSystem.addComponent("methane", 21.8);
+        testSystem.addComponent("methane", 121.8);
         //    testSystem.addComponent("ethane", 0.05);
         //     testSystem.addComponent("propane", 0.03);
-            testSystem.addComponent("n-hexane", 01.01);
+      //      testSystem.addComponent("n-hexane", 10.01);
         //     testSystem.addComponent("nitrogen", 0.05);
         testSystem.addComponent("MEG", 0.0916);
         testSystem.addComponent("water", 10.916);
@@ -37,17 +37,19 @@ public class SolidFlash {
         //     testSystem.addComponent("nitrogen", 10e-6);
         //    testSystem.addComponent("ethane" , 0.1);
 
-        // testSystem.setMultiPhaseCheck(true);
+        testSystem.setMultiPhaseCheck(true);
 
-        testSystem.setSolidPhaseCheck("water");
+      //  testSystem.setSolidPhaseCheck("water");
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(7);
+        testSystem.setMixingRule(9);
         testSystem.useVolumeCorrection(true);
+        
+        testSystem.setSolidPhaseCheck("water");
         // testSystem.setSolidPhaseCheck("CO2");
         testSystem.init(0);
         try {
-            //testOps.freezingPointTemperatureFlash();
-            testOps.TPSolidflash();
+            testOps.freezingPointTemperatureFlash();
+            //testOps.TPSolidflash();
             //   testSystem.display();
             //testOps.waterDewPointTemperatureFlash();
             //testOps.bubblePointTemperatureFlash();

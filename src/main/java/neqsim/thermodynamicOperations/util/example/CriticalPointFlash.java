@@ -24,6 +24,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.thermodynamicOperations.flashOps.saturationOps.cricondebarFlash;
 import org.apache.log4j.Logger;
 
 /**
@@ -36,18 +37,21 @@ public class CriticalPointFlash {
     static Logger logger = Logger.getLogger(CriticalPointFlash.class);
 
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 15, 10.01325);
+        SystemInterface testSystem = new SystemSrkEos(300,80.01325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("water", 0.9);
-        //testSystem.addComponent("n-butane", 0.1);
-        testSystem.addComponent("CO2", 0.1);
+       // testSystem.addComponent("water", 0.9);
+        testSystem.addComponent("methane", 0.1);
+        testSystem.addComponent("propane", 0.1);
       //  testSystem.addComponent("i-butane", 0.1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.init(0);
         try {
-            testOps.criticalPointFlash();
+           testOps.calcCricondenBar();
+            //testOps.criticalPointFlash();
+          //  testOps.calcPTphaseEnvelope(true);
+           // testOps.displayResult();
         } catch (Exception e) {
             logger.error(e.toString());
         }

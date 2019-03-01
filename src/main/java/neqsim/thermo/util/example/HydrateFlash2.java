@@ -11,7 +11,7 @@ public class HydrateFlash2 {
     static Logger logger = Logger.getLogger(HydrateFlash2.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 -150, 2.0);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 +10, 122.0);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -33,7 +33,7 @@ public class HydrateFlash2 {
         // testSystem.addComponent("TEG", 0.5e-4);
       //  testSystem.addSalt("NaCl", 0.01);
   //      testSystem.addComponent("MEG", 0.1);
-     //   testSystem.addComponent("water", 1e-7);
+        testSystem.addComponent("water", 1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(9);
 
@@ -41,22 +41,22 @@ public class HydrateFlash2 {
         testSystem.init(0);
         // testSystem.setSolidPhaseCheck("water");
         testSystem.setMultiPhaseCheck(true);
-        //testSystem.setHydrateCheck(true);
+        testSystem.setHydrateCheck(true);
 
 
 
         //    testSystem.setMultiPhaseCheck(true);
         try {
-            testOps.dewPointTemperatureFlash();
+            //testOps.dewPointTemperatureFlash();
           //  testOps.waterDewPointTemperatureFlash();
         testOps.setRunAsThread(true);
-            //testOps.hydrateEquilibriumLine(10.0, 200.0);
+            testOps.hydrateEquilibriumLine(10.0, 200.0);
              boolean isFinished = testOps.waitAndCheckForFinishedCalculation(100000);
                 logger.info("finished? " + isFinished);
             //testSystem.setTemperature(240.0);
             // testOps.freezingPointTemperatureFlash();
             // testSystem.display();
-            //testOps.TPflash();
+            testOps.TPflash();
         } catch (Exception e) {
             e.toString();
         }

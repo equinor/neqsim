@@ -15,7 +15,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
-public class snohvit {
+public class OnshoreProcess1 {
 
     private static final long serialVersionUID = 1000;
 

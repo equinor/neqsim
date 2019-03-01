@@ -14,7 +14,7 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  *
  * @author esol
  */
-public class TestOnlineKarsto {
+public class TestOnlineProcess {
 
     public static void main(String args[]) {
 

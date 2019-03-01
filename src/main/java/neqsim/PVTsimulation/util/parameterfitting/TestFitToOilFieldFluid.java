@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * @author ESOL
  */
-public class TestFitToJohanSverderupFluid {
+public class TestFitToOilFieldFluid {
 
     private static final long serialVersionUID = 1000;
 

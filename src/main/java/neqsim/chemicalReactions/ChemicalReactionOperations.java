@@ -199,7 +199,7 @@ public class ChemicalReactionOperations extends Object implements neqsim.thermo.
             }
             if(newComp){
                 system.addComponent(name,1.0e-40);
-                System.out.println("new component added: " + name);
+                //System.out.println("new component added: " + name);
             }
         }
     }
@@ -304,7 +304,7 @@ public class ChemicalReactionOperations extends Object implements neqsim.thermo.
         //System.out.println("pressure2");
         if(firsttime==true || type==0){
             try{
-                System.out.println("Calculating initial estimates");
+                //System.out.println("Calculating initial estimates");
                 nVector = calcNVector();
                 bVector = calcBVector();
                 calcInertMoles(phase);
@@ -313,7 +313,7 @@ public class ChemicalReactionOperations extends Object implements neqsim.thermo.
                 //for (i=0;i<5;i++)
                 //   System.out.println("new moles "+newMoles[i]);
                 updateMoles(phase);
-                System.out.println("finished iniT estimtes ");
+                //System.out.println("finished iniT estimtes ");
                 //system.display();
                 firsttime=false;
                 return true;

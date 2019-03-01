@@ -95,7 +95,7 @@ public class LumpingModel implements Serializable {
                     denstemp1 += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass();
                     denstemp2 += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass() / system.getPhase(0).getComponent(name).getNormalLiquidDensity();
                     system.removeComponent(name);
-                    logger.info("removing component " + name);
+                    //logger.info("removing component " + name);
                     ii--;
                 }
 

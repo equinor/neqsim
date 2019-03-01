@@ -802,7 +802,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      */
     public void addComponent(String componentName, double moles) {
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-            logger.error("No component with name: " + componentName + " in database");
+            //logger.error("No component with name: " + componentName + " in database");
             return;
         }
         int index = 0;

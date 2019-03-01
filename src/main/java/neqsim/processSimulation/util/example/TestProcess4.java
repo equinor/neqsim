@@ -3,7 +3,7 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
-public class processAlgerie {
+public class TestProcess4 {
 
     private static final long serialVersionUID = 1000;
 

@@ -6,10 +6,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
 
 
-public class SouthParsMEG{
+public class TestMEGFlash{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(SouthParsMEG.class);
+    static Logger logger = Logger.getLogger(TestMEGFlash.class);
     public static void main(String args[]){
         SystemInterface testSystem = new SystemSrkCPAs(273.15+20, 10.0);
         

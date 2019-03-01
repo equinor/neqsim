@@ -65,7 +65,7 @@ public class TBPfractionModel implements Serializable {
             double acs = calcAcentricFactor(molarMass, density);//thermoSystem.getPhase(thermoSystem.getPhaseIndex(0)).getComponent(0).getAcentricFactor();
             double criticaVol = (0.2918 - 0.0928 * acs) * 8.314 * TC / PC * 10.0;
             if (criticaVol < 0) {
-                logger.info("acentric factor in calc critVol " + acs);
+                //logger.info("acentric factor in calc critVol " + acs);
                 criticaVol = (0.2918 - 0.0928) * 8.314 * TC / PC * 10.0;
             }
             return criticaVol;

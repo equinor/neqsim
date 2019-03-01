@@ -36,7 +36,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  *
  * @author ESOL
  */
-public class G2PGasProcessingModule extends ProcessModuleBaseClass {
+public class MixerGasProcessingModule extends ProcessModuleBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -209,7 +209,7 @@ public class G2PGasProcessingModule extends ProcessModuleBaseClass {
         Stream glycolFeedStream = new Stream("Glycol feed stream", glycolTestSystem);
         glycolFeedStream.getThermoSystem().setTotalFlowRate(4.0 * 1e3, "kg/hr");
 
-        G2PGasProcessingModule separationModule = new G2PGasProcessingModule();
+        MixerGasProcessingModule separationModule = new MixerGasProcessingModule();
         separationModule.addInputStream("feed stream", wellStream);
         separationModule.addInputStream("glycol feed stream", glycolFeedStream);
         separationModule.setSpecification("inlet separation temperature", 55.0);

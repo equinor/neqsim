@@ -34,7 +34,7 @@ public class TestFluidIssues {
             testOps.TPflash();
         }
          // Trying to see what happens if an extra component is added
-        //testSystem.init(0);
+        testSystem.init(0);
         testSystem.addComponent("water", 100.0);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);

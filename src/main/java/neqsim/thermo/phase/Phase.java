@@ -106,7 +106,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                     temp.add(this.componentArray[i]);
                 }
             }
-            logger.info("length " + temp.size());
+            //logger.info("length " + temp.size());
             for (int i = 0; i < temp.size(); i++) {
                 this.componentArray[i] = (ComponentInterface) temp.get(i);
                 this.getComponent(i).setComponentNumber(i);

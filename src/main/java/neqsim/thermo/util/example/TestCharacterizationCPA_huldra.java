@@ -125,7 +125,7 @@ public class TestCharacterizationCPA_huldra {
         }
 
       //  testSystem.saveObject(96);
-      testSystem.saveFluid(1947);
+      //testSystem.saveFluid(1947);
 
         testSystem.display();
     }

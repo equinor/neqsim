@@ -64,10 +64,10 @@ public class ChemicalReactionList extends Object implements ThermodynamicConstan
         try {
 
             if (system.getModelName().equals("Kent Eisenberg-model")) {
-                System.out.println("selecting Kent-Eisenberg reaction set");
+                //System.out.println("selecting Kent-Eisenberg reaction set");
                 dataSet = database.getResultSet("SELECT * FROM REACTIONDATAKentEisenberg");
             } else {
-                System.out.println("selecting standard reaction set");
+                //System.out.println("selecting standard reaction set");
                 dataSet = database.getResultSet("SELECT * FROM REACTIONDATA");
             }
 
@@ -108,8 +108,8 @@ public class ChemicalReactionList extends Object implements ThermodynamicConstan
                             e.printStackTrace();
                         }
                     }
-                    System.out.println(names);
-                    System.out.println(stocCoef);
+                    //System.out.println(names);
+                   // System.out.println(stocCoef);
                     nameArray = new String[names.size()];
                     coefArray = new double[nameArray.length];
                     for (int i = 0; i < nameArray.length; i++) {

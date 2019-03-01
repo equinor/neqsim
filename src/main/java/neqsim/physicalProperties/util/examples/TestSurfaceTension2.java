@@ -13,7 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author ESOL
  */
-public class TestSurfaceTensionSintef {
+public class TestSurfaceTension2 {
 
     private static final long serialVersionUID = 1000;
     //John debug
@@ -39,7 +39,7 @@ public class TestSurfaceTensionSintef {
         // testSystem.addComponent("n-hexane", 0);
         testSystem.addComponent("n-heptane", 13.16);
         //     testSystem.addComponent("n-octane", 12.64);
-        //    testSystem.addComponent("n-nonane", 7.13);
+        testSystem.addComponent("n-nonane", 7.13);
 
         //    testSystem.addTBPfraction("C10", 22.1, 230.3 / 1000.0, 0.859);
         //   testSystem.setHeavyTBPfractionAsPlusFraction();

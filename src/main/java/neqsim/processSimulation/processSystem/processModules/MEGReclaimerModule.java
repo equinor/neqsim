@@ -1,4 +1,20 @@
 /*
+ * Copyright 2018 ESOL.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * SnøhvitCO2RemovalModule.java
  *
  * Created on 1. november 2006, 20:33
@@ -7,7 +23,7 @@
  * and open the template in the editor.
  */
 
-package neqsim.processSimulation.util.example.modules;
+package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -22,7 +38,7 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  *
  * @author ESOL
  */
-public class SnohvitMEGReclaimerModule extends ProcessModuleBaseClass {
+public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     private static final long serialVersionUID = 1000;
     
@@ -39,7 +55,7 @@ public class SnohvitMEGReclaimerModule extends ProcessModuleBaseClass {
     double reclaimerPressure=0.17;
     
     /** Creates a new instance of SnøhvitCO2RemovalModule */
-    public SnohvitMEGReclaimerModule() {
+    public MEGReclaimerModule() {
     }
     
     public void addInputStream(String streamName, StreamInterface stream){
@@ -148,7 +164,7 @@ public class SnohvitMEGReclaimerModule extends ProcessModuleBaseClass {
         Stream inletStream = new Stream(testSystem);
         inletStream.run();
         inletStream.displayResult();
-        SnohvitMEGReclaimerModule reclaimer = new SnohvitMEGReclaimerModule();
+        MEGReclaimerModule reclaimer = new MEGReclaimerModule();
         reclaimer.addInputStream("streamToReclaimer", inletStream);
         reclaimer.setOperationPressure(0.17);
         
@@ -159,9 +175,11 @@ public class SnohvitMEGReclaimerModule extends ProcessModuleBaseClass {
     }
     
      public void calcDesign() {
-        
+        // design is done here //
     }
+
     public void setDesign() {
+        // set design is done here //
     }
     
 }
