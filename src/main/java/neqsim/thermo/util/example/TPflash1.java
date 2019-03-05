@@ -11,7 +11,7 @@ import org.apache.log4j.Logger;
  * Created on 27. september 2001, 09:43
  */
 
-/*
+ /*
  *
  * @author esol @version
  */
@@ -58,7 +58,7 @@ public class TPflash1 {
             try {
                 //   testOps.waterDewPointTemperatureMultiphaseFlash();
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
             //testSystem.init(0);
             //     testSystem.init(1);
@@ -93,12 +93,13 @@ public class TPflash1 {
             try {
                 //   testOps.waterDewPointTemperatureMultiphaseFlash();
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
             //testSystem.init(0);
             //     testSystem.init(1);
         }
         testSystem.display();
+         ((neqsim.thermo.phase.PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
 
     }
 }

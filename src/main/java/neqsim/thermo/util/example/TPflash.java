@@ -35,6 +35,7 @@ public class TPflash {
         //   testSystem.addComponent("oxygen", 28);
 
         testSystem.addComponent("methane", 79);
+         testSystem.addComponent("n-hexane", 79);
         testSystem.addComponent("water", 21);
         testSystem.useVolumeCorrection(false);
 
@@ -198,8 +199,8 @@ public class TPflash {
          */
 //testSystem.addComponent("water", 1);
 // testSystem.addComponent("TEG", 1);
-        //  testSystem.createDatabase(true);
-        // testSystem.setMixingRule(2);
+          testSystem.createDatabase(true);
+         testSystem.setMixingRule(2);
         //   testSystem.useVolumeCorrection(true);
         ////   testSystem.setMultiPhaseCheck(true);
         //Y testSystem = testSystem.readObject(30);
@@ -245,6 +246,7 @@ public class TPflash {
          */
         testSystem.display();
         System.out.println("desnity " + testSystem.getPhase(0).getDensity());
+   ((neqsim.thermo.phase.PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
 
     }
 }
