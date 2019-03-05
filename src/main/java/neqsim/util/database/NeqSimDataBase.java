@@ -47,7 +47,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     }
 
     private static final long serialVersionUID = 1000;
-    public static String dataBasePath = "", username = "remote", password = "remote";
+    public static String dataBasePath = "";
+    public static String username = "remote", password = "remote";
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
 
@@ -61,8 +62,8 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
     // private static String password = "";    
     //private static String dataBaseType ="MSAccess";
     //public static String dataBasePath = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
-    // private static String dataBaseType = "MSAccessUCanAccess";
-    // public static String connectionString = "jdbc:ucanaccess://C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb;memory=true";
+    //private static String dataBaseType = "MSAccessUCanAccess";
+    //public static String connectionString = "jdbc:ucanaccess://C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb;memory=true";
     //
     //private static String dataBaseType ="mySQLNTNU";
     //private static String connectionString = "jdbc:mysql://iept1122.ivt.ntnu.no:3306/neqsimthermodatabase";
