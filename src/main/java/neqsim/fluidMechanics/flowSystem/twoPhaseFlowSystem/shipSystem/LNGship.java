@@ -313,21 +313,22 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
          testSystem.addComponent("ethane", 0.0526);
          testSystem.addComponent("propane", 0.0115);
          */
-        testSystem.addComponent("nitrogen", 0.763);//0.93041);
-        testSystem.addComponent("methane", 92.024);//92.637);
-        testSystem.addComponent("ethane", 5.604);//4.876);
-        testSystem.addComponent("propane", 1.159);//1.093);
-        testSystem.addComponent("i-butane", 0.104);
-        testSystem.addComponent("n-butane", 0.325);
-        testSystem.addComponent("i-pentane", 0.017);
-        testSystem.addComponent("n-pentane", 0.004);
+        testSystem.addComponent("nitrogen", 0.691);//0.93041);
+        testSystem.addComponent("methane", 91.93);//92.637);
+        testSystem.addComponent("ethane", 5.651);//4.876);
+        testSystem.addComponent("propane", 1.296);//1.093);
+        testSystem.addComponent("i-butane", 0.122);
+        testSystem.addComponent("n-butane", 0.289);
+        testSystem.addComponent("i-pentane", 0.018);
+        testSystem.addComponent("n-pentane", 0.003);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
         neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem.LNGship ship = new neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem.LNGship(testSystem, 140000, 0.0015);
-        ship.setInitialTemperature(111.0);
-        ship.useStandardVersion("","2016");
+        //ship.setInitialTemperature(111.0);
+     //   ship.useStandardVersion("","2016");
         ship.getStandardISO6976().setEnergyRefT(15);
+        ship.getStandardISO6976().setVolRefT(15);
         ship.createSystem();
         ship.init();
         //ship.setBackCalculate(true);

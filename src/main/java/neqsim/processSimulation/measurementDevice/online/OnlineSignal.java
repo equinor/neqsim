@@ -6,7 +6,7 @@
 package neqsim.processSimulation.measurementDevice.online;
 
 import java.util.Date;
-import neqsim.util.database.AspenIP21StatoilDatabase;
+import neqsim.util.database.AspenIP21Database;
 
 /**
  *
@@ -37,7 +37,7 @@ public class OnlineSignal {
     java.sql.ResultSet dataSet = null;
     double value = 1.0;
     private String unit = "°C";
-    neqsim.util.database.AspenIP21StatoilDatabase database = null;
+    neqsim.util.database.AspenIP21Database database = null;
 
     public OnlineSignal(String plantName, String transmitterName) {
         this.plantName = plantName;
@@ -48,9 +48,9 @@ public class OnlineSignal {
 
     public boolean connect() {
         if (plantName.equals("Karsto")) {
-            database = new neqsim.util.database.AspenIP21StatoilDatabase();
+            database = new neqsim.util.database.AspenIP21Database();
         } else {
-            database = new neqsim.util.database.AspenIP21StatoilDatabase();
+            database = new neqsim.util.database.AspenIP21Database();
         }
         try {
             dataSet = database.getResultSet(("SELECT * FROM IP_AnalogDef WHERE NAME='" + name + "'"));

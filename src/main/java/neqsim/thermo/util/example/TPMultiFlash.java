@@ -87,9 +87,8 @@ public class TPMultiFlash {
                 testSystem.setNumberOfPhases(1);
                 testSystem.setMaxNumberOfPhases(1);
                 
-            for (int i = 0; i < 1000000; i++) {
+            for (int i = 0; i < 100000; i++) {
                 double[] x = testSystem.getMolarComposition();
-                testSystem.removeMoles();
                 testSystem.setMolarComposition(x);
                 testSystem.init(0, 0);
                 testSystem.setTemperature(298);

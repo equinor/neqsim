@@ -33,8 +33,8 @@ public class TPflashMembrane {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         
         testSystem.addComponent("CO2", 10.0);
-        testSystem.addComponent("methane", 100.0, 0);
-        testSystem.addComponent("methane", 100.0, 1);
+        testSystem.addComponent("propane", 100.0, 0);
+        testSystem.addComponent("propane", 100.0, 1);
         
         testSystem.createDatabase(true);
         // 1- orginal no interaction 2- classic w interaction

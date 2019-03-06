@@ -1,6 +1,7 @@
 package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
@@ -11,8 +12,8 @@ public class HydrateFlash {
     static Logger logger = Logger.getLogger(HydrateFlash.class);
 
     public static void main(String args[]) {
- //       SystemInterface testSystem = new SystemSrkCPAstatoil(288.15, 100.450);
-        SystemInterface testSystem = new SystemSrkEos(273.15 - 10.5, 5.0);
+ //       SystemInterface testSystem = new SystemSrkCPAstatoil(288.15, 10.450);
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 10.5, 51.0);
  //SystemInterface testSystem = new SystemUMRPRUEos(273.15 - 10.5, 5.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         //      testSystem.addComponent("CO2", 1.5);
@@ -35,11 +36,11 @@ public class HydrateFlash {
          testSystem.addTBPfraction("C7", 2.22, 96.0 / 1000.0, 0.7380);
          testSystem.addTBPfraction("C8", 0.32, 107.0 / 1000.0, 0.7650);
          testSystem.addTBPfraction("C9", 0.177, 121.0 / 1000.0, 0.7810);
-         testSystem.addTBPfraction("C10", 1.22, 184.0 / 1000.0, 0.81020);
+      //   testSystem.addTBPfraction("C10", 1.22, 184.0 / 1000.0, 0.81020);
        //  testSystem.addTBPfraction("C11", 4.93, 147.0 / 1000.0, 0.7960);
        //  testSystem.addTBPfraction("C12", 3.84, 161.0 / 1000.0, 0.8100);
        //  testSystem.addTBPfraction("C13", 2.74, 175.0 / 1000.0, 0.8250);
-       //  testSystem.addTBPfraction("C14", 2.19, 190.0 / 1000.0, 0.8360);
+     testSystem.addTBPfraction("C14", 2.19, 290.0 / 1000.0, 0.8360);
          
       //  testSystem.addTBPfraction("C15", 3.0, 291.0 / 1000.0, 0.85790282291);
         // testSystem.addTBPfraction("C15", 2.64, 206.0 / 1000.0, 0.8420);
@@ -53,31 +54,31 @@ public class HydrateFlash {
         //testSystem.addComponent("NaCl", 12.4);
         //testSystem.addComponent("Na+", 6.2);
         //testSystem.addComponent("Cl-", 6.2);
-         testSystem.addComponent("MEG", 1.517);
+      //   testSystem.addComponent("MEG", 1.517);
         //testSystem.setSolidPhaseCheck("TEG");
         // testSystem.setSolidPhaseCheck("MEG");
         //testSystem.addSolidComplexPhase("MEG");
         //  testSystem.addSolidComplexPhase("wax");
         testSystem.setHeavyTBPfractionAsPlusFraction();
         
-        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(8);
+      testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(8);
         testSystem.getCharacterization().characterisePlusFraction();
         
       //  testSystem.addComponent("MEG", 1.015);
-      //    testSystem.addComponent("water", 10.015);
+          testSystem.addComponent("water", 10.015);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
        //  testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-       // testSystem.setHydrateCheck(false);
-        testSystem.setMultiPhaseCheck(true);
+        testSystem.setHydrateCheck(true);
+       // testSystem.setMultiPhaseCheck(true);
         testSystem.init(0);
         //  testSystem = testSystem.autoSelectModel();
         testOps = new ThermodynamicOperations(testSystem);
         //testSystem.setSolidPhaseCheck("water");
 
         try {
-            testOps.TPflash();
-            //testOps.hydrateFormationTemperature();
+            //testOps.TPflash();
+            testOps.hydrateFormationTemperature();
             //   testOps.calcTOLHydrateFormationTemperature();
             //double[] temp = {288.15, 285.2, 283.5};//, 277.3};//, 285.15};//, 284.0};//, 283.5, 283.0};//, 280.15};// , 268.15, 288.0, 274.6, 274.2, 273.7, 273.15};//, 297.8, 297.5};
             //double[] pres = {100.0, 100.0, 100.0, 100, 100, 100};//, 100, 100, 100,100,100};

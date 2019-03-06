@@ -35,21 +35,20 @@ public class TestFlash {
         int phaseNumber;
 
         double[][] fluidProperties = new double[10][67];
-        int fluidNumber = 2;
+        int fluidNumber = 4;
         int flashMode = 1;
-        double[] spec1 = {1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 22.7};
+        double[] spec1 = {1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 1.0};
         double[] spec2 = {288.15, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7};  // Temperatures
         //double[] spec2={-470.0,-480.0,-475.0,-471.0,-474.0,-450.0,-480.0,-473.0,-471.0,-477.0}; // Enthalpies
         //double[] spec2={-18.0,-19.0,-18.5,-18.0,-15.0,-19.5,-22.0,-21.0,-18.7,-18.0}; // Entropies
 
         // Fractions for use with fuid number 1
-        double[] fractions = {0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01};
+        double[] fractions = {0.01, 0.02, 0.03, 0.01, 0.80, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
         //double[] fractions={0.01, 0.02, +.03, 0.01, 0.70, 0.14, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01};
         // Normalize fractions sum fractions = 1
 
         SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 22.0);//
         ThermodynamicOperations fluidOps = new ThermodynamicOperations(fluid);
-         
 
         if (fluidNumber == 1) {
             // Fluid gas
@@ -78,8 +77,8 @@ public class TestFlash {
             fluid.setMixingRule(2);
             fluid.useVolumeCorrection(true);
             fluid.init(0); // careful: this method will reset forced phase types
-            fluid.setMaxNumberOfPhases(1);   
-            fluid.setForcePhaseTypes(true);  
+            fluid.setMaxNumberOfPhases(1);
+            fluid.setForcePhaseTypes(true);
             fluid.setPhaseType(0, "gas");
         } else if (fluidNumber == 3) {
             // Fluid water
@@ -199,18 +198,20 @@ public class TestFlash {
         }
 
         // Set fractions for gas
-        fluid.setMolarComposition(fractions);
-
+       // fluid.setMolarComposition(fractions);
 
         long time = System.currentTimeMillis();
         for (int t = 0; t < 10; t++) {
-            fluid.setPressure(spec1[t]);
+             fluid.setPressure(spec1[t]);
 
             if (flashMode == 1) {
                 fluid.setTemperature(spec2[t]);
                 fluidOps.TPflash();
                 fluid.init(2);
                 fluid.initPhysicalProperties();
+              //  fluid.initPhysicalProperties("viscosity");
+               // fluid.initPhysicalProperties("conductivity");
+              //  fluid.initPhysicalProperties("density");
             } else if (flashMode == 2) {
                 fluidOps.PHflash(spec2[t], 0);
                 // eller
@@ -229,7 +230,7 @@ public class TestFlash {
             fluidProperties[t][k++] = (double) fluid.getNumberOfPhases(); // Mix Number of Phases
             fluidProperties[t][k++] = fluid.getPressure("Pa"); // Mix Pressure [Pa]
             fluidProperties[t][k++] = fluid.getTemperature("K"); // Mix Temperature [K]
-            fluidProperties[t][k++] = fluid.getNumberOfMoles() * 100; // Mix Mole Percent
+            fluidProperties[t][k++] = fluid.getMoleFractionsSum() * 100; // Mix Mole Percent
             fluidProperties[t][k++] = 100.0; // Mix Weight Percent
             fluidProperties[t][k++] = 1.0 / fluid.getDensity("mol/m3"); // Mix Molar Volume [m3/mol]
             fluidProperties[t][k++] = 100.0; // Mix Volume Percent
@@ -242,7 +243,7 @@ public class TestFlash {
             fluidProperties[t][k++] = fluid.getEntropy("J/molK");
             fluidProperties[t][k++] = fluid.getCp("J/molK"); // Mix Heat Capacity-Cp [J/molK]
             fluidProperties[t][k++] = fluid.getCv("J/molK");// Mix Heat Capacity-Cv [J/molK]
-          //  fluidProperties[t][k++] = fluid.Cp()/fluid.getCv();// Mix Kappa (Cp/Cv)
+            //  fluidProperties[t][k++] = fluid.Cp()/fluid.getCv();// Mix Kappa (Cp/Cv)
             fluidProperties[t][k++] = fluid.getKappa();// Mix Kappa (Cp/Cv)
             fluidProperties[t][k++] = Double.NaN; // Mix JT Coefficient [K/Pa]
             fluidProperties[t][k++] = Double.NaN; // Mix Velocity of Sound [m/s]
@@ -261,21 +262,21 @@ public class TestFlash {
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getDensity("kg/m3"); // Phase Density [kg/m3]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getZ(); // Phase Z Factor
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getMolarMass() * 1000; // Phase Molecular Weight [g/mol]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEnthalpy() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Enthalpy [J/mol]
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEnthalpy() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Enthalpy [J/mol]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEnthalpy("J/mol"); // Phase Enthalpy [J/mol]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEntropy() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Entropy [J/molK]
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEntropy() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Entropy [J/molK]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getEntropy("J/molK"); // Phase Entropy [J/molK]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Heat Capacity-Cp [J/molK]
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Heat Capacity-Cp [J/molK]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp("J/molK"); // Phase Heat Capacity-Cp [J/molK]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCv() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Heat Capacity-Cv [J/molK]
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCv() / fluid.getPhase(phaseNumber).getNumberOfMolesInPhase(); // Phase Heat Capacity-Cv [J/molK]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCv("J/molK"); // Phase Heat Capacity-Cv [J/molK]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp() / fluid.getPhase(phaseNumber).getCv(); // Phase Kappa (Cp/Cv)
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getCp() / fluid.getPhase(phaseNumber).getCv(); // Phase Kappa (Cp/Cv)
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getKappa(); // Phase Kappa (Cp/Cv)
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getJouleThomsonCoefficient() / 1e5; // Phase JT Coefficient [K/Pa]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getSoundSpeed(); // Phase Velocity of Sound [m/s]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getPhysicalProperties().getViscosity();// Phase Viscosity [Pa s]
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getPhysicalProperties().getViscosity();// Phase Viscosity [Pa s]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getViscosity("kg/msec");// Phase Viscosity [Pa s] or [kg/msec]
-                  //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getPhysicalProperties().getConductivity(); // Phase Thermal Conductivity [W/mK]
+                    //  fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getPhysicalProperties().getConductivity(); // Phase Thermal Conductivity [W/mK]
                     fluidProperties[t][k++] = fluid.getPhase(phaseNumber).getConductivity("W/mK"); // Phase Thermal Conductivity [W/mK]
                     // Phase Surface Tension(N/m) ** NOT USED
                 } else {
@@ -299,7 +300,6 @@ public class TestFlash {
                 }
             }
         }
-
         logger.info("Time taken for 10 flash calcs [ms] = " + (System.currentTimeMillis() - time));
 
         int t = 0;
@@ -374,6 +374,6 @@ public class TestFlash {
         logger.info("Aqueous Velocity of Sound      [m/s]      " + fluidProperties[t][k++]);
         logger.info("Aqueous Viscosity [Pa s] eller [kg/(m*s)] " + fluidProperties[t][k++]);
         logger.info("Aqueous Thermal Conductivity   [W/mK]     " + fluidProperties[t][k++]);
-
+fluid.display();
     }
 }

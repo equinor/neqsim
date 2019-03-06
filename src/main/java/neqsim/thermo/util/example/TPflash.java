@@ -2,6 +2,8 @@ package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemSrkPenelouxEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
@@ -26,25 +28,46 @@ public class TPflash {
 
     public static void main(String[] args) {
 
-        //  SystemInterface testSystem = new SystemSrkEos(273.15 + 25, 10.0);//
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 45.0, 22.0);//
-        //      testSystem.addComponent("CO2", 0.0214);
-        //      testSystem.addComponent("nitrogen", 0.00892);
+        // SystemInterface testSystem = new SystemSrkEos(293.15, 999999.999999999/1.0e5);
+        SystemInterface testSystem = new SystemSrkPenelouxEos(293.15, 999999.999999999 / 1.0e5);
+        //SystemInterface testSystem = new SystemSrkCPAstatoil(86273.15 + 45.0, 22.0);//
+        //   testSystem.addComponent("nitrogen", 72);
+        //   testSystem.addComponent("oxygen", 28);
 
+        testSystem.addComponent("methane", 79);
+         testSystem.addComponent("n-hexane", 79);
+        testSystem.addComponent("water", 21);
+        testSystem.useVolumeCorrection(false);
+
+        ///  testSystem.addComponent("nC10", 28.0);
+        //estSystem.addComponent("benzene",21);
+        //   testSystem.addTBPfraction("C10", 50.178, 248.5 / 1000.0, 0.81982);
+        /*
         //testSystem.addComponent("mercury", 1);
-        testSystem.addComponent("CO2", 1);
-        testSystem.addComponent("methane", 90);
-        testSystem.addComponent("ethane", 0.0402);
-        testSystem.addTBPfraction("C7", 5.154639175, 700.0 / 1000.0, 0.70932);
-        testSystem.addComponent("methanol", 1);
-        testSystem.addComponent("water", 1);
+        testSystem.addComponent("methane", 17.42);
+        testSystem.addComponent("ethane", 1.454);
+        testSystem.addComponent("propane", 2.914);
+        testSystem.addComponent("i-butane", 1.146);
+        testSystem.addComponent("n-butane", 2.75);
+          testSystem.addComponent("n-pentane", 4.0);
+          testSystem.addComponent("n-hexane", 3.949);
+        //     testSystem.addComponent("CO2", 49.390402);
+        testSystem.addTBPfraction("C7", 4.96, 96.2 / 1000.0, 0.7116912);
+        testSystem.addTBPfraction("C8", 5.467, 109.2 / 1000.0, 0.7393);
+        testSystem.addTBPfraction("C9", 4.387, 123.5 / 1000.0, 0.7583);
+        testSystem.addTBPfraction("C10", 50.178, 348.5 / 1000.0, 0.8982);
+         */
+        //  testSystem.setHeavyTBPfractionAsPlusFraction();
+        ///  testSystem.getCharacterization().characterisePlusFraction();
+        // testSystem.addTBPfraction("C111", 4.58, 236.5 / 1000.0, 0.8398);
+        //      testSystem.addComponent("methanol", 1);
+        // testSystem.addComponent("MDEA", 1);
         //      testSystem.addComponent("i-butane", 2.68E-4);
         //      testSystem.addComponent("n-butane", 3.41E-4);
         // testSystem.addTBPfraction("C7", 0.2, 200.0 / 1000.0, 0.8932);
         //     testSystem.addComponent("MEG", 0.00476);
         // SystemInterface testSystem = new SystemSrkEos(273.851993 +15, 1);//
         //  testSystem.addComponent("TEG", 0.1);
-
         //      testSystem.addComponent("ethane", 5.154639175);
         //   testSystem.addComponent("propane", 3.092783505);
         ///   testSystem.addComponent("i-butane", 2.06185567);
@@ -176,10 +199,10 @@ public class TPflash {
          */
 //testSystem.addComponent("water", 1);
 // testSystem.addComponent("TEG", 1);
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(10);
-        testSystem.useVolumeCorrection(true);
-        testSystem.setMultiPhaseCheck(true);
+          testSystem.createDatabase(true);
+         testSystem.setMixingRule(2);
+        //   testSystem.useVolumeCorrection(true);
+        ////   testSystem.setMultiPhaseCheck(true);
         //Y testSystem = testSystem.readObject(30);
         //testSystem.setTemperature(273.15);
         //testSystem.setTotalFlowRate(20.0, "MSm^3/day");
@@ -192,16 +215,21 @@ public class TPflash {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         // testSystem.setNumberOfPhases(1);
-        //9 try {
-        // testOps.freezingPointTemperatureFlash();
-        //     testSystem.setTemperature(60);
-        //    testSystem.setPressure(85);
-        //    testSystem.init(0);
-        //     testSystem.setTotalFlowRate(1.2,"kg/hr");
-        for (int i = 0; i < 1; i++) {
-            testOps.TPflash();
-            //  testSystem.initPhysicalProperties();
+        try {
+            // testOps.freezingPointTemperatureFlash();
+            //     testSystem.setTemperature(60);
+            //    testSystem.setPressure(85);
+            //    testSystem.init(0);
+            //     testSystem.setTotalFlowRate(1.2,"kg/hr");
+            for (int i = 0; i < 1; i++) {
+                //   testOps.dewPointTemperatureFlash();
+                //  testSystem.initPhysicalProperties();
+            }
+        } catch (Exception e) {
+
         }
+        // testSystem.addComponent("ethane", -0.01);
+        testOps.TPflash();
         /*
         testSystem.display();
         testSystem.setMolarComposition(new double[]{0.9, 0, 1, 0.0, 0});
@@ -217,6 +245,8 @@ public class TPflash {
         }
          */
         testSystem.display();
+        System.out.println("desnity " + testSystem.getPhase(0).getDensity());
+   ((neqsim.thermo.phase.PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
 
     }
 }

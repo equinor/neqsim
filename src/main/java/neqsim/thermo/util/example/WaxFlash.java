@@ -11,7 +11,7 @@ public class WaxFlash {
     static Logger logger = Logger.getLogger(WaxFlash.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.0 + 12, 4.0);
+        SystemInterface testSystem = new SystemSrkEos(273.0 + 42, 4.0);
         //SystemInterface testSystem = new SystemPCSAFT(239.0, 223.0);
         //SystemInterface testSystem = new SystemGERG2004Eos(121.0, 1.61);
         //     testSystem.getWaxCharacterisation().setModelName("Pedersen");
@@ -23,16 +23,16 @@ public class WaxFlash {
         //   testSystem.addComponent("nC14", 10.0);
         //   testSystem.addComponent("nC16", 10.0);
         //testSystem.addComponent("nC10", 0.8);
-        //   testSystem.addTBPfraction("C7", 10.0, 93.30 / 1000.0, 0.73);
-        //  testSystem.addTBPfraction("C8", 10.0, 106.60 / 1000.0, 0.7533);
+           testSystem.addTBPfraction("C7", 10.0, 93.30 / 1000.0, 0.73);
+          testSystem.addTBPfraction("C8", 10.0, 106.60 / 1000.0, 0.7533);
         //   testSystem.addTBPfraction("C9", 10.0, 119.60 / 1000.0, 0.7653);
-        testSystem.addTBPfraction("C15", 21, 132.60 / 1000.0, 0.79);
-        testSystem.addTBPfraction("C20", 52.00, 343 / 1000.0, 0.85);
-        //tempSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.882888);
+     //   testSystem.addTBPfraction("C15", 21, 132.60 / 1000.0, 0.79);
+     //   testSystem.addTBPfraction("C20", 52.00, 343 / 1000.0, 0.85);
+        testSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.882888);
 
-        //testSystem.getCharacterization().characterisePlusFraction();
+        testSystem.getCharacterization().characterisePlusFraction();
         // testSystem.addComponent("MEG", 8.8);
-        //      testSystem.addComponent("water", 10.8);
+              testSystem.addComponent("water", 10.8);
 
         testSystem.getWaxModel().addTBPWax();
         testSystem.createDatabase(true);
@@ -40,9 +40,9 @@ public class WaxFlash {
         testSystem.addSolidComplexPhase("wax");
         //  testSystem.setSolidPhaseCheck("nC14");
         testSystem.setMultiphaseWaxCheck(true);
-        testSystem.autoSelectMixingRule();
+      //  testSystem.autoSelectMixingRule();
        // testSystem.setMixingRule(2);
-        testSystem.setMultiPhaseCheck(true);
+        //testSystem.setMultiPhaseCheck(true);
         //  //    testSystem.getPhase(5).setPressure(20.0);
 //testSystem.setTemperature(232);
         //  testSystem.setSolidPhaseCheck("n-hexane");

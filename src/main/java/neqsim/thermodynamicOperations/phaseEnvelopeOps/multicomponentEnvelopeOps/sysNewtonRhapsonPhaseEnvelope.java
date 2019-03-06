@@ -145,8 +145,8 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
     }
 
     public final void calc_x_y() {
-        sumx = 0;
-        sumy = 0;
+        sumx = 0.0;
+        sumy = 0.0;
         for (int j = 0; j < system.getNumberOfPhases(); j++) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if (j == 0) {
@@ -426,7 +426,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
             return;
         } else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {
 
-            logger.info("hei fra her");
+            logger.info("close to CP (based on avsp criteria)");
             testcrit = 1;
             xg = Xgij.getMatrix(numb, numb, 0, 3);
 
@@ -482,7 +482,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
         Matrix dx;
         iter = 0;
         double dxOldNorm = 1e10;
-
+        
         do {
             iter++;
             init();
@@ -528,9 +528,9 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
             }
             dxOldNorm = dx.norm2();
 
-            //   logger.info("feilen: " + dx.norm2());
+        //       logger.info("error: " + dx.norm2());
         } while (dx.norm2() > 1.e-10 && !Double.isNaN(dx.norm2()));
-        // logger.info("iter: " + iter + " err " + (dx.norm2() / u.norm2()));
+       //  logger.info("pressure " + system.getPressure() + " iter: " + iter + " err " + (dx.norm2() / u.norm2()));
         init();
         findSpecEq();
         uold = u.copy();

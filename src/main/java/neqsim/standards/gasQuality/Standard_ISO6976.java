@@ -285,7 +285,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard implements neqsi
         }
 
         double relativeDens = 0.0;
-        System.out.println("reference state " + getReferenceState());
+       // System.out.println("reference state " + getReferenceState());
         if (getReferenceState().equals("ideal")) {
             relativeDens = relDensIdeal;
         } else if (getVolRefT() == 0) {

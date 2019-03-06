@@ -1,6 +1,7 @@
 package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+import neqsim.thermo.system.SystemFurstElectrolyteEosMod2004;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
@@ -28,16 +29,16 @@ public class ReactiveTPflash {
     }
 
     public static void main(String args[]) {
-        //SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 45, 2.050);
-        SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.15 + 60, 50.0);
+       //SystemInterface testSystem = new SystemFurstElectrolyteEosMod2004(273.15 + 45, 2.050);
+       SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.15 + 60, 10.0);
 
         testSystem.addComponent("methane", 110.0);
-        testSystem.addComponent("CO2", 2.05);
+        testSystem.addComponent("CO2", 10.05);
         //   testSystem.addComponent("H2S", 0.10);
-        //testSystem.addComponent("MDEA", 132.0);
+        testSystem.addComponent("MDEA", 13.0);
         testSystem.addComponent("water", 100.00);
-        testSystem.addComponent("Na+", 1.200);
-        testSystem.addComponent("OH-", 1.100);
+      //  testSystem.addComponent("Na+", 1.200);
+      //  testSystem.addComponent("OH-", 1.100);
         //testSystem.addComponent("HCO3-", .100);
         //     testSystem.addComponent("Piperazine", 0.1e-4);
 

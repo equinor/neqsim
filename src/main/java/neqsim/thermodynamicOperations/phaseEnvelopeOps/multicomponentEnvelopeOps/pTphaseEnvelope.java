@@ -129,6 +129,10 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
             pointsV = new double[10000];
             pointsS = new double[10000];
             system.init(0);
+            
+            
+            // finds the component with highest (buble point first) or lowest (dew point first) TC
+            // component intex i put in variable speceq
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
                     if (bubblePointFirst == true && system.getPhase(0).getComponents()[speceq].getTC() > system.getPhase(0).getComponents()[i].getTC()) {

@@ -52,7 +52,6 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
             }
             databaseConnection = this.openConnection("FluidDatabase");
             statement = databaseConnection.createStatement();
-            
         }
         catch(Exception e){
             System.out.println("error in FluidDatabase " +e.toString());

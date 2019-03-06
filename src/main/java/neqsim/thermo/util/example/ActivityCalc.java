@@ -40,28 +40,12 @@ public class ActivityCalc {
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42, 1.01325);
-//        SystemInterface testSystem = new SystemSrkEos(273.15 - 17.8, 10.01325);
-       // SystemInterface testSystem = new SystemGERG2004Eos(273.15 - 20.0, 30.01325);
-       // SystemInterface testSystem = new SystemPrEos(273.15 - 20.0, 30.01325);
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        //testSystem.addComponent("MDEA+", 0.000001);
 
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+     
         testSystem.addComponent("TEG", 0.99);
         testSystem.addComponent("water", 0.01);
 
-        //testSystem.addComponent("HCO3-", 0.01);
-        // testSystem.addComponent("MDEA", 0.010001);
-        // testSystem.addComponent("MDEA+", 0.0001);
-//        testSystem.addComponent("Na+", 0.001);
-        //      testSystem.addComponent("methane", 1.0001);
-        //       testSystem.addComponent("CO2", 1.001);
-        //      testSystem.addComponent("CO2", 1.1);
-        //       testSystem.addComponent("water", 0.99);
-        //      testSystem.addComponent("MEG", 0.01);
-
-        //testSystem.addComponent("HCO3-", 0.0001);xH=yP
-
-        //testSystem.setHydrateCheck(true);
         testSystem.createDatabase(true);
 
         testSystem.setMixingRule(10);
@@ -70,16 +54,9 @@ public class ActivityCalc {
 
         try {
             testOps.bubblePointPressureFlash(false);
-            //     testOps.hydrateFormationTemperature(0);
         } catch (Exception e) {
         }
 
-        //     testSystem.getChemicalReactionOperations().solveChemEq(1);
-        //       System.out.println("Henrys Constant " + testSystem.getPhase(0).getComponent("CO2").getx()/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
-        //        double meanact2 = testSystem.getPhase(1).getMeanIonicActivity(0,1);
-//        System.out.println("mean ionic-activity: " + meanact2);
-//        double osm = testSystem.getPhase(1).getOsmoticCoefficientOfWater();
-//        System.out.println("osm: " + osm);
         testSystem.display();
         System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
 

@@ -14,7 +14,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.Draft_ISO18453;
 import neqsim.standards.gasQuality.GasChromotograpyhBase;
 import neqsim.standards.gasQuality.Standard_ISO6976;
-import neqsim.standards.gasQuality.StatoilBestPracticeHydrocarbonDewPoint;
+import neqsim.standards.gasQuality.BestPracticeHydrocarbonDewPoint;
 import neqsim.standards.gasQuality.SulfurSpecificationMethod;
 import neqsim.standards.gasQuality.UKspecifications_ICF_SI;
 import neqsim.thermo.system.SystemInterface;
@@ -46,7 +46,7 @@ public class BaseContract implements ContractInterface {
     public BaseContract(SystemInterface system, String terminal, String country) {
         int numb = 0;
         this.setContractName(contractName);
-        neqsim.util.database.NeqSimDataBaseMYSQL database = new neqsim.util.database.NeqSimDataBaseMYSQL();
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         try {
             dataSet = database.getResultSet("SELECT * FROM GASCONTRACTSPECIFICATIONS WHERE TERMINAL='" + terminal + "'" + " AND COUNTRY='" + country + "'");
@@ -110,8 +110,8 @@ public class BaseContract implements ContractInterface {
         if (methodName.equals("SulfurSpecificationMethod")) {
             return new SulfurSpecificationMethod(system);
         }
-        if (methodName.equals("StatoilBestPracticeHydrocarbonDewPoint")) {
-            return new StatoilBestPracticeHydrocarbonDewPoint(system);
+        if (methodName.equals("BestPracticeHydrocarbonDewPoint")) {
+            return new BestPracticeHydrocarbonDewPoint(system);
         }
         if (methodName.equals("UKspecifications")) {
             return new UKspecifications_ICF_SI(system);

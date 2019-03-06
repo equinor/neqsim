@@ -216,7 +216,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         Vmix -= (KMcorrectionFactor1 + (KMcorrectionFactor2 - KMcorrectionFactor1) * (xn2 / 0.0425)) * xch4 / 1000.0;
 
         LNGdensity = thermoSystem.getPhase(0).getMolarMass() * 1000.0 / Vmix;
-        System.out.println("LNG density " + LNGdensity);
+     //   System.out.println("LNG density " + LNGdensity);
     }
 
     public double getValue(String returnParameter, java.lang.String returnUnit) {

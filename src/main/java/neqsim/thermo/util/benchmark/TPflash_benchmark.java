@@ -33,8 +33,8 @@ public class TPflash_benchmark {
     public static void main(String args[]) {
         double[][] points;
 
-        SystemInterface testSystem = new SystemSrkEos(283.15, 35.01325);
-        //   SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 10.0);
+        SystemInterface testSystem = new SystemSrkEos(303.15, 35.01325);
+        //  SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 10.0);
         // SystemInterface testSystem = new SystemUMRPRUMCEos(303.0, 10.0);
         //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15, 1.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -48,24 +48,25 @@ public class TPflash_benchmark {
         testSystem.addComponent("i-butane", 0.006585);
         testSystem.addComponent("n-pentane", 0.005953);
         testSystem.addComponent("i-pentane", 0.0040184);
-        testSystem.addTBPfraction("C6", 0.006178399, 86.17801 / 1000.0, 0.6639999);
-        testSystem.addComponent("water", 0.0027082);
+        testSystem.addTBPfraction("C6", 0.6178399, 86.17801 / 1000.0, 0.6639999);
+        testSystem.addComponent("water", 0.27082);
         //       testSystem.addComponent("TEG", 1.0);
         //     testSystem.addTBPfraction("C7",1.0,250.0/1000.0,0.9);
 
         testSystem.createDatabase(true);
-//        testSystem.setMixingRule(2);
-        testSystem.autoSelectMixingRule();
+        testSystem.setMixingRule(2);
+        testSystem.setMultiPhaseCheck(true);
+        //  testSystem.autoSelectMixingRule();
         //    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         logger.info("start benchmark TPflash......");
-        
 
         testSystem.init(0);
         long time = System.currentTimeMillis();
-        //testOps.TPflash();
-        for (int i = 0; i < 1; i++) {
+        testOps.TPflash();
+        for (int i = 0; i < 5000; i++) {
             //testSystem.init(3, 0);
             testOps.TPflash();
+          //  testSystem.initPhysicalProperties();
             //testSystem.init(0);
             //     testSystem.init(1);
         }
