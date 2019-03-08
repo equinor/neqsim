@@ -6,6 +6,9 @@
 # Compiled class file
 *.class
 
+# BAckup of java files
+*.java~
+
 # Log file
 *.log
 
@@ -47,5 +50,8 @@ nbbuild/
 #dist/
 nbdist/
 .nb-gradle/
+
+#Visual studio
+.vs/
 
 # End of https://www.gitignore.io/api/java,maven,netbeans
