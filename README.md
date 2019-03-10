@@ -9,8 +9,13 @@ NeqSim can be built using the Maven build system (https://maven.apache.org/). Al
 ### Prerequisites
 NeqSim source code can be compiled with JDK8+ and is dependent on a number of third part java libraries. THe needed java libraries are listed in the pom.xml file and on the [NeqSim dependencies page](https://github.com/equinor/neqsimsource/network/dependencies).
 
-## Installing
+#### Initial setup: ####
 NeqSim sorce code is downloaded by cloning the library to your local computer, or forked to your private reprository.
+```bash
+git clone https://github.com/equinor/neqsimsource.git
+cd neqsimsource
+mvn install
+```
 
 ## Running the tests
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
