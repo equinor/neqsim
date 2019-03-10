@@ -25,14 +25,14 @@ THe NeqSim source code is compiled and distributed as a Java library.
 Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests.
 
 ## Versioning
-We use SemVer for versioning. For the versions available, see
+NeqSim use [SemVer](https://semver.org/) for versioning.
 
 ## Authors
 Even Solbraa
 Marlene Louse Lund
 
 ## License
-NeqSim is distributed under the Apache 2 licence.
+NeqSim is distributed under the [Apache-2.0](https://github.com/equinor/neqsimsource/blob/master/LICENSE) licence.
 
 ## Acknowledgments
 A number of master and PhD students at NTNU have contributed to development of NeqSim. We greatly acknowledge their contributions.
