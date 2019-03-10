@@ -3,7 +3,7 @@ NeqSim (Non-Equilibrium Simulator) is a Java library for estimation of fluid beh
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method.
 
 ## Releases
-[NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available both as java archives (jar files) and as source code.
+[NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available as java packages (jar files) and as source code.
 
 ## Getting Started
 See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim API.
