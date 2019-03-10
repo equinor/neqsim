@@ -3,11 +3,43 @@ NeqSim is an abbreviation for Non-equilibrium Simulator. It is a tool for thermo
 NeqSim enables simulation of the most common unit operations you find in the petroleum industry. 
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method.
 
-#Getting Started
+# Getting Started
 See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for learning how to start using the NeqSim API.
 NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
 
+## Prerequisites
+NeqSim source code can be compiled with JDK8+ and is dependent on a number of third part java libraries. THe needed java libraries are listed in the pom.xml file and on the [NeqSim dependencies page](https://github.com/equinor/neqsimsource/network/dependencies).
 
+## Installing
+NeqSim sorce code is downloaded by cloning the library to your local computer, or forked to your private reprository.
+
+#Running the tests
+THe test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
+
+#Deployment
+THe NeqSim source code is compiled and distributed as a Java library.
+
+Built With
+[Maven](https://maven.apache.org/) - Dependency Management
+
+#Contributing
+Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests.
+
+#Versioning
+We use SemVer for versioning. For the versions available, see
+
+#Authors
+Even Solbraa
+Marlene Louse Lund
+
+#License
+NeqSim is distributed under the Apache 2 licence.
+
+#Acknowledgments
+A number of master and PhD students at NTNU have contributed to development of NeqSim. We greatly acknowledge their contributions.
+
+
+#
 NeqSim is built upon six base modules:
 1. Thermodynamic Routines
 2. Physical Properties Routines
@@ -18,7 +50,8 @@ NeqSim is built upon six base modules:
 7. Process simulation routines
 
 
-File System and examples:
+# File System
+'''
 neqsim/: main library with all modules 
 
 neqsim/thermo/: Main path for thermodynamic routines
@@ -38,16 +71,6 @@ neqsim/processSimulation/util/examples/: Examples of use of Process Simulation c
 
 changelog.txt : History of what changed between each version.
 license.txt: license document
-
-
-Third party open source projects used by NeqSim
-EJML - for liner algebra calculations (http://ejml.org)
-JAMA - for linear algebra calculations (https://math.nist.gov/javanumerics/jama/)
-Commons Math - for various mathematical operations (http://commons.apache.org/proper/commons-math/)
-JFreeChart - for displaying charts (http://www.jfree.org/jfreechart/)
-Ucanaccess - for working with the local MSAccess database (http://ucanaccess.sourceforge.net/site.html)
-
-How to build NeqSim from source code
-NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
+'''
 
 
