@@ -13,7 +13,7 @@ NeqSim source code can be compiled with JDK8+ and is dependent on a number of th
 NeqSim sorce code is downloaded by cloning the library to your local computer, or forked to your private reprository.
 
 ## Running the tests
-THe test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
+The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
 
 ## Deployment
 THe NeqSim source code is compiled and distributed as a Java library.
