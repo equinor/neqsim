@@ -16,8 +16,8 @@ NeqSim source code can be compiled with JDK8+ and is dependent on a number of th
 NeqSim sorce code is downloaded by cloning the library to your local computer (alternatively fork it to your private reprository). The following commands are dependent on a local installation of [GIT](https://git-scm.com/) and [Maven](https://maven.apache.org/).
 
 ```bash
-git clone https://github.com/equinor/neqsimsource.git
-cd neqsimsource
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
 mvn install
 ```
 
