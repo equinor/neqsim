@@ -37,7 +37,6 @@ NeqSim is distributed under the Apache 2 licence.
 ## Acknowledgments
 A number of master and PhD students at NTNU have contributed to development of NeqSim. We greatly acknowledge their contributions.
 
-
 ## NeqSim modules
 NeqSim is built upon six base modules:
 1. Thermodynamic Routines
@@ -50,24 +49,23 @@ NeqSim is built upon six base modules:
 
 
 ## File System
-'''
-neqsim/: main library with all modules 
 
-neqsim/thermo/: Main path for thermodynamic routines
-neqsim/thermo/util/examples/: examples of use of Thermodynamic Models and Routines
-
-neqsim/thermodynamicOperation: Main path for flash routines (TPflash, phase envelopes, etc.)
-neqsim/thermodynamicOperation/util/example/: examples of use of thermodynamic operations (eg. flash calculations etc.)
-
-neqsim/physicalProperties: Main path for Physical Property methods
-neqsim/physicalProperties/util/examples/: Examples of use of physical properties calculations
-
-neqsim/physicalProperties: Main path for Physical Property methods
-neqsim/physicalProperties/util/examples/: Examples of use of physical properties calculations
-
-neqsim/processSimulation: Main path for Process Simulation Calculations
-neqsim/processSimulation/util/examples/: Examples of use of Process Simulation calculations
-
-changelog.txt : History of what changed between each version.
-license.txt: license document
-'''
+>neqsim/: main library with all modules 
+>
+>neqsim/thermo/: Main path for thermodynamic routines
+>neqsim/thermo/util/examples/: examples of use of Thermodynamic Models and Routines
+>
+>neqsim/thermodynamicOperation: Main path for flash routines (TPflash, phase envelopes, etc.)
+>neqsim/thermodynamicOperation/util/example/: examples of use of thermodynamic operations (eg. flash calculations etc.)
+>
+>neqsim/physicalProperties: Main path for Physical Property methods
+>neqsim/physicalProperties/util/examples/: Examples of use of physical properties calculations
+>
+>neqsim/physicalProperties: Main path for Physical Property methods
+>neqsim/physicalProperties/util/examples/: Examples of use of physical properties calculations
+>
+>neqsim/processSimulation: Main path for Process Simulation Calculations
+>neqsim/processSimulation/util/examples/: Examples of use of Process Simulation calculations
+>
+>changelog.txt : History of what changed between each version.
+>license.txt: license document
