@@ -1,7 +1,13 @@
 NeqSim
 NeqSim is an abbreviation for Non-equilibrium Simulator. It is a tool for thermodynamic and fluid-mechanic simulations. 
 NeqSim enables simulation of the most common unit operations you find in the petroleum industry. 
-The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new methods.
+The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method.
+
+#Getting Started
+See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for learning how to start using the NeqSim API.
+NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
+
+
 NeqSim is built upon six base modules:
 1. Thermodynamic Routines
 2. Physical Properties Routines
