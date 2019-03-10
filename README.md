@@ -2,6 +2,9 @@
 NeqSim (Non-Equilibrium Simulator) is a Java library for estimation of fluid behavior and process design for oil and gas production.
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method.
 
+## Releases
+[NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available for download from the release pages.
+
 ## Getting Started
 See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim API.
 NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
@@ -22,7 +25,7 @@ mvn install
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
 
 ## Deployment
-The NeqSim source code is compiled and distributed as a Java library. [NeqSim latest release](https://github.com/equinor/neqsimsource/releases) is available for download from the release pages.
+The NeqSim source code is compiled and distributed as a Java library. [NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available for download from the release pages.
 
 ## Built With
 [Maven](https://maven.apache.org/) - Dependency Management
