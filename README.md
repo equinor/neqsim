@@ -38,7 +38,8 @@ NeqSim use [SemVer](https://semver.org/) for versioning.
 
 ## Authors
 Even Solbraa
-Marlene Louse Lund
+
+Marlene Louise Lund
 
 ## License
 NeqSim is distributed under the [Apache-2.0](https://github.com/equinor/neqsimsource/blob/master/LICENSE) licence.
