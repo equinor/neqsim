@@ -16,30 +16,30 @@ NeqSim sorce code is downloaded by cloning the library to your local computer, o
 #Running the tests
 THe test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
 
-#Deployment
+# Deployment
 THe NeqSim source code is compiled and distributed as a Java library.
 
-Built With
+# Built With
 [Maven](https://maven.apache.org/) - Dependency Management
 
-#Contributing
+# Contributing
 Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests.
 
-#Versioning
+# Versioning
 We use SemVer for versioning. For the versions available, see
 
-#Authors
+# Authors
 Even Solbraa
 Marlene Louse Lund
 
-#License
+# License
 NeqSim is distributed under the Apache 2 licence.
 
-#Acknowledgments
+# Acknowledgments
 A number of master and PhD students at NTNU have contributed to development of NeqSim. We greatly acknowledge their contributions.
 
 
-#
+# NeqSim modules
 NeqSim is built upon six base modules:
 1. Thermodynamic Routines
 2. Physical Properties Routines
