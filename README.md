@@ -22,7 +22,7 @@ mvn install
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
 
 ## Deployment
-The NeqSim source code is compiled and distributed as a Java library. [NeqSim latest release](/releases) is available for download from the release pages.
+The NeqSim source code is compiled and distributed as a Java library. [NeqSim latest release](https://github.com/equinor/neqsimsource/releases) is available for download from the release pages.
 
 ## Built With
 [Maven](https://maven.apache.org/) - Dependency Management
