@@ -77,3 +77,9 @@ NeqSim is built upon six base modules:
 >
 >changelog.txt : History of what changed between each version.
 >license.txt: license document
+
+## Toolboxes
+NeqSim toolboxes are avalable via GitHub for alternative programming languages.
+* [Matlab](https://github.com/equinor/neqsimmatlab)
+* [Python](https://github.com/equinor/neqsimpython)
+* [.NET (C#)](https://github.com/equinor/neqsimcapeopen)
