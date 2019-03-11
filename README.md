@@ -58,7 +58,6 @@ NeqSim is built upon six base modules:
 
 
 ## File System
-
 >neqsim/: main library with all modules 
 >
 >neqsim/thermo/: Main path for thermodynamic routines
