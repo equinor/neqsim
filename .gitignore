@@ -53,5 +53,6 @@ nbdist/
 
 #Visual studio
 .vs/
+.vscode/
 
 # End of https://www.gitignore.io/api/java,maven,netbeans
