@@ -76,7 +76,6 @@ public class PSflashSingleComp extends Flash implements java.io.Serializable {
             return;
         }
         double beta = (Sspec - liqEntropy) / (gasEntropy - liqEntropy);
-        system.display();
         system.setBeta(beta);
         system.init(3);
     }
