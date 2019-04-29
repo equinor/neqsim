@@ -23,7 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 
-@Disabled public class ElectrolyteCPAEosTest extends ModelTestBase{
+@Disabled public class ElectrolyteCPAEosTest extends ModelBaseTest{
 
     private static final long serialVersionUID = 1000;
     

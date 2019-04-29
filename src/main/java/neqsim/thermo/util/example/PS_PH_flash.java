@@ -26,12 +26,12 @@ public class PS_PH_flash {
 
     public static void main(String args[]) {
         //SystemInterface testSystem = new SystemSrkMathiasCopeman(273.15 + 5, 80);
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 0.0, 100.0);
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 100.0);
         //  SystemInterface testSystem = new SystemGERG2004Eos(277.59,689.474483);
         //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(350.15,30.00);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("water", 1.0);
+        testSystem.addComponent("water", 51.0);
         /*
         testSystem.addComponent("nitrogen", 1.08263303991407E-05);
         testSystem.addComponent("CO2", 0.00019008457660675);
@@ -69,7 +69,7 @@ public class PS_PH_flash {
 
         }
         testSystem.init(2);
-        testSystem.display();
+      //  testSystem.display();
 
         //testSystem.setPressure(testSystem.getPressure() - 1.2);
         // double entropy = testSystem.getEntropy(); //
@@ -78,8 +78,8 @@ public class PS_PH_flash {
         // System.out.println("enthalpy spec" + enthalpy);
 
         double entropy = testSystem.getEntropy();
-        testSystem.setTemperature(273.15 + 30.0);
-        testSystem.setPressure(10.0);
+        testSystem.setTemperature(273.15 + 0.0);
+        testSystem.setPressure(100.0);
         try {
             testOps.TPflash();
             //   testOps.bubblePointTemperatureFlash();
@@ -93,7 +93,7 @@ public class PS_PH_flash {
         //   testSystem.setPressure(20.894745);
          testOps.PSflash(entropy);
       //  testOps.PHflash(enthalpy);
-        testSystem.display();
+       // testSystem.display();
 
         //      testOps.PSflash(entropy);
         //     testSystem.display();
@@ -109,7 +109,7 @@ public class PS_PH_flash {
      //   testSystem.init(2);
      //   testSystem.setPressure(1.0);
      //   testOps.PSflash(entropy);
-     //   testSystem.display();
+       testSystem.display();
         // System.out.println("enthalpy spec" + testSystem.getEnthalpy());
     }
 }

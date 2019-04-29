@@ -71,7 +71,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                 stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
                 stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
                 double temperatureC = system.getPhase(phaseNumber).getTemperature();
-                double lnKsp = Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureC + Double.parseDouble(dataSet.getString("Ksp-water2")) + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Ksp-water3")) + temperatureC * Double.parseDouble(dataSet.getString("Ksp-water4")) + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureC * temperatureC);
+                double lnKsp = Double.parseDouble(dataSet.getString("Kspwater")) / temperatureC + Double.parseDouble(dataSet.getString("Kspwater2")) + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Kspwater3")) + temperatureC * Double.parseDouble(dataSet.getString("Kspwater4")) + Double.parseDouble(dataSet.getString("Kspwater5")) / (temperatureC * temperatureC);
                 ksp = Math.exp(lnKsp);
 
                 if (saltName.equals("NaCl")) {

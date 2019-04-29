@@ -200,11 +200,10 @@ public class TPflash extends Flash implements java.io.Serializable {
 		}
 
 		if (Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) > 1e-12) {
-			double fact = 1.0;
 			for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-				system.getPhase(0).getComponent(i).setK(system.getPhase(0).getComponent(i).getK() * fact
+				system.getPhase(0).getComponent(i).setK(system.getPhase(0).getComponent(i).getK()
 						* system.getPhase(1).getPressure() / system.getPhase(0).getPressure());
-				system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK() * fact);
+				system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
 			}
 		}
 
@@ -243,25 +242,15 @@ public class TPflash extends Flash implements java.io.Serializable {
 			tpdy = -1.0;
 			dgonRT = -1.0;
 		} else {
-			// lowestGibbsEnergyPhase = findLowestGibbsEnergyPhase();
 			for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
 				tpdy += system.getPhase(0).getComponent(i).getx()
 						* (Math.log(system.getPhase(0).getComponent(i).getFugasityCoeffisient())
 								+ Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
 								- minGibsLogFugCoef[i]);
-				// -
-				// Math.log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponents()[i].getz())
-				// -
-				// Math.log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponents()[i].getFugasityCoeffisient()));
 				tpdx += system.getPhase(1).getComponent(i).getx()
 						* (Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
 								+ Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
 								- minGibsLogFugCoef[i]);
-
-				// -
-				// Math.log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponents()[i].getz())
-				// -
-				// Math.log(minimumGibbsEnergySystem.getPhase(lowestGibbsEnergyPhase).getComponents()[i].getFugasityCoeffisient()));
 			}
 
 			dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
@@ -271,8 +260,6 @@ public class TPflash extends Flash implements java.io.Serializable {
 					for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
 						system.getPhase(0).getComponent(i)
 								.setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
-										// -
-										// Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents()[i].getFugasityCoeffisient()))
 										- minGibsLogFugCoef[i]) * system.getPhase(1).getPressure()
 										/ system.getPhase(0).getPressure());
 						system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
@@ -426,7 +413,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 		if (gasgib * (1.0 - Math.signum(gasgib) * 1e-8) < liqgib) {
 			system.setPhaseType(0, 1);
 		}
-		
+
 		system.init(1);
 
 		if (system.doMultiPhaseCheck()) {

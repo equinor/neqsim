@@ -35,7 +35,7 @@ public class ReactiveTPflash {
         testSystem.addComponent("methane", 110.0);
         testSystem.addComponent("CO2", 10.05);
         //   testSystem.addComponent("H2S", 0.10);
-        testSystem.addComponent("MDEA", 13.0);
+      //  testSystem.addComponent("MDEA", 13.0);
         testSystem.addComponent("water", 100.00);
       //  testSystem.addComponent("Na+", 1.200);
       //  testSystem.addComponent("OH-", 1.100);

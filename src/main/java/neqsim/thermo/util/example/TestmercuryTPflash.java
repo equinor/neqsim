@@ -28,16 +28,16 @@ public class TestmercuryTPflash {
 
     public static void main(String[] args) {
 
-      SystemInterface testSystem = new SystemSrkEos(288.15, 2.0);
+      SystemInterface testSystem = new SystemSrkEos(288.15, 12.0);
      
-        testSystem.addComponent("c-hexane", 1);
+   //   testSystem.addComponent("methane", 1);
+        testSystem.addComponent("nC12", 1);
         
         testSystem.addComponent("mercury",1);
-
       //  testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        testSystem.setMultiPhaseCheck(true);
+       testSystem.setMultiPhaseCheck(true);
       
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {

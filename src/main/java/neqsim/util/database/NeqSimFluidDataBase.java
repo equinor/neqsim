@@ -27,6 +27,8 @@ import java.sql.*;
  *
  * @author  esol
  * @version
+ * The database is used for storing fluid info and recreating a fluid 
+ * it uses the database neqsimfluiddatabase for storing fluid information
  */
 public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable{
 

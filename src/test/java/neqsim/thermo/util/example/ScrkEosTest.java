@@ -22,7 +22,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
  *
  * @author ESOL
  */
-@Disabled public class ScrkEosTest extends ModelTestBase {
+@Disabled public class ScrkEosTest extends ModelBaseTest {
 
     private static final long serialVersionUID = 1000;
     

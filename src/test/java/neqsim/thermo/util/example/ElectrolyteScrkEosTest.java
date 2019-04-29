@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author ESOL
  */
-@Disabled public class ElectrolyteScrkEosTest extends ModelTestBase{
+@Disabled public class ElectrolyteScrkEosTest extends ModelBaseTest{
 
     private static final long serialVersionUID = 1000;
     
