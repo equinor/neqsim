@@ -59,7 +59,6 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         javax.sql.DataSource ds = null;
 
         try {
-            return DriverManager.getConnection("jdbc:odbc:Driver={AspenTech SQLplus};host=143.97.152.75;port=10014;ads=KAR_IP21;maxrows=100000;charint=Y;charfloat=N;chartime=Y;readonly=N;allfields=N;rowid=N;converterrors=Y;charisnull=Y;tibco=N");
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
             System.out.println("error in Kårstø DB " + ex.toString());
