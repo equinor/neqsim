@@ -62,8 +62,8 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
             return DriverManager.getConnection("");
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
-            System.out.println("error in Kårstø DB " + ex.toString());
-            System.out.println("The Kårstø database must be registered on the local DBMS to work.");
+            System.out.println("error in KÃ¥rstÃ¸ DB " + ex.toString());
+            System.out.println("The KÃ¥rstÃ¸ database must be registered on the local DBMS to work.");
         } finally {
             try {
                 if (ctx != null) {
