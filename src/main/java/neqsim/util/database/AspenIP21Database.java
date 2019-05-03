@@ -31,17 +31,17 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
     private static final long serialVersionUID = 1000;
 
     protected Connection databaseConnection = null;
-    private static String dataBaseType = "Karsto";
+    private static String dataBaseType = "";
     private Statement statement = null;
 
     public AspenIP21Database() {
 
         try {
-            if (dataBaseType.equals("Karsto")) {
+            if (dataBaseType.equals("")) {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
             }
         } catch (Exception ex) {
-            System.out.println("error in Online Karsto " + ex.toString());
+            System.out.println("" + ex.toString());
             System.out.println("The database must be registered on the local DBMS to work.");
         }
 
@@ -61,8 +61,8 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         try {
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
-            System.out.println("error in Kårstø DB " + ex.toString());
-            System.out.println("The Kårstø database must be registered on the local DBMS to work.");
+            System.out.println("error in DB " + ex.toString());
+            System.out.println("The database must be registered on the local DBMS to work.");
         } finally {
             try {
                 if (ctx != null) {
