@@ -30,7 +30,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
 
     private static final long serialVersionUID = 1000;
 
-    protected Connection databaseConnection = null;//ss
+    protected Connection databaseConnection = null;
     private static String dataBaseType = "Karsto";
     private Statement statement = null;
 
@@ -59,7 +59,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         javax.sql.DataSource ds = null;
 
         try {
-            return DriverManager.getConnection("jdbc:odbc:Driver={AspenTech SQLplus};host=143.97.152.75;port=10014;ads=KAR_IP21;maxrows=100000;charint=Y;charfloat=N;chartime=Y;readonly=N;allfields=N;rowid=N;converterrors=Y;charisnull=Y;tibco=N");
+            return DriverManager.getConnection("");
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
             System.out.println("error in Kårstø DB " + ex.toString());
@@ -101,7 +101,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
 
     public static void main(String[] args) {
         AspenIP21Database database = new AspenIP21Database();
-        ResultSet dataSet = database.getResultSet("Karsto", "SELECT * FROM IP_AnalogDef WHERE NAME='21TI1117'");
+        ResultSet dataSet = database.getResultSet("");
         try {
                      while (dataSet.next()) {
 
