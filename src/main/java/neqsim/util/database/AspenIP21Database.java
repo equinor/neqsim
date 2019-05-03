@@ -59,11 +59,11 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         javax.sql.DataSource ds = null;
 
         try {
-            return DriverManager.getConnection("");
+            return DriverManager.getConnection("jdbc:odbc:Driver={AspenTech SQLplus};host=143.97.152.75;port=10014;ads=KAR_IP21;maxrows=100000;charint=Y;charfloat=N;chartime=Y;readonly=N;allfields=N;rowid=N;converterrors=Y;charisnull=Y;tibco=N");
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
-            System.out.println("error in KÃ¥rstÃ¸ DB " + ex.toString());
-            System.out.println("The KÃ¥rstÃ¸ database must be registered on the local DBMS to work.");
+            System.out.println("error in Kårstø DB " + ex.toString());
+            System.out.println("The Kårstø database must be registered on the local DBMS to work.");
         } finally {
             try {
                 if (ctx != null) {
@@ -101,7 +101,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
 
     public static void main(String[] args) {
         AspenIP21Database database = new AspenIP21Database();
-        ResultSet dataSet = database.getResultSet("");
+        ResultSet dataSet = database.getResultSet("Karsto", "SELECT * FROM IP_AnalogDef WHERE NAME='21TI1117'");
         try {
                      while (dataSet.next()) {
 
