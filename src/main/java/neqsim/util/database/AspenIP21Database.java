@@ -71,6 +71,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            
         }
         return null;
     }
@@ -100,7 +101,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
 
     public static void main(String[] args) {
         AspenIP21Database database = new AspenIP21Database();
-        ResultSet dataSet = database.getResultSet("Karsto", "SELECT * FROM IP_AnalogDef WHERE NAME='21TI1117'");
+        ResultSet dataSet = database.getResultSet("'");
         try {
                      while (dataSet.next()) {
 
