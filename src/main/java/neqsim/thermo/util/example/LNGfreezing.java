@@ -11,18 +11,18 @@ public class LNGfreezing {
     static Logger logger = Logger.getLogger(LNGfreezing.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.15 - 152.8, 35);
+        SystemInterface testSystem = new SystemSrkEos(273.15 - 152.8, 5);
         //  SystemInterface testSystem = new SystemSrkTwuCoonEos(162, 59.7);
         // SystemInterface testSystem = new SystemPCSAFT(159, 50.0);
-      //  testSystem.addComponent("CO2", 0.0017000);
-        testSystem.addComponent("nitrogen", 0.101268581777448);
+        testSystem.addComponent("CO2", 0.17000);
+        testSystem.addComponent("nitrogen", 1.101268581777448);
         testSystem.addComponent("methane", 0.324059461687833);
         testSystem.addComponent("ethane", 0.274475926106361);
         testSystem.addComponent("propane", 0.0305789847160361);
       //  testSystem.addComponent("i-butane", 0.0050000);
-        testSystem.addComponent("n-butane", 0.269617045712322);
+   //     testSystem.addComponent("n-butane", 0.269617045712322);
        // testSystem.addComponent("i-pentane", 0.0012000);
-      //  testSystem.addComponent("n-pentane", 0.0012000);
+   //     testSystem.addComponent("n-pentane", 0.12000);
     //    testSystem.addComponent("benzene", 0.0002000);
     //    testSystem.addComponent("n-hexane", 0.0002000);
         //   testSystem.addComponent("water", 0.0000000551);
@@ -36,7 +36,7 @@ public class LNGfreezing {
         //  testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         //  testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-        testSystem.setSolidPhaseCheck("n-butane");
+        testSystem.setSolidPhaseCheck("CO2");
         testSystem.init(0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
@@ -46,7 +46,7 @@ public class LNGfreezing {
             //System.out.println("funk " + operation.calcFunc());
             testOps.freezingPointTemperatureFlash();
           //  System.out.println("freeze temperature " + (testSystem.getTemperature() - 273.15));
-            // testOps.TPSolidflash();
+           //  testOps.TPSolidflash();
             testSystem.display();
         } catch (Exception e) {
             logger.error("error",e);

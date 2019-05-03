@@ -55,13 +55,6 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
     private static String dataBaseType = "MSAccessUCanAccess";
      public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
   
-    //private static String dataBaseType = "mySQL";
-    //private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimexperimentaldata";
-    //  private static String username = "remote";
-    //  private static String password = "remote";  
-    //
-    //private static String dataBaseType ="mySQLNeqSimWeb";
-    //
     private Statement statement = null;
     protected Connection databaseConnection = null;
 
@@ -90,20 +83,7 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
         javax.sql.DataSource ds = null;
 
         try {
-            if (dataBaseType.equals("MSAccess")) {
-                String dir = "";
-                if (System.getProperty("NeqSim.home") == null) {
-                    dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
-                } else {
-                    dir = System.getProperty("NeqSim.home");
-                }
-                return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
-
-            } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
-                //  Path path = FileSystems.getDefault().getPath(dataBasePath);
-                //  return DriverManager.getConnection("jdbc:h2:" + path.toAbsolutePath().toString() + ";DATABASE_TO_UPPER=false", "sa", "");
-                return DriverManager.getConnection(connectionString, "sa", "");
-            } else if (dataBaseType.equals("MSAccessUCanAccess")) {
+           if (dataBaseType.equals("MSAccessUCanAccess")) {
                 return DriverManager.getConnection(getConnectionString());
             } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
                 return DriverManager.getConnection(getConnectionString(), username, password);
@@ -129,7 +109,6 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
                 logger.error("error", e);
             }
         }
-
     }
 
     public Connection getConnection() {
@@ -244,86 +223,8 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
         connectionString = aConnectionString;
     }
 
-    public static void main(String[] args
-    ) {
-        /*
-        // example of how to use mySQL  database
-        neqsim.util.database.NeqSimDataBase.setDataBaseType("mySQL");
-        neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:mysql://tr-w33:3306/neqsimthermodatabase");
-        neqsim.util.database.NeqSimDataBase.setUsername("remote");
-        neqsim.util.database.NeqSimDataBase.setPassword("remote");
-         */
-
-        // example of how to use local Access database
-        NeqSimExperimentDatabase.dataBasePath
-                = "C:/Users/esol/OneDrive - Equinor/programming/NeqSimGUI/neqsim/data/NeqSimDatabase.mdb";
-        NeqSimExperimentDatabase.dataBaseType
-                = "MSAccessUCanAccess";
-
-        neqsim.util.database.NeqSimExperimentDatabase.setDataBaseType("MSAccessUCanAccess");
-        //neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");//jdbc:mysql://tr-w33:3306/neqsimthermodatabase");"jdbc:derby://localhost:1527/neqsimthermodatabase"
-        //  neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");
-        neqsim.util.database.NeqSimExperimentDatabase.setUsername("remote");
-        neqsim.util.database.NeqSimExperimentDatabase.setPassword("remote");
-
-        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
-
-        ResultSet dataSet = database.getResultSet("SELECT * FROM COMP WHERE NAME='methane'");
-
-        try {
-            dataSet.next();
-            logger.info("dataset " + dataSet.getString("molarmass"));
-
-        } catch (Exception e) {
-            logger.error("failed " + e.toString());
-            throw new RuntimeException(e);
-        }
-
+    public static void main(String[] args) {
+       
     }
 
-    public static String[] getComponentNames() {
-        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
-        try {
-            List<String> names = new ArrayList<>();
-            ResultSet dataSet = database.getResultSet("SELECT name FROM comp ORDER BY ID");
-            while (dataSet.next()) {
-                names.add(dataSet.getString("name"));
-            }
-            return names.toArray(new String[0]);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static boolean hasComponent(String compName) {
-        neqsim.util.database.NeqSimExperimentDatabase database = new neqsim.util.database.NeqSimExperimentDatabase();
-        java.sql.ResultSet dataSet = null;
-        String[] names = null;
-        try {
-            dataSet = database.getResultSet("select count(*) from COMP WHERE NAME='" + compName + "'");
-            dataSet.next();
-            int size = dataSet.getInt(1);
-            if (size == 0) {
-                return false;
-            } else {
-                return true;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            try {
-                if (dataSet != null) {
-                    dataSet.close();
-                }
-                if (database.getStatement() != null) {
-                    database.getStatement().close();
-                }
-                if (database.getConnection() != null) {
-                    database.getConnection().close();
-                }
-            } catch (Exception e) {
-                logger.error("error closing database.....", e);
-            }
-        }
-    }
 }
