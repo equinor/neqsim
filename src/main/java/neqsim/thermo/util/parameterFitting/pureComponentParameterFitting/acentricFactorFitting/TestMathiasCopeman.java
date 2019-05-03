@@ -31,7 +31,7 @@ public class TestMathiasCopeman extends java.lang.Object {
     
     
     public static void main(String[] args){
-        
+    	
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList sampleList = new ArrayList();
         

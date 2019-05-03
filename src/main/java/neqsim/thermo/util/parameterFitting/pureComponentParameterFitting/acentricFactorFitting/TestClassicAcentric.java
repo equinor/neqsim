@@ -7,6 +7,8 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.database.NeqSimExperimentDatabase;
+
 import java.sql.*;
 import java.util.*;
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -35,11 +37,16 @@ public class TestClassicAcentric extends java.lang.Object {
         ArrayList sampleList = new ArrayList();
         
         // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
+        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
         //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='methane' AND VapourPressure<100");
         //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
-        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='S8' AND VapourPressure<100");
+
+    	
+       // neqsim.util.database.NeqSimExperimentDatabase.setConnectionString("jdbc:mysql://tr-w33:3306/neqsimexperimentaldata");
         
+        
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM purecomponentvapourpressures WHERE ComponentName='water' AND VapourPressure<100");
+
         try{
             while(dataSet.next()){
                 ClassicAcentricFunction function = new  ClassicAcentricFunction();

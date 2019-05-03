@@ -27,7 +27,7 @@ public class TestUMRPRUMC {
     }
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 20, 100);
+        SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 20, 10.0);
         //    SystemInterface testSystem = new SystemSrkEos(273.15 + 20, 15.0);
        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 20, 1.0);
         //testSystem.getCharacterization().setTBPModel("PedersenPR");//(RiaziDaubert  PedersenPR  PedersenSRK
@@ -69,8 +69,8 @@ public class TestUMRPRUMC {
         //   testSystem.addComponent("n-octane", 10.0);
         //   
 
-           testSystem.addTBPfraction("C8", 1.0, 100.0 / 1000.0, 0.8);
-            testSystem.addTBPfraction("LP_C17", 0.03, 238.779998779297 / 1000.0, 0.84325);
+       //    testSystem.addTBPfraction("C8", 1.0, 100.0 / 1000.0, 0.8);
+       //     testSystem.addTBPfraction("LP_C17", 0.03, 238.779998779297 / 1000.0, 0.84325);
         //   testSystem.addComponent("ethane", 1.0);
     //    testSystem.addComponent("water", 7.0);
         //  testSystem.addComponent("CO2", 1.0e-10);
@@ -78,16 +78,16 @@ public class TestUMRPRUMC {
         //      testSystem.addComponent("ethane", 0.375);
 //       //    testSystem.addComponent("ethane", 99.9);
         //   testSystem.addComponent("nC27", 0.25);
-        testSystem.createDatabase(true);
+    //    testSystem.createDatabase(true);
       //  testSystem.setHydrateCheck(true);
-        //testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-           testSystem.setMixingRule(2);
+        testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+         //  testSystem.setMixingRule(2);
         //  testSystem.setMultiPhaseCheck(true);
         testSystem.init(0);
         //  testSystem.setAtractiveTerm(13);
         try {
             testOps.TPflash();
-            for (int i = 0; i < 1000000; i++) {
+            for (int i = 0; i < 1; i++) {
                 testOps.TPflash();
                 testSystem.init(3);
              //   testOps.hydrateFormationTemperature();

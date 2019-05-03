@@ -29,15 +29,15 @@ public class TPflash {
     public static void main(String[] args) {
 
         // SystemInterface testSystem = new SystemSrkEos(293.15, 999999.999999999/1.0e5);
-        SystemInterface testSystem = new SystemSrkPenelouxEos(293.15, 999999.999999999 / 1.0e5);
+        SystemInterface testSystem = new SystemSrkEos(376.15, 1.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(86273.15 + 45.0, 22.0);//
         //   testSystem.addComponent("nitrogen", 72);
         //   testSystem.addComponent("oxygen", 28);
 
-        testSystem.addComponent("methane", 79);
-         testSystem.addComponent("n-hexane", 79);
-        testSystem.addComponent("water", 21);
-        testSystem.useVolumeCorrection(false);
+        testSystem.addComponent("water", 79);
+   //      testSystem.addComponent("n-hexane", 79);
+  //      testSystem.addComponent("water", 21);
+   //     testSystem.useVolumeCorrection(false);
 
         ///  testSystem.addComponent("nC10", 28.0);
         //estSystem.addComponent("benzene",21);

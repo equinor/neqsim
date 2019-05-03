@@ -30,7 +30,7 @@ import org.apache.log4j.Logger;
  * @author Even Solbraa
  * @version Dec 2018
  */
-public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
 
     /**
      * @return the createTemporaryTables
@@ -54,29 +54,7 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
 
     private static String dataBaseType = "Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
-    // private static String connectionString = "jdbc:derby:C:/programming/NeqSimSourceCode/java/neqsim/data/webdb/neqsimthermodatabase";
-    //
-    //private static String dataBaseType = "H2RT";
-    //private static String connectionString = "jdbc:h2:C:/Users/esol/OneDrive - Statoil ASA/programming/neqsimsource/src/main/resources/data/neqsimH2DB/neqsim.db;DATABASE_TO_UPPER=false";
-    // private static String username = "sa";
-    // private static String password = "";    
-    //private static String dataBaseType ="MSAccess";
-    //public static String dataBasePath = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
-    //private static String dataBaseType = "MSAccessUCanAccess";
-    //public static String connectionString = "jdbc:ucanaccess://C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb;memory=true";
-    //
-    //private static String dataBaseType ="mySQLNTNU";
-    //private static String connectionString = "jdbc:mysql://iept1122.ivt.ntnu.no:3306/neqsimthermodatabase";
-    // private static String username = "remote";
-    // private static String password = "remote";
-    //
-    //private static String dataBaseType = "mySQL";
-    //private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimthermodatabase";
-    //  private static String username = "remote";
-    //  private static String password = "remote";  
-    //
-    //private static String dataBaseType ="mySQLNeqSimWeb";
-    //
+  
     private Statement statement = null;
     protected Connection databaseConnection = null;
 
@@ -115,11 +93,9 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                 return DriverManager.getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
 
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
-                //  Path path = FileSystems.getDefault().getPath(dataBasePath);
-                //  return DriverManager.getConnection("jdbc:h2:" + path.toAbsolutePath().toString() + ";DATABASE_TO_UPPER=false", "sa", "");
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
-                return DriverManager.getConnection("jdbc:ucanaccess://" + dataBasePath + ";memory=true");
+                return DriverManager.getConnection(getConnectionString());
             } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
                 return DriverManager.getConnection(getConnectionString(), username, password);
             } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
@@ -144,7 +120,6 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
                 logger.error("error", e);
             }
         }
-
     }
 
     public Connection getConnection() {
@@ -261,26 +236,6 @@ public final class NeqSimDataBase implements neqsim.util.util.FileSystemSettings
 
     public static void main(String[] args
     ) {
-        /*
-        // example of how to use mySQL  database
-        neqsim.util.database.NeqSimDataBase.setDataBaseType("mySQL");
-        neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:mysql://tr-w33:3306/neqsimthermodatabase");
-        neqsim.util.database.NeqSimDataBase.setUsername("remote");
-        neqsim.util.database.NeqSimDataBase.setPassword("remote");
-         */
-
-        // example of how to use local Access database
-        NeqSimDataBase.dataBasePath
-                = "C:/programming/NeqSimSourceCode/java/neqsim/data/NeqSimDatabase.mdb";
-        NeqSimDataBase.dataBaseType
-                = "MSAccessUCanAccess";
-
-        neqsim.util.database.NeqSimDataBase.setDataBaseType("MSAccessUCanAccess");
-        //neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");//jdbc:mysql://tr-w33:3306/neqsimthermodatabase");"jdbc:derby://localhost:1527/neqsimthermodatabase"
-        //  neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");
-        neqsim.util.database.NeqSimDataBase.setUsername("remote");
-        neqsim.util.database.NeqSimDataBase.setPassword("remote");
-
         NeqSimDataBase database = new NeqSimDataBase();
 
         ResultSet dataSet = database.getResultSet("SELECT * FROM COMP WHERE NAME='methane'");

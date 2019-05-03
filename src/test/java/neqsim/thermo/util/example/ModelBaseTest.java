@@ -18,7 +18,7 @@ import neqsim.thermo.system.SystemInterface;
  *
  * @author ESOL
  */
-@Disabled public class ModelTestBase{
+@Disabled public class ModelBaseTest{
 
     private static final long serialVersionUID = 1000;
     

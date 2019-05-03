@@ -40,7 +40,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
             funk = 0;
             deriv = 0;
             ytotal = 0;
-            system.init(1);
+            system.init(2);
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
 
                 do {
@@ -59,7 +59,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
             }
 
             //  logger.info("FUNK: " + funk);
-            // logger.info("temp: " + system.getTemperature());
+             logger.info("temp: " + system.getTemperature());
             // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
             system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
 

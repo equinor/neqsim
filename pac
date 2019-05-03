@@ -1,0 +1,13 @@
+CREATE TABLE compsalt (
+	ID INT NOT NULL,
+	SaltName VARCHAR(50),
+	ion1 VARCHAR(50),
+	ion2 VARCHAR(50),
+	stoc1 DOUBLE DEFAULT 0,
+	stoc2 DOUBLE DEFAULT 0,
+	Kspwater DOUBLE,
+	Kspwater2 DOUBLE,
+	Kspwater3 DOUBLE,
+	Kspwater4 DOUBLE,
+	Kspwater5 DOUBLE DEFAULT 0
+);

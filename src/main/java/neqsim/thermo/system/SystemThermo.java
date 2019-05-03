@@ -2870,7 +2870,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     public SystemInterface readObject(int ID) {
         ResultSet rs = null;
         SystemThermo tempSystem = null;
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        neqsim.util.database.NeqSimBlobDatabase database = new neqsim.util.database.NeqSimBlobDatabase();
         try {
             java.sql.Connection con = database.openConnection();
             String sqlStr = "SELECT FLUID FROM fluid_blobdb WHERE ID=" + Integer.toString(ID);
@@ -2928,7 +2928,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         byte[] byteObject = fout.toByteArray();
         ByteArrayInputStream inpStream = new ByteArrayInputStream(byteObject);
 
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        neqsim.util.database.NeqSimBlobDatabase database = new neqsim.util.database.NeqSimBlobDatabase();
 
         try {
             java.sql.Connection con = database.openConnection();
