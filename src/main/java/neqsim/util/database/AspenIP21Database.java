@@ -30,7 +30,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
 
     private static final long serialVersionUID = 1000;
 
-    protected Connection databaseConnection = null;
+    protected Connection databaseConnection = null;//ss
     private static String dataBaseType = "Karsto";
     private Statement statement = null;
 
