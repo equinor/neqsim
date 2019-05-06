@@ -48,7 +48,7 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
 
     private static final long serialVersionUID = 1000;
     public static String dataBasePath = "";
-    public static String username = "remote", password = "remote";
+    public static String username = "", password = "";
     static Logger logger = Logger.getLogger(NeqSimExperimentDatabase.class);
     private static boolean createTemporaryTables = false;
 
