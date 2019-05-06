@@ -83,3 +83,6 @@ NeqSim toolboxes are avalable via GitHub for alternative programming languages.
 * [Matlab](https://github.com/equinor/neqsimmatlab)
 * [Python](https://github.com/equinor/neqsimpython)
 * [.NET (C#)](https://github.com/equinor/neqsimcapeopen)
+
+## Related open source projects:
+[NeqSim Python/Colab](https://github.com/EvenSol/NeqSim-Colab)
