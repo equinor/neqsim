@@ -37,8 +37,8 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 ## Versioning
 NeqSim use [SemVer](https://semver.org/) for versioning.
 
-## Authors
-Even Solbraa, Marlene Louise Lund
+## Authors and contact persons
+Even Solbraa (esolbraa@gmail.com),  Marlene Louise Lund
 
 ## Licence
 NeqSim is distributed under the [Apache-2.0](https://github.com/equinor/neqsimsource/blob/master/LICENSE) licence.
