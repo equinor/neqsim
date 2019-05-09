@@ -32,7 +32,7 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 [Maven](https://maven.apache.org/) - Dependency Management
 
 ## Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
+See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
 ## Versioning
 NeqSim use [SemVer](https://semver.org/) for versioning.
