@@ -49,7 +49,7 @@ public class Fittings {
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM FITTINGS WHERE name='" + name + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"));
                 dataSet.next();
                 LtoD = (Double.parseDouble(dataSet.getString("LtoD")));
                 System.out.printf("LtoD "+ LtoD);

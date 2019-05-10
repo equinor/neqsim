@@ -48,12 +48,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
     private static final long serialVersionUID = 1000;
     public static String dataBasePath = "";
-    public static String username = "remote", password = "remote";
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
 
     private static String dataBaseType = "Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
+	private static String username = "remote";
+	private static String password = "remote";
   
     private Statement statement = null;
     protected Connection databaseConnection = null;
@@ -79,10 +80,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      * Creates new NeqSimDataBase
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
+    	
         javax.naming.InitialContext ctx = null;
         javax.sql.DataSource ds = null;
-
         try {
+        	if(System.getenv("NEQSIMTHERMODB_CS")!=null) {
+        		 return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"),System.getenv("NEQSIMTHERMODB_USER"),System.getenv("NEQSIMTHERMODB_PASSWORD"));
+        	}
             if (dataBaseType.equals("MSAccess")) {
                 String dir = "";
                 if (System.getProperty("NeqSim.home") == null) {
@@ -100,13 +104,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
                 return DriverManager.getConnection(getConnectionString(), username, password);
             } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
                 ctx = new javax.naming.InitialContext();
-                ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimDataSource");
-                if (ctx != null) {
-                    ctx.close();
-                }
+                ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimThermoDatabase");
                 return ds.getConnection();
             } else {
-                return DriverManager.getConnection(getConnectionString(), username, password);
+                return DriverManager.getConnection(getConnectionString());
             }
         } catch (Exception ex) {
             logger.error("error loading NeqSimDataBase... " + ex.toString());
@@ -238,7 +239,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     ) {
         NeqSimDataBase database = new NeqSimDataBase();
 
-        ResultSet dataSet = database.getResultSet("SELECT * FROM COMP WHERE NAME='methane'");
+        ResultSet dataSet = database.getResultSet("SELECT * FROM comp WHERE NAME='methane'");
 
         try {
             dataSet.next();
@@ -270,7 +271,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         java.sql.ResultSet dataSet = null;
         String[] names = null;
         try {
-            dataSet = database.getResultSet("select count(*) from COMP WHERE NAME='" + compName + "'");
+            dataSet = database.getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");
             dataSet.next();
             int size = dataSet.getInt(1);
             if (size == 0) {

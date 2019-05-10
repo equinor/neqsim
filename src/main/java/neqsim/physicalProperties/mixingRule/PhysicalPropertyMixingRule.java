@@ -71,7 +71,7 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
                 } else {
                     try {
                         database = new neqsim.util.database.NeqSimDataBase();
-                        dataSet = database.getResultSet("SELECT * FROM INTER WHERE (COMP1='" + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name + "')");
+                        dataSet = database.getResultSet("SELECT * FROM inter WHERE (COMP1='" + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name + "')");
                         if (dataSet.next()) {
                             Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
                         } else {

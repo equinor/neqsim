@@ -71,9 +71,9 @@ public class ComponentHydrate extends Component {
             if (!component_name.equals("default")) {
                 try {
                     if (database.createTemporaryTables()) {
-                        dataSet = database.getResultSet(("SELECT * FROM COMPTEMP WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     } else {
-                        dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
 
                     }
                     dataSet.next();
@@ -81,7 +81,7 @@ public class ComponentHydrate extends Component {
                 } catch (Exception e) {
                     dataSet.close();
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 lennardJonesMolecularDiameterHydrate = Double.parseDouble(dataSet.getString("LJdiameterHYDRATE"));        //BF

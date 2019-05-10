@@ -117,15 +117,15 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     java.sql.ResultSet dataSet = null;
                     try {
                         if (getComponent(0).getAtractiveTermNumber() == 13) {
-                            dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamA_UMRMC WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                            dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umrmc WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         } else {
-                            dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamA_UMR WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                            dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umr WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         }
                         dataSet.next();
                         //dataSet.getClob("MainGroup");
                     } catch (Exception e) {
                         dataSet.close();
-                        dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamA_UMR WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparama_umr WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                     }
 
@@ -153,15 +153,15 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     java.sql.ResultSet dataSet = null;
                     try {
                         if (getPhase().getComponent(0).getAtractiveTermNumber() == 13) {
-                            dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamB_UMRMC WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umrmc WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         } else {
-                            dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamB_UMR WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umr WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         }
                         dataSet.next();
                         //dataSet.getClob("MainGroup");
                     } catch (Exception e) {
                         dataSet.close();
-                        dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamB_UMR WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparamb_umr WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                     }
 
@@ -187,15 +187,15 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
                     java.sql.ResultSet dataSet = null;
                     try {
                         if (getPhase().getComponent(0).getAtractiveTermNumber() == 13) {
-                            dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamC_UMRMC WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umrmc WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         } else {
-                            dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamC_UMR WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                            dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umr WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         }
                         dataSet.next();
                         //  dataSet.getClob("MainGroup");
                     } catch (Exception e) {
                         dataSet.close();
-                        dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParamC_UMR WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparamc_umr WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                     }
 

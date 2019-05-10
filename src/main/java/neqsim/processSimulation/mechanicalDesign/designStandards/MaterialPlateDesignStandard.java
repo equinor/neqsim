@@ -53,7 +53,7 @@ public class MaterialPlateDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM MaterialPlateProperties WHERE materialName='" + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='" + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
                 while (dataSet.next()) {
                     if (divClassNo == 1) {
                         divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa

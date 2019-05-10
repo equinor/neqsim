@@ -49,10 +49,10 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 	private static final long serialVersionUID = 1000;
 	public static String dataBasePath = "";
 	static Logger logger = Logger.getLogger(NeqSimBlobDatabase.class);
-	private static boolean createTemporaryTables = false;
+	private static boolean createTemporaryTables = true;
 
-	private static String dataBaseType = "mySQL";
-	private static String connectionString = "jdbc:mysql://tr-w33:3306/neqsimblobdb";
+	private static String dataBaseType = "Derby";
+    private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
 	private static String username = "remote";
 	private static String password = "remote";
 
@@ -84,9 +84,32 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 		javax.sql.DataSource ds = null;
 
 		try {
-			if (dataBaseType.equals("mySQL")) {
+			if (System.getenv("NEQSIMTHERMODB_CS") != null) {
+				return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"),
+						System.getenv("NEQSIMTHERMODB_USER"), System.getenv("NEQSIMTHERMODB_PASSWORD"));
+			}
+			if (dataBaseType.equals("MSAccess")) {
+				String dir = "";
+				if (System.getProperty("NeqSim.home") == null) {
+					dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
+				} else {
+					dir = System.getProperty("NeqSim.home");
+				}
+				return DriverManager.getConnection(
+						"jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
+
+			} else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
+				return DriverManager.getConnection(connectionString, "sa", "");
+			} else if (dataBaseType.equals("MSAccessUCanAccess")) {
+				return DriverManager.getConnection(getConnectionString());
+			} else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU")
+					|| dataBaseType.equals("Derby")) {
 				return DriverManager.getConnection(getConnectionString(), username, password);
-			}else {
+			} else if (dataBaseType.equals("mySQLNeqSimWeb")) {
+				ctx = new javax.naming.InitialContext();
+				ds = (javax.sql.DataSource) ctx.lookup("java:comp/env/jdbc/NeqsimThermoDatabase");
+				return ds.getConnection();
+			} else {
 				return DriverManager.getConnection(getConnectionString(), username, password);
 			}
 		} catch (Exception ex) {
@@ -198,7 +221,6 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 	}
 
 	public static void main(String[] args) {
-		
 
 	}
 }

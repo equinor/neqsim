@@ -81,12 +81,12 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM UNIFACGroupParam WHERE Secondary=" + groupNumber + ""));
+                dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
                 dataSet.next();
                 dataSet.getClob("name");
             } catch (Exception e) {
                 dataSet.close();
-                dataSet = database.getResultSet(("SELECT * FROM UNIFACGroupParam WHERE Secondary=" + groupNumber + ""));
+                dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
                 dataSet.next();
             }
             n = temp;

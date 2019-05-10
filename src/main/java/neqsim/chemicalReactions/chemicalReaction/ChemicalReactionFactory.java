@@ -47,7 +47,7 @@ public class ChemicalReactionFactory {
         
         try{
             java.sql.ResultSet dataSet = null;
-            dataSet =  database.getResultSet("SELECT * FROM ReactionKSPdata where name='" + name +"'");
+            dataSet =  database.getResultSet("SELECT * FROM reactionkspdata where name='" + name +"'");
             
             dataSet.next();
             String reacname = dataSet.getString("name");
