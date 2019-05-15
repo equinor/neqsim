@@ -79,7 +79,7 @@ NeqSim is built upon six base modules:
 >license.txt: license document
 
 ## Toolboxes
-NeqSim toolboxes are avalable via GitHub for alternative programming languages.
+See [NeqSim homepage](https://equinor.github.io/neqsimhome/). NeqSim toolboxes are avalable via GitHub for alternative programming languages.
 * [Matlab](https://github.com/equinor/neqsimmatlab)
 * [Python](https://github.com/equinor/neqsimpython)
 * [.NET (C#)](https://github.com/equinor/neqsimcapeopen)
