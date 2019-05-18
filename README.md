@@ -1,6 +1,6 @@
 [![Build Status](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
 # NeqSim
-[NeqSim (Non-Equilibrium Simulator)](https://equinor.github.io/neqsimhome/) is a Java library for estimation of fluid behavior and process design for oil and gas production.
+NeqSim Matlab is part of the [NeqSim project](https://equinor.github.io/neqsimhome/). [NeqSim (Non-Equilibrium Simulator)](https://equinor.github.io/neqsimhome/) is a Java library for estimation of fluid behavior and process design for oil and gas production.
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
 
 ## Releases
