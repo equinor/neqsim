@@ -27,7 +27,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='" + standardName + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='" + standardName + "'"));
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("GasLoadFactor")) {

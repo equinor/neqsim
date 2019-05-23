@@ -33,13 +33,13 @@ public class ComponentDesmukhMather extends ComponentGE {
             if (!component_name.equals("default")) {
 
                 try {
-                    dataSet = database.getResultSet(("SELECT * FROM COMPTEMP WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     dataSet.next();
                     dataSet.getString("FORMULA");
                 } catch (Exception e) {
                     dataSet.close();
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 deshMathIonicDiameter = Double.parseDouble(dataSet.getString("DeshMatIonicDiameter"));

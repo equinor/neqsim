@@ -36,16 +36,16 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 try {
                     if (database.createTemporaryTables()) {
 
-                        dataSet = database.getResultSet(("SELECT * FROM COMPTEMP WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     } else {
-                        dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
 
                     }
                     dataSet.next();
                 } catch (Exception e) {
                     dataSet.close();
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 Ak[0][0] = Double.parseDouble(dataSet.getString("HydrateA1Small"));

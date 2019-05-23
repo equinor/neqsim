@@ -65,7 +65,7 @@ public class PhaseDesmukhMather extends PhaseGE {
                     else{
                         int templ = l, tempk=k;
                         //database = new util.database.NeqSimDataBase();
-                        java.sql.ResultSet dataSet =  database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='"+getComponents()[l].getComponentName() + "') OR (comp1='" + getComponents()[l].getComponentName() + "' AND comp2='"+component_name + "')");
+                        java.sql.ResultSet dataSet =  database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name + "' AND comp2='"+getComponents()[l].getComponentName() + "') OR (comp1='" + getComponents()[l].getComponentName() + "' AND comp2='"+component_name + "')");
                         dataSet.next();
                         
                         if(dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())){

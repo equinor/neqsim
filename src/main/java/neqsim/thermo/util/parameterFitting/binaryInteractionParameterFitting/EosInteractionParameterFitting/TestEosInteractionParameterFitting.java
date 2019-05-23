@@ -37,7 +37,7 @@ public class TestEosInteractionParameterFitting extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM BinaryEquilibriumData WHERE Component1='methane' AND Component2='ethane'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binaryequilibriumdata WHERE Component1='methane' AND Component2='ethane'");
         //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         
         try{

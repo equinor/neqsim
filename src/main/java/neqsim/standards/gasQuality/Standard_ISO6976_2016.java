@@ -79,7 +79,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
 
                 try {
-                    dataSet = database.getResultSet(("SELECT * FROM ISO6976constants2016 WHERE ComponentName='" + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='" + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
                     dataSet.next();
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
 
@@ -87,15 +87,15 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
                     try {
                         dataSet.close();
                         if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("inert")) {
-                            dataSet = database.getResultSet(("SELECT * FROM ISO6976constants2016 WHERE ComponentName='nitrogen'"));
+                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
                         } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("HC")) {
-                            dataSet = database.getResultSet(("SELECT * FROM ISO6976constants2016 WHERE ComponentName='n-heptane'"));
+                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
                         } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("alcohol") || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("glycol")) {
-                            dataSet = database.getResultSet(("SELECT * FROM ISO6976constants2016 WHERE ComponentName='methanol'"));
+                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='methanol'"));
                         } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("TPB") || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("plus")) {
-                            dataSet = database.getResultSet(("SELECT * FROM ISO6976constants2016 WHERE ComponentName='n-heptane'"));
+                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
                         } else {
-                            dataSet = database.getResultSet(("SELECT * FROM ISO6976constants2016 WHERE ComponentName='nitrogen'"));
+                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
                         }
                         M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
                         dataSet.next();

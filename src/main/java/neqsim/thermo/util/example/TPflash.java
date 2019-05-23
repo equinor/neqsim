@@ -5,7 +5,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemSrkPenelouxEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
+import java.util.Map;
 /*
  * TPflash.java
  *
@@ -27,7 +27,6 @@ public class TPflash {
     }
 
     public static void main(String[] args) {
-
         // SystemInterface testSystem = new SystemSrkEos(293.15, 999999.999999999/1.0e5);
         SystemInterface testSystem = new SystemSrkEos(376.15, 1.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(86273.15 + 45.0, 22.0);//

@@ -37,7 +37,7 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water' AND Temperature>293.15  AND x1<=1.0 ORDER BY Temperature,x1");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activitycoefficienttable WHERE Component1='MDEA' AND Component2='water' AND Temperature>293.15  AND x1<=1.0 ORDER BY Temperature,x1");
         
         try{
             while(dataSet.next()){

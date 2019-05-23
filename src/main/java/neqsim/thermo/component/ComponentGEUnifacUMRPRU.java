@@ -57,12 +57,12 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM UNIFACcompUMRPRU WHERE Name='" + component_name + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + component_name + "'"));
                 dataSet.next();
 //                dataSet.getClob("name");
             } catch (Exception e) {
                 dataSet.close();
-                dataSet = database.getResultSet(("SELECT * FROM UNIFACcompUMRPRU WHERE Name='" + component_name + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM unifaccompumrpru WHERE Name='" + component_name + "'"));
                 dataSet.next();
                 logger.error("Something went wrong. Closing database.", e);
             }

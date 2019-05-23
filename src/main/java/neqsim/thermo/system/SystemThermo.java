@@ -550,7 +550,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             return;
         }
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + componentName + "'"));
+        java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));
         double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
         try {
             dataSet.next();
@@ -582,7 +582,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
     public void addSalt(String componentName, double value) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM COMPSALT WHERE SaltName='" + componentName + "'");
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'");
         double val1 = 1e-20, val2 = 1e-20;
         try {
             dataSet.next();
@@ -736,7 +736,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             return;
         }
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + componentName + "'"));
+        java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + componentName + "'"));
         double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
         try {
             dataSet.next();
@@ -2630,8 +2630,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         try {
             database = new neqsim.util.database.NeqSimDataBase();
             if (database.createTemporaryTables()) {
-                database.execute("delete FROM COMPTEMP");
-                database.execute("delete FROM INTERTEMP");
+                database.execute("delete FROM comptemp");
+                database.execute("delete FROM intertemp");
             }
         } catch (Exception e) {
             logger.error("error in SystemThermo Class...resetDatabase() method");
@@ -2667,9 +2667,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             names += "'" + this.getComponentNames()[getPhase(0).getNumberOfComponents() - 1] + "'";
 
             if (database.createTemporaryTables()) {
-                database.execute("insert into COMPTEMP SELECT * FROM COMP WHERE name IN (" + names + ")");
-                database.execute("insert into INTERTEMP SELECT DISTINCT * FROM INTER WHERE comp1 IN (" + names + ") AND comp2 IN (" + names + ")");
-                database.execute("delete FROM INTERTEMP WHERE comp1=comp2");
+                database.execute("insert into comptemp SELECT * FROM comp WHERE name IN (" + names + ")");
+                database.execute("insert into intertemp SELECT DISTINCT * FROM inter WHERE comp1 IN (" + names + ") AND comp2 IN (" + names + ")");
+                database.execute("delete FROM intertemp WHERE comp1=comp2");
             }
             //System.out.println("ok " + names);
 
@@ -3166,7 +3166,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
         double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
         try {
 
-            database.execute("delete FROM SYSTEMREPORT");
+            database.execute("delete FROM systemreport");
             int i = 0;
             for (; i < numberOfComponents; i++) {
                 String sqlString = "'" + Integer.toString(i + 1) + "', '" + getPhase(0).getComponent(i).getName() + "', " + "'molfrac[-] ', '" + Double.toString(getPhase(0).getComponent(i).getz()) + "'";
@@ -3183,7 +3183,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
                 logger.error(sqlString);
 
-                database.execute("INSERT INTO SYSTEMREPORT VALUES (" + sqlString + ")");
+                database.execute("INSERT INTO systemreport VALUES (" + sqlString + ")");
             }
 
             //beta
@@ -3203,7 +3203,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
             logger.error(sqlString);
 
-            database.execute("INSERT INTO SYSTEMREPORT VALUES (" + sqlString + ")");
+            database.execute("INSERT INTO systemreport VALUES (" + sqlString + ")");
 
             //molarmass
             i++;
@@ -3220,7 +3220,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             }
 
             //System.out.println(sqlString);
-            database.execute("INSERT INTO SYSTEMREPORT VALUES (" + sqlString + ")");
+            database.execute("INSERT INTO systemreport VALUES (" + sqlString + ")");
 
             //            dataSet.next();
             //            dataSet.updateString("SPECIFICATION", "dette");

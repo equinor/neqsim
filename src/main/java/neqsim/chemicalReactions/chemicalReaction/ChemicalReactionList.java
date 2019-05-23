@@ -65,10 +65,10 @@ public class ChemicalReactionList extends Object implements ThermodynamicConstan
 
             if (system.getModelName().equals("Kent Eisenberg-model")) {
                 //System.out.println("selecting Kent-Eisenberg reaction set");
-                dataSet = database.getResultSet("SELECT * FROM REACTIONDATAKentEisenberg");
+                dataSet = database.getResultSet("SELECT * FROM reactiondatakenteisenberg");
             } else {
                 //System.out.println("selecting standard reaction set");
-                dataSet = database.getResultSet("SELECT * FROM REACTIONDATA");
+                dataSet = database.getResultSet("SELECT * FROM reactiondata");
             }
 
             double[] coefArray;
@@ -92,7 +92,7 @@ public class ChemicalReactionList extends Object implements ThermodynamicConstan
                     java.sql.ResultSet dataSet2 = null;
                     try {
                         neqsim.util.database.NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
-                        dataSet2 = database2.getResultSet("SELECT * FROM STOCCOEFDATA where REACNAME='" + reacname + "'");
+                        dataSet2 = database2.getResultSet("SELECT * FROM stoccoefdata where REACNAME='" + reacname + "'");
                         dataSet2.next();
                         do {
                             //System.out.println("name of cop " +dataSet2.getString("compname").trim());

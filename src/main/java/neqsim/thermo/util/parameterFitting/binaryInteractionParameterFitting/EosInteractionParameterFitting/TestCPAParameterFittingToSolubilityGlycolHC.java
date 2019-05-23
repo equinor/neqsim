@@ -37,7 +37,7 @@ public class TestCPAParameterFittingToSolubilityGlycolHC extends java.lang.Objec
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();//AND reference<>'Lindboe2002'
-        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM HCGlycolLLdata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM hcglycollldata WHERE comp1='n-heptane' AND comp2='MEG' AND reference='Lindboe2002' ORDER BY Temperature,Pressure");// AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<383.15 AND Pressure<60.01325");
         //double parameterGuess[] = {0.0471326591, 5.14, 10.819, 0.6744, 0.0141};
         //double parameterGuess[] = {0.0602997387, 5.2137117933, 10.3039876875, 0.6714377099, 0.0178639622}; // fitted to all data
         double parameterGuess[] = {1924, 4938};//,  -1.11, 1.24};

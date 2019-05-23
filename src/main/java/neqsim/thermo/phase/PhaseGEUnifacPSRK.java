@@ -73,13 +73,13 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
                     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
                     java.sql.ResultSet dataSet = null;
                     try{
-                        dataSet =  database.getResultSet(("SELECT * FROM UNIFACInterParamB WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet =  database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                         dataSet.getClob("MainGroup");
                     }
                     catch(Exception e){
                         dataSet.close();
-                        dataSet =  database.getResultSet(("SELECT * FROM UNIFACInterParamB WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet =  database.getResultSet(("SELECT * FROM unifacinterparamb WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                     }
                     
@@ -106,13 +106,13 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
                     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
                     java.sql.ResultSet dataSet = null;
                     try{
-                        dataSet =  database.getResultSet(("SELECT * FROM UNIFACInterParamC WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet =  database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                         dataSet.getClob("MainGroup");
                     }
                     catch(Exception e){
                         dataSet.close();
-                        dataSet =  database.getResultSet(("SELECT * FROM UNIFACInterParamC WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet =  database.getResultSet(("SELECT * FROM unifacinterparamc WHERE MainGroup="+((ComponentGEUnifac)getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                     }
                     
