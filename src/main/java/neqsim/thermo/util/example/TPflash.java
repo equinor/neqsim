@@ -31,6 +31,7 @@ public class TPflash {
         SystemInterface testSystem = new SystemSrkEos(376.15, 1.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(86273.15 + 45.0, 22.0);//
            testSystem.addComponent("nitrogen", 72);
+           testSystem.addComponent("ethane", 72);
         //   testSystem.addComponent("oxygen", 28);
 
         testSystem.addComponent("water", 79);
