@@ -29,6 +29,7 @@ public class PhaseEnvelope2 {
 		testSystem.addComponent("propane", 3.0);
 		testSystem.addComponent("i-butane", 1.8);
 		testSystem.addComponent("n-butane", 1.433);
+		testSystem.addComponent("n-hexane", 1.433);
 		testSystem.setMixingRule(2);
 		try {
 			testOps.calcPTphaseEnvelope(true);
