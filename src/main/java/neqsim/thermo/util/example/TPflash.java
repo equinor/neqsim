@@ -30,7 +30,7 @@ public class TPflash {
         // SystemInterface testSystem = new SystemSrkEos(293.15, 999999.999999999/1.0e5);
         SystemInterface testSystem = new SystemSrkEos(376.15, 1.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(86273.15 + 45.0, 22.0);//
-        //   testSystem.addComponent("nitrogen", 72);
+           testSystem.addComponent("nitrogen", 72);
         //   testSystem.addComponent("oxygen", 28);
 
         testSystem.addComponent("water", 79);
@@ -164,7 +164,7 @@ public class TPflash {
          */
         //  ((PhaseEosInterface)testSystem.getPhase(0)).getMixingRule().setBinaryInteractionParameter(0, 1, 0.08);
         /*
-         //Åsgard fluid
+         //ï¿½sgard fluid
          testSystem.addComponent("CO2", 2.797);
          testSystem.addComponent("nitrogen", 0.215);
          testSystem.addComponent("methane", 67.173);
