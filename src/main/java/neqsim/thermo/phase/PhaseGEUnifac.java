@@ -74,12 +74,12 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
                     neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
                     java.sql.ResultSet dataSet = null;
                     try {
-                        dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParam WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                         dataSet.getClob("MainGroup");
                     } catch (Exception e) {
                         dataSet.close();
-                        dataSet = database.getResultSet(("SELECT * FROM UNIFACInterParam WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup=" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
                         dataSet.next();
                     }
 

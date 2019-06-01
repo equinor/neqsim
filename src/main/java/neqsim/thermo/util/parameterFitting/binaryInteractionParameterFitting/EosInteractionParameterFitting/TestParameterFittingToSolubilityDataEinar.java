@@ -37,7 +37,7 @@ public class TestParameterFittingToSolubilityDataEinar extends java.lang.Object 
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityDataEinar WHERE ComponentSolute='methane' AND ComponentSolvent='Water'");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarysolubilitydataeinar WHERE ComponentSolute='methane' AND ComponentSolvent='Water'");
       
         try{
             int p=0;

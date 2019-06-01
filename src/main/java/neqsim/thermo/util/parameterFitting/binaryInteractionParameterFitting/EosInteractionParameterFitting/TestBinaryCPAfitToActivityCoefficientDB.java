@@ -38,7 +38,7 @@ public class TestBinaryCPAfitToActivityCoefficientDB extends java.lang.Object im
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet( "SELECT * FROM activityCoefficientTable WHERE ((Component1='TEG' AND Component2='water') OR (Component1='water' AND Component2='TEG')) AND ReferenceID<>'shell data'");
+        ResultSet dataSet = database.getResultSet( "SELECT * FROM activitycoefficienttable WHERE ((Component1='TEG' AND Component2='water') OR (Component1='water' AND Component2='TEG')) AND ReferenceID<>'shell data'");
 
         try {
             while (dataSet.next()) {

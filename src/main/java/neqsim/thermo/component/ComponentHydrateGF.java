@@ -34,11 +34,11 @@ public class ComponentHydrateGF extends ComponentHydrate {
             try {
                 //System.out.println("reading GF hydrate parameters ..............");
                 try {
-                    dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 } catch (Exception e) {
                     logger.info("noo parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM COMP WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 Ak[0][0] = Double.parseDouble(dataSet.getString("A1_SmallGF"));

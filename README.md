@@ -1,7 +1,7 @@
 [![Build Status](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
 # NeqSim
-NeqSim (Non-Equilibrium Simulator) is a Java library for estimation of fluid behavior and process design for oil and gas production.
-The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method.
+NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimation of fluid behavior and process design for oil and gas production.
+The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of oil and gas.  NeqSim is easilly extended with new method. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
 
 ## Releases
 [NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available as java packages (jar files) and as source code. NeqSim can be used in a third party application by adding NeqSim-x.x-shaded.jar to the classpath.
@@ -32,13 +32,13 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 [Maven](https://maven.apache.org/) - Dependency Management
 
 ## Contributing
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
+See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
 ## Versioning
 NeqSim use [SemVer](https://semver.org/) for versioning.
 
-## Authors
-Even Solbraa, Marlene Louise Lund
+## Authors and contact persons
+Even Solbraa (esolbraa@gmail.com),  Marlene Louise Lund
 
 ## Licence
 NeqSim is distributed under the [Apache-2.0](https://github.com/equinor/neqsimsource/blob/master/LICENSE) licence.
@@ -79,7 +79,7 @@ NeqSim is built upon six base modules:
 >license.txt: license document
 
 ## Toolboxes
-NeqSim toolboxes are avalable via GitHub for alternative programming languages.
+See [NeqSim homepage](https://equinor.github.io/neqsimhome/). NeqSim toolboxes are avalable via GitHub for alternative programming languages.
 * [Matlab](https://github.com/equinor/neqsimmatlab)
 * [Python](https://github.com/equinor/neqsimpython)
 * [.NET (C#)](https://github.com/equinor/neqsimcapeopen)

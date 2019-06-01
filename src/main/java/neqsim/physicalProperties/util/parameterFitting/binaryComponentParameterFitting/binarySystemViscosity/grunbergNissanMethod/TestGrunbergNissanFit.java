@@ -36,7 +36,7 @@ public class TestGrunbergNissanFit extends java.lang.Object {
         
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet("SELECT * FROM BinarySystemViscosity WHERE ComponentName1='TEG'");
+        ResultSet dataSet =  database.getResultSet("SELECT * FROM binarysystemviscosity WHERE ComponentName1='TEG'");
         
         try{
             logger.info("adding....");

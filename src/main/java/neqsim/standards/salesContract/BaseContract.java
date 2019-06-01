@@ -49,7 +49,7 @@ public class BaseContract implements ContractInterface {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         try {
-            dataSet = database.getResultSet("SELECT * FROM GASCONTRACTSPECIFICATIONS WHERE TERMINAL='" + terminal + "'" + " AND COUNTRY='" + country + "'");
+            dataSet = database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='" + terminal + "'" + " AND COUNTRY='" + country + "'");
             while (dataSet.next()) {
                 numb++;
                 StandardInterface method = getMethod(system, dataSet.getString("METHOD"));

@@ -314,9 +314,9 @@ public class CPAMixing extends Object implements Cloneable, java.io.Serializable
                         int templ = l, tempk = k;
                         //database = new util.database.NeqSimDataBase();
                         if (database.createTemporaryTables()) {
-                            dataSet = database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                            dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
                         } else {
-                            dataSet = database.getResultSet("SELECT * FROM INTER WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                            dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
                         }
                         if (dataSet.next()) {
                             assosSchemeType[k][l] = Integer.parseInt(dataSet.getString("cpaAssosiationType").trim());

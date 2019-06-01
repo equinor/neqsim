@@ -95,7 +95,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM MaterialPipeProperties WHERE specificationNumber='" + specificationNumber + "' AND grade='" + grade + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='" + specificationNumber + "' AND grade='" + grade + "'"));
                 while (dataSet.next()) {
 
                     minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;

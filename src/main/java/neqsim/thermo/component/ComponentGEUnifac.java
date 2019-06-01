@@ -51,12 +51,12 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM UNIFACcomp WHERE Name='" + component_name + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
                 dataSet.next();
                 dataSet.getClob("name");
             } catch (Exception e) {
                 dataSet.close();
-                dataSet = database.getResultSet(("SELECT * FROM UNIFACcomp WHERE Name='" + component_name + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
                 dataSet.next();
             }
 

@@ -55,13 +55,13 @@ public class ComponentBWRS extends ComponentSrk{
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try{
-                dataSet =  database.getResultSet(("SELECT * FROM MBWR32param WHERE name='"+component_name + "'"));
+                dataSet =  database.getResultSet(("SELECT * FROM mbwr32param WHERE name='"+component_name + "'"));
                 dataSet.next();
                 dataSet.getClob("name");
             }
             catch(Exception e){
                 dataSet.close();
-                dataSet =  database.getResultSet(("SELECT * FROM MBWR32param WHERE name='"+component_name + "'"));
+                dataSet =  database.getResultSet(("SELECT * FROM mbwr32param WHERE name='"+component_name + "'"));
                 dataSet.next();
             }
             

@@ -1592,9 +1592,9 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                     try {
                         int templ = l, tempk = k;
                         if (database.createTemporaryTables()) {
-                            dataSet = database.getResultSet("SELECT * FROM INTERTEMP WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                            dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
                         } else {
-                            dataSet = database.getResultSet("SELECT * FROM INTER WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
+                            dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
 
                         }
                         dataSet.next();
