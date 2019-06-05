@@ -34,6 +34,10 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 ## Contributing
 See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
+## NeqSim discussions
+Discussions related to NeqSim development and use is done using [Slack for NeqSim](https://neqsim.slack.com). 
+Use the [invitation link](https://join.slack.com/t/neqsim/shared_invite/enQtNjU1ODQ1MDQyMjEzLWU5MWEyNDA3YTlmNThmMGQ1OGMyODgzYzdlZTM5NTVjNDMzOGIyOTU4MTYwNzZkNmZiNDczZjBjMGZkNzlkZTE) to join the group.
+
 ## Versioning
 NeqSim use [SemVer](https://semver.org/) for versioning.
 
