@@ -12,6 +12,10 @@ import java.awt.image.BufferedImage;
 import javax.swing.*;
 import org.jfree.chart.*;
 import org.jfree.data.*;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.xy.XYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 /**
  *

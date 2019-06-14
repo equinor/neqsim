@@ -51,6 +51,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     static Logger logger = Logger.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
 
+    
     private static String dataBaseType = "Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
 	private static String username = "remote";
@@ -85,9 +86,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         javax.sql.DataSource ds = null;
         try {
         	if(System.getenv("NEQSIMTHERMODB_CS")!=null) {
-        		 return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"),System.getenv("NEQSIMTHERMODB_USER"),System.getenv("NEQSIMTHERMODB_PASSWORD"));
+        		 return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"),System.getenv("MYSQL_USER"), System.getenv("MYSQL_PASSWORD"));
         	}
-            if (dataBaseType.equals("MSAccess")) {
+        	else if (dataBaseType.equals("MSAccess")) {
                 String dir = "";
                 if (System.getProperty("NeqSim.home") == null) {
                     dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";

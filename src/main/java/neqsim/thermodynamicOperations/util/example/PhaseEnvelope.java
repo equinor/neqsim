@@ -35,7 +35,7 @@ public class PhaseEnvelope {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         
-        int sstms= 10;
+        int sstms=1;
     
         System.out.println(sstms);
         
@@ -128,8 +128,7 @@ public class PhaseEnvelope {
         testSystem.addComponent("n-heptane", 0.1);
         testSystem.addComponent("n-octane", 0.05);
         testSystem.addComponent("nC10", 0.01);   
-        testSystem.addComponent("nC12", 0.001);          
-        testSystem.addComponent("water", 0.000001);   
+        testSystem.addComponent("nC12", 0.001);      
         
         }else if  (sstms==11) {    
         /* TEST SYSTEM 11 : open ended phase envelope Even    */
@@ -158,15 +157,14 @@ public class PhaseEnvelope {
         
         } 
  
-        testSystem.setMixingRule(1);
-        
+        testSystem.setMixingRule(2);
         try {
         
         // from bubble point side
         //testOps.calcPTphaseEnvelope(true, 1.);            
         
         // from dew point side
-        testOps.calcPTphaseEnvelope(false, 1.); 
+        testOps.calcPTphaseEnvelope(); 
         
         testOps.displayResult();
         

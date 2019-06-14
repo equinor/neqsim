@@ -377,7 +377,7 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     public void printToFile(String name) {
     }
 
-    public JFreeChart getJFreeChart(String type) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name){
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -460,4 +460,5 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     public String[][] getResultTable() {
         return null;
     }
+    
 }

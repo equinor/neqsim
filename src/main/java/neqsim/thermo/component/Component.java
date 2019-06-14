@@ -488,7 +488,7 @@ abstract class Component extends Object implements ComponentInterface, Thermodyn
     }
 
     public double getHeatOfVapourization(double temp) {
-        return heatOfVaporizationCoefs[0] * 0.0;  // må settes på rett form
+        return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1]*temp + heatOfVaporizationCoefs[2]*temp*temp + heatOfVaporizationCoefs[3]*temp*temp*temp * heatOfVaporizationCoefs[4]*temp*temp*temp*temp;  // må settes på rett form
     }
 
     public final double getTripplePointDensity() {

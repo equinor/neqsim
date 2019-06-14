@@ -2,10 +2,14 @@ package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemDefault;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.*;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+import java.awt.image.BufferedImage;
+
 import org.apache.log4j.Logger;
+import org.jfree.chart.JFreeChart;
 
 /*
  * PhaseEnvelope.java
@@ -34,48 +38,67 @@ public class PhaseEnvelope {
         // SystemInterface testSystem = new SystemUMRPRUEos(225.65, 1.00);
         //SystemInterface testSystem = new SystemPrEos1978(223.15,50.00);
         //SystemInterface testSystem = new SystemPrGassemEos(253.15,50.00);
-        SystemInterface testSystem = new SystemSrkEos(280.0, 41.00);
+        SystemInterface testSystem = new SystemUMRPRUMCEos(280.0, 41.00);
         //SystemInterface testSystem = new SystemPrDanesh(273.15+80.0,100.00);
         //SystemInterface testSystem = new SystemPrEosDelft1998(223.15,50.00);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        //        testSystem.addComponent("nC10", 50.34);
-      //  testSystem.addComponent("nitrogen", 0.1545);
-        // testSystem.addComponent("H2S", 110.00821);
-        //  testSystem.addComponent("CO2", 58.00821);
-        testSystem.addComponent("methane", 90.0);
-      //  testSystem.addComponent("ethane", 10.58);
-        testSystem.addComponent("propane", 3.0);
-        testSystem.addComponent("i-butane", 10.8);
-        testSystem.addComponent("n-butane", 10.433);
-     //   testSystem.addComponent("i-pentane", 0.896);
-     //   testSystem.addComponent("n-pentane", 1.242);
-     ///    testSystem.addComponent("n-hexane", 4.587);
+        testSystem.addComponent("nitrogen",1.1715);
+        testSystem.addComponent("CO2", 1.2661);
+        testSystem.addComponent("methane", 76.9645);
+        testSystem.addComponent("ethane", 10.3185);
+        testSystem.addComponent("propane", 6.7815);
+        testSystem.addComponent("i-butane", 0.9409);
+        testSystem.addComponent("n-butane", 1.7977);
+        testSystem.addComponent("22-dim-C3", 1.7977);
+        testSystem.addComponent("i-pentane", 0.2678);
+        testSystem.addComponent("n-pentane",0.2323);
+        testSystem.addComponent("c-C5", 0.0112);
+        testSystem.addComponent("22-dim-C4", 0.0022);
+        testSystem.addComponent("23-dim-C4", 0.0027);
+        testSystem.addComponent("2-m-C5", 0.0177);
+        testSystem.addComponent("3-m-C5", 0.0082);
+        testSystem.addComponent("n-hexane", 0.0156);
+
+        testSystem.addComponent("n-heptane", 0.0024838567);
+        testSystem.addComponent("c-hexane", 0.0123687984);
+        testSystem.addComponent("benzene", 0.0050181982);
+        
+        testSystem.addComponent("n-octane", 0.0000100970);
+        testSystem.addComponent("c-C7", 0.0009491160);
+        testSystem.addComponent("toluene", 0.0005553338);
+        testSystem.addComponent("n-nonane", 0.0000201940);
+        testSystem.addComponent("c-C8", 0.0001110668);
+        //testSystem.addComponent("m-Xylene", 0.0000000000);
+        testSystem.addComponent("nC10", 0.0001110668);
+        
+       // testSystem.addComponent("nC10", 1e-4);
          
          
-     //      testSystem.addComponent("n-heptane", 0.068);
-        //      testSystem.addComponent("n-octane", 0.127);
+          
         //    testSystem.addComponent("n-octane", 0.027);
-         testSystem.addComponent("n-nonane", 0.0003);
+       // testSystem.addComponent("nC13", .3);
         //    testSystem.addTBPfraction("C6", 1.587, 86.178 / 1000.0, 0.70255);
         //   testSystem.addTBPfraction("C7", 2.566, 91.5 / 1000.0, 0.738);
         //  testSystem.addTBPfraction("C8", 2.764, 101.2 / 1000.0, 0.765);
         //  testSystem.addTBPfraction("C9", 1.71, 119.1 / 1000.0, 0.781);
-        //   testSystem.addPlusFraction("C10", 0.647, 154.9 / 1000.0, 0.7871);
+       // testSystem.addTBPfraction("C10", 1.647, 254.9 / 1000.0, 0.894871);
 
      //   testSystem.addComponent("water", 100.2);
-        //   testSystem.addPlusFraction("C11", 22.1, 156.2 / 1000.0, 0.787278398);
+          // testSystem.addPlusFraction("C11", 0.01, 256.2 / 1000.0, 0.92787278398);
         //  testSystem.getCharacterization().
       
-        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
-        testSystem.getCharacterization().characterisePlusFraction();
+    //    testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
+      // testSystem.getCharacterization().characterisePlusFraction();
         //
         testSystem.createDatabase(true);
+
+   //     testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         // testSystem.setMultiPhaseCheck(true);
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
-        testSystem.setMixingRule(2);//"UNIFAC_UMRPRU");
+        //testSystem.setMixingRule(2);//"UNIFAC_UMRPRU");
    //     testSystem.setHydrateCheck(true);
         // testSystem.setBmixType(0);
 
@@ -98,7 +121,7 @@ public class PhaseEnvelope {
             
             testSystem.addComponent("water", -testSystem.getPhase(0).getComponent("water").getNumberOfmoles());
            */
-                    testOps.calcPTphaseEnvelope(true);//true);
+                    testOps.calcPTphaseEnvelope();//true);
            // isFinished = testOps.waitAndCheckForFinishedCalculation(10000);
           //  testOps.addData("water", waterData);
           //  testOps.addData("hydrate", hydData);
@@ -107,10 +130,14 @@ public class PhaseEnvelope {
       //      testOps.getJfreeChart();
             // testOps.dewPointPressureFlash();
             //testOps.bubblePointTemperatureFlash();
+          //  JFreeChart jfreeObj = testOps.getJfreeChart();
+         //   BufferedImage buf = jfreeObj.createBufferedImage(640, 400, null);
         } catch (Exception e) {
             logger.error("error",e);
         }
+       
         testSystem.display();
+      //  testOps.get("DewT");
         //   thermo.ThermodynamicModelTest testModel = new thermo.ThermodynamicModelTest(testSystem);
         //  testModel.runTest();
 

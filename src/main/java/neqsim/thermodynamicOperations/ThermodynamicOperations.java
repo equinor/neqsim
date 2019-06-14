@@ -29,7 +29,6 @@ import javax.swing.JTable;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
-import neqsim.thermodynamicOperations.flashOps.TPflash;
 import neqsim.thermodynamicOperations.flashOps.PHflash;
 import neqsim.thermodynamicOperations.flashOps.PHflashSingleComp;
 import neqsim.thermodynamicOperations.flashOps.PHsolidFlash;
@@ -70,7 +69,6 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.waterDewPointTemper
 import neqsim.thermodynamicOperations.flashOps.saturationOps.waterDewPointTemperatureMultiphaseFlash;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.HPTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope;
-import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelopeNew;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
@@ -112,12 +110,15 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         operation = new SolidFlash1(system);
         getOperation().run();
     }
+
     /**
-     * Method to perform a flash at given temperature, pressure and specified volume
-     * The number of moles in the system are changed to match the specified volume.
-     * @param volumeSpec is the specified  volume
+     * Method to perform a flash at given temperature, pressure and specified
+     * volume The number of moles in the system are changed to match the
+     * specified volume.
+     *
+     * @param volumeSpec is the specified volume
      * @param unit The unit as a string. units supported are m3, litre,
-     * 
+     *
      */
     public void TPVflash(double volumeSpec, String unit) {
         unit = "m3";
@@ -596,7 +597,9 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
     public double calcCricondenBar() {
         system.init(0);
         operation = new cricondebarFlash(system);
-        //  operation = new cricondenBarTemp1(system);
+       // operation = new CricondenBarFlash(system);
+
+//  operation = new cricondenBarTemp1(system);
         operation.run();
         return system.getPressure();
     }
@@ -747,7 +750,19 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
     //        operation.run();
     //    }
     public void calcPTphaseEnvelope() {
-        operation = new pTphaseEnvelope(system, fileName, 1e-10, 1.0, true);
+        operation = new pTphaseEnvelope(system, fileName, (1.0 - 1e-10), 1.0, false);
+        //thisThread = new Thread(operation);
+        //thisThread.start();
+        getOperation().run();
+    }
+
+    public void calcPTphaseEnvelope(boolean bubfirst, double lowPres) {
+        double phasefraction = 1.0 - 1e-10;
+        if (bubfirst) {
+            phasefraction = 1.0e-10;
+        }
+        operation = new pTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
+
         //thisThread = new Thread(operation);
         //thisThread.start();
         getOperation().run();
@@ -757,16 +772,6 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         operation = new pTphaseEnvelope(system, fileName, 1e-10, lowPres, true);
         //thisThread = new Thread(operation);
         //thisThread.start();
-        getOperation().run();
-    }
-
-    public org.jfree.chart.JFreeChart getJfreeChart() {
-        return getOperation().getJFreeChart("");
-    }
-
-    public void calcPTphaseEnvelopeNew() {
-        double phasefraction = 1.0 - 1e-10;
-        operation = new pTphaseEnvelopeNew(system, fileName, phasefraction, 1.0);
         getOperation().run();
     }
 
@@ -786,15 +791,13 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         }
     }
 
-    public void calcPTphaseEnvelope(boolean bubfirst, double lowPres) {
-        double phasefraction = 1.0 - 1e-10;
-        if (bubfirst) {
-            phasefraction = 1.0e-10;
-        }
-        operation = new pTphaseEnvelope(system, fileName, phasefraction, lowPres, bubfirst);
+    public org.jfree.chart.JFreeChart getJfreeChart() {
+        return getOperation().getJFreeChart("");
+    }
 
-        //thisThread = new Thread(operation);
-        //thisThread.start();
+    public void calcPTphaseEnvelopeNew() {
+        double phasefraction = 1.0 - 1e-10;
+        //operation = new pTphaseEnvelope(system, fileName, phasefraction, 1.0);
         getOperation().run();
     }
 
