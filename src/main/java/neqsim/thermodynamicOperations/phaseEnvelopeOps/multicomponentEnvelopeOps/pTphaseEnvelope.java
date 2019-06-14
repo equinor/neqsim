@@ -604,36 +604,48 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     public double[] get(String name) {
-        if (name.equals("bubT")) {
-            return points2[0];
-        }
-        if (name.equals("bubP")) {
-            return points2[1];
-        }
-        if (name.equals("dewT")) {
-            return points2[2];
-        }
-        if (name.equals("dewP")) {
-            return points2[3];
-        }
-        if (name.equals("dewH")) {
-            return pointsH2[2];
-        }
-        if (name.equals("dewDens")) {
-            return pointsV2[2];
-        }
-        if (name.equals("dewS")) {
-            return pointsS2[2];
-        }
-        if (name.equals("bubH")) {
-            return pointsH2[0];
-        }
-        if (name.equals("bubDens")) {
-            return pointsV2[0];
-        }
-        if (name.equals("bubS")) {
-            return pointsS2[0];
-        }
+    	 if (name.equals("dewT")) {
+             return points2[0];
+         }
+         if (name.equals("dewP")) {
+             return points2[1];
+         }
+         if (name.equals("bubT")) {
+             return points2[2];
+         }
+         if (name.equals("bubP")) {
+             return points2[3];
+         }
+         if (name.equals("dewT2")) {
+             return points2[4];
+         }
+         if (name.equals("dewP2")) {
+             return points2[5];
+         }
+         if (name.equals("bubT2")) {
+             return points2[6];
+         }
+         if (name.equals("bubP2")) {
+             return points2[7];
+         }
+         if (name.equals("dewH")) {
+             return pointsH2[2];
+         }
+         if (name.equals("dewDens")) {
+             return pointsV2[2];
+         }
+         if (name.equals("dewS")) {
+             return pointsS2[2];
+         }
+         if (name.equals("bubH")) {
+             return pointsH2[0];
+         }
+         if (name.equals("bubDens")) {
+             return pointsV2[0];
+         }
+         if (name.equals("bubS")) {
+             return pointsS2[0];
+         }
         if (name.equals("cricondentherm")) {
             return cricondenTherm;
         }

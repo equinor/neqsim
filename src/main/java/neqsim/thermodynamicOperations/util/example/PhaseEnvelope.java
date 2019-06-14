@@ -1,4 +1,4 @@
-package neqsim.thermo.util.example;
+package neqsim.thermodynamicOperations.util.example;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -36,7 +36,7 @@ public class PhaseEnvelope {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         
-        int sstms=13;
+        int sstms=4;
     
         System.out.println(sstms);
         
@@ -203,11 +203,11 @@ public class PhaseEnvelope {
         
         double[] cricondenTherm = testOps.get("cricondentherm");
         double[] cricondenThermX = testOps.get("cricondenthermX");
-        double[] cricondenThermY = testOps.get("cricondenthermY");  
+        double[] cricondenThermY = testOps.get("cricondenthermY");
         
-        testOps.calcCricoP(  cricondenBar, cricondenBarX , cricondenBarY) ; 
+      //  testOps.calcCricoP(  cricondenBar, cricondenBarX , cricondenBarY) ; 
         logger.info("Cricondenbar Direct " + testOps.get("cricondenbar")[0] + " " + testOps.get("cricondenbar")[1]);
-        testOps.calcCricoT(  cricondenTherm, cricondenThermX , cricondenThermY) ; 
+      //  testOps.calcCricoT(  cricondenTherm, cricondenThermX , cricondenThermY) ; 
         logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " " + testOps.get("cricondentherm")[1]);
         
         } catch (Exception e333) {
