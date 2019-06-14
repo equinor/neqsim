@@ -67,6 +67,8 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperature
 import neqsim.thermodynamicOperations.flashOps.saturationOps.freezingPointTemperatureFlash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.waterDewPointTemperatureFlash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.waterDewPointTemperatureMultiphaseFlash;
+import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.CricondenBarFlash;
+import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.CricondenThermFlash;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.HPTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope;
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
@@ -560,6 +562,25 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
             run();
         }
     }
+    
+public void calcCricoP(double[] cricondenBar, double[] cricondenBarX , double[] cricondenBarY)  {
+        
+        double phasefraction = 1.0 - 1e-10;
+        
+        operation = new CricondenBarFlash(system, fileName, phasefraction,cricondenBar, cricondenBarX , cricondenBarY  );
+
+        getOperation().run();
+    }
+
+    public void calcCricoT(double[] cricondenTherm, double[] cricondenThermX , double[] cricondenThermY)  {
+        
+        double phasefraction = 1.0 - 1e-10;
+        
+        operation = new CricondenThermFlash(system, fileName, phasefraction,cricondenTherm, cricondenThermX , cricondenThermY  );
+
+        getOperation().run();
+    }
+
 
     public void waterDewPointLine(double minimumPressure, double maximumPressure) throws Exception {
         operation = new WaterDewPointEquilibriumLine(system, minimumPressure, maximumPressure);

@@ -6,7 +6,6 @@
  */
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 

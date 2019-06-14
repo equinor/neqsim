@@ -10,7 +10,6 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 
-
 public class CricondenThermFlash extends pTphaseEnvelope {
 
     private static final long serialVersionUID = 1000;

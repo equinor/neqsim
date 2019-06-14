@@ -1,10 +1,11 @@
-package neqsim.thermodynamicOperations.util.example;
+package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
+
 
 /*
  * PhaseEnvelope.java
@@ -35,7 +36,7 @@ public class PhaseEnvelope {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         
-        int sstms=1;
+        int sstms=13;
     
         System.out.println(sstms);
         
@@ -128,7 +129,8 @@ public class PhaseEnvelope {
         testSystem.addComponent("n-heptane", 0.1);
         testSystem.addComponent("n-octane", 0.05);
         testSystem.addComponent("nC10", 0.01);   
-        testSystem.addComponent("nC12", 0.001);      
+        testSystem.addComponent("nC12", 0.001);          
+        //testSystem.addComponent("water", 0.000001);   
         
         }else if  (sstms==11) {    
         /* TEST SYSTEM 11 : open ended phase envelope Even    */
@@ -155,16 +157,37 @@ public class PhaseEnvelope {
         testSystem.addComponent("nC10", 1);
         testSystem.addComponent("nC16", 1);  
         
+        }else if  (sstms==15) {    
+        /* TEST SYSTEM 15        */
+/*        
+        testSystem.addComponent("methane", 87);
+        testSystem.addComponent("ethane", 4.35);
+        testSystem.addComponent("propane", 1 );
+        testSystem.addComponent("n-butane", 1);
+        testSystem.addComponent("i-butane", 1);  
+        testSystem.addPlusFraction("C7", 0.5, 0.25, 0.900);
+        testSystem.getCharacterization().characterisePlusFraction();
+ */
+        testSystem.addComponent("methane", 87);
+        testSystem.addComponent("ethane", 4.35);
+        testSystem.addComponent("propane", 1 );
+        testSystem.addComponent("n-butane", 1);
+        testSystem.addComponent("i-butane", 1);  
+        testSystem.addPlusFraction("C7", 0.05, 0.25, 0.900);
+        testSystem.getCharacterization().characterisePlusFraction();
+
+                
         } 
  
-        testSystem.setMixingRule(2);
+        testSystem.setMixingRule(1);
+        
         try {
         
         // from bubble point side
         //testOps.calcPTphaseEnvelope(true, 1.);            
         
         // from dew point side
-        testOps.calcPTphaseEnvelope(); 
+        testOps.calcPTphaseEnvelope(false, 1.); 
         
         testOps.displayResult();
         
@@ -173,8 +196,23 @@ public class PhaseEnvelope {
             testOps.displayResult();
         }
  
-        logger.info("Cricondenbar " + testOps.get("cricondenbar")[0] + " " + testOps.get("cricondenbar")[1]);
-        logger.info("Cricondentherm " + testOps.get("cricondentherm")[0] + " " + testOps.get("cricondentherm")[1]);
+        try {
+        double[] cricondenBar = testOps.get("cricondenbar");
+        double[] cricondenBarX = testOps.get("cricondenbarX");
+        double[] cricondenBarY = testOps.get("cricondenbarY");  
+        
+        double[] cricondenTherm = testOps.get("cricondentherm");
+        double[] cricondenThermX = testOps.get("cricondenthermX");
+        double[] cricondenThermY = testOps.get("cricondenthermY");  
+        
+        testOps.calcCricoP(  cricondenBar, cricondenBarX , cricondenBarY) ; 
+        logger.info("Cricondenbar Direct " + testOps.get("cricondenbar")[0] + " " + testOps.get("cricondenbar")[1]);
+        testOps.calcCricoT(  cricondenTherm, cricondenThermX , cricondenThermY) ; 
+        logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " " + testOps.get("cricondentherm")[1]);
+        
+        } catch (Exception e333) {
+            logger.error("error", e333);
+        }        
     }
 
 }
