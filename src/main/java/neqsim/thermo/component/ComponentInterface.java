@@ -226,9 +226,17 @@ public interface ComponentInterface {
     public double getdfugdp();
 
     public double getSolidVaporPressure(double temperature);
-
+	
+    /**
+	 * @param temperature
+	 * @return ideal gas Cp for the component in the specific phase [J/molK]
+	 */
     public double getCp0(double temperature);
 
+	/**
+	 * @param temperature
+	 * @return ideal gas Cv for the component in the specific phase [J/molK]
+	 */
     public double getCv0(double temperature);
 
     public double getHID(double T);

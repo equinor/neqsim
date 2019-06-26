@@ -327,7 +327,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
                     etterCP = true;
                     npCrit=np;       
                     system.invertPhaseTypes();
-                    System.out.println("critical point");
+                    //System.out.println("critical point");
                 }
             } 
            

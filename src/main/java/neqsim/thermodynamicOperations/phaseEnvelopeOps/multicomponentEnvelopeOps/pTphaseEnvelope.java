@@ -270,7 +270,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 double densV = system.getPhase(0).getDensity();
                 double densL = system.getPhase(1).getDensity();    
                
-                System.out.println(np + "  " + system.getTemperature() + "  " + system.getPressure() + " " +  densV + " " +   densL );
+                //System.out.println(np + "  " + system.getTemperature() + "  " + system.getPressure() + " " +  densV + " " +   densL );
                 
                 if ( (nonLinSolver.etterCP == false) ) {
                     if (Kvallc < 1.05 && Kvalhc > 0.95 ){
