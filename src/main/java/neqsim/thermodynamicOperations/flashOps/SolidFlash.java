@@ -86,7 +86,7 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 x += system.getPhase(k).getComponent(i).getx();
             }
-            logger.info("x tot " + x + " PHASE " + k);
+            //logger.info("x tot " + x + " PHASE " + k);
             if (x < 1.0 - 1e-6) {
                 //logger.info("removing phase " + k);
                 system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));

@@ -327,7 +327,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
                     etterCP = true;
                     npCrit=np;       
                     system.invertPhaseTypes();
-                    System.out.println("critical point");
+                    //System.out.println("critical point");
                 }
             } 
            
@@ -534,11 +534,13 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
 
         
         if (volold < vol){
+            /*
             volold=volold2;
             ds=-ds;
             u = uold.copy();
             calcInc2(np);
             solve(np);               
+            */
         }
         
         

@@ -35,10 +35,10 @@ import org.jfree.chart.JFreeChart;
 
 
 
-public class pTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(pTphaseEnvelope.class);
+    static Logger logger = Logger.getLogger(pTphaseEnvelopeMay.class);
 
     double maxPressure = 1000.0;
     double minPressure=1.0;
@@ -49,10 +49,6 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     boolean hascopiedPoints = false;
     double[] cricondenTherm = new double[3];
     double[] cricondenBar = new double[3];
-    double [] cricondenThermX= new double[100];
-    double [] cricondenThermY= new double[100];
-    double [] cricondenBarX = new double[100];
-    double [] cricondenBarY = new double[100];
     double phaseFraction = 1e-10;
     neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file1;
     neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file2;
@@ -93,18 +89,12 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     double Pcfirst ;
     double Tmin=0.0;
 
-    double[] cricondenThermfirst = new double[3];
-    double[] cricondenBarfirst = new double[3];
-    double [] cricondenThermXfirst= new double[100];
-    double [] cricondenThermYfirst= new double[100];
-    double [] cricondenBarXfirst = new double[100];
-    double [] cricondenBarYfirst = new double[100];
 
     
-    public pTphaseEnvelope() {
+    public pTphaseEnvelopeMay() {
     }
 
-    public pTphaseEnvelope(SystemInterface system, String name, double phaseFraction, double lowPres, boolean bubfirst) {
+    public pTphaseEnvelopeMay(SystemInterface system, String name, double phaseFraction, double lowPres, boolean bubfirst) {
         this.bubblePointFirst = bubfirst;
         if (name != null) {
             outputToFile = true;
@@ -225,15 +215,6 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                         if (ncrfirst==0){ncrfirst=npfirst;}
                         Tcfirst=system.getTC();
                         Pcfirst=system.getPC();                        
- 
-                        cricondenBarfirst=cricondenBar;
-                        cricondenBarXfirst=cricondenBarX;
-                        cricondenBarYfirst=cricondenBarY;   
-                        
-                        cricondenThermfirst=cricondenTherm;
-                        cricondenThermXfirst=cricondenThermX;
-                        cricondenThermYfirst=cricondenThermY;                          
-                        
                         hascopiedPoints = true;
                         copiedPoints = new double[5][np - 1];
                         for (int i = 0; i < np-1 ; i++) {
@@ -243,7 +224,6 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                             copiedPoints[3][i] = pointsS[i];
                             copiedPoints[4][i] = pointsV[i];
                         }
-                        
                         //new settings
                         phaseFraction = 1.0 - phaseFraction;
                         if (bubblePointFirst){ 
@@ -252,11 +232,10 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                             bubblePointFirst=true;
                         }
                         run();
-                        /**/
                         break;
                         
                     }else{
-
+                        
                         np=np-1;
                         break;
                         
@@ -277,7 +256,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                         // close to the critical point
                         // invert phase types and find the CP Temp and Press
                        
-                        System.out.println("critical point");
+                       // System.out.println("critical point");
                         nonLinSolver.npCrit=np;
                         system.invertPhaseTypes(); 
                         nonLinSolver.etterCP = true; 
@@ -297,20 +276,12 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 if (system.getTemperature() > cricondenTherm[0]) {
                     cricondenTherm[1] = system.getPressure();
                     cricondenTherm[0] = system.getTemperature();
-                    for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
-                    cricondenThermX[ii] = system.getPhase(1).getComponent(ii).getx();
-                    cricondenThermY[ii] = system.getPhase(0).getComponent(ii).getx();
-                    }
                 }else {
                     nonLinSolver.ettercricoT =true;
                 }    
                 if (system.getPressure() > cricondenBar[1]) {
                     cricondenBar[0] = system.getTemperature();
                     cricondenBar[1] = system.getPressure();
-                    for (int ii = 0; ii < nonLinSolver.numberOfComponents; ii++) {
-                    cricondenBarX[ii] = system.getPhase(1).getComponent(ii).getx();
-                    cricondenBarY[ii] = system.getPhase(0).getComponent(ii).getx();
-                    }                  
                 }
 
                 //Exit criteria
@@ -474,24 +445,25 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
             }            
 
-            
-            
             //critical point
             system.setTemperature(system.getTC() );
             system.setPressure(system.getPC() );
-            
+
+            system.init(3);
+
             points2[0][ncr] = system.getTC();
-            points2[1][ncr] = system.getPC();       
+            points2[1][ncr] = system.getPC();
+        
             if (ncr2 > 2) {
                 points2[2][0] = system.getTC();
                 points2[3][0] = system.getPC();
             }
-            
+             
             }catch ( Exception e2){
                 double nef=0.;
                 logger.error("error",e2);         
-            }    
-
+            }
+            
             try{
                 
             if (outputToFile) {
@@ -604,66 +576,54 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     public double[] get(String name) {
-    	 if (name.equals("dewT")) {
-             return points2[0];
-         }
-         if (name.equals("dewP")) {
-             return points2[1];
-         }
-         if (name.equals("bubT")) {
-             return points2[2];
-         }
-         if (name.equals("bubP")) {
-             return points2[3];
-         }
-         if (name.equals("dewT2")) {
-             return points2[4];
-         }
-         if (name.equals("dewP2")) {
-             return points2[5];
-         }
-         if (name.equals("bubT2")) {
-             return points2[6];
-         }
-         if (name.equals("bubP2")) {
-             return points2[7];
-         }
-         if (name.equals("dewH")) {
-             return pointsH2[2];
-         }
-         if (name.equals("dewDens")) {
-             return pointsV2[2];
-         }
-         if (name.equals("dewS")) {
-             return pointsS2[2];
-         }
-         if (name.equals("bubH")) {
-             return pointsH2[0];
-         }
-         if (name.equals("bubDens")) {
-             return pointsV2[0];
-         }
-         if (name.equals("bubS")) {
-             return pointsS2[0];
-         }
+        if (name.equals("dewT")) {
+            return points2[0];
+        }
+        if (name.equals("dewP")) {
+            return points2[1];
+        }
+        if (name.equals("bubT")) {
+            return points2[2];
+        }
+        if (name.equals("bubP")) {
+            return points2[3];
+        }
+        if (name.equals("dewT2")) {
+            return points2[4];
+        }
+        if (name.equals("dewP2")) {
+            return points2[5];
+        }
+        if (name.equals("bubT2")) {
+            return points2[6];
+        }
+        if (name.equals("bubP2")) {
+            return points2[7];
+        }
+        if (name.equals("dewH")) {
+            return pointsH2[2];
+        }
+        if (name.equals("dewDens")) {
+            return pointsV2[2];
+        }
+        if (name.equals("dewS")) {
+            return pointsS2[2];
+        }
+        if (name.equals("bubH")) {
+            return pointsH2[0];
+        }
+        if (name.equals("bubDens")) {
+            return pointsV2[0];
+        }
+        if (name.equals("bubS")) {
+            return pointsS2[0];
+        }
         if (name.equals("cricondentherm")) {
             return cricondenTherm;
         }
-        if (name.equals("cricondenthermX")) {
-            return cricondenThermX;
-        }
-        if (name.equals("cricondenthermY")) {
-            return cricondenThermY;
-        }        
         if (name.equals("cricondenbar")) {
             return cricondenBar;
         }
-        if (name.equals("cricondenbarX")) {
-            return cricondenBarX;
-        }        
-        if (name.equals("cricondenbarY")) {
-            return cricondenBarY;
-        }           
         if (name.equals("criticalPoint1")) {
             return new double[]{system.getTC(), system.getPC()};
         }
@@ -736,8 +696,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 lc=i ;
             }
         }        
-        
-        try{
+ 
         if (beta <= 0.5){
             initTc=system.getPhase(0).getComponents()[lc].getTC(); //closer to bubble point get the lightest component
             initPc=system.getPhase(0).getComponents()[lc].getPC();
@@ -781,14 +740,24 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 }
 		Tstartold=Tstart;
         }      
-        }catch(Exception e) {
-             Tstart=Tstart=initTc*5.373*(1+initAc)/(5.373*(1+initAc)-Math.log(P/initPc));  
-        }
-        if (Double.isNaN(Tstart) || Double.isInfinite(Tstart)) {
-            Tstart=Tstart=initTc*5.373*(1+initAc)/(5.373*(1+initAc)-Math.log(P/initPc));
-        }    
+
         return Tstart;
     } 
+    
+    public org.jfree.chart.JFreeChart getJFreeChart(String name){
+        DecimalFormat nf = new DecimalFormat();
+        nf.setMaximumFractionDigits(1);
+        nf.applyPattern("####.#");
+
+        double TC = system.getTC();
+        double PC = system.getPC();
+        logger.info("tc : " + TC + "  PC : " + PC);
+        String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
+        String title2 = "";
+        String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC=" + String.valueOf(nf.format(PC) + " bara");
+        graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
+        return graph2.getChart();
+    }
  
    
 }

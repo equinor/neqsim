@@ -7,6 +7,8 @@
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.linearLiquidModel;
 
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.database.NeqSimExperimentDatabase;
+
 import java.sql.*;
 import java.util.*;
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -35,7 +37,7 @@ public class TestViscosityFit extends java.lang.Object {
         ArrayList sampleList = new ArrayList();
         
         // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
+        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
         ResultSet dataSet =  database.getResultSet("SELECT * FROM purecomponentviscosity WHERE ComponentName='MEG' ORDER BY Temperature");
        
         try{

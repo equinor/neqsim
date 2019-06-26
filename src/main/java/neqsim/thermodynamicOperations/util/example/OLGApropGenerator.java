@@ -21,6 +21,7 @@
 package neqsim.thermodynamicOperations.util.example;
 
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
@@ -35,31 +36,43 @@ public class OLGApropGenerator {
     static Logger logger = Logger.getLogger(OLGApropGenerator.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.15, 10.0);
-        testSystem.addComponent("methane", 10.0);
-        testSystem.addComponent("ethane", 1.0);
-        testSystem.addComponent("nC10", 5.0);
-        //testSystem.addComponent("MEG", 1.0);
-        testSystem.addComponent("water", 10.0);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15, 10.0);
+        testSystem.addComponent("nitrogen", 0.01848);
+        testSystem.addComponent("CO2", 0.837478);
+        testSystem.addComponent("methane", 2.135464);
+        testSystem.addComponent("ethane", 0.6941);
+        testSystem.addComponent("propane", 0.46402);
+        testSystem.addComponent("i-butane", 0.302664);
+        testSystem.addComponent("n-butane", 0.2696);
+        testSystem.addComponent("i-pentane", 0.18108);
+        testSystem.addComponent("n-pentane", 0.422286);
+        testSystem.addTBPfraction("C6_PC", 0.01753, 86.178/1000.0, 0.66399);
+        testSystem.addTBPfraction("C7_PC", 0.0231839, 96.0/1000.0, 0.738);
+        testSystem.addTBPfraction("C8_PC", 0.006674, 107.0/1000.0, 0.8097);
+        testSystem.addTBPfraction("C9_PC", 0.000660625, 120.99/1000.0, 0.8863);
+        testSystem.addTBPfraction("C10_PC", 8.07355e-5, 144.178/1000.0, 0.8526);
+        
+        testSystem.addComponent("water", 28.97100);
+        testSystem.addComponent("TEG",65.65524299);
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(2);
+        testSystem.setMixingRule(10);
 
         testSystem.setMultiPhaseCheck(true);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
-            testSystem.setTemperature(380.0);
-            testSystem.setPressure(80.0);
-            testOps.TPflash();
-            testSystem.display();
+           // testSystem.setTemperature(380.0);
+          //  testSystem.setPressure(80.0);
+          //  testOps.TPflash();
+          //  testSystem.display();
 
-            testSystem.setTemperature(273.15 + 141.85);
-            testSystem.setPressure(143);
+            testSystem.setTemperature(273.15 + 20.85);
+            testSystem.setPressure(13);
             testOps.TPflash();
             testSystem.display();
 
             String fileName = "c:/Appl/OLGAneqsim.tab";
-            testOps.OLGApropTable(273.15 + 26.85, 273.15 + 156.85, 41, 80.0, 200.0, 41, fileName, 0);
+            testOps.OLGApropTable(273.15, 273.15 + 50.0, 40, 1.0, 120.0, 40, fileName, 0);
             testOps.displayResult();
 
         } catch (Exception e) {

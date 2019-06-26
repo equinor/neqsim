@@ -88,7 +88,7 @@ public class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods
                 //System.out.println("no pure component viscosity model defined for component " + liquidPhase.getPhase().getComponents()[i].getComponentName());
                 pureComponentViscosity[i] = 7.0e-1;
             }
-            pureComponentViscosity[i] *= 1.0;//((getViscosityPressureCorrection(i) + 1.0) / 2.0);
+            pureComponentViscosity[i] *= ((getViscosityPressureCorrection(i) + 1.0) / 2.0);
             //System.out.println("pure comp viscosity " + pureComponentViscosity[i] + " pressure cor " + getViscosityPressureCorrection(i));
         }
     }
@@ -102,7 +102,7 @@ public class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods
         if (TR > 1) {
             return 1.0;
         }
-        double deltaPr = (liquidPhase.getPhase().getPressure() - 0) / liquidPhase.getPhase().getComponent(i).getPC();
+        double deltaPr = (liquidPhase.getPhase().getPressure() - 0.0) / liquidPhase.getPhase().getComponent(i).getPC();
         double A = 0.9991 - (4.674 * 1e-4 / (1.0523 * Math.pow(TR, -0.03877) - 1.0513));
         double D = (0.3257 / Math.pow((1.0039 - Math.pow(TR, 2.573)), 0.2906)) - 0.2086;
         double C = -0.07921 + 2.1616 * TR - 13.4040 * TR * TR + 44.1706 * Math.pow(TR, 3) - 84.8291 * Math.pow(TR, 4) + 96.1209 * Math.pow(TR, 5) - 59.8127 * Math.pow(TR, 6) + 15.6719 * Math.pow(TR, 7);

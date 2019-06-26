@@ -69,15 +69,15 @@ public class VLSolidTPFLash {
             //testSystem.display();
             testSystem.init(3);
             entalp = testSystem.getEnthalpy();
-            testSystem.setNumberOfPhases(3);
-            testSystem.setPressure(18.0);
+         //   testSystem.setNumberOfPhases(3);
+         //   testSystem.setPressure(18.0);
             //testOps.TPflash();
             //testSystem.display();
-         //    testOps.PHsolidFlash(entalp);
+            testOps.PHsolidFlash(entalp-1000.0);
             //testOps.PHflash(entalp, 0);
            // testSystem.display();
            // testOps.freezingPointTemperatureFlash();
-            //testSystem.display();
+            testSystem.display();
         } catch (Exception e) {
             logger.error(e.toString());
         }

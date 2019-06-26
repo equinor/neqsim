@@ -210,7 +210,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                     clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
                 }
                 //logger.info("err " + error[j]);
-            } while ((f.norm1() > 1e-6 && iterations < maxiterations && error[j] < oldErr) || (iterations % 7) == 0 || iterations < 3);
+            } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0 || iterations < 3);
 
             //logger.info("err " + error[j]);
             //logger.info("iterations " + iterations);

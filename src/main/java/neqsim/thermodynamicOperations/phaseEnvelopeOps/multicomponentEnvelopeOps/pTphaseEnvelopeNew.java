@@ -329,7 +329,7 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
     public void printToFile(String name) {
     }
 
-    public JFreeChart getJFreeChart(String type) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name){
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");

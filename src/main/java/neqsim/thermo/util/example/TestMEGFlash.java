@@ -44,11 +44,11 @@ public class TestMEGFlash{
         //testSystem.setSolidPhaseCheck("water");
         //testSystem.setHydrateCheck(true);
         
-        testSystem.createDatabase(true);
+        //testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
         //testSystem.setMultiPhaseCheck(true);
         try{
-        testOps.bubblePointPressureFlash(false);
+       testOps.bubblePointPressureFlash(false);
         }
         catch(Exception e){
             logger.error("error",e);

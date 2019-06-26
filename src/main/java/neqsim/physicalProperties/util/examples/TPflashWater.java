@@ -2,6 +2,7 @@ package neqsim.physicalProperties.util.examples;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
 
@@ -28,20 +29,18 @@ public class TPflashWater {
     }
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 0.0, 100.0189);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 40.0, 100.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        testSystem.addComponent("methane", 0.3);
+    //  testSystem.addComponent("methane", 0.3);
        // testSystem.addComponent("n-heptane", 0.000071);
         //testSystem.addComponent("water", 0.02, "kg/sec");
-        testSystem.addComponent("TEG", 0.98);
+       // testSystem.addComponent("water", 0.97);
+        testSystem.addComponent("TEG", 0.103);
 
-        testSystem.createDatabase(true);
+       // testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
-        testSystem.init(0);
-        testSystem.init(1);
-        testSystem.setMultiPhaseCheck(true);
-        testSystem.initPhysicalProperties();
+    //    testSystem.setMultiPhaseCheck(true);
 
         try {
             testOps.TPflash();
@@ -49,6 +48,9 @@ public class TPflashWater {
         } catch (Exception e) {
             logger.error(e.toString());
         }
+        testSystem.initPhysicalProperties();
+      //  System.out.println("viscosity " + testSystem.getViscosity());
+        System.out.println("viscosity " + testSystem.getPhase("aqueous").getViscosity());
         testSystem.display();
         //    System.out.println("surftens 0-2 " + testSystem.getInterphaseProperties().getSurfaceTension(0,2));
     }
