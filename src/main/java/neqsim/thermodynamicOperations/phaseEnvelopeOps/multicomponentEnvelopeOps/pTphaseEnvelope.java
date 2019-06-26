@@ -277,7 +277,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                         // close to the critical point
                         // invert phase types and find the CP Temp and Press
                        
-                        System.out.println("critical point");
+                        //System.out.println("critical point");
                         nonLinSolver.npCrit=np;
                         system.invertPhaseTypes(); 
                         nonLinSolver.etterCP = true; 
