@@ -6,6 +6,9 @@
 # Compiled class file
 *.class
 
+###eclipse settings
+.settings/
+
 # BAckup of java files
 *.java~
 
