@@ -8,6 +8,7 @@ package neqsim.processSimulation.processEquipment.valve;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  *
@@ -26,5 +27,7 @@ public interface ValveInterface extends ProcessEquipmentInterface {
     public void setPercentValveOpening(double percentValveOpening);
     public double getCv();
     public void setCv(double Cv);
+    public double getOutletPressure();
+    public double getInletPressure();
+    public SystemInterface getThermoSystem();
 }
-

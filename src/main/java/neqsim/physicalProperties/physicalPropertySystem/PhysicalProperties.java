@@ -137,11 +137,18 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
     public void init(PhaseInterface phase) {
         this.phase = phase;
         this.setPhases();
+        try {
         density = densityCalc.calcDensity();
         viscosity = viscosityCalc.calcViscosity();
         kinematicViscosity = this.calcKinematicViscosity();
         diffusivityCalc.calcDiffusionCoeffisients(binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         conductivity = conductivityCalc.calcConductivity();
+        }
+        catch(Exception e) {
+        	// might be a chance that entering here ends in an infinite loop...
+			phase.resetPhysicalProperties();
+        	phase.initPhysicalProperties();
+        }
     }
 
     public void init(PhaseInterface phase, String type) {

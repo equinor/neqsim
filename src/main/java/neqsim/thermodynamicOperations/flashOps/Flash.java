@@ -93,7 +93,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
         Matrix df = null;
         int maxiterations = 50;
-        double oldErr = 1.0;
+        double oldErr = 1.0, oldOldErr=10.0;
 
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
             d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
@@ -125,6 +125,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
             iterations = 0;
             do {
                 iterations++;
+                oldOldErr = oldErr;
                 oldErr = error[j];
                 error[j] = 0.0;
 
@@ -210,7 +211,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
                     clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
                 }
                 //logger.info("err " + error[j]);
-            } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0 || iterations < 3);
+            } while ((error[j]<oldErr && oldErr<oldOldErr) && (f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0 || iterations < 3);
 
             //logger.info("err " + error[j]);
             //logger.info("iterations " + iterations);
