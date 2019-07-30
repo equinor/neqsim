@@ -58,6 +58,18 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
+    
+    public double getOutletPressure() {
+    	return this.pressure;
+    }
+    
+    public SystemInterface getThermoSystem() {
+    	return thermoSystem;
+    }
+    
+    public double getInletPressure() {
+    	return inletStream.getThermoSystem().getPressure();
+    }
 
     public void setOutletPressure(double pressure) {
         this.pressure = pressure;

@@ -141,7 +141,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
         super.calcDesign();
 
         Separator separator = (Separator) getProcessEquipment();
-
+        separator.getThermoSystem().initPhysicalProperties();
         separator.setDesignLiquidLevelFraction(Fg);
 
         double emptyVesselWeight = 0.0, internalsWeight = 0.0, externalNozzelsWeight = 0.0;

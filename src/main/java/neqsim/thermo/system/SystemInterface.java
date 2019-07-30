@@ -20,6 +20,12 @@ public interface SystemInterface extends Cloneable {
 
     public void removePhaseKeepTotalComposition(int specPhase);
 
+    /**
+     * Calculates thermodynamic properties of a fluid using the init(2) method
+     *
+     */
+    public void initThermoProperties();
+    
     public void initPhysicalProperties(String propertyName);
 
     /**

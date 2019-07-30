@@ -1192,6 +1192,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
             initAnalytic(type);
         }
     }
+    
+    /**
+     * Calculates thermodynamic properties of a fluid using the init(2) method
+     *
+     */
+    public void initThermoProperties() {
+    	init(2);
+    }
 
     public void init(int type, int phase) { // type = 0 start init type =1 gi nye betingelser
         if (numericDerivatives) {
