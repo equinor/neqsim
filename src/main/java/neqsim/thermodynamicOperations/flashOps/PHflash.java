@@ -93,7 +93,8 @@ public class PHflash extends Flash implements java.io.Serializable {
             system.setTemperature(1.0 / nyTemp);
             tpFlash.run();
             erorOld = error;
-            error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+            error = Math.abs(calcdQdT());
+           // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
            // System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
 
         } while (((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);

@@ -107,10 +107,10 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
             system.setTemperature(nyTemp);
             tpFlash.run();
             erorOld = error;
-            error = Math.abs((nyTemp - oldTemp) / (nyTemp));
+            error = Math.abs(calcdQdT());//Math.abs((nyTemp - oldTemp) / (nyTemp));
             //if(error>erorOld) factor *= -1.0;
-            //  System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
-          newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
+             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
+          //newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
         } while(((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }
