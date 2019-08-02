@@ -97,7 +97,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 		Matrix df = null;
 		int maxiterations = 50;
 		double oldErr = 1.0, oldOldErr = 10.0;
-
+		double fNorm=0.0, fNormOld = 0.0;
 		for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
 			d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
 		}
@@ -149,12 +149,13 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 				if (iterations <= maxiterations - 10 || !system.isImplementedCompositionDeriativesofFugacity()) {
 
 					clonedSystem.init(1, j);
-
+					fNormOld = fNorm;
 					for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
 						f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
 								+ clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
 					}
-					if (iterations % 7 == 0) {
+					fNorm = f.norm2();
+					if (iterations % 7 == 0 && fNorm<fNormOld) {
 						double vec1 = 0.0, vec2 = 0.0, prod1 = 0.0, prod2 = 0.0;
 
 						for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -223,7 +224,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					deltalogWi[i] = logWi[i] - oldlogw[i];
 					clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
 				}
-				// logger.info("err " + error[j] +" iterations " + iterations + " phase " + j);
+				// logger.info("fnorm " +f.norm1()  + " err " + error[j] +" iterations " + iterations + " phase " + j);
+				 
 			} while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0 || iterations < 3);
 			//(error[j]<oldErr && oldErr<oldOldErr) &&
 			// logger.info("err " + error[j]);
