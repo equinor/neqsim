@@ -909,15 +909,19 @@ abstract class Component extends Object
 	}
 
 	public double getAntoineVaporPressure(double temp) {
-		if (Math.abs(AntoineE) > 1e-12) {
+		
+		if(antoineLiqVapPresType.equals("pow10")) {
+			return Math.pow(AntoineA - (AntoineB / (temp + AntoineC-273.15)), 10.0); // equation and parameter from properties o liquids and gases (poling 5th ed) 
+		}
+		else if(antoineLiqVapPresType.equals("exp")) {
+			return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter from properties o liquids and gases (poling 5th ed) 
+		}
+		else if (Math.abs(AntoineE) > 1e-12) {
 			return Math
 					.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
 					/ 100000;
-		} else if (Math.abs(AntoineD) <= 0.000000001) {
-			return (Math.exp(AntoineA - (AntoineB / (temp + AntoineC))));
-		} else if ((AntoineD - 1000) < 1e-10) {
-			return (Math.pow(10, AntoineA - (AntoineB / (temp + AntoineC))));
-		} else {
+		}
+		else {
 			double x = 1 - (temp / criticalTemperature);
 			return (Math.exp(Math.pow((1 - x), -1) * (AntoineA * x + AntoineB * Math.pow(x, 1.5)
 					+ AntoineC * Math.pow(x, 3) + AntoineD * Math.pow(x, 6))) * criticalPressure);
