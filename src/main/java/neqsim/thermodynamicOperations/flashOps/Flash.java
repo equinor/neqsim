@@ -112,6 +112,9 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 			sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK()
 					* clonedSystem.getPhase(0).getComponent(i).getz();
 		}
+		
+		//System.out.println("sumw0 " + sumw[0]);
+		//System.out.println("sumw1 " + sumw[1]);
 
 		for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
 			clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getz()
@@ -119,7 +122,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 			clonedSystem.getPhase(0).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getK()
 					* clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
 		}
-
+		
 		for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
 			for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
 				Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
@@ -141,7 +144,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
 				}
 
-				if ((iterations <= maxiterations - 20) || !system.isImplementedCompositionDeriativesofFugacity()) {
+				if ((iterations <= maxiterations - 10) || !system.isImplementedCompositionDeriativesofFugacity()) {
 
 					clonedSystem.init(1, j);
 					fNormOld = fNorm;
@@ -153,7 +156,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					if(fNorm>fNormOld && iterations > 3) {
 						break;
 					}
-					if (iterations % 7 == 0 && fNorm < fNormOld) {
+					if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
 						double vec1 = 0.0, vec2 = 0.0, prod1 = 0.0, prod2 = 0.0;
 
 						for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
