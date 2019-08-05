@@ -352,8 +352,8 @@ public interface ComponentInterface {
     public int getAtractiveTermNumber();
 
     public double getVoli();
-
-    public double getLogAntoineVaporPressuredT(double temp);
+    
+    public double getAntoineVaporPressuredT(double temp);
 
     public double[] getMatiascopemanParams();
 

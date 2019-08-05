@@ -913,7 +913,7 @@ abstract class Component extends Object
 		if(antoineLiqVapPresType.equals("pow10")) {
 			return Math.pow(AntoineA - (AntoineB / (temp + AntoineC-273.15)), 10.0); // equation and parameter from properties o liquids and gases (poling 5th ed) 
 		}
-		else if(antoineLiqVapPresType.equals("exp")) {
+		else if(antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
 			return Math.exp(AntoineA - (AntoineB / (temp + AntoineC))); // equation and parameter from properties o liquids and gases (poling 5th ed) 
 		}
 		else if (Math.abs(AntoineE) > 1e-12) {
@@ -928,11 +928,18 @@ abstract class Component extends Object
 		}
 	}
 
-	public double getLogAntoineVaporPressuredT(double temp) {
-		if (AntoineD == 0) {
-			return AntoineB / Math.pow(temp + AntoineC, 2.0);
-		} else {
-			double x = 1 - (temp / criticalTemperature);
+	public double getAntoineVaporPressuredT(double temp) {
+		if(antoineLiqVapPresType.equals("pow10")) {
+			//(10^   (A - B/(C + x - 5463/20))    *B*log(10))/(C + x - 5463/20)^2
+			double ans = (Math.pow(AntoineA - AntoineB/(AntoineC+ temp - 273.15),10.0)  *AntoineB*Math.log(10.0))/Math.pow((AntoineC + temp - 273.15),2.0);
+			return ans;
+		}
+		else if(antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
+			//(B*exp(A - B/(C + x)))/(C + x)^2
+			double ans = AntoineB*(Math.exp(AntoineA - AntoineB/(AntoineC+ temp)))/Math.pow((AntoineC + temp),2.0);
+			return ans;
+		}
+		else {
 			return 0.0;
 		}
 	}
@@ -948,10 +955,10 @@ abstract class Component extends Object
 		do {
 			iter++;
 			nyTemp -= (nyPres - pres);
-
+			//nyTemp = nyTemp-iter/(iter+10.0)*(nyPres - pres)/getAntoineVaporPressuredT(nyTemp);
 			nyPres = getAntoineVaporPressure(nyTemp);
-			// System.out.println("temp Antoine " +nyTemp);
-		} while (Math.abs((nyPres - pres) / pres) > 0.001 && iter < 1000);
+			// System.out.println("temp Antoine " +nyTemp + " error "+Math.abs((nyPres - pres) / pres));
+		} while (Math.abs((nyPres - pres) / pres) > 0.00001 && iter < 1000);
 		return nyTemp;
 	}
 

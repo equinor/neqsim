@@ -68,7 +68,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         int numberOfComponents = phase.getNumberOfComponents();
 
         if (referenceStateType.equals("solvent")) {
-            dfugdt = dlngammadt + getLogAntoineVaporPressuredT(temperature);
+            dfugdt = dlngammadt + 1.0/getAntoineVaporPressure(temperature)*getAntoineVaporPressuredT(temperature);
             logger.info("check this dfug dt - antoine");
         } else {
             dfugdt = dlngammadt + getHenryCoefdT(temperature);
