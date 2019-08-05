@@ -113,9 +113,18 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					* clonedSystem.getPhase(0).getComponent(i).getz();
 		}
 		
-		//System.out.println("sumw0 " + sumw[0]);
-		//System.out.println("sumw1 " + sumw[1]);
+	//	System.out.println("sumw0 " + sumw[0]);
+	//	System.out.println("sumw1 " + sumw[1]);
 
+		int start=0;
+		int end= clonedSystem.getPhase(0).getNumberOfComponents();
+		int mult = 1;
+		if(sumw[1]>sumw[0]) {
+			start=end;
+				end=0;
+				mult=-1;
+		}
+			
 		for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
 			clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getz()
 					/ clonedSystem.getPhase(0).getComponent(i).getK() / sumw[1]);
@@ -123,7 +132,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					* clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
 		}
 		
-		for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
+		//for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
+		for (int j = start; j == end; j=j+mult) {
 			for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
 				Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
 				logWi[i] = Math.log(Wi[j][i]);
