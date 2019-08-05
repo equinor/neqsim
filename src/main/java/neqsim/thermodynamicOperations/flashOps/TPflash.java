@@ -366,7 +366,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 					timeFromLastGibbsFail++;
 					setNewK();
 				}
-				// logger.info("iterations " + iterations + " error " + deviation);
+			//	 logger.info("iterations " + iterations + " error " + deviation);
 			} while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
 			// logger.info("iterations " + iterations + " error " + deviation);
 			if (system.isChemicalSystem()) {
