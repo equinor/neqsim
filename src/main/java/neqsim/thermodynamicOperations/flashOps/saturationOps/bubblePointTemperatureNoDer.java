@@ -38,7 +38,10 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash{
         system.setBeta(1, 1.0-1e-10);
         system.setBeta(0, 1e-10);
         
-        if(system.getPhase(0).getNumberOfComponents()==1) system.setTemperature(system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure()));
+        if(system.getPhase(0).getNumberOfComponents()==1) {
+        	system.setTemperature(system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure()));
+        	if(system.getTemperature()>system.getPhase(0).getComponent(0).getTC()) system.setTemperature(system.getTemperature()-10.0);
+        }
        
         double oldPres=0;
         if(system.isChemicalSystem()){

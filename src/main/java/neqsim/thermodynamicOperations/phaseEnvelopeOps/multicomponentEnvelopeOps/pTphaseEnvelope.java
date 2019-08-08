@@ -602,6 +602,33 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
 	public void printToFile(String name) {
 	}
+	
+	 public org.jfree.chart.JFreeChart getJFreeChart(String name){
+		 DecimalFormat nf = new DecimalFormat();
+			nf.setMaximumFractionDigits(1);
+			nf.applyPattern("####.#");
+			if (bubblePointFirst) {
+				// bubble point side
+				navn[0] = "bubble point 2";
+				navn[1] = "dew point 2";
+				navn[2] = "dew point 1";
+				navn[3] = "bubble point 1";
+			} else {
+				// dew point side and does not crash
+				navn[0] = "dew point";
+				navn[1] = "bubble point";
+				navn[2] = "dew point";
+				navn[3] = "bubbl point";
+			}
+
+			double TC = system.getTC();
+			double PC = system.getPC();
+
+			String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
+
+			graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
+	        return graph2.getChart();
+	    }
 
 	public double[][] getPoints(int i) {
 		return points2;
