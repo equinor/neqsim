@@ -1796,6 +1796,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      * method to return conductivity of a fluid
      *
      * @return conductivity in unit W/m*K
+     * 
+     * @deprecated use {@link #getThermalConductivity()} instead. 
      */
     public double getConductivity() {
         double cond = 0;
@@ -1811,8 +1813,46 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      * @param unit The unit as a string. Supported units are W/mK, W/cmK
      *
      * @return conductivity in specified unit
+     * 
+     * @deprecated use {@link #getThermalConductivity(String unit)} instead. 
      */
     public double getConductivity(String unit) {
+        double refConductivity = getConductivity(); // conductivity in W/m*K
+        double conversionFactor = 1.0;
+        switch (unit) {
+            case "W/mK":
+                conversionFactor = 1.0;
+                break;
+            case "W/cmK":
+                conversionFactor = 0.01;
+                break;
+            default:
+                throw new RuntimeException();
+        }
+        return refConductivity * conversionFactor;
+    }
+    
+    /**
+     * method to return conductivity of a fluid
+     *
+     * @return conductivity in unit W/m*K
+     */
+    public double getThermalConductivity() {
+        double cond = 0;
+        for (int i = 0; i < numberOfPhases; i++) {
+            cond += beta[phaseIndex[i]] * getPhase(i).getPhysicalProperties().getConductivity();
+        }
+        return cond;
+    }
+
+    /**
+     * method to return conductivity in a given unit
+     *
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     *
+     * @return conductivity in specified unit
+     */
+    public double getThermalConductivity(String unit) {
         double refConductivity = getConductivity(); // conductivity in W/m*K
         double conversionFactor = 1.0;
         switch (unit) {

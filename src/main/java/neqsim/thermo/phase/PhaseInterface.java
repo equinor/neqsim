@@ -277,6 +277,22 @@ public interface PhaseInterface extends Cloneable {
      * @return conductivity in specified unit
      */
     public double getConductivity(String unit);
+    
+    /**
+     * method to return conductivity of a phase
+     *
+     * @return conductivity in unit W/m*K
+     */
+    public double getThermalConductivity();
+
+    /**
+     * method to return conductivity in a given unit
+     *
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     *
+     * @return conductivity in specified unit
+     */
+    public double getThermalConductivity(String unit);
 
     /**
      * method to return specific heat capacity (Cp)

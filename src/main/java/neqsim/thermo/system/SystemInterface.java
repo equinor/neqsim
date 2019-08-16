@@ -709,6 +709,8 @@ public interface SystemInterface extends Cloneable {
      * method to return thermal conductivity
      *
      * @return conductivity in unit W/mK
+     * 
+     * @deprecated use {@link #getThermalConductivity()} instead. 
      */
     public double getConductivity();
 
@@ -718,8 +720,25 @@ public interface SystemInterface extends Cloneable {
      * @param unit The unit as a string. Supported units are W/mK, W/cmK
      *
      * @return conductivity in specified unit
+     * @deprecated use {@link #getThermalConductivity(String unit)} instead. 
      */
     public double getConductivity(String unit);
+    
+    /**
+     * method to return thermal conductivity
+     *
+     * @return conductivity in unit W/mK
+     */
+    public double getThermalConductivity();
+
+    /**
+     * method to return thermal conductivity in a given unit
+     *
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     *
+     * @return conductivity in specified unit
+     */
+    public double getThermalConductivity(String unit);
 
     /**
      * method to return interfacial tension between two phases
