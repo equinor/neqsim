@@ -143,6 +143,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
                         isConverged = false;
                     }
                 }
+                if(!((ProcessEquipmentInterface)unitOperations.get(i)).solved()) isConverged=false;
             }
 
             signalDB = new String[1000][1 + 3 * measurementDevices.size()];

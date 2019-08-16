@@ -123,4 +123,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public String[][] reportResults() {
         return report;
     }
+    
+    public boolean solved() {
+    	return true;
+    }
+
 }

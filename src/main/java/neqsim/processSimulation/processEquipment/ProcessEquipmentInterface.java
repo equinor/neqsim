@@ -50,4 +50,6 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
     public void setController(ControllerDeviceInterface controller);
 
     public ControllerDeviceInterface getController();
+    
+    public boolean solved();
 }
