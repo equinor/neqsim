@@ -910,14 +910,48 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return refViscosity * conversionFactor;
     }
-
+    
     /**
      * method to return conductivity of a phase
      *
      * @return conductivity in unit W/m*K
      */
+    public double getThermalConductivity() {
+    	 return getPhysicalProperties().getConductivity();
+    }
+
+    /**
+     * method to return conductivity of a phase
+     *
+     * @return conductivity in unit W/m*K
+     * @deprecated use {@link #getThermalConductivity()} instead.
+     */
+    @Deprecated
     public double getConductivity() {
         return getPhysicalProperties().getConductivity();
+    }
+    
+    /**
+     * method to return conductivity in a given unit
+     *
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     *
+     * @return conductivity in specified unit
+     */
+    public double getThermalConductivity(String unit) {
+        double refConductivity = getThermalConductivity(); // conductivity in W/m*K
+        double conversionFactor = 1.0;
+        switch (unit) {
+            case "W/mK":
+                conversionFactor = 1.0;
+                break;
+            case "W/cmK":
+                conversionFactor = 0.01;
+                break;
+            default:
+                throw new RuntimeException();
+        }
+        return refConductivity * conversionFactor;
     }
 
     /**
@@ -926,7 +960,9 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * @param unit The unit as a string. Supported units are W/mK, W/cmK
      *
      * @return conductivity in specified unit
+     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
+    @Deprecated
     public double getConductivity(String unit) {
         double refConductivity = getConductivity(); // conductivity in W/m*K
         double conversionFactor = 1.0;
