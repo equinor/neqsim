@@ -14,6 +14,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author  Even Solbraa
  * @version
+ * 
+ * 
  */
 public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
 
