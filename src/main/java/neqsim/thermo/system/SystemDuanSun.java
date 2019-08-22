@@ -34,7 +34,7 @@ public class SystemDuanSun extends SystemEos {
         attractiveTermNumber = 0;
         phaseArray[0] = new PhaseSrkEos();
         for (int i=1;i<numberOfPhases;i++){
-            phaseArray[i] = new PhaseDuanSun();//modifiedWS();
+            phaseArray[i] = new PhaseDuanSun();
         }
     }
     
@@ -88,11 +88,6 @@ public class SystemDuanSun extends SystemEos {
         catch(Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
-        
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
         
         return clonedSystem;
     }
