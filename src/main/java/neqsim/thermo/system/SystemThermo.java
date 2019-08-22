@@ -491,6 +491,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     }
 
     public void setTotalFlowRate(double flowRate, String flowunit) {
+    	if(getMolarMass()<1e-20) {
+    		init(0);
+    	}
         neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), getDensity(), 0);
         double SIval = unit.getSIvalue();
         double totalNumberOfMolesLocal = totalNumberOfMoles;
@@ -2433,6 +2436,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
      */
     public double getInterfacialTension(int phase1, int phase2) {
         return interfaceProp.getSurfaceTension(phase1, phase2);
+    }
+    
+    public double getInterfacialTension(int phase1, int phase2,String unit) {
+        return interfaceProp.getSurfaceTension(phase1, phase2, unit);
     }
 
     /**

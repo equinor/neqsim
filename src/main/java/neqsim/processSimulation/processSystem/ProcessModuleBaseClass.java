@@ -110,4 +110,9 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
         return operations;
     }
+    
+    //this method needs to be updated...need to chec if all equipment are solved correctly
+    public boolean solved() {
+    	return true;
+    }
 }
