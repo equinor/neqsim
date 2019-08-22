@@ -26,6 +26,8 @@ public interface SystemInterface extends Cloneable {
      */
     public void initThermoProperties();
     
+    public double getInterfacialTension(int phase1, int phase2,String unit);
+    
     public void initPhysicalProperties(String propertyName);
 
     /**

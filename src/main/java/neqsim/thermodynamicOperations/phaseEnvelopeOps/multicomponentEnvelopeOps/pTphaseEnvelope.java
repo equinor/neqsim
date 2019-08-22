@@ -30,6 +30,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.derby.iapi.services.io.ArrayUtil;
 import org.apache.log4j.Logger;
 import org.jfree.chart.JFreeChart;
 
@@ -602,33 +605,33 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
 	public void printToFile(String name) {
 	}
-	
-	 public org.jfree.chart.JFreeChart getJFreeChart(String name){
-		 DecimalFormat nf = new DecimalFormat();
-			nf.setMaximumFractionDigits(1);
-			nf.applyPattern("####.#");
-			if (bubblePointFirst) {
-				// bubble point side
-				navn[0] = "bubble point 2";
-				navn[1] = "dew point 2";
-				navn[2] = "dew point 1";
-				navn[3] = "bubble point 1";
-			} else {
-				// dew point side and does not crash
-				navn[0] = "dew point";
-				navn[1] = "bubble point";
-				navn[2] = "dew point";
-				navn[3] = "bubbl point";
-			}
 
-			double TC = system.getTC();
-			double PC = system.getPC();
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+		DecimalFormat nf = new DecimalFormat();
+		nf.setMaximumFractionDigits(1);
+		nf.applyPattern("####.#");
+		if (bubblePointFirst) {
+			// bubble point side
+			navn[0] = "bubble point 2";
+			navn[1] = "dew point 2";
+			navn[2] = "dew point 1";
+			navn[3] = "bubble point 1";
+		} else {
+			// dew point side and does not crash
+			navn[0] = "dew point";
+			navn[1] = "bubble point";
+			navn[2] = "dew point";
+			navn[3] = "bubbl point";
+		}
 
-			String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
+		double TC = system.getTC();
+		double PC = system.getPC();
 
-			graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
-	        return graph2.getChart();
-	    }
+		String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
+
+		graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
+		return graph2.getChart();
+	}
 
 	public double[][] getPoints(int i) {
 		return points2;
@@ -655,6 +658,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 		if (name.equals("bubP")) {
 			return points2[3];
 		}
+		// return points2[3];
 		if (name.equals("dewT2")) {
 			return points2[4];
 		}
@@ -802,7 +806,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 					Kwil[j] = system.getPhase(0).getComponents()[j].getPC() / P
 							* Math.exp(5.373 * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
 									* (1. - system.getPhase(0).getComponents()[j].getTC() / Tstart));
-					//system.getPhases()[0].getComponents()[j].setK(Kwil[j]);
+					// system.getPhases()[0].getComponents()[j].setK(Kwil[j]);
 				}
 
 				for (int j = 0; j < numberOfComponents; j++) {

@@ -33,5 +33,7 @@ public interface InterphasePropertiesInterface {
     public void setInterfacialTensionModel(int interfacialTensionModel);
 
     public SurfaceTensionInterface getSurfaceTensionModel(int i);
+    
+    public double getSurfaceTension(int numb1, int numb2, String unit);
 }
 
