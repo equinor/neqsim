@@ -132,6 +132,10 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     public double getEnergyInput() {
         return energyInput;
     }
+    
+    public double getDuty() {
+        return energyInput;
+    }
 
     public void setEnergyInput(double energyInput) {
         this.energyInput = energyInput;
