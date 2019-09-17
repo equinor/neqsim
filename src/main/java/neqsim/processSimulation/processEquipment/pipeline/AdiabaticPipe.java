@@ -88,8 +88,10 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         double reynoldsNumber = velocity * insideDiameter / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
         double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
         double dp = Math.pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass() / neqsim.thermo.ThermodynamicConstantsInterface.pi, 2.0) * frictionFactor * length * system.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R / system.getPhase(0).getMolarMass() * system.getTemperature() / Math.pow(insideDiameter, 5.0);
-        System.out.println("friction fact" + frictionFactor + " velocity " + velocity + " reynolds number " + reynoldsNumber);
-        return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp) / 1.0e5;
+        //\\System.out.println("friction fact" + frictionFactor + " velocity " + velocity + " reynolds number " + reynoldsNumber);
+        System.out.println("dp gravity " + system.getDensity("kg/m3")*neqsim.thermo.ThermodynamicConstantsInterface.gravity*(inletElevation-outletElevation)/1.0e5);
+        double dp_gravity=system.getDensity("kg/m3")*neqsim.thermo.ThermodynamicConstantsInterface.gravity*(inletElevation-outletElevation);
+        return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp )/ 1.0e5 + dp_gravity/1.0e5 ;
     }
     
     public double calcFlow() {
