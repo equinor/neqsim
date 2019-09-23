@@ -189,6 +189,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		return clonedSystem;
 	}
 
+	/**
+	 * add fluid to an existing fluid
+	 *
+	 * @param addSystem1 first fluid to add
+	 * @param addSystem2 second fluid o add
+	 *
+	 * @return new fluid
+	 */
 	public void addFluid(SystemInterface addSystem) {
 		boolean addedNewComponent = false;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -204,6 +212,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			init(0);
 		}
 	}
+	
 
 	public void addPhase() {
 		/*

@@ -21,6 +21,21 @@ public interface SystemInterface extends Cloneable {
     public void removePhaseKeepTotalComposition(int specPhase);
 
     /**
+	 * return two fluid added as a new fluid 
+	 *
+	 * @param addFluid1 first fluid to add
+	 * @param addFluid2 second fluid o add
+	 *
+	 * @return new fluid
+	 */
+	public static SystemInterface addFluids(SystemInterface addFluid1, SystemInterface addFluid2)
+		{
+			SystemInterface newFluid = (SystemInterface) addFluid1.clone();
+			newFluid.addFluid(addFluid2);
+			return newFluid;
+		}
+	
+    /**
      * Calculates thermodynamic properties and physical properties of a fluid using the initThermoProperties method and initPhysicalPropertiesMethod
      *
      */
