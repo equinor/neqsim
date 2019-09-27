@@ -72,7 +72,7 @@ public class GERG2004EOS {
     public static void main(String args[]) {
         GERG2004EOS gergEOS = new GERG2004EOS();
         double c1 = 298.0, c2 = 0.1, c3 = 0.90, c4 = 0.1, c5 = 0, c6 = 0, c7 = 0, c8 = 0, c9 = 0, c10 = 0, c11 = 0, c12 = 0, c13 = 0, c14 = 0, c15 = 0, c16 = 0, c17 = 0, c18 = 0, c19 = 0, c20 = 0;
-        // double a2 = gergEOS.POTDX(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20);
+        // double a2 = gergEOS.POTDX (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20);
         double a4 = GERG2004EOS.SALLOTPX(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, 2)[3];
         double a2 = GERG2004EOS.ZOTPX(c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, 2);
         double[] a3 = new double[18];

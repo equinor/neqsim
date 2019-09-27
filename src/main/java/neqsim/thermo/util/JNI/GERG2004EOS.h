@@ -12,7 +12,7 @@ extern "C" {
  * Method:    POTDX
  * Signature: (DDDDDDDDDDDDDDDDDDDD)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_POTDX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_POTDX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble);
 
 /*
@@ -20,7 +20,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_POTDX
  * Method:    ZOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_ZOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_ZOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -28,7 +28,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_ZOTPX
  * Method:    HOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_HOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_HOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -36,7 +36,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_HOTPX
  * Method:    SOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_SOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_SOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -44,7 +44,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_SOTPX
  * Method:    CPOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_CPOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_CPOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -52,7 +52,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_CPOTPX
  * Method:    WOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_WOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_WOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -60,7 +60,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_WOTPX
  * Method:    RJTOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_RJTOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_RJTOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -68,7 +68,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_RJTOTPX
  * Method:    GOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_GOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_GOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -76,7 +76,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_GOTPX
  * Method:    UOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_UOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_UOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -84,7 +84,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_UOTPX
  * Method:    AOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_AOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_AOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -92,7 +92,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_AOTPX
  * Method:    SFUGOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)[D
  */
-JNIEXPORT jdoubleArray JNICALL Java_thermo_util_JNI_GERG2004EOS_SFUGOTPX
+JNIEXPORT jdoubleArray JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_SFUGOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -100,7 +100,7 @@ JNIEXPORT jdoubleArray JNICALL Java_thermo_util_JNI_GERG2004EOS_SFUGOTPX
  * Method:    SPHIOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)[D
  */
-JNIEXPORT jdoubleArray JNICALL Java_thermo_util_JNI_GERG2004EOS_SPHIOTPX
+JNIEXPORT jdoubleArray JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_SPHIOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -108,7 +108,7 @@ JNIEXPORT jdoubleArray JNICALL Java_thermo_util_JNI_GERG2004EOS_SPHIOTPX
  * Method:    CVOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)D
  */
-JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_CVOTPX
+JNIEXPORT jdouble JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_CVOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 /*
@@ -116,7 +116,7 @@ JNIEXPORT jdouble JNICALL Java_thermo_util_JNI_GERG2004EOS_CVOTPX
  * Method:    SALLOTPX
  * Signature: (DDDDDDDDDDDDDDDDDDDDI)[D
  */
-JNIEXPORT jdoubleArray JNICALL Java_thermo_util_JNI_GERG2004EOS_SALLOTPX
+JNIEXPORT jdoubleArray JNICALL Java_neqsim_thermo_util_JNI_GERG2004EOS_SALLOTPX
   (JNIEnv *, jclass, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jdouble, jint);
 
 #ifdef __cplusplus

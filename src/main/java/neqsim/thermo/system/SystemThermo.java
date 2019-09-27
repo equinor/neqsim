@@ -1296,6 +1296,15 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void initThermoProperties() {
 		init(2);
 	}
+	
+	/**
+	 * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and initPhysicalProperties();
+	 *
+	 */
+	public void initProperties() {
+		initThermoProperties();
+		initPhysicalProperties();
+	}
 
 	public void init(int type, int phase) { // type = 0 start init type =1 gi nye betingelser
 		if (numericDerivatives) {
@@ -4008,6 +4017,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
 		}
+		for(int i=0;i<getNumberOfPhases();i++) {
+			init(0,i);
+		}
 	}
 
 	/**
@@ -4022,6 +4034,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setEmptyFluid();
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, moles[compNumb]);
+		}
+		for(int i=0;i<getNumberOfPhases();i++) {
+			init(0,i);
 		}
 	}
 
