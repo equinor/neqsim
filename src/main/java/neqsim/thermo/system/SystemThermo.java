@@ -212,7 +212,6 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			init(0);
 		}
 	}
-	
 
 	public void addPhase() {
 		/*
@@ -741,7 +740,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			// // refSystem.init(1);
 			// //refSystem.initPhysicalProperties();
 			// // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
-			// //må sammenligne med API-standard for tetthet - og sette Penloux dt
+			// //mÃ¥ sammenligne med API-standard for tetthet - og sette Penloux dt
 			//
 			//
 		} catch (Exception e) {
@@ -1306,6 +1305,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		init(2);
 	}
 	
+	/**
+	 * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and initPhysicalProperties();
+	 *
+	 */
 	public void initProperties() {
 		initThermoProperties();
 		initPhysicalProperties();
@@ -1787,7 +1790,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setMixingRuleGEmodel(GEmodel);
 		setMixingRule(typename);
 	}
-
+	
+	/**
+	 * method to set the mixing rule for the fluid
+	 *
+	 * @param mixingRuleName the name of the mixing rule. The name can be 'no','classic', 'Huron-Vidal'/'HV', 
+	 * 'Huron-Vidal-T', 'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T', 'classic-CPA-T', 'classic-Tx'  
+	 */
 	public void setMixingRule(String typename) {
 		int var = 0;
 		if (typename.equals("no")) {
@@ -4010,6 +4019,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
 		}
+		for(int i=0;i<getNumberOfPhases();i++) {
+			init(0,i);
+		}
 	}
 
 	/**
@@ -4024,6 +4036,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setEmptyFluid();
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, moles[compNumb]);
+		}
+		for(int i=0;i<getNumberOfPhases();i++) {
+			init(0,i);
 		}
 	}
 

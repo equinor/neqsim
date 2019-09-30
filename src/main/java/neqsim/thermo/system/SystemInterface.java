@@ -19,6 +19,12 @@ public interface SystemInterface extends Cloneable {
     public double getMoleFractionsSum();
 
     public void removePhaseKeepTotalComposition(int specPhase);
+    
+	/**
+	 * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and initPhysicalProperties();
+	 *
+	 */
+	public void initProperties();
 
     /**
 	 * return two fluid added as a new fluid 
@@ -398,7 +404,13 @@ public interface SystemInterface extends Cloneable {
     public void write(String name, String filename, boolean newfile);
 
     public void useVolumeCorrection(boolean volcor);
-
+	
+    /**
+	 * method to set the mixing rule for the fluid
+	 *
+	 * @param mixingRuleName the name of the mixing rule. The name can be 'no','classic', 'Huron-Vidal'/'HV', 
+	 * 'Huron-Vidal-T', 'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T', 'classic-CPA-T', 'classic-Tx'  
+	 */
     public void setMixingRule(String typename);
 
     public boolean isNumericDerivatives();
