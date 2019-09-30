@@ -40,12 +40,6 @@ public interface SystemInterface extends Cloneable {
 			newFluid.addFluid(addFluid2);
 			return newFluid;
 		}
-	
-    /**
-     * Calculates thermodynamic properties and physical properties of a fluid using the initThermoProperties method and initPhysicalPropertiesMethod
-     *
-     */
-	public void initProperties();
     /**
      * Calculates thermodynamic properties of a fluid using the init(2) method
      *
