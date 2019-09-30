@@ -189,6 +189,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		return clonedSystem;
 	}
 
+	/**
+	 * add fluid to an existing fluid
+	 *
+	 * @param addSystem1 first fluid to add
+	 * @param addSystem2 second fluid o add
+	 *
+	 * @return new fluid
+	 */
 	public void addFluid(SystemInterface addSystem) {
 		boolean addedNewComponent = false;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -732,7 +740,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			// // refSystem.init(1);
 			// //refSystem.initPhysicalProperties();
 			// // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
-			// //må sammenligne med API-standard for tetthet - og sette Penloux dt
+			// //mÃ¥ sammenligne med API-standard for tetthet - og sette Penloux dt
 			//
 			//
 		} catch (Exception e) {
@@ -1789,29 +1797,23 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 * @param mixingRuleName the name of the mixing rule. The name can be 'no','classic', 'Huron-Vidal'/'HV', 
 	 * 'Huron-Vidal-T', 'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T', 'classic-CPA-T', 'classic-Tx'  
 	 */
-	public void setMixingRule(String mixingRuleName) {
+	public void setMixingRule(String typename) {
 		int var = 0;
-		if (mixingRuleName.equals("no")) {
+		if (typename.equals("no")) {
 			var = 1;
-		} else if (mixingRuleName.equals("classic")) {
+		} else if (typename.equals("classic")) {
 			var = 2;
-		} else if (mixingRuleName.equals("Huron-Vidal")) {
-			var = 3;
-		} else if (mixingRuleName.equals("HV")) {
+		} else if (typename.equals("HV")) {
 			var = 4;
-		} else if (mixingRuleName.equals("Huron-Vidal-T")) {
-			var = 4;
-		} else if (mixingRuleName.equals("WS")) {
+		} else if (typename.equals("WS")) {
 			var = 5;
-		} else if (mixingRuleName.equals("Wong-Sandler")) {
-			var = 5;
-		} else if (mixingRuleName.equals("classic-CPA")) {
+		} else if (typename.equals("CPA-Mix")) {
 			var = 7;
-		} else if (mixingRuleName.equals("classic-T")) {
+		} else if (typename.equals("classic-T")) {
 			var = 8;
-		} else if (mixingRuleName.equals("classic-CPA-T")) {
+		} else if (typename.equals("classic-T-cpa")) {
 			var = 9;
-		} else if (mixingRuleName.equals("classic-Tx")) {
+		} else if (typename.equals("classic-Tx-cpa")) {
 			var = 10;
 		} else {
 			var = 1;
