@@ -199,12 +199,23 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 */
 	public void addFluid(SystemInterface addSystem) {
 		boolean addedNewComponent = false;
+		int index=-1;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
-			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName())) {
+			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName()) && !getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName()+"_PC")) {
 				addedNewComponent = true;
 			}
-			addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
+			else {
+				index = getPhase(0).getComponent(addSystem.getPhase(0).getComponent(i).getComponentName()).getComponentNumber();
+			}
+			
+			if(index!=-1) {
+			addComponent(index,
 					addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+			}
+			else {
+			addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
+				addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+			}
 		}
 		if (addedNewComponent) {
 			createDatabase(true);
