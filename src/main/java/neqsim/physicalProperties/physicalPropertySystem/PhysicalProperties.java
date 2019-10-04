@@ -150,6 +150,12 @@ public abstract class PhysicalProperties extends java.lang.Object implements Phy
         	phase.initPhysicalProperties();
         }
     }
+    
+    public void setPhase(PhaseInterface phase) {
+    	 this.phase = phase;
+         this.setPhases();
+    }
+    
 
     public void init(PhaseInterface phase, String type) {
         if (type.equals("density")) {

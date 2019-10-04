@@ -37,6 +37,8 @@ public interface PhysicalPropertiesInterface extends Cloneable {
     public double getDensity();
 
     public PhaseInterface getPhase();
+    
+    public void setPhase(PhaseInterface phase);
 
     public double calcDensity();
 

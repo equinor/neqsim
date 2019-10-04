@@ -201,7 +201,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		boolean addedNewComponent = false;
 		int index=-1;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
-			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName()) && !getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName()+"_PC")) {
+			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName())) {
 				addedNewComponent = true;
 			}
 			else {
@@ -3794,9 +3794,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void orderByDensity() {
 		boolean change = false;
 		int count = 0;
+	
 		if (getPhase(0).getPhysicalProperties() == null) {
 			getPhase(0).initPhysicalProperties("density");
 		}
+		for (int i = 1; i < getNumberOfPhases(); i++) {
+			getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
+		}
+	
 		do {
 			change = false;
 			count++;
