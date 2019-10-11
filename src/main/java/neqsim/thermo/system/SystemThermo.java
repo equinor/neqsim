@@ -199,12 +199,23 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 */
 	public void addFluid(SystemInterface addSystem) {
 		boolean addedNewComponent = false;
+		int index=-1;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
 			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName())) {
 				addedNewComponent = true;
 			}
-			addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
+			else {
+				index = getPhase(0).getComponent(addSystem.getPhase(0).getComponent(i).getComponentName()).getComponentNumber();
+			}
+			
+			if(index!=-1) {
+			addComponent(index,
 					addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+			}
+			else {
+			addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
+				addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+			}
 		}
 		if (addedNewComponent) {
 			createDatabase(true);
@@ -3783,9 +3794,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void orderByDensity() {
 		boolean change = false;
 		int count = 0;
+	
 		if (getPhase(0).getPhysicalProperties() == null) {
 			getPhase(0).initPhysicalProperties("density");
 		}
+		
+		for (int i = 1; i < getNumberOfPhases(); i++) {
+			if (getPhase(i).getPhysicalProperties() == null) {
+				getPhase(i).initPhysicalProperties("density");
+			}
+			getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
+		}
+	
 		do {
 			change = false;
 			count++;

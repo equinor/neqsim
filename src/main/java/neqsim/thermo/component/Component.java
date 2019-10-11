@@ -196,7 +196,7 @@ abstract class Component extends Object
 				} catch (Exception e) {
 					try {
 						dataSet.close();
-						logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
+						//logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
 						dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
 						dataSet.next();
 					} catch (Exception e2) {

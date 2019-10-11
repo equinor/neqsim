@@ -6,6 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseSolid;
 
 /**
  *
@@ -39,7 +40,13 @@ public class ComponentWax extends ComponentSolid {
     }
 
     public double fugcoef2(PhaseInterface phase1) {
+    	try {
         refPhase.setTemperature(phase1.getTemperature());
+    	}
+    	catch(Exception e) {
+    		//System.out.println("compname " + componentName);
+    		e.printStackTrace();
+    	}
         refPhase.setPressure(phase1.getPressure());
         refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 0, 1.0);
         refPhase.getComponent(0).fugcoef(refPhase);

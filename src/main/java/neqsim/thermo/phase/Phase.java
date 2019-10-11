@@ -359,7 +359,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         if (physicalPropertyHandler.getPhysicalProperty(this) == null) {
             setPhysicalProperties(physicalPropertyType);
         }
-
+        getPhysicalProperties().setPhase(this);
+        
         //   if (physicalProperty == null || phaseTypeAtLastPhysPropUpdate != phaseType || !phaseTypeNameAtLastPhysPropUpdate.equals(phaseTypeName)) {
         //        this.setPhysicalProperties();
         ////   }
