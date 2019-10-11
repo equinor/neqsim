@@ -3798,7 +3798,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		if (getPhase(0).getPhysicalProperties() == null) {
 			getPhase(0).initPhysicalProperties("density");
 		}
+		
 		for (int i = 1; i < getNumberOfPhases(); i++) {
+			if (getPhase(i).getPhysicalProperties() == null) {
+				getPhase(i).initPhysicalProperties("density");
+			}
 			getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
 		}
 	
