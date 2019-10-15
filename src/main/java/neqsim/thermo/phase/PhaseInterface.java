@@ -23,6 +23,15 @@ public interface PhaseInterface extends Cloneable {
 
     public void resetPhysicalProperties();
 
+	/**
+	 * method to return fluid volume
+	 *
+	 * @param unit The unit as a string. Supported units are m3, litre
+	 *
+	 * @return volume in specified unit
+	 */
+	public double getVolume(String unit);
+    
     /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant.
      * The method calculates it as Cp (real) /Cv (real)

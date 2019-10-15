@@ -1602,6 +1602,26 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public double getVolume() {
         return getTotalVolume();
     }
+    
+	/**
+	 * method to return fluid volume
+	 *
+	 * @param unit The unit as a string. Supported units are m3, litre
+	 *
+	 * @return volume in specified unit
+	 */
+	public double getVolume(String unit) {
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "m3":
+			conversionFactor = 1.0;
+			break;
+		case "litre":
+			conversionFactor = 1000.0;
+			break;
+		}
+		return conversionFactor * getVolume() / 1.0e5;
+	}
 
     /**
      * method to return phase volume with Peneloux volume correction need to
