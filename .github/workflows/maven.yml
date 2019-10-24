@@ -1,9 +1,6 @@
 name: Java CI
 
-on:
-  push:
-    tags:
-      - v*
+on: [push]
 
 jobs:
   build:
@@ -21,8 +18,8 @@ jobs:
       - name: Set version in maven
         run: mvn versions:set -DnewVersion=1.1.0
       - name: Deploy to Github Package Registry
-          env:
-            GITHUB_USERNAME: x-access-token
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run:
-            mvn --settings settings.xml deploy
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run:
+          mvn --settings settings.xml deploy
