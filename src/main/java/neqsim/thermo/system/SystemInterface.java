@@ -16,8 +16,41 @@ public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID, String text);
     
+	  /**
+     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
+     * 
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     *
+     * @return Joule Thomson coefficient in given unit
+     */
+    public double getJouleThomsonCoefficient(String unit);
+    
+    /**
+     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
+     *
+     * @return Joule Thomson coefficient in K/bar
+     */
+    public double getJouleThomsonCoefficient();
+    
     public double getMoleFractionsSum();
 
+	/**
+	 * method to get the speed of sound of a system. THe sound speed is implemented
+	 * based on a molar average over the phases
+	 * 
+	 * @param unit The unit as a string. Supported units are m/s, km/h
+	 * @return speed of sound in m/s
+	 */
+	public double getSoundSpeed(String unit);
+	
+	/**
+	 * method to get the speed of sound of a system. THe sound speed is implemented
+	 * based on a molar average over the phases
+	 *
+	 * @return speed of sound in m/s
+	 */
+	public double getSoundSpeed();
+	
     public void removePhaseKeepTotalComposition(int specPhase);
     
 	/**

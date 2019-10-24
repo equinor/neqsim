@@ -18,9 +18,20 @@ public interface PhaseInterface extends Cloneable {
     public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
 
     public void setMoleFractions(double[] x);
-
+    
+    public double getPhaseFraction();
+    
     public double getCp0();
-
+    
+    /**
+     * method to get the Joule Thomson Coefficient of a phase note: implemented
+     * in phaseEos
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     *
+     * @return Joule Thomson coefficient in given unit
+     */
+    public double getJouleThomsonCoefficient(String unit);
+    
     public void resetPhysicalProperties();
 
 	/**

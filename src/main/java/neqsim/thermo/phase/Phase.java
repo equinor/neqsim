@@ -1219,6 +1219,27 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return tempVar;
     }
+    
+    /**
+     * method to get the Joule Thomson Coefficient of a phase note: implemented
+     * in phaseEos
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     *
+     * @return Joule Thomson coefficient in given unit
+     */
+    public double getJouleThomsonCoefficient(String unit) {
+        double JTcoef = getJouleThomsonCoefficient();
+        double conversionFactor = 1.0;
+		switch (unit) {
+		case "K/bar":
+			conversionFactor = 1.0;
+			break;
+		case "C/bar":
+			conversionFactor = 1.0;
+			break;
+		}
+		return JTcoef * conversionFactor; 
+    }
 
     /**
      * method to get the Joule Thomson Coefficient of a phase note: implemented
@@ -1260,6 +1281,10 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 throw new RuntimeException("Could not create conversion factor because molar mass is NULL or 0");
         }
         return refDensity * conversionFactor;
+    }
+    
+    public final double getPhaseFraction() {
+        return getBeta();
     }
 
     public final double getBeta() {

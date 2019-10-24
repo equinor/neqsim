@@ -199,22 +199,20 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 */
 	public void addFluid(SystemInterface addSystem) {
 		boolean addedNewComponent = false;
-		int index=-1;
+		int index = -1;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
 			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName())) {
 				addedNewComponent = true;
+			} else {
+				index = getPhase(0).getComponent(addSystem.getPhase(0).getComponent(i).getComponentName())
+						.getComponentNumber();
 			}
-			else {
-				index = getPhase(0).getComponent(addSystem.getPhase(0).getComponent(i).getComponentName()).getComponentNumber();
-			}
-			
-			if(index!=-1) {
-			addComponent(index,
-					addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
-			}
-			else {
-			addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
-				addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+
+			if (index != -1) {
+				addComponent(index, addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
+			} else {
+				addComponent(addSystem.getPhase(0).getComponent(i).getComponentName(),
+						addSystem.getPhase(0).getComponent(i).getNumberOfmoles());
 			}
 		}
 		if (addedNewComponent) {
@@ -1206,6 +1204,75 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return beta[phaseIndex[0]];
 	}
+	
+	  /**
+     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
+     * 
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     *
+     * @return Joule Thomson coefficient in given unit
+     */
+    public double getJouleThomsonCoefficient(String unit) {
+        double JTcoef = getJouleThomsonCoefficient();
+        double conversionFactor = 1.0;
+		switch (unit) {
+		case "K/bar":
+			conversionFactor = 1.0;
+			break;
+		case "C/bar":
+			conversionFactor = 1.0;
+			break;
+		}
+		return JTcoef * conversionFactor; 
+    }
+    
+    /**
+     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
+     *
+     * @return Joule Thomson coefficient in K/bar
+     */
+    public double getJouleThomsonCoefficient() {
+    	double JTcoef = 0;
+		for (int i = 0; i < numberOfPhases; i++) {
+			JTcoef += getBeta(i) * getPhase(i).getJouleThomsonCoefficient();
+		}
+		return JTcoef;
+    }
+
+	/**
+	 * method to get the speed of sound of a system. THe sound speed is implemented
+	 * based on a molar average over the phases
+	 * 
+	 * @param unit The unit as a string. Supported units are m/s, km/h
+	 * @return speed of sound in m/s
+	 */
+	public double getSoundSpeed(String unit) {
+		double refVel = getSoundSpeed();
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "m/s":
+			conversionFactor = 1.0;
+			break;
+		case "km/hr":
+			conversionFactor = 3.6;
+			break;
+		}
+		return refVel * conversionFactor;
+	}
+
+	/**
+	 * method to get the speed of sound of a system. THe sound speed is implemented
+	 * based on a molar average over the phases
+	 *
+	 * @return speed of sound in m/s
+	 */
+	public double getSoundSpeed() {
+		double soundspeed = 0;
+		for (int i = 0; i < numberOfPhases; i++) {
+			soundspeed += getBeta(i) * getPhase(i).getSoundSpeed();
+		}
+		return soundspeed;
+	}
 
 	public final void initTotalNumberOfMoles(double change) {
 		setTotalNumberOfMoles(getTotalNumberOfMoles() + change);
@@ -1315,9 +1382,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void initThermoProperties() {
 		init(2);
 	}
-	
+
 	/**
-	 * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and initPhysicalProperties();
+	 * Calculates thermodynamic and physical properties of a fluid using
+	 * initThermoProperties() and initPhysicalProperties();
 	 *
 	 */
 	public void initProperties() {
@@ -1801,12 +1869,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setMixingRuleGEmodel(GEmodel);
 		setMixingRule(typename);
 	}
-	
+
 	/**
 	 * method to set the mixing rule for the fluid
 	 *
-	 * @param mixingRuleName the name of the mixing rule. The name can be 'no','classic', 'Huron-Vidal'/'HV', 
-	 * 'Huron-Vidal-T', 'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T', 'classic-CPA-T', 'classic-Tx'  
+	 * @param mixingRuleName the name of the mixing rule. The name can be
+	 *                       'no','classic', 'Huron-Vidal'/'HV', 'Huron-Vidal-T',
+	 *                       'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T',
+	 *                       'classic-CPA-T', 'classic-Tx'
 	 */
 	public void setMixingRule(String typename) {
 		int var = 0;
@@ -3794,18 +3864,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void orderByDensity() {
 		boolean change = false;
 		int count = 0;
-	
+
 		if (getPhase(0).getPhysicalProperties() == null) {
 			getPhase(0).initPhysicalProperties("density");
 		}
-		
+
 		for (int i = 1; i < getNumberOfPhases(); i++) {
 			if (getPhase(i).getPhysicalProperties() == null) {
 				getPhase(i).initPhysicalProperties("density");
 			}
 			getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
 		}
-	
+
 		do {
 			change = false;
 			count++;
@@ -4039,8 +4109,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
 		}
-		for(int i=0;i<getNumberOfPhases();i++) {
-			init(0,i);
+		for (int i = 0; i < getNumberOfPhases(); i++) {
+			init(0, i);
 		}
 	}
 
@@ -4057,8 +4127,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, moles[compNumb]);
 		}
-		for(int i=0;i<getNumberOfPhases();i++) {
-			init(0,i);
+		for (int i = 0; i < getNumberOfPhases(); i++) {
+			init(0, i);
 		}
 	}
 

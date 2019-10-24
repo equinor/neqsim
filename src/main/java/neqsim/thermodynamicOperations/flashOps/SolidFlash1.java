@@ -78,7 +78,7 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 x += system.getPhase(k).getComponent(i).getx();
             }
-            logger.info("x tot " + x + " PHASE " + k);
+            //logger.info("x tot " + x + " PHASE " + k);
             if (x < 1.0 - 1e-6) {
                 //logger.info("removing phase " + k);
                 system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));
@@ -215,16 +215,16 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
             } catch (Exception e) {
                 // ans = dQdBM.solve(dQM.transpose());
             }
-            dQdBM.print(10, 10);
-            logger.info("BetaStep:  ");
-            ans.print(30, 30);
+            //dQdBM.print(10, 10);
+            //logger.info("BetaStep:  ");
+          //  ans.print(30, 30);
 
             betaReductionFactor = 1.0;
-            logger.info("Oldbeta befor update");
-            betaMatrix.print(10, 10);
+            //logger.info("Oldbeta befor update");
+            //betaMatrix.print(10, 10);
             betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
-            logger.info("Beta before multiplying reduction Factoer");
-            betaMatrixTemp.print(10, 2);
+            //logger.info("Beta before multiplying reduction Factoer");
+           // betaMatrixTemp.print(10, 2);
 
             double minBetaTem = 1000000;
             int minBetaTemIndex = 0;
@@ -241,18 +241,18 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
                     betaReductionFactor = 1.0 + betaMatrixTemp.get(minBetaTemIndex, 0) / ans.get(minBetaTemIndex, 0);
                 }
             }
-            logger.info("Reduction Factor " + betaReductionFactor);
+            //logger.info("Reduction Factor " + betaReductionFactor);
             betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
 
-            logger.info("Beta after multiplying reduction Factoer");
-            betaMatrixTemp.print(10, 2);
+            //logger.info("Beta after multiplying reduction Factoer");
+            //betaMatrixTemp.print(10, 2);
 
             betaMatrixOld = betaMatrix.copy();
             betaMatrix = betaMatrixTemp.copy();
             boolean deactivatedPhase = false;
             for (int i = 0; i < system.getNumberOfPhases() - solidsNumber; i++) {
                 system.setBeta(i, betaMatrix.get(i, 0));
-                logger.info("Fluid Phase fraction" + system.getBeta(i));
+              //  logger.info("Fluid Phase fraction" + system.getBeta(i));
                 if (Math.abs(system.getBeta(i)) < 1.0e-10) {
                     FluidPhaseActiveDescriptors[i] = 0;
                     deactivatedPhase = true;
@@ -261,11 +261,11 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
 
             Qnew = calcQ();
 
-            logger.info("Qold = " + Qold);
-            logger.info("Qnew = " + Qnew);
+        //    logger.info("Qold = " + Qold);
+        //    logger.info("Qnew = " + Qnew);
 
             if (Qnew > Qold + 1.0e-10 && !deactivatedPhase) {
-                logger.info("Qnew > Qold...............................");
+//                logger.info("Qnew > Qold...............................");
                 int iter2 = 0;
                 do {
                     iter2++;
@@ -315,7 +315,7 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
         }
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);
-            logger.info("Solid PhaseFraction  " + tempVar);
+           // logger.info("Solid PhaseFraction  " + tempVar);
         }
         return tempVar;
     }
@@ -336,6 +336,19 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
         system.setSolidPhaseCheck(true);
         if (checkAndAddSolidPhase() == 0) {
             return;
+        }
+        if (system.getPhase(0).getNumberOfComponents() == 1) {
+        	system.init(1);
+        	if(system.getPhase(0).getFugacity(0)>system.getPhases()[3].getFugacity(0)) {
+        		   	   system.setPhaseIndex(0, 3);
+        	}
+        		   	   else {
+        		   		   
+        		   	   }
+        		   system.setBeta(0, 1.0);
+        	system.setNumberOfPhases(1);
+        	system.init(1);
+        	return;
         }
         //    if (system.getPhase(0).getNumberOfComponents() <= 2) {
         //       solvebeta1();

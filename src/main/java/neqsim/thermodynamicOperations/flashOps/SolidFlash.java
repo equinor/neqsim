@@ -190,7 +190,7 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
             }
 
             betaMatrix.minusEquals(ans.times((iter + 1.0) / (10.0 + iter)));
-            betaMatrix.print(10, 2);
+            //betaMatrix.print(10, 2);
             //betaMatrix.print(10,2);
 
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
