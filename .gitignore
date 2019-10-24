@@ -61,3 +61,5 @@ nbdist/
 # End of https://www.gitignore.io/api/java,maven,netbeans
 /bin/
 src/main/java/neqsim/util/database/NeqSimDataBase2.java
+
+neqsim.iml
