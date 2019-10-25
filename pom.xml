@@ -21,11 +21,6 @@
             <url>http://central.maven.org/maven2/</url>
         </repository>
         <repository>
-            <id>netbeans</id>
-            <name>Netbeans rep</name>
-            <url>http://bits.netbeans.org/maven2/</url>
-        </repository>
-        <repository>
             <id>boundless</id>
             <url>https://repo.boundlessgeo.com/main/</url>
         </repository>
