@@ -1219,6 +1219,27 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return tempVar;
     }
+    
+    /**
+     * method to get the Joule Thomson Coefficient of a phase note: implemented
+     * in phaseEos
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     *
+     * @return Joule Thomson coefficient in given unit
+     */
+    public double getJouleThomsonCoefficient(String unit) {
+        double JTcoef = getJouleThomsonCoefficient();
+        double conversionFactor = 1.0;
+		switch (unit) {
+		case "K/bar":
+			conversionFactor = 1.0;
+			break;
+		case "C/bar":
+			conversionFactor = 1.0;
+			break;
+		}
+		return JTcoef * conversionFactor; 
+    }
 
     /**
      * method to get the Joule Thomson Coefficient of a phase note: implemented
@@ -1260,6 +1281,10 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
                 throw new RuntimeException("Could not create conversion factor because molar mass is NULL or 0");
         }
         return refDensity * conversionFactor;
+    }
+    
+    public final double getPhaseFraction() {
+        return getBeta();
     }
 
     public final double getBeta() {
@@ -1602,6 +1627,26 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public double getVolume() {
         return getTotalVolume();
     }
+    
+	/**
+	 * method to return fluid volume
+	 *
+	 * @param unit The unit as a string. Supported units are m3, litre
+	 *
+	 * @return volume in specified unit
+	 */
+	public double getVolume(String unit) {
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "m3":
+			conversionFactor = 1.0;
+			break;
+		case "litre":
+			conversionFactor = 1000.0;
+			break;
+		}
+		return conversionFactor * getVolume() / 1.0e5;
+	}
 
     /**
      * method to return phase volume with Peneloux volume correction need to

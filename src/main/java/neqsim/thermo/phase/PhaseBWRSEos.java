@@ -338,7 +338,7 @@ public class PhaseBWRSEos extends PhaseSrkEos{
         //                System.out.println("dFdV " + ((fold-fnew)/(2*dv)) + " super " + super.dFdV()+ "  phasetype " +getPhaseTypeName());
         //                //        return (fold-fnew)/(2*dv);
         //                System.out.println("dFdV " + ((getFpoldV()+getFexpdV()))*1e3*1e-5 + " super " + super.dFdV()+ "  phasetype " +getPhaseTypeName());
-          System.out.println("dFdV " + getFpoldV()+getFexpdV()*1e3*1e-5);
+        //  System.out.println("dFdV " + getFpoldV()+getFexpdV()*1e3*1e-5);
         return (getFpoldV()+getFexpdV())*1e3*1e-5;
     }
     
