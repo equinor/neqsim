@@ -131,12 +131,26 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
     }
 
     public void TPflash() {
+    	double flowRate = system.getTotalNumberOfMoles();
+    	double minimumFlowRate = 1e-50;
+    	if(flowRate<1e-3) {
+    		system.setTotalFlowRate(1.0, "mol/sec");
+    	}
         operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, system.doSolidPhaseCheck());
         if (!isRunAsThread()) {
             getOperation().run();
         } else {
             run();
         }
+        if(flowRate<1e-3) {
+        	if(flowRate<minimumFlowRate) {
+        		system.setTotalNumberOfMoles(minimumFlowRate);
+        	}
+        	else {
+    		system.setTotalNumberOfMoles(flowRate);
+        	}
+    		system.init(2);
+    	}
     }
 
     public void saturateWithWater() {

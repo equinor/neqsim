@@ -32,6 +32,16 @@ public interface ComponentInterface {
     public double getdrhodN();
 
     public double getVolumeCorrectionT_CPA();
+    
+    /**
+     * method to return flow rate of a component
+     *
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     * m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     *
+     * @return flow rate in specified unit
+     */
+    public double getFlowRate(String flowunit);
 
     public void setVolumeCorrectionT_CPA(double volumeCorrectionT_CPA);
 

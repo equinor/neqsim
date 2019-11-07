@@ -94,9 +94,26 @@ public interface PhaseInterface extends Cloneable {
      * @return molar volume volume in unit m3/mol*1e5
      */
     public double getMolarVolume();
-
+    
+    /**
+     * method to return flow rate of a phase
+     *
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     * m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     *
+     * @return flow rate in specified unit
+     */
+    public double getFlowRate(String flowunit);
+    
     public void setComponentArray(ComponentInterface[] components);
 
+    /**
+     * method to get density of a phase using the GERG-2008 EoS
+     *
+     * @return density with unit kg/m3
+     */
+    public double getDensity_GERG2008();
+    
     /**
      * method to get density of a phase note: does not use Peneloux volume
      * correction

@@ -7,6 +7,10 @@ package neqsim.standards.gasQuality;
 
 import java.text.*;
 import java.util.ArrayList;
+
+import org.apache.log4j.Logger;
+
+import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem.LNGship;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -44,6 +48,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard implements neqsi
     double wobbeIdeal = 0.0, wobbeReal = 0.0;
     double relDensIdeal = 0.0, relDensReal = 0.0;
     double densIdeal = 0.0, densReal = 0.0;
+    static Logger logger = Logger.getLogger(Standard_ISO6976.class);
 
     /**
      * Creates a new instance of Standard_ISO1992
@@ -114,7 +119,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard implements neqsi
                         er.printStackTrace();
                     }
                     componentsNotDefinedByStandard.add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
-                    System.out.println("added component not specified by ISO6976 " + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+                    //logger.info("added component not specified by ISO6976 " + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
 
                 }
 
@@ -148,7 +153,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard implements neqsi
             String err = e.toString();
             System.out.println(err);
         }
-        System.out.println("ok adding components in " + getName());
+        //logger.info("ok adding components in " + getName());
 
     }
 

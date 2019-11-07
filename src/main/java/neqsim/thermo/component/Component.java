@@ -2025,4 +2025,36 @@ abstract class Component extends Object
 	public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation) {
 		this.idealGasEnthalpyOfFormation = idealGasEnthalpyOfFormation;
 	}
+	
+	/**
+	 * method to return flow rate of component
+	 *
+	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+	 *
+	 * @return flow rate in specified unit
+	 */
+	public double getFlowRate(String flowunit) {
+		if (flowunit.equals("kg/sec")) {
+			return numberOfMolesInPhase * getMolarMass();
+		} else if (flowunit.equals("kg/min")) {
+			return numberOfMolesInPhase * getMolarMass() * 60.0;
+		} else if (flowunit.equals("kg/hr")) {
+			return numberOfMolesInPhase * getMolarMass() * 3600.0;
+		} else if (flowunit.equals("m3/hr")) {
+			return getVoli() / 1.0e5 * 3600.0;
+		} else if (flowunit.equals("m3/min")) {
+			return getVoli() / 1.0e5 * 60.0;
+		} else if (flowunit.equals("m3/sec")) {
+			return getVoli() / 1.0e5;
+		} else if (flowunit.equals("mole/sec")) {
+			return numberOfMolesInPhase;
+		} else if (flowunit.equals("mole/min")) {
+			return numberOfMolesInPhase * 60.0;
+		} else if (flowunit.equals("mole/hr")) {
+			return numberOfMolesInPhase * 3600.0;
+		} else {
+			throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+		}
+	}
 }

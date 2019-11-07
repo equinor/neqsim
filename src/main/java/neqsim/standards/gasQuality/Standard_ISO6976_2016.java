@@ -6,7 +6,12 @@
 package neqsim.standards.gasQuality;
 
 import java.util.ArrayList;
+
+import org.apache.log4j.Logger;
+
+import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem.LNGship;
 import neqsim.thermo.system.SystemInterface;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -30,7 +35,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
     double[] Hinf0, Hinf15, Hinf20, Hinf25, Hinf60F;
     double HsupIdeal0 = 0.0, HsupIdeal15 = 0.0, HsupIdeal20 = 0.0, HsupIdeal25 = 0.0, HsupIdeal60F = 0.0;
     double HinfIdeal0 = 0.0, HinfIdeal15 = 0.0, HinfIdeal20 = 0.0, HinfIdeal25 = 0.0, HinfIdeal60F = 0.0;
-  
+    static Logger logger = Logger.getLogger(Standard_ISO6976_2016.class);
 
     /**
      * Creates a new instance of Standard_ISO1992
@@ -100,10 +105,10 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
                         M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
                         dataSet.next();
                     } catch (Exception er) {
-                        er.printStackTrace();
+                    	logger.error(er.toString());
                     }
                     componentsNotDefinedByStandard.add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
-                    System.out.println("added component not specified by ISO6976constants2016 " + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+                    logger.info("added component not specified by ISO6976constants2016 " + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
 
                 }
 
@@ -137,9 +142,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
 
         } catch (Exception e) {
             String err = e.toString();
-            System.out.println(err);
+            logger.error(err);
         }
-        System.out.println("ok adding components in " + getName());
 
     }
 
@@ -280,7 +284,6 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
         }
 
         double relativeDens = 0.0;
-        System.out.println("reference state " + getReferenceState());
         if (getReferenceState().equals("ideal")) {
             relativeDens = relDensIdeal;
         } else if (getVolRefT() == 0) {

@@ -173,6 +173,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		clonedSystem.attractiveTermNumber = attractiveTermNumber;
 		clonedSystem.phaseType = phaseType.clone();
 		clonedSystem.phaseIndex = phaseIndex.clone();
+		if (interfaceProp != null) {
+		//	clonedSystem.interfaceProp = (InterphasePropertiesInterface) interfaceProp.clone();
+		}
 		clonedSystem.characterization = (neqsim.thermo.characterization.Characterise) characterization.clone();
 		if (clonedSystem.waxCharacterisation != null) {
 			clonedSystem.waxCharacterisation = (neqsim.thermo.characterization.WaxCharacterise) waxCharacterisation
@@ -557,6 +560,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	public void setTotalFlowRate(double flowRate, String flowunit) {
+		
 		if (getMolarMass() < 1e-20) {
 			init(0);
 		}
@@ -564,8 +568,16 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		double SIval = unit.getSIvalue();
 		double totalNumberOfMolesLocal = totalNumberOfMoles;
 		for (int i = 0; i < numberOfComponents; i++) {
+			if(flowRate<1e-100) {
+				setEmptyFluid();
+			}
+			else if(totalNumberOfMolesLocal>1e-100) {
 			addComponent(i, SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
 					- getPhase(0).getComponent(i).getNumberOfmoles());
+			}
+			else {
+				addComponent(i, SIval);
+			}
 		}
 	}
 

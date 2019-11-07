@@ -28,6 +28,8 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import static neqsim.thermo.ThermodynamicConstantsInterface.referencePressure;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.util.GERG.NeqSimGERG2008;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -1731,4 +1733,46 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         }
         return wtFrac;
     }
+    
+    /**
+     * method to get density of a phase using the GERG-2008 EoS
+     *
+     * @return density with unit kg/m3
+     */
+    public double getDensity_GERG2008() {
+    	NeqSimGERG2008 test = new NeqSimGERG2008(this);
+    	return test.getDensity();
+    }
+    
+	/**
+	 * method to return flow rate of phase
+	 *
+	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+	 *
+	 * @return flow rate in specified unit
+	 */
+	public double getFlowRate(String flowunit) {
+		if (flowunit.equals("kg/sec")) {
+			return numberOfMolesInPhase * getMolarMass();
+		} else if (flowunit.equals("kg/min")) {
+			return numberOfMolesInPhase * getMolarMass() * 60.0;
+		} else if (flowunit.equals("kg/hr")) {
+			return numberOfMolesInPhase * getMolarMass() * 3600.0;
+		} else if (flowunit.equals("m3/hr")) {
+			return getVolume() / 1.0e5 * 3600.0;
+		} else if (flowunit.equals("m3/min")) {
+			return getVolume() / 1.0e5 * 60.0;
+		} else if (flowunit.equals("m3/sec")) {
+			return getVolume() / 1.0e5;
+		} else if (flowunit.equals("mole/sec")) {
+			return numberOfMolesInPhase;
+		} else if (flowunit.equals("mole/min")) {
+			return numberOfMolesInPhase * 60.0;
+		} else if (flowunit.equals("mole/hr")) {
+			return numberOfMolesInPhase * 3600.0;
+		} else {
+			throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+		}
+	}
 }
