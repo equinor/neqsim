@@ -5,6 +5,8 @@
  */
 package neqsim.physicalProperties.interfaceProperties;
 
+import org.apache.log4j.Logger;
+
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionInterface;
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.PotentialTheoryAdsorption;
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.FirozabadiRamleyInterfaceTension;
@@ -32,7 +34,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 	double[] surfaceTension;
 	int numberOfInterfaces = 1;
 	private int interfacialTensionModel = 0;
-
+	static Logger logger = Logger.getLogger(InterfaceProperties.class);
 	/**
 	 * Creates new InterfaceProperties
 	 */
@@ -48,6 +50,19 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 		// FirozabadiRamleyInterfaceTension(system);
 	}
 
+	public Object clone() {
+		InterfaceProperties clonedSystem = null;
+		try {
+			//clonedSystem = (InterfaceProperties) suclone();
+			// clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
+			// chemicalReactionOperations.clone();
+		} catch (Exception e) {
+			logger.error("Cloning failed.", e);
+		}
+		//clonedSystem.system = system;
+		return clonedSystem;
+	}
+	
 	public void init(SystemInterface system) {
 		this.system = system;
 		init();

@@ -905,10 +905,6 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 *                      added to the fluid
 	 */
 	public void addComponent(String componentName, double moles) {
-		if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
-			// logger.error("No component with name: " + componentName + " in database");
-			return;
-		}
 		int index = 0;
 
 		boolean addForFirstTime = true;
@@ -918,6 +914,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				index = p;
 			}
 		}
+		
+		if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName) && addForFirstTime) {
+			// logger.error("No component with name: " + componentName + " in database");
+			return;
+		}
+		
 
 		if (addForFirstTime) {
 			if (moles < 0.0) {

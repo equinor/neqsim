@@ -32,6 +32,11 @@ public interface PhaseInterface extends Cloneable {
      */
     public double getJouleThomsonCoefficient(String unit);
     
+    /**
+	 * Returns the mole composition vector in unit mole fraction
+	 */
+	public double[] getMolarComposition();
+    
     public void resetPhysicalProperties();
 
 	/**

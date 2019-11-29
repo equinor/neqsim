@@ -12,7 +12,7 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
  * @author  esol
  * @version
  */
-public interface InterphasePropertiesInterface {
+public interface InterphasePropertiesInterface extends Cloneable{
 
     public void init();
 
@@ -20,7 +20,7 @@ public interface InterphasePropertiesInterface {
    public void setInterfacialTensionModel(String phase1, String phase2, String model);
     public void setSolidAdsorbentMaterial(String material);
 
-    //public double getSurfaceTension(int i);
+    public Object clone();
 
     public double getSurfaceTension(int i, int j);
 
