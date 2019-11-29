@@ -247,6 +247,18 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return initType;
     }
 
+	/**
+	 * Returns the mole composition vector in unit mole fraction
+	 */
+	public double[] getMolarComposition() {
+		double[] comp = new double[getNumberOfComponents()];
+
+		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+			comp[compNumb] = getComponent(compNumb).getx();
+		}
+		return comp;
+	}
+
     public double getMixGibbsEnergy() {
         double gmix = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {

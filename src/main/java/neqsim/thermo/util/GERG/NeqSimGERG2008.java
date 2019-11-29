@@ -117,7 +117,6 @@ public class NeqSimGERG2008 {
 		doubleW jt = new doubleW(0.0);
 		doubleW kappa = new doubleW(0.0);
 
-		double pressure = phase.getPressure() * 100.0;
 		double dens = getMolarDensity();
 		// neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
 		// arg7);
@@ -227,13 +226,13 @@ public class NeqSimGERG2008 {
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
 		ops.TPflash();
 		fluid1.display();
-
+		System.out.println("density GERG " +fluid1.getPhase(0).getDensity_GERG2008());
 		NeqSimGERG2008 test = new NeqSimGERG2008(fluid1.getPhase("gas"));
 		System.out.println("density " + test.getDensity());
 		System.out.println("pressure " + test.getPressure());
 		// System.out.println("properties " + test.propertiesGERG());
 		double[] properties = test.propertiesGERG();
-
+		System.out.println("Pressure [kPa]:            " + properties[0]);
 		System.out.println("Compressibility factor:            " + properties[1]);
 		System.out.println("d(P)/d(rho) [kPa/(mol/l)]            " + properties[2]);
 		System.out.println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:            " + properties[3]);
