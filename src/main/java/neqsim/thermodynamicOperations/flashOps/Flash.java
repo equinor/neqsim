@@ -112,35 +112,35 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 			sumw[0] += clonedSystem.getPhase(0).getComponent(i).getK()
 					* clonedSystem.getPhase(0).getComponent(i).getz();
 		}
-		
-	//	System.out.println("sumw0 " + sumw[0]);
-	//	System.out.println("sumw1 " + sumw[1]);
 
-		int start=0;
-		int end= clonedSystem.getPhase(0).getNumberOfComponents();
+		// System.out.println("sumw0 " + sumw[0]);
+		// System.out.println("sumw1 " + sumw[1]);
+
+		int start = 0;
+		int end = 1;//clonedSystem.getNumberOfPhases()-1;
 		int mult = 1;
-		if(sumw[1]>sumw[0]) {
-			start=end;
-				end=0;
-				mult=-1;
+		if (sumw[1] > sumw[0]) {
+			start = end;
+			end = 0;
+			mult = -1;
 		}
-			
+
 		for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
 			clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getz()
 					/ clonedSystem.getPhase(0).getComponent(i).getK() / sumw[1]);
 			clonedSystem.getPhase(0).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getK()
 					* clonedSystem.getPhase(0).getComponent(i).getz() / sumw[0]);
 		}
-		
-		//for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
-		for (int j = start; j == end; j=j+mult) {
+
+		// for (int j = 0; j < clonedSystem.getNumberOfPhases(); j++) {
+		for (int j = start; j >= end; j = j + mult) {
 			for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
 				Wi[j][i] = clonedSystem.getPhase(j).getComponent(i).getx();
 				logWi[i] = Math.log(Wi[j][i]);
 			}
 			iterations = 0;
 			fNorm = 1.0e10;
-			
+
 			do {
 				iterations++;
 				error[j] = 0.0;
@@ -163,7 +163,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 								+ clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
 					}
 					fNorm = f.norm2();
-					if(fNorm>fNormOld && iterations > 3) {
+					if (fNorm > fNormOld && iterations > 3) {
 						break;
 					}
 					if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
@@ -236,7 +236,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					deltalogWi[i] = logWi[i] - oldlogw[i];
 					clonedSystem.getPhase(j).getComponent(i).setx(Wi[j][i] / sumw[j]);
 				}
-				//logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " + iterations + " phase " + j);
+				// logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
+				// iterations + " phase " + j);
 
 			} while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0 || iterations < 3);
 			// (error[j]<oldErr && oldErr<oldOldErr) &&
