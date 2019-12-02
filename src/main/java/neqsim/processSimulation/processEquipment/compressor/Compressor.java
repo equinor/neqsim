@@ -31,10 +31,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public double dH = 0.0;
 	public double inletEnthalpy = 0;
 	public double pressure = 0.0;
+	private int speed = 3000;
 	public double isentropicEfficiency = 1.0, polytropicEfficiency = 1.0;
 	public boolean usePolytropicCalc = false;
 	public boolean powerSet = false;
 	private CompressorChart compressorChart = new CompressorChart();
+	private boolean useCompressorChart =false;
 	private AntiSurge antiSurge = new AntiSurge();
 	/**
 	 * Creates new ThrottelValve
@@ -153,6 +155,21 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		double densInn = getThermoSystem().getDensity();
 		double entropy = getThermoSystem().getEntropy();
 		inletEnthalpy = hinn;
+		
+		if(useCompressorChart) {
+			double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+			setPolytropicEfficiency(polytropEff/100.0);
+			double head_meter = getCompressorChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+			double temperature_inlet = thermoSystem.getTemperature();
+			double z_inlet = thermoSystem.getZ();
+			double MW = thermoSystem.getMolarMass();
+			double kappa = thermoSystem.getKappa();
+			double n = 1.0/ (1.0 - (kappa-1.0)/kappa*1.0/(polytropEff/100.0));
+			double head_kjkg = head_meter/1000.0*9.81;
+			double pressureRatio = Math.pow((head_kjkg*1000.0 +  (n/(n-1.0)*z_inlet*8.314*(temperature_inlet+273.15)/MW))/ (n/(n-1.0)*z_inlet*8.314*(temperature_inlet+273.15)/MW), n/(n-1.0));
+			System.out.println("pressure ratio " + pressureRatio);
+			setOutletPressure(thermoSystem.getPressure()*pressureRatio);
+		}
 
 		if (usePolytropicCalc) {
 
@@ -378,6 +395,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public void setCompressorChart(CompressorChart compressorChart) {
 		this.compressorChart = compressorChart;
+		useCompressorChart = true;
 	}
 
 	public AntiSurge getAntiSurge() {
@@ -386,5 +404,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public void setAntiSurge(AntiSurge antiSurge) {
 		this.antiSurge = antiSurge;
+	}
+
+	int getSpeed() {
+		return speed;
+	}
+
+	void setSpeed(int speed) {
+		this.speed = speed;
 	}
 }
