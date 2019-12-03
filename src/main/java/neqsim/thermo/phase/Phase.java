@@ -308,7 +308,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
 
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
         if (physicalPropertyHandler == null) {
-            return null;
+        	initPhysicalProperties();
+        	return physicalPropertyHandler.getPhysicalProperty(this);
         } else {
             return physicalPropertyHandler.getPhysicalProperty(this);
         }

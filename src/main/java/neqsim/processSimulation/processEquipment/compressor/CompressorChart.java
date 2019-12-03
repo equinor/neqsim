@@ -121,7 +121,7 @@ public class CompressorChart {
 
 		testFluid.addComponent("methane", 1.0);
 		testFluid.setMixingRule(2);
-		testFluid.setTotalFlowRate(0.65, "MSm3/day");
+		testFluid.setTotalFlowRate(0.635, "MSm3/day");
 
 		Stream stream_1 = new Stream("Stream1", testFluid);
 		Compressor comp1 = new Compressor(stream_1);
@@ -161,7 +161,7 @@ public class CompressorChart {
 		// refPressure, double refZ)
 		comp1.setCompressorChart(compChart);
 		comp1.setSurgeCurve(surgeC);
-		comp1.setSpeed(2850);
+		comp1.setSpeed(2050);
 
 		StoneWallCurve stoneWall = new StoneWallCurve();
 		double[] stoneWallflow = new double[] { 923.2, 950.0, 980.0, 1000.0 };
@@ -174,6 +174,8 @@ public class CompressorChart {
 		operations.add(comp1);
 		operations.run();
 		operations.displayResult();
+		
+		System.out.println("power " + comp1.getPower());
 
 	}
 
