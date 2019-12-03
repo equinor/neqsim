@@ -8,6 +8,9 @@ package neqsim.processSimulation.processEquipment.compressor;
 import java.awt.*;
 import java.text.*;
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -22,7 +25,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
 
 	private static final long serialVersionUID = 1000;
-
+	static Logger logger = Logger.getLogger(Compressor.class);
 	String name = new String();
 	public SystemInterface thermoSystem;
 	public ThermodynamicOperations thermoOps;
@@ -36,6 +39,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public boolean usePolytropicCalc = false;
 	public boolean powerSet = false;
 	private CompressorChart compressorChart = new CompressorChart();
+	private SurgeCurve surgeCurve = new SurgeCurve();
+	private StoneWallCurve stoneWallCurve = new StoneWallCurve();
 	private boolean useCompressorChart =false;
 	private AntiSurge antiSurge = new AntiSurge();
 	/**
@@ -159,6 +164,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		if(useCompressorChart) {
 			double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 			setPolytropicEfficiency(polytropEff/100.0);
+			 logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
 			double head_meter = getCompressorChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 			double temperature_inlet = thermoSystem.getTemperature();
 			double z_inlet = thermoSystem.getZ();
@@ -167,8 +173,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			double n = 1.0/ (1.0 - (kappa-1.0)/kappa*1.0/(polytropEff/100.0));
 			double head_kjkg = head_meter/1000.0*9.81;
 			double pressureRatio = Math.pow((head_kjkg*1000.0 +  (n/(n-1.0)*z_inlet*8.314*(temperature_inlet+273.15)/MW))/ (n/(n-1.0)*z_inlet*8.314*(temperature_inlet+273.15)/MW), n/(n-1.0));
-			System.out.println("pressure ratio " + pressureRatio);
+			//System.out.println("pressure ratio " + pressureRatio);
+			 logger.info("pressure ratio " + pressureRatio);
 			setOutletPressure(thermoSystem.getPressure()*pressureRatio);
+			logger.info("head " + head_meter+ " m");
+			logger.info("surge flow " + getSurgeCurve().getSurgeFlow(head_meter)+ " m3/hr");
+			logger.info("surge? " + isSurge(head_meter, thermoSystem.getFlowRate("m3/hr")));
+			logger.info("stone wall? " + isStoneWall(head_meter, thermoSystem.getFlowRate("m3/hr")));
 		}
 
 		if (usePolytropicCalc) {
@@ -401,6 +412,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public AntiSurge getAntiSurge() {
 		return antiSurge;
 	}
+	
+	public boolean isSurge(double flow, double head) {
+			return surgeCurve.isSurge(flow, head);
+	}
+	
+	public boolean isStoneWall(double flow, double head) {
+		return stoneWallCurve.isStoneWall(flow, head);
+}
 
 	public void setAntiSurge(AntiSurge antiSurge) {
 		this.antiSurge = antiSurge;
@@ -412,5 +431,21 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	void setSpeed(int speed) {
 		this.speed = speed;
+	}
+
+	public SurgeCurve getSurgeCurve() {
+		return surgeCurve;
+	}
+
+	public void setSurgeCurve(SurgeCurve surgeCurve) {
+		this.surgeCurve = surgeCurve;
+	}
+
+	public StoneWallCurve getStoneWallCurve() {
+		return stoneWallCurve;
+	}
+
+	public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
+		this.stoneWallCurve = stoneWallCurve;
 	}
 }
