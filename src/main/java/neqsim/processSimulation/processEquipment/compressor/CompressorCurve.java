@@ -2,10 +2,10 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 public class CompressorCurve {
 	
-	double[] flow;
-	double[] head;
-	double[] polytropicEfficiency ;
-	double speed = 1000.0;
+	public double[] flow;
+	public double[] head;
+	public double[] polytropicEfficiency ;
+	public double speed = 1000.0;
 	
 	public CompressorCurve() {
 		flow = new double[] {453.2, 600.0, 750.0};

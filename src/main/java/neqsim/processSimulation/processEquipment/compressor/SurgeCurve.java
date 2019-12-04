@@ -18,8 +18,6 @@ public class SurgeCurve {
 	PolynomialFunction flowFitterFunc = null;
 	
 	public SurgeCurve() {
-		//flow = new double[] {453.2, 600.0, 750.0};
-		//head = new double[] {1000.0, 900.0, 800.0};
 	}
 	
 	public SurgeCurve(double[] flow, double[] head) {
@@ -28,6 +26,8 @@ public class SurgeCurve {
 	}
 	
 	public void setCurve(double[] chartConditions, double[] flow, double[] head) {
+		this.flow = flow;
+		this.head = head;
 		this.chartConditions = chartConditions;
 		for(int i=0;i<flow.length;i++) {			
 			flowFitter.add(head[i],flow[i]);
