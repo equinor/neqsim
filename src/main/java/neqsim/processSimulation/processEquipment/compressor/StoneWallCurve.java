@@ -7,43 +7,42 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.log4j.Logger;
 
-public class SurgeCurve {
+public class StoneWallCurve {
 		
-	static Logger logger = Logger.getLogger(SurgeCurve.class);
+	static Logger logger = Logger.getLogger(StoneWallCurve.class);
 	double[] flow;
 	double[] head;
 	double[] chartConditions = null;
 	private boolean isActive = false;
-	
 	final WeightedObservedPoints flowFitter = new WeightedObservedPoints();
 	PolynomialFunction flowFitterFunc = null;
 	
-	public SurgeCurve() {
+	public StoneWallCurve() {
+		//flow = new double[] {453.2, 600.0, 750.0};
+		//head = new double[] {1000.0, 900.0, 800.0};
 	}
 	
-	public SurgeCurve(double[] flow, double[] head) {
+	public StoneWallCurve(double[] flow, double[] head) {
 		this.flow = flow;
 		this.head = head;
 	}
 	
 	public void setCurve(double[] chartConditions, double[] flow, double[] head) {
-		this.flow = flow;
-		this.head = head;
 		this.chartConditions = chartConditions;
 		for(int i=0;i<flow.length;i++) {			
 			flowFitter.add(head[i],flow[i]);
 		}
 		 PolynomialCurveFitter fitter=PolynomialCurveFitter.create(2);
 		 flowFitterFunc = new PolynomialFunction(fitter.fit(flowFitter.toList()));
-		 isActive = true;
+		 isActive=true;
 	}
 	
-	public double getSurgeFlow(double head){
+	public double getStoneWallFlow(double head){
 		return flowFitterFunc.value(head);
 	}
 	
-	public boolean isSurge(double head, double flow) {
-		if(getSurgeFlow(head)>flow) return true;
+	public boolean isStoneWall(double head, double flow) {
+		if(getStoneWallFlow(head)<flow) return true;
 		else return false;
 	}
 	

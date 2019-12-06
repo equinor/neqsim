@@ -8,6 +8,9 @@ package neqsim.processSimulation.processEquipment.compressor;
 import java.awt.*;
 import java.text.*;
 import javax.swing.*;
+
+import org.apache.log4j.Logger;
+
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -22,7 +25,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
 
 	private static final long serialVersionUID = 1000;
-
+	static Logger logger = Logger.getLogger(Compressor.class);
 	String name = new String();
 	public SystemInterface thermoSystem;
 	public ThermodynamicOperations thermoOps;
@@ -31,11 +34,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public double dH = 0.0;
 	public double inletEnthalpy = 0;
 	public double pressure = 0.0;
+	private int speed = 3000;
 	public double isentropicEfficiency = 1.0, polytropicEfficiency = 1.0;
 	public boolean usePolytropicCalc = false;
 	public boolean powerSet = false;
 	private CompressorChart compressorChart = new CompressorChart();
 	private AntiSurge antiSurge = new AntiSurge();
+
 	/**
 	 * Creates new ThrottelValve
 	 */
@@ -66,11 +71,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			e.printStackTrace();
 		}
 	}
-	
-	
+
 	public void solveAntiSurge() {
-		if(getAntiSurge().isActive()) {
-			//....
+		if (getAntiSurge().isActive()) {
+			// ....
 		}
 	}
 
@@ -129,15 +133,15 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		usePolytropicCalc = useOld;
 		return newPoly;
 	}
-	
+
 	public double findOutPressure(double hinn, double hout, double polytropicEfficiency) {
 		double entropy = getThermoSystem().getEntropy();
 		getThermoSystem().setPressure(getThermoSystem().getPressure() + 1.0);
 
 		// System.out.println("entropy inn.." + entropy);
 		thermoOps.PSflash(entropy);
-		
-		double houtGuess = hinn + dH/polytropicEfficiency;
+
+		double houtGuess = hinn + dH / polytropicEfficiency;
 		thermoOps.PHflash(houtGuess, 0);
 		System.out.println("TEMPERATURE .." + getThermoSystem().getTemperature());
 		return getThermoSystem().getPressure();
@@ -153,17 +157,61 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		double densInn = getThermoSystem().getDensity();
 		double entropy = getThermoSystem().getEntropy();
 		inletEnthalpy = hinn;
+		boolean surgeCheck = false;
+		double orginalMolarFLow = thermoSystem.getTotalNumberOfMoles();
+		double fractionAntiSurge = 0.0;
+		if (compressorChart.isUseCompressorChart()) {
+			do {
+				double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"),
+						getSpeed());
+				setPolytropicEfficiency(polytropEff / 100.0);
+				logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
+				double head_meter = getCompressorChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+				logger.info("head_meter: " + head_meter);
+				double temperature_inlet = thermoSystem.getTemperature();
+				double z_inlet = thermoSystem.getZ();
+				double MW = thermoSystem.getMolarMass();
+				double kappa = thermoSystem.getGamma();
+				double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
+				double head_kjkg = head_meter / 1000.0 * 9.81;
+				double pressureRatio = Math.pow(
+						(head_kjkg * 1000.0 + (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet + 273.15) / MW))
+								/ (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet + 273.15) / MW),
+						n / (n - 1.0));
+				// System.out.println("pressure ratio " + pressureRatio);
+				logger.info("pressure ratio " + pressureRatio);
+				setOutletPressure(thermoSystem.getPressure() * pressureRatio);
+				logger.info("head " + head_meter + " m");
+				if (getAntiSurge().isActive()) {
+					logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(head_meter) + " m3/hr");
+					surgeCheck = isSurge(head_meter, thermoSystem.getFlowRate("m3/hr"));
+					logger.info("surge? " + surgeCheck);
+				}
+				if (getCompressorChart().getStoneWallCurve().isActive()) {
+					logger.info("stone wall? " + isStoneWall(head_meter, thermoSystem.getFlowRate("m3/hr")));
+				}
+				if (surgeCheck && getAntiSurge().isActive()) {
+					double surgeFLow = getCompressorChart().getSurgeCurve().getSurgeFlow(head_meter);
+					double correction = surgeFLow / thermoSystem.getFlowRate("m3/hr");
+					thermoSystem.setTotalNumberOfMoles(1.005 * thermoSystem.getTotalNumberOfMoles());
+					thermoSystem.init(3);
+					fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
+					logger.info("fractionAntiSurge: " + fractionAntiSurge);
+				}
+
+				powerSet = true;
+				dH = head_kjkg * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()*thermoSystem.getTotalNumberOfMoles();
+			} while (surgeCheck && getAntiSurge().isActive());
+		}
 
 		if (usePolytropicCalc) {
 
 			if (powerSet) {
-				//dH = (getPower() - hinn) / polytropicEfficiency;
-				double hout = hinn + dH;
-				
-				findOutPressure(hinn, hout, polytropicEfficiency);
-				System.out.println("hout " + hout);
-				
-				
+				// dH = (getPower() - hinn) / polytropicEfficiency;
+				double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
+				thermoSystem.setPressure(pressure);
+				// findOutPressure(hinn, hout, polytropicEfficiency);
+				// System.out.println("hout " + hout);
 				thermoOps.PHflash(hout, 0);
 			} else {
 				int numbersteps = 40;
@@ -199,10 +247,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			 */
 		} else {
 			getThermoSystem().setPressure(pressure);
-
 			// System.out.println("entropy inn.." + entropy);
 			thermoOps.PSflash(entropy);
-			double densOutIdeal = getThermoSystem().getDensity();
+			// double densOutIdeal = getThermoSystem().getDensity();
 			if (!powerSet) {
 				dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
 			}
@@ -212,6 +259,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			thermoOps.PHflash(hout, 0);
 		}
 		// thermoSystem.display();
+
+		if (getCompressorChart().isUseCompressorChart() && getAntiSurge().isActive()) {
+			thermoSystem.setTotalNumberOfMoles(orginalMolarFLow);
+			thermoSystem.init(3);
+		}
+
 		outStream.setThermoSystem(getThermoSystem());
 	}
 
@@ -384,7 +437,24 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		return antiSurge;
 	}
 
+	public boolean isSurge(double flow, double head) {
+		return getCompressorChart().getSurgeCurve().isSurge(flow, head);
+	}
+
+	public boolean isStoneWall(double flow, double head) {
+		return getCompressorChart().getStoneWallCurve().isStoneWall(flow, head);
+	}
+
 	public void setAntiSurge(AntiSurge antiSurge) {
 		this.antiSurge = antiSurge;
 	}
+
+	public int getSpeed() {
+		return speed;
+	}
+
+	public void setSpeed(int speed) {
+		this.speed = speed;
+	}
+
 }
