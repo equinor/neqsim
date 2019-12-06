@@ -13,7 +13,7 @@ public class StoneWallCurve {
 	double[] flow;
 	double[] head;
 	double[] chartConditions = null;
-	
+	private boolean isActive = false;
 	final WeightedObservedPoints flowFitter = new WeightedObservedPoints();
 	PolynomialFunction flowFitterFunc = null;
 	
@@ -34,6 +34,7 @@ public class StoneWallCurve {
 		}
 		 PolynomialCurveFitter fitter=PolynomialCurveFitter.create(2);
 		 flowFitterFunc = new PolynomialFunction(fitter.fit(flowFitter.toList()));
+		 isActive=true;
 	}
 	
 	public double getStoneWallFlow(double head){
@@ -48,6 +49,14 @@ public class StoneWallCurve {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
+	}
+
+	boolean isActive() {
+		return isActive;
+	}
+
+	void setActive(boolean isActive) {
+		this.isActive = isActive;
 	}
 
 }

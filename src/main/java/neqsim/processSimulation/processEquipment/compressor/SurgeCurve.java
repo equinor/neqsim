@@ -13,6 +13,7 @@ public class SurgeCurve {
 	double[] flow;
 	double[] head;
 	double[] chartConditions = null;
+	private boolean isActive = false;
 	
 	final WeightedObservedPoints flowFitter = new WeightedObservedPoints();
 	PolynomialFunction flowFitterFunc = null;
@@ -34,6 +35,7 @@ public class SurgeCurve {
 		}
 		 PolynomialCurveFitter fitter=PolynomialCurveFitter.create(2);
 		 flowFitterFunc = new PolynomialFunction(fitter.fit(flowFitter.toList()));
+		 isActive = true;
 	}
 	
 	public double getSurgeFlow(double head){
@@ -48,6 +50,14 @@ public class SurgeCurve {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
+	}
+
+	boolean isActive() {
+		return isActive;
+	}
+
+	void setActive(boolean isActive) {
+		this.isActive = isActive;
 	}
 
 }

@@ -157,7 +157,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		double densInn = getThermoSystem().getDensity();
 		double entropy = getThermoSystem().getEntropy();
 		inletEnthalpy = hinn;
-		boolean surgeCheck=false;
+		boolean surgeCheck = false;
 		double orginalMolarFLow = thermoSystem.getTotalNumberOfMoles();
 		double fractionAntiSurge = 0.0;
 		if (compressorChart.isUseCompressorChart()) {
@@ -182,25 +182,25 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				logger.info("pressure ratio " + pressureRatio);
 				setOutletPressure(thermoSystem.getPressure() * pressureRatio);
 				logger.info("head " + head_meter + " m");
-				logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(head_meter) + " m3/hr");
-				
-				surgeCheck = isSurge(head_meter, thermoSystem.getFlowRate("m3/hr"));
-
-				logger.info("surge? " + surgeCheck);
-				logger.info("stone wall? " + isStoneWall(head_meter, thermoSystem.getFlowRate("m3/hr")));
-				
+				if (getAntiSurge().isActive()) {
+					logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(head_meter) + " m3/hr");
+					surgeCheck = isSurge(head_meter, thermoSystem.getFlowRate("m3/hr"));
+					logger.info("surge? " + surgeCheck);
+				}
+				if (getCompressorChart().getStoneWallCurve().isActive()) {
+					logger.info("stone wall? " + isStoneWall(head_meter, thermoSystem.getFlowRate("m3/hr")));
+				}
 				if (surgeCheck && getAntiSurge().isActive()) {
 					double surgeFLow = getCompressorChart().getSurgeCurve().getSurgeFlow(head_meter);
-					double correction = surgeFLow/thermoSystem.getFlowRate("m3/hr");
-					thermoSystem.setTotalNumberOfMoles(1.005* thermoSystem.getTotalNumberOfMoles());
+					double correction = surgeFLow / thermoSystem.getFlowRate("m3/hr");
+					thermoSystem.setTotalNumberOfMoles(1.005 * thermoSystem.getTotalNumberOfMoles());
 					thermoSystem.init(3);
-					fractionAntiSurge=thermoSystem.getTotalNumberOfMoles()/orginalMolarFLow-1.0;
+					fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
 					logger.info("fractionAntiSurge: " + fractionAntiSurge);
 				}
-				
-				
-				powerSet=true;
-				dH=head_kjkg*1000.0*thermoSystem.getMolarMass()/polytropEff;
+
+				powerSet = true;
+				dH = head_kjkg * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()*thermoSystem.getTotalNumberOfMoles();
 			} while (surgeCheck && getAntiSurge().isActive());
 		}
 
@@ -208,10 +208,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 			if (powerSet) {
 				// dH = (getPower() - hinn) / polytropicEfficiency;
-				double hout = hinn*(1-0+fractionAntiSurge) + dH;
+				double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
 				thermoSystem.setPressure(pressure);
-				//findOutPressure(hinn, hout, polytropicEfficiency);
-				System.out.println("hout " + hout);
+				// findOutPressure(hinn, hout, polytropicEfficiency);
+				// System.out.println("hout " + hout);
 				thermoOps.PHflash(hout, 0);
 			} else {
 				int numbersteps = 40;
@@ -247,10 +247,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			 */
 		} else {
 			getThermoSystem().setPressure(pressure);
-
 			// System.out.println("entropy inn.." + entropy);
 			thermoOps.PSflash(entropy);
-			double densOutIdeal = getThermoSystem().getDensity();
+			// double densOutIdeal = getThermoSystem().getDensity();
 			if (!powerSet) {
 				dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
 			}
@@ -260,12 +259,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			thermoOps.PHflash(hout, 0);
 		}
 		// thermoSystem.display();
-		
+
 		if (getCompressorChart().isUseCompressorChart() && getAntiSurge().isActive()) {
 			thermoSystem.setTotalNumberOfMoles(orginalMolarFLow);
 			thermoSystem.init(3);
 		}
-		
+
 		outStream.setThermoSystem(getThermoSystem());
 	}
 
@@ -450,13 +449,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		this.antiSurge = antiSurge;
 	}
 
-	int getSpeed() {
+	public int getSpeed() {
 		return speed;
 	}
 
-	void setSpeed(int speed) {
+	public void setSpeed(int speed) {
 		this.speed = speed;
 	}
 
-	
 }
