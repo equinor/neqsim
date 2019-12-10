@@ -93,7 +93,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
             }
             system.setPressure(newPres);
 
-            logger.info("iter " + iterations + " pressure " + system.getPressure() + " xtotal " + xtotal);
+          //  logger.info("iter " + iterations + " pressure " + system.getPressure() + " xtotal " + xtotal);
         } while ((((Math.abs(xtotal) - 1.0) > 1e-10) || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9) && (iterations < maxNumberOfIterations));
         //logger.info("iter " + iterations + " XTOT " +xtotal + " k " +system.getPhases()[1].getComponents()[0].getK());
         if (Math.abs(xtotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
