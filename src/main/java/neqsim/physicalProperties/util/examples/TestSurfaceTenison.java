@@ -39,31 +39,35 @@ public class TestSurfaceTenison {
         testSystem.addComponent("n-butane", 6.857);
         testSystem.addComponent("i-pentane", 6.492);
         testSystem.addComponent("n-pentane", 7.515);
-        testSystem.addTBPfraction("C6", 9.123, 84.9 / 1000.0, 0.6675);
+      // testSystem.addTBPfraction("C6", 9.123, 84.9 / 1000.0, 0.6675);
         testSystem.addTBPfraction("C7", 13.162, 90.0 / 1000.0, 0.7509);
-        testSystem.addTBPfraction("C8", 12.641, 101.8 / 1000.0, 0.7782);
-        testSystem.addTBPfraction("C9", 7.126, 115.3 / 1000.0, 0.7928);
-        testSystem.addTBPfraction("C10", 22.098, 230.3 / 1000.0, 0.8454);
-        testSystem.setHeavyTBPfractionAsPlusFraction();
-        testSystem.getCharacterization().characterisePlusFraction();
+    //    testSystem.addTBPfraction("C8", 12.641, 101.8 / 1000.0, 0.7782);
+    //    testSystem.addTBPfraction("C9", 7.126, 115.3 / 1000.0, 0.7928);
+    //    testSystem.addTBPfraction("C10", 22.098, 230.3 / 1000.0, 0.8454);
+      //  testSystem.setHeavyTBPfractionAsPlusFraction();
+      //  testSystem.getCharacterization().characterisePlusFraction();
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
         //  testSystem.setMultiPhaseCheck(true);
-        testSystem.useVolumeCorrection(true);
+     //   testSystem.useVolumeCorrection(true);
         // testSystem.getInterphaseProperties().setInterfacialTensionModel(1); // GT == 1  Parac==0
-        testSystem.init(0);
-
+       
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
             //  testOps.bubblePointPressureFlash(false);
             // testOps.bubblePointTemperatureFlash();
+
             testOps.TPflash();
             testSystem.display();
+          //  testSystem = (SystemInterface)testSystem.clone();
             testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Linear Gradient Theory");
-            testOps.TPflash();
-            testSystem.display();
+            System.out.println("tension gas-oil " + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
+
+//           
+         //   testOps.TPflash();
+        //    testSystem.display();
             // testOps.dewPointMach("n-pentane", "dewPointTemperature", testSystem.getTemperature());
             //  testOps.dewPointTemperatureFlash();
         } catch (Exception e) {

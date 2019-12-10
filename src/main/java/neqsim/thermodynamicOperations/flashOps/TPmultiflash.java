@@ -180,11 +180,12 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                 }
             }
             system.normalizeBeta();
-            //system.init(1);
+            system.init(1);
             calcE();
             setXY();
             system.init(1);
             err = ans.normF();
+
         } while ((err > 1e-12 && iter < 50) || iter < 3);
         //logger.info("iterations " + iter);
         return err;
@@ -439,7 +440,7 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                         ((SystemInterface) clonedSystem.get(0)).getPhase(1).getComponents()[i].setx(1e-50);
                     }
                 }
-            } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
+            } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 600);
             // logger.info("err: " + err + " ITER " + iter);
             double xTrivialCheck0 = 0.0;
             double xTrivialCheck1 = 0.0;
@@ -456,10 +457,10 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                 xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
                 xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
             }
-            if (iter >= 199) {
-                logger.info("iter > maxiter multiphase stability ");
-                logger.info("error " + Math.abs(err));
-                logger.info("tm: " + tm[j]);
+            if (iter >= 599) {
+               // logger.info("iter > maxiter multiphase stability ");
+               // logger.info("error " + Math.abs(err));
+              //  logger.info("tm: " + tm[j]);
             }
 
             if (Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4) {
@@ -846,8 +847,13 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                     //logger.info("diff multiphase " + diff);
                 } while (diff > 1e-12 && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 500);
                 //  this.solveBeta(true);
-                if (iterations >= 49) {
+                if (iterations >= 499) {
                     logger.error("error in multiphase flash..did not solve in 50 iterations");
+                //    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+                //    	logger.info("beta " +system.getBeta(i));
+                 //   }
+                  //  logger.info("diff " + diff);
+                    diff = this.solveBeta();
                 }
 
             } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100) || (iterOut < 3 && system.isChemicalSystem()));

@@ -23,7 +23,9 @@ public class expander1 {
 
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        neqsim.processSimulation.processEquipment.expander.Expander expander = new neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
+      //  neqsim.processSimulation.processEquipment.expander.Expander expander = new neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
+        neqsim.processSimulation.processEquipment.compressor.Compressor expander = new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
+        
         expander.setOutletPressure(80.0);
         expander.setPolytropicEfficiency(0.9);
         expander.setIsentropicEfficiency(0.9);
@@ -36,7 +38,7 @@ public class expander1 {
         operations.run();
         
         
-        expander.solveEfficiency(272.50);
+   //     expander.solveEfficiency(272.50);
         operations.displayResult();
 
         //   compr.solvePolytropicEfficiency(compr.getOutStream().getTemperature() + 0.01);

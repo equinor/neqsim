@@ -33,7 +33,7 @@ public class TestTransientFlow2 {
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15+25.0),10.00);
         testSystem.addComponent("methane", 0.900);
         testSystem.addComponent("ethane", 0.100);
-      //  testSystem.addComponent("n-heptane", 1.00);
+        testSystem.addComponent("n-heptane", 1.00);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         

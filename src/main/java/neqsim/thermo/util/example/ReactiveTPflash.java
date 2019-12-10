@@ -36,23 +36,23 @@ public class ReactiveTPflash {
         testSystem.addComponent("CO2", 10.05);
         //   testSystem.addComponent("H2S", 0.10);
       //  testSystem.addComponent("MDEA", 13.0);
+       // testSystem.addComponent("nC10", 1.00);
         testSystem.addComponent("water", 100.00);
-      //  testSystem.addComponent("Na+", 1.200);
-      //  testSystem.addComponent("OH-", 1.100);
+        testSystem.addComponent("Na+", 1.200);
+        testSystem.addComponent("OH-", 1.200);
         //testSystem.addComponent("HCO3-", .100);
         //     testSystem.addComponent("Piperazine", 0.1e-4);
 
         testSystem.chemicalReactionInit();
         //   testSystem.useVolumeCorrection(true);
         testSystem.createDatabase(true);
-        // testSystem.setMultiPhaseCheck(true);
+        testSystem.setMultiPhaseCheck(true);
         testSystem.setMixingRule(10);
         //  testSystem.
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         testSystem.init(0);
         testSystem.init(1);
         //testSystem.init(1);
-        logger.info("activity coefficiet " + testSystem.getPhase(1).getActivityCoefficient(1));
 //        System.out.println("wt% MDEA " + 100*testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()/(testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()+testSystem.getPhase(1).getComponent("water").getx()*testSystem.getPhase(1).getComponent("water").getMolarMass()));
 //        System.out.println("wt% Piperazine " + testSystem.getPhase(1).getComponent("Piperazine").getx()*testSystem.getPhase(1).getComponent("Piperazine").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
@@ -67,7 +67,7 @@ public class ReactiveTPflash {
         }
         testSystem.display();
         logger.info("pH " + testSystem.getPhase(1).getpH());
-        logger.info("activity coefficiet water " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
 //        
 //        for(int i=0;i<23;i++){
 //            try{

@@ -263,7 +263,7 @@ public class OLGApropertyTableGeneratorWaterStudents extends neqsim.thermodynami
             for (int i = 0; i < pressures.length; i++) {
                 thermoSystem.setPressure(pressures[i]);
                 try {
-                    logger.info("TPflash... " + thermoSystem.getTemperature() + " pressure " + thermoSystem.getPressure());
+                    //logger.info("TPflash... " + thermoSystem.getTemperature() + " pressure " + thermoSystem.getPressure());
                     thermoOps.TPflash();
                     thermoSystem.init(3);
                     thermoSystem.initPhysicalProperties();
@@ -1089,25 +1089,24 @@ public class OLGApropertyTableGeneratorWaterStudents extends neqsim.thermodynami
         bubP = calcBubP(temperatures);
         dewP = calcDewP(temperatures);
         //bubT = calcBubT(temperatures);
-        logger.info("Finished creating arrays");
+       // logger.info("Finished creating arrays");
         // BicubicSplineInterpolatingFunction funcGasDens = interpolationFunc.interpolate(pressures, temperatures, props[0]);
         // logger.info("interpolated value " + funcGasDens.value(40, 298.0));
     }
 
     public void displayResult() {
-        logger.info("TC " + TC + " PC " + PC);
-        for (int i = 0; i < pressures.length; i++) {
-            thermoSystem.setPressure(pressures[i]);
-            for (int j = 0; j < temperatures.length; j++) {
-                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
-            }
-        }
+       // logger.info("TC " + TC + " PC " + PC);
+      //  for (int i = 0; i < pressures.length; i++) {
+         //   thermoSystem.setPressure(pressures[i]);
+       //     for (int j = 0; j < temperatures.length; j++) {
+            //    logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]);// + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+        //    }
+      //  }
         writeOLGAinpFile(fileName);
     }
 
     public void writeOLGAinpFile2(String filename) {
         Writer writer = null;
-
         /*try {
          writer = new BufferedWriter(new OutputStreamWriter(
          new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/javacode_ROG55.txt"), "utf-8"));
@@ -1183,7 +1182,7 @@ public class OLGApropertyTableGeneratorWaterStudents extends neqsim.thermodynami
                 if (names[k] == null) {
                     continue;
                 }
-                logger.info("Writing variable: " + names[k]);
+           //     logger.info("Writing variable: " + names[k]);
                 writer.write(names[k] + " (" + units[k] + ")\n");
                 for (int i = 0; i < pressures.length; i++) {
                     //thermoSystem.setPressure(pressures[i]);
@@ -1202,7 +1201,7 @@ public class OLGApropertyTableGeneratorWaterStudents extends neqsim.thermodynami
             }
 
         } catch (IOException ex) {
-            // report
+        	ex.printStackTrace();
         } finally {
             try {
                 writer.close();

@@ -189,6 +189,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
 
     public void generateTBPFractions() {
     }
+    
 
     public void addCharacterizedPlusFraction() {
         if (!pseudocomponents) {

@@ -146,7 +146,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
     public static void main(String[] args) {
     	// test code for adjuster...
     	  neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15+25.0),20.00);
-          testSystem.addComponent("methane", 1200.00);
+          testSystem.addComponent("methane", 1000.00);
           testSystem.createDatabase(true);
           testSystem.setMixingRule(2);
           

@@ -79,6 +79,7 @@ public class ModelTest {
         testSystem.setTemperature(testSystem.getTemperature() - 0.002);
         testSystem.init(3);
         double ent2 = testSystem.getPhase(1).getEnthalpy();
+        testSystem.saveFluid(3217);
 
         double numCp = (ent1 - ent2) / 0.002;
 

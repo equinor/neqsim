@@ -58,7 +58,7 @@ class FlashGasTest {
 			fluid1.setPressure(P_bar[i]);
 			thermoOps.PHflash(enthalpy[i]);
 			errH[i] = fluid1.getTemperature() - T_C[i] - 273.15;
-			//System.out.println("err " + errH[i]);
+			System.out.println("err Enthalpy " + errH[i]);
 			assertTrue(Math.abs(errH[i]) < 1e-2);
 		}
 	}

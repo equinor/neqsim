@@ -23,6 +23,8 @@ package neqsim.util.database;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -35,15 +37,15 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     /**
      * @return the createTemporaryTables
      */
-    public boolean createTemporaryTables() {
+    public static boolean createTemporaryTables() {
         return createTemporaryTables;
     }
 
     /**
      * @param createTemporaryTables the createTemporaryTables to set
      */
-    public void setCreateTemporaryTables(boolean createTemporaryTables) {
-        this.createTemporaryTables = createTemporaryTables;
+    public static void setCreateTemporaryTables(boolean createTemporaryTables) {
+    	NeqSimDataBase.createTemporaryTables = createTemporaryTables;
     }
 
     private static final long serialVersionUID = 1000;
@@ -55,8 +57,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     private static String dataBaseType = "Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
     
- //  private static String dataBaseType = "MSAccessUCanAccess";
-  // public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
+   // private static String connectionString = "jdbc:derby:C:\\Program Files (x86)\\Equinor\\NeqSim v2.0\\data\\neqsimthermodatabase";
+  //  private static String dataBaseType = "mySQL";
+  //  private static String connectionString = "jdbc:mysql://neqsim.equinor.com:3307/neqsimthermodatabase?useSSL=false";
+    
+    
+  // private static String dataBaseType = "MSAccessUCanAccess";
+//   public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 	private static String username = "remote";
 	private static String password = "remote";
   
@@ -89,7 +96,11 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         javax.sql.DataSource ds = null;
         try {
         	if(System.getenv("NEQSIMTHERMODB_CS")!=null) {
-        		 return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"),System.getenv("MYSQL_USER"), System.getenv("MYSQL_PASSWORD"));
+        		Properties properties = new Properties();
+        		properties.setProperty("user", System.getenv("MYSQL_USER"));
+        		properties.setProperty("password", System.getenv("MYSQL_PASSWORD"));
+        		properties.setProperty("useSSL", "false");
+        		 return DriverManager.getConnection(System.getenv("NEQSIMTHERMODB_CS"),properties);
         	}
         	else if (dataBaseType.equals("MSAccess")) {
                 String dir = "";

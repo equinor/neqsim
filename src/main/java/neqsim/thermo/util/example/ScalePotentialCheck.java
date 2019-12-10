@@ -41,7 +41,7 @@ public class ScalePotentialCheck {
         testSystem.addComponent("methane", 90);
         //testSystem.addComponent("ethane", 10.5);
         testSystem.addComponent("CO2",0.1);
-        //   testSystem.addComponent("H2S", 0.01);
+        testSystem.addComponent("H2S", 0.01);
      //      testSystem.addComponent("n-heptane", 15.2);
         //   testSystem.addComponent("nC10", 0.52);
         //  testSystem.addComponent("MEG", 0.1);
@@ -51,8 +51,8 @@ public class ScalePotentialCheck {
         testSystem.addComponent("Na+", 4e-5);
         testSystem.addComponent("Cl-", 4e-5);
        //  testSystem.addComponent("Hg++", 4e-7);
-        //   testSystem.addComponent("OH-", 100e-3);
-        //    testSystem.addComponent("Fe++", 110.1e-3);
+           testSystem.addComponent("OH-", 220e-5);
+            testSystem.addComponent("Fe++", 110.1e-5);
   //      testSystem.addComponent("OH-", 0.07*2);// * 17.001);
         //  testSystem.addComponent("Cl-", (1000 - 100) * 1e-3);
         //testSystem.addComponent("Ca++",0.002);

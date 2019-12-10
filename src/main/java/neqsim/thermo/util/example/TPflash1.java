@@ -65,6 +65,10 @@ public class TPflash1 {
         }
 
         testSystem.display();
+        
+        neqsim.util.database.NeqSimDataBase.setDataBaseType("Derby");
+        neqsim.util.database.NeqSimDataBase.setConnectionString("jdbc:derby:classpath:data/neqsimthermodatabase");
+        
 
         testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 88.8);//
         testSystem.addComponent("nitrogen", 1.681146444);

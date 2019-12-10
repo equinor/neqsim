@@ -35,7 +35,7 @@ public class SolidFlash {
     static Logger logger = Logger.getLogger(SolidFlash.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemUMRPRUMCEos(200.0, 20.3);
+        SystemInterface testSystem = new SystemUMRPRUMCEos(273.15-80, 1.3);
         //  testSystem.addComponent("nitrogen", 83.33);
         //  testSystem.addComponent("oxygen", 8.49);
         //  testSystem.addComponent("argon", 0.87);
@@ -43,9 +43,9 @@ public class SolidFlash {
 
 
         // testSystem.addComponent("nitrogen", 8.33);
-        testSystem.addComponent("methane", 98.17);
+      //  testSystem.addComponent("methane", 98.17);
         // testSystem.addComponent("ethane", 0.87);
-        testSystem.addComponent("CO2", 11.83);
+        testSystem.addComponent("CO2", 1.83);
 
 
         testSystem.createDatabase(true);

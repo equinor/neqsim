@@ -92,10 +92,10 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         PipeData pipe1 = new PipeData(0.203, 0.00025);
 
         testSystem.addComponent("methane", 250.0, "Nliter/min", 0);
-        testSystem.addComponent("water", .0010, "Nliter/min", 0);
+        testSystem.addComponent("water", .00010, "Nliter/min", 0);
         //testSystem.addComponent("n-heptane", 20.0, "Nliter/min", 1);
-        testSystem.addComponent("TEG", 20.0, "kg/min", 1);
-        testSystem.addComponent("water", 2.0, "kg/min", 1);
+        testSystem.addComponent("TEG", 90.0, "kg/min", 1);
+        testSystem.addComponent("water", 1.0, "kg/min", 1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
         testSystem.initPhysicalProperties();
