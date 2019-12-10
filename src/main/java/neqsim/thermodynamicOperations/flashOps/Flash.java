@@ -119,7 +119,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 		int start = 0;
 		int end = 1;//clonedSystem.getNumberOfPhases()-1;
 		int mult = 1;
-		if (sumw[1] > sumw[0]) {
+		//if (sumw[1] > sumw[0]) {
+		if (lowestGibbsEnergyPhase==0) {
 			start = end;
 			end = 0;
 			mult = -1;
@@ -163,7 +164,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 								+ clonedSystem.getPhase(j).getComponent(i).getLogFugasityCoeffisient() - d[i]));
 					}
 					fNorm = f.norm2();
-					if (fNorm > fNormOld && iterations > 3) {
+					if (fNorm > fNormOld && iterations > 3 || iterations % 7 != 0) {
 						break;
 					}
 					if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis) {
@@ -225,7 +226,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 					// logger.info("err newton " + error[j]);
 				}
 
-				// logger.info("norm f " + f.norm1());
+			logger.info("norm f " + f.norm1());
 				// clonedSystem.display();
 				sumw[j] = 0.0;
 				for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
