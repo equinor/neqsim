@@ -847,7 +847,7 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                     //logger.info("diff multiphase " + diff);
                 } while (diff > 1e-12 && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 500);
                 //  this.solveBeta(true);
-                if (iterations >= 49) {
+                if (iterations >= 499) {
                     logger.error("error in multiphase flash..did not solve in 50 iterations");
                 //    for (int i = 0; i < system.getNumberOfPhases(); i++) {
                 //    	logger.info("beta " +system.getBeta(i));

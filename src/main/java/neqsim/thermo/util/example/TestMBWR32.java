@@ -2,6 +2,7 @@ package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemBWRSEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.log4j.Logger;
 
@@ -28,8 +29,8 @@ public class TestMBWR32 {
     }
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemBWRSEos(273.15-170, 1.01);
-        //SystemInterface testSystem = new SystemSrkEos(131.38, 4.31);
+        SystemInterface testSystem = new SystemBWRSEos(298.15, 0.101);
+       // SystemInterface testSystem = new SystemSrkEos(111.15, 5.01);
         //SystemInterface testSystem = new SystemPrEos(111.0, 1.0523);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -45,7 +46,7 @@ public class TestMBWR32 {
 
         try {
             //  testOps.TPflash();
-            // testOps.bubblePointTemperatureFlash();
+             testOps.bubblePointTemperatureFlash();
           //  testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
             logger.info(e.toString());

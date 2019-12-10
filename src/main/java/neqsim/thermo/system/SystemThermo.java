@@ -2482,14 +2482,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 	public final void setBeta(double b) {
 		if(b<0) b=neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-		if(b>0) b=1.0-neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+		if(b>1) b=1.0-neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 		beta[0] = b;
 		beta[1] = 1.0 - b;
 	}
 
 	public final void setBeta(int phase, double b) {
 		if(b<0) b=neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-		if(b>0) b=1.0-neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+		if(b>1) b=1.0-neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 		beta[phaseIndex[phase]] = b;
 	}
 

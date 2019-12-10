@@ -36,6 +36,15 @@ public class SurgeCurve {
 		 PolynomialCurveFitter fitter=PolynomialCurveFitter.create(2);
 		 flowFitterFunc = new PolynomialFunction(fitter.fit(flowFitter.toList()));
 		 isActive = true;
+		 
+		 
+		 // trykkforhold på y-aksen mot redused flow
+		 // dp over sugetrykk
+		 // surge kurva er invariat i plottet trykkforhold mot redused flow		
+		 //	CCC bruker dP/ (over måleblnde som representerer flow) dP/Ps   - på x-aksen
+		 // trykkforhold på y-aksen (trykk ut/trykk inn)
+		 // 
+
 	}
 	
 	public double getSurgeFlow(double head){

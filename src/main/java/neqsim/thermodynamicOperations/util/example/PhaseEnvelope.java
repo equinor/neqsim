@@ -4,6 +4,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+import java.io.File;
+
 import org.apache.log4j.Logger;
 
 
@@ -36,7 +39,7 @@ public class PhaseEnvelope {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         
-        int sstms=4;
+        int sstms=1;
     
         System.out.println(sstms);
         
@@ -157,29 +160,27 @@ public class PhaseEnvelope {
         testSystem.addComponent("nC10", 1);
         testSystem.addComponent("nC16", 1);  
         
-        }else if  (sstms==15) {    
-        /* TEST SYSTEM 15        */
-/*        
-        testSystem.addComponent("methane", 87);
-        testSystem.addComponent("ethane", 4.35);
-        testSystem.addComponent("propane", 1 );
-        testSystem.addComponent("n-butane", 1);
-        testSystem.addComponent("i-butane", 1);  
-        testSystem.addPlusFraction("C7", 0.5, 0.25, 0.900);
-        testSystem.getCharacterization().characterisePlusFraction();
- */
-        testSystem.addComponent("methane", 87);
-        testSystem.addComponent("ethane", 4.35);
-        testSystem.addComponent("propane", 1 );
-        testSystem.addComponent("n-butane", 1);
-        testSystem.addComponent("i-butane", 1);  
-        testSystem.addPlusFraction("C7", 0.05, 0.25, 0.900);
-        testSystem.getCharacterization().characterisePlusFraction();
+        }else if  (sstms==15) {  
+        	 testSystem.addComponent("CO2", 2.7);
+        testSystem.addComponent("methane", 80);
+        testSystem.addComponent("ethane",8.35);
+        testSystem.addComponent("propane", 4.5);
+        testSystem.addComponent("n-butane", 2.0);
+        testSystem.addComponent("i-butane", 1.0);  
+        testSystem.addComponent("n-hexane", 0.5);  
+        testSystem.addPlusFraction("C7", 10.1, 0.19, 0.850);
+     //   testSystem.getCharacterization().characterisePlusFraction();
 
                 
         } 
+        else if  (sstms==16) {  
+        	testSystem.addComponent("methane", 76.0);
+        	testSystem.addComponent("n-hexane", 4.5);
+        	testSystem.addComponent("n-nonane", 4.5);
+
+            } 
  
-        testSystem.setMixingRule(1);
+        testSystem.setMixingRule(2);
         
         try {
         
@@ -187,13 +188,26 @@ public class PhaseEnvelope {
         //testOps.calcPTphaseEnvelope(true, 1.);            
         
         // from dew point side
+        testOps.setRunAsThread(true);
         testOps.calcPTphaseEnvelope(false, 1.); 
+       // testOps.displayResult();
+        testOps.waitAndCheckForFinishedCalculation(15000);
+        testOps.getJfreeChart();
+        org.jfree.chart.JFreeChart chart = testOps.getJfreeChart();
         
-        testOps.displayResult();
+    //    testOps.displayResult();
+        
+        java.awt.image.BufferedImage buf = chart.createBufferedImage(640, 400, null);
+        File file = new File("c:/temp/img.jpg");
+        javax.imageio.ImageIO.write(buf, "jpeg",file);
+        
+        chart.createBufferedImage(640, 400, null);
+     //   
+       
         
         } catch (Exception e) {
             logger.error("error", e);
-            testOps.displayResult();
+          //  testOps.displayResult();
         }
  
         try {

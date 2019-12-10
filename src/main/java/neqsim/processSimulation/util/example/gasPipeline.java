@@ -32,16 +32,19 @@ public class gasPipeline {
         pipeline.setPipeOuterHeatTransferCoefficients(new double[]{15.0, 15.0, 15.0});
         pipeline.setPipeWallHeatTransferCoefficients(new double[]{15.0, 15.0, 15.0});
         AdiabaticPipe simplePipeline = new AdiabaticPipe(stream_1);
-        simplePipeline.setDiameter(1.0);
+        simplePipeline.setDiameter(10.2);
         simplePipeline.setLength(100);
-
+        simplePipeline.setInletElevation(0.0);
+        simplePipeline.setOutletElevation(-100.0);
+        
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
-        operations.add(pipeline);
-       // operations.add(simplePipeline);
+        //operations.add(pipeline);
+        operations.add(simplePipeline);
 
         operations.run();
-        pipeline.getOutStream().displayResult();
+        //pipeline.getOutStream().displayResult();
+        simplePipeline.getOutStream().displayResult();
         //.displayResult();
     }
 }

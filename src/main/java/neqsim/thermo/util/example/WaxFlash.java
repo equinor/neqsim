@@ -11,7 +11,7 @@ public class WaxFlash {
     static Logger logger = Logger.getLogger(WaxFlash.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.0 + 42, 4.0);
+        SystemInterface testSystem = new SystemSrkEos(273.0 + 92, 4.0);
         //SystemInterface testSystem = new SystemPCSAFT(239.0, 223.0);
         //SystemInterface testSystem = new SystemGERG2004Eos(121.0, 1.61);
         //     testSystem.getWaxCharacterisation().setModelName("Pedersen");
@@ -28,7 +28,7 @@ public class WaxFlash {
         //   testSystem.addTBPfraction("C9", 10.0, 119.60 / 1000.0, 0.7653);
      //   testSystem.addTBPfraction("C15", 21, 132.60 / 1000.0, 0.79);
      //   testSystem.addTBPfraction("C20", 52.00, 343 / 1000.0, 0.85);
-        testSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.882888);
+        testSystem.addPlusFraction("C20", 10.62, 481.0 / 1000.0, 0.882888);
 
         testSystem.getCharacterization().characterisePlusFraction();
         // testSystem.addComponent("MEG", 8.8);
@@ -52,7 +52,7 @@ public class WaxFlash {
             //   testOps.TPflash();
             //        System.out.println("wax in oil " + testSystem.getPhase(0).getWtFractionOfWaxFormingComponents());
             //  testSystem.setPressure(5.0);
-            //     testOps.calcWAT();
+         //       testOps.calcWAT();
             //  testSystem.display();
             //   testSystem.setPressure(100.0);
             //   testOps.calcWAT();

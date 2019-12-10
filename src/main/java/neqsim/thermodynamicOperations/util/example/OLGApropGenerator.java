@@ -36,7 +36,7 @@ public class OLGApropGenerator {
     static Logger logger = Logger.getLogger(OLGApropGenerator.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15, 10.0);
+        SystemInterface testSystem = new SystemSrkEos(273.15, 10.0);
         testSystem.addComponent("nitrogen", 0.01848);
         testSystem.addComponent("CO2", 0.837478);
         testSystem.addComponent("methane", 2.135464);
@@ -52,10 +52,10 @@ public class OLGApropGenerator {
         testSystem.addTBPfraction("C9_PC", 0.000660625, 120.99/1000.0, 0.8863);
         testSystem.addTBPfraction("C10_PC", 8.07355e-5, 144.178/1000.0, 0.8526);
         
-        testSystem.addComponent("water", 28.97100);
-        testSystem.addComponent("TEG",65.65524299);
+     //  testSystem.addComponent("water", 28.97100);
+     //   testSystem.addComponent("TEG",65.65524299);
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(10);
+        testSystem.setMixingRule(2);
 
         testSystem.setMultiPhaseCheck(true);
 
@@ -71,8 +71,8 @@ public class OLGApropGenerator {
             testOps.TPflash();
             testSystem.display();
 
-            String fileName = "c:/Appl/OLGAneqsim.tab";
-            testOps.OLGApropTable(273.15, 273.15 + 50.0, 40, 1.0, 120.0, 40, fileName, 0);
+            String fileName = "c:/temp//OLGAneqsim.tab";
+            testOps.OLGApropTable(273.15, 273.15 + 50.0, 40, 1.0, 220.0, 40, fileName, 0);
             testOps.displayResult();
 
         } catch (Exception e) {

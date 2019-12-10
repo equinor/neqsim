@@ -54,7 +54,7 @@ public class CompressorChart {
 
 		reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
 		reducedPolytropicEfficiencyFunc = new PolynomialFunction(
-				fitter.fit(reducedPolytropicEfficiencyFitter.toList()));
+				fitter.fit(reducedPolytropicEfficiencyFitter.toList()));		
 		setUseCompressorChart(true);
 	}
 

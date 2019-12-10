@@ -63,15 +63,16 @@ public class TestMechanicalDesign {
         operations.add(sep);
         operations.run();
         operations.displayResult();
-
+        sep.getMechanicalDesign().calcDesign();
         // do design of process
-        operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("StatoilTR");
+       // operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("StatoilTR");
 
         // operations.runProcessDesignCalculation(); 
         // prosessdesign do: calculate flow rates of TEG, amine, calculates heat duty requirements, compressor power requirements, number of trays, packing height, numner of theoretical stages, 
         // operations.runMechanicalDesignCalculation();
         // calculates diameters of colums, wall thickness, weight, size of equipment, tray spacing
-        operations.getSystemMechanicalDesign().runDesignCalculation();
+      //  operations.getSystemMechanicalDesign().runDesignCalculation();
+        
         //  operations.getSystemMechanicalDesign().setDesign();
         // operations.run();
         //sep.getGasLoadFactor();

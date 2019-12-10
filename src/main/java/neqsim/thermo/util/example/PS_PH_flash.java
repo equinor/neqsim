@@ -31,8 +31,8 @@ public class PS_PH_flash {
         //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(350.15,30.00);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("water", 51.0);
-        /*
+ //       testSystem.addComponent("water", 51.0);
+        
         testSystem.addComponent("nitrogen", 1.08263303991407E-05);
         testSystem.addComponent("CO2", 0.00019008457660675);
         testSystem.addComponent("methane", 0.00305547803640366);
@@ -42,7 +42,7 @@ public class PS_PH_flash {
         testSystem.addComponent("i-butane", 0.00255768150091171);
         testSystem.addComponent("i-pentane", 0.00205287128686905);
         testSystem.addComponent("n-pentane", 0.00117853358387947);
-
+/*
         testSystem.addTBPfraction("CH2", 0.000867870151996613, 0.0810000000000000, 0.72122997045517);
         testSystem.addTBPfraction("CH3", 0.04819875717163090, 0.0987799987792969, 0.754330039024353);
         testSystem.addTBPfraction("CH4", 0.0972084712982178, 0.1412200012207030, 0.81659996509552);
@@ -68,7 +68,7 @@ public class PS_PH_flash {
         } catch (Exception e) {
 
         }
-        testSystem.init(2);
+        testSystem.init(3);
       //  testSystem.display();
 
         //testSystem.setPressure(testSystem.getPressure() - 1.2);
@@ -78,6 +78,7 @@ public class PS_PH_flash {
         // System.out.println("enthalpy spec" + enthalpy);
 
         double entropy = testSystem.getEntropy();
+  /*
         testSystem.setTemperature(273.15 + 0.0);
         testSystem.setPressure(100.0);
         try {
@@ -91,6 +92,8 @@ public class PS_PH_flash {
         // System.out.println("entropy spec" + entropy);
 
         //   testSystem.setPressure(20.894745);
+         * */
+        testSystem.setPressure(10.0);
          testOps.PSflash(entropy);
       //  testOps.PHflash(enthalpy);
        // testSystem.display();
