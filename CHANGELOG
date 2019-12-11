@@ -1,6 +1,8 @@
 Version 2.0 (10/12/2019)
-- improved robustnes and speed
 - verson name changed from 2018.X to 2.X
+- improved speed and stability of algorithms (TPflash, phase envelopes)
+- added GERG-2008 for calculation of gas density
+- various updates in process simulation models (compressors, recycle, mechanical design)
 
 version 2018.5
 - stability and speed improvements
