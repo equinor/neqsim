@@ -17,4 +17,6 @@ public interface LumpingModelInterface {
     public void generateLumpedComposition(Characterise charac);
 
     public int getNumberOfLumpedComponents();
+    
+    public double getFractionOfHeavyEnd(int i);
 }

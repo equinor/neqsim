@@ -837,6 +837,7 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                     }
                 }
                 setDoubleArrays();
+                iterations=0;
                 do {
                     iterations++;
                     oldBeta = system.getBeta(system.getNumberOfPhases() - 1);
@@ -845,17 +846,12 @@ public class TPmultiflash extends TPflash implements java.io.Serializable {
                     diff = this.solveBeta();
                     // diff = Math.abs((system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) / oldBeta);
                     //logger.info("diff multiphase " + diff);
-                } while (diff > 1e-12 && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 500);
+                } while (diff > 1e-12 && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 200);
                 //  this.solveBeta(true);
-                if (iterations >= 499) {
-                    logger.error("error in multiphase flash..did not solve in 50 iterations");
-                //    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-                //    	logger.info("beta " +system.getBeta(i));
-                 //   }
-                  //  logger.info("diff " + diff);
+                if (iterations >= 199) {
+                    logger.error("error in multiphase flash..did not solve in 200 iterations");
                     diff = this.solveBeta();
                 }
-
             } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100) || (iterOut < 3 && system.isChemicalSystem()));
 
             boolean hasRemovedPhase = false;
