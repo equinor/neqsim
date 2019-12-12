@@ -186,6 +186,8 @@ public interface PhaseInterface extends Cloneable {
     public double getBeta();
 
     public double getWtFrac(int component);
+    
+    public double getWtFrac(String componentName);
 
     public void setMixingRuleGEModel(String name);
 

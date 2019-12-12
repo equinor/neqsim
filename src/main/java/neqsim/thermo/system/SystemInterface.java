@@ -16,6 +16,16 @@ public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID, String text);
     
+    /**
+	 * This method is used to set the total molar composition of a characterized fluid. The total
+	 * flow rate will be kept constant. The input mole fractions will be normalized.
+	 *
+	 * @param molefractions is a double array taking the molar fraction of the
+	 *                      components in the fluid. THe last fraction in the array is the total molefraction of the characterized components.
+	 * @return Nothing.
+	 */
+    public void setMolarCompositionOfPlusFluid(double[] molefractions);
+    
 	  /**
      * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
      * 

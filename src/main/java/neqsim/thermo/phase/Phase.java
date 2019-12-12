@@ -181,6 +181,10 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return pres;
     }
 
+    public double getWtFrac(String componentName) {
+    	return getWtFrac(getComponent(componentName).getComponentNumber());
+    }
+    
     public double getWtFrac(int component) {
         return getComponent(component).getMolarMass() * getComponent(component).getx() / this.getMolarMass();
     }

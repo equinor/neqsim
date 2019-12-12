@@ -36,5 +36,7 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
     public double getPolytropicEfficiency();
 
     public void setPolytropicEfficiency(double polytropicEfficiency);
+    
+	public AntiSurge getAntiSurge();
 }
 

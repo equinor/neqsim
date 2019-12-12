@@ -41,7 +41,7 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
             mol_m3 = 1.0/(molarmass)*stddens*1000;
         }
         
-        if(name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI")) {
+        if(name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI") || name.equals("mol")) {
             factor = 1.0;
         } else if(name.equals("Nlitre/min")) {
             factor = 1.0/60.0 * mol_m3/1000.0;

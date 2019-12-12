@@ -174,7 +174,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		clonedSystem.phaseType = phaseType.clone();
 		clonedSystem.phaseIndex = phaseIndex.clone();
 		if (interfaceProp != null) {
-		//	clonedSystem.interfaceProp = (InterphasePropertiesInterface) interfaceProp.clone();
+			// clonedSystem.interfaceProp = (InterphasePropertiesInterface)
+			// interfaceProp.clone();
 		}
 		clonedSystem.characterization = (neqsim.thermo.characterization.Characterise) characterization.clone();
 		if (clonedSystem.waxCharacterisation != null) {
@@ -560,7 +561,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	public void setTotalFlowRate(double flowRate, String flowunit) {
-		
+
 		if (getMolarMass() < 1e-20) {
 			init(0);
 		}
@@ -568,14 +569,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		double SIval = unit.getSIvalue();
 		double totalNumberOfMolesLocal = totalNumberOfMoles;
 		for (int i = 0; i < numberOfComponents; i++) {
-			if(flowRate<1e-100) {
+			if (flowRate < 1e-100) {
 				setEmptyFluid();
-			}
-			else if(totalNumberOfMolesLocal>1e-100) {
-			addComponent(i, SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-					- getPhase(0).getComponent(i).getNumberOfmoles());
-			}
-			else {
+			} else if (totalNumberOfMolesLocal > 1e-100) {
+				addComponent(i, SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
+						- getPhase(0).getComponent(i).getNumberOfmoles());
+			} else {
 				addComponent(i, SIval);
 			}
 		}
@@ -914,12 +913,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				index = p;
 			}
 		}
-		
+
 		if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName) && addForFirstTime) {
 			// logger.error("No component with name: " + componentName + " in database");
 			return;
 		}
-		
 
 		if (addForFirstTime) {
 			if (moles < 0.0) {
@@ -1181,7 +1179,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			// System.out.println("step : " + step);
 
 		} while (((Math.abs(step)) >= 1.0e-10 && iterations < 300));// && (Math.abs(nybeta)-Math.abs(maxBeta))>0.1);
-		
+
 		// System.out.println("beta: " + nybeta + " iterations: " + iterations);
 		if (nybeta <= tolerance) {
 			phase = 1;
@@ -1217,17 +1215,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return beta[phaseIndex[0]];
 	}
-	
-	  /**
-     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
-     * 
-     * @param unit The unit as a string. Supported units are K/bar, C/bar
-     *
-     * @return Joule Thomson coefficient in given unit
-     */
-    public double getJouleThomsonCoefficient(String unit) {
-        double JTcoef = getJouleThomsonCoefficient();
-        double conversionFactor = 1.0;
+
+	/**
+	 * method to get the Joule Thomson Coefficient of a system. Based on a phase
+	 * mole fraction basis average
+	 * 
+	 * @param unit The unit as a string. Supported units are K/bar, C/bar
+	 *
+	 * @return Joule Thomson coefficient in given unit
+	 */
+	public double getJouleThomsonCoefficient(String unit) {
+		double JTcoef = getJouleThomsonCoefficient();
+		double conversionFactor = 1.0;
 		switch (unit) {
 		case "K/bar":
 			conversionFactor = 1.0;
@@ -1236,21 +1235,22 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			conversionFactor = 1.0;
 			break;
 		}
-		return JTcoef * conversionFactor; 
-    }
-    
-    /**
-     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
-     *
-     * @return Joule Thomson coefficient in K/bar
-     */
-    public double getJouleThomsonCoefficient() {
-    	double JTcoef = 0;
+		return JTcoef * conversionFactor;
+	}
+
+	/**
+	 * method to get the Joule Thomson Coefficient of a system. Based on a phase
+	 * mole fraction basis average
+	 *
+	 * @return Joule Thomson coefficient in K/bar
+	 */
+	public double getJouleThomsonCoefficient() {
+		double JTcoef = 0;
 		for (int i = 0; i < numberOfPhases; i++) {
 			JTcoef += getBeta(i) * getPhase(i).getJouleThomsonCoefficient();
 		}
 		return JTcoef;
-    }
+	}
 
 	/**
 	 * method to get the speed of sound of a system. THe sound speed is implemented
@@ -2481,15 +2481,19 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	public final void setBeta(double b) {
-		if(b<0) b=neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-		if(b>1) b=1.0-neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+		if (b < 0)
+			b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+		if (b > 1)
+			b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 		beta[0] = b;
 		beta[1] = 1.0 - b;
 	}
 
 	public final void setBeta(int phase, double b) {
-		if(b<0) b=neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-		if(b>1) b=1.0-neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+		if (b < 0)
+			b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
+		if (b > 1)
+			b = 1.0 - neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 		beta[phaseIndex[phase]] = b;
 	}
 
@@ -4125,6 +4129,40 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setEmptyFluid();
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+		}
+		for (int i = 0; i < getNumberOfPhases(); i++) {
+			init(0, i);
+		}
+	}
+
+	/**
+	 * This method is used to set the total molar composition of a characterized fluid. The total
+	 * flow rate will be kept constant. The input mole fractions will be normalized.
+	 *
+	 * @param molefractions is a double array taking the molar fraction of the
+	 *                      components in the fluid. THe last fraction in the array is the total molefraction of the characterized components.
+	 * @return Nothing.
+	 */
+	public void setMolarCompositionOfPlusFluid(double[] molefractions) {
+		double totalFlow = getTotalNumberOfMoles();
+		if (totalFlow < 1e-100) {
+			logger.error("Total flow can not be 0 when setting molar composition ");
+			neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+			throw new RuntimeException(e);
+		}
+		double sum = 0;
+		for (double value : molefractions) {
+			sum += value;
+		}
+		setEmptyFluid();
+		int compNumb = 0;
+		for (compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
+			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+		}
+		for (int j = 0; j < getCharacterization().getLumpingModel().getNumberOfLumpedComponents()-1; j++) {
+		//	addComponent(compNumb, totalFlow * molefractions[molefractions.length - 1]
+		//			* getCharacterization().getLumpingModel().getFractionOfHeavyEnd(j) / sum);
+			compNumb++;
 		}
 		for (int i = 0; i < getNumberOfPhases(); i++) {
 			init(0, i);
