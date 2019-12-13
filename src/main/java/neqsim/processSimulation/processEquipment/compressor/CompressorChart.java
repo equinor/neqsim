@@ -24,13 +24,16 @@ public class CompressorChart {
 	private boolean useCompressorChart = false;
 	double refTemperature;
 	double refPressure;
+	double referenceSpeed = 1000.0;
 	double refZ;
 	double[] chartConditions = null;
 	final WeightedObservedPoints reducedHeadFitter = new WeightedObservedPoints();
 	final WeightedObservedPoints reducedFlowFitter = new WeightedObservedPoints();
+	final WeightedObservedPoints fanLawCorrectionFitter = new WeightedObservedPoints();
 	final WeightedObservedPoints reducedPolytropicEfficiencyFitter = new WeightedObservedPoints();
 	PolynomialFunction reducedHeadFitterFunc = null;
 	PolynomialFunction reducedPolytropicEfficiencyFunc = null;
+	PolynomialFunction fanLawCorrectionFunc = null;
 
 	public CompressorChart() {
 	}
@@ -42,19 +45,25 @@ public class CompressorChart {
 
 	public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
 			double[][] polyEff) {
+		
+		referenceSpeed = speed[0];
+		
 		for (int i = 0; i < speed.length; i++) {
 			CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
 			chartValues.add(curve);
 			for (int j = 0; j < flow[i].length; j++) {
 				reducedHeadFitter.add(flow[i][j] / speed[i], head[i][j] / speed[i] / speed[i]);
 				reducedPolytropicEfficiencyFitter.add(flow[i][j] / speed[i], polyEff[i][j]);
+				double flowFanLaw =  flow[0][j]*speed[i]/speed[0];
+				fanLawCorrectionFitter.add(speed[i]/speed[0], flow[i][j]/flowFanLaw);
 			}
 		}
 		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
 
 		reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
 		reducedPolytropicEfficiencyFunc = new PolynomialFunction(
-				fitter.fit(reducedPolytropicEfficiencyFitter.toList()));		
+				fitter.fit(reducedPolytropicEfficiencyFitter.toList()));	
+		fanLawCorrectionFunc =  new PolynomialFunction(fitter.fit(fanLawCorrectionFitter.toList()));
 		setUseCompressorChart(true);
 	}
 
@@ -63,11 +72,16 @@ public class CompressorChart {
 	}
 
 	public double getHead(double flow, double speed) {
+		//double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
+		//System.out.println("flow correction " + flowCorrection);
 		return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
+		// return reducedHeadFitterFunc.value(flowCorrection * flow / speed) * speed * speed;
 	}
 
 	public double getPolytropicEfficiency(double flow, double speed) {
+		//double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
 		return reducedPolytropicEfficiencyFunc.value(flow / speed);
+		//return reducedPolytropicEfficiencyFunc.value(reducedHeadFitterFunc*flow / speed);
 	}
 
 	public void addSurgeCurve(double[] flow, double[] head) {
@@ -132,7 +146,7 @@ public class CompressorChart {
 		Stream stream_1 = new Stream("Stream1", testFluid);
 		Compressor comp1 = new Compressor(stream_1);
 		comp1.setUsePolytropicCalc(true);
-		comp1.getAntiSurge().setActive(false);
+		comp1.getAntiSurge().setActive(true);
 		comp1.setSpeed(2050);
 
 		double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
@@ -148,12 +162,12 @@ public class CompressorChart {
 		
 		double[] surgeflow = new double[] { 453.2, 550.0, 700.0, 800.0 };
 		double[] surgehead = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
-		//comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow, surgehead);
+		comp1.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeflow, surgehead);
 	
 
 		double[] stoneWallflow = new double[] { 923.2, 950.0, 980.0, 1000.0 };
 		double[] stoneWallHead = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
-		//comp1.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallflow, stoneWallHead);
+		comp1.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallflow, stoneWallHead);
 		
 	
 		
@@ -165,6 +179,7 @@ public class CompressorChart {
 		
 		
 		System.out.println("power " + comp1.getPower());
+		System.out.println("fraction in anti surge line " + comp1.getAntiSurge().getCurrentSurgeFraction());
 
 	}
 

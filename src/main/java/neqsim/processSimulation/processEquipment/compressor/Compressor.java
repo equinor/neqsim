@@ -193,9 +193,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				if (surgeCheck && getAntiSurge().isActive()) {
 					double surgeFLow = getCompressorChart().getSurgeCurve().getSurgeFlow(head_meter);
 					double correction = surgeFLow / thermoSystem.getFlowRate("m3/hr");
-					thermoSystem.setTotalNumberOfMoles(1.005 * thermoSystem.getTotalNumberOfMoles());
+					thermoSystem.setTotalNumberOfMoles(getAntiSurge().getSurgeControlFactor() * thermoSystem.getTotalNumberOfMoles());
 					thermoSystem.init(3);
 					fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
+					getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
 					logger.info("fractionAntiSurge: " + fractionAntiSurge);
 				}
 
@@ -438,7 +439,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	}
 
 	public boolean isSurge(double flow, double head) {
-		return getCompressorChart().getSurgeCurve().isSurge(flow, head);
+		getAntiSurge().setSurge(getCompressorChart().getSurgeCurve().isSurge(flow, head));
+		return getAntiSurge().isSurge();
 	}
 
 	public boolean isStoneWall(double flow, double head) {
