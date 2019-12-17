@@ -128,6 +128,21 @@ public abstract class PhysicalProperties extends java.lang.Object
 					this);
 		}
 	}
+	
+	public void setDiffusionCoefficientModel(String model) {
+		if ("CSP".equals(model)) {
+			diffusivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity.CorrespondingStatesDiffusivity(this);
+		}
+		else if ("Wilke Lee".equals(model)) {
+			diffusivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(this);
+		}
+		else if ("Siddiqi Lucas".equals(model)) {
+			diffusivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod(this);
+		}
+		else if ("Alkanol amine".equals(model)) {
+			diffusivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.AmineDiffusivity(this);
+		}
+	}
 
 	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel() {
 		return conductivityCalc;
@@ -161,6 +176,7 @@ public abstract class PhysicalProperties extends java.lang.Object
 			viscosity = viscosityCalc.calcViscosity();
 			kinematicViscosity = this.calcKinematicViscosity();
 			diffusivityCalc.calcDiffusionCoeffisients(binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
+			diffusivityCalc.calcEffectiveDiffusionCoeffisients();
 			conductivity = conductivityCalc.calcConductivity();
 		} catch (Exception e) {
 			// might be a chance that entering here ends in an infinite loop...
@@ -229,6 +245,14 @@ public abstract class PhysicalProperties extends java.lang.Object
 	public double getDiffusionCoeffisient(int i, int j) {
 		return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
 	}
+	
+	public double getDiffusionCoefficient(int i, int j) {
+		return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
+	}
+	
+	public double getDiffusionCoefficient(String comp1, String comp2) {
+		return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(phase.getComponent(comp1).getComponentNumber(), phase.getComponent(comp2).getComponentNumber());
+	}
 
 	public double getFickDiffusionCoeffisient(int i, int j) {
 		return diffusivityCalc.getFickBinaryDiffusionCoefficient(i, j);
@@ -241,6 +265,10 @@ public abstract class PhysicalProperties extends java.lang.Object
 
 	public double getEffectiveDiffusionCoefficient(int i) {
 		return diffusivityCalc.getEffectiveDiffusionCoefficient(i);
+	}
+	
+	public double getEffectiveDiffusionCoefficient(String compName) {
+		return diffusivityCalc.getEffectiveDiffusionCoefficient(phase.getComponent(compName).getComponentNumber());
 	}
 
 	public double getEffectiveSchmidtNumber(int i) {
