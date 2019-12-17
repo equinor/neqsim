@@ -24,6 +24,7 @@ import javax.swing.*;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.characterization.Characterise;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -593,7 +594,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			return totalNumberOfMoles * getMolarMass();
 		} else if (flowunit.equals("kg/min")) {
 			return totalNumberOfMoles * getMolarMass() * 60.0;
-		} else if (flowunit.equals("kg/hr")) {
+		} 
+		else if (flowunit.equals("Sm3/hr")) {
+			return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R*ThermodynamicConstantsInterface.standardStateTemperature/101325.0;
+		}
+		else if (flowunit.equals("Sm3/day")) {
+			return totalNumberOfMoles * 3600.0*24.0 * ThermodynamicConstantsInterface.R*ThermodynamicConstantsInterface.standardStateTemperature/101325.0;
+		}
+		else if (flowunit.equals("kg/hr")) {
 			return totalNumberOfMoles * getMolarMass() * 3600.0;
 		} else if (flowunit.equals("m3/hr")) {
 			return getVolume() / 1.0e5 * 3600.0;
