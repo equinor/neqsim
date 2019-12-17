@@ -152,7 +152,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 			surfTensModel = new GTSurfaceTension(system);
 		} else if ("Firozabadi Ramley".equals(model)) {
 			surfTensModel = new FirozabadiRamleyInterfaceTension(system);
-		} else if ("Parachor".equals(model)) {
+		} else if ("Parachor".equals(model) || "Weinaug-Katz".equals(model)) {
 			surfTensModel = new ParachorSurfaceTension(system);
 		} else {
 			surfTensModel = new ParachorSurfaceTension(system);

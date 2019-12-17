@@ -38,7 +38,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
     }
 
     public double calcViscosity() {
-
+    	this.calcPureComponentViscosity();
         int phaseTypeNumb = 0;
         //if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;
 
@@ -117,9 +117,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         return viscosity;
     }
 
-    public double getPureComponentViscosity(int i) {
-        return 0;
-    }
+   
 
     public double getRefComponentViscosity(double temp, double pres) {
 

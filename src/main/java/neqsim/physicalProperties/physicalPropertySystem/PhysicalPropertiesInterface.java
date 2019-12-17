@@ -14,56 +14,59 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public interface PhysicalPropertiesInterface extends Cloneable {
 
-    public double getPureComponentViscosity(int i);
+	public double getPureComponentViscosity(int i);
 
-    public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
+	public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
 
-    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
+	public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
 
-    public double getViscosity();
+	public double getViscosity();
 
-    public void setMixingRuleNull();
+	public void setMixingRuleNull();
 
-    public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
+	public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
 
-    public double getConductivity();
+	public double getDiffusionCoefficient(String comp1, String comp2);
 
-    public double getKinematicViscosity();
+	public double getConductivity();
 
-    public void setViscosityModel(String model);
+	public double getKinematicViscosity();
 
-    public void setConductivityModel(String model);
+	public double getEffectiveDiffusionCoefficient(String compName);
 
-    public double getDensity();
+	public void setViscosityModel(String model);
 
-    public PhaseInterface getPhase();
-    
-    public void setPhase(PhaseInterface phase);
+	public void setConductivityModel(String model);
 
-    public double calcDensity();
+	public double getDensity();
 
-    public double getEffectiveSchmidtNumber(int i);
+	public PhaseInterface getPhase();
 
-    public double getDiffusionCoeffisient(int i, int j);
+	public void setPhase(PhaseInterface phase);
 
-    public double getEffectiveDiffusionCoefficient(int i);
+	public double calcDensity();
 
-    public void calcEffectiveDiffusionCoefficients();
+	public double getEffectiveSchmidtNumber(int i);
 
-    public double getFickDiffusionCoeffisient(int i, int j);
+	public double getDiffusionCoeffisient(int i, int j);
 
-    public void init(PhaseInterface phase);
+	public double getEffectiveDiffusionCoefficient(int i);
 
-    public void init(PhaseInterface phase, String type);
+	public void calcEffectiveDiffusionCoefficients();
 
+	public double getFickDiffusionCoeffisient(int i, int j);
 
-    public Object clone();
+	public void init(PhaseInterface phase);
 
-    public void setBinaryDiffusionCoefficientMethod(int i);
+	public void init(PhaseInterface phase, String type);
 
-    public void setMulticomponentDiffusionMethod(int i);
+	public Object clone();
 
-    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel();
+	public void setBinaryDiffusionCoefficientMethod(int i);
 
-    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel();
+	public void setMulticomponentDiffusionMethod(int i);
+
+	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel();
+
+	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel();
 }

@@ -92,14 +92,11 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
         return viscosity;
     }
 
-    public double getPureComponentViscosity(int i) {
-        return 0;
-    }
 
     public double getRefComponentViscosity(double temp, double pres) {
 
         referenceSystem.setTemperature(temp);
-        System.out.println("ref temp " + temp);
+       // System.out.println("ref temp " + temp);
         referenceSystem.setPressure(pres);
         //System.out.println("ref pres " + pres);
         referenceSystem.init(1);
