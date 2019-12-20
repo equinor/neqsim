@@ -2581,6 +2581,19 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return cP;
 	}
+	
+	/**
+	 * method to return ideal gas specific heat capacity (Cp0)
+	 *
+	 * @return Cp0 in unit J/K
+	 */
+	public double getCp0() {
+		double cP = 0.0;
+		for (int i = 0; i < numberOfPhases; i++) {
+			cP += getPhase(i).getCp0();
+		}
+		return cP;
+	}
 
 	/**
 	 * method to return specific heat capacity (Cp) in a given unit
@@ -2650,7 +2663,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	/**
-	 * method to return heat capacity ratio/adiabatic index/Poisson constant
+	 * method to return real heat capacity ratio/adiabatic index/Poisson constant
 	 *
 	 * @return kappa
 	 */
@@ -2659,12 +2672,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	/**
-	 * method to return heat capacity ratio/adiabatic index/Poisson constant
+	 * method to return ideal heat capacity ratio/adiabatic index/Poisson constant
 	 *
-	 * @return kappa
+	 * @return gamma
 	 */
 	public double getGamma() {
-		return getCp() / getCv();
+		double Cp0 = getCp0();
+		return Cp0 / (Cp0- ThermodynamicConstantsInterface.R);
 	}
 
 	public void calcInterfaceProperties() {

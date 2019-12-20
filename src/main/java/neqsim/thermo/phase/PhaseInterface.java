@@ -49,8 +49,8 @@ public interface PhaseInterface extends Cloneable {
 	public double getVolume(String unit);
     
     /**
-     * method to return heat capacity ratio/adiabatic index/Poisson constant.
-     * The method calculates it as Cp (real) /Cv (real)
+     * method to return ideal heat capacity ratio/adiabatic index/Poisson constant.
+     * The method calculates it as Cp (ideal) /Cv (ideal)
      *
      * @return gamma
      */
