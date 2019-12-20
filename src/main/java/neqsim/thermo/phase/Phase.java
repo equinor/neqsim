@@ -761,23 +761,22 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     }
 
     /**
-     * method to return heat capacity ratio
-     * The method calculates it as Cp (real) /Cv (real)
+     * method to return heat capacity ratio/adiabatic index/Poisson constant
      *
-     * @return gamma
+     * @return kappa
      */
     public double getKappa() {
         return getCp() / getCv();
     }
 
     /**
-     * method to return ideal heat capacity ratio/adiabatic index/Poisson constant.
-     * The method calculates it as Cp (ideal) /Cv (ideal)
+     * method to return heat capacity ratio/adiabatic index/Poisson constant.
+     * The method calculates it as Cp (real) /Cv (real)
      *
      * @return gamma
      */
     public double getGamma() {
-        return getCp0() / (getCp0()-ThermodynamicConstantsInterface.R);
+        return getCp() / getCv();
     }
 
     /**
