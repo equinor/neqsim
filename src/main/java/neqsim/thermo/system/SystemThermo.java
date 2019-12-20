@@ -2666,6 +2666,16 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public double getGamma() {
 		return getCp() / getCv();
 	}
+	
+	/**
+	 * method to return heat capacity ratio calculated as Cp/(Cp-R)
+	 *
+	 * @return kappa
+	 */
+	public double getGamma2() {
+		double cp0 = getCp();
+		return cp0 / (cp0-ThermodynamicConstantsInterface.R*totalNumberOfMoles);
+	}
 
 	public void calcInterfaceProperties() {
 		interfaceProp.init();
