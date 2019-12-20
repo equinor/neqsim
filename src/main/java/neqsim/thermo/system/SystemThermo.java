@@ -2674,7 +2674,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 */
 	public double getGamma2() {
 		double cp0 = getCp();
-		return cp0 / (cp0-ThermodynamicConstantsInterface.R);
+		return cp0 / (cp0-ThermodynamicConstantsInterface.R*totalNumberOfMoles);
 	}
 
 	public void calcInterfaceProperties() {

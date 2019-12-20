@@ -786,7 +786,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
 	 */
 	public double getGamma2() {
 		double cp0 = getCp();
-		return cp0 / (cp0-ThermodynamicConstantsInterface.R);
+		return cp0 / (cp0-ThermodynamicConstantsInterface.R*numberOfMolesInPhase);
 	}
 
 	
