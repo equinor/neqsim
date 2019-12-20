@@ -779,6 +779,17 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
         return getCp() / getCv();
     }
 
+	/**
+	 * method to return heat capacity ratio calculated as Cp/(Cp-R)
+	 *
+	 * @return kappa
+	 */
+	public double getGamma2() {
+		double cp0 = getCp();
+		return cp0 / (cp0-ThermodynamicConstantsInterface.R);
+	}
+
+	
     /**
      * method to return enthalpy of a phase in unit Joule
      */

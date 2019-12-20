@@ -168,14 +168,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"),
 						getSpeed());
 				setPolytropicEfficiency(polytropEff / 100.0);
-				logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
+				//logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
 				double polytropicHead = getCompressorChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 				double temperature_inlet = thermoSystem.getTemperature();
 				double z_inlet = thermoSystem.getZ();
 				double MW = thermoSystem.getMolarMass();
-				double kappa = thermoSystem.getGamma();
+				double kappa = thermoSystem.getGamma2();
 				double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
-				logger.info("n " + n);
+				//logger.info("n " + n);
 				polytropicExponent = n;
 				if (getCompressorChart().getHeadUnit().equals("meter")) {
 					polytropicFluidHead = polytropicHead / 1000.0 * 9.81;
@@ -190,18 +190,18 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 						.pow((polytropicFluidHead * 1000.0 + (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW))
 								/ (n / (n - 1.0) * z_inlet * 8.314 * (temperature_inlet) / MW), n / (n - 1.0));
 				// System.out.println("pressure ratio " + pressureRatio);
-				logger.info("pressure ratio " + pressureRatio);
+			//	logger.info("pressure ratio " + pressureRatio);
 				setOutletPressure(thermoSystem.getPressure() * pressureRatio);
-				logger.info("polytropic head " + polytropicFluidHead + " kj/kg");
-				logger.info("polytropic head " + polytropicHeadMeter + " meter");
+				//logger.info("polytropic head " + polytropicFluidHead + " kj/kg");
+				//logger.info("polytropic head " + polytropicHeadMeter + " meter");
 				if (getAntiSurge().isActive()) {
 					logger.info("surge flow " + getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead)
 							+ " m3/hr");
 					surgeCheck = isSurge(polytropicHead, thermoSystem.getFlowRate("m3/hr"));
-					logger.info("surge? " + surgeCheck);
+					//logger.info("surge? " + surgeCheck);
 				}
 				if (getCompressorChart().getStoneWallCurve().isActive()) {
-					logger.info("stone wall? " + isStoneWall(polytropicHead, thermoSystem.getFlowRate("m3/hr")));
+					//logger.info("stone wall? " + isStoneWall(polytropicHead, thermoSystem.getFlowRate("m3/hr")));
 				}
 				if (surgeCheck && getAntiSurge().isActive()) {
 					double surgeFLow = getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
@@ -211,7 +211,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					thermoSystem.init(3);
 					fractionAntiSurge = thermoSystem.getTotalNumberOfMoles() / orginalMolarFLow - 1.0;
 					getAntiSurge().setCurrentSurgeFraction(fractionAntiSurge);
-					logger.info("fractionAntiSurge: " + fractionAntiSurge);
+				//	logger.info("fractionAntiSurge: " + fractionAntiSurge);
 				}
 
 				powerSet = true;

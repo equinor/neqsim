@@ -97,6 +97,13 @@ public interface SystemInterface extends Cloneable {
      */
     public void initPhysicalProperties(String propertyName);
 
+	/**
+	 * method to return heat capacity ratio calculated as Cp/(Cp-R)
+	 *
+	 * @return kappa
+	 */
+	public double getGamma2();
+	
     /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant
      *
