@@ -28,7 +28,7 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
 
     public double getValue(String tounit) {
         if (tounit.equals("barg")) {
-            return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue - 0.01325;
+            return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue - 1.01325;
         } else {
             return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
         }
