@@ -35,7 +35,7 @@ public class TestFlash {
 		int phaseNumber;
 
 		double[][] fluidProperties = new double[10][67];
-		int fluidNumber = 7;
+		int fluidNumber = 1;
 		int flashMode = 1;
 		double[] spec1 = { 1, 23.2, 24.23, 25.98, 25.23, 26.1, 27.3, 28.7, 23.5, 1.0 };
 		double[] spec2 = { 288.15, 290.1, 295.1, 301.2, 299.3, 310.2, 315.3, 310.0, 305.2, 312.7 }; // Temperatures
@@ -251,7 +251,7 @@ public class TestFlash {
 			fluidProperties[t][k++] = fluid.getCp("J/molK"); // Mix Heat Capacity-Cp [J/molK]
 			fluidProperties[t][k++] = fluid.getCv("J/molK");// Mix Heat Capacity-Cv [J/molK]
 			// fluidProperties[t][k++] = fluid.Cp()/fluid.getCv();// Mix Kappa (Cp/Cv)
-			fluidProperties[t][k++] = fluid.getKappa();// Mix Kappa (Cp/Cv)
+			fluidProperties[t][k++] = fluid.getGamma();// Mix Kappa (Cp/Cv)
 			fluidProperties[t][k++] = Double.NaN; // Mix JT Coefficient [K/Pa]
 			fluidProperties[t][k++] = Double.NaN; // Mix Velocity of Sound [m/s]
 			fluidProperties[t][k++] = fluid.getViscosity("kg/msec"); // Mix Viscosity [Pa s] or [kg/(m*s)]

@@ -75,13 +75,13 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidMechanics.flowSystem.
     
     
     public static void main(String[] args) {
-        // Initierer et nyt rørsystem
+        // Initierer et nyt rorsystem
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new TwoPhaseReactorFlowSystem();
         
         // Definerer termodyanmikken5
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);    // initierer et system som benytter SRK tilstandsligning
         // med trykk 305.3 K og 125 bar
-        neqsim.thermodynamicOperations.ThermodynamicOperations testOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);                  // gjør termodyanmiske Flash rutiner tilgjengelige
+        neqsim.thermodynamicOperations.ThermodynamicOperations testOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);                  // gjor termodyanmiske Flash rutiner tilgjengelige
         testSystem.addComponent("methane", 0.11152181, 0);
         //   testSystem.addComponent("ethane", 0.0011152181, 0);
         testSystem.addComponent("water", 0.04962204876, 1);
@@ -89,24 +89,24 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidMechanics.flowSystem.
         testSystem.setMixingRule(2);
         // benytter klassiske blandingsregler
         
-        pipe.setInletThermoSystem(testSystem);                               // setter termodyanmikken for rørsystemet
-        pipe.setNumberOfLegs(5);                                        // deler inn røret i et gitt antall legger
+        pipe.setInletThermoSystem(testSystem);                               // setter termodyanmikken for rorsystemet
+        pipe.setNumberOfLegs(5);                                        // deler inn roret i et gitt antall legger
         pipe.setNumberOfNodesInLeg(100);                                 // setter antall nodepunkter (beregningspunkter/grid) pr. leg
         double[] height = {0,0,0,0,0,0};
         double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
         double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
         
-        pipe.setLegHeights(height);                                     // setter inn høyde for hver leg-ende
+        pipe.setLegHeights(height);                                     // setter inn hoyde for hver leg-ende
         pipe.setLegPositions(length);                                  // setter avstand til hver leg-ende
         pipe.setLegOuterTemperatures(outerTemperature);
         
-        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface [] pipeGemometry = new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData[5];    // Deffinerer geometrien for røret
+        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface [] pipeGemometry = new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData[5];    // Deffinerer geometrien for roret
         double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
         for(int i=0;i<pipeDiameter.length;i++) {
             pipeGemometry[i] = new neqsim.fluidMechanics.geometryDefinitions.reactor.ReactorData(pipeDiameter[i], 1);
         }
-        pipe.setEquipmentGeometry(pipeGemometry);                      // setter inn rørgeometrien for hver leg
-        // utfører bergninger
+        pipe.setEquipmentGeometry(pipeGemometry);                      // setter inn rorgeometrien for hver leg
+        // utforer bergninger
         pipe.createSystem();
         pipe.init();
         

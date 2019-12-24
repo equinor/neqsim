@@ -5,7 +5,6 @@
  */
 package neqsim.thermo.phase;
 
-
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -51,6 +50,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     /**
      * Creates new PhaseSrkEos
      */
+    
     public PhaseSrkCPAojAlgo() {
         super();
     }

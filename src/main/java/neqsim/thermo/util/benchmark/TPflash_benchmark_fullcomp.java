@@ -65,7 +65,7 @@ public class TPflash_benchmark_fullcomp {
         testSystem.setMixingRule(9);
         logger.info("start benchmark TPflash......");
         long time = System.currentTimeMillis();
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 1000000; i++) {
             testOps.TPflash();
             try {
             //    testOps.hydrateFormationTemperature();

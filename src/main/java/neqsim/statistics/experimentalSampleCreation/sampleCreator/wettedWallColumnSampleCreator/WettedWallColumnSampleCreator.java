@@ -124,7 +124,7 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
                 system.getPhases()[0].addMoles(1,dNdt[i]*(time[i]-time[i-1]));
                 system.getPhases()[1].addMoles(1,-dNdt[i]*(time[i]-time[i-1]));
                 system.init(1);
-                // her bør det komme en funksjon som finer nummeret til Co2!
+                // her bor det komme en funksjon som finer nummeret til Co2!
                 dPdt[i] = (smoothedPressure[i+1]-smoothedPressure[i-1])/(time[i+1]-time[i-1]);
               //  dPdn[i] = system.getPhases()[1].getdPdn(1);
             }

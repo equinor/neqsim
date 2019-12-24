@@ -334,7 +334,7 @@ abstract class Component extends Object
 					heatOfVaporizationCoefs[i] = Double
 							.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i + 1))));
 				}
-				// disse må settes inn fra database ssociationsites
+				// disse maa settes inn fra database ssociationsites
 				numberOfAssociationSites = Integer.parseInt(dataSet.getString("associationsites"));
 				orginalNumberOfAssociationSites = numberOfAssociationSites;
 				associationScheme = dataSet.getString("associationscheme");
@@ -517,7 +517,7 @@ abstract class Component extends Object
 	public double getHeatOfVapourization(double temp) {
 		return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1] * temp + heatOfVaporizationCoefs[2] * temp * temp
 				+ heatOfVaporizationCoefs[3] * temp * temp * temp * heatOfVaporizationCoefs[4] * temp * temp * temp
-						* temp; // må settes på rett form
+						* temp; // maa settes paa rett form
 	}
 
 	public final double getTripplePointDensity() {
@@ -1028,7 +1028,7 @@ abstract class Component extends Object
 		}
 		return numberOfMolesInPhase
 				* (getIdEntropy(temperature) - (R * Math.log(pressure / referencePressure)) - R * Math.log(x))
-				+ getSresTP(temperature) * numberOfMolesInPhase; // 1 bør være Z
+				+ getSresTP(temperature) * numberOfMolesInPhase; // 1 bor vaere Z
 	}
 
 	public final String getName() {

@@ -95,7 +95,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow impleme
                 redMassTrans = 9.777e-4 * Math.pow(node.getReynoldsNumber(phase),0.6804) * Math.pow(schmidtNumber, 0.5) ;
             }
 //            System.out.println("redmass" + redMassTrans + "  redmass " + redMassTrans/Math.sqrt(schmidtNumber) +"  rey " + node.getReynoldsNumber(phase)/schmidtNumber);
-            // er usikker på denne korreksjonen med 1e-2 - må sjekkes opp mot artikkel av Yih og Chen (1982) - satser på at de ga den med enhet cm/sek
+            // er usikker paa denne korreksjonen med 1e-2 - maa sjekkes opp mot artikkel av Yih og Chen (1982) - satser paa at de ga den med enhet cm/sek
             massTrans = redMassTrans*Math.pow(Math.pow(node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity(),2.0)/gravity  , -1.0/3.0) * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity() / schmidtNumber;
         }
         if(phase==0){

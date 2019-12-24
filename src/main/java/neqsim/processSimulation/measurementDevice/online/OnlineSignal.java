@@ -32,7 +32,7 @@ public class OnlineSignal {
 
     Date dateStamp = new Date();
     String name = "";
-    String plantName = "Kårstø";
+    String plantName = "Kaarsto";
     String transmitterName = "21TI1117";
     java.sql.ResultSet dataSet = null;
     double value = 1.0;

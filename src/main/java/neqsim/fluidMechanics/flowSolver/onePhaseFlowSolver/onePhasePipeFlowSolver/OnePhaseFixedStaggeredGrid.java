@@ -201,7 +201,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             b[0] = a[0] + c[0] + (Fe - Fw) + oldMass[0];
             r[0] = oldMass[0] * oldDensity[0];
 
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             //           a[0] = - a[0];
             //           c[0] = -c[0];
         }
@@ -222,7 +222,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             b[i] = a[i] + c[i] + (Fe - Fw) + oldMass[i];
             r[i] = oldMass[i] * oldDensity[i];
 
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = -a[i];
             c[i] = -c[i];
         }
@@ -243,7 +243,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         c[i] = Math.max(-Fe, 0);
         b[i] = a[i] + c[i] + (Fe - Fw) + oldMass[i];
         r[i] = oldMass[i] * oldDensity[i];
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[i] = -a[i];
         c[i] = -c[i];
     }
@@ -297,7 +297,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[i];
             //   System.out.println("Fe-Fw: " +(Fe - Fw)  +  "   Fe: " + Fe);
             r[i] = SU + oldImpuls[i] * oldVelocity[i];
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = -a[i];
             c[i] = -c[i];
         }
@@ -330,7 +330,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[i];
         r[i] = SU + oldImpuls[i] * oldVelocity[i];
 
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[numberOfNodes - 1] = -a[numberOfNodes - 1];
         c[numberOfNodes - 1] = -c[numberOfNodes - 1];
     }
@@ -365,7 +365,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldEnergy[i];
             r[i] = SU + oldEnergy[i] * oldInternalEnergy[i];
 
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = -a[i];
             c[i] = -c[i];
         }
@@ -423,7 +423,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
             r[i] = oldComp[i] * oldComposition[componentNumber][i];
 
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = -a[i];
             c[i] = -c[i];
         }
@@ -445,7 +445,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         c[i] = Math.max(-Fe, 0);
         b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
         r[i] = oldComp[i] * oldComposition[componentNumber][i];
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[i] = -a[i];
         c[i] = -c[i];
     }

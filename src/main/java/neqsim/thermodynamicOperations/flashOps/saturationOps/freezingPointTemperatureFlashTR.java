@@ -57,7 +57,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         //for(int k=0;k<system.getPhases()[0].getNumberOfComponents();k++){
         for(int k=0;k<1;k++){
         
-            //if(system.getPhase(0).getComponent(k).fugcoef(system.getPhase(0))<9e4){//&& system.getPhase(3).getComponent(k).doSolidCheck()){ // solidCheck variablen er satt når man kaller setSolidCheck Funksjonen som må kjøres fær du kjører scriptet.
+            //if(system.getPhase(0).getComponent(k).fugcoef(system.getPhase(0))<9e4){//&& system.getPhase(3).getComponent(k).doSolidCheck()){ // solidCheck variablen er satt naar man kaller setSolidCheck Funksjonen som maa kjores faer du kjorer scriptet.
                     FCompNames[k] = system.getPhase(0).getComponent(k).getComponentName();
                     if(system.getPhase(0).getComponent(k).getHsub()<1000) {
                         CCequation =false;
@@ -106,7 +106,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                         dfugdt = Math.log((system.getPhase(0).getComponent(k).getSolidVaporPressuredT(temp)*Math.exp(solvol/(R*temp)*(pres-Pvapsolid)))/pres);
                     }
                     //Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
-                    //legge in sjekk på om soldens eksisterer i databasen.
+                    //legge in sjekk paa om soldens eksisterer i databasen.
                     
                     soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp)*1000;
                     

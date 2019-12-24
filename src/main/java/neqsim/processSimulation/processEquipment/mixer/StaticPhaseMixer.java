@@ -46,7 +46,7 @@ public class StaticPhaseMixer extends StaticMixer implements ProcessEquipmentInt
                 
                 
                 //
-                // her må man egentlig sjekke at phase typen er den samme !!! antar at begge er to fase elle gass - tofase
+                // her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er to fase elle gass - tofase
                 for(int p=0;p<numberOfPhases;p++){
                     moles[p] = ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(p).getComponents()[i].getNumberOfMolesInPhase();
                     phaseType[p] = ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(p).getPhaseType();
@@ -83,7 +83,7 @@ public class StaticPhaseMixer extends StaticMixer implements ProcessEquipmentInt
                     System.out.println("adding moles finished");
                 }
                 else {
-                    System.out.println("ikke gå hit");
+                    System.out.println("ikke gaa hit");
                     for(int p=0;p<numberOfPhases;p++){
                         mixedStream.getThermoSystem().addComponent(compName, moles[p], p);
                     }

@@ -14,7 +14,7 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
     
     
     public static void main(String[] args) {
-        // Initierer et nyt rørsystem
+        // Initierer et nyt rorsystem
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystemReac();
         
         SystemInterface testSystem = new SystemFurstElectrolyteEos(295.3, 50.01325);
@@ -33,25 +33,25 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
         //testSystem.setNumericDerivatives(true);
         testSystem.initPhysicalProperties();
         
-        pipe.setInletThermoSystem(testSystem);                           // setter termodyanmikken for rørsystemet
-        pipe.setNumberOfLegs(3);                                        // deler inn røret i et gitt antall legger
+        pipe.setInletThermoSystem(testSystem);                           // setter termodyanmikken for rorsystemet
+        pipe.setNumberOfLegs(3);                                        // deler inn roret i et gitt antall legger
         pipe.setNumberOfNodesInLeg(10);                                 // setter antall nodepunkter (beregningspunkter/grid) pr. leg
          
         double[] height = {0,0,0,0,0,0};
         double[] length = {0.0, 0.03, 0.07, 0.13, 2.5, 3.7};
         double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
         
-        pipe.setLegHeights(height);                                     // setter inn høyde for hver leg-ende
+        pipe.setLegHeights(height);                                     // setter inn hoyde for hver leg-ende
         pipe.setLegPositions(length);                                  // setter avstand til hver leg-ende
         pipe.setLegOuterTemperatures(outerTemperature);
         
-        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface [] pipeGemometry = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[5];    // Deffinerer geometrien for røret
+        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface [] pipeGemometry = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[5];    // Deffinerer geometrien for roret
         double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025, 0.025};
         for(int i=0;i<pipeDiameter.length;i++) {
             pipeGemometry[i] = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
         }
-        pipe.setEquipmentGeometry(pipeGemometry);                      // setter inn rørgeometrien for hver leg
-        // utfører bergninger
+        pipe.setEquipmentGeometry(pipeGemometry);                      // setter inn rorgeometrien for hver leg
+        // utforer bergninger
         pipe.createSystem();
         pipe.setEquilibriumMassTransfer(false);
         pipe.setEquilibriumHeatTransfer(false);

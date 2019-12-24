@@ -64,7 +64,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
                      logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName() );
                     }
              else{
-                    testSystem.setTemperature(FCompTemp[k]); //øker hastigheten når det kun sjekkes for en komponent
+                    testSystem.setTemperature(FCompTemp[k]);
                     logger.info("starting at Temperature  " + system.getTemperature());
                     }
           
@@ -157,7 +157,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
           }
           
          testSystem.setTemperature(newTemp);
-            }//do løkke
+            }//do lokke
       while(((Math.abs(FugRatio-1)>=0.00001 && iterations<100)) && noFreezeliq && SolidForms);
             logger.info("noFreezeliq: "+ noFreezeliq+ " SolidForms: " + SolidForms);  
             
@@ -177,7 +177,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
           
           logger.info("Iterations :" + iterations);
                     
-          }//end Ifløkke    
+          }//end Iflokke    
           }//end for 
         maximum = FCompTemp[0];   // start with the first value
         for (int i=1; i<FCompTemp.length; i++) {

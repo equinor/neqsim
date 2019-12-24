@@ -56,9 +56,9 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         if (referenceStateType.equals("solvent")) {
-            dfugdp = 0.0; // foreløpig uten pointing
+            dfugdp = 0.0; // forelopig uten pointing
         } else {
-            dfugdp = 0.0; // foreløpig uten pointing
+            dfugdp = 0.0; // forelopig uten pointing
         }
         return dfugdp;
     }

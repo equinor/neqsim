@@ -29,7 +29,7 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
     /** Creates new AtractiveTermSrk */
     public AtractiveTermTwuCoonParam(ComponentEosInterface component, double[] params) {
         this(component);
-        //this.parameters [0] for å benytte gitte input parametre
+        //this.parameters [0] for aa benytte gitte input parametre
         System.arraycopy(params, 0, this.parameters, 0, params.length);
 
 
