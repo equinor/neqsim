@@ -27,30 +27,32 @@ public class TestCharacterizationCondensate {
     }
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 121.0, 250.0);
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 50.0);
 
         testSystem.setFluidName("AsgardB");
 
         //testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");//(RiaziDaubert  PedersenPR  PedersenSRK
       //  testSystem.getCharacterization().setPlusFractionModel("heavyOil");
-        testSystem.getCharacterization().setLumpingModel("no"); //"abLumping";
-        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
+        testSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); //"abLumping";
+        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(13);
+     //   testSystem.addComponent("water", 0.5);
+        testSystem.addComponent("nitrogen", 0.002);
+        testSystem.addComponent("CO2", 0.005);
+        testSystem.addComponent("methane", 0.4);
+        testSystem.addComponent("ethane", 0.03);
+        testSystem.addComponent("propane", 0.01);
+        testSystem.addComponent("n-butane", 0.002);
+        testSystem.addComponent("i-butane", 0.006);
+        testSystem.addComponent("n-pentane", 0.004);
+        testSystem.addComponent("i-pentane", 0.005);
 
-        testSystem.addComponent("nitrogen", 0.87);
-        testSystem.addComponent("CO2", 2.769723);
-        testSystem.addComponent("methane", 68.30317);
-        testSystem.addComponent("ethane", 9.519049);
-        testSystem.addComponent("propane", 5.769423);
-        testSystem.addComponent("n-butane", 2.749725);
-        testSystem.addComponent("n-pentane", 1.449855);
+        testSystem.addTBPfraction("C6", 0.004, 85.0253 / 1000.0, 0.667229);
+        testSystem.addTBPfraction("C7", 0.001, 90.3717 / 1000.0, 0.7463691);
+        testSystem.addTBPfraction("C8", 0.001, 102.46950 / 1000.0, 0.7709114);
+        testSystem.addTBPfraction("C9", 0.001, 115.6 / 1000.0, 0.7901);
+        testSystem.addTBPfraction("C10", 0.02, 225.5046 / 1000.0, 0.8411014);
 
-      //  testSystem.addTBPfraction("C6", 1.49985, 86.3 / 1000.0, 0.7432);
-        testSystem.addTBPfraction("C7", 1.0, 187.0 / 1000.0, 0.84738);
-   //   testSystem.addTBPfraction("C8", 0.939906, 107.0 / 1000.0, 0.765);
-    //    testSystem.addTBPfraction("C9", 0.879912, 121.0 / 1000.0, 0.781);
-   //     testSystem.addTBPfraction("C10", 1.45, 200.0 / 1000.0, .8948);
-
-        testSystem.addComponent("water", 10.87);
+      //  testSystem.addComponent("water", 10.87);
         //  testSystem.addPlusFraction("C11", 1.44, 231.0 / 1000, 0.87);
         testSystem.setHeavyTBPfractionAsPlusFraction();
         testSystem.getCharacterization().characterisePlusFraction();
@@ -59,7 +61,8 @@ public class TestCharacterizationCondensate {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
-        testSystem.initPhysicalProperties();
+        testSystem.setTotalFlowRate(0.0, "kg/sec");
+     //   testSystem.initPhysicalProperties();
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         try {
@@ -70,5 +73,20 @@ public class TestCharacterizationCondensate {
             logger.error(e.toString());
         }
         testSystem.display();
+        
+        
+        /*
+        System.out.println("molar mass " +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );
+        
+        testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4, 0.01, 0.01, 0.02, 0.02, 0.01 ,0.01, 0.01, 0.01 ,0.01, 0.01, 0.2 });
+        try {
+            testOps.TPflash();
+            //           testOps.hydrateFormationTemperature();
+//            testOps.dewPointTemperatureFlash();
+        } catch (Exception e) {
+            logger.error(e.toString());
+        }
+        testSystem.display();
+        */
     }
 }

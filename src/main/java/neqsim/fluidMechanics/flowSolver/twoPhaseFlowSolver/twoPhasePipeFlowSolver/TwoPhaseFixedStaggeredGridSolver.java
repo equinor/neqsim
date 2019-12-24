@@ -247,7 +247,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             b[0] = 1.0;//a[0] + c[0] + (Fe - Fw) + oldMass[0];
             r[0] = 0.0;//oldMass[0]*oldDensity[0];
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[0] = - a[0];
             c[0] = -c[0];
         }
@@ -269,7 +269,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             b[i] = a[i] + c[i] + (Fe - Fw) + oldMass[phase][i];
             r[i] = oldMass[phase][i]*oldDensity[phase][i];
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -291,7 +291,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
         c[i] = 0;//Math.max(-Fe,0);
         b[i] = 1;//a[i] + c[i] + (Fe - Fw) + oldMass[phase][i];
         r[i] = 0;//oldMass[phase][i]*oldDensity[phase][i];
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[i] = - a[i];
         c[i] = -c[i];
     }
@@ -321,7 +321,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             b[0] = 1.0;//a[0] + c[0] + (Fe - Fw) + oldMass[0];
             r[0] = 0.0;//oldMass[0]*oldDensity[0];
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[0] = - a[0];
             c[0] = -c[0];
         }
@@ -343,7 +343,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             b[i] = a[i] + c[i] + (Fe - Fw) + oldMass[phase][i];
             r[i] = oldMass[phase][i]*oldDensity[phase][i];
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -366,7 +366,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
         c[i] = Math.max(-Fe,0);
         b[i] = a[i] + c[i] + (Fe - Fw) + oldMass[phase][i];
         r[i] = oldMass[phase][i]*oldDensity[phase][i];
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[i] = - a[i];
         c[i] = -c[i];
     }
@@ -422,7 +422,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             c[i] = Math.max(-Fe,0);//- Fe/2.0;
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[phase][i];
             r[i] =  SU + oldImpuls[phase][i] * oldVelocity[phase][i];
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -458,7 +458,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
         b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[phase][i];
         r[i] = SU + oldImpuls[phase][i] * oldVelocity[phase][i];
         
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[numberOfNodes-1] = - a[numberOfNodes-1];
         c[numberOfNodes-1]= -c[numberOfNodes-1];
     }
@@ -497,7 +497,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldEnergy[phase][i];
             r[i] =  SU + oldEnergy[phase][i]*oldInternalEnergy[phase][i];
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -555,7 +555,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             c[i] = Math.max(-Fe,0);//- Fe/2.0;
             b[i] = a[i] + c[i] + (Fe - Fw) - sign * pipe.getNode(i).getArea(phase) * pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)/pipe.getNode(i).getVelocity()*pipe.getNode(i).getGeometry().getNodeLength();
             r[i] =  0;
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -601,7 +601,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
             b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[phase][i];
             r[i] = SU + oldComp[phase][i]*oldComposition[phase][componentNumber][i];
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -627,7 +627,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver imp
         c[i] = 0.0;//Math.max(-Fe,0);
         b[i] = 1.0;//a[i] + c[i] + (Fe - Fw) + oldComp[phase][i];
         r[i] = 0.0;//SU + oldComp[phase][i]*oldComposition[phase][componentNumber][i];
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[i] = - a[i];
         c[i] = -c[i];
     }

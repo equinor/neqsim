@@ -26,7 +26,7 @@ public class OnshoreProcess1 {
 
             double totalProductionRate = 222.5808099 * 3600.0; //kg/time
             double formationWater = 0.02; //m^3/day
-            double productionSplit = 0.999; // 1.0 means only snøhvit
+            double productionSplit = 0.999; // 1.0 means only snohvit
 
             // MEG injection rate
             double injectionRate = 6.3;// m^3/time
@@ -34,7 +34,7 @@ public class OnshoreProcess1 {
             double molMEG = wtFracMEG * injectionRate * 1.117 * 1000.0 / 3600.0 / 0.062;
             double molwater = (1.0 - wtFracMEG) * injectionRate * 1.0 * 1000.0 / 3600.0 / 0.018;
 
-            //Snøhvit reservoir system
+            //Snohvit reservoir system
             double reservoirGasMolarMassSnohvit = 0.02186;//kg/mol
             double reservoirGasFlowSnohvit = productionSplit * totalProductionRate; // kg/time Designbasis: 223.04 kg/sek
             double reservoirTemperatureSnohvit = 273.15 + 91.4; //K
@@ -140,9 +140,9 @@ public class OnshoreProcess1 {
             MeasurementDeviceInterface reservoirTemperaturTransmitter = new TemperatureTransmitter(stream_1);
             MeasurementDeviceInterface reservoirPressureTransmitter = new PressureTransmitter(stream_1);
             WaterContentAnalyser waterAnalyser = new WaterContentAnalyser(separator.getGasOutStream());
-            waterAnalyser.setName("Snøhvit Total Water Analyser");
+            waterAnalyser.setName("Snohvit Total Water Analyser");
             MolarMassAnalyser molarMassAnalyser = new MolarMassAnalyser(separator.getGasOutStream());
-            molarMassAnalyser.setName("Snøhvit molar mass analyser");
+            molarMassAnalyser.setName("Snohvit molar mass analyser");
             StreamInterface stream_2 = separator.getGasOutStream();
             stream_2.setName("Gas From Snohvit Reservoir");
 
@@ -191,7 +191,7 @@ public class OnshoreProcess1 {
             SimpleTPoutPipeline pipeLine1 = new SimpleTPoutPipeline(mixer1.getOutStream());
             pipeLine1.setOutPressure(55.0);
             pipeLine1.setOutTemperature(273.15 + 5.0);
-            pipeLine1.setName("snøhvit pipeline");
+            pipeLine1.setName("snohvit pipeline");
             pipeLine1.setNumberOfLegs(1);
             pipeLine1.setPipeDiameters(new double[]{1.2, 1.2});
             pipeLine1.setLegPositions(new double[]{0, 150000.0});

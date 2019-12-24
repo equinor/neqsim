@@ -226,7 +226,7 @@ public class TBPfractionModel implements Serializable {
         }
 
         public double calcTB(double molarMass, double density) {
-            //Søreide method (Whitson book)
+            //Soreide method (Whitson book)
             return 5.0 / 9.0 * (1928.3 - 1.695e5 * Math.pow(molarMass, -0.03522) * Math.pow(density, 3.266) * Math.exp(-4.922e-3 * molarMass - 4.7685 * density + 3.462e-3 * molarMass * density));//97.58*Math.pow(molarMass,0.3323)*Math.pow(density,0.04609);
         }
 

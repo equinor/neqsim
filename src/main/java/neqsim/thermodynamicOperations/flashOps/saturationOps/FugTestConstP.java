@@ -118,7 +118,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
            
                    // if(Math.abs(Fugrel[1][i]-1)<0.01)testSystem.display();
                   
-            }//end iterasjons løkke
+            }//end iterasjons lokke
             
             String[] title = new String[2];
             title[0]="Solid Fugacity";
@@ -131,8 +131,8 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
             
             graph2b grafvapor = new graph2b(Fugrel,title2,compName+" Fugacity Ratio", "Temperature [K]","Fsolid/Ffluid");
             grafvapor.setVisible(true);
-        }//end solidcheck løkke
-      }//end komponent løkke
+        }//end solidcheck lokke
+      }//end komponent lokke
     } //end run
     
     public void PrintToFile(String FileName){

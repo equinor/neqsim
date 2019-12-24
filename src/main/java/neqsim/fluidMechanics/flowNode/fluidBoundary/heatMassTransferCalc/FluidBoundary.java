@@ -191,7 +191,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
         for (int i = 0; i < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; i++) {
             for (int j = 0; j < bulkSystem.getPhases()[phase].getNumberOfComponents() - 1; j++) {
                 temp = (i == j) ? 1.0 : 0.0;
-                nonIdealCorrections[phase].set(i, j, temp + bulkSystem.getPhases()[phase].getComponents()[i].getx() * bulkSystem.getPhases()[phase].getComponents()[i].getdfugdn(j) * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase());  // her må det fylles inn
+                nonIdealCorrections[phase].set(i, j, temp + bulkSystem.getPhases()[phase].getComponents()[i].getx() * bulkSystem.getPhases()[phase].getComponents()[i].getdfugdn(j) * bulkSystem.getPhases()[phase].getNumberOfMolesInPhase());  // her maa det fylles inn
             }
         }
     //System.out.println("non-id");

@@ -18,7 +18,7 @@ public class CompositionEstimation {
         reservoirTemperature = reservoirTemperature;
         reservoirPressure = reservoirPressure;
     }
-// correltaion from Håland et. al. 1999
+// correltaion from Haaland et. al. 1999
     public double estimateH2Sconcentration() {
         return 5.0e7 * Math.exp(-6543.0 / reservoirTemperature);
     }

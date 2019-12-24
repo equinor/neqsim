@@ -120,7 +120,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                 }
             }//end if
 
-        }// end for løkke
+        }// end for lokke
 
         if (SolidForms) {
             system.setTemperature(maxTemperature);

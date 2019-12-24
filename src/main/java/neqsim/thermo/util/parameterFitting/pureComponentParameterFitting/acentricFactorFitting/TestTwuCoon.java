@@ -88,7 +88,7 @@ public class TestTwuCoon extends java.lang.Object {
 
             for (int i = 0; i < 30; i++) {
                 double temperature = Ttp + ((TC - Ttp) / 30) * i;
-                //kan legge inn dewTflash for å finne avvik til tilsvarende linje med schwarzentruber... da også for flerkomponent blandinger istedenfor antoine ligningen.
+                //kan legge inn dewTflash for aa finne avvik til tilsvarende linje med schwarzentruber... da ogsaa for flerkomponent blandinger istedenfor antoine ligningen.
 //                double pressure = testSystem.getPhase(0).getComponent(0).getAntoineVaporPressure(temperature);
                 System2.setTemperature(temperature);
                 Ops.dewPointPressureFlash();

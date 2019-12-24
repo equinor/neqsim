@@ -15,7 +15,7 @@
  */
 
 /*
- * SnøhvitCO2RemovalModule.java
+ * SnohvitCO2RemovalModule.java
  *
  * Created on 1. november 2006, 20:33
  *
@@ -47,7 +47,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double adsorbentFillingHeight = 3.0;
 
     /**
-     * Creates a new instance of SnøhvitCO2RemovalModule
+     * Creates a new instance of SnohvitCO2RemovalModule
      */
     public AdsorptionDehydrationlModule() {
     }

@@ -43,7 +43,7 @@ public class StaticNeqMixer extends StaticMixer implements ProcessEquipmentInter
                 System.out.println("adding: " + componentName);
                 int numberOfPhases= ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfPhases();
                 double[] moles = new double[numberOfPhases];
-                // her må man egentlig sjekke at phase typen er den samme !!! antar at begge er to fase elle gass - tofase
+                // her maa man egentlig sjekke at phase typen er den samme !!! antar at begge er to fase elle gass - tofase
                 for(int p=0;p<numberOfPhases;p++){
                     moles[p] = ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem()).getPhases()[p].getComponents()[i].getNumberOfMolesInPhase();
                 }
@@ -64,7 +64,7 @@ public class StaticNeqMixer extends StaticMixer implements ProcessEquipmentInter
                     System.out.println("adding moles finished");
                 }
                 else {
-                    System.out.println("ikke gå hit");
+                    System.out.println("ikke gaa hit");
                     for(int p=0;p<numberOfPhases;p++){
                         mixedStream.getThermoSystem().addComponent(compName, moles[p], p);
                     }

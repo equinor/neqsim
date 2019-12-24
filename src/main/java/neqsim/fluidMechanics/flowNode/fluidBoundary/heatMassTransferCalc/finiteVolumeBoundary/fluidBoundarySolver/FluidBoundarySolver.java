@@ -106,7 +106,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface{
         b[0] = 1.0;//boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
         r[0] = boundary.getNode(0).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
         System.out.println("b0 :" + b[0]);
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[0] = - a[0];
         c[0] = -c[0];
         
@@ -119,7 +119,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface{
             b[i] = a[i] + c[i];
             r[i] = 0.0;
             
-            // setter ligningen på rett form
+            // setter ligningen paa rett form
             a[i] = - a[i];
             c[i] = -c[i];
         }
@@ -130,7 +130,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface{
         b[i] = 1.0;// boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
         r[i] = boundary.getNode(i).getBulkSystem().getPhases()[1].getComponents()[componentNumber].getx();
         System.out.println("bn :" + b[i]);
-        // setter ligningen på rett form
+        // setter ligningen paa rett form
         a[i] = - a[i];
         c[i] = -c[i];
     }

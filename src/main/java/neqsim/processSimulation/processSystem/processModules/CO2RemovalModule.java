@@ -15,7 +15,7 @@
  */
 
 /*
- * SnøhvitCO2RemovalModule.java
+ * SnohvitCO2RemovalModule.java
  *
  * Created on 1. november 2006, 20:33
  *
@@ -42,7 +42,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     
     protected Separator inletSeparator = null;
     
-    /** Creates a new instance of SnøhvitCO2RemovalModule */
+    /** Creates a new instance of SnohvitCO2RemovalModule */
     public CO2RemovalModule() {
     }
     

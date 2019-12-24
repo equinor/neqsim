@@ -52,7 +52,7 @@ public class WettedWallDataReader extends DataReader {
                 tokenizer.nextToken();
                 dataObject.setInletLiquidTemperature(Double.parseDouble(tokenizer.nextToken()));
                 dataObject.setInletGasTemperature(Double.parseDouble(tokenizer.nextToken()));
-                tokenizer.nextToken();  // væske inn på væskefordeler
+                tokenizer.nextToken();  // vaeske inn paa vaeskefordeler
                 dataObject.setOutletLiquidTemperature(Double.parseDouble(tokenizer.nextToken()));
                 dataObject.setColumnWallTemperature(Double.parseDouble(tokenizer.nextToken()));
                 dataObject.setOutletGasTemperature(Double.parseDouble(tokenizer.nextToken()));

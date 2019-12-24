@@ -136,7 +136,7 @@ public class ComponentBWRS extends ComponentSrk{
         BEdT[4] = (-2.0*aBWRS[27]/Math.pow(temperature,3.0)-3.0*aBWRS[28]/Math.pow(temperature,4.0));//*Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
         BEdT[5] = (-2.0*aBWRS[29]/Math.pow(temperature,3.0)-3.0*aBWRS[30]/Math.pow(temperature,4.0)-4.0*aBWRS[31]/Math.pow(temperature,5.0));//*Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
         
-        // disse deriverte er ennå ikke satt inn (finnes i Odvar's avhandling)
+        // disse deriverte er ennaa ikke satt inn (finnes i Odvar's avhandling)
         BPdTdT[0] = 0;
         BPdTdT[1] = 0;
         BPdTdT[2] = 0;

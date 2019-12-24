@@ -38,11 +38,11 @@ public class SurgeCurve {
 		 isActive = true;
 		 
 		 
-		 // trykkforhold på y-aksen mot redused flow
+		 // trykkforhold paa y-aksen mot redused flow
 		 // dp over sugetrykk
 		 // surge kurva er invariat i plottet trykkforhold mot redused flow		
-		 //	CCC bruker dP/ (over måleblnde som representerer flow) dP/Ps   - på x-aksen
-		 // trykkforhold på y-aksen (trykk ut/trykk inn)
+		 //	CCC bruker dP/ (over maaleblnde som representerer flow) dP/Ps   - paa x-aksen
+		 // trykkforhold paa y-aksen (trykk ut/trykk inn)
 		 // 
 
 	}

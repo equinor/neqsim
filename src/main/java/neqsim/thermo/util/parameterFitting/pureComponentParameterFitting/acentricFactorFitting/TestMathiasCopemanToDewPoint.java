@@ -102,7 +102,7 @@ public class TestMathiasCopemanToDewPoint extends java.lang.Object {
         
         
         
-        dataSet =  database.getResultSet(  "SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0");//"0 AND reference='Mørch2004gas1'");
+        dataSet =  database.getResultSet(  "SELECT * FROM dewPointDataSynthHCStatoil WHERE Pressure<80.0");//"0 AND reference='Morch2004gas1'");
         
         try{
             long numerOfPoint = 1;

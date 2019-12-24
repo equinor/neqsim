@@ -164,27 +164,29 @@ public class CompressorChart {
 		Compressor comp1 = new Compressor(stream_1);
 		comp1.setUsePolytropicCalc(true);
 		//comp1.getAntiSurge().setActive(true);
-		comp1.setSpeed(13402);
+		comp1.setSpeed(2050);
 
-		/*
-		 * double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 }; double[]
-		 * speed = new double[] { 1000.0, 2000.0, 3000.0, 4000.0 }; double[][] flow =
-		 * new double[][] { { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0
-		 * }, { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0 } };
-		 * double[][] head = new double[][] { { 10000.0, 9000.0, 8000.0, 7500.0 }, {
-		 * 10000.0, 9000.0, 8000.0, 7500.0 }, { 10000.0, 9000.0, 8000.0, 7500.0 }, {
-		 * 10000.0, 9000.0, 8000.0, 7500.0 } }; double[][] polyEff = new double[][] { {
-		 * 90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0,
-		 * 88.1 }, { 90.0, 91.0, 89.0, 88.1 } };
-		 */
-		double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
-		double[] speed = new double[] { 13402.0 };
-		double[][] flow = new double[][] { { 1050.0, 1260.0, 1650.0, 1950.0 } };
+		
+		  double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 }; 
+		  double[] speed = new double[] { 1000.0, 2000.0, 3000.0, 4000.0 }; 
+		  double[][] flow = new double[][] { { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0
+		  }, { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0 } };
+		  double[][] head = new double[][] { { 10000.0, 9000.0, 8000.0, 7500.0 }, {
+		  10000.0, 9000.0, 8000.0, 7500.0 }, { 10000.0, 9000.0, 8000.0, 7500.0 }, {
+		  10000.0, 9000.0, 8000.0, 7500.0 } }; 
+		  double[][] polyEff = new double[][] { {
+		  90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0,
+		  88.1 }, { 90.0, 91.0, 89.0, 88.1 } };
+		  
+		 
+		//double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
+		//double[] speed = new double[] { 13402.0 };
+		//double[][] flow = new double[][] { { 1050.0, 1260.0, 1650.0, 1950.0 } };
 		//double[][] head = new double[][] { { 8555.0, 8227.0, 6918.0, 5223.0 } };
-		double[][] head = new double[][] { { 85.0, 82.0, 69.0, 52.0 } };
-		double[][] polyEff = new double[][] { { 66.8, 69.0, 66.4, 55.6 } };
+	//	double[][] head = new double[][] { { 85.0, 82.0, 69.0, 52.0 } };
+	//	double[][] polyEff = new double[][] { { 66.8, 69.0, 66.4, 55.6 } };
 		comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
-		comp1.getCompressorChart().setHeadUnit("kJ/kg");
+	//	comp1.getCompressorChart().setHeadUnit("kJ/kg");
 		/*
 		double[] surgeflow = new double[] { 453.2, 550.0, 700.0, 800.0 };
 		double[] surgehead = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };

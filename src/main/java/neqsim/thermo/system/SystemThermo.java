@@ -584,8 +584,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	/**
 	 * method to return flow rate of fluid
 	 *
-	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, kg/hr
+	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day
 	 *
 	 * @return flow rate in specified unit
 	 */
