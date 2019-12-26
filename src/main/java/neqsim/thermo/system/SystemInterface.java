@@ -14,6 +14,8 @@ public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID);
 
+	public int getNumberOfComponents();
+	
     public void saveFluid(int ID, String text);
     
     /**

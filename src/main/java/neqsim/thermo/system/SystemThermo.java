@@ -124,6 +124,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		beta[5] = 1.0;
 	}
 
+	public int getNumberOfComponents() {
+		return getComponentNames().length;
+	}
+	
 	public void clearAll() {
 		setTotalNumberOfMoles(0);
 		phaseType[0] = 1;
