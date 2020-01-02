@@ -124,6 +124,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		beta[5] = 1.0;
 	}
 
+	public int getNumberOfComponents() {
+		return getComponentNames().length;
+	}
+
 	public void clearAll() {
 		setTotalNumberOfMoles(0);
 		phaseType[0] = 1;
@@ -584,8 +588,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	/**
 	 * method to return flow rate of fluid
 	 *
-	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, kg/hr
-	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day
+	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+	 *                 kg/hr m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr,
+	 *                 Sm3/hr, Sm3/day
 	 *
 	 * @return flow rate in specified unit
 	 */
@@ -594,14 +599,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			return totalNumberOfMoles * getMolarMass();
 		} else if (flowunit.equals("kg/min")) {
 			return totalNumberOfMoles * getMolarMass() * 60.0;
-		} 
-		else if (flowunit.equals("Sm3/hr")) {
-			return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R*ThermodynamicConstantsInterface.standardStateTemperature/101325.0;
-		}
-		else if (flowunit.equals("Sm3/day")) {
-			return totalNumberOfMoles * 3600.0*24.0 * ThermodynamicConstantsInterface.R*ThermodynamicConstantsInterface.standardStateTemperature/101325.0;
-		}
-		else if (flowunit.equals("kg/hr")) {
+		} else if (flowunit.equals("Sm3/hr")) {
+			return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
+					* ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+		} else if (flowunit.equals("Sm3/day")) {
+			return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
+					* ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+		} else if (flowunit.equals("kg/hr")) {
 			return totalNumberOfMoles * getMolarMass() * 3600.0;
 		} else if (flowunit.equals("m3/hr")) {
 			return getVolume() / 1.0e5 * 3600.0;
@@ -2521,7 +2525,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	/**
 	 * method to return fluid volume
 	 *
-	 * @param unit The unit as a string. Supported units are m3, litre
+	 * @param unit The unit as a string. Supported units are m3, litre, m3/kg,
+	 *             m3/mol
 	 *
 	 * @return volume in specified unit
 	 */
@@ -2531,11 +2536,41 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		case "m3":
 			conversionFactor = 1.0;
 			break;
+		case "m3/kg":
+			conversionFactor = 1.0 / getMass("kg");
+			break;
 		case "litre":
 			conversionFactor = 1000.0;
 			break;
+		case "m3/mol":
+			conversionFactor = 1.0 / getTotalNumberOfMoles();
+			break;
 		}
 		return conversionFactor * getVolume() / 1.0e5;
+	}
+
+	/**
+	 * method to return mass of fluid
+	 *
+	 * @param unit The unit as a string. Supported units are kg, gr, tons
+	 *
+	 * @return volume in specified unit
+	 */
+	public double getMass(String unit) {
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "kg":
+			conversionFactor = 1.0;
+			break;
+
+		case "gr":
+			conversionFactor = 1000.0;
+			break;
+		case "tons":
+			conversionFactor = 1.0e-3;
+			break;
+		}
+		return conversionFactor * getTotalNumberOfMoles() * getMolarMass();
 	}
 
 	/**
@@ -2666,7 +2701,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public double getGamma() {
 		return getCp() / getCv();
 	}
-	
+
 	/**
 	 * method to return heat capacity ratio calculated as Cp/(Cp-R)
 	 *
@@ -2674,7 +2709,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 */
 	public double getGamma2() {
 		double cp0 = getCp();
-		return cp0 / (cp0-ThermodynamicConstantsInterface.R*totalNumberOfMoles);
+		return cp0 / (cp0 - ThermodynamicConstantsInterface.R * totalNumberOfMoles);
 	}
 
 	public void calcInterfaceProperties() {
@@ -4154,11 +4189,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	/**
-	 * This method is used to set the total molar composition of a characterized fluid. The total
-	 * flow rate will be kept constant. The input mole fractions will be normalized.
+	 * This method is used to set the total molar composition of a characterized
+	 * fluid. The total flow rate will be kept constant. The input mole fractions
+	 * will be normalized.
 	 *
 	 * @param molefractions is a double array taking the molar fraction of the
-	 *                      components in the fluid. THe last fraction in the array is the total molefraction of the characterized components.
+	 *                      components in the fluid. THe last fraction in the array
+	 *                      is the total molefraction of the characterized
+	 *                      components.
 	 * @return Nothing.
 	 */
 	public void setMolarCompositionOfPlusFluid(double[] molefractions) {
@@ -4177,9 +4215,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		for (compNumb = 0; compNumb < molefractions.length - 1; compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
 		}
-		for (int j = 0; j < getCharacterization().getLumpingModel().getNumberOfLumpedComponents()-1; j++) {
-		//	addComponent(compNumb, totalFlow * molefractions[molefractions.length - 1]
-		//			* getCharacterization().getLumpingModel().getFractionOfHeavyEnd(j) / sum);
+		for (int j = 0; j < getCharacterization().getLumpingModel().getNumberOfLumpedComponents() - 1; j++) {
+			// addComponent(compNumb, totalFlow * molefractions[molefractions.length - 1]
+			// * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(j) / sum);
 			compNumb++;
 		}
 		for (int i = 0; i < getNumberOfPhases(); i++) {

@@ -163,6 +163,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		boolean surgeCheck = false;
 		double orginalMolarFLow = thermoSystem.getTotalNumberOfMoles();
 		double fractionAntiSurge = 0.0;
+		double kappa = 0.0;
 		if (compressorChart.isUseCompressorChart()) {
 			do {
 				double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"),
@@ -173,7 +174,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				double temperature_inlet = thermoSystem.getTemperature();
 				double z_inlet = thermoSystem.getZ();
 				double MW = thermoSystem.getMolarMass();
-				double kappa = thermoSystem.getGamma2();
+				
+				if(getCompressorChart().useRealKappa()) {
+					kappa = thermoSystem.getGamma();
+				}
+				else{
+					kappa = thermoSystem.getGamma2();
+				}
+				
 				double n = 1.0 / (1.0 - (kappa - 1.0) / kappa * 1.0 / (polytropEff / 100.0));
 				//logger.info("n " + n);
 				polytropicExponent = n;

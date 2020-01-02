@@ -14,6 +14,8 @@ public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID);
 
+	public int getNumberOfComponents();
+	
     public void saveFluid(int ID, String text);
     
     /**
@@ -42,6 +44,15 @@ public interface SystemInterface extends Cloneable {
      */
     public double getJouleThomsonCoefficient();
     
+	/**
+	 * method to return mass of fluid
+	 *
+	 * @param unit The unit as a string. Supported units are kg, gr, tons
+	 *
+	 * @return volume in specified unit
+	 */
+	public double getMass(String unit);
+		
     public double getMoleFractionsSum();
 
 	/**
@@ -111,13 +122,14 @@ public interface SystemInterface extends Cloneable {
      */
     public double getGamma();
 
-    /**
-     * method to return fluid volume
-     *
-     * @param unit The unit as a string. Supported units are m3, litre
-     *
-     * @return volume in unit m3*1e5
-     */
+	/**
+	 * method to return fluid volume
+	 *
+	 * @param unit The unit as a string. Supported units are m3, litre, m3/kg,
+	 *             m3/mol
+	 *
+	 * @return volume in specified unit
+	 */
     public double getVolume(String unit);
 
 	/**

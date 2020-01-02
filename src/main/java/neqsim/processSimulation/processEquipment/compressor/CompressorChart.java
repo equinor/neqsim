@@ -26,6 +26,7 @@ public class CompressorChart {
 	double refPressure;
 	double referenceSpeed = 1000.0;
 	double refZ;
+	private boolean useRealKappa = false;
 	double[] chartConditions = null;
 	final WeightedObservedPoints reducedHeadFitter = new WeightedObservedPoints();
 	final WeightedObservedPoints reducedFlowFitter = new WeightedObservedPoints();
@@ -221,6 +222,14 @@ public class CompressorChart {
 
 	public void setHeadUnit(String headUnit) {
 		this.headUnit = headUnit;
+	}
+
+	public boolean useRealKappa() {
+		return useRealKappa;
+	}
+
+	public void setUseRealKappa(boolean useRealKappa) {
+		this.useRealKappa = useRealKappa;
 	}
 
 }
