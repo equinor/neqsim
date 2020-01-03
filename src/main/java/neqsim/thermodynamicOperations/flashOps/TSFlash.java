@@ -22,6 +22,8 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -68,7 +70,7 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
 
     public double solveQ() {
     	// this method is not yet implemented
-        double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
+        double oldTemp = system.getPressure(), nyTemp = system.getPressure();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
         double factor = 0.8;
@@ -76,41 +78,17 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
         boolean correctFactor = true;
         double newCorr = 1.0;
         do {
-            if (error > erorOld  && factor>0.1 && correctFactor) {
-                factor *= 0.5;
-            } else if (error < erorOld && correctFactor) {
-                factor = 1.0;
-            }
-            
-            iterations++;
-            oldTemp = system.getTemperature();
+           iterations++;
+            oldTemp = system.getPressure();
             system.init(2);
-            newCorr = factor * calcdQdT() / calcdQdTT() * system.getPhase(0).getdPdTVn();
-            nyTemp = oldTemp - newCorr;
-            if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
-                nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-               correctFactor = false;
-            }
-            else if (nyTemp < 0) {
-                nyTemp = Math.abs(system.getTemperature() - 10.0);
-                correctFactor = false;
-            }
-            else if (Double.isNaN(nyTemp)) {
-                nyTemp = oldTemp + 1.0;
-                correctFactor = false;
-            }
-            else{
-                correctFactor = true;
-            }
-
-            system.setTemperature(nyTemp);
+            
+            nyTemp = oldTemp - calcdQdT()/10.0;
+  
+            system.setPressure(nyTemp);
             tpFlash.run();
             erorOld = error;
-            error = Math.abs(calcdQdT());//Math.abs((nyTemp - oldTemp) / (nyTemp));
-            //if(error>erorOld) factor *= -1.0;
-             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
-          //newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
-        } while(((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+            error = Math.abs(calcdQdT());
+         } while(((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }
 
@@ -121,5 +99,30 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
     public void run() {
         tpFlash.run();
         solveQ();
+    }
+    
+    public static void main(String[] args) {
+    	   SystemInterface testSystem = new SystemSrkEos(373.15,45.551793);
+           
+           ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+           testSystem.addComponent("methane", 9.4935);
+           testSystem.addComponent("ethane", 5.06499);
+           testSystem.addComponent("n-heptane", 0.2);
+           testSystem.init(0);
+           try{
+               testOps.TPflash();
+               testSystem.display();
+               
+               double Sspec = testSystem.getEntropy("kJ/kgK");
+               System.out.println("S spec " + Sspec);
+               testSystem.setTemperature(293.15);
+               testOps.TSflash(Sspec, "kJ/kgK");
+                testSystem.display();
+           }
+           catch(Exception e){
+               logger.error(e.toString());
+           }
+           
+           
     }
 }

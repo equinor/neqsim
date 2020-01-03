@@ -42,6 +42,7 @@ import neqsim.thermodynamicOperations.flashOps.TSFlash;
 import neqsim.thermodynamicOperations.flashOps.TVflash;
 import neqsim.thermodynamicOperations.flashOps.VHflash;
 import neqsim.thermodynamicOperations.flashOps.VUflash;
+import neqsim.thermodynamicOperations.flashOps.VUflashQfunc;
 import neqsim.thermodynamicOperations.flashOps.calcIonicComposition;
 import neqsim.thermodynamicOperations.flashOps.dTPflash;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.HCdewPointPressureFlash;
@@ -318,12 +319,43 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
 	public void VSflash(double volume, double entropy, String unitVol, String unitEntropy) {
 		double conversionFactorV = 1.0;
 		double conversionFactorEntr = 1.0;
-		VSflash(volume / conversionFactorV, entropy / conversionFactorEntr);
+		
+		switch (unitVol) {
+		case "m3":
+			conversionFactorV = 1.0e5;
+			break;
+		}
+		
+		switch (unitEntropy) {
+		case "J/K":
+			conversionFactorEntr = 1.0;
+			break;
+		case "J/molK":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+			break;
+		case "J/kgK":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+			break;
+		case "kJ/kgK":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+			break;
+		}
+		VSflash(volume * conversionFactorV, entropy / conversionFactorEntr);
 	}
 
 	public void VSflash(double volume, double entropy) {
 		operation = new neqsim.thermodynamicOperations.flashOps.VSflash(system, volume, entropy);
 		getOperation().run();
+	}
+	
+	public void TVflash(double Vspec, String unit) {
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "m3":
+			conversionFactor = 1.0e5;
+			break;
+		}
+		TVflash(Vspec * conversionFactor);
 	}
 
 	public void TVflash(double Vspec) {
@@ -342,7 +374,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
 	}
 
 	public void VUflash(double Uspec, double Vspec) {
-		operation = new VUflash(system, Uspec, Vspec);
+		operation = new VUflashQfunc(system, Uspec, Vspec);
 		getOperation().run();
 	}
 
