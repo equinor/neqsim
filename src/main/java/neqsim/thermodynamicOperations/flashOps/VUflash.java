@@ -54,7 +54,7 @@ public class VUflash  extends Flash implements java.io.Serializable {
         double pNew = system.getPressure(), pOld = system.getPressure(),pOldOld=0.0;
         double err=0.0;
         int iterations=0;
-//        System.out.println("entalpy start " + system.getEnthalpy());
+//\\        System.out.println("entalpy start " + system.getEnthalpy());
         double dPdV=0.0;
         double wallHeat = 0.0;
         for(int i=0;i<21;i++){
