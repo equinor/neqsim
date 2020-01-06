@@ -1961,6 +1961,44 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return gibbsEnergy;
 	}
+	
+	/**
+	 * method to return exergy in a given unit
+	 * @param temperatureOfSurroundings in Kelvin
+	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
+	 *             kJ/kg
+	 * @return exergy in specified unit
+	 */
+	public double getExergy(double temperatureOfSurroundings, String exergyUnit) {
+		double refExergy = getExergy(temperatureOfSurroundings); // exergy in J
+		double conversionFactor = 1.0;
+		switch (exergyUnit) {
+		case "J":
+			conversionFactor = 1.0;
+			break;
+		case "J/mol":
+			conversionFactor = 1.0 / getTotalNumberOfMoles();
+			break;
+		case "J/kg":
+			conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass();
+			break;
+		case "kJ/kg":
+			conversionFactor = 1.0 / getTotalNumberOfMoles() / getMolarMass() / 1000.0;
+			break;
+		}
+		return refExergy * conversionFactor;
+	}
+	
+	/**
+	 * method to return exergy defined as (h1-T0*s1) in a unit Joule
+	 * @param temperatureOfSurroundings in Kelvin
+	 */
+	public double getExergy(double temperatureOfSurroundings) {
+		double getExergy = getEnthalpy()-temperatureOfSurroundings*getEntropy();
+		return getExergy;
+	}
+	
+	
 
 	/**
 	 * method to return enthalpy in a unit Joule

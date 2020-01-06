@@ -37,6 +37,23 @@ public interface SystemInterface extends Cloneable {
      */
     public double getJouleThomsonCoefficient(String unit);
     
+	/**
+	 * method to return exergy in a given unit
+	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
+	 *             kJ/kg
+	 * @param temperatureOfSurroundings in Kelvin
+	 * @return exergy in specified unit
+	 */
+	public double getExergy(double temperatureOfSurroundings, String exergyUnit);
+	
+	
+	/**
+	 * method to return exergy defined as (h1-T0*s1) in a unit Joule
+	 * @param temperatureOfSurroundings in Kelvin
+	 */
+	public double getExergy(double temperatureOfSurroundings);
+	
+
     /**
      * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
      *

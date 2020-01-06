@@ -196,7 +196,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
             thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(), dn * dt);
         }
         thermoOps = new ThermodynamicOperations(thermoSystem);
-        thermoOps.VUflash(newEnergy, volume1);
+        thermoOps.VUflash(volume1, newEnergy);
 
         setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
 

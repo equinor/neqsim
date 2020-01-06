@@ -41,6 +41,7 @@ import neqsim.thermodynamicOperations.flashOps.TPgradientFlash;
 import neqsim.thermodynamicOperations.flashOps.TSFlash;
 import neqsim.thermodynamicOperations.flashOps.TVflash;
 import neqsim.thermodynamicOperations.flashOps.VHflash;
+import neqsim.thermodynamicOperations.flashOps.VHflashQfunc;
 import neqsim.thermodynamicOperations.flashOps.VUflash;
 import neqsim.thermodynamicOperations.flashOps.VUflashQfunc;
 import neqsim.thermodynamicOperations.flashOps.calcIonicComposition;
@@ -368,13 +369,67 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
 		getOperation().run();
 	}
 
-	public void VHflash(double Hspec, double Vspec) {
-		operation = new VHflash(system, Hspec, Vspec);
+	public void VHflash(double Vspec , double Hspec) {
+		operation = new VHflashQfunc(system, Vspec, Hspec);
 		getOperation().run();
 	}
+	
+	public void VHflash(double volume, double enthalpy, String unitVol, String unitEnthalpy) {
+		double conversionFactorV = 1.0;
+		double conversionFactorEntr = 1.0;
+		
+		switch (unitVol) {
+		case "m3":
+			conversionFactorV = 1.0e5;
+			break;
+		}
+		
+		switch (unitEnthalpy) {
+		case "J/K":
+			conversionFactorEntr = 1.0;
+			break;
+		case "J/mol":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+			break;
+		case "J/kg":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+			break;
+		case "kJ/kg":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+			break;
+		}
+		VHflash(volume * conversionFactorV, enthalpy / conversionFactorEntr);
+	}
 
-	public void VUflash(double Uspec, double Vspec) {
-		operation = new VUflashQfunc(system, Uspec, Vspec);
+	public void VUflash(double volume, double energy, String unitVol, String unitEnergy) {
+		double conversionFactorV = 1.0;
+		double conversionFactorEntr = 1.0;
+		
+		switch (unitVol) {
+		case "m3":
+			conversionFactorV = 1.0e5;
+			break;
+		}
+		
+		switch (unitEnergy) {
+		case "J/K":
+			conversionFactorEntr = 1.0;
+			break;
+		case "J/mol":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+			break;
+		case "J/kg":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+			break;
+		case "kJ/kg":
+			conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+			break;
+		}
+		VUflash(volume * conversionFactorV, energy / conversionFactorEntr);
+	}
+	
+	public void VUflash(double Vspec, double Uspec) {
+		operation = new VUflashQfunc(system, Vspec, Uspec);
 		getOperation().run();
 	}
 

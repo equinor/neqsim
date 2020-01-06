@@ -32,25 +32,25 @@ import org.apache.log4j.Logger;
  * @author even solbraa
  * @version
  */
-public class VUflashQfunc extends Flash implements java.io.Serializable {
+public class VHflashQfunc extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(VUflashQfunc.class);
+    static Logger logger = Logger.getLogger(VHflashQfunc.class);
 
-    double Vspec = 0, Uspec = 0.0;
+    double Vspec = 0, Hspec = 0.0;
     Flash tpFlash;
 
     /**
      * Creates new PHflash
      */
-    public VUflashQfunc() {
+    public VHflashQfunc() {
     }
 
-    public VUflashQfunc(SystemInterface system, double Vspec, double Uspec) {
+    public VHflashQfunc(SystemInterface system, double Vspec, double Hspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Vspec = Vspec;
-        this.Uspec = Uspec;
+        this.Hspec = Hspec;
     }
 
     public double calcdQdPP() {
@@ -67,7 +67,7 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
     }
 
     public double calcdQdT() {
-        double dQdT = (Uspec + system.getPressure() * Vspec - system.getEnthalpy()) / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
+        double dQdT = (Hspec - system.getEnthalpy()) / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
         return dQdT;
     }
 
@@ -95,8 +95,8 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
             system.setPressure(nyPres);
 			system.setTemperature(nyTemp);
             tpFlash.run();
-         //   logger.info("error1: " + Math.abs((nyPres - oldPres) / (nyPres)));
-          //  logger.info("error2: " + Math.abs((nyTemp - oldTemp) / (nyTemp)));
+         //  logger.info("error1: " + Math.abs((nyPres - oldPres) / (nyPres)));
+         //   logger.info("error2: " + Math.abs((nyTemp - oldTemp) / (nyTemp)));
          //   logger.info("inernaleng: " + system.getInternalEnergy());
         } while (Math.abs((nyPres - oldPres) / (nyPres)) + Math.abs((nyTemp - oldTemp) / (nyTemp)) > 1e-9 && iterations < 1000);
         return nyPres;
@@ -127,11 +127,11 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
 	             testOps.TPflash();
 	             testSystem.display();
 	             
-	             double energy = testSystem.getInternalEnergy()*1.1;
-	             double volume = testSystem.getVolume()*1.2;
+	             double energy = testSystem.getEnthalpy()*1.1;
+	             double volume = testSystem.getVolume()*0.9;
 	             
 	             
-	             testOps.VUflash(volume, energy);
+	             testOps.VHflash(volume, energy);
 	              testSystem.display();
 	         }
 	         catch(Exception e){

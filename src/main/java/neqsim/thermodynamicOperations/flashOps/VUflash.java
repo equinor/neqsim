@@ -40,7 +40,7 @@ public class VUflash  extends Flash implements java.io.Serializable {
     public VUflash() {
     }
     
-    public VUflash(SystemInterface system, double Uspec, double Vspec) {
+    public VUflash(SystemInterface system, double Vspec, double Uspec) {
         this.system = system;
         this.pHFlash = new PHflash(system,Uspec,0);
         this.Uspec = Uspec;
