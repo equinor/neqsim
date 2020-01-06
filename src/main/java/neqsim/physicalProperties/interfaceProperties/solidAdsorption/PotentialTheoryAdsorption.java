@@ -68,26 +68,50 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 epsField[comp][i] = eps0[comp] * Math.pow(Math.log(z0[comp] / zField[comp][i]), 1.0 / beta[comp]);
             }
         }
+        for (int i = 0; i < integrationSteps; i++) {
+            double error = 0;
+            int iter = 0;
+            double sumx = 0, pressure = 0;
+            do {
+                iter++;
+                sumx = 0.0;
+                pressure = 0.0;
+                for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
+                    double correction = Math.exp(epsField[comp][i] / R / system.getPhase(phase).getTemperature());
+                    fugacityField[comp][i] = correction * bulkFug[comp];
+                    double fugComp = tempSystem.getPhase(phase).getComponent(comp).getFugasityCoefficient() * tempSystem.getPhase(phase).getPressure();
+                    corrx[comp] = fugacityField[comp][i] / fugComp;
+                    pressure += fugacityField[comp][i] / tempSystem.getPhase(phase).getComponent(comp).getFugasityCoefficient();
+                }
+                for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
+                    tempSystem.getPhase(phase).getComponent(comp).setx(corrx[comp]);
+                    sumx += corrx[comp];
+                }
+                tempSystem.setPressure(pressure);
+                // tempSystem.getPhase(phase).normalize();
+                // tempSystem.calc_x_y();
+                tempSystem.init(1);
+                //  System.out.println("pressure " + tempSystem.getPressure() + " error " + Math.abs(sumx - 1.0));
+            } while (Math.abs(sumx - 1.0) > 1e-12 && iter < 100);
 
-        for (int i = 0; i < integrationSteps; i++) 
-
+            for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
+                surfaceExcess[comp] += deltaz[comp] * (1.0e5 / tempSystem.getPhase(phase).getMolarVolume() * tempSystem.getPhase(phase).getComponent(comp).getx() - 1.0e5 / system.getPhase(phase).getMolarVolume() * system.getPhase(phase).getComponent(comp).getx());
+            }
+        }
+        
         totalSurfaceExcess = 0.0;
         for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
             totalSurfaceExcess += surfaceExcess[comp];
-            //    logger.info("surface excess " + surfaceExcess[comp]);
         }
         for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
             surfaceExcessMolFraction[comp] = surfaceExcess[comp] / totalSurfaceExcess;
-            logger.error("surface excess molfrac " + surfaceExcessMolFraction[comp] + " mol/kg adsorbent " + surfaceExcess[comp]);
+            //logger.info("surface excess molfrac " + surfaceExcessMolFraction[comp] + " mol/kg adsorbent " + surfaceExcess[comp]);
         }
-        logger.info("pressure " + tempSystem.getPressure());
-        /*
-        error = fugacityField[comp][i] - fugComp;
-        logger.info("error " + error);
-        tempSystem.getPhase(phase).setPressure(tempSystem.getPhase(phase).getPressure() + error);
-        tempSystem.init(3);
-        logger.info("i " + i + " fug " + fugacityField[comp][i]);
-         * */
+    }
+    
+    public double getSurfaceExcess(String componentName) {
+    	int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
+    	return surfaceExcess[componentNumber];
     }
 
     public void readDBParameters() {

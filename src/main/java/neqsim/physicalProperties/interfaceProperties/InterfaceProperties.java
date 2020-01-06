@@ -30,7 +30,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 	SurfaceTensionInterface gasLiquidSurfaceTensionCalc = null;
 	SurfaceTensionInterface gasAqueousSurfaceTensionCalc = null;
 	SurfaceTensionInterface liquidLiquidSurfaceTensionCalc = null;
-	AdsorptionInterface[] adsorptionCalc;
+	private AdsorptionInterface[] adsorptionCalc;
 	double[] surfaceTension;
 	int numberOfInterfaces = 1;
 	private int interfacialTensionModel = 0;
@@ -81,22 +81,22 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 	}
 
 	public void initAdsorption() {
-		adsorptionCalc = new AdsorptionInterface[system.getNumberOfPhases()];
+		setAdsorptionCalc(new AdsorptionInterface[system.getNumberOfPhases()]);
 
 		for (int i = 0; i < system.getNumberOfPhases(); i++) {
-			adsorptionCalc[i] = new PotentialTheoryAdsorption(system);
+			getAdsorptionCalc()[i] = new PotentialTheoryAdsorption(system);
 		}
 	}
 
 	public void setSolidAdsorbentMaterial(String material) {
 		for (int i = 0; i < system.getNumberOfPhases(); i++) {
-			adsorptionCalc[i].setSolidMaterial(material);
+			getAdsorptionCalc()[i].setSolidMaterial(material);
 		}
 	}
 
 	public void calcAdsorption() {
 		for (int i = 0; i < system.getNumberOfPhases(); i++) {
-			adsorptionCalc[i].calcAdorption(i);
+			getAdsorptionCalc()[i].calcAdorption(i);
 		}
 	}
 
@@ -203,5 +203,17 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 			liquidLiquidSurfaceTensionCalc = new ParachorSurfaceTension(system);
 		}
 
+	}
+
+	public AdsorptionInterface[] getAdsorptionCalc() {
+		return adsorptionCalc;
+	}
+
+	public AdsorptionInterface getAdsorptionCalc(String phaseName) {
+		return adsorptionCalc[system.getPhaseNumberOfPhase(phaseName)];
+	}
+	
+	public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc) {
+		this.adsorptionCalc = adsorptionCalc;
 	}
 }

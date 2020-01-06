@@ -13,6 +13,6 @@ public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstant
 
     public void calcAdorption(int phase);
     public double getSurfaceExess(int component);
-      public void setSolidMaterial(String solidM);
-
+     public void setSolidMaterial(String solidM);
+     public double getSurfaceExcess(String componentName);
 }
