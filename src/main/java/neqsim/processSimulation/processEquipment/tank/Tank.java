@@ -96,7 +96,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         inletStreamMixer.run();
         SystemInterface thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
-        ops.VUflash(thermoSystem2.getInternalEnergy(), thermoSystem2.getVolume());
+        ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
          System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy " + thermoSystem2.getInternalEnergy());
         steelWallTemperature = thermoSystem2.getTemperature();
         if (thermoSystem2.hasPhaseType("gas")) {
@@ -192,7 +192,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
 
         System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
         thermoOps = new ThermodynamicOperations(thermoSystem);
-        thermoOps.VUflash(newEnergy, volume1);
+        thermoOps.VUflash(volume1,newEnergy);
 
         setOutComposition(thermoSystem);
         setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());

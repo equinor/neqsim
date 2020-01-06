@@ -77,7 +77,7 @@ public class TestVHflash {
             logger.info("Volume Liquid Methane " +  testSystem2.getPhase(0).getMolarMass()*testSystem2.getNumberOfMoles()/testSystem2.getPhase(0).getPhysicalProperties().getDensity());
             logger.info("Volume Nitrogen from vacum breaker system " + testSystem4.getPhase(0).getMolarMass()*testSystem4.getNumberOfMoles()/testSystem4.getPhase(0).getPhysicalProperties().getDensity());
 //
-            testOps3.VHflash(testSystem.getEnthalpy()+testSystem2.getEnthalpy(), testSystem.getVolume());
+            testOps3.VHflash(testSystem.getVolume(),testSystem.getEnthalpy()+testSystem2.getEnthalpy());
             testSystem3.display();
 //            logger.info("total number of moles " + testSystem3.getTotalNumberOfMoles() );
         } catch(Exception e){
