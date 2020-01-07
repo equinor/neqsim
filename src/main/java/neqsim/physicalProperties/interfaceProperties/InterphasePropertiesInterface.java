@@ -5,6 +5,7 @@
  */
 package neqsim.physicalProperties.interfaceProperties;
 
+import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionInterface;
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensionInterface;
 
 /**
@@ -35,5 +36,11 @@ public interface InterphasePropertiesInterface extends Cloneable{
     public SurfaceTensionInterface getSurfaceTensionModel(int i);
     
     public double getSurfaceTension(int numb1, int numb2, String unit);
+    
+    public AdsorptionInterface[] getAdsorptionCalc();
+
+	public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc);
+	
+	public AdsorptionInterface getAdsorptionCalc(String phaseName);
 }
 

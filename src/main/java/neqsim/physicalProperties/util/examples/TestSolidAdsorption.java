@@ -19,10 +19,10 @@ public class TestSolidAdsorption {
     static Logger logger = Logger.getLogger(TestSolidAdsorption.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(288.15,0.4);
+        SystemInterface testSystem = new SystemSrkEos(288.15,1.4);
         testSystem.addComponent("methane", 1.0);
         testSystem.addComponent("CO2", 0.1);
-      //  testSystem.addComponent("n-heptane", 0.1);
+        testSystem.addComponent("n-heptane", 0.1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
@@ -38,6 +38,8 @@ public class TestSolidAdsorption {
         testSystem.getInterphaseProperties().setSolidAdsorbentMaterial("AC"); // AC Norit R1
         testSystem.getInterphaseProperties().calcAdsorption();
        // testSystem.initPhysicalProperties();
+        System.out.println("surface excess CO2 from gas "+ testSystem.getInterphaseProperties().getAdsorptionCalc("gas").getSurfaceExcess("CO2") + " kg CO2/kg AC");
+        System.out.println("surface excess CO2 from oil "+ testSystem.getInterphaseProperties().getAdsorptionCalc("oil").getSurfaceExcess("CO2") + " kg CO2/kg AC");
 
     }
 }
