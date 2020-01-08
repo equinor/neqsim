@@ -14,7 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkMathiasCopeman;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 public class TestMathiasCopemanToDewPoint extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestMathiasCopemanToDewPoint.class);
+    static Logger logger = LogManager.getLogger(TestMathiasCopemanToDewPoint.class);
     
     /** Creates new TestAcentric */
     public TestMathiasCopemanToDewPoint() {

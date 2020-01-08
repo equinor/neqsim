@@ -11,7 +11,7 @@ import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalPropertie
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.CO2water;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity.Viscosity;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CO2waterPhysicalProperties.class);
+    static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
     
     
     

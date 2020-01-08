@@ -8,12 +8,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(addIonToScaleSaturation.class);
+    static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
     String saltName="", scaleSaltName="", nameOfIonToBeAdded="";
     int phaseNumber = 1;
     String[][] resultTable = null;

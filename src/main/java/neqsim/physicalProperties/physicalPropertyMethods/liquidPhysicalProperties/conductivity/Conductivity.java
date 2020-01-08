@@ -5,7 +5,7 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 public class Conductivity extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Conductivity.class);
+    static Logger logger = LogManager.getLogger(Conductivity.class);
 
     double conductivity = 0;
     public double[] pureComponentConductivity;

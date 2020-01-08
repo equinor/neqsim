@@ -7,12 +7,12 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public abstract  class constantDutyFlash  implements constantDutyFlashInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(constantDutyFlash.class);
+    static Logger logger = LogManager.getLogger(constantDutyFlash.class);
     
     SystemInterface system;
     protected boolean superCritical = false;

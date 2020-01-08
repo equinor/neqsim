@@ -5,7 +5,7 @@ import java.util.*;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public class CompressorChart {
 
-	static Logger logger = Logger.getLogger(CompressorChart.class);
+	static Logger logger = LogManager.getLogger(CompressorChart.class);
 	ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
 	private SurgeCurve surgeCurve = new SurgeCurve();
 	private StoneWallCurve stoneWallCurve = new StoneWallCurve();

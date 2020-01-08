@@ -8,7 +8,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacUMRPRU;
 import neqsim.thermo.component.ComponentGEUniquac;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
     double[] Qmix = null;
     double[][] QmixdN = null;
     String[] gropuNames = null;
-    static Logger logger = Logger.getLogger(PhaseGEUnifacUMRPRU.class);
+    static Logger logger = LogManager.getLogger(PhaseGEUnifacUMRPRU.class);
 
     public PhaseGEUnifacUMRPRU() {
         super();

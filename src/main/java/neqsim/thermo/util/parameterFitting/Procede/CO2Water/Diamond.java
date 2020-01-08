@@ -6,7 +6,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * Sleipneracetate.java
@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
 public class Diamond {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Diamond.class);
+    static Logger logger = LogManager.getLogger(Diamond.class);
 
     /**
      * Creates a new instance of Sleipneracetate

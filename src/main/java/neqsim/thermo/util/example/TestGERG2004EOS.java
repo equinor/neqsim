@@ -3,7 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * PhaseEnvelope.java
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public class TestGERG2004EOS {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestGERG2004EOS.class);
+    static Logger logger = LogManager.getLogger(TestGERG2004EOS.class);
     
     /** Creates new PhaseEnvelope */
     public TestGERG2004EOS() {

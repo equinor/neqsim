@@ -7,7 +7,7 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import neqsim.thermo.phase.PhaseEosInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(BinaryHVParameterFittingToDewPointData.class);
+    static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToDewPointData.class);
     
     int phase = 1;
     int type = 1;

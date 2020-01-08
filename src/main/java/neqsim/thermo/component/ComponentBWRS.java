@@ -8,7 +8,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseBWRSEos;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -36,7 +36,7 @@ public class ComponentBWRS extends ComponentSrk{
     
     PhaseBWRSEos refPhaseBWRS = null;
     
-    static Logger logger = Logger.getLogger(ComponentBWRS.class);
+    static Logger logger = LogManager.getLogger(ComponentBWRS.class);
     
     /** Creates new System_SRK_EOS
      * Ev liten fil ja.

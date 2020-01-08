@@ -1642,6 +1642,7 @@ for (i = 1; i <= 21; i++) {
 //Dummy.label("neqsim/thermo/GERG/Setupgerg",1000009);
 }              //  Close for() loop. 
 }
+if(true) return;
 //Dummy.go_to("neqsim/thermo/GERG/Setupgerg",999999);
 // 
 // c  Code to produce nearly exact values for n0(1) and n0(2)

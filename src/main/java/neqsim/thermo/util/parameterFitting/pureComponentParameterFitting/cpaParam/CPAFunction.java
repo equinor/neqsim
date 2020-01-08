@@ -6,7 +6,7 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class CPAFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CPAFunction.class);
+    static Logger logger = LogManager.getLogger(CPAFunction.class);
 
     /**
      * Creates new Test

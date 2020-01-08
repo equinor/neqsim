@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkMathiasCopeman;
 import neqsim.thermo.system.SystemSrkTwuCoonEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class TestMathiasCopeman extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestMathiasCopeman.class);
+    static Logger logger = LogManager.getLogger(TestMathiasCopeman.class);
     
     /** Creates new TestAcentric */
     public TestMathiasCopeman() {

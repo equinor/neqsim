@@ -7,7 +7,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,7 +23,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos implements neq
     neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface electrolyteMixingRule;
     double sr2On = 1.0, lrOn = 1.0, bornOn= 1.0;
     
-    static Logger logger = Logger.getLogger(PhaseModifiedFurstElectrolyteEos.class);
+    static Logger logger = LogManager.getLogger(PhaseModifiedFurstElectrolyteEos.class);
     //double gammLRdV=0.0;
     // PhaseInterface[] refPhase;// = new PhaseInterface[10];
     

@@ -9,7 +9,7 @@ package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
-    static Logger logger = Logger.getLogger(BinaryHVParameterFittingFunction_MDEA.class);
+    static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_MDEA.class);
     
     /** Creates new Test */
     public BinaryHVParameterFittingFunction_MDEA() {

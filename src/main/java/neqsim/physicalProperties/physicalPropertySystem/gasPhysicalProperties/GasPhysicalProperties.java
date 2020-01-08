@@ -6,7 +6,7 @@
 package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(GasPhysicalProperties.class);
+    static Logger logger = LogManager.getLogger(GasPhysicalProperties.class);
 
     public GasPhysicalProperties() {
     }

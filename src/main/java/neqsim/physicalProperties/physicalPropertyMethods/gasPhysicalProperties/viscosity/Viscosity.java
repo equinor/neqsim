@@ -8,7 +8,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
 
 //import physicalProperties.*;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 //import physicalProperties.gasPhysicalProperties.*;
 /**
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 abstract class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod implements  neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Viscosity.class);
+    static Logger logger = LogManager.getLogger(Viscosity.class);
     
     
     /** Creates new Conductivity */

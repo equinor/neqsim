@@ -6,7 +6,7 @@
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompInterfaceTension;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(InfluenceParamGTFunctionBinaryData.class);
+    static Logger logger = LogManager.getLogger(InfluenceParamGTFunctionBinaryData.class);
 
     public InfluenceParamGTFunctionBinaryData() {
         params = new double[1];

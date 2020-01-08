@@ -23,7 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 public class VLSolidTPFLash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(VLSolidTPFLash.class);
+    static Logger logger = LogManager.getLogger(VLSolidTPFLash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemPrEos(208.2 , 18.34);

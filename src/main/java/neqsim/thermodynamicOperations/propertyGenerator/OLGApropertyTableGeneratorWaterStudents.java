@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -39,7 +39,7 @@ import org.apache.log4j.Logger;
 public class OLGApropertyTableGeneratorWaterStudents extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorWaterStudents.class);
+    static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterStudents.class);
 
     SystemInterface thermoSystem = null, gasSystem = null, oilSystem = null, waterSystem = null;
     ThermodynamicOperations thermoOps = null;

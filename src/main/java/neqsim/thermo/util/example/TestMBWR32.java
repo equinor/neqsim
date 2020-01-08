@@ -4,7 +4,7 @@ import neqsim.thermo.system.SystemBWRSEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * TPflash.java
@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
 public class TestMBWR32 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestMBWR32.class);
+    static Logger logger = LogManager.getLogger(TestMBWR32.class);
 
     /**
      * Creates new TPflash

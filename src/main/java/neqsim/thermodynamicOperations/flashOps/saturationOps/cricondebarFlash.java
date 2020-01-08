@@ -8,12 +8,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class cricondebarFlash extends constantDutyPressureFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(constantDutyFlash.class);
+    static Logger logger = LogManager.getLogger(constantDutyFlash.class);
 
     Matrix Jac, fvec;
 

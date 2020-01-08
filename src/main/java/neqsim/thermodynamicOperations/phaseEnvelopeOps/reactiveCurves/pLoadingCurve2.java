@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 public class pLoadingCurve2 extends BaseOperation implements OperationInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(pLoadingCurve2.class);
+    static Logger logger = LogManager.getLogger(pLoadingCurve2.class);
     
     SystemInterface system;
     int i, j=0, nummer=0, iterations=0,maxNumberOfIterations=10000;

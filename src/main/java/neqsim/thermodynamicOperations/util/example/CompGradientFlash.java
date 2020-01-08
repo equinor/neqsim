@@ -19,7 +19,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * TPflash.java
@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 public class CompGradientFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CompGradientFlash.class);
+    static Logger logger = LogManager.getLogger(CompGradientFlash.class);
 
     /** Creates new TPflash */
     public CompGradientFlash() {

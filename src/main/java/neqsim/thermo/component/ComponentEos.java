@@ -27,7 +27,7 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwuCoonParam;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermUMRPRU;
 import neqsim.thermo.component.atractiveEosTerm.AttractiveTermTwuCoonStatoil;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -49,7 +49,7 @@ abstract class ComponentEos extends Component implements ComponentEosInterface, 
     protected double dAdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
     protected double dBdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
     protected AtractiveTermInterface atractiveParameter;
-    static Logger logger = Logger.getLogger(ComponentEos.class);
+    static Logger logger = LogManager.getLogger(ComponentEos.class);
 
     public ComponentEos() {
     }

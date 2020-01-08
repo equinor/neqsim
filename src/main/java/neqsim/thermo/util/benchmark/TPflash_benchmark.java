@@ -20,11 +20,11 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class TPflash_benchmark {
 
-    static Logger logger = Logger.getLogger(TPflash_benchmark.class);
+    static Logger logger = LogManager.getLogger(TPflash_benchmark.class);
     private static final long serialVersionUID = 1000;
 
     /**

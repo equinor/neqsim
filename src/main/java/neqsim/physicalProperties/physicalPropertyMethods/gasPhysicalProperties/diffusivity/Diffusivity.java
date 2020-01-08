@@ -6,7 +6,7 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class Diffusivity extends neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Diffusivity.class);
+    static Logger logger = LogManager.getLogger(Diffusivity.class);
     
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
     double[] effectiveDiffusionCoefficient;

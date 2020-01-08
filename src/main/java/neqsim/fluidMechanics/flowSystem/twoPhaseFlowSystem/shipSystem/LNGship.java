@@ -3,7 +3,7 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem;
 
 import java.text.DecimalFormat;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.standards.StandardInterface;
 import neqsim.standards.gasQuality.Standard_ISO6578;
@@ -38,7 +38,7 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
 	private String[][] resultTable = null;
 	private boolean backCalculate = false;
 	double endVolume = 0.0;
-	static Logger logger = Logger.getLogger(LNGship.class);
+	static Logger logger = LogManager.getLogger(LNGship.class);
 
 	public LNGship(neqsim.thermo.system.SystemInterface thermoSystem, double totalTankVolume,
 			double dailyBoilOffRatio) {

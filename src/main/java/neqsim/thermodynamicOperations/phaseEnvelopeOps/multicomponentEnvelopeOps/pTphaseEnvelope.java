@@ -33,13 +33,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.derby.iapi.services.io.ArrayUtil;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.jfree.chart.JFreeChart;
 
 public class pTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(pTphaseEnvelope.class);
+	static Logger logger = LogManager.getLogger(pTphaseEnvelope.class);
 
 	double maxPressure = 1000.0;
 	double minPressure = 1.0;

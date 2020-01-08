@@ -2,7 +2,7 @@ package neqsim.thermo.characterization;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class NewtonSolveCDplus extends Object implements java.io.Serializable {
     private static final long serialVersionUID = 1000;    
@@ -13,7 +13,7 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
     int numberOfComponents = 0;
     PlusCharacterize characterizeClass;
     SystemInterface system = null;
-    static Logger logger = Logger.getLogger(NewtonSolveCDplus.class);
+    static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
     public NewtonSolveCDplus() {
     }

@@ -20,12 +20,12 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializable, ThermodynamicConstantsInterface{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(sysNewtonRhapsonPHflash.class);
+    static Logger logger = LogManager.getLogger(sysNewtonRhapsonPHflash.class);
     int neq=0,iter=0;
     int ic02p=-100, ic03p=-100, testcrit=0, npCrit=0;
     double beta = 0, ds=0,dTmax=1,dPmax=1, avscp = 0.1, TC1=0, TC2=0,PC1=0,PC2=0;

@@ -51,6 +51,7 @@ if ((Math.abs((x[(i-(1))+ _x_offset]-neqsim.thermo.util.GERG.GERG2008_gerg2008.x
 if ((icheck == 0))  {
     dr.val = neqsim.thermo.util.GERG.GERG2008_gerg2008.drold.val;
 tr.val =    neqsim.thermo.util.GERG.GERG2008_gerg2008.trold.val;
+return;
 //Dummy.go_to("neqsim/thermo/GERG/Reducingparametersgerg",999999);
 }
         neqsim.thermo.util.GERG.GERG2008_gerg2008.told.val = 0.e0;

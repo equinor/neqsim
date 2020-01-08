@@ -8,12 +8,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(HydrateInhibitorConcentrationFlash.class);
+    static Logger logger = LogManager.getLogger(HydrateInhibitorConcentrationFlash.class);
 
     double hydT = 273.15;
     String inhibitor = "MEG";

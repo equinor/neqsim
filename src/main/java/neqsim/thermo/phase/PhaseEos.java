@@ -9,7 +9,7 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -25,7 +25,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     public EosMixingRulesInterface mixRule;
     double uEOS = 0, wEOS = 0;
     newtonRhapson solver;
-    static Logger logger = Logger.getLogger(PhaseEos.class);
+    static Logger logger = LogManager.getLogger(PhaseEos.class);
     // Class methods
 
     @Override

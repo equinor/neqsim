@@ -10,7 +10,7 @@ import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -32,7 +32,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
     double dFdVdXdXdVtotal = 0.0;
     double dFCPAdXdXdTtotal = 0.0, dFCPAdTdT = 0.0;
     
-    static Logger logger = Logger.getLogger(PhaseElectrolyteCPAOld.class);
+    static Logger logger = LogManager.getLogger(PhaseElectrolyteCPAOld.class);
 
     /** Creates new PhaseSrkEos */
     public PhaseElectrolyteCPAOld() {

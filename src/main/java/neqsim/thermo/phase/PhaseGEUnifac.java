@@ -8,7 +8,7 @@ package neqsim.thermo.phase;
 import java.util.Arrays;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -26,7 +26,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
     boolean checkedGroups = false;
-    static Logger logger = Logger.getLogger(PhaseGEUnifac.class);
+    static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
 
     public PhaseGEUnifac() {
         super();

@@ -7,7 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -25,7 +25,7 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     double[] xsiteOld = new double[0];
     double[] xsitedV = new double[0];
     double[] xsitedT = new double[0];
-    static Logger logger = Logger.getLogger(ComponentElectrolyteCPAOld.class);
+    static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
 
     public ComponentElectrolyteCPAOld() {
     }

@@ -7,7 +7,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class CriticalPointFlash extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CriticalPointFlash.class);
+    static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
 
     SimpleMatrix Mmatrix = null;
     SimpleMatrix HeidemannMmatrix = null;

@@ -22,7 +22,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 public class TPflash extends Flash implements java.io.Serializable {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(TPflash.class);
+	static Logger logger = LogManager.getLogger(TPflash.class);
 
 	SystemInterface clonedSystem;
 	double betaTolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;

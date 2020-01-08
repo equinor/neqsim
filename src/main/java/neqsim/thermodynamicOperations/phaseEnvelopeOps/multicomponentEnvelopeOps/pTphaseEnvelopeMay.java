@@ -30,7 +30,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.jfree.chart.JFreeChart;
 
 
@@ -38,7 +38,7 @@ import org.jfree.chart.JFreeChart;
 public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(pTphaseEnvelopeMay.class);
+    static Logger logger = LogManager.getLogger(pTphaseEnvelopeMay.class);
 
     double maxPressure = 1000.0;
     double minPressure=1.0;

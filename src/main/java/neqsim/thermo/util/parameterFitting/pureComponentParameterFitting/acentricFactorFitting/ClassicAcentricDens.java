@@ -6,7 +6,7 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class ClassicAcentricDens extends ClassicAcentricFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ClassicAcentricDens.class);
+    static Logger logger = LogManager.getLogger(ClassicAcentricDens.class);
     
     int phasetype = 1;
     /** Creates new Test */

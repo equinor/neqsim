@@ -8,7 +8,7 @@ package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalPropertie
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Density;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class LiquidPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(LiquidPhysicalProperties.class);
+    static Logger logger = LogManager.getLogger(LiquidPhysicalProperties.class);
 
     public LiquidPhysicalProperties() {
     }

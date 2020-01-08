@@ -13,7 +13,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class IonicInteractionParameterFittingFunction_Sleipner extends LevenbergMarquardtFunction implements ThermodynamicConstantsInterface{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction_Sleipner.class);
+    static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_Sleipner.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction_Sleipner() {

@@ -3,13 +3,13 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 public class TestMEGFlash{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestMEGFlash.class);
+    static Logger logger = LogManager.getLogger(TestMEGFlash.class);
     public static void main(String args[]){
         SystemInterface testSystem = new SystemSrkCPAs(273.15+20, 10.0);
         

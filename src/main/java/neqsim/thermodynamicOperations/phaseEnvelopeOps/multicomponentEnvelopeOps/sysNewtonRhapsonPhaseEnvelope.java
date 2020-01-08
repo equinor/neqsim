@@ -20,12 +20,12 @@ import Jama.*;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 import static neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope.logger;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(sysNewtonRhapsonPhaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope.class);
 
     double sumx = 0, sumy = 0;
     int neq = 0, iter = 0, iter2 = 0  ;

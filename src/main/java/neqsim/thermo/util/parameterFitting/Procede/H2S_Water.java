@@ -5,7 +5,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 
@@ -22,7 +22,7 @@ import org.apache.log4j.Logger;
 public class H2S_Water {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(H2S_Water.class);
+    static Logger logger = LogManager.getLogger(H2S_Water.class);
     
     /** Creates a new instance of Sleipneracetate */
     public H2S_Water() {

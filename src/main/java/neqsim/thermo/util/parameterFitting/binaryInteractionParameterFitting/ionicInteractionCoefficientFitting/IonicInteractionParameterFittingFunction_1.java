@@ -6,7 +6,7 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class IonicInteractionParameterFittingFunction_1 extends IonicInteractionParameterFittingFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction_1.class);
+    static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_1.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction_1() {

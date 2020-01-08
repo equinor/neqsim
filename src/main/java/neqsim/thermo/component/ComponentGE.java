@@ -7,7 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     protected double gamma = 0, gammaRefCor = 0;
     protected double lngamma = 0, dlngammadt = 0, dlngammadp = 0,dlngammadtdt=0.0;
     protected double[] dlngammadn;
-    static Logger logger = Logger.getLogger(ComponentGE.class);
+    static Logger logger = LogManager.getLogger(ComponentGE.class);
 
     /** Creates new ComponentGE */
     public ComponentGE() {

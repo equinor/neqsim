@@ -13,7 +13,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class TestBinaryHVParameterFittingToSolubilityData_Lucia extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToSolubilityData_Lucia.class);
+    static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData_Lucia.class);
 
     /**
      * Creates new TestAcentric

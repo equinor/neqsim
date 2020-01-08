@@ -23,7 +23,7 @@ package neqsim.util.database;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -49,7 +49,7 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
     private static final long serialVersionUID = 1000;
     public static String dataBasePath = "";
     public static String username = "", password = "";
-    static Logger logger = Logger.getLogger(NeqSimExperimentDatabase.class);
+    static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
     private static boolean createTemporaryTables = false;
 
     private static String dataBaseType = "MSAccessUCanAccess";

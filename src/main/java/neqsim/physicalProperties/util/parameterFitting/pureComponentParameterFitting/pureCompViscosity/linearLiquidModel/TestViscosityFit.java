@@ -16,7 +16,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 public class TestViscosityFit extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestViscosityFit.class);
+    static Logger logger = LogManager.getLogger(TestViscosityFit.class);
     
     /** Creates new TestAcentric */
     public TestViscosityFit() {

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -50,7 +50,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
     private static final long serialVersionUID = 1000;
     public static String dataBasePath = "";
-    static Logger logger = Logger.getLogger(NeqSimDataBase.class);
+    static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
 
     

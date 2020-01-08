@@ -6,7 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +19,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
 
     double Ak[][] = new double[2][2]; //[structure][cavitytype]
     double Bk[][] = new double[2][2]; //[structure][cavitytype]
-    static Logger logger = Logger.getLogger(ComponentHydrateGF.class);
+    static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
     public ComponentHydrateGF() {
     }

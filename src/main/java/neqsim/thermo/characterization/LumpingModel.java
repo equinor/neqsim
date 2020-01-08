@@ -22,7 +22,7 @@ package neqsim.thermo.characterization;
 
 import java.io.Serializable;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -34,7 +34,7 @@ public class LumpingModel implements Serializable {
     double[] fractionOfHeavyEnd = null;
     String name = "";
     SystemInterface system = null;
-    static Logger logger = Logger.getLogger(LumpingModel.class);
+    static Logger logger = LogManager.getLogger(LumpingModel.class);
 
     public LumpingModel(SystemInterface system) {
         this.system = system;

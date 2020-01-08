@@ -5,7 +5,7 @@
  */
 
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 public class Density extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Density.class);
+    static Logger logger = LogManager.getLogger(Density.class);
 
     
       /** Creates new Density */

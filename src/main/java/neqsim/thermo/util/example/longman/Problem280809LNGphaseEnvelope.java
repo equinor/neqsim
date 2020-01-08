@@ -8,7 +8,7 @@ package neqsim.thermo.util.example.longman;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 public class Problem280809LNGphaseEnvelope {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Problem280809LNGphaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
     public Problem280809LNGphaseEnvelope(){
 

@@ -30,7 +30,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.util.GERG.NeqSimGERG2008;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -59,7 +59,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     PhaseInterface[] refPhase = null;
     int phaseType = 0;
     protected String phaseTypeName = "gas";
-    static Logger logger = Logger.getLogger(Phase.class);
+    static Logger logger = LogManager.getLogger(Phase.class);
 
     // Class methods
     /**

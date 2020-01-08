@@ -3,14 +3,14 @@
  */
 package neqsim.thermo;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  * @author esol
  *
  */
 public class Fluid {
-	 static Logger logger = Logger.getLogger(Fluid.class);
+	 static Logger logger = LogManager.getLogger(Fluid.class);
 	 static neqsim.thermo.system.SystemInterface fluid = null;
 	 private static boolean hasWater = false;
 	 private static boolean autoSelectModel = false;

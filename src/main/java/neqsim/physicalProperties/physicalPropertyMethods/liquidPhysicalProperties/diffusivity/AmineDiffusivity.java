@@ -6,7 +6,7 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class AmineDiffusivity extends SiddiqiLucasMethod{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(AmineDiffusivity.class);
+    static Logger logger = LogManager.getLogger(AmineDiffusivity.class);
     
     /** Creates new Conductivity */
     

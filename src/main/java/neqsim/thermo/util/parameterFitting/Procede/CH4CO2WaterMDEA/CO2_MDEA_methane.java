@@ -6,7 +6,7 @@ import java.sql.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class CO2_MDEA_methane {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CO2_MDEA_methane.class);
+    static Logger logger = LogManager.getLogger(CO2_MDEA_methane.class);
     
     /** Creates a new instance of Sleipneracetate */
     public CO2_MDEA_methane() {

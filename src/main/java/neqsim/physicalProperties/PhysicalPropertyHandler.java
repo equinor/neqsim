@@ -17,7 +17,7 @@ package neqsim.physicalProperties;
 
 import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -30,7 +30,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface aqueousPhysicalProperties = null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhysicalProperties = null;
     private neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRule mixingRule = null;
-    static Logger logger = Logger.getLogger(PhysicalPropertyHandler.class);
+    static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
     private static final long serialVersionUID = 1000;
 
     public PhysicalPropertyHandler() {

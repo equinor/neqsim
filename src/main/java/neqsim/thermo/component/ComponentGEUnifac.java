@@ -8,7 +8,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -26,7 +26,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     double Q = 0.0;
     double R = 0.0;
     int numberOfUnifacSubGroups = 133;
-    static Logger logger = Logger.getLogger(ComponentGEUnifac.class);
+    static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
     /**
      * Creates new ComponentGEUniquac

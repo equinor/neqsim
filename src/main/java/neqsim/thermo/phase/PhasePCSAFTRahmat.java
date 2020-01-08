@@ -7,7 +7,7 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -91,7 +91,7 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     private double F1dispVolTerm = 1.0, F1dispSumTerm = 1.0, F1dispI1 = 1.0, F2dispI2 = 1.0, F2dispZHC = 1.0, F2dispZHCdN = 1.0, F2dispZHCdm = 1.0, F2dispZHCdV = 1.0, F2dispI2dVdV, F2dispI2dVdVdV = 0.0, F2dispZHCdVdV = 1.0, F2dispZHCdVdVdV = 1.0, F1dispI1dNdN = 1.0, F1dispI1dNdNdN = 1.0;
     private double F1dispVolTermdV = 1.0, F1dispVolTermdVdV = 1.0, F1dispI1dN = 1.0, F1dispI1dm = 1.0, F1dispI1dV = 1.0, F2dispI2dV = 1.0, F2dispI2dN = 1.0, F2dispI2dm = 1.0, F2dispSumTerm = 0.0, F2dispZHCdNdN = 1.0, F2dispZHCdNdNdN = 1.0, F2dispI2dNdN = 1.0, F2dispI2dNdNdN = 1.0, F1dispI1dVdV = 1.0, F1dispI1dVdVdV = 1.0;
     private double F1dispVolTermdVdVdV = 1.0;
-    static Logger logger = Logger.getLogger(PhasePCSAFTRahmat.class);
+    static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
     /** Creates new PhaseSrkEos */
     public PhasePCSAFTRahmat() {

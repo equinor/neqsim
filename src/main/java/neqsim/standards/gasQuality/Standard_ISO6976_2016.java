@@ -7,11 +7,11 @@ package neqsim.standards.gasQuality;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem.LNGship;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -35,7 +35,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
     double[] Hinf0, Hinf15, Hinf20, Hinf25, Hinf60F;
     double HsupIdeal0 = 0.0, HsupIdeal15 = 0.0, HsupIdeal20 = 0.0, HsupIdeal25 = 0.0, HsupIdeal60F = 0.0;
     double HinfIdeal0 = 0.0, HinfIdeal15 = 0.0, HinfIdeal20 = 0.0, HinfIdeal25 = 0.0, HinfIdeal60F = 0.0;
-    static Logger logger = Logger.getLogger(Standard_ISO6976_2016.class);
+    static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
 
     /**
      * Creates a new instance of Standard_ISO1992

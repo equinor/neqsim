@@ -6,7 +6,7 @@
 package neqsim.thermo.characterization;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public class WaxCharacterise extends Object implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;    
-    static Logger logger = Logger.getLogger(WaxCharacterise.class);
+    static Logger logger = LogManager.getLogger(WaxCharacterise.class);
     SystemInterface thermoSystem = null;
     String name = "";
     protected WaxModelInterface model = new PedersenWaxModel();

@@ -7,12 +7,12 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(bubblePointTemperatureNoDer.class);
+	static Logger logger = LogManager.getLogger(bubblePointTemperatureNoDer.class);
 
 	/** Creates new bubblePointFlash */
 	public bubblePointTemperatureNoDer() {

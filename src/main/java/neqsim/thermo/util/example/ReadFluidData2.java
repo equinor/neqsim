@@ -4,7 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * TPflash.java
@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
 public class ReadFluidData2 {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(ReadFluidData.class);
+	static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
 	/**
 	 * Creates new TPflash

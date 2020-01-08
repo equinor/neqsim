@@ -18,7 +18,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -27,7 +27,7 @@ import org.apache.log4j.Logger;
 public class TestFlash {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(TestFlash.class);
+	static Logger logger = LogManager.getLogger(TestFlash.class);
 
 	public static void main(String[] args) {
 

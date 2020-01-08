@@ -8,7 +8,7 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePCSAFTRahmat;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
 public class SystemPCSAFT extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(SystemPCSAFT.class);
+    static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
 
     //  SystemSrkEos clonedSystem;
     public SystemPCSAFT() {
