@@ -36,7 +36,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseWax;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * This is the base class of the System classes. The purpose of this class is to
@@ -101,7 +101,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	private boolean multiphaseWaxCheck = false;
 	Object pdfDocument = null;
 	private boolean forcePhaseTypes = false;
-	static Logger logger = Logger.getLogger(SystemThermo.class);
+	static Logger logger = LogManager.getLogger(SystemThermo.class);
 
 	public SystemThermo() {
 		phaseArray = new PhaseInterface[6];

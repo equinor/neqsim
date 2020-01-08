@@ -9,7 +9,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentPCSAFTa;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -29,7 +29,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     double gcpav = 0.0, lngcpa = 0.0, gcpavv = 1.0, gcpavvv = 0.0, gcpa = 0.0;
     int[][][] selfAccociationScheme = null;
     int[][][][] crossAccociationScheme = null;
-    static Logger logger = Logger.getLogger(PhasePCSAFTa.class);
+    static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
     /** Creates new PhaseSrkEos */
     public PhasePCSAFTa() {

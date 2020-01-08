@@ -14,7 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class TestIonicInteractionParameterFittingPiperazine extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestIonicInteractionParameterFittingPiperazine.class);
+    static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingPiperazine.class);
     
     /** Creates new TestAcentric */
     public TestIonicInteractionParameterFittingPiperazine(){

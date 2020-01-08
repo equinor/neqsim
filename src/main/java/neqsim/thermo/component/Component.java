@@ -30,7 +30,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.referenceTemperature
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 abstract class Component extends Object
 		implements ComponentInterface, ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
@@ -105,7 +105,7 @@ abstract class Component extends Object
 	protected double epsikSAFT = 0;
 	private double associationVolumeSAFT;
 	private double associationEnergySAFT = 0;
-	static Logger logger = Logger.getLogger(Component.class);
+	static Logger logger = LogManager.getLogger(Component.class);
 
 	/**
 	 * Creates new Component

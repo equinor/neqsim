@@ -9,7 +9,7 @@ package neqsim.thermodynamicOperations.chemicalEquilibrium;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class ChemicalEquilibrium extends BaseOperation implements OperationInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ChemicalEquilibrium.class);
+    static Logger logger = LogManager.getLogger(ChemicalEquilibrium.class);
     
     SystemInterface system;
     /** Creates a new instance of ChemicalEquilibrium */

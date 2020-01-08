@@ -9,7 +9,7 @@ package neqsim.thermo.util.parameterFitting.Procede.CO2MDEA;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
-    static Logger logger = Logger.getLogger(BinaryHVParameterFittingFunction_N2O.class);
+    static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_N2O.class);
     
     /** Creates new Test */
     public BinaryHVParameterFittingFunction_N2O() {

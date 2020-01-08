@@ -6,7 +6,7 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethodInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(PhysicalPropertyMethod.class);
+    static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
     
     /** Creates new PhysicalPropertyMethod */
     public PhysicalPropertyMethod() {

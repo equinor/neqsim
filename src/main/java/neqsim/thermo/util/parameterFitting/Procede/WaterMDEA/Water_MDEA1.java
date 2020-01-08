@@ -4,7 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 
@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 public class Water_MDEA1 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Water_MDEA1.class);
+    static Logger logger = LogManager.getLogger(Water_MDEA1.class);
     
     /** Creates a new instance of Sleipneracetate */
     public Water_MDEA1() {

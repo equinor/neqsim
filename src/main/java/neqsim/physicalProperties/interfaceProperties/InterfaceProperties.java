@@ -5,7 +5,7 @@
  */
 package neqsim.physicalProperties.interfaceProperties;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionInterface;
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.PotentialTheoryAdsorption;
@@ -34,7 +34,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 	double[] surfaceTension;
 	int numberOfInterfaces = 1;
 	private int interfacialTensionModel = 0;
-	static Logger logger = Logger.getLogger(InterfaceProperties.class);
+	static Logger logger = LogManager.getLogger(InterfaceProperties.class);
 	/**
 	 * Creates new InterfaceProperties
 	 */

@@ -6,7 +6,7 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class CPAFunctionCp extends CPAFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CPAFunctionCp.class);
+    static Logger logger = LogManager.getLogger(CPAFunctionCp.class);
     
     int phasetype = 1;
     /** Creates new Test */

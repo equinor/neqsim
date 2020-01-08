@@ -7,7 +7,7 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 public class TwuCoon extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TwuCoon.class);
+    static Logger logger = LogManager.getLogger(TwuCoon.class);
     
     /** Creates new Test */
     public TwuCoon() {

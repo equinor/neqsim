@@ -2,7 +2,7 @@ package neqsim.thermo.characterization;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class PedersenPlusModelSolver extends Object implements java.io.Serializable {
     private static final long serialVersionUID = 1000;    
@@ -13,7 +13,7 @@ public class PedersenPlusModelSolver extends Object implements java.io.Serializa
     int numberOfComponents = 0;
     PlusFractionModel.PedersenPlusModel characterizeClass;
     SystemInterface system = null;
-    static Logger logger = Logger.getLogger(PedersenPlusModelSolver.class);
+    static Logger logger = LogManager.getLogger(PedersenPlusModelSolver.class);
 
     public PedersenPlusModelSolver() {
     }

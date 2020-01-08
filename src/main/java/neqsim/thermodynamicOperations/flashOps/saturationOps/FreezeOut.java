@@ -12,7 +12,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 //import dataPresentation.
@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 public class FreezeOut extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(FreezeOut.class);
+    static Logger logger = LogManager.getLogger(FreezeOut.class);
     public double[] FCompTemp = new double[10];
     public String[] FCompNames = new String[10];
     public boolean noFreezeFlash = true;

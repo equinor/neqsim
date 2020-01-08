@@ -9,7 +9,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Eo
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CPAParameterFittingToDewPointData.class);
+    static Logger logger = LogManager.getLogger(CPAParameterFittingToDewPointData.class);
     
     /** Creates new Test */
     public CPAParameterFittingToDewPointData() {

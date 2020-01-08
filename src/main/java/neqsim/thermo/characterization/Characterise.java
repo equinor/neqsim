@@ -21,7 +21,7 @@
 package neqsim.thermo.characterization;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -38,7 +38,7 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
     protected String TBPFractionModelName = "PedersenSRK";
     protected LumpingModel lumpingModelSelector = null;
     protected TBPfractionModel TBPfractionModelSelector;
-    static Logger logger = Logger.getLogger(Characterise.class);
+    static Logger logger = LogManager.getLogger(Characterise.class);
 
     /**
      * Creates a new instance of TBPCharacterize

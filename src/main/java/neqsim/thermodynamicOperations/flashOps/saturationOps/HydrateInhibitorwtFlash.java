@@ -8,7 +8,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
@@ -17,7 +17,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     double wtfrac = 0.5;
     String inhibitor = "MEG";
     
-    static Logger logger = Logger.getLogger(HydrateInhibitorwtFlash.class);
+    static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
 
     /**
      * Creates new bubblePointFlash

@@ -19,7 +19,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -28,7 +28,7 @@ import org.apache.log4j.Logger;
 public class TestBinaryHVParameterFitting_MDEA extends java.lang.Object{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestBinaryHVParameterFitting_MDEA .class);
+    static Logger logger = LogManager.getLogger(TestBinaryHVParameterFitting_MDEA .class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFitting_MDEA(){

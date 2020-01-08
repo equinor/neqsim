@@ -12,7 +12,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 //import dataPresentation.
@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 public class FugTestConstP extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(FugTestConstP.class);
+    static Logger logger = LogManager.getLogger(FugTestConstP.class);
     public double temp=0.0, pres=0.0;
     public SystemInterface testSystem, testSystem2;
     public ThermodynamicOperations testOps, testOps2;

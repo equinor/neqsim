@@ -5,7 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.util;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -37,7 +37,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
     int iterations = 0;
     
 
-    static Logger logger = Logger.getLogger(PhaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
     /** Creates new staticMixer */
     public Adjuster() {

@@ -6,7 +6,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.fr
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTemperatureCalc;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -15,7 +15,7 @@ import org.apache.log4j.Logger;
 public class SolidComplexFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(SolidComplexFunction.class);
+    static Logger logger = LogManager.getLogger(SolidComplexFunction.class);
 
     public SolidComplexFunction() {
     }

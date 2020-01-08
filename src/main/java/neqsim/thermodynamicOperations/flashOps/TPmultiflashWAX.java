@@ -24,7 +24,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import Jama.*;
 import java.util.*;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 public class TPmultiflashWAX extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TPmultiflashWAX.class);
+    static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
 
     //   SystemInterface clonedSystem;
     boolean multiPhaseTest = false;

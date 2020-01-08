@@ -23,7 +23,7 @@ package neqsim.util.database;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -48,7 +48,7 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 
 	private static final long serialVersionUID = 1000;
 	public static String dataBasePath = "";
-	static Logger logger = Logger.getLogger(NeqSimBlobDatabase.class);
+	static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
 	private static boolean createTemporaryTables = true;
 
 	private static String dataBaseType = "mySQL";

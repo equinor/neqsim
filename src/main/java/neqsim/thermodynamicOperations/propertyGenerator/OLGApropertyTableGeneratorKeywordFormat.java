@@ -27,7 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorKeywordFormat.class);
+    static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorKeywordFormat.class);
 
     SystemInterface thermoSystem = null;
     ThermodynamicOperations thermoOps = null;

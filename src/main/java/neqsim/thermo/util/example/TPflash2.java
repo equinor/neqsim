@@ -2,7 +2,7 @@ package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.*;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * TPflash.java
@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 public class TPflash2 {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(TPflash2.class);
+	static Logger logger = LogManager.getLogger(TPflash2.class);
 
 	/**
 	 * Creates new TPflash

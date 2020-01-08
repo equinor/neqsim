@@ -9,7 +9,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  *
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public class TestCharacterizationCondensate1 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestCharacterizationCondensate1.class);
+    static Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
 
     /**
      * Creates new TPflash

@@ -9,12 +9,12 @@ import java.io.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(freezingPointTemperatureFlash.class);
+    static Logger logger = LogManager.getLogger(freezingPointTemperatureFlash.class);
 
     public boolean noFreezeFlash = true;
     public int Niterations = 0;

@@ -24,7 +24,7 @@ package neqsim.thermo.atomElement;
 
 import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -34,7 +34,7 @@ public class Element extends Object implements ThermodynamicConstantsInterface, 
     private static final long serialVersionUID = 1000;    
     String[]  nameArray;
     double[]  coefArray;
-    static Logger logger = Logger.getLogger(Element.class);
+    static Logger logger = LogManager.getLogger(Element.class);
     /** Creates new Element */
     public Element() {
     }

@@ -8,7 +8,7 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.linear.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class GTSurfaceTensionSimple extends SurfaceTension {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(GTSurfaceTensionSimple.class);
+    static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
     
     int ite_step = 200;
     SystemInterface localSystem = null;

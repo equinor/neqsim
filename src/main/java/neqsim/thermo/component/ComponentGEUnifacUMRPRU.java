@@ -9,7 +9,7 @@ import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ComponentGEUnifacUMRPRU.class);
+    static Logger logger = LogManager.getLogger(ComponentGEUnifacUMRPRU.class);
 
     int numberOfUnifacSubGroups = 139;
     double[][] aij = null, aijdT = null, aijdTdT = null;

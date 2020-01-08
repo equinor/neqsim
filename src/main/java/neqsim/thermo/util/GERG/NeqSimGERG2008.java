@@ -65,6 +65,7 @@ public class NeqSimGERG2008 {
 		// Densitygerg dens = Densitygerg();
 		// neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
 		// arg7);
+		
 		neqsim.thermo.util.GERG.Densitygerg.densitygerg(flag, phase.getTemperature(), pressure,
 				normalizedGERGComposition, d, ierr, herr, strW);
 		return ierr.val;
@@ -220,7 +221,6 @@ public class NeqSimGERG2008 {
 		fluid1.addComponent("methane", 92.0);
 		fluid1.addComponent("ethane", 8.0);
 		fluid1.addComponent("propane", 1.0);
-
 		fluid1.setTemperature(298.0);
 		fluid1.setPressure(150.00);
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);

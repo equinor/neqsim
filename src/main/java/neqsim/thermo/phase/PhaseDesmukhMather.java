@@ -8,7 +8,7 @@ package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentDesmukhMather;
 import neqsim.thermo.component.ComponentGEInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -25,7 +25,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     double[][] bij;
     /** Creates new PhaseGENRTLmodifiedHV */
     
-    static Logger logger = Logger.getLogger(PhaseDesmukhMather.class);
+    static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
     
     public PhaseDesmukhMather() {
         super();

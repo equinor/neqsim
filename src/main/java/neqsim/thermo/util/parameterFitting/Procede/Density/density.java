@@ -2,7 +2,7 @@ package neqsim.thermo.util.parameterFitting.Procede.Density;
 import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  *
@@ -11,7 +11,7 @@ import org.apache.log4j.Logger;
 public class density {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(density.class);
+    static Logger logger = LogManager.getLogger(density.class);
     
     /** Creates a new instance of Sleipneracetate */
     public density() {

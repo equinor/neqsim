@@ -1,12 +1,12 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.specificHeat;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 public class SpecificHeatCpFunction extends LevenbergMarquardtFunction{
 	 private static final long serialVersionUID = 1000;
-	    static Logger logger = Logger.getLogger(SpecificHeatCpFunction.class);
+	    static Logger logger = LogManager.getLogger(SpecificHeatCpFunction.class);
 	    
 	    public SpecificHeatCpFunction() {
 	        params = new double[4];

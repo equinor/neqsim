@@ -4,7 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 
@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 public class N2O {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(N2O.class);
+    static Logger logger = LogManager.getLogger(N2O.class);
     
     /** Creates a new instance of Sleipneracetate */
     public N2O() {

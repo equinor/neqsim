@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class TestTwuCoon extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestTwuCoon.class);
+    static Logger logger = LogManager.getLogger(TestTwuCoon.class);
 
     /** Creates new TestAcentric */
     public TestTwuCoon() {

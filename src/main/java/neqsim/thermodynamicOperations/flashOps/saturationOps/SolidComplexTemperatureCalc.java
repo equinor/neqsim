@@ -7,12 +7,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(SolidComplexTemperatureCalc.class);
+    static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
     String comp1, comp2;
     public static double Kcomplex = 0.133736021815520500;

@@ -8,7 +8,7 @@ package neqsim.physicalProperties.mixingRule;
 import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(PhysicalPropertyMixingRule.class);
+    static Logger logger = LogManager.getLogger(PhysicalPropertyMixingRule.class);
 
     public double[][] Gij;
 

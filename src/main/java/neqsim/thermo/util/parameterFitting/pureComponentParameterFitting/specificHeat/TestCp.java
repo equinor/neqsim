@@ -3,7 +3,7 @@ package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.specif
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
@@ -15,7 +15,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
 
 public class TestCp {
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(TestCp.class);
+	static Logger logger = LogManager.getLogger(TestCp.class);
 	
 	  public static void main(String[] args){
 	        

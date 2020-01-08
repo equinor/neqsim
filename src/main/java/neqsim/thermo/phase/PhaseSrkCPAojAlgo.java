@@ -9,7 +9,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.SparseStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
@@ -43,7 +43,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     MatrixStore<Double> hessianInvers2 = null;
     final BasicMatrix.Factory<PrimitiveMatrix> mtrxFactory = PrimitiveMatrix.FACTORY;
     
-    static Logger logger = Logger.getLogger(PhaseSrkCPAojAlgo.class);
+    static Logger logger = LogManager.getLogger(PhaseSrkCPAojAlgo.class);
 
     //private transient SimpleMatrix KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
     // DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;//new DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);

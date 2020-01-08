@@ -7,7 +7,7 @@ package neqsim.physicalProperties.util.examples;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class TestSolidAdsorption {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestSolidAdsorption.class);
+    static Logger logger = LogManager.getLogger(TestSolidAdsorption.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(288.15,1.4);

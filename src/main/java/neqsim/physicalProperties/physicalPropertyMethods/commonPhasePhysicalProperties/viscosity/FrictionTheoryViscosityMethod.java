@@ -5,7 +5,7 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -33,7 +33,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
     {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
 
     protected double kaprr_fconst = 1.35994e-8;
-    static Logger logger = Logger.getLogger(FrictionTheoryViscosityMethod.class);
+    static Logger logger = LogManager.getLogger(FrictionTheoryViscosityMethod.class);
 
     //PR
     //    protected double kapac_fconst = -0.140464;

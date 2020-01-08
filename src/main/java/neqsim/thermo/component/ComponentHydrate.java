@@ -6,7 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class ComponentHydrate extends Component {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ComponentHydrate.class);
+    static Logger logger = LogManager.getLogger(ComponentHydrate.class);
 
     //double emptyHydrateVapourPressureConstant[][] =  {{17.6025820786, -6056.0650578668},{17.332, -6017.6}}; //fitted
     double emptyHydrateVapourPressureConstant[][] = {{17.44, -6003.9}, {17.332, -6017.6}}; //Sloan (1990)

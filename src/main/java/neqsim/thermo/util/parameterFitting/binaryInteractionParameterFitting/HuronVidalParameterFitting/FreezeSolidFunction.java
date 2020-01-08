@@ -6,7 +6,7 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class FreezeSolidFunction extends HuronVidalFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(FreezeSolidFunction.class);
+    static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
     
     /** Creates new Test */
     public FreezeSolidFunction() {

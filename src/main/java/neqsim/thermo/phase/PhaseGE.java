@@ -9,7 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,7 +23,7 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
     public EosMixingRules mixSelect = new EosMixingRules();
     public EosMixingRulesInterface mixRuleEos;
     
-    static Logger logger = Logger.getLogger(PhaseGE.class);
+    static Logger logger = LogManager.getLogger(PhaseGE.class);
     
     /** Creates new PhaseGE */
     public PhaseGE() {

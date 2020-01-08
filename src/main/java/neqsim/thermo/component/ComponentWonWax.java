@@ -5,7 +5,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 public class ComponentWonWax extends ComponentSolid {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ComponentWonWax.class);
+    static Logger logger = LogManager.getLogger(ComponentWonWax.class);
 
     /**
      * Creates new SolidComponent

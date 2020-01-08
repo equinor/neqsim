@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
  */
 public class TVPexample {
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TVPexample.class);
+    static Logger logger = LogManager.getLogger(TVPexample.class);
     public TVPexample(){};
     
     public static void main(String[] args) {

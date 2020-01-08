@@ -23,7 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 public class SolidFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(SolidFlash.class);
+    static Logger logger = LogManager.getLogger(SolidFlash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemUMRPRUMCEos(273.15-80, 1.3);

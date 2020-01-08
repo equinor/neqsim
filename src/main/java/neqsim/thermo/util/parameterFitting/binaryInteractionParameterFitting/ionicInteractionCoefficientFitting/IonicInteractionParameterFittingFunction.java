@@ -11,7 +11,7 @@ import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
 public class IonicInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunction.class);
+    static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunction() {

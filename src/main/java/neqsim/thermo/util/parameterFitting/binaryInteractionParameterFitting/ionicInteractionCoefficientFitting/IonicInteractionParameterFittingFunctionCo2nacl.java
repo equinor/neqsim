@@ -8,7 +8,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
+    static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
     
     /** Creates new Test */
     public IonicInteractionParameterFittingFunctionCo2nacl() {

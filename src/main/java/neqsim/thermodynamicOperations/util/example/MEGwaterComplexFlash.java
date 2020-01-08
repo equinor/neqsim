@@ -23,7 +23,7 @@ package neqsim.thermodynamicOperations.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -32,7 +32,7 @@ import org.apache.log4j.Logger;
 public class MEGwaterComplexFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(MEGwaterComplexFlash.class);
+    static Logger logger = LogManager.getLogger(MEGwaterComplexFlash.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 +50, 1.0);

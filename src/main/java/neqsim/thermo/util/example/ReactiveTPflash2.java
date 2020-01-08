@@ -9,7 +9,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  esol
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class ReactiveTPflash2 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ReactiveTPflash2.class);
+    static Logger logger = LogManager.getLogger(ReactiveTPflash2.class);
     
     /** Creates new TPflash */
     public ReactiveTPflash2() {

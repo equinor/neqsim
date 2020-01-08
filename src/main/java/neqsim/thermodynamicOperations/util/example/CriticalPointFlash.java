@@ -25,7 +25,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.thermodynamicOperations.flashOps.saturationOps.cricondebarFlash;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 public class CriticalPointFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CriticalPointFlash.class);
+    static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
 
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(300,80.01325);

@@ -7,7 +7,7 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 public class dTPflash extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(dTPflash.class);
+    static Logger logger = LogManager.getLogger(dTPflash.class);
     String[] flashComp = null;
     
     //   SystemInterface clonedSystem;

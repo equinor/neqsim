@@ -9,7 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacPSRK;
 import neqsim.thermo.component.ComponentGEUniquac;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public class PhaseGEUnifacPSRK extends PhaseGEUnifac{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(PhaseGEUnifacPSRK.class);
+    static Logger logger = LogManager.getLogger(PhaseGEUnifacPSRK.class);
     
     /** Creates new PhaseGEUniquac */
     

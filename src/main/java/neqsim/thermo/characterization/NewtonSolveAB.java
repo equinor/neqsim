@@ -18,7 +18,7 @@ package neqsim.thermo.characterization;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class NewtonSolveAB extends Object implements java.io.Serializable {
     private static final long serialVersionUID = 1000;    
@@ -28,7 +28,7 @@ public class NewtonSolveAB extends Object implements java.io.Serializable {
     Matrix sol,dx;
     int numberOfComponents=0;
     TBPCharacterize characterizeClass;
-    static Logger logger = Logger.getLogger(NewtonSolveAB.class);
+    static Logger logger = LogManager.getLogger(NewtonSolveAB.class);
     
     SystemInterface system = null;
     

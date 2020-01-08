@@ -9,7 +9,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class TestISO1982 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestISO1982.class);
+    static Logger logger = LogManager.getLogger(TestISO1982.class);
     
     /** Creates a new instance of TestISO1982 */
     public TestISO1982() {

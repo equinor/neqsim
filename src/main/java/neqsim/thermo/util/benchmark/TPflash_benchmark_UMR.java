@@ -19,12 +19,12 @@ package neqsim.thermo.util.benchmark;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class TPflash_benchmark_UMR {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TPflash_benchmark_UMR.class);
+    static Logger logger = LogManager.getLogger(TPflash_benchmark_UMR.class);
 
     /**
      * This method is just meant to test the thermo package.

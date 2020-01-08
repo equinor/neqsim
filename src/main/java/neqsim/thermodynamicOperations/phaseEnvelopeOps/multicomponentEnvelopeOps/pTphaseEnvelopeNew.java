@@ -29,7 +29,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.jfree.chart.JFreeChart;
 
 /**
@@ -40,7 +40,7 @@ import org.jfree.chart.JFreeChart;
 public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(pTphaseEnvelopeNew.class);
+    static Logger logger = LogManager.getLogger(pTphaseEnvelopeNew.class);
 
     graph2b graph2 = null;
     SystemInterface system;

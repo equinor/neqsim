@@ -14,7 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class TestCPA extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestCPA.class);
+    static Logger logger = LogManager.getLogger(TestCPA.class);
     
     /** Creates new TestAcentric */
     public TestCPA() {

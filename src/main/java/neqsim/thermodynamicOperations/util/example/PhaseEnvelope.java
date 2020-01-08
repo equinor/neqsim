@@ -7,7 +7,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 
 /*
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class PhaseEnvelope {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(PhaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
     /*
      * Creates new PhaseEnvelope

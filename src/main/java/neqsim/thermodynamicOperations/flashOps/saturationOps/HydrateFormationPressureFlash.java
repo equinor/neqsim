@@ -9,12 +9,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(HydrateFormationPressureFlash.class);
+    static Logger logger = LogManager.getLogger(HydrateFormationPressureFlash.class);
     
     /** Creates new bubblePointFlash */
     public HydrateFormationPressureFlash() {

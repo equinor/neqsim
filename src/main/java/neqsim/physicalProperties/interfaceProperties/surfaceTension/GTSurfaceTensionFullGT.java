@@ -12,7 +12,7 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 //import static easyjcckit.QuickPlot.*;
 import neqsim.thermo.system.SystemInterface;
 import no.uib.cipr.matrix.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  * @brief Solving for the surface tension by direct Newton method.
@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
 public class GTSurfaceTensionFullGT {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(GTSurfaceTensionFullGT.class);
+    static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
 
     private int ncomp;           // Number of components.
     private SystemInterface sys; // Local work copy of flashed system.

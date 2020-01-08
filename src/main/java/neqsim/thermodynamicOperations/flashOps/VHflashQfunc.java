@@ -25,7 +25,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 public class VHflashQfunc extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(VHflashQfunc.class);
+    static Logger logger = LogManager.getLogger(VHflashQfunc.class);
 
     double Vspec = 0, Hspec = 0.0;
     Flash tpFlash;

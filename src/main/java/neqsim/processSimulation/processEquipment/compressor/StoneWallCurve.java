@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class StoneWallCurve {
 		
-	static Logger logger = Logger.getLogger(StoneWallCurve.class);
+	static Logger logger = LogManager.getLogger(StoneWallCurve.class);
 	double[] flow;
 	double[] head;
 	double[] chartConditions = null;

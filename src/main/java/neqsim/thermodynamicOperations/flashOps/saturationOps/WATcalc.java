@@ -7,12 +7,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class WATcalc extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(WATcalc.class);
+    static Logger logger = LogManager.getLogger(WATcalc.class);
 
     /** Creates new bubblePointFlash */
     public WATcalc() {

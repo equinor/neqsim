@@ -20,7 +20,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  * @author Even Solbraa
@@ -45,7 +45,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
     public static boolean calcEOSInteractionParameters = false;
     private int bmixType = 0;
 
-    static Logger logger = Logger.getLogger(EosMixingRules.class);
+    static Logger logger = LogManager.getLogger(EosMixingRules.class);
 
     /**
      * Creates new EosMixingRules

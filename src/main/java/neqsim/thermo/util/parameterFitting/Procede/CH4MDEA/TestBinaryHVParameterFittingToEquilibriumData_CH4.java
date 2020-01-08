@@ -16,7 +16,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Neeraj Agrawal
@@ -25,7 +25,7 @@ import org.apache.log4j.Logger;
 public class TestBinaryHVParameterFittingToEquilibriumData_CH4 extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestBinaryHVParameterFittingToEquilibriumData_CH4.class);
+    static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_CH4.class);
     
     /** Creates new TestAcentric */
     public TestBinaryHVParameterFittingToEquilibriumData_CH4() {

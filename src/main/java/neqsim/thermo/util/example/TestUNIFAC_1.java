@@ -3,7 +3,7 @@ package neqsim.thermo.util.example;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * TPflash.java
@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
 public class TestUNIFAC_1 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestUNIFAC_1.class);
+    static Logger logger = LogManager.getLogger(TestUNIFAC_1.class);
     
     /** Creates new TPflash */
     public TestUNIFAC_1() {

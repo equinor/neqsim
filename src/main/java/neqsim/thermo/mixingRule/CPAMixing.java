@@ -11,7 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  * @author Even Solbraa
@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
 public class CPAMixing extends Object implements Cloneable, java.io.Serializable, ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CPAMixing.class);
+    static Logger logger = LogManager.getLogger(CPAMixing.class);
 
     int[][] assosSchemeType = null; // 0- ER  - 1 - CR1
     double[][] cpaBetaCross = null;

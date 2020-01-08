@@ -77,7 +77,7 @@ import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -95,7 +95,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
 	String fileName = null;
 	private boolean runAsThread = false;
 	protected String[][] resultTable = null;
-	static Logger logger = Logger.getLogger(ThermodynamicOperations.class);
+	static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
 
 	/**
 	 * Creates new thermoOps

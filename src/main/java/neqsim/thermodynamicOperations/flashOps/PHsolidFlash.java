@@ -23,7 +23,7 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -33,7 +33,7 @@ import org.apache.log4j.Logger;
 public class PHsolidFlash extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(PHsolidFlash.class);
+    static Logger logger = LogManager.getLogger(PHsolidFlash.class);
 
     Flash tpFlash;
     int refluxPhase = 0;

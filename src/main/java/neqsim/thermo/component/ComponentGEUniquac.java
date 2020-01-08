@@ -6,7 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +19,7 @@ public class ComponentGEUniquac extends ComponentGE {
 
     double r = 0, q = 0;
     
-    static Logger logger = Logger.getLogger(ComponentGEUniquac.class);
+    static Logger logger = LogManager.getLogger(ComponentGEUniquac.class);
 
     /**
      * Creates new ComponentGEUniquac

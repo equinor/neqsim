@@ -3,12 +3,12 @@ package neqsim.thermo.util.example.longman;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class Problem280809LNGfreezing {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(Problem280809LNGfreezing.class);
+    static Logger logger = LogManager.getLogger(Problem280809LNGfreezing.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemGERG2004Eos(170,1);

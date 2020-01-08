@@ -31,7 +31,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperations.BaseOperation {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(OLGApropertyTableGeneratorWater.class);
+    static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWater.class);
 
     BicubicInterpolator interpolationFunc = new BicubicInterpolator();
     SystemInterface thermoSystem = null, gasSystem = null, oilSystem = null, waterSystem = null;

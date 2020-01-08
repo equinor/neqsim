@@ -7,7 +7,7 @@
 package neqsim.thermo;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 public class ThermodynamicModelTest implements ThermodynamicConstantsInterface{
     private static final long serialVersionUID = 1000;
     SystemInterface system;
-    static Logger logger = Logger.getLogger(ThermodynamicModelTest.class);
+    static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
 
     
     

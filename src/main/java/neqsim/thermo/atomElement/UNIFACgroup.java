@@ -26,7 +26,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import static neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -64,7 +64,7 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
     String groupName = "";
     int mainGroup = 0;
     int subGroup = 0;
-    static Logger logger = Logger.getLogger(UNIFACgroup.class);
+    static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
     /**
      * Creates new Element

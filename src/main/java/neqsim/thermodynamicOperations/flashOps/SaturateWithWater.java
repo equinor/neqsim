@@ -24,7 +24,7 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 public class SaturateWithWater extends QfuncFlash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(SaturateWithWater.class);
+    static Logger logger = LogManager.getLogger(SaturateWithWater.class);
 
     Flash tpFlash;
 

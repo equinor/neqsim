@@ -13,7 +13,7 @@ import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.OperationInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class pLoadingCurve extends Object implements OperationInterface, java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(pLoadingCurve.class);
+    static Logger logger = LogManager.getLogger(pLoadingCurve.class);
     
     SystemInterface system;
     int i, j=0, nummer=0, iterations=0,maxNumberOfIterations=10000;

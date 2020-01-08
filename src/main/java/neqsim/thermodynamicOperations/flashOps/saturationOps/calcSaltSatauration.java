@@ -7,12 +7,12 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class calcSaltSatauration extends constantDutyTemperatureFlash{
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(calcSaltSatauration.class);
+    static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
     String saltName;
     /** Creates new bubblePointFlash */
     public calcSaltSatauration() {

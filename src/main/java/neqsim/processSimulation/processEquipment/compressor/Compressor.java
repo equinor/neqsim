@@ -9,7 +9,7 @@ import java.awt.*;
 import java.text.*;
 import javax.swing.*;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
@@ -25,7 +25,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(Compressor.class);
+	static Logger logger = LogManager.getLogger(Compressor.class);
 	String name = new String();
 	public SystemInterface thermoSystem;
 	public ThermodynamicOperations thermoOps;
@@ -225,6 +225,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				powerSet = true;
 				dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
 						* thermoSystem.getTotalNumberOfMoles();
+				//logger.info("dH: " + dH);
 			} while (surgeCheck && getAntiSurge().isActive());
 		}
 

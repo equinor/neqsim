@@ -4,7 +4,7 @@ import java.io.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /*
  * Sleipneracetate.java
@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 public class CO2_MDEA_speciation {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(CO2_MDEA_speciation.class);
+    static Logger logger = LogManager.getLogger(CO2_MDEA_speciation.class);
 
     /**
      * Creates a new instance of Sleipneracetate

@@ -6,7 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.apache.log4j.Logger;
 public class ComponentHydrateBallard extends ComponentHydrate {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(ComponentHydrateBallard.class);
+    static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
 
     /** Creates new Class */
     public ComponentHydrateBallard() {

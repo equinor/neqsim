@@ -6,7 +6,7 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,7 +21,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     double cavRadius[][] = new double[2][2];
     double cavNumb[][] = new double[2][2];
     double cavprwat[][] = new double[2][2];
-    static Logger logger = Logger.getLogger(ComponentHydrateStatoil.class);
+    static Logger logger = LogManager.getLogger(ComponentHydrateStatoil.class);
 
     /** Creates new Class */
     public ComponentHydrateStatoil() {

@@ -7,7 +7,7 @@ package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +19,7 @@ public class ComponentDesmukhMather extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
     private double deshMathIonicDiameter = 1.0;
-    static Logger logger = Logger.getLogger(ComponentDesmukhMather.class);
+    static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
     /** Creates new ComponentGENRTLmodifiedHV */
     public ComponentDesmukhMather() {
     }

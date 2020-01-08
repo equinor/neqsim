@@ -10,7 +10,7 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -31,7 +31,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(PhaseSrkCPA.class);
+    static Logger logger = LogManager.getLogger(PhaseSrkCPA.class);
 
     public CPAMixing cpaSelect = new CPAMixing();
     public CPAMixingInterface cpamix;

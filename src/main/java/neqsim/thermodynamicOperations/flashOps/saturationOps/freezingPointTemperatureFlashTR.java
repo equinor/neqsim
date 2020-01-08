@@ -13,7 +13,7 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
@@ -25,7 +25,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     public int compnr;
     public String name ="Frz";
     public boolean CCequation = true;
-    static Logger logger = Logger.getLogger(freezingPointTemperatureFlashTR.class);
+    static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
     /** Creates new bubblePointFlash */
     public freezingPointTemperatureFlashTR() {
     }

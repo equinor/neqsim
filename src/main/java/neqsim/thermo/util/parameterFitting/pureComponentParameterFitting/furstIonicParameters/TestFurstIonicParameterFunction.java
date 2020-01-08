@@ -14,7 +14,7 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 public class TestFurstIonicParameterFunction extends java.lang.Object {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TestFurstIonicParameterFunction.class);
+    static Logger logger = LogManager.getLogger(TestFurstIonicParameterFunction.class);
     
     /** Creates new TestAcentric */
     public TestFurstIonicParameterFunction() {

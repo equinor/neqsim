@@ -25,7 +25,7 @@ import java.util.*;
 import neqsim.thermo.ThermodynamicModelSettings;
 import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.ejml.simple.SimpleMatrix;
 
 /**
@@ -36,7 +36,7 @@ import org.ejml.simple.SimpleMatrix;
 public class TPmultiflash extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(TPmultiflash.class);
+    static Logger logger = LogManager.getLogger(TPmultiflash.class);
 
     //   SystemInterface clonedSystem;
     boolean multiPhaseTest = false;

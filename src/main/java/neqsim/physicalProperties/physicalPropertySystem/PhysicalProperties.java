@@ -7,7 +7,7 @@ package neqsim.physicalProperties.physicalPropertySystem;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -25,7 +25,7 @@ public abstract class PhysicalProperties extends java.lang.Object
 	}
 
 	private static final long serialVersionUID = 1000;
-	static Logger logger = Logger.getLogger(PhysicalProperties.class);
+	static Logger logger = LogManager.getLogger(PhysicalProperties.class);
 
 	public PhaseInterface phase;
 	protected int binaryDiffusionCoefficientMethod;

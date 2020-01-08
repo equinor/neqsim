@@ -23,7 +23,7 @@
 package neqsim.thermo.component.atractiveEosTerm;
 
 import neqsim.thermo.component.ComponentEosInterface;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 
 /**
  *
@@ -39,7 +39,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
     protected double parameters[] = new double[3];
     protected double parametersSolid[] = new double[3];
     
-    static Logger logger = Logger.getLogger(AtractiveTermBaseClass.class);
+    static Logger logger = LogManager.getLogger(AtractiveTermBaseClass.class);
     
     /** Creates new AtractiveTermBaseClass */
     public AtractiveTermBaseClass(ComponentEosInterface component) {

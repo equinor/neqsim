@@ -12,7 +12,7 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import static neqsim.physicalProperties.interfaceProperties.surfaceTension.GTSurfaceTensionFullGT.logger;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.*;
 import org.ejml.data.*;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
@@ -33,7 +33,7 @@ import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = Logger.getLogger(GTSurfaceTensionODE.class);
+    static Logger logger = LogManager.getLogger(GTSurfaceTensionODE.class);
 
     private boolean initialized = false;
     private int ncomp;           // Number of components.
