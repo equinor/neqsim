@@ -3,7 +3,6 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem;
 
 import java.text.DecimalFormat;
 
-//import org.apache.logging.log4j.*;
 import org.apache.logging.log4j.*;
 
 import neqsim.standards.StandardInterface;
