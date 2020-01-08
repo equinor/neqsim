@@ -51,10 +51,10 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 	static Logger logger = LogManager.getLogger(NeqSimBlobDatabase.class);
 	private static boolean createTemporaryTables = true;
 
-	private static String dataBaseType = "mySQL";
-	private static String connectionString = "jdbc:mysql://neqsim.equinor.com:3308/neqsimblobdb";
-	private static String username = "remote";
-	private static String password = "remote";
+	private static String dataBaseType = "";
+	private static String connectionString = "";
+	private static String username = "";
+	private static String password = "";
 
 	private Statement statement = null;
 	protected Connection databaseConnection = null;
