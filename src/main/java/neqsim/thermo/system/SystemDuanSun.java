@@ -7,7 +7,11 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseDuanSun;
+import neqsim.thermo.system.SystemEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
 import neqsim.thermo.phase.PhasePureComponentSolid;
+
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
@@ -16,7 +20,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * @version
  */
 
-/** This class defines a thermodynamic system using the SRK EoS and Pitze for liquids 
+/** This class defines a thermodynamic system using the SRK EoS and Pitzer for liquids 
  */
 public class SystemDuanSun extends SystemEos {
 
@@ -30,7 +34,7 @@ public class SystemDuanSun extends SystemEos {
         attractiveTermNumber = 0;
         phaseArray[0] = new PhaseSrkEos();
         for (int i=1;i<numberOfPhases;i++){
-            phaseArray[i] = new PhaseDuanSun();//modifiedWS();
+            phaseArray[i] = new PhaseDuanSun();
         }
     }
     
@@ -85,12 +89,26 @@ public class SystemDuanSun extends SystemEos {
             logger.error("Cloning failed.", e);
         }
         
-        
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
-        
         return clonedSystem;
+    }
+    
+    public static void main(String[] args) {
+    	SystemInterface fluid1 = new SystemDuanSun(298.15, 10.0);
+    	
+    	fluid1.addComponent("CO2", 1.0);
+    	fluid1.addComponent("water", 1.0);
+    	fluid1.setMixingRule(2);
+    	
+    	try {
+    	  ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
+    	  testOps.TPflash();
+    	  
+    	}
+    	catch(Exception e) {
+    		logger.error(e.toString());
+    	}
+    	
+    	
     }
     
     
