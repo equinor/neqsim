@@ -56,6 +56,11 @@ public class Fluid {
 		String[] compNames = null;
 		double[] flowrate = null;
 		setThermoModel();
+		if(fluidType.equals("water")) {
+			compNames = new String[] {"water"};
+			flowrate = new double[]{1.0};
+			createFluid(compNames, flowrate, "mole/sec");	
+		}
 		if(fluidType.equals("dry gas")) {
 			compNames = new String[] {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane"};
 			flowrate = new double[]{0.01, 0.02, 0.82, 0.11, 0.05, 0.01, 0.012};
