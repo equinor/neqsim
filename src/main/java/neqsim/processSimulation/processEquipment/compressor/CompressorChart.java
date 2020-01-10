@@ -11,7 +11,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class CompressorChart {
+public class CompressorChart implements CompressorChartInterface {
 
 	static Logger logger = LogManager.getLogger(CompressorChart.class);
 	ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
@@ -71,7 +71,7 @@ public class CompressorChart {
 
 	}
 
-	public double getHead(double flow, double speed) {
+	public double getPolytropicHead(double flow, double speed) {
 		// double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
 		// System.out.println("flow correction " + flowCorrection);
 		return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
@@ -90,10 +90,10 @@ public class CompressorChart {
 		surgeCurve = new SurgeCurve(flow, head);
 	}
 
-	public double getPolytropicHead(double flow, double speed) {
-		checkSurge1(flow, speed);
-		return 100.0;
-	}
+	//public double getPolytropicHead(double flow, double speed) {
+	//	checkSurge1(flow, speed);
+	//	return 100.0;
+	//}
 
 	public double polytropicEfficiency(double flow, double speed) {
 		return 100.0;
@@ -208,11 +208,11 @@ public class CompressorChart {
 
 	}
 
-	boolean isUseCompressorChart() {
+	public boolean isUseCompressorChart() {
 		return useCompressorChart;
 	}
 
-	void setUseCompressorChart(boolean useCompressorChart) {
+	public void setUseCompressorChart(boolean useCompressorChart) {
 		this.useCompressorChart = useCompressorChart;
 	}
 
