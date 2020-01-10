@@ -34,7 +34,7 @@ public class TestCharacterizationCondensate {
         //testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");//(RiaziDaubert  PedersenPR  PedersenSRK
       //  testSystem.getCharacterization().setPlusFractionModel("heavyOil");
         testSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); //"abLumping";
-        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(13);
+        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
      //   testSystem.addComponent("water", 0.5);
         testSystem.addComponent("nitrogen", 0.002);
         testSystem.addComponent("CO2", 0.005);
@@ -61,7 +61,7 @@ public class TestCharacterizationCondensate {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
-        testSystem.setTotalFlowRate(0.0, "kg/sec");
+        testSystem.setTotalFlowRate(1.0, "kg/sec");
      //   testSystem.initPhysicalProperties();
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
