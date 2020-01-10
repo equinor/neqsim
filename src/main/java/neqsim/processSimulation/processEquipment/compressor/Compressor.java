@@ -170,7 +170,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 						getSpeed());
 				setPolytropicEfficiency(polytropEff / 100.0);
 				//logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
-				double polytropicHead = getCompressorChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+				double polytropicHead = getCompressorChart().getPolytropicHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 				double temperature_inlet = thermoSystem.getTemperature();
 				double z_inlet = thermoSystem.getZ();
 				double MW = thermoSystem.getMolarMass();
