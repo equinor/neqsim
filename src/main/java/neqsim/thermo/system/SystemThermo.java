@@ -4248,7 +4248,6 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setEmptyFluid();
 		for (int compNumb = 0; compNumb < numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
-			System.out.println("x " + molefractions[compNumb]);
 		}
 		int ii=0;
 		for(int compNumb=numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents();compNumb<numberOfComponents;compNumb++) {
