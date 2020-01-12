@@ -222,69 +222,35 @@ public class LumpingModel implements Serializable {
             int numberOfPseudocomponents = numberOfLumpedComponents;
             fractionOfHeavyEnd= new double[numberOfPseudocomponents];
             double[] zPlus = new double[numberOfPseudocomponents];
-            double[] MPlus = new double[numberOfPseudocomponents];
-
             double weightFrac = 0.0;
             double weightTot = 0.0;
             double molFracTot = 0.0;
             
-            int i2 = system.getCharacterization().getPlusFractionModel().getFirstPlusFractionNumber();
-            int plusCompNumber = system.getCharacterization().getPlusFractionModel().getPlusComponentNumber();
+            int firstPlusFractionNumber = system.getCharacterization().getPlusFractionModel().getFirstPlusFractionNumber();
             int compNumberOfFirstComponentInPlusFraction = system.getCharacterization().getPlusFractionModel().getPlusComponentNumber();
-            int numberOfDefinedTBPcomponents = 3;
+            int numberOfDefinedTBPcomponents = 0;
+            
+            for(int compNumb=0;compNumb<firstPlusFractionNumber;compNumb++) {
+                if(system.getPhase(0).hasComponent("C"+Integer.toString(compNumb)+"_PC")) numberOfDefinedTBPcomponents++;
+            }
+            
+            numberOfPseudocomponents = numberOfLumpedComponents-numberOfDefinedTBPcomponents;
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                if (system.getPhase(0).getComponent(i).isIsTBPfraction() || system.getPhase(0).getComponent(i).isIsPlusFraction() && (i>=compNumberOfFirstComponentInPlusFraction)) {
+                if ((system.getPhase(0).getComponent(i).isIsTBPfraction() || system.getPhase(0).getComponent(i).isIsPlusFraction()) && (i>=compNumberOfFirstComponentInPlusFraction)) {
                     weightTot += system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(i).getMolarMass();
                     molFracTot += system.getPhase(0).getComponent(i).getz();
                 }
             }
-            
 
-            double meanWeightFrac = weightTot / (numberOfPseudocomponents-numberOfDefinedTBPcomponents + 1e-10);
+            double meanWeightFrac = weightTot / (numberOfPseudocomponents + 1e-10);
             int k = 0;
-            int firstPS = charac.getPlusFractionModel().getFirstTBPFractionNumber();
             double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
             double totalNumberOfMoles = system.getNumberOfMoles();
-            int numbComp = system.getPhase(0).getNumberOfComponents();
             int i = 0;
-            int added = 0;
-            if (charac.getPlusFractionModel().hasPlusFraction()) {
-                added++;
-            }
             int pseudoNumber = 1;
             double accumulatedWeigthFrac = 0.0;
-
-            for (int ii = 0; ii < system.getPhase(0).getNumberOfComponents() - added; ii++) {
-                String name = system.getPhase(0).getComponent(ii).getComponentName();
-                if (system.getPhase(0).getComponent(name).isIsTBPfraction() || system.getPhase(0).getComponent(name).isIsPlusFraction() && (ii>=compNumberOfFirstComponentInPlusFraction)) {
-                    Maverage += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass();
-                    weightFrac += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass();
-                    zPlus[k] += system.getPhase(0).getComponent(name).getz();
-                    denstemp1 += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass();
-                    denstemp2 += system.getPhase(0).getComponent(name).getz() * system.getPhase(0).getComponent(name).getMolarMass() / system.getPhase(0).getComponent(name).getNormalLiquidDensity();
-                    system.removeComponent(name);
-                    //logger.info("removing component " + name);
-                    ii--;
-                }
-
-                if (weightFrac >= meanWeightFrac) {
-                    accumulatedWeigthFrac += weightFrac;
-                    meanWeightFrac = (weightTot - accumulatedWeigthFrac) / (numberOfPseudocomponents - pseudoNumber);
-                    String addName = "PC" + Integer.toString(pseudoNumber++);
-                    //String addName = (i == firstPS) ? "PC" + Integer.toString(firstPS) : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(ii);
-                    fractionOfHeavyEnd[k] = zPlus[k]/molFracTot;
-                    system.addTBPfraction(addName, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
-                    denstemp1 = 0.0;
-                    denstemp2 = 0.0;
-                    weightFrac = 0.0;
-                    Maverage = 0.0;
-                    k++;
-                    firstPS = i + 1;
-
-                    added++;
-                }
-            }
-
+            
+            int starti = charac.getPlusFractionModel().getFirstPlusFractionNumber();
             for (i = charac.getPlusFractionModel().getFirstPlusFractionNumber(); i < charac.getPlusFractionModel().getLastPlusFractionNumber(); i++) {
                 Maverage += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
                 weightFrac += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
@@ -296,7 +262,9 @@ public class LumpingModel implements Serializable {
                 //System.out.println("weigth " + weightFrac + " i" + i);
                 if ((weightFrac >= meanWeightFrac && !((numberOfPseudocomponents - pseudoNumber) == 0)) || i == charac.getPlusFractionModel().getLastPlusFractionNumber() - 1) {
                     meanWeightFrac = (weightTot - accumulatedWeigthFrac) / (numberOfPseudocomponents - pseudoNumber);
-                    String addName = "PC" + Integer.toString(pseudoNumber++);
+                  //  String addName = "PC" + Integer.toString(pseudoNumber++);
+                    pseudoNumber++;
+                    String addName = "C" + Integer.toString(starti)+"-"+Integer.toString(i);
                     //System.out.println("adding " + addName);
                     fractionOfHeavyEnd[k] = zPlus[k]/molFracTot;
                     system.addTBPfraction(addName, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
@@ -305,7 +273,7 @@ public class LumpingModel implements Serializable {
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    firstPS = i + 1;
+                    starti = i;
                 }
             }
             if (charac.getPlusFractionModel().hasPlusFraction()) {
