@@ -19,4 +19,8 @@ public interface LumpingModelInterface {
     public int getNumberOfLumpedComponents();
     
     public double getFractionOfHeavyEnd(int i);
+    
+    public void setNumberOfPseudoComponents(int lumpedNumb);
+    
+    public int getNumberOfPseudoComponents();
 }

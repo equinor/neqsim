@@ -30,7 +30,7 @@ import org.apache.logging.log4j.*;
  */
 public class LumpingModel implements Serializable {
     private static final long serialVersionUID = 1000;    
-    int numberOfLumpedComponents = 7;
+    int numberOfLumpedComponents = 7, numberOfPseudocomponents=7;
     double[] fractionOfHeavyEnd = null;
     String name = "";
     SystemInterface system = null;
@@ -61,13 +61,21 @@ public class LumpingModel implements Serializable {
          public int getNumberOfLumpedComponents() {
             return numberOfLumpedComponents;
         }
+         
+         public void setNumberOfPseudoComponents(int lumpedNumb) {
+             numberOfPseudocomponents = lumpedNumb;
+         }
+         
+          public int getNumberOfPseudoComponents() {
+             return numberOfPseudocomponents;
+         }
 
         public String getName() {
             return name;
         }
 
         public void generateLumpedComposition(Characterise charac) {
-            int numberOfPseudocomponents = numberOfLumpedComponents;
+            int numberOfLumpedComponents = numberOfPseudocomponents;
             fractionOfHeavyEnd= new double[numberOfPseudocomponents];
             double[] zPlus = new double[numberOfPseudocomponents];
             double[] MPlus = new double[numberOfPseudocomponents];
@@ -157,46 +165,6 @@ public class LumpingModel implements Serializable {
             }
         }
 
-        public void generateLumpedComposition2(Characterise charac) {
-
-            int numberOfPseudocomponents = numberOfLumpedComponents;
-
-            double[] zPlus = new double[numberOfPseudocomponents];
-            double[] MPlus = new double[numberOfPseudocomponents];
-
-            double weightFrac = 0.0;
-            double weightTot = 0.0;
-
-            for (int i = charac.getPlusFractionModel().getFirstPlusFractionNumber(); i < charac.getPlusFractionModel().getLastPlusFractionNumber(); i++) {
-                weightTot += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-            }
-            double meanWeightFrac = weightTot / (numberOfPseudocomponents + 0.000001);
-            int k = 0;
-            int firstPS = charac.getPlusFractionModel().getFirstPlusFractionNumber();
-            double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
-            double totalNumberOfMoles = system.getNumberOfMoles();
-            for (int i = charac.getPlusFractionModel().getFirstPlusFractionNumber(); i < charac.getPlusFractionModel().getLastPlusFractionNumber(); i++) {
-                Maverage += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-                weightFrac += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-                zPlus[k] += charac.getPlusFractionModel().getZ()[i];
-                denstemp1 += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-                denstemp2 += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i] / charac.getPlusFractionModel().getDens()[i];
-
-                //System.out.println("weigth " + weightFrac + " i" + i);
-                if (weightFrac >= meanWeightFrac || i == charac.getPlusFractionModel().getLastPlusFractionNumber() - 1) {
-                    String name = (i == firstPS) ? "PC" + Integer.toString(firstPS) : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
-                    system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
-                    denstemp1 = 0.0;
-                    denstemp2 = 0.0;
-                    weightFrac = 0.0;
-                    Maverage = 0.0;
-                    k++;
-                    firstPS = i + 1;
-                }
-            }
-            system.removeComponent(system.getPhase(0).getComponent(charac.getPlusFractionModel().getPlusComponentNumber()).getName());
-        }
-
         
         public double getFractionOfHeavyEnd(int i) {
         	return fractionOfHeavyEnd[i];
@@ -219,9 +187,7 @@ public class LumpingModel implements Serializable {
 
        
         public void generateLumpedComposition(Characterise charac) {
-            int numberOfPseudocomponents = numberOfLumpedComponents;
-            fractionOfHeavyEnd= new double[numberOfPseudocomponents];
-            double[] zPlus = new double[numberOfPseudocomponents];
+           
             double weightFrac = 0.0;
             double weightTot = 0.0;
             double molFracTot = 0.0;
@@ -234,7 +200,11 @@ public class LumpingModel implements Serializable {
                 if(system.getPhase(0).hasComponent("C"+Integer.toString(compNumb)+"_PC")) numberOfDefinedTBPcomponents++;
             }
             
-            numberOfPseudocomponents = numberOfLumpedComponents-numberOfDefinedTBPcomponents;
+            numberOfLumpedComponents  = numberOfPseudocomponents-numberOfDefinedTBPcomponents;       
+            fractionOfHeavyEnd= new double[numberOfLumpedComponents];
+            double[] zPlus = new double[numberOfLumpedComponents];
+            double[] zPLus = new double[numberOfLumpedComponents];
+            
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if ((system.getPhase(0).getComponent(i).isIsTBPfraction() || system.getPhase(0).getComponent(i).isIsPlusFraction()) && (i>=compNumberOfFirstComponentInPlusFraction)) {
                     weightTot += system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(i).getMolarMass();
@@ -242,7 +212,7 @@ public class LumpingModel implements Serializable {
                 }
             }
 
-            double meanWeightFrac = weightTot / (numberOfPseudocomponents + 1e-10);
+            double meanWeightFrac = weightTot / (numberOfLumpedComponents + 1e-10);
             int k = 0;
             double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
             double totalNumberOfMoles = system.getNumberOfMoles();
@@ -260,67 +230,27 @@ public class LumpingModel implements Serializable {
                 denstemp2 += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i] / charac.getPlusFractionModel().getDens()[i];
 
                 //System.out.println("weigth " + weightFrac + " i" + i);
-                if ((weightFrac >= meanWeightFrac && !((numberOfPseudocomponents - pseudoNumber) == 0)) || i == charac.getPlusFractionModel().getLastPlusFractionNumber() - 1) {
-                    meanWeightFrac = (weightTot - accumulatedWeigthFrac) / (numberOfPseudocomponents - pseudoNumber);
+                if ((weightFrac >= meanWeightFrac && !((numberOfLumpedComponents - pseudoNumber) == 0)) || i == charac.getPlusFractionModel().getLastPlusFractionNumber() - 1) {
+                    meanWeightFrac = (weightTot - accumulatedWeigthFrac) / (numberOfLumpedComponents - pseudoNumber);
                   //  String addName = "PC" + Integer.toString(pseudoNumber++);
                     pseudoNumber++;
                     String addName = "C" + Integer.toString(starti)+"-"+Integer.toString(i);
                     //System.out.println("adding " + addName);
                     fractionOfHeavyEnd[k] = zPlus[k]/molFracTot;
+                            
                     system.addTBPfraction(addName, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
                     denstemp1 = 0.0;
                     denstemp2 = 0.0;
                     weightFrac = 0.0;
                     Maverage = 0.0;
                     k++;
-                    starti = i;
+                    starti = i+1;
                 }
             }
             if (charac.getPlusFractionModel().hasPlusFraction()) {
                 system.removeComponent(system.getPhase(0).getComponent(charac.getPlusFractionModel().getPlusComponentNumber()).getName());
             }
         }
-
-        public void generateLumpedComposition2(Characterise charac) {
-
-            int numberOfPseudocomponents = numberOfLumpedComponents;
-
-            double[] zPlus = new double[numberOfPseudocomponents];
-            double[] MPlus = new double[numberOfPseudocomponents];
-
-            double weightFrac = 0.0;
-            double weightTot = 0.0;
-
-            for (int i = charac.getPlusFractionModel().getFirstPlusFractionNumber(); i < charac.getPlusFractionModel().getLastPlusFractionNumber(); i++) {
-                weightTot += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-            }
-            double meanWeightFrac = weightTot / (numberOfPseudocomponents + 0.000001);
-            int k = 0;
-            int firstPS = charac.getPlusFractionModel().getFirstPlusFractionNumber();
-            double Maverage = 0.0, denstemp1 = 0.0, denstemp2 = 0.0;
-            double totalNumberOfMoles = system.getNumberOfMoles();
-            for (int i = charac.getPlusFractionModel().getFirstPlusFractionNumber(); i < charac.getPlusFractionModel().getLastPlusFractionNumber(); i++) {
-                Maverage += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-                weightFrac += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-                zPlus[k] += charac.getPlusFractionModel().getZ()[i];
-                denstemp1 += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i];
-                denstemp2 += charac.getPlusFractionModel().getZ()[i] * charac.getPlusFractionModel().getM()[i] / charac.getPlusFractionModel().getDens()[i];
-
-                //System.out.println("weigth " + weightFrac + " i" + i);
-                if (weightFrac >= meanWeightFrac || i == charac.getPlusFractionModel().getLastPlusFractionNumber() - 1) {
-                    String name = (i == firstPS) ? "PC" + Integer.toString(firstPS) : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
-                    system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
-                    denstemp1 = 0.0;
-                    denstemp2 = 0.0;
-                    weightFrac = 0.0;
-                    Maverage = 0.0;
-                    k++;
-                    firstPS = i + 1;
-                }
-            }
-            system.removeComponent(system.getPhase(0).getComponent(charac.getPlusFractionModel().getPlusComponentNumber()).getName());
-        }
-
         
         public double getFractionOfHeavyEnd(int i) {
         	return fractionOfHeavyEnd[i];

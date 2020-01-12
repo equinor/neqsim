@@ -34,7 +34,7 @@ public class TestCharacterizationCondensate {
         //testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");//(RiaziDaubert  PedersenPR  PedersenSRK
       //  testSystem.getCharacterization().setPlusFractionModel("heavyOil");
         testSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); //"abLumping";
-        testSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
+        testSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
      //   testSystem.addComponent("water", 0.5);
         testSystem.addComponent("nitrogen", 0.002);
         testSystem.addComponent("CO2", 0.005);
@@ -74,7 +74,16 @@ public class TestCharacterizationCondensate {
         }
         testSystem.display();
         
-        
+        double[] molaFrac = new double[]{0.01, 0.01, 0.6, 0.1, 0.02, 0.02, 0.01, 0.001, 0.002, 0.01, 0.001, 0.001,0.001, 0.4};
+        testSystem.setMolarCompositionPlus(molaFrac);
+        try {
+            testOps.TPflash();
+            //           testOps.hydrateFormationTemperature();
+//            testOps.dewPointTemperatureFlash();
+        } catch (Exception e) {
+            logger.error(e.toString());
+        }
+        testSystem.display();
         /*
         System.out.println("molar mass " +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );
         
