@@ -2312,6 +2312,27 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return tempVar;
 	}
+	
+	/**
+	 * method to get molar mass of a fluid phase
+	 * @param unit The unit as a string. Supported units are kg/mol, gr/mol
+	 * @return molar mass in given unit 
+	 */
+	public double getMolarMass(String unit) {
+		double refMolarMass = getMolarMass();
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "kg/mol":
+			conversionFactor = 1.0;
+			break;
+		case "gr/mol":
+			conversionFactor = 1000.0;
+			break;
+		default:
+			throw new RuntimeException();
+		}
+		return refMolarMass * conversionFactor;
+	}
 
 	/**
 	 * method to set the temperature of a fluid (same temperature for all phases)

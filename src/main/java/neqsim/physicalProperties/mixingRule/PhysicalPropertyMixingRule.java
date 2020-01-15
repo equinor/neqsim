@@ -61,42 +61,51 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
         // logger.info("reading mix Gij viscosity..");
         Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         neqsim.util.database.NeqSimDataBase database = null;
-        java.sql.ResultSet dataSet;
+        java.sql.ResultSet dataSet = null;
+
+        database = new neqsim.util.database.NeqSimDataBase();
         for (int l = 0; l < phase.getNumberOfComponents(); l++) {
+        	 if (phase.getComponent(l).isIsTBPfraction()  || phase.getComponent(l).getIonicCharge() != 0) {
+                 break;
+             }
             String component_name = phase.getComponents()[l].getComponentName();
             for (int k = l; k < phase.getNumberOfComponents(); k++) {
-                if (k == l || phase.getComponent(l).getIonicCharge() != 0) {
-                    Gij[l][k] = 0.0;
-                    Gij[k][l] = Gij[l][k];
+                if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
+                    break;
                 } else {
                     try {
-                        database = new neqsim.util.database.NeqSimDataBase();
-                        dataSet = database.getResultSet("SELECT * FROM inter WHERE (COMP1='" + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name + "')");
+                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name + "')");
                         if (dataSet.next()) {
                             Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
                         } else {
                             Gij[l][k] = 0.0;
                         }
                         Gij[k][l] = Gij[l][k];
-                        database.getConnection().close();
                     } catch (Exception e) {
                         logger.error("err in phys prop.....");
                         String err = e.toString();
                         logger.error(err);
                     } finally {
                         try {
-                            if (database.getStatement() != null) {
-                                database.getStatement().close();
-                            }
-                            if (database.getConnection() != null) {
-                                database.getConnection().close();
-                            }
-                        } catch (Exception e) {
-                            logger.error("error closing database.....", e);
-                        }
+                        	   if (dataSet != null) {
+                                   dataSet.close();
+                               }
+                           } catch (Exception e) {
+                               logger.error("err closing dataSet in physical property mixing rule...", e);
+                           }
                     }
                 }
             }
+        }
+        try {
+            if (database.getStatement() != null) {
+                database.getStatement().close();
+            }
+            if (database.getConnection() != null) {
+                database.getConnection().close();
+            }
+        } catch (Exception e) {
+            logger.error("error closing database.....", e);
         }
     }
 }

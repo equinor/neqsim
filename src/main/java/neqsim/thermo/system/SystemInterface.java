@@ -17,6 +17,13 @@ public interface SystemInterface extends Cloneable {
 	public int getNumberOfComponents();
 	
 	/**
+	 * method to get molar mass of a fluid phase
+	 * @param unit The unit as a string. Supported units are kg/mol, gr/mol
+	 * @return molar mass in given unit 
+	 */
+	public double getMolarMass(String unit);
+	
+	/**
 	 * This method is used to set the total molar composition of a plus fluid. The total
 	 * flow rate will be kept constant. The input mole fractions will be normalized.
 	 *

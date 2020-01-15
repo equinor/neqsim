@@ -176,7 +176,7 @@ public abstract class PhysicalProperties extends java.lang.Object
 			viscosity = viscosityCalc.calcViscosity();
 			kinematicViscosity = this.calcKinematicViscosity();
 			diffusivityCalc.calcDiffusionCoeffisients(binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
-			diffusivityCalc.calcEffectiveDiffusionCoeffisients();
+		//	diffusivityCalc.calcEffectiveDiffusionCoeffisients();
 			conductivity = conductivityCalc.calcConductivity();
 		} catch (Exception e) {
 			// might be a chance that entering here ends in an infinite loop...
