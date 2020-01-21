@@ -2312,6 +2312,27 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return tempVar;
 	}
+	
+	/**
+	 * method to get molar mass of a fluid phase
+	 * @param unit The unit as a string. Supported units are kg/mol, gr/mol
+	 * @return molar mass in given unit 
+	 */
+	public double getMolarMass(String unit) {
+		double refMolarMass = getMolarMass();
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "kg/mol":
+			conversionFactor = 1.0;
+			break;
+		case "gr/mol":
+			conversionFactor = 1000.0;
+			break;
+		default:
+			throw new RuntimeException();
+		}
+		return refMolarMass * conversionFactor;
+	}
 
 	/**
 	 * method to set the temperature of a fluid (same temperature for all phases)
@@ -4220,6 +4241,38 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		setEmptyFluid();
 		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+		}
+		for (int i = 0; i < getNumberOfPhases(); i++) {
+			init(0, i);
+		}
+	}
+	
+	/**
+	 * This method is used to set the total molar composition of a plus fluid. The total
+	 * flow rate will be kept constant. The input mole fractions will be normalized.
+	 *
+	 * @param molefractions is a double array taking the molar fraction of the
+	 *                      components in the fluid. THe last molfraction is the mole fraction of the plus component
+	 * @return Nothing.
+	 */
+	public void setMolarCompositionPlus(double[] molefractions) {
+		double totalFlow = getTotalNumberOfMoles();
+		if (totalFlow < 1e-100) {
+			logger.error("Total flow can not be 0 when setting molar composition ");
+			neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+			throw new RuntimeException(e);
+		}
+		double sum = 0;
+		for (double value : molefractions) {
+			sum += value;
+		}
+		setEmptyFluid();
+		for (int compNumb = 0; compNumb < numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
+			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
+		}
+		int ii=0;
+		for(int compNumb=numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents();compNumb<numberOfComponents;compNumb++) {
+			addComponent(compNumb, totalFlow * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)*molefractions[numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents()] / sum);
 		}
 		for (int i = 0; i < getNumberOfPhases(); i++) {
 			init(0, i);

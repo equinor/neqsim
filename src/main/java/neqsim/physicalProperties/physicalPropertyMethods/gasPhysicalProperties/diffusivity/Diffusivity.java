@@ -64,9 +64,10 @@ public class Diffusivity extends neqsim.physicalProperties.physicalPropertyMetho
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod , int multicomponentDiffusionMethod){
         
         for(int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
-            for(int j = 0; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
+            for(int j = i; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
                 binaryDiffusionCoeffisients[i][j] =  calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
-           }
+                binaryDiffusionCoeffisients[j][i] = binaryDiffusionCoeffisients[i][j];
+            }
         }
         
         if(multicomponentDiffusionMethod==0){
