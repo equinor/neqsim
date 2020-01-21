@@ -1590,6 +1590,9 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                 } else {
                     java.sql.ResultSet dataSet = null;
                     try {
+                    	if(phase.getComponent(k).isIsTBPfraction() || phase.getComponent(l).isIsTBPfraction()) {
+                    			throw new Exception("no interaction coefficient for TBP fractions");
+                    	}
                         int templ = l, tempk = k;
                         if (database.createTemporaryTables()) {
                             dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='" + component_name + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='" + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name + "')");
@@ -1649,6 +1652,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                                 hasKIJTTypeCPAcol = true;
                             }
                         }
+                        
                         //           System.out.println("class name " + phase.getClass().getName());
                         if (!phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs") || !hasKIJTTypeCPAcol) {
                             intparamTType[k][l] = Integer.parseInt(dataSet.getString("KIJTType"));
