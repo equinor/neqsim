@@ -23,4 +23,9 @@ public interface LumpingModelInterface {
     public void setNumberOfPseudoComponents(int lumpedNumb);
     
     public int getNumberOfPseudoComponents();
+    
+    public String getLumpedComponentName(int i);
+    
+  	public String[] getLumpedComponentNames();
+  	
 }
