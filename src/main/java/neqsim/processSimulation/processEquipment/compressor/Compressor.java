@@ -38,7 +38,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public double isentropicEfficiency = 1.0, polytropicEfficiency = 1.0;
 	public boolean usePolytropicCalc = false;
 	public boolean powerSet = false;
-	private CompressorChart compressorChart = new CompressorChart();
+	private CompressorChartInterface compressorChart = new CompressorChart();
 	private AntiSurge antiSurge = new AntiSurge();
 	private double polytropicHead = 0;
 	private double polytropicFluidHead = 0, polytropicHeadMeter = 0.0;
@@ -60,6 +60,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		this();
 		this.name = name;
 		setInletStream(inletStream);
+	}
+	
+	public Compressor(boolean interpolateMapLookup) {
+		this();
+		if (interpolateMapLookup) {
+		compressorChart = new CompressorChartAlternativeMapLookup();
+	   }
 	}
 
 	public void setName(String name) {
@@ -97,6 +104,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		powerSet = true;
 		dH = p;
 	}
+	
 
 	public StreamInterface getOutStream() {
 		return outStream;
@@ -149,7 +157,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		System.out.println("TEMPERATURE .." + getThermoSystem().getTemperature());
 		return getThermoSystem().getPressure();
 	}
-
 	public void run() {
 		// System.out.println("compressor running..");
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -170,7 +177,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 						getSpeed());
 				setPolytropicEfficiency(polytropEff / 100.0);
 				//logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
-				double polytropicHead = getCompressorChart().getPolytropicHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
+				polytropicHead = getCompressorChart().getPolytropicHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 				double temperature_inlet = thermoSystem.getTemperature();
 				double z_inlet = thermoSystem.getZ();
 				double MW = thermoSystem.getMolarMass();
@@ -450,7 +457,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		return thermoSystem;
 	}
 
-	public CompressorChart getCompressorChart() {
+	public CompressorChartInterface getCompressorChart() {
 		return compressorChart;
 	}
 
