@@ -77,5 +77,13 @@ public interface CompressorChartInterface extends Cloneable {
 	 */
 	public void setUseRealKappa(boolean useRealKappa);
 	
+	public SurgeCurve getSurgeCurve();
+
+	public void setSurgeCurve(SurgeCurve surgeCurve);
+
+	public StoneWallCurve getStoneWallCurve();
+
+	public void setStoneWallCurve(StoneWallCurve stoneWallCurve);
+	
 	
 }
