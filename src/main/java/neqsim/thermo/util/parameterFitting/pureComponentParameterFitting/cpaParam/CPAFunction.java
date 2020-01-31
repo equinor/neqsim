@@ -47,23 +47,23 @@ public class CPAFunction extends LevenbergMarquardtFunction {
         
         i += 5;
         
-        if (i == 1) {
+        if (i == 11) {
             system.getPhases()[0].getComponents()[0].seta(value * 1e4);
             system.getPhases()[1].getComponents()[0].seta(value * 1e4);
         }
-        if (i == 0) {
+        if (i == 10) {
             system.getPhases()[0].getComponents()[0].setb(value);
             system.getPhases()[1].getComponents()[0].setb(value);
         }
-        if (i == 2) {
+        if (i == 12) {
             system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
             system.getPhases()[1].getComponents()[0].getAtractiveTerm().setm(value);
         }
-        if (i == 4) {
+        if (i == 14) {
             system.getPhase(0).getComponent(0).setAssociationEnergy(value * 1e4);
             system.getPhase(1).getComponent(0).setAssociationEnergy(value * 1e4);
         }
-        if (i == 3) {
+        if (i == 13) {
             system.getPhase(0).getComponent(0).setAssociationVolume(value);
             system.getPhase(1).getComponent(0).setAssociationVolume(value);
         }
@@ -78,12 +78,12 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i - 5, value);
             system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(i - 5, value);
         }
-        if (i == 8) {
+        if (i == 0) {
             system.getPhases()[0].getComponents()[0].setRacketZCPA(value);
             system.getPhases()[1].getComponents()[0].setRacketZCPA(value);
         }
         
-         if (i == 9) {
+         if (i == 1) {
             system.getPhases()[0].getComponents()[0].setVolumeCorrectionT_CPA(value);
             system.getPhases()[1].getComponents()[0].setVolumeCorrectionT_CPA(value);
         }
