@@ -6,6 +6,8 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.database.NeqSimExperimentDatabase;
+
 import java.sql.*;
 import java.util.*;
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -36,10 +38,11 @@ public class TestCPA_TEG extends java.lang.Object {
         ArrayList sampleList = new ArrayList();
 
         // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
+        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
 
         //double guess[] = {13.21, 39.1260, 1.1692, 0.0188, 1.4337};//,1.0008858863, 1.8649645470, -4.6720397496}; // MEG - srk-cpa
-        double guess[] = {0.903477158616734, 1.514853438, -1.86430399826};//
+       // double guess[] = {0.903477158616734, 1.514853438, -1.86430399826};//
+        double guess[] = {0.28454, -0.0044236};//
     //    double guess[] = {0.28652795, 0.001};
        // double guess[] ={ 0.6224061375113976, -0.050295759360433255, 0.7162394329011095};//water CPA statoil
      //  double guess[] ={ 1.683161439854159, -2.0134329439188, 2.1912144731621446};//water CPA statoil
@@ -49,7 +52,7 @@ public class TestCPA_TEG extends java.lang.Object {
         ResultSet dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='TEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
 
         try {
-            while (dataSet.next()) {
+            while (!dataSet.next()) {
                 CPAFunction function = new CPAFunction();
                 SystemInterface testSystem = new SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("Temperature")), Double.parseDouble(dataSet.getString("VapourPressure")));
                 testSystem.addComponent(dataSet.getString("ComponentName"), 1.0);
@@ -78,7 +81,7 @@ public class TestCPA_TEG extends java.lang.Object {
             logger.error("database error" + e);
         }
 
-        dataSet = database.getResultSet( "SELECT * FROM PureComponentDensity WHERE ComponentName='TEG' AND Temperature>173.15 ORDER BY Temperature");
+        dataSet = database.getResultSet( "SELECT * FROM PureComponentDensity WHERE ComponentName='MEG' AND Temperature>173.15 ORDER BY Temperature");
         try {
             while (dataSet.next()) {
                 CPAFunctionDens function = new CPAFunctionDens(1);
@@ -113,7 +116,7 @@ public class TestCPA_TEG extends java.lang.Object {
 
         dataSet = database.getResultSet( "SELECT * FROM PureComponentCpHeatCapacity WHERE ComponentName='TEG' AND Temperature>263.15 ORDER BY Temperature");
         try {
-            while (dataSet.next()) {
+            while (!dataSet.next()) {
                 CPAFunctionCp function = new CPAFunctionCp(1);
                 SystemInterface testSystem = new SystemSrkCPAstatoil(Double.parseDouble(dataSet.getString("Temperature")), 1.1);
                 //SystemInterface testSystem = new SystemSrkEos(280, 0.001);
@@ -150,7 +153,7 @@ public class TestCPA_TEG extends java.lang.Object {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-      //  optim.solve();
+        optim.solve();
         //optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
