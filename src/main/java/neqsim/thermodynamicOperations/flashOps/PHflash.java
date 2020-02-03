@@ -71,7 +71,7 @@ public class PHflash extends Flash implements java.io.Serializable {
             if (error > erorOld && factor > 0.1 && correctFactor) {
                 factor *= 0.5;
             } else if (error < erorOld && correctFactor) {
-                factor = 1.0;
+                factor = iterations/(iterations+1.0)*1.0;
             }
             iterations++;
             oldTemp = nyTemp;
