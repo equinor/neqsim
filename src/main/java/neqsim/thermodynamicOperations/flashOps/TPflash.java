@@ -220,13 +220,15 @@ public class TPflash extends Flash implements java.io.Serializable {
 		}
 		system.calc_x_y();
 		system.init(1);
-
+		sucsSubs();
 		// Performs three iterations of successive substitution
 		for (int k = 0; k < 3; k++) {
 			if (system.getBeta() < (1.0 - betaTolerance * 1.1) && system.getBeta() > (betaTolerance * 1.1)) {
 				sucsSubs();
 			}
 		}
+		
+		//System.out.println("beta " + system.getBeta());
 
 		int totiter = 0;
 		double tpdx = 1.0;
