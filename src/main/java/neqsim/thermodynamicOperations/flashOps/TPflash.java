@@ -220,7 +220,14 @@ public class TPflash extends Flash implements java.io.Serializable {
 		}
 		system.calc_x_y();
 		system.init(1);
-		sucsSubs();
+		
+		// If phase fraction using Wilson K factor returns pure gas or pure liquid, we try with another K value guess based on calculated fugacities.
+		// This solves some problems when we have high volumes of water and heavy hydrocarbons returning only one liquid phase (and this phase desolves all gas)
+		if (system.getBeta() > (1.0 - betaTolerance * 1.1) || system.getBeta() < (betaTolerance * 1.1)) {
+			system.setBeta(0.5);
+			sucsSubs();
+		}
+		
 		// Performs three iterations of successive substitution
 		for (int k = 0; k < 3; k++) {
 			if (system.getBeta() < (1.0 - betaTolerance * 1.1) && system.getBeta() > (betaTolerance * 1.1)) {
