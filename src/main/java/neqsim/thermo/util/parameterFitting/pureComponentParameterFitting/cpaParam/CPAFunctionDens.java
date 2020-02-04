@@ -53,7 +53,7 @@ public class CPAFunctionDens extends CPAFunction {
     }
     
     public double calcValue(double[] dependentValues){
-        //system.setTemperature(dependentValues[0]);
+        system.setTemperature(dependentValues[0]);
         //system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
         
         system.init(0);
