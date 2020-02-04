@@ -45,7 +45,7 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     public void setFittingParams(int i, double value) {
         params[i] = value;
         
-        i += 5;
+      //  i += 5;
         
         if (i == 11) {
             system.getPhases()[0].getComponents()[0].seta(value * 1e4);
