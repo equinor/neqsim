@@ -3039,6 +3039,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 	public void display(String name) {
 		JFrame dialog = new JFrame("System-Report");
+		Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 		Container dialogContentPane = dialog.getContentPane();
 		dialogContentPane.setLayout(new BorderLayout());
 
@@ -3047,7 +3048,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		JTable Jtab = new JTable(table, names);
 		JScrollPane scrollpane = new JScrollPane(Jtab);
 		dialogContentPane.add(scrollpane);
-		dialog.setSize(800, 600); // pack();
+		
+		//  setting the size of the frame and text size
+		dialog.setSize(screenDimension.width/2, screenDimension.height/2); // pack();
+		Jtab.setRowHeight(dialog.getHeight()/table.length);
+		Jtab.setFont(new Font("Serif", Font.PLAIN, dialog.getHeight()/table.length-dialog.getHeight()/table.length/10));
+		
 		// dialog.pack();
 		dialog.setVisible(true);
 	}
