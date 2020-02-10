@@ -107,7 +107,7 @@ public class SystemDuanSun extends SystemEos {
     	catch(Exception e) {
     		logger.error(e.toString());
     	}
-    	
+    	fluid1.display();
     	
     }
     
