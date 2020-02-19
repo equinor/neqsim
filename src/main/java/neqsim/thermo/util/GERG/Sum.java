@@ -10,7 +10,7 @@ package neqsim.thermo.util.GERG;
  * @author esol
  */
 public class Sum {
-    
+	private static final long serialVersionUID = 1000;
      public static double sum(double[] values, int a) {
    double result = 0;
    for (double value:values)

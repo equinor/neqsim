@@ -19,7 +19,7 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
 public class NeqSimGERG2008 {
-
+	private static final long serialVersionUID = 1000;
 	double[] normalizedGERGComposition = new double[21];
 	double[] notNormalizedGERGComposition = new double[21];
 	PhaseInterface phase = null;
@@ -134,6 +134,7 @@ public class NeqSimGERG2008 {
 
 			String componentName = phase.getComponent(i).getComponentName();
 
+		
 			switch (componentName) {
 			case "methane":
 				notNormalizedGERGComposition[0] = phase.getComponent(i).getx();
@@ -198,8 +199,16 @@ public class NeqSimGERG2008 {
 			case "argon":
 				notNormalizedGERGComposition[20] = phase.getComponent(i).getx();
 				break;
+			
+		 	default:
+		 		double molarMass = phase.getComponent(i).getMolarMass();
+		 		if(molarMass > 86.2/1000.0 && molarMass<96.0/1000.0) notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
+		 		if(molarMass > 96.0/1000.0 && molarMass<107.0/1000.0) notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
+		 		if(molarMass > 107.0/1000.0 && molarMass<121.0/1000.0) notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
+		 		if(molarMass > 121.0/1000.0) notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
+		 		break;
 			}
-			;
+		 	;
 		}
 		normalizeComposition();
 	}
@@ -221,6 +230,7 @@ public class NeqSimGERG2008 {
 		fluid1.addComponent("methane", 92.0);
 		fluid1.addComponent("ethane", 8.0);
 		fluid1.addComponent("propane", 1.0);
+		fluid1.addTBPfraction("C8", 0.01, 211.0/1000.0, 0.82);
 		fluid1.setTemperature(298.0);
 		fluid1.setPressure(150.00);
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);

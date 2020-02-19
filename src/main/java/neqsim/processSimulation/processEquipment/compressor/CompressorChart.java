@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class CompressorChart {
-
+	private static final long serialVersionUID = 1000;
 	static Logger logger = LogManager.getLogger(CompressorChart.class);
 	ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
 	private SurgeCurve surgeCurve = new SurgeCurve();

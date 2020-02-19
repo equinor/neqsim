@@ -8,7 +8,7 @@ import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.*;
 
 public class StoneWallCurve {
-		
+	private static final long serialVersionUID = 1000;	
 	static Logger logger = LogManager.getLogger(StoneWallCurve.class);
 	double[] flow;
 	double[] head;

@@ -13,6 +13,7 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
  * @return the heatTransferCoefficient
  */
 {
+	private static final long serialVersionUID = 1000;
 
     /**
      * @return the temperature

@@ -6,6 +6,7 @@ import org.netlib.util.*;
 
 
 public class Molarmassgerg {
+	private static final long serialVersionUID = 1000;
 // 
 // c  Calculate molar mass of the mixture with the compositions contained i
 // c

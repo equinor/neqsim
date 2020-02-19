@@ -10,6 +10,7 @@ import org.apache.logging.log4j.*;
  *
  */
 public class Fluid {
+	private static final long serialVersionUID = 1000;
 	 static Logger logger = LogManager.getLogger(Fluid.class);
 	 static neqsim.thermo.system.SystemInterface fluid = null;
 	 private static boolean hasWater = false;
