@@ -202,8 +202,11 @@ public class NeqSimGERG2008 {
 			
 		 	default:
 		 		double molarMass = phase.getComponent(i).getMolarMass();
-		 		if(molarMass > 86.2/1000.0 && molarMass<96.0/1000.0) notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
-		 		if(molarMass > 96.0/1000.0 && molarMass<107.0/1000.0) notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
+		 		if(molarMass > 44.096759796142/1000.0 && molarMass<58.1236991882324/1000.0) notNormalizedGERGComposition[6] += phase.getComponent(i).getx();
+		 		if(molarMass > 58.1236991882324/1000.0 && molarMass<72.15064/1000.0) notNormalizedGERGComposition[8] += phase.getComponent(i).getx();
+		 		if(molarMass > 72.15064/1000.0 && molarMass<86.2/1000.0) notNormalizedGERGComposition[9] += phase.getComponent(i).getx();
+		 		if(molarMass > 86.2/1000.0 && molarMass<100.204498291016/1000.0) notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
+		 		if(molarMass > 100.204498291016/1000.0 && molarMass<107.0/1000.0) notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
 		 		if(molarMass > 107.0/1000.0 && molarMass<121.0/1000.0) notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
 		 		if(molarMass > 121.0/1000.0) notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
 		 		break;
@@ -225,13 +228,13 @@ public class NeqSimGERG2008 {
 
 		SystemInterface fluid1 = new SystemSrkEos();
 
-		fluid1.addComponent("CO2", 2.0);
-		fluid1.addComponent("nitrogen", 1.2);
-		fluid1.addComponent("methane", 92.0);
+		fluid1.addComponent("CO2", 1.0);
+		fluid1.addComponent("nitrogen", 1.0);
+		fluid1.addComponent("methane", 89.0);
 		fluid1.addComponent("ethane", 8.0);
 		fluid1.addComponent("propane", 1.0);
-		fluid1.addTBPfraction("C8", 0.01, 211.0/1000.0, 0.82);
-		fluid1.setTemperature(298.0);
+		//fluid1.addTBPfraction("C8", 0.01, 211.0/1000.0, 0.82);
+		fluid1.setTemperature(298.15);
 		fluid1.setPressure(150.00);
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
 		ops.TPflash();
@@ -246,16 +249,17 @@ public class NeqSimGERG2008 {
 		System.out.println("Compressibility factor:            " + properties[1]);
 		System.out.println("d(P)/d(rho) [kPa/(mol/l)]            " + properties[2]);
 		System.out.println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:            " + properties[3]);
-		System.out.println("d(P)/d(T) [kPa/K]:             " + properties[4]);
-		System.out.println("Energy [J/mol]:             " + properties[5]);
-		System.out.println("Enthalpy [J/mol]:             " + properties[6]);
-		System.out.println("Entropy [J/mol-K]:             " + properties[7]);
-		System.out.println("Isochoric heat capacity [J/mol-K]:             " + properties[8]);
-		System.out.println("Isobaric heat capacity [J/mol-K]:            " + properties[9]);
-		System.out.println("Speed of sound [m/s]:            " + properties[10]);
-		System.out.println("Gibbs energy [J/mol]:            " + properties[11]);
-		System.out.println("Joule-Thomson coefficient [K/kPa]:            " + properties[12]);
-		System.out.println("Isentropic exponent:           " + properties[13]);
+		System.out.println("d2(P)/d2(T) [kPa/K]:             " + properties[4]);
+		System.out.println("d(P)/d(T) [kPa/K]:             " + properties[5]);
+		System.out.println("Energy [J/mol]:             " + properties[6]);
+		System.out.println("Enthalpy [J/mol]:             " + properties[7]);
+		System.out.println("Entropy [J/mol-K]:             " + properties[8]);
+		System.out.println("Isochoric heat capacity [J/mol-K]:             " + properties[9]);
+		System.out.println("Isobaric heat capacity [J/mol-K]:            " + properties[10]);
+		System.out.println("Speed of sound [m/s]:            " + properties[11]);
+		System.out.println("Gibbs energy [J/mol]:            " + properties[12]);
+		System.out.println("Joule-Thomson coefficient [K/kPa]:            " + properties[13]);
+		System.out.println("Isentropic exponent:           " + properties[14]);
 
 	}
 }

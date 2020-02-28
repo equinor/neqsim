@@ -1393,7 +1393,8 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public double getpH_old() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getName().equals("H3O+")) {
-                return -neqsim.MathLib.generalMath.GeneralMath.log10(componentArray[i].getx() * getActivityCoefficient(i));
+              //  return -neqsim.MathLib.generalMath.GeneralMath.log10(componentArray[i].getx() * getActivityCoefficient(i));
+            	return -java.lang.Math.log10(componentArray[i].getx() * getActivityCoefficient(i)/(0.01802*neqsim.thermo.util.empiric.Water.waterDensity(temperature)/1000.0));
             }
         }
         logger.info("no H3Oplus");
