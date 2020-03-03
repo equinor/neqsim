@@ -3,18 +3,29 @@ package neqsim.processSimulation.processEquipment.compressor;
 import java.util.*;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class CompressorChart implements CompressorChartInterface {
-	private static final long serialVersionUID = 1000;
+
+
+/**
+ * This class is an implementation of the compressor chart class that uses Fan laws and "double" interpolation to
+ * navigate the compressor map (as opposed to the standard class using reduced variables according to Fan laws).
+ */
+public class CompressorChartAlternativeMapLookup implements CompressorChartInterface {
+
+
 	static Logger logger = LogManager.getLogger(CompressorChart.class);
 	ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
+	ArrayList<Double> chartSpeeds = new ArrayList<Double>();
 	private SurgeCurve surgeCurve = new SurgeCurve();
 	private StoneWallCurve stoneWallCurve = new StoneWallCurve();
 	boolean isSurge = false;
@@ -35,55 +46,102 @@ public class CompressorChart implements CompressorChartInterface {
 	PolynomialFunction reducedHeadFitterFunc = null;
 	PolynomialFunction reducedPolytropicEfficiencyFunc = null;
 	PolynomialFunction fanLawCorrectionFunc = null;
+	double gearRatio = 1.0;
 
-	public CompressorChart() {
+	public CompressorChartAlternativeMapLookup() {
 	}
 
 	public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
 		CompressorCurve curve = new CompressorCurve(speed, flow, head, polytropicEfficiency);
 		chartValues.add(curve);
+		chartSpeeds.add(speed);
 	}
 
 	public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
 			double[][] polyEff) {
-		referenceSpeed = speed[0];
-
+	
 		for (int i = 0; i < speed.length; i++) {
 			CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
-			chartValues.add(curve);
-			for (int j = 0; j < flow[i].length; j++) {
-				reducedHeadFitter.add(flow[i][j] / speed[i], head[i][j] / speed[i] / speed[i]);
-				reducedPolytropicEfficiencyFitter.add(flow[i][j] / speed[i], polyEff[i][j]);
-				double flowFanLaw = flow[i][j] * speed[i] / speed[0]; // MLLU: not correct. speed[0] should be the requested speed
-				fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
+			chartValues.add(curve); 
+			chartSpeeds.add(speed[i]);
 			}
-		}
-		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
-
-		reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
-		reducedPolytropicEfficiencyFunc = new PolynomialFunction(
-				fitter.fit(reducedPolytropicEfficiencyFitter.toList()));
-		fanLawCorrectionFunc = new PolynomialFunction(fitter.fit(fanLawCorrectionFitter.toList()));
+		
 		setUseCompressorChart(true);
 	}
 
-	public void fitReducedCurve() {
-
+	
+	public ArrayList<Double> getClosestRefSpeeds(double speed) {
+		
+		ArrayList<Double> closestRefSpeeds = new ArrayList<Double>(); 
+		Double[] speedArray = new Double[chartSpeeds.size()];
+		speedArray = chartSpeeds.toArray(speedArray);
+		Arrays.sort(speedArray);
+		boolean speedOnRef = false;
+		
+		for (int i = 0; i < chartSpeeds.size(); i++) {
+			double s = chartValues.get(i).speed;
+			if (speed == s) { // speed is equal to a reference speed
+				closestRefSpeeds.add(s);
+				speedOnRef = true;
+			}
+		}
+		
+	    if (!speedOnRef) {
+			int pos = bisect_left(speedArray, speed);
+			if (pos == 0) { // speed is lower than the lowest reference speed
+				closestRefSpeeds.add(speedArray[0]);
+			} else if(pos == chartSpeeds.size()) { // speed is higher than the highest reference speed
+				closestRefSpeeds.add(speedArray[speedArray.length-1]);
+			} else { // speed is in between two reference speeds
+				closestRefSpeeds.add(speedArray[pos-1]);
+				closestRefSpeeds.add(speedArray[pos]);
+			}
+				
+		}
+		return closestRefSpeeds;
 	}
 
-	public double getPolytropicHead(double flow, double speed) {
-		// double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
-		// System.out.println("flow correction " + flowCorrection);
-		return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
-		// return reducedHeadFitterFunc.value(flowCorrection * flow / speed) * speed *
-		// speed;
+	public double getPolytropicHead(double flow, double speed) {		
+		ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
+		closestRefSpeeds = getClosestRefSpeeds(speed);
+		double s;
+		double speedRatio;
+		ArrayList<Double> tempHeads = new ArrayList<Double>();
+		SplineInterpolator asi = new SplineInterpolator();
+		
+		for (int i = 0; i < closestRefSpeeds.size(); i++) {
+			s = closestRefSpeeds.get(i); 
+			speedRatio = speed*gearRatio/s;
+			PolynomialSplineFunction psf = asi.interpolate(getCurveAtRefSpeed(s).flow, getCurveAtRefSpeed(s).head);
+			tempHeads.add(psf.value(flow));
+		}
+		
+		double sum = 0.0;
+		for (int i = 0; i < tempHeads.size(); i++) {
+			sum += tempHeads.get(i);
+		}
+		return sum / tempHeads.size();
 	}
+	
 
 	public double getPolytropicEfficiency(double flow, double speed) {
-		// double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
-		return reducedPolytropicEfficiencyFunc.value(flow / speed);
-		// return reducedPolytropicEfficiencyFunc.value(reducedHeadFitterFunc*flow /
-		// speed);
+		ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
+		closestRefSpeeds = getClosestRefSpeeds(speed);
+		double s;
+		ArrayList<Double> tempEffs = new ArrayList<Double>();
+		SplineInterpolator asi = new SplineInterpolator();
+		
+		for (int i = 0; i < closestRefSpeeds.size(); i++) {
+			s = closestRefSpeeds.get(i); 
+			PolynomialSplineFunction psf = asi.interpolate(getCurveAtRefSpeed(s).flow, getCurveAtRefSpeed(s).polytropicEfficiency);
+			tempEffs.add(psf.value(flow));
+		}
+		
+		double sum = 0.0;
+		for (int i = 0; i < tempEffs.size(); i++) {
+			sum += tempEffs.get(i);
+		}
+		return sum / tempEffs.size();
 	}
 
 	public void addSurgeCurve(double[] flow, double[] head) {
@@ -94,6 +152,28 @@ public class CompressorChart implements CompressorChartInterface {
 	//	checkSurge1(flow, speed);
 	//	return 100.0;
 	//}
+	
+	public CompressorCurve getCurveAtRefSpeed(double refSpeed){
+		for (int i = 0; i < chartValues.size(); i++) {
+			CompressorCurve c = chartValues.get(i);
+			if (c.speed == refSpeed) {
+				return c;
+			}
+		}
+		
+		logger.error("Input ref. speed does not match any speed in the chart.");
+		neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+		throw new RuntimeException(e);
+		}
+	
+	public double getGearRatio() {
+		return gearRatio;
+	}
+	
+	public void setGearRatio(double GR) {
+		gearRatio = GR;
+	}
+
 
 	public double polytropicEfficiency(double flow, double speed) {
 		return 100.0;
@@ -159,27 +239,29 @@ public class CompressorChart implements CompressorChartInterface {
 
 		testFluid.setTemperature(24.0, "C");
 		testFluid.setPressure(48.0, "bara");
+		//testFluid.setTotalFlowRate(3.635, "MSm3/day");
 		testFluid.setTotalFlowRate(5.4, "MSm3/day");
 
 		Stream stream_1 = new Stream("Stream1", testFluid);
-		Compressor comp1 = new Compressor(stream_1);
+		Compressor comp1 = new Compressor(true);
+		comp1.setInletStream(stream_1);
 		comp1.setUsePolytropicCalc(true);
 		//comp1.getAntiSurge().setActive(true);
 		comp1.setSpeed(11918);
 
 		
-		  double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 }; 
-		//  double[] speed = new double[] { 1000.0, 2000.0, 3000.0, 4000.0 }; 
-		//  double[][] flow = new double[][] { { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0
-		//  }, { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0 } };
-		//  double[][] head = new double[][] { { 10000.0, 9000.0, 8000.0, 7500.0 }, {
-		//  10000.0, 9000.0, 8000.0, 7500.0 }, { 10000.0, 9000.0, 8000.0, 7500.0 }, {
-		//  10000.0, 9000.0, 8000.0, 7500.0 } }; 
-		//  double[][] polyEff = new double[][] { {
-		// 90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0,
-		//  88.1 }, { 90.0, 91.0, 89.0, 88.1 } };
+		  double[] chartConditions = new double[] {0.3, 1.0, 1.0, 1.0}; 
+		  /*double[] speed = new double[] { 1000.0, 2000.0, 3000.0, 4000.0 }; 
+		  double[][] flow = new double[][] { { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0
+		  }, { 453.2, 600.0, 750.0, 800.0 }, { 453.2, 600.0, 750.0, 800.0 } };
+		  double[][] head = new double[][] { { 10000.0, 9000.0, 8000.0, 7500.0 }, {
+		  10000.0, 9000.0, 8000.0, 7500.0 }, { 10000.0, 9000.0, 8000.0, 7500.0 }, {
+		  10000.0, 9000.0, 8000.0, 7500.0 } }; 
+		  double[][] polyEff = new double[][] { {
+		  90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0, 88.0 }, { 90.0, 91.0, 89.0,
+		  88.1 }, { 90.0, 91.0, 89.0, 88.1 } }; */
 		  
-		 
+		  
 		  double[] speed = new double[] {12913, 12298, 11683, 11098, 10453, 9224, 8609, 8200}; 
 		  double[][] flow = new double[][] { {2789.1285 , 3174.0375 , 3689.2288 , 4179.4503 , 4570.2768 , 4954.7728 , 5246.0329 , 5661.0331
 		  }, {2571.1753 , 2943.7254 , 3440.2675 , 3837.4448 , 4253.0898 , 4668.6643 , 4997.1926 , 5387.4952
@@ -208,8 +290,9 @@ public class CompressorChart implements CompressorChartInterface {
 		  }, {77.5063036680357 , 80.2056198362559 , 81.0339108025933 , 79.6085962687939 , 76.3814534404405 , 70.8027503005902 , 64.6437367160571 , 60.5299349982342
 		  }, {77.8175271586685 , 80.065165942218 , 81.0631362122632 , 79.8955051771299 , 76.1983240929369 , 69.289982774309 , 60.8567149372229
 		  },{78.0924334304045 , 80.9353551568667 , 80.7904437766234 , 78.8639325223295 , 75.2170936751143 , 70.3105081673411 , 65.5507568533569 , 61.0391468300337
-		  } };	  
+		  } };
 		  
+		 
 		//double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 };
 		//double[] speed = new double[] { 13402.0 };
 		//double[][] flow = new double[][] { { 1050.0, 1260.0, 1650.0, 1950.0 } };
@@ -217,7 +300,7 @@ public class CompressorChart implements CompressorChartInterface {
 	//	double[][] head = new double[][] { { 85.0, 82.0, 69.0, 52.0 } };
 	//	double[][] polyEff = new double[][] { { 66.8, 69.0, 66.4, 55.6 } };
 		comp1.getCompressorChart().setCurves(chartConditions, speed, flow, head, polyEff);
-		comp1.getCompressorChart().setHeadUnit("kJ/kg");
+	//	comp1.getCompressorChart().setHeadUnit("kJ/kg");
 		/*
 		double[] surgeflow = new double[] { 453.2, 550.0, 700.0, 800.0 };
 		double[] surgehead = new double[] { 6000.0, 7000.0, 8000.0, 10000.0 };
@@ -238,7 +321,6 @@ public class CompressorChart implements CompressorChartInterface {
 		System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
 		System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency()*100.0);
 		System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
-
 	}
 
 	public boolean isUseCompressorChart() {
@@ -263,6 +345,34 @@ public class CompressorChart implements CompressorChartInterface {
 
 	public void setUseRealKappa(boolean useRealKappa) {
 		this.useRealKappa = useRealKappa;
+	}
+	
+	public static int bisect_left(Double[] A, double x) {
+	    return bisect_left(A, x, 0, A.length);
+	}
+
+	public static int bisect_left(Double[] A, double x, int lo, int hi) {
+	    int N = A.length;
+	    if (N == 0) {
+	        return 0;
+	    }
+	    if (x < A[lo]) {
+	        return lo;
+	    }
+	    if (x > A[hi - 1]) {
+	        return hi;
+	    }
+	    for (;;) {
+	        if (lo + 1 == hi) {
+	            return x == A[lo] ? lo : (lo + 1);
+	        }
+	        int mi = (hi + lo) / 2;
+	        if (x <= A[mi]) {
+	            hi = mi;
+	        } else {
+	            lo = mi;
+	        }
+	    }
 	}
 
 }
