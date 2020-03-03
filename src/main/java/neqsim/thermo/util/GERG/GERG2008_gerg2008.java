@@ -2,7 +2,9 @@ package neqsim.thermo.util.GERG;
 import org.netlib.util.*;
 
 public class GERG2008_gerg2008
+
 {
+	private static final long serialVersionUID = 1000;
 public static double [] dc= new double[(21)];
 public static double [] tc= new double[(21)];
 public static double [] mmigerg= new double[(21)];

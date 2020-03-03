@@ -29,7 +29,7 @@ public class Alpha0gerg {
 // 
 // 
 // 
-
+private static final long serialVersionUID = 1000;
 public static void alpha0gerg (double t,
 double d,
 double [] x, int _x_offset,

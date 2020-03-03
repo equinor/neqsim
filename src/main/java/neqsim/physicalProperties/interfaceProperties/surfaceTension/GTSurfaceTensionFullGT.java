@@ -93,6 +93,7 @@ public class GTSurfaceTensionFullGT {
         for (i = 0; i < ncomp; i++) {
             nv[i] = this.rho_ph1[i] * Pa;
         }
+        this.sys.setTotalFlowRate(1.0, "mol/sec"); // added by Even S 18/02/2020 (can not set molar composition if total flow is zero
         this.sys.setMolarComposition(nv);
         this.sys.init_x_y();
         this.sys.setBeta(1.0);

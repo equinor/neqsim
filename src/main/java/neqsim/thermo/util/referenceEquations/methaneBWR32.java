@@ -20,7 +20,7 @@ package neqsim.thermo.util.referenceEquations;
  * @author ESOL
  */
 public class methaneBWR32 {
-
+	private static final long serialVersionUID = 1000;
     double gamma = 0.0096;
     double[] N = new double[]{-1.84E-02,
         1.051016206,

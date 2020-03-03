@@ -7,6 +7,7 @@
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.component.ComponentGeDuanSun;
 import neqsim.thermo.component.ComponentGeNRTL;
 
 /**
@@ -29,30 +30,14 @@ public class PhaseDuanSun extends PhaseGE {
         super();
     }
     
-    public PhaseDuanSun(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule, double[][] intparam) {
-        super();
-        componentArray = new ComponentGeNRTL[alpha[0].length];
-        this.mixRule = mixRule;
-        this.alpha = alpha;
-        this.Dij = Dij;
-        this.intparam = intparam;
-        for (int i=0; i < alpha[0].length; i++){
-            numberOfComponents++;
-            componentArray[i] = new ComponentGeNRTL(phase.getComponents()[i].getName(), phase.getComponents()[i].getNumberOfmoles(), phase.getComponents()[i].getNumberOfMolesInPhase(), phase.getComponents()[i].getComponentNumber());
-        }
-        setMixingRule(2);
-    }
-    
     public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber){
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentGeNRTL(componentName, moles, molesInPhase,compNumber);
+        componentArray[compNumber] = new ComponentGeDuanSun(componentName, moles, molesInPhase,compNumber);
     }
     
     public void setMixingRule(int type){
         super.setMixingRule(type);
-        this.intparam = mixSelect.getSRKbinaryInteractionParameters();
         this.alpha = mixSelect.getNRTLalpha();
-        this.mixRule = mixSelect.getClassicOrHV();
         this.Dij = mixSelect.getNRTLDij();
     }
     
@@ -71,7 +56,7 @@ public class PhaseDuanSun extends PhaseGE {
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
         GE = 0;
         for (int i=0; i < numberOfComponents; i++){
-            GE += phase.getComponents()[i].getx()*Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij, intparam, mixRule));
+            GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun) componentArray[i]).getGamma(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij));
         }
         
         return R*temperature*numberOfMolesInPhase*GE;//phase.getNumberOfMolesInPhase()*
@@ -84,5 +69,21 @@ public class PhaseDuanSun extends PhaseGE {
     public double getExessGibbsEnergy(){
         //double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,  pressure, phaseType);
         return GE;
+    }
+    
+    public double getEnthalpy() {
+    	return 0.0;
+    }
+    
+    public double getEntropy() {
+    	return 0.0;
+    }
+    
+    public double getCp() {
+    	return 0.0;
+    }
+    
+    public double getCv() {
+    	return 0.0;
     }
 }

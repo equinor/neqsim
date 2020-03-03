@@ -93,10 +93,12 @@ public class SystemDuanSun extends SystemEos {
     }
     
     public static void main(String[] args) {
-    	SystemInterface fluid1 = new SystemDuanSun(298.15, 10.0);
+    	SystemInterface fluid1 = new SystemSrkCPA(298.15, 10.0);
     	
     	fluid1.addComponent("CO2", 1.0);
+    	fluid1.addComponent("nitrogen", 1.0);
     	fluid1.addComponent("water", 1.0);
+    	fluid1.addComponent("NaCl", 1.0);
     	fluid1.setMixingRule(2);
     	
     	try {
@@ -107,7 +109,7 @@ public class SystemDuanSun extends SystemEos {
     	catch(Exception e) {
     		logger.error(e.toString());
     	}
-    	
+    	fluid1.display();
     	
     }
     

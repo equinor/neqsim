@@ -31,7 +31,7 @@ public class Alphargerg {
 // 
 // 
 // c  Set up del, tau, log(tau), and the first 7 calculations for del^i
-
+	private static final long serialVersionUID = 1000;
 public static void alphargerg (int iprop,
 double t,
 double d,

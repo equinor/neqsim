@@ -5,7 +5,7 @@ import org.netlib.util.*;
 
 
 public class Setupgerg {
-
+	private static final long serialVersionUID = 1000;
 // 
 // c-----------------------------------------------------------------------
 // 

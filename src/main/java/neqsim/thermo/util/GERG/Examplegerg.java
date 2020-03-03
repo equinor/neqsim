@@ -4,7 +4,7 @@ import java.lang.*;
 import org.netlib.util.*;
 
 public class Examplegerg {
-
+	private static final long serialVersionUID = 1000;
 // c  Example program for calling routines for the GERG-2008 equation of st
 // 
 // 
