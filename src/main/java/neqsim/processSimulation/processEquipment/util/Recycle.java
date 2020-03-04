@@ -60,7 +60,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 //            mixedStream.getThermoSystem().init(0);
 //            mixedStream.getThermoSystem().init(3);
         }
-
+        mixedStream.setEmptyThermoSystem(((StreamInterface) streams.get(0)).getThermoSystem());
         numberOfInputStreams++;
         lastIterationStream = (Stream) mixedStream.clone();
     }

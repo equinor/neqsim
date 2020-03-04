@@ -135,7 +135,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
         liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "liquid");
         liquidOutStream.run();
         //liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
-
+try {
         thermoSystem = (SystemInterface) thermoSystem2.clone();
         thermoSystem.setTotalNumberOfMoles(1.0e-10);
         thermoSystem.init(1);
@@ -149,7 +149,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
             totalliquidVolume = +liquidVolume / thermoSystem2.getPhase(j).getMolarVolume();
             }
             for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-                thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentName(), relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+                thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentNumber(), relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
             }
         }
         thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume() / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + totalliquidVolume));
@@ -163,7 +163,10 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
         liquidVolume = getLiquidLevel() * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter() * getSeparatorLength();
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter() * getInternalDiameter() * getSeparatorLength();
        // System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-
+}
+catch(Exception e) {
+	e.printStackTrace();
+}
         thermoSystem = thermoSystem2;
     }
 
