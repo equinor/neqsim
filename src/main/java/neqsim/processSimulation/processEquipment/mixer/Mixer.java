@@ -98,7 +98,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
                 if (gotComponent) {
                     //  System.out.println("adding moles starting....");
-                    mixedStream.getThermoSystem().addComponent(compName, moles);
+                    mixedStream.getThermoSystem().addComponent(index, moles);
                 //mixedStream.getThermoSystem().init_x_y();
                 //System.out.println("adding moles finished");
                 } else {

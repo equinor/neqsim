@@ -172,7 +172,6 @@
         </dependency>
     </dependencies>
     <build>
-    <pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -244,7 +243,6 @@
                 </dependencies>
             </plugin>
         </plugins>
-    </pluginManagement>
     </build>
     <distributionManagement>
         <repository>

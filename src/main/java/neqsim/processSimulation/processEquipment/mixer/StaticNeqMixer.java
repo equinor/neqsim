@@ -59,7 +59,7 @@ public class StaticNeqMixer extends StaticMixer implements ProcessEquipmentInter
                 if(gotComponent){
                     System.out.println("adding moles starting....");
                     for(int p=0;p<numberOfPhases;p++){
-                        mixedStream.getThermoSystem().addComponent(compName, moles[p], p);
+                        mixedStream.getThermoSystem().addComponent(index, moles[p], p);
                     }
                     System.out.println("adding moles finished");
                 }

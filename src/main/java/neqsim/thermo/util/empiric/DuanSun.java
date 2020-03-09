@@ -1,5 +1,11 @@
 package neqsim.thermo.util.empiric;
 
+import neqsim.thermo.system.SystemDuanSun;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
 public class DuanSun {
 	private static final long serialVersionUID = 1000;
 	double[] c = new double[] { 0.1, 0.2, 0.3, 0.4, 0.5 };
@@ -9,13 +15,17 @@ public class DuanSun {
 
 	}
 
-	public double calcCO2solubility2(double temperature, double pressure, double salinity) {
+	public double bublePointPressure(double temperature, double x_CO2, double salinity) {
 		// Type manually the pressure limits according to the expected pressure
-		double P = pressure;
+		double P = 9.0, Pold = 9.0, Poldold=9.0;
 		double y[] = { 0.9, 0.1 };
-		double[] x = { 0.000554093, 1.0 - 0.000554093 };
-		while (P < 6.0) {
-
+		double[] x = { x_CO2, 1.0 - x_CO2 };
+		double error = 1e10, errorOld=1e10;
+		int iter = 1;
+		do {
+		
+		//while (P < 15.0) {
+			iter++;
 			double Tc[] = { 304.2, 647.3 };
 			double Pc[] = { 72.8, 217.6 };
 			double w[] = { 0.225, 0.344 };
@@ -321,11 +331,18 @@ public class DuanSun {
 				System.out.println("P = " + P + " bar ");
 				break;
 			}
-
-			P = P + Math.pow(10.0, -7.0) * P;
+			errorOld = error;
+			error = Math.abs((fl[0] - fv[0])) + Math.abs((fl[1] - fv[1])) + Math.abs(G);
+			Poldold = Pold;
+			Pold = P;
+		
+			if(iter<5) P = P + Math.pow(10.0, -7.0) * P;
+			else P = P - 0.1*(error-errorOld)/(Pold-Poldold);
+			System.out.println("P = " + P + " bar " + " error " + error);
 
 		}
-		return x[0];
+		while(Math.abs(error)>1e-6);
+		return P;
 	}
 
 	public double calcCO2solubility(double temperature, double pressure, double salinity) {
@@ -571,16 +588,39 @@ public class DuanSun {
 	}
 
 	public static void main(String[] args) {
-
+/*
 		DuanSun testDuanSun = new DuanSun();
 
 		double CO2solubility = testDuanSun.calcCO2solubility(298.15, 10.0, 2.0);
 
 		System.out.println("CO2solubility " + CO2solubility + " mol/mol");
 
-		double CO2solubility2 = testDuanSun.calcCO2solubility2(298.15, 10.0, 2.0);
+		double CO2solubility2 = testDuanSun.bublePointPressure(298.15, CO2solubility, 2.0);
 
-		System.out.println("CO2solubility " + CO2solubility2 + " mol/mol");
+		System.out.println("Total pressure " + CO2solubility2 + " bara");
+		
+		*/
+		
+		SystemInterface fluid1 = new SystemDuanSun(298.15, 10.0);
+		fluid1.addComponent("CO2", 1.0, "mol/sec");
+		fluid1.addComponent("oxygen", 1.0, "mol/sec");
+		fluid1.addComponent("methane", 1.0, "mol/sec");
+		fluid1.addComponent("water", 1.0, "mol/sec");
+		fluid1.addComponent("Na+", 1.0, "mol/sec");
+		fluid1.addComponent("Cl-", 1.0, "mol/sec");
+		fluid1.setMixingRule(2);
+		
+		ThermodynamicOperations thermoOPs = new ThermodynamicOperations(fluid1);
+		try {
+		thermoOPs.TPflash();
+		fluid1.display();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println("CO2 in liquid " + fluid1.getPhase("liquid").getComponent("CO2").getx());
+		
 	}
 
 }
