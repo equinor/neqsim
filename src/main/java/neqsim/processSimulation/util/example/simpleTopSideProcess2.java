@@ -34,7 +34,7 @@ public class simpleTopSideProcess2{
         Stream stream_gasFromSep = new Stream(separator_inlet.getGasOutStream());
         
         Heater cooler1 = new Heater(stream_gasFromSep);
-        cooler1.setOutTemperature(290.25);
+        cooler1.setOutTemperature(285.25);
         
         Separator scrubber = new Separator("Scrubber 1", cooler1.getOutStream());
         
@@ -50,6 +50,18 @@ public class simpleTopSideProcess2{
         operations.add(cooler1);
         operations.add(scrubber);
         operations.add(recyleOp);
+        operations.run();
+        scrubber.displayResult();
+        
+        stream_inlet.getThermoSystem().setTemperature(273.15+35.0);
+        operations.run();
+        scrubber.displayResult();
+        
+        stream_inlet.getThermoSystem().setTemperature(273.15+30.0);
+        operations.run();
+        scrubber.displayResult();
+        
+        stream_inlet.getThermoSystem().setTemperature(273.15+16.0);
         operations.run();
         scrubber.displayResult();
     }
