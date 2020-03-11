@@ -2836,8 +2836,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		// phases " + numberOfPhases);
 		String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
 
-		init(3);
-		initPhysicalProperties();
+		initProperties();
 
 		java.text.DecimalFormat nf = new java.text.DecimalFormat();
 
