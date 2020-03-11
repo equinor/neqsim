@@ -31,6 +31,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public ThermodynamicOperations thermoOps;
 	public StreamInterface inletStream;
 	public StreamInterface outStream;
+	private double outTemperature = 298.15;
+	private boolean useOutTemperature = false;
 	public double dH = 0.0;
 	public double inletEnthalpy = 0;
 	public double pressure = 0.0;
@@ -43,6 +45,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	private double polytropicHead = 0;
 	private double polytropicFluidHead = 0, polytropicHeadMeter = 0.0;
 	private double polytropicExponent = 0;
+	private int numberOfCompresorCalcSteps = 40;
 
 	/**
 	 * Creates new ThrottelValve
@@ -118,7 +121,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		double funk = 0.0, funkOld = 0.0;
 		double newPoly;
 		double dfunkdPoly = 100.0, dPoly = 100.0, oldPoly = outTemperature;
+		useOutTemperature = false;
 		run();
+		useOutTemperature = true;
 		int iter = 0;
 		boolean useOld = usePolytropicCalc;
 		// usePolytropicCalc = true;
@@ -136,10 +141,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			isentropicEfficiency = newPoly;
 			dPoly = polytropicEfficiency - oldPoly;
 			funkOld = funk;
+			useOutTemperature = false;
 			run();
-			// System.out.println("temperature compressor " +
-			// getThermoSystem().getTemperature() + " funk " + funk + " polytropic " +
-			// polytropicEfficiency);
+			useOutTemperature = true;
+		//	System.out.println("temperature compressor " +
+		//getThermoSystem().getTemperature() + " funk " + funk + " polytropic " +
+		//	polytropicEfficiency);
 		} while ((Math.abs((getThermoSystem().getTemperature() - outTemperature)) > 1e-5 || iter < 3) && (iter < 50));
 		usePolytropicCalc = useOld;
 		return newPoly;
@@ -157,6 +164,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		System.out.println("TEMPERATURE .." + getThermoSystem().getTemperature());
 		return getThermoSystem().getPressure();
 	}
+	
 	public void run() {
 		// System.out.println("compressor running..");
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -171,7 +179,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		double orginalMolarFLow = thermoSystem.getTotalNumberOfMoles();
 		double fractionAntiSurge = 0.0;
 		double kappa = 0.0;
-		if (compressorChart.isUseCompressorChart()) {
+		if(useOutTemperature) {
+			solveEfficiency(outTemperature);
+			polytropicHead = getPower()/getThermoSystem().getFlowRate("kg/sec")/1000.0;
+			polytropicFluidHead = polytropicHead;
+			polytropicHeadMeter = polytropicHead*1000.0/9.81;
+			return;
+		}
+	    if (compressorChart.isUseCompressorChart()) {
 			do {
 				double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"),
 						getSpeed());
@@ -246,7 +261,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				// System.out.println("hout " + hout);
 				thermoOps.PHflash(hout, 0);
 			} else {
-				int numbersteps = 40;
+				int numbersteps = numberOfCompresorCalcSteps;
 				double dp = (pressure - getThermoSystem().getPressure()) / (1.0 * numbersteps);
 				for (int i = 0; i < numbersteps; i++) {
 					entropy = getThermoSystem().getEntropy();
@@ -489,6 +504,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public void setSpeed(int speed) {
 		this.speed = speed;
 	}
+	
+	public double getPolytropicHead(String unit) {
+		if(unit.equals("kJ/kg"))
+		return polytropicFluidHead;
+		else if (unit.equals("meter"))
+		return polytropicHeadMeter;
+		else return polytropicHead;
+	}
 
 	public double getPolytropicHead() {
 		return polytropicHead;
@@ -508,6 +531,27 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public void setPolytropicHeadMeter(double polytropicHeadMeter) {
 		this.polytropicHeadMeter = polytropicHeadMeter;
+	}
+
+	public double getOutTemperature() {
+		return outTemperature;
+	}
+
+	public void setOutTemperature(double outTemperature) {
+		useOutTemperature = true;
+		this.outTemperature = outTemperature;
+	}
+	
+	public void useOutTemperature(boolean useOutTemperature) {
+		this.useOutTemperature = useOutTemperature;
+	}
+
+	public int getNumberOfCompresorCalcSteps() {
+		return numberOfCompresorCalcSteps;
+	}
+
+	public void setNumberOfCompresorCalcSteps(int numberOfCompresorCalcSteps) {
+		this.numberOfCompresorCalcSteps = numberOfCompresorCalcSteps;
 	}
 
 }
