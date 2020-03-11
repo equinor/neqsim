@@ -534,7 +534,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	}
 
 	public double getOutTemperature() {
-		return outTemperature;
+		if(useOutTemperature) return outTemperature;
+		else return getThermoSystem().getTemperature();
 	}
 
 	public void setOutTemperature(double outTemperature) {
