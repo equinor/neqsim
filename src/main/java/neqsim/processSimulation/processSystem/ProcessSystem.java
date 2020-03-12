@@ -138,7 +138,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
                 ((Runnable) unitOperations.get(i)).run();
                 if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
                     hasResycle = true;
-                    System.out.println("Testing Recycle " + ((ProcessEquipmentInterface) unitOperations.get(i)).getName() + " error " + ((Recycle) unitOperations.get(i)).getError());
+                    //System.out.println("Testing Recycle " + ((ProcessEquipmentInterface) unitOperations.get(i)).getName() + " error " + ((Recycle) unitOperations.get(i)).getError());
                     if (((Recycle) unitOperations.get(i)).getTolerance() <= ((Recycle) unitOperations.get(i)).getError()) {
                         isConverged = false;
                     }

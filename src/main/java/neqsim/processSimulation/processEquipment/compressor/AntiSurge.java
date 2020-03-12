@@ -1,7 +1,7 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 public class AntiSurge {
-
+	private static final long serialVersionUID = 1000;
 	private boolean isActive = false;
 	private boolean isSurge = false;
 	private double surgeControlFactor = 1.05;

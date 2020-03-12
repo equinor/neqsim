@@ -6,7 +6,7 @@ import org.netlib.util.*;
 
 
 public class Reducingparametersgerg {
-
+	private static final long serialVersionUID = 1000;
 // 
 // c-----------------------------------------------------------------------
 // 

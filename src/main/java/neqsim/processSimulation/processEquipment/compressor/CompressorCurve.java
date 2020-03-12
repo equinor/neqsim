@@ -1,7 +1,7 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 public class CompressorCurve {
-	
+	private static final long serialVersionUID = 1000;
 	public double[] flow;
 	public double[] head;
 	public double[] polytropicEfficiency ;

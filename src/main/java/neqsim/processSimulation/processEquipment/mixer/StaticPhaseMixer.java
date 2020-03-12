@@ -70,11 +70,11 @@ public class StaticPhaseMixer extends StaticMixer implements ProcessEquipmentInt
                     for(int p=0;p<numberOfPhases;p++){
                         if(phaseType[p]==0){
                             System.out.println("adding liq");
-                            mixedStream.getThermoSystem().addComponent(compName, moles[p], 1);
+                            mixedStream.getThermoSystem().addComponent(index, moles[p], 1);
                         }
                         else if(phaseType[p]==1){
                             System.out.println("adding gas");
-                            mixedStream.getThermoSystem().addComponent(compName, moles[p], 0);
+                            mixedStream.getThermoSystem().addComponent(index, moles[p], 0);
                         }
                         else{
                             System.out.println("not here....");

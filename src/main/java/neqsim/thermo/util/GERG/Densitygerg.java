@@ -5,6 +5,7 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
 public final class Densitygerg {
+	private static final long serialVersionUID = 1000;
   public static void densitygerg(int paramInt1, double paramDouble1, double paramDouble2, double[] paramArrayOfDouble, int paramInt2, doubleW paramdoubleW, intW paramintW, StringW paramStringW) {
     byte b1 = 0;
     byte b2 = 0;

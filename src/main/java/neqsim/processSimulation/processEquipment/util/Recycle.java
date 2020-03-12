@@ -60,7 +60,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 //            mixedStream.getThermoSystem().init(0);
 //            mixedStream.getThermoSystem().init(3);
         }
-
+        mixedStream.setEmptyThermoSystem(((StreamInterface) streams.get(0)).getThermoSystem());
         numberOfInputStreams++;
         lastIterationStream = (Stream) mixedStream.clone();
     }
@@ -95,12 +95,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 
                 if (gotComponent) {
                     //  System.out.println("adding moles starting....");
-                    mixedStream.getThermoSystem().addComponent(compName, moles);
+                    mixedStream.getThermoSystem().addComponent(index, moles);
                 //mixedStream.getThermoSystem().init_x_y();
                 //System.out.println("adding moles finished");
                 } else {
                     System.out.println("ikke gaa hit");
-                    mixedStream.getThermoSystem().addComponent(compName, moles);
+                    mixedStream.getThermoSystem().addComponent(index, moles);
                 }
             }
         }

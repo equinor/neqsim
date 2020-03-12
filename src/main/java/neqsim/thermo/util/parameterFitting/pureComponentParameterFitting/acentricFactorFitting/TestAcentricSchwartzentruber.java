@@ -84,7 +84,7 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
 
         // do simulations
         //  optim.solve();
-        //optim.runMonteCarloSimulation();
+        optim.runMonteCarloSimulation();
         optim.displayCurveFit();
 //        optim.writeToCdfFile("c:/testFit.nc");
 //        optim.writeToTextFile("c:/testFit.txt");
