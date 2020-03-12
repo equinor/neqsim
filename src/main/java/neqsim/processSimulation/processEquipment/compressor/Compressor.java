@@ -313,6 +313,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		}
 		thermoSystem.initProperties();
 		outStream.setThermoSystem(getThermoSystem());
+		
+		polytropicFluidHead = getPower()/getThermoSystem().getFlowRate("kg/sec")/1000.0*getPolytropicEfficiency();
+		polytropicHeadMeter = polytropicFluidHead*1000.0/9.81;
 	}
 
 	public void displayResult() {
@@ -534,7 +537,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	}
 
 	public double getOutTemperature() {
-		return outTemperature;
+		if(useOutTemperature) return outTemperature;
+		else return getThermoSystem().getTemperature();
 	}
 
 	public void setOutTemperature(double outTemperature) {
