@@ -181,9 +181,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		double kappa = 0.0;
 		if(useOutTemperature) {
 			solveEfficiency(outTemperature);
-			polytropicHead = getPower()/getThermoSystem().getFlowRate("kg/sec")/1000.0;
+			polytropicHead = getPower()/getThermoSystem().getFlowRate("kg/sec")/1000.0*getPolytropicEfficiency();
 			polytropicFluidHead = polytropicHead;
-			polytropicHeadMeter = polytropicHead*1000.0/9.81;
+			polytropicHeadMeter = polytropicFluidHead*1000.0/9.81;
 			return;
 		}
 	    if (compressorChart.isUseCompressorChart()) {
