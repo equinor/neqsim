@@ -23,6 +23,7 @@ git clone https://github.com/equinor/neqsim.git
 cd neqsim
 mvn install
 ```
+An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
 
 ## Running the tests
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsimsource/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project. 
@@ -34,7 +35,7 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 [Maven](https://maven.apache.org/) - Dependency Management
 
 ## Contributing
-See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
+See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
 ## Collaboration hub
 Discussions related to NeqSim development and use is done using [Slack for NeqSim](https://neqsim.slack.com). 
