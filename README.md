@@ -6,7 +6,10 @@ The basis for NeqSim is a library of fundamental mathematical models related to 
 ## Releases
 [NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available as java packages (jar files) and as source code. NeqSim can be used in a third party application by adding NeqSim.jar to the classpath.
 
-## Getting Started
+## Getting started as a NeqSim Java user
+NeqSim can be used in a Java application by adding the NeqSim.jar found in [NeqSim releases](https://github.com/equinor/neqsimsource/releases) to the classpath. A demonstration of dowloading the library and running a TPflash  bencmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). 
+
+## Getting Started as a NeqSim Java developer
 See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim API.
 NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
 
