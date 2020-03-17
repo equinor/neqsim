@@ -39,11 +39,13 @@ public class NeqSimGERG2008 {
 
 	public double getDensity(PhaseInterface phase) {
 		this.setPhase(phase);
+		//return getMolarDensity() * getMolarMass() * 1000.0;
 		return getMolarDensity() * phase.getMolarMass() * 1000.0;
 	}
 
 	public double getDensity() {
 		return getMolarDensity() * phase.getMolarMass() * 1000.0;
+		//return getMolarDensity() * getMolarMass()* 1000.0;
 	}
 
 	public double getPressure() {
@@ -55,6 +57,12 @@ public class NeqSimGERG2008 {
 		return ierr.val;
 	}
 
+	public double getMolarMass() {
+		doubleW  mm=new doubleW(0.0);
+	    neqsim.thermo.util.GERG.Molarmassgerg.molarmassgerg(normalizedGERGComposition, 0, mm);
+		return mm.val/1.0e3;
+	}
+	
 	public double getMolarDensity() {
 		int d = 0;
 		int flag = 0;
@@ -63,7 +71,7 @@ public class NeqSimGERG2008 {
 		StringW strW = new StringW("");
 		double pressure = phase.getPressure() * 100.0;
 		// Densitygerg dens = Densitygerg();
-		// neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
+		// neqsim.thermo.GERG.DensnormalizedGERGCompositionitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
 		// arg7);
 		
 		neqsim.thermo.util.GERG.Densitygerg.densitygerg(flag, phase.getTemperature(), pressure,
@@ -227,15 +235,22 @@ public class NeqSimGERG2008 {
 	public static void main(String[] args) {
 
 		SystemInterface fluid1 = new SystemSrkEos();
-
-		fluid1.addComponent("CO2", 1.0);
-		fluid1.addComponent("nitrogen", 1.0);
-		fluid1.addComponent("methane", 89.0);
-		fluid1.addComponent("ethane", 8.0);
-		fluid1.addComponent("propane", 1.0);
+		fluid1.addComponent("methane", 0.84005);
+		fluid1.addComponent("nitrogen", 0.00423);
+		fluid1.addComponent("CO2", 0.02125);
+		fluid1.addComponent("ethane", 0.08779);
+		fluid1.addComponent("propane", 0.03238);
+		fluid1.addComponent("i-butane", 0.00703);
+		fluid1.addComponent("n-butane", 0.00376);
+		fluid1.addComponent("i-pentane", 0.00147);
+		fluid1.addComponent("n-pentane", 0.00132);
+		fluid1.addComponent("n-hexane", 0.00059);
+		fluid1.addComponent("n-heptane", 0.00013);
+		//fluid//1.addComponent("ethane", 5.0);
+		//fluid1.addComponent("propane", 5.0);
 		//fluid1.addTBPfraction("C8", 0.01, 211.0/1000.0, 0.82);
-		fluid1.setTemperature(298.15);
-		fluid1.setPressure(150.00);
+		fluid1.setTemperature(279.9583621);
+		fluid1.setPressure(6.4819*10.0);
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
 		ops.TPflash();
 		fluid1.display();
