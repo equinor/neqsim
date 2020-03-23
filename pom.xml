@@ -26,8 +26,13 @@
             <id>boundless</id>
             <url>https://repo.boundlessgeo.com/main/</url>
         </repository>
+      <repository>
+        <id>unidata-all</id>
+        <name>Unidata All</name>
+        <url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
+      </repository>
     </repositories>
-
+ 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -140,12 +145,12 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.11</version>
         </dependency>
-        <dependency>
-            <groupId>edu.ucar</groupId>
-            <artifactId>netcdfAll</artifactId>
-            <version>4.6.14</version>
-        </dependency>
-        <dependency>
+      <dependency>
+        <groupId>edu.ucar</groupId>
+        <artifactId>netcdf4</artifactId>
+        <version>4.6.14</version>
+      </dependency>
+      <dependency>
             <groupId>org.ojalgo</groupId>
             <artifactId>ojalgo</artifactId>
             <version>44.0.0</version>
