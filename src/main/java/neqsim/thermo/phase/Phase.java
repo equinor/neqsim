@@ -28,7 +28,6 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import static neqsim.thermo.ThermodynamicConstantsInterface.referencePressure;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.util.GERG.NeqSimGERG2008;
 
 import org.apache.logging.log4j.*;
 
@@ -1769,7 +1768,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * @return density with unit kg/m3
      */
     public double getDensity_GERG2008() {
-    	NeqSimGERG2008 test = new NeqSimGERG2008(this);
+    	neqsim.thermo.util.GERG.NeqSimGERG2008_2 test = new neqsim.thermo.util.GERG.NeqSimGERG2008_2(this);
     	return test.getDensity();
     }
     

@@ -67,7 +67,7 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
         thermoSystem.setMultiPhaseCheck(true);
         thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
-        thermoSystem.init(3);
+//        thermoSystem.init(3);
 //        thermoSystem.setMultiPhaseCheck(false);
         
 //
