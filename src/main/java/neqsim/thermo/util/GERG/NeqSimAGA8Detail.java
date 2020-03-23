@@ -14,23 +14,24 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.*;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.netlib.util.StringW;
-import org.netlib.util.Util;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
-public class NeqSimGERG2008_2 {
+public class NeqSimAGA8Detail {
 	private static final long serialVersionUID = 1000;
 	double[] normalizedGERGComposition = new double[21+1];
 	double[] notNormalizedGERGComposition = new double[21+1];
 	PhaseInterface phase = null;
 
-	public NeqSimGERG2008_2() {
+	public NeqSimAGA8Detail() {
 
 	}
 
-	public NeqSimGERG2008_2(PhaseInterface phase) {
+	public NeqSimAGA8Detail(PhaseInterface phase) {
 		this.setPhase(phase);
-		GERG2008_2.SetupGERG();
+		if(Double.isNaN(DETAIL.RDetail) || DETAIL.RDetail==0) {
+			DETAIL.SetupDetail();
+		}
 	}
 
 	public double getMolarDensity(PhaseInterface phase) {
@@ -54,13 +55,13 @@ public class NeqSimGERG2008_2 {
 		double moldens = getMolarDensity();
 		doubleW P = new doubleW(0.0);
 		doubleW Z = new doubleW(0.0);
-		GERG2008_2.PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition,P, Z);
+		DETAIL.PressureDetail(phase.getTemperature(), moldens, normalizedGERGComposition,P, Z);
 		return P.val;
 	}
 
 	public double getMolarMass() {
 		doubleW  mm=new doubleW(0.0);
-	    neqsim.thermo.util.GERG.GERG2008_2.MolarMassGERG(normalizedGERGComposition, mm);
+	    neqsim.thermo.util.GERG.DETAIL.MolarMassDetail(normalizedGERGComposition, mm);
 		return mm.val/1.0e3;
 	}
 	
@@ -72,19 +73,19 @@ public class NeqSimGERG2008_2 {
 		doubleW D = new doubleW(0.0);
 		StringW strW = new StringW("");
 		double pressure = phase.getPressure() * 100.0;
-		neqsim.thermo.util.GERG.GERG2008_2.DensityGERG(flag, phase.getTemperature(), pressure,
+		neqsim.thermo.util.GERG.DETAIL.DensityDetail(phase.getTemperature(), pressure,
 				normalizedGERGComposition, D, ierr, herr);
 		return D.val;
 	}
 
-	public double[] propertiesGERG(PhaseInterface phase) {
+	public double[] propertiesDetail(PhaseInterface phase) {
 		this.setPhase(phase);
-		return propertiesGERG();
+		return propertiesDetail();
 	}
 
 	public double[] getProperties(PhaseInterface phase, String[] properties) {
 		double molarDens = getMolarDensity(phase);
-		double[] allProperties = propertiesGERG();
+		double[] allProperties = propertiesDetail();
 		double[] returnProperties = new double[properties.length];
 
 		for (int i = 0; i < properties.length; i++) {
@@ -106,7 +107,7 @@ public class NeqSimGERG2008_2 {
 		return returnProperties;
 	}
 
-	public double[] propertiesGERG() {
+	public double[] propertiesDetail() {
 		int _x_offset = 0;
 		doubleW p = new doubleW(0.0);
 		doubleW z = new doubleW(0.0);
@@ -127,8 +128,8 @@ public class NeqSimGERG2008_2 {
 		double dens = getMolarDensity();
 		// neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
 		// arg7);
-		GERG2008_2.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition,
-			p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
+		DETAIL.PropertiesDetail(phase.getTemperature(), dens, normalizedGERGComposition,
+			p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa);
 		double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val,
 				s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
 		return properties;
@@ -260,14 +261,15 @@ public class NeqSimGERG2008_2 {
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
 		ops.TPflash();
 		//fluid1.display();
-		System.out.println("density GERG " +fluid1.getPhase(0).getDensity_GERG2008());
+		System.out.println("density GERG2008 Detail " +fluid1.getPhase(0).getDensity_GERG2008());
+		System.out.println("density AGA8 Detail " +fluid1.getPhase(0).getDensity_AGA8());
 		
 		
-		NeqSimGERG2008_2 test = new NeqSimGERG2008_2(fluid1.getPhase("gas"));
+		NeqSimAGA8Detail test = new NeqSimAGA8Detail(fluid1.getPhase("gas"));
 		System.out.println("density " + test.getDensity());
 		System.out.println("pressure " + test.getPressure());
 		// System.out.println("properties " + test.propertiesGERG());
-		double[] properties = test.propertiesGERG();
+		double[] properties = test.propertiesDetail();
 		System.out.println("Pressure [kPa]:            " + properties[0]);
 		System.out.println("Compressibility factor:            " + properties[1]);
 		System.out.println("d(P)/d(rho) [kPa/(mol/l)]            " + properties[2]);

@@ -1768,7 +1768,17 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * @return density with unit kg/m3
      */
     public double getDensity_GERG2008() {
-    	neqsim.thermo.util.GERG.NeqSimGERG2008_2 test = new neqsim.thermo.util.GERG.NeqSimGERG2008_2(this);
+    	neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    	return test.getDensity();
+    }
+    
+    /**
+     * method to get density of a phase using the AGA8-Detail EoS
+     *
+     * @return density with unit kg/m3
+     */
+    public double getDensity_AGA8() {
+    	neqsim.thermo.util.GERG.NeqSimAGA8Detail test = new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
     	return test.getDensity();
     }
     
