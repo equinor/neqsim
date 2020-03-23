@@ -14,23 +14,25 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.*;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.netlib.util.StringW;
-import org.netlib.util.Util;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
-public class NeqSimGERG2008_2 {
+public class NeqSimGERG2008 {
 	private static final long serialVersionUID = 1000;
 	double[] normalizedGERGComposition = new double[21+1];
 	double[] notNormalizedGERGComposition = new double[21+1];
 	PhaseInterface phase = null;
 
-	public NeqSimGERG2008_2() {
+	public NeqSimGERG2008() {
 
 	}
 
-	public NeqSimGERG2008_2(PhaseInterface phase) {
+	public NeqSimGERG2008(PhaseInterface phase) {
 		this.setPhase(phase);
-		GERG2008_2.SetupGERG();
+		if(Double.isNaN(GERG2008.RGERG) || GERG2008.RGERG==0) {
+			GERG2008.SetupGERG();
+		}
+		
 	}
 
 	public double getMolarDensity(PhaseInterface phase) {
@@ -54,13 +56,13 @@ public class NeqSimGERG2008_2 {
 		double moldens = getMolarDensity();
 		doubleW P = new doubleW(0.0);
 		doubleW Z = new doubleW(0.0);
-		GERG2008_2.PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition,P, Z);
+		GERG2008.PressureGERG(phase.getTemperature(), moldens, normalizedGERGComposition,P, Z);
 		return P.val;
 	}
 
 	public double getMolarMass() {
 		doubleW  mm=new doubleW(0.0);
-	    neqsim.thermo.util.GERG.GERG2008_2.MolarMassGERG(normalizedGERGComposition, mm);
+	    neqsim.thermo.util.GERG.GERG2008.MolarMassGERG(normalizedGERGComposition, mm);
 		return mm.val/1.0e3;
 	}
 	
@@ -72,7 +74,7 @@ public class NeqSimGERG2008_2 {
 		doubleW D = new doubleW(0.0);
 		StringW strW = new StringW("");
 		double pressure = phase.getPressure() * 100.0;
-		neqsim.thermo.util.GERG.GERG2008_2.DensityGERG(flag, phase.getTemperature(), pressure,
+		neqsim.thermo.util.GERG.GERG2008.DensityGERG(flag, phase.getTemperature(), pressure,
 				normalizedGERGComposition, D, ierr, herr);
 		return D.val;
 	}
@@ -127,7 +129,7 @@ public class NeqSimGERG2008_2 {
 		double dens = getMolarDensity();
 		// neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
 		// arg7);
-		GERG2008_2.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition,
+		GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition,
 			p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
 		double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val,
 				s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
@@ -263,7 +265,7 @@ public class NeqSimGERG2008_2 {
 		System.out.println("density GERG " +fluid1.getPhase(0).getDensity_GERG2008());
 		
 		
-		NeqSimGERG2008_2 test = new NeqSimGERG2008_2(fluid1.getPhase("gas"));
+		NeqSimGERG2008 test = new NeqSimGERG2008(fluid1.getPhase("gas"));
 		System.out.println("density " + test.getDensity());
 		System.out.println("pressure " + test.getPressure());
 		// System.out.println("properties " + test.propertiesGERG());

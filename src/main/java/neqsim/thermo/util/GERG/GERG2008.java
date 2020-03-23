@@ -12,7 +12,7 @@ import org.netlib.util.intW;
  * @author esol
  *
  */
-public class GERG2008_2 {
+public class GERG2008 {
 
 	// Variables containing the common parameters in the GERG-2008 equations
 	static double RGERG;
@@ -3073,7 +3073,7 @@ public class GERG2008_2 {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
-		GERG2008_2 test = new GERG2008_2();
+		GERG2008 test = new GERG2008();
 		test.SetupGERG();
 
 		double T = 400;

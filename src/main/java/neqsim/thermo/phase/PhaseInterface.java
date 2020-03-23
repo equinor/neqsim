@@ -24,6 +24,13 @@ public interface PhaseInterface extends Cloneable {
     public double getCp0();
     
     /**
+     * method to get density of a phase using the AGA8-Detail EoS
+     *
+     * @return density with unit kg/m3
+     */
+    public double getDensity_AGA8();
+    
+    /**
      * method to get the Joule Thomson Coefficient of a phase note: implemented
      * in phaseEos
      * @param unit The unit as a string. Supported units are K/bar, C/bar
