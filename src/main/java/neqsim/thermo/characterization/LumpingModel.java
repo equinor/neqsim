@@ -209,8 +209,12 @@ public class LumpingModel implements Serializable {
             int numberOfDefinedTBPcomponents = 0;
             
             for(int compNumb=0;compNumb<firstPlusFractionNumber;compNumb++) {
-                if(system.getPhase(0).hasComponent("C"+Integer.toString(compNumb)+"_PC")) numberOfDefinedTBPcomponents++;
+                if(system.getPhase(0).hasComponent("C"+Integer.toString(compNumb)+"_PC")) {
+                	numberOfDefinedTBPcomponents++;
+                }
             }
+            
+            if((numberOfPseudocomponents-numberOfDefinedTBPcomponents)<=numberOfLumpedComponents) numberOfPseudocomponents=numberOfDefinedTBPcomponents+numberOfLumpedComponents;
             
             numberOfLumpedComponents  = numberOfPseudocomponents-numberOfDefinedTBPcomponents;     
             lumpedComponentNames = new String[numberOfLumpedComponents];

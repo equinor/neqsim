@@ -603,11 +603,11 @@ public class DuanSun {
 		
 		SystemInterface fluid1 = new SystemDuanSun(298.15, 10.0);
 		fluid1.addComponent("CO2", 1.0, "mol/sec");
-		fluid1.addComponent("oxygen", 1.0, "mol/sec");
-		fluid1.addComponent("methane", 1.0, "mol/sec");
+	//	fluid1.addComponent("oxygen", 1.0, "mol/sec");
+//		fluid1.addComponent("methane", 1.0, "mol/sec");
 		fluid1.addComponent("water", 1.0, "mol/sec");
-		fluid1.addComponent("Na+", 1.0, "mol/sec");
-		fluid1.addComponent("Cl-", 1.0, "mol/sec");
+		fluid1.addComponent("Na+", 0.01, "mol/sec");
+	//	fluid1.addComponent("Cl-", 1.0, "mol/sec");
 		fluid1.setMixingRule(2);
 		
 		ThermodynamicOperations thermoOPs = new ThermodynamicOperations(fluid1);

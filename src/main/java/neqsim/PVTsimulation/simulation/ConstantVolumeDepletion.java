@@ -45,12 +45,16 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     public void calcSaturationConditions() {
 
-        do {
-            getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-            thermoOps.TPflash();
-        } while (getThermoSystem().getNumberOfPhases() > 1);
-        double minPres = getThermoSystem().getPressure() - 10.0;
-        double maxPres = getThermoSystem().getPressure();
+    	getThermoSystem().setPressure(1.0);
+		do {
+			getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+		} while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure()<1000.0);
+		do {
+			getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+			thermoOps.TPflash();
+		} while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure()<1000.0);
+		double minPres = getThermoSystem().getPressure() - 10.0;
+		double maxPres = getThermoSystem().getPressure();
         do {
             getThermoSystem().setPressure((minPres + maxPres) / 2.0);
             thermoOps.TPflash();
@@ -234,7 +238,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         CVDsim.setTemperature(315.0);
         CVDsim.setPressures(new double[]{400, 300.0, 200.0, 100.0});
         CVDsim.runCalc();
-
         CVDsim.setTemperaturesAndPressures(new double[]{313, 313, 313, 313}, new double[]{400, 300.0, 200.0, 100.0});
         double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
         CVDsim.setExperimentalData(expData);

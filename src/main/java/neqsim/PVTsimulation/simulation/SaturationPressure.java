@@ -15,7 +15,7 @@ public class SaturationPressure extends BasePVTsimulation {
 
     private static final long serialVersionUID = 1000;
 
-    double saturationPressure;
+    private double saturationPressure;
 
     public SaturationPressure(SystemInterface tempSystem) {
         super(tempSystem);
@@ -23,10 +23,15 @@ public class SaturationPressure extends BasePVTsimulation {
 
     public double calcSaturationPressure() {
         getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
-        do {
-            getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-            thermoOps.TPflash();
-        } while (getThermoSystem().getNumberOfPhases() > 1);
+        getThermoSystem().setPressure(1.0);
+		do {
+			getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+			thermoOps.TPflash();
+		} while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure()<1000.0);
+		do {
+			getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+			thermoOps.TPflash();
+		} while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure()<1000.0);
         double minPres = getThermoSystem().getPressure() - 10.0;
         double maxPres = getThermoSystem().getPressure();
         int iteration = 0;
@@ -94,4 +99,9 @@ public class SaturationPressure extends BasePVTsimulation {
 
 
     }
+
+	public double getSaturationPressure() {
+		return saturationPressure;
+	}
+
 }
