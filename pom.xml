@@ -73,42 +73,42 @@
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-cdense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-core</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-ddense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-dsparse</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-experimental</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-fdense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-simple</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-zdense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>com.lowagie</groupId>

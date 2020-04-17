@@ -65,7 +65,7 @@ public class PHflash extends Flash implements java.io.Serializable {
         double error = 1.0, erorOld = 1.0e10;
         double factor = 0.8;
         double newCorr = 1.0;
-
+        system.init(2);
         boolean correctFactor = true;
         do {
             if (error > erorOld && factor > 0.1 && correctFactor) {
@@ -75,7 +75,6 @@ public class PHflash extends Flash implements java.io.Serializable {
             }
             iterations++;
             oldTemp = nyTemp;
-            system.init(2);
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
@@ -92,6 +91,7 @@ public class PHflash extends Flash implements java.io.Serializable {
             }
             system.setTemperature(1.0 / nyTemp);
             tpFlash.run();
+            system.init(2);
             erorOld = error;
             error = Math.abs(calcdQdT());
            // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));

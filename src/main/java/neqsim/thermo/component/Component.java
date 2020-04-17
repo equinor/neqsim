@@ -1538,6 +1538,7 @@ abstract class Component extends Object
 	 *
 	 */
 	public boolean isIsIon() {
+		if(componentType.equals("ion")) setIsIon(true);
 		return isIon;
 	}
 

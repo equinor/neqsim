@@ -1,4 +1,5 @@
 /*
+ /*
  * ComponentGEUniquac.java
  *
  * Created on 10. juli 2000, 21:06
@@ -6,6 +7,7 @@
 
 package neqsim.thermo.component;
 
+import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
@@ -219,6 +221,8 @@ public class ComponentGeDuanSun extends ComponentGE {
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
 			int phasetype, double[][] HValpha, double[][] HVgij) {
 
+		//System.out.println("comp name  " + getComponentName()  + " isIon " + isIsIon());
+		
 		if (componentName.equals("CO2")) {
 			return 0.9;
 		} else if (componentName.equals("water")) {
@@ -228,6 +232,131 @@ public class ComponentGeDuanSun extends ComponentGE {
 		}
 	}
 
+/*	public double getHenryCoef(double temperature) {
+		// System.out.println("henry " +
+		// Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
+		if (componentName.equals("CO2")) {
+//			return 
+		}
+		return super.getHenryCoef(temperature);
+				
+	}
+*/	
+    public double fugcoef(PhaseInterface phase) {
+        logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+        if (referenceStateType.equals("solvent")) {
+            fugasityCoeffisient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
+            gammaRefCor = gamma;
+        } else {
+            double activinf = 1.0;
+            if (phase.hasComponent("water")) {
+                int waternumb = phase.getComponent("water").getComponentNumber();
+                activinf = gamma /((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
+            } else {
+                activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
+            }
+
+          //Born function
+    		double BORN=0.0;
+    		double EPS=0.0; double EPS1000=0.0;double CB=0.0;double BB=0.0;
+    		EPS1000=3.4279*Math.pow(10.0,2.0)*Math.exp((-5.0866*Math.pow(10.0,-3.0)*phase.getTemperature()+9.469*Math.pow(10.0,-7.0)*Math.pow(phase.getTemperature(),2.0)));
+    		CB=-2.0525+3.1159*Math.pow(10.0,3.0)/(phase.getTemperature()-1.8289*Math.pow(10.0,2.0));
+    		BB=-8.0325*Math.pow(10.0,-3.0)+4.21452*Math.pow(10.0,6.0)/phase.getTemperature()+2.1417*phase.getTemperature();
+    		EPS=EPS1000+CB*Math.log((BB+phase.getPressure())/BB+1000.0);
+    		BORN=(1.0/EPS)*(CB/((phase.getPressure()+BB)*(CB*Math.log((phase.getPressure()+BB)/(BB+1000.0))+EPS)));
+
+    		//Average partial molar volume
+    		double Vm[]= {0.0,0.0,0.0};
+    		Vm[0]=41.84*(0.1*7.29+(100*0.92)/(2600+phase.getPressure())+2.07/(phase.getTemperature()-288.0)-1.23*Math.pow(10.0,4.0)/((2600+phase.getPressure())*(phase.getTemperature()-288.0))+1.6*BORN);
+    		Vm[1]=41.84*(0.1*7.0);
+    		Vm[2]=41.84*(0.1*5.7889+(100*6.3536)/(2600+phase.getPressure())+3.2528/(phase.getTemperature()-288.0)-3.0417*Math.pow(10.0,4.0)/((2600+phase.getPressure())*(phase.getTemperature()-288.0))+0.3943*BORN);
+
+    		double Poynteff[]= {0.0,0.0,0.0};
+    		Poynteff[0]=Vm[0]*(phase.getPressure()-1.0)/(1000.0*(R/100.0)*phase.getTemperature());
+    		Poynteff[1]=Vm[1]*(phase.getPressure()-1.0)/(1000.0*(R/100.0)*phase.getTemperature());
+    		Poynteff[2]=Vm[2]*(phase.getPressure()-1.0)/(1000.0*(R/100.0)*phase.getTemperature());
+
+    		double K[]= {0.0,0.0,0.0,0.0};
+    		double a1=0.0;double a2=0.0;double a3=0.0;double a4=0.0;double a5=0.0;double a6=0.0;double a7=0.0;
+    		double ACO20=-10.52624;double ACO21=2.3547*Math.pow(10.0,-2.0);double ACO22=3972.8;double ACO23=0.0;double ACO24=-5.8746*Math.pow(10.0,5.0);double ACO25=-1.9194*Math.pow(10.0,-5.0);
+    		double AN20=58.453;double AN21=-1.818*Math.pow(10.0,-3.0);double AN22=-3199.0;double AN23=-17.909;double AN24=27460.0;double AN25=0.0;
+    		double AO20=7.5001;double AO21=-7.8981*Math.pow(10.0,-3.0);double AO22=0.0;double AO23=0.0;double AO24=-2.0027*Math.pow(10.0,5.0);double AO25=0.0;
+
+    		if(phase.getTemperature()<=373.15)
+    		{
+    		a1=9.31063597;a2=-1.892867005*Math.pow(10.0,-1.0);a3=1.307135652*Math.pow(10.0,-3.0);a4=-3.800223763*Math.pow(10.0,-6.0);a5=4.0091369717*Math.pow(10.0,-9.0);a6=2.2769246863*Math.pow(10.0,1.0);a7=-1.1291330188*Math.pow(10.0,-2.0);	
+    		}else
+    		{
+    		a1=-9.0283127*Math.pow(10.0,-1.0);a2=3.6492938*Math.pow(10.0,-2.0);a3=4.3610019*Math.pow(10.0,-4.0);a4=-3.10936036*Math.pow(10.0,-6.0);a5=4.592053*Math.pow(10.0,-9.0);a6=1.62996873*Math.pow(10.0,1.0);a7=2.81119409*Math.pow(10.0,-2.0);	
+    		}
+
+    		K[0]=Math.pow(10.0,(ACO20+ACO21*phase.getTemperature()+ACO22/phase.getTemperature()+ACO23*Math.log10(phase.getTemperature())+ACO24/(Math.pow(phase.getTemperature(),2.0))+ACO25*Math.pow(phase.getTemperature(),2.0)))*Math.exp(Poynteff[0]);
+    		K[1]=Math.pow(10.0,(AN20+AN21*phase.getTemperature()+AN22/phase.getTemperature()+AN23*Math.log10(phase.getTemperature())+AN24/(Math.pow(phase.getTemperature(),2.0))+AN25*Math.pow(phase.getTemperature(),2.0)))*Math.exp(Poynteff[1]);
+            K[2]=Math.pow(10.0,(AO20+AO21*phase.getTemperature()+AO22/phase.getTemperature()+AO23*Math.log10(phase.getTemperature())+AO24/(Math.pow(phase.getTemperature(),2.0))+AO25*Math.pow(phase.getTemperature(),2.0)))*Math.exp(Poynteff[2]);
+            K[3]=(a1+a2*phase.getTemperature()+a3*Math.pow(phase.getTemperature(),2.0)+a4*Math.pow(phase.getTemperature(),3.0)+a5*Math.pow(phase.getTemperature(),4.0))*Math.exp((phase.getPressure()-1.0)*(a6+a7*phase.getTemperature())/(1000.0*(R/100.0)*phase.getTemperature()));
+
+            if (componentName.equals("CO2")) {
+            fugasityCoeffisient = activinf*K[0]*gamma*((1000.0/18.0)+25.689/(gamma*K[0]))/ phase.getPressure();	
+            }else if (componentName.equals("nitrogen")) {
+            fugasityCoeffisient = activinf*K[1]*gamma*((1000.0/18.0)+50.585/(gamma*K[1]))/ phase.getPressure();	
+            }else if (componentName.equals("oxygen")) {
+            fugasityCoeffisient = activinf*K[2]*gamma*((1000.0/18.0)+46.9157/(gamma*K[2]))/ phase.getPressure();	
+            }else {
+            fugasityCoeffisient = activinf*K[3]/phase.getPressure();	
+            }
+//    		fugasityCoeffisient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();//gamma* benyttes ikke
+            gammaRefCor = activinf;
+        }
+        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        return fugasityCoeffisient;
+    }
+
+/////////////////////////////////////////////////////	
+	public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype,
+			double salinity) {
+		double P=pressure;
+		double T=temperature;
+		double S=salinity;        
+
+		double lamdaCO2Na=-0.411370585+0.000607632*T+97.5347708/T-0.023762247*P/T+0.017065624*P/(630.0-T)+1.41335834*Math.pow(10.0,-5.0)*T*Math.log(P);
+		double lamdaN2Na=-2.4434074+0.0036351795*T+447.47364/T-0.000013711527*P+0.0000071037217*Math.pow(P,2.0)/T;
+		double lamdaO2Na=0.19997;
+		double zetaN2NaCl=-0.58071053*Math.pow(10.0,-2.0);
+		double zetaO2NaCl=-1.2793*Math.pow(10.0,-2.0);
+		double zetaCO2NaCl=0.00033639-1.9829898*Math.pow(10.0,-5.0)*T+0.002122208*P/T-0.005248733*P/(630.-T);
+
+		if (componentName.equals("CO2")) {
+			gamma=Math.exp(2.0*S*lamdaCO2Na+Math.pow(S,2.0)*zetaCO2NaCl);
+		} else if (componentName.equals("nitrogen")) {
+			gamma=Math.exp(2.0*S*lamdaN2Na+Math.pow(S,2.0)*zetaN2NaCl);
+		} else if (componentName.equals("oxygen")) {
+			gamma=Math.exp(2.0*S*lamdaO2Na+Math.pow(S,2.0)*zetaO2NaCl);
+		} else {
+			gamma=1.0;
+		}
+
+//		double gammaCO2=Math.exp(2.0*S*lamdaCO2Na+Math.pow(S,2.0)*zetaCO2NaCl);
+//		double gammaN2=Math.exp(2.0*S*lamdaN2Na+Math.pow(S,2.0)*zetaN2NaCl);
+//		double gammaO2=Math.exp(2.0*S*lamdaO2Na+Math.pow(S,2.0)*zetaO2NaCl);
+//		gamma=1.0;
+
+		lngamma=Math.log(gamma);
+
+//		System.out.println("gamma CO2 = " + gammaCO2);
+//		System.out.println("gamma N2 = " + gammaN2);
+//		System.out.println("gamma O2 = " + gammaO2);
+
+//		if (componentName.equals("CO2")) {
+//		return gammaCO2;
+//		}else if (componentName.equals("nitrogen")) {
+//		return gammaN2;
+//		}else if (componentName.equals("oxygen")) {
+//		return gammaO2;
+//		}else 
+		return gamma;
+
+	}
+/////////////////////////////////////////////////////
 	/*
 	 * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
 	 * double temperature, double pressure, int phasetype){ dfugdp =

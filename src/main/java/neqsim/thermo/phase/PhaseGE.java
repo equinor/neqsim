@@ -44,6 +44,30 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
         if(initType!=0) {
             getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phase);
         }
+        
+        double sumHydrocarbons = 0.0, sumAqueous = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+            if (getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction()) {
+                sumHydrocarbons += getComponent(i).getx();
+            } else {
+                sumAqueous += getComponent(i).getx();
+            }
+        }
+
+        if (sumHydrocarbons > sumAqueous) {
+            phaseTypeName = "oil";
+        } else {
+            phaseTypeName = "aqueous";
+        }
+        
+        //calc liquid density
+        
+        if(initType>1) {
+        //Calc Cp /Cv
+        //Calc enthalpy/entropys
+        }
+        
+        
     }
     
     public void setMixingRule(int type){

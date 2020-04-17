@@ -7,6 +7,8 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.database.NeqSimExperimentDatabase;
+
 import java.sql.*;
 import java.util.*;
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -36,15 +38,17 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
         ArrayList sampleList = new ArrayList();
         
         // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<363.15 AND Pressure<60.01325 ORDER BY Temperature,Pressure");
+        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
+       // ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>278.15 AND Temperature<363.15 AND Pressure<60.01325 ORDER BY Temperature,Pressure");
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='oxygen' AND ComponentSolvent='water' ORDER BY Temperature,Pressure");
+        
         //  ResultSet dataSet =  database.getResultSet(  "SELECT * FROM activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
         //    testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
         //    testSystem.addComponent(dataSet.getString("ComponentSolvent"), 1.0);
         try{
             int p=0;
             logger.info("adding....");
-            while(dataSet.next() && p<12){
+            while(dataSet.next() && p<22){
                 p++;
                 BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData();
                 //SystemInterface testSystem = new SystemSrkEos(280,1);
@@ -52,13 +56,13 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(290, 1.0);
                 //SystemInterface testSystem = new SystemSrkMathiasCopeman(290, 1.0);
                 testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0);
-                testSystem.addComponent(dataSet.getString("ComponentSolvent"), 10.0);
+                testSystem.addComponent(dataSet.getString("ComponentSolvent"), 100.0);
                 
                 //testSystem.addComponent("CO2", 1.0);
                 //testSystem.addComponent("water", 1.0);
                 //testSystem.addComponent("MDEA", 1.000001);
                 //testSystem.chemicalReactionInit();
-                //testSystem.createDatabase(true);
+                testSystem.createDatabase(true);
                 testSystem.setMixingRule(4);
                 
                 //testSystem.getChemicalReactionOperations().solveChemEq(0);
@@ -81,8 +85,8 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
                 //double parameterGuess[] = {4799.35, -2772.29, 0.6381, -1.68096};
                 //double parameterGuess[] = {5640.38, -3793.1, -4.42, 2.82}; // HV CO2
                 //double parameterGuess[] = {7263.5285887088, -3712.3594920781, -7.1458168635, 1.2714576276};//CO2-SRK-MC
-                double parameterGuess[] = {5251.7374371982, -3121.2788585048, -0.8420253536, -0.5123316046}; // HV CO2 -PVT-sim
-                // double parameterGuess[] = {5023.6600682957, -136.4306560594, -3.9812435921, 1.4579901393}; // HV methane
+               // double parameterGuess[] = {5251.7374371982, -3121.2788585048, -0.8420253536, -0.5123316046}; // HV CO2 -PVT-sim
+                double parameterGuess[] = {2423.6600682957, -2136.4306560594, 1.9812435921, 1.4579901393}; // HV methane
                 //double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162 , 13.0150379323}; // HV
                 //double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
                 // double parameterGuess[] = {-7.132E2, -3.933E2};//, 3.96E0, 9.602E-1}; //, 1.239}; //WS
@@ -102,7 +106,7 @@ public class TestBinaryHVParameterFittingToSolubilityData extends java.lang.Obje
         //optim.runMonteCarloSimulation();
         //    optim.displayResult();
         optim.displayCurveFit();
-        optim.displayResult();
+       // optim.displayResult();
         //        optim.writeToCdfFile("c:/testFit.nc");
         //        optim.writeToTextFile("c:/testFit.txt");
     }

@@ -519,20 +519,19 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 	public SystemInterface phaseToSystem(int phaseNumber) {
 		SystemInterface newSystem = (SystemInterface) this.clone();
-
+		
 		for (int j = 0; j < getMaxNumberOfPhases(); j++) {
 			for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
-				newSystem.getPhases()[j].getComponents()[i]
-						.setNumberOfmoles(getPhase(phaseNumber).getComponents()[i].getNumberOfMolesInPhase());
-				newSystem.getPhases()[j].getComponents()[i]
-						.setNumberOfMolesInPhase(getPhase(phaseNumber).getComponents()[i].getNumberOfMolesInPhase());
+				newSystem.getPhase(j).getComponent(i)
+						.setNumberOfmoles(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
+				newSystem.getPhase(j).getComponent(i)
+						.setNumberOfMolesInPhase(getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase());
 			}
 		}
 
 		newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase());
 
 		newSystem.init(0);
-
 		newSystem.setNumberOfPhases(1);
 		newSystem.setPhaseType(0, getPhase(phaseNumber).getPhaseType());// phaseType[phaseNumber]);
 		newSystem.init(1);
@@ -570,7 +569,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		if (getMolarMass() < 1e-20) {
 			init(0);
 		}
-		neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), getDensity(), 0);
+		if(flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("Am3/sec")) {
+			initPhysicalProperties("density");
+		}
+		neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), getDensity("kg/m3"), 0);
 		double SIval = unit.getSIvalue();
 		double totalNumberOfMolesLocal = totalNumberOfMoles;
 		for (int i = 0; i < numberOfComponents; i++) {
@@ -608,11 +610,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		} else if (flowunit.equals("kg/hr")) {
 			return totalNumberOfMoles * getMolarMass() * 3600.0;
 		} else if (flowunit.equals("m3/hr")) {
-			return getVolume() / 1.0e5 * 3600.0;
+			//return getVolume() / 1.0e5 * 3600.0;
+			return totalNumberOfMoles * getMolarMass() * 3600.0/getDensity("kg/m3");
 		} else if (flowunit.equals("m3/min")) {
-			return getVolume() / 1.0e5 * 60.0;
+			return totalNumberOfMoles * getMolarMass() * 60.0/getDensity("kg/m3");
+			//return getVolume() / 1.0e5 * 60.0;
 		} else if (flowunit.equals("m3/sec")) {
-			return getVolume() / 1.0e5;
+			return totalNumberOfMoles * getMolarMass()/getDensity("kg/m3");
+			//return getVolume() / 1.0e5;
 		} else if (flowunit.equals("mole/sec")) {
 			return totalNumberOfMoles;
 		} else if (flowunit.equals("mole/min")) {
@@ -1430,7 +1435,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		this.init(initType);
 	}
 
-	public void initAnalytic(int type) { // type = 0 start init type =1 gi nye betingelser
+	public void initAnalytic(int type) { // type = 0 start init type =1O gi nye betingelser
 		if (type == 0) {
 			numberOfPhases = getMaxNumberOfPhases();
 			for (int i = 0; i < getMaxNumberOfPhases(); i++) {
@@ -2459,14 +2464,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 * method to set the pressure of a fluid (same temperature for all phases)
 	 *
 	 * @param newPressure in specified unit
-	 * @param unit        unit can be bar or atm
+	 * @param unit        unit can be bar/bara/barg or atm
 	 */
 	public final void setPressure(double newPressure, String unit) {
 		for (int i = 0; i < getMaxNumberOfPhases(); i++) {
 			if (unit.equals("bar") || unit.equals("bara")) {
 				phaseArray[i].setPressure(newPressure);
 			} else if (unit.equals("atm")) {
-				phaseArray[i].setPressure(newPressure - 0.01325);
+				phaseArray[i].setPressure(newPressure + 0.01325);
 			} else if (unit.equals("barg")) {
 				phaseArray[i].setPressure(newPressure + 1.01325);
 			} else {

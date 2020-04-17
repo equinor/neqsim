@@ -51,6 +51,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public boolean chemSyst = false;
     protected double diElectricConstant = 0;
     double Z = 1;
+    public String thermoPropertyModelName = null;
     double beta = 1.0;
     private int initType = 0;
     int mixingRuleNumber = 0;
@@ -1812,5 +1813,9 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
 		} else {
 			throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
 		}
+	}
+
+	public String getThermoPropertyModelName() {
+		return thermoPropertyModelName;
 	}
 }

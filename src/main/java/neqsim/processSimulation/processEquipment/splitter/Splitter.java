@@ -82,8 +82,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
             thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
             splitStream[i].setThermoSystem(thermoSystem);
             for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
+            	int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
                 double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
-                splitStream[i].getThermoSystem().addComponent(inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentName(), moles * splitFactor[i] - moles);
+                splitStream[i].getThermoSystem().addComponent(index, moles * splitFactor[i] - moles);
             }
             thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
             thermoOps.TPflash();

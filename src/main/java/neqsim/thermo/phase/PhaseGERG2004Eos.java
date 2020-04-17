@@ -28,6 +28,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
     /** Creates new PhaseSrkEos */
     public PhaseGERG2004Eos() {
         super();
+        thermoPropertyModelName = "GERG-EoS 2008";
     }
 
     public Object clone() {

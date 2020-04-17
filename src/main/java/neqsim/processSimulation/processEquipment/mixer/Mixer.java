@@ -26,7 +26,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     private static final long serialVersionUID = 1000;
 
     protected ArrayList streams = new ArrayList(0);
-    protected int numberOfInputStreams = 0;
+    private int numberOfInputStreams = 0;
     protected Stream mixedStream;
     public ThermodynamicOperations testOps = null;
     private boolean isSetOutTemperature = false;
@@ -53,7 +53,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         streams.add(newStream);
 
         try{
-        if (numberOfInputStreams == 0) {
+        if (getNumberOfInputStreams() == 0) {
             mixedStream = (Stream) ((StreamInterface) streams.get(0)).clone(); // cloning the first stream
 //            mixedStream.getThermoSystem().setNumberOfPhases(2);
 //            mixedStream.getThermoSystem().reInitPhaseType();
@@ -311,5 +311,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
 	public void isSetOutTemperature(boolean isSetOutTemperature) {
 		this.isSetOutTemperature = isSetOutTemperature;
+	}
+
+	public int getNumberOfInputStreams() {
+		return numberOfInputStreams;
 	}
 }

@@ -159,12 +159,14 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 				}
 				for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
 					thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentNumber(),
-							relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+							relFact * thermoSystem2.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
 				}
 			}
-			// thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume() /
-			// (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() +
-			// totalliquidVolume));
+
+			if (thermoSystem.hasPhaseType("gas")) {
+				thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
+						/ (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + totalliquidVolume));
+			}
 			thermoSystem.init(3);
 			// System.out.println("moles in separator " + thermoSystem.getNumberOfMoles());
 			double volume1 = thermoSystem.getVolume();
@@ -217,7 +219,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 					- liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
 			System.out.println("dn " + dn);
 			thermoSystem.addComponent(
-					inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(),
+					inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentNumber(),
 					dn * dt);
 		}
 		thermoOps = new ThermodynamicOperations(thermoSystem);
