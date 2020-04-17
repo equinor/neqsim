@@ -10,7 +10,7 @@
     <version>${revision}${sha1}${changelist}</version>
 
     <properties>
-      <revision>1.2.0</revision>
+      <revision>2.2.0</revision>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
       <sha1/>
@@ -26,8 +26,13 @@
             <id>boundless</id>
             <url>https://repo.boundlessgeo.com/main/</url>
         </repository>
+      <repository>
+        <id>unidata-all</id>
+        <name>Unidata All</name>
+        <url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
+      </repository>
     </repositories>
-
+ 
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -68,42 +73,42 @@
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-cdense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-core</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-ddense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-dsparse</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-experimental</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-fdense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-simple</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>org.ejml</groupId>
             <artifactId>ejml-zdense</artifactId>
-            <version>0.38</version>
+            <version>0.39</version>
         </dependency>
         <dependency>
             <groupId>com.lowagie</groupId>
@@ -140,12 +145,12 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.11</version>
         </dependency>
-        <dependency>
-            <groupId>edu.ucar</groupId>
-            <artifactId>netcdfAll</artifactId>
-            <version>4.6.14</version>
-        </dependency>
-        <dependency>
+      <dependency>
+        <groupId>edu.ucar</groupId>
+        <artifactId>netcdf4</artifactId>
+        <version>4.6.14</version>
+      </dependency>
+      <dependency>
             <groupId>org.ojalgo</groupId>
             <artifactId>ojalgo</artifactId>
             <version>44.0.0</version>

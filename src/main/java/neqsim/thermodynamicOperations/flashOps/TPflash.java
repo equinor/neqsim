@@ -436,8 +436,8 @@ public class TPflash extends Flash implements java.io.Serializable {
 			TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
 			operation.run();
 		}
-
 		system.orderByDensity();
+		system.init(1);
 	}
 
 	public org.jfree.chart.JFreeChart getJFreeChart(String name) {

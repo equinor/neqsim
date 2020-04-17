@@ -28,7 +28,6 @@ import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import static neqsim.thermo.ThermodynamicConstantsInterface.referencePressure;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.util.GERG.NeqSimGERG2008;
 
 import org.apache.logging.log4j.*;
 
@@ -52,6 +51,7 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
     public boolean chemSyst = false;
     protected double diElectricConstant = 0;
     double Z = 1;
+    public String thermoPropertyModelName = null;
     double beta = 1.0;
     private int initType = 0;
     int mixingRuleNumber = 0;
@@ -1769,7 +1769,17 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
      * @return density with unit kg/m3
      */
     public double getDensity_GERG2008() {
-    	NeqSimGERG2008 test = new NeqSimGERG2008(this);
+    	neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    	return test.getDensity();
+    }
+    
+    /**
+     * method to get density of a phase using the AGA8-Detail EoS
+     *
+     * @return density with unit kg/m3
+     */
+    public double getDensity_AGA8() {
+    	neqsim.thermo.util.GERG.NeqSimAGA8Detail test = new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
     	return test.getDensity();
     }
     
@@ -1803,5 +1813,9 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
 		} else {
 			throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
 		}
+	}
+
+	public String getThermoPropertyModelName() {
+		return thermoPropertyModelName;
 	}
 }

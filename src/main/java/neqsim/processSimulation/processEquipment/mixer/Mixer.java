@@ -15,7 +15,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
+import org.apache.logging.log4j.*;
 /**
  *
  * @author  Even Solbraa
@@ -26,10 +26,13 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     private static final long serialVersionUID = 1000;
 
     protected ArrayList streams = new ArrayList(0);
-    protected int numberOfInputStreams = 0;
+    private int numberOfInputStreams = 0;
     protected Stream mixedStream;
     public ThermodynamicOperations testOps = null;
-
+    private boolean isSetOutTemperature = false;
+    private double outTemperature = Double.NaN;
+    static Logger logger = LogManager.getLogger(Mixer.class);
+    
     /** Creates new staticMixer */
     public Mixer() {
     }
@@ -50,7 +53,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         streams.add(newStream);
 
         try{
-        if (numberOfInputStreams == 0) {
+        if (getNumberOfInputStreams() == 0) {
             mixedStream = (Stream) ((StreamInterface) streams.get(0)).clone(); // cloning the first stream
 //            mixedStream.getThermoSystem().setNumberOfPhases(2);
 //            mixedStream.getThermoSystem().reInitPhaseType();
@@ -72,7 +75,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         int index = 0;
         String compName = new String();
         double lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
-
+        boolean hasAddedNewComponent = false;
         for (int k = 1; k < streams.size(); k++) {
             if (((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0).getPressure() < lowestPressure){
                 lowestPressure = ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0).getPressure();
@@ -102,11 +105,13 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
                 //mixedStream.getThermoSystem().init_x_y();
                 //System.out.println("adding moles finished");
                 } else {
-                    System.out.println("ikke gaa hit");
+                	hasAddedNewComponent = true;
+                    //System.out.println("ikke gaa hit");
                     mixedStream.getThermoSystem().addComponent(compName, moles);
                 }
             }
         }
+        if(hasAddedNewComponent) mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
 //        mixedStream.getThermoSystem().init_x_y();
 //        mixedStream.getThermoSystem().initBeta();
 //        mixedStream.getThermoSystem().init(2);
@@ -161,10 +166,24 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
             enthalpy = calcMixStreamEnthalpy();
            //  System.out.println("temp guess " + guessTemperature());
             mixedStream.getThermoSystem().setTemperature(guessTemperature());
-            testOps.PHflash(enthalpy, 0);
+           
            //System.out.println("filan temp  " + mixedStream.getTemperature());
-        } else {
-            testOps.TPflash();
+        }
+        if(isSetOutTemperature) {
+        	if(!Double.isNaN(getOutTemperature())) mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        	testOps.TPflash();
+        }
+        else {
+        	try { 
+        	testOps.PHflash(enthalpy, 0);
+        	}
+        	catch(Exception e) {
+        		logger.error(e.getMessage());
+        		if(!Double.isNaN(getOutTemperature())) mixedStream.getThermoSystem().setTemperature(getOutTemperature());
+        		testOps.TPflash();
+        	}
+        	
+        	
         }
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
@@ -276,4 +295,25 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         }
         mixedStream.getThermoSystem().setTemperature(temp);
     }
+
+	public double getOutTemperature() {
+		return outTemperature;
+	}
+
+	public void setOutTemperature(double outTemperature) {
+		isSetOutTemperature(true);
+		this.outTemperature = outTemperature;
+	}
+
+	public boolean isSetOutTemperature() {
+		return isSetOutTemperature;
+	}
+
+	public void isSetOutTemperature(boolean isSetOutTemperature) {
+		this.isSetOutTemperature = isSetOutTemperature;
+	}
+
+	public int getNumberOfInputStreams() {
+		return numberOfInputStreams;
+	}
 }

@@ -20,6 +20,7 @@ public class PhasePrEos extends PhaseEos{
   /** Creates new PhaseSrkEos */
   public PhasePrEos() {
      super();
+     thermoPropertyModelName = "PR-EoS";
      uEOS = 2;
      wEOS = -1;    
      delta1 = 1.0 + Math.sqrt(2.0);

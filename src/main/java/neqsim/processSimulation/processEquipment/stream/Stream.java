@@ -149,8 +149,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             return;
         }
         if (thermoSystem.hasPhaseType(phaseTypeName)) {
-            thermoSystem.getPhaseNumberOfPhase(phaseTypeName);
-            this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase(phaseTypeName));
+            this.thermoSystem = thermoSystem.phaseToSystem(phaseTypeName);
         } else {
             System.out.println("no phase of type " + phaseTypeName);
             System.out.println("...returning empty system ");

@@ -1,3 +1,15 @@
+Version 2.2 (17/4/2020)
+- Huron Vidal parameter oxygen-water updated
+- CPA-binary interaction paramter kij updated for N2-water and o2-water
+- Peneloux volume correction paramters water, MEG, TEG
+- Volume correction parameters for water, MEG and TEG updated (temperature dependent volume correction)
+- UMR-PRU model updated with parameters for c-C7 and c-C8, c-C9
+- various bug fixes and new feautures for process calculations (changes for compressors, mixers, etc.)
+- Short-cut class for creating new fluids implemented (neqsim.thermo.Fluid class)
+
+Version 2.1
+- improved stability of TPflash calculations
+
 Version 2.0 (10/12/2019)
 - verson name changed from 2018.X to 2.X
 - improved speed and stability of algorithms (TPflash, phase envelopes)

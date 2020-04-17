@@ -37,7 +37,7 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         thermoOps.TPflash();
        // system.display();
 
-        //System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
+     //   System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
         return system.getPhase(phase).getComponent(component).getx();  // for lucia data
         //return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
@@ -51,12 +51,17 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
+        
+        
+            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameterij(0, 1, value);
+            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameterij(0, 1, value);
+            
         }
         if (i == 10) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
         }
-        if (i == 2) {
+        if (i == 1) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameterT1(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameterT1(0, 1, value);
         }
@@ -66,7 +71,7 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameterij(0, 1, value);
         }
 
-        if (i == 1) {
+        if (i == 11) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameterji(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameterji(0, 1, value);
         }
