@@ -4054,7 +4054,20 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			addComponent(i, -change, 1);
 		}
 	}
-
+	
+	public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName, String toPhaseName) {
+		if(!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction<1e-25)) {
+			return;
+		}
+		int phaseNumbFrom = getPhaseNumberOfPhase(fromPhaseName);
+		int phaseNumbTo = getPhaseNumberOfPhase(toPhaseName);
+		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+			double change = getPhase(phaseNumbFrom).getComponent(i).getNumberOfMolesInPhase() * fraction;
+			addComponent(i, change, phaseNumbTo);
+			addComponent(i, -change, phaseNumbFrom);
+		}
+	}
+	
 	public void addGasToLiquid(double fraction) {
 		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
 			double change = getPhase(0).getComponent(i).getNumberOfMolesInPhase() * fraction;

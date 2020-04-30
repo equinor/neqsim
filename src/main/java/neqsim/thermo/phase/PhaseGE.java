@@ -6,6 +6,7 @@
 
 package neqsim.thermo.phase;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
@@ -37,6 +38,21 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
             componentArray[i].init(temperature, pressure, totalNumberOfMoles, beta, type);
         }
         this.getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, type);
+        
+        double sumHydrocarbons = 0.0, sumAqueous = 0.0;
+        for (int i = 0; i < numberOfComponents; i++) {
+            if (getComponent(i).isHydrocarbon() || getComponent(i).isInert() || getComponent(i).isIsTBPfraction()) {
+                sumHydrocarbons += getComponent(i).getx();
+            } else {
+                sumAqueous += getComponent(i).getx();
+            }
+        }
+        
+        if (sumHydrocarbons > sumAqueous) {
+            phaseTypeName = "oil";
+        } else {
+            phaseTypeName = "aqueous";
+        }
     }
     
     public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase, double beta){
@@ -144,6 +160,27 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
         dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1, dilphase.getPhaseType(), 1.0);
         ((PhaseGEInterface)dilphase).getExessGibbsEnergy(dilphase, 2, dilphase.getTemperature(), dilphase.getPressure(), dilphase.getPhaseType());
         return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
+    }
+    
+    public double getEnthalpy() {
+    	return getCp()*temperature*numberOfMolesInPhase;
+    }
+    
+    public double getEntropy() {
+    	return getCp()*Math.log(temperature/ThermodynamicConstantsInterface.referenceTemperature);
+    }
+    
+    public double getCp() {
+    	   double tempVar = 0.0;
+           for (int i = 0; i < numberOfComponents; i++) {
+               tempVar += componentArray[i].getx() * componentArray[i].getPureComponentCpLiquid(temperature);
+           }
+           return tempVar;
+    }
+    
+    public double getCv() {
+    	// Cv is assumed equal to Cp
+          return getCp();
     }
     
 }

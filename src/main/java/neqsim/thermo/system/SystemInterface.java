@@ -14,6 +14,8 @@ public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID);
 
+    public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName, String toPhaseName);
+    
 	public int getNumberOfComponents();
 	
 	/**

@@ -107,4 +107,6 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     public double getGammaRefCor() {
         return gammaRefCor;
     }
+    
+ 
 }
