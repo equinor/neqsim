@@ -85,7 +85,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return newNode;
     }
 
-    public static void main(String[] args) {
+    public static void mainOld(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 11.0, 60.0);
         //SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -105,6 +105,78 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         testSystem.init(3);
 
         //testOps.TPflash();
+        testSystem.display();
+        //testSystem.setTemperature(273.15+20);
+        //    testSystem.initPhysicalProperties();
+
+        FlowNodeInterface test = new DropletFlowNode(testSystem, pipe1);
+
+        test.setInterphaseModelType(1);
+        test.setLengthOfNode(0.1);
+        test.getGeometry().getSurroundingEnvironment().setTemperature(273.15 + 11.0);
+
+        test.getFluidBoundary().setHeatTransferCalc(true);
+        test.getFluidBoundary().setMassTransferCalc(true);
+        double length = 0;
+        //test.initFlowCalc();
+
+        test.initFlowCalc();
+        test.calcFluxes();
+        test.getFluidBoundary().display("test");
+        double[][] temperatures2 = new double[3][1000];
+        int k = 0;
+        for (int i = 0; i < 1000; i++) {
+            length += test.getLengthOfNode();
+            test.initFlowCalc();
+            test.calcFluxes();
+
+            if (i > 1 && (i % 1) == 0) {
+                k++;
+              //  test.display("length " + length);
+                // test.getBulkSystem().display("length " + length);
+              //  test.getInterphaseSystem().display("length " + length);
+                //test.getFluidBoundary().display("length " + length);
+             //   test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+                temperatures2[0][k] = length;
+                temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+                System.out.println(test.getBulkSystem().getPhase(0).getComponent("water").getx());
+                //test.getFluidBoundary().display("test");
+            }
+
+            // test.getBulkSystem().display();
+            test.update();
+           // test.getFluidBoundary().display("length " + length);
+          //  test.getInterphaseSystem().display("length " + length);
+
+          //  test.getFluidBoundary().display("test");
+        }
+
+        for (int i = 0; i < k; i++) {
+            System.out.println("len temp  " + temperatures2[0][i] + " " + temperatures2[1][i]);
+        }
+        ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+        ops.TPflash();
+        testSystem.display();
+
+    }
+    
+    public static void main(String[] args) {
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 5.0, 10.0e-3);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        PipeData pipe1 = new PipeData(0.203, 0.00025);
+
+        testSystem.addComponent("oxygen", 50.0e-6, "kg/min", 0);
+        testSystem.addComponent("oxygen", 8e-6, "kg/min", 1);
+        testSystem.addComponent("water", 100.0, "kg/min", 1);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(10);
+        testSystem.initPhysicalProperties();
+
+        testSystem.init_x_y();
+        testSystem.initBeta();
+        testSystem.init(3);
+
+        testOps.TPflash();
         testSystem.display();
         //testSystem.setTemperature(273.15+20);
         //    testSystem.initPhysicalProperties();

@@ -33,7 +33,7 @@ public class TestCharacterizationCondensate {
 
         //testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");//(RiaziDaubert  PedersenPR  PedersenSRK
       //  testSystem.getCharacterization().setPlusFractionModel("heavyOil");
-        testSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); //"abLumping";
+       // testSystem.getCharacterization().setLumpingModel("PVTlumpingModel"); //"abLumping";
         testSystem.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
         //testSystem.addComponent("water", 0.5);
         //testSystem.addComponent("TEG", 0.5);
@@ -51,7 +51,19 @@ public class TestCharacterizationCondensate {
         testSystem.addTBPfraction("C7", 0.001, 90.3717 / 1000.0, 0.7463691);
         testSystem.addTBPfraction("C8", 0.001, 102.46950 / 1000.0, 0.7709114);
         testSystem.addTBPfraction("C9", 0.001, 115.6 / 1000.0, 0.7901);
-        testSystem.addTBPfraction("C10", 0.02, 225.5046 / 1000.0, 0.8411014);
+        testSystem.addTBPfraction("C10", 0.001, 125.5046 / 1000.0, 0.80411014);
+        
+        testSystem.addTBPfraction("C11", 0.004, 135.0253 / 1000.0, 0.8167229);
+        testSystem.addTBPfraction("C12", 0.001, 145.3717 / 1000.0, 0.8263691);
+        testSystem.addTBPfraction("C13", 0.001, 158.46950 / 1000.0, 0.827709114);
+        testSystem.addTBPfraction("C14", 0.001, 168.6 / 1000.0, 0.827901);
+        testSystem.addTBPfraction("C15", 0.001, 172.5046 / 1000.0, 0.8311014);
+        
+        testSystem.addTBPfraction("C16", 0.004, 190.0253 / 1000.0, 0.83667229);
+        testSystem.addTBPfraction("C17", 0.001, 211.3717 / 1000.0, 0.8363691);
+        testSystem.addTBPfraction("C18", 0.001, 220.46950 / 1000.0, 0.827709114);
+        testSystem.addTBPfraction("C19", 0.001, 245.6 / 1000.0, 0.8401);
+        testSystem.addTBPfraction("C20", 0.03, 391.5046 / 1000.0, 0.8617411014);
 
       //  testSystem.addComponent("water", 10.87);
         //  testSystem.addPlusFraction("C11", 1.44, 231.0 / 1000, 0.87);
@@ -87,9 +99,9 @@ public class TestCharacterizationCondensate {
             logger.error(e.toString());
         }
         testSystem.display();
-        System.out.println("number of lumped components " + testSystem.getCharacterization().getLumpingModel().getNumberOfLumpedComponents());
-        System.out.println("number of pseudo components " + testSystem.getCharacterization().getLumpingModel().getNumberOfPseudoComponents());
-        System.out.println("lumped component " + testSystem.getCharacterization().getLumpingModel().getLumpedComponentName(3));
+      //  System.out.println("number of lumped components " + testSystem.getCharacterization().getLumpingModel().getNumberOfLumpedComponents());
+       // System.out.println("number of pseudo components " + testSystem.getCharacterization().getLumpingModel().getNumberOfPseudoComponents());
+       // System.out.println("lumped component " + testSystem.getCharacterization().getLumpingModel().getLumpedComponentName(3));
        
         /*
         System.out.println("molar mass " +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );

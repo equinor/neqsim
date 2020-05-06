@@ -62,7 +62,7 @@ public class TPflash_benchmark {
 
         testSystem.init(0);
         long time = System.currentTimeMillis();
-        testOps.TPflash();
+
         for (int i = 0; i < 5000; i++) {
             //testSystem.init(3, 0);
             testOps.TPflash();
@@ -71,8 +71,8 @@ public class TPflash_benchmark {
             //     testSystem.init(1);
         }
 
-        logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
-        testSystem.display();
+        System.out.println("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
+      //  testSystem.display();
         //    SystemInterface testSystem2 = testSystem.readObjectFromFile("c:/temp/test2.neqsim", "test2.neqsim");
         /// testSystem2.init(3);
         //       testSystem2.display();
