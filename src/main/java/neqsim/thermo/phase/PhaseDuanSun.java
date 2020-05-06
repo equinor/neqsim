@@ -71,19 +71,5 @@ public class PhaseDuanSun extends PhaseGE {
         return GE;
     }
     
-    public double getEnthalpy() {
-    	return 0.0;
-    }
-    
-    public double getEntropy() {
-    	return 0.0;
-    }
-    
-    public double getCp() {
-    	return 0.0;
-    }
-    
-    public double getCv() {
-    	return 0.0;
-    }
+   
 }

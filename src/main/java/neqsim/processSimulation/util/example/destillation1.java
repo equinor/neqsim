@@ -36,7 +36,7 @@ public class destillation1 {
 
         DistillationColumn column = new DistillationColumn(9, true, true);
         column.addFeedStream(stream_1, 4);
-        ((Reboiler) column.getReboiler()).setRefluxRatio(32.7);
+        ((Reboiler) column.getReboiler()).setRefluxRatio(3.7);
         ((Condenser) column.getCondenser()).setRefluxRatio(10.7);
         //    column.setReboilerTemperature(360);
         //  column.setReboilerTemperature(300);
@@ -53,12 +53,12 @@ public class destillation1 {
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(column);
-        //   operations.add(heater);
-        // operations.add(column2);
+   //        operations.add(heater);
+    //     operations.add(column2);
 
         operations.run();
-        column.getReboiler().displayResult();
-        column.getCondenser().displayResult();
+    //    column.getReboiler().displayResult();
+    //    column.getCondenser().displayResult();
         // operations.displayResult();
     }
 }

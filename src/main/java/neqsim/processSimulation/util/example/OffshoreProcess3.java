@@ -69,13 +69,12 @@ public class OffshoreProcess3 {
         Mixer mixermp = new Mixer("mpmixer");
         mixermp.addStream(lpcompressor.getOutStream());
         mixermp.addStream(mpseparator.getGasOutStream());
-
+        //mixermp.isSetOutTemperature(true);
         Heater mpgasheater = new Heater(mixermp.getOutStream());
         mpgasheater.setOutTemperature(290.0);
 
         Compressor compressor2stage = new Compressor(mpseparator.getGasOutStream());
         compressor2stage.setOutletPressure(50.0);
-
         Mixer mixer = new Mixer("MPmixer");
         mixer.addStream(compressor2stage.getOutStream());
         mixer.addStream(inletSeparator.getGasOutStream());

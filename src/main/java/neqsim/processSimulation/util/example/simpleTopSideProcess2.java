@@ -23,7 +23,6 @@ public class simpleTopSideProcess2{
 		neqsim.thermo.system.SystemInterface fluid = neqsim.thermo.Fluid.create("gas condensate");
 		fluid.setTemperature(45.0, "C");
 		fluid.setPressure(5.0, "bara");
-		
         Stream stream_inlet = new Stream("Stream1", fluid);
         
         Mixer mixer_inlet = new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer HP");
@@ -55,14 +54,15 @@ public class simpleTopSideProcess2{
         
         stream_inlet.getThermoSystem().setTemperature(273.15+35.0);
         operations.run();
-        scrubber.displayResult();
+       
+    //    scrubber.displayResult();
         
         stream_inlet.getThermoSystem().setTemperature(273.15+30.0);
         operations.run();
-        scrubber.displayResult();
+    //    scrubber.displayResult();
         
         stream_inlet.getThermoSystem().setTemperature(273.15+16.0);
         operations.run();
-        scrubber.displayResult();
+    //    scrubber.displayResult();
     }
 }

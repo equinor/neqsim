@@ -166,6 +166,30 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         return this.thermoSystem;
     }
 
+    public void setFlowRate(double flowrate, String unit) {
+    	this.getFluid().setTotalFlowRate(flowrate, unit);
+    }
+    
+    public void setPressure(double pressure, String unit) {
+    	getFluid().setPressure(pressure, unit);
+    }
+    
+    public void setTemperature(double temperature, String unit) {
+    	getFluid().setTemperature(temperature, unit);
+    }
+    
+    public double getFlowRate(String unit) {
+    	return this.getFluid().getFlowRate(unit);
+    }
+    
+    public double getPressure(String unit) {
+    	return getFluid().getPressure(unit);
+    }
+    
+    public double getTemperature(String unit) {
+    	return getFluid().getTemperature(unit);
+    }
+    
     public void run() {
         //System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
@@ -227,7 +251,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             thermoOps.TPflash();
         }
 
-        thermoSystem.init(3);
+        thermoSystem.initProperties();
         //System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         //System.out.println("beta: " + thermoSystem.getBeta());
     }

@@ -29,19 +29,20 @@ public class ReactiveTPflash {
     }
 
     public static void main(String args[]) {
-       //SystemInterface testSystem = new SystemFurstElectrolyteEosMod2004(273.15 + 45, 2.050);
-       SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.15 + 60, 10.0);
+      // SystemInterface testSystem = new SystemFurstElectrolyteEosMod2004(423.2, 24.4);
+      SystemInterface testSystem = new SystemElectrolyteCPAstatoil(308.3, 3.8);
 
-        testSystem.addComponent("methane", 110.0);
-        testSystem.addComponent("CO2", 10.05);
+      testSystem.addComponent("methane", 99.0);
+      testSystem.addComponent("CO2", 1.0e-6);
         //   testSystem.addComponent("H2S", 0.10);
       //  testSystem.addComponent("MDEA", 13.0);
        // testSystem.addComponent("nC10", 1.00);
-        testSystem.addComponent("water", 100.00);
-        testSystem.addComponent("Na+", 1.200);
-        testSystem.addComponent("OH-", 1.200);
-        //testSystem.addComponent("HCO3-", .100);
-        //     testSystem.addComponent("Piperazine", 0.1e-4);
+        testSystem.addComponent("water", 11.00, "kg/sec");
+     //   testSystem.addComponent("Na+", 1.200);
+      //  testSystem.addComponent("OH-", 1.200);
+      //  testSystem.addComponent("MDEA", 1.100, "mol/sec");
+   //    testSystem.addComponent("HCO3-", 0.100, "mol/sec");
+        //testSystem.addComponent("Piperazine", 0.1e-4);
 
         testSystem.chemicalReactionInit();
         //   testSystem.useVolumeCorrection(true);
@@ -66,6 +67,7 @@ public class ReactiveTPflash {
         } catch (Exception e) {
         }
         testSystem.display();
+        System.out.println("pH " + testSystem.getPhase(1).getpH());
         logger.info("pH " + testSystem.getPhase(1).getpH());
         logger.info("activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
 //        

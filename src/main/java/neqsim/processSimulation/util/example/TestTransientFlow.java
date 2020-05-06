@@ -111,7 +111,11 @@ public class TestTransientFlow {
         
         operations.run();
         operations.displayResult();
+        operations.setTimeStep(0.001);
+        operations.runTransient();
+        operations.runTransient();
         
+        /*
         // transient behaviour
          operations.setTimeStep(1.1);
         for(int i=0;i<50;i++){
@@ -127,7 +131,7 @@ public class TestTransientFlow {
          operations.displayResult();
 
           operations.displayResult();
-        
+        */
         
     }
 }

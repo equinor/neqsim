@@ -26,17 +26,21 @@ public class process1 {
 
         neqsim.processSimulation.processEquipment.compressor.Compressor compr = new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
         compr.setOutletPressure(80.0);
-        compr.setPolytropicEfficiency(0.9);
-        compr.setIsentropicEfficiency(0.9);
+        compr.setOutTemperature(345.0);
         compr.setUsePolytropicCalc(true);
-
+        //compr.setNumberOfCompresorCalcSteps(10);
+        
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(compr);
 
 
         operations.run();
-        operations.displayResult();
+        compr.displayResult();
+        System.out.println("polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
+        System.out.println("polytropic efficiency " + compr.getPolytropicEfficiency());
+        
+       // operations.displayResult();
 
      //   compr.solvePolytropicEfficiency(compr.getOutStream().getTemperature() + 0.01);
      //   operations.displayResult();

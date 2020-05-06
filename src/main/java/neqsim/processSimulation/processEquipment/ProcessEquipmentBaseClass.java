@@ -26,6 +26,7 @@ package neqsim.processSimulation.processEquipment;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  *
@@ -58,11 +59,20 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public void run() {
     }
 
-    ;
+ 
     public void runTransient(double dt) {
         run();
     }
 
+    public SystemInterface getThermoSystem() {
+        return null;
+    }
+    
+    public SystemInterface getFluid() {
+        return getThermoSystem();
+    }
+    
+    
     ;
     public void displayResult() {
     }

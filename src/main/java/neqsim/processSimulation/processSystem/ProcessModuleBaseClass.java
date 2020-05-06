@@ -26,6 +26,7 @@ package neqsim.processSimulation.processSystem;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  *
@@ -114,5 +115,14 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     //this method needs to be updated...need to chec if all equipment are solved correctly
     public boolean solved() {
     	return true;
+    }
+    
+
+    public SystemInterface getThermoSystem() {
+        return null;
+    }
+    
+    public SystemInterface getFluid() {
+        return getThermoSystem();
     }
 }

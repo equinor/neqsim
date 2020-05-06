@@ -519,7 +519,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 	public SystemInterface phaseToSystem(int phaseNumber) {
 		SystemInterface newSystem = (SystemInterface) this.clone();
-		
+
 		for (int j = 0; j < getMaxNumberOfPhases(); j++) {
 			for (int i = 0; i < getPhase(j).getNumberOfComponents(); i++) {
 				newSystem.getPhase(j).getComponent(i)
@@ -569,10 +569,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		if (getMolarMass() < 1e-20) {
 			init(0);
 		}
-		if(flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("Am3/sec")) {
+		if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("Am3/sec")) {
 			initPhysicalProperties("density");
 		}
-		neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), getDensity("kg/m3"), 0);
+		neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(),
+				getDensity("kg/m3"), 0);
 		double SIval = unit.getSIvalue();
 		double totalNumberOfMolesLocal = totalNumberOfMoles;
 		for (int i = 0; i < numberOfComponents; i++) {
@@ -610,14 +611,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		} else if (flowunit.equals("kg/hr")) {
 			return totalNumberOfMoles * getMolarMass() * 3600.0;
 		} else if (flowunit.equals("m3/hr")) {
-			//return getVolume() / 1.0e5 * 3600.0;
-			return totalNumberOfMoles * getMolarMass() * 3600.0/getDensity("kg/m3");
+			// return getVolume() / 1.0e5 * 3600.0;
+			return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
 		} else if (flowunit.equals("m3/min")) {
-			return totalNumberOfMoles * getMolarMass() * 60.0/getDensity("kg/m3");
-			//return getVolume() / 1.0e5 * 60.0;
+			return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
+			// return getVolume() / 1.0e5 * 60.0;
 		} else if (flowunit.equals("m3/sec")) {
-			return totalNumberOfMoles * getMolarMass()/getDensity("kg/m3");
-			//return getVolume() / 1.0e5;
+			return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
+			// return getVolume() / 1.0e5;
 		} else if (flowunit.equals("mole/sec")) {
 			return totalNumberOfMoles;
 		} else if (flowunit.equals("mole/min")) {
@@ -1966,12 +1967,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return gibbsEnergy;
 	}
-	
+
 	/**
 	 * method to return exergy in a given unit
+	 * 
 	 * @param temperatureOfSurroundings in Kelvin
-	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
-	 *             kJ/kg
+	 * @param unit                      The unit as a string. Supported units are J,
+	 *                                  J/mol, J/kg and kJ/kg
 	 * @return exergy in specified unit
 	 */
 	public double getExergy(double temperatureOfSurroundings, String exergyUnit) {
@@ -1993,17 +1995,16 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return refExergy * conversionFactor;
 	}
-	
+
 	/**
 	 * method to return exergy defined as (h1-T0*s1) in a unit Joule
+	 * 
 	 * @param temperatureOfSurroundings in Kelvin
 	 */
 	public double getExergy(double temperatureOfSurroundings) {
-		double getExergy = getEnthalpy()-temperatureOfSurroundings*getEntropy();
+		double getExergy = getEnthalpy() - temperatureOfSurroundings * getEntropy();
 		return getExergy;
 	}
-	
-	
 
 	/**
 	 * method to return enthalpy in a unit Joule
@@ -2317,11 +2318,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 		return tempVar;
 	}
-	
+
 	/**
 	 * method to get molar mass of a fluid phase
+	 * 
 	 * @param unit The unit as a string. Supported units are kg/mol, gr/mol
-	 * @return molar mass in given unit 
+	 * @return molar mass in given unit
 	 */
 	public double getMolarMass(String unit) {
 		double refMolarMass = getMolarMass();
@@ -3052,12 +3054,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		JTable Jtab = new JTable(table, names);
 		JScrollPane scrollpane = new JScrollPane(Jtab);
 		dialogContentPane.add(scrollpane);
-		
-		//  setting the size of the frame and text size
-		dialog.setSize(screenDimension.width/2, screenDimension.height/2); // pack();
-		Jtab.setRowHeight(dialog.getHeight()/table.length);
-		Jtab.setFont(new Font("Serif", Font.PLAIN, dialog.getHeight()/table.length-dialog.getHeight()/table.length/10));
-		
+
+		// setting the size of the frame and text size
+		dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
+		Jtab.setRowHeight(dialog.getHeight() / table.length);
+		Jtab.setFont(new Font("Serif", Font.PLAIN,
+				dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
+
 		// dialog.pack();
 		dialog.setVisible(true);
 	}
@@ -4055,6 +4058,20 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		}
 	}
 
+	public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
+			String toPhaseName) {
+		if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-25)) {
+			return;
+		}
+		int phaseNumbFrom = getPhaseNumberOfPhase(fromPhaseName);
+		int phaseNumbTo = getPhaseNumberOfPhase(toPhaseName);
+		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+			double change = getPhase(phaseNumbFrom).getComponent(i).getNumberOfMolesInPhase() * fraction;
+			addComponent(i, change, phaseNumbTo);
+			addComponent(i, -change, phaseNumbFrom);
+		}
+	}
+
 	public void addGasToLiquid(double fraction) {
 		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
 			double change = getPhase(0).getComponent(i).getNumberOfMolesInPhase() * fraction;
@@ -4256,13 +4273,15 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			init(0, i);
 		}
 	}
-	
+
 	/**
-	 * This method is used to set the total molar composition of a plus fluid. The total
-	 * flow rate will be kept constant. The input mole fractions will be normalized.
+	 * This method is used to set the total molar composition of a plus fluid. The
+	 * total flow rate will be kept constant. The input mole fractions will be
+	 * normalized.
 	 *
 	 * @param molefractions is a double array taking the molar fraction of the
-	 *                      components in the fluid. THe last molfraction is the mole fraction of the plus component
+	 *                      components in the fluid. THe last molfraction is the
+	 *                      mole fraction of the plus component
 	 * @return Nothing.
 	 */
 	public void setMolarCompositionPlus(double[] molefractions) {
@@ -4277,12 +4296,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			sum += value;
 		}
 		setEmptyFluid();
-		for (int compNumb = 0; compNumb < numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
+		for (int compNumb = 0; compNumb < numberOfComponents
+				- getCharacterization().getLumpingModel().getNumberOfLumpedComponents(); compNumb++) {
 			addComponent(compNumb, totalFlow * molefractions[compNumb] / sum);
 		}
-		int ii=0;
-		for(int compNumb=numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents();compNumb<numberOfComponents;compNumb++) {
-			addComponent(compNumb, totalFlow * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)*molefractions[numberOfComponents-getCharacterization().getLumpingModel().getNumberOfLumpedComponents()] / sum);
+		int ii = 0;
+		for (int compNumb = numberOfComponents - getCharacterization().getLumpingModel()
+				.getNumberOfLumpedComponents(); compNumb < numberOfComponents; compNumb++) {
+			addComponent(compNumb,
+					totalFlow * getCharacterization().getLumpingModel().getFractionOfHeavyEnd(ii++)
+							* molefractions[numberOfComponents
+									- getCharacterization().getLumpingModel().getNumberOfLumpedComponents()]
+							/ sum);
 		}
 		for (int i = 0; i < getNumberOfPhases(); i++) {
 			init(0, i);
@@ -4540,6 +4565,21 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	 */
 	public double getVolumeFraction(int phaseNumber) {
 		return getPhase(phaseNumber).getVolume() / getVolume();
+	}
+
+	public final double getPhaseFraction(String phaseTypeName, String unit) {
+		int phaseNumber = getPhaseNumberOfPhase(phaseTypeName);
+		switch (unit) {
+		case "mole":
+			return getBeta(phaseNumber);
+		case "volume":
+			return getVolumeFraction(phaseNumber);
+		case "mass":
+			initPhysicalProperties("density");
+			return getPhase(phaseNumber).getVolume() * getPhase(phaseNumber).getDensity() / getDensity();
+		default:
+			return getBeta(phaseNumber);
+		}
 	}
 
 	/**

@@ -29,7 +29,7 @@ public class TPflash1 {
     public static void main(String[] args) {
 
         // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 1.8);//
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 5.0, 1.8);//
         testSystem.addComponent("nitrogen", 1.681146444);
         testSystem.addComponent("CO2", 2.185242497);
         testSystem.addComponent("methane", 78.0590685);
@@ -41,8 +41,8 @@ public class TPflash1 {
         testSystem.addComponent("n-pentane", 1.446888586);
         testSystem.addComponent("n-hexane", 1.446888586);
         testSystem.addComponent("nC10", 1.446888586);
-        testSystem.addComponent("water", 10.35509484);
-        testSystem.addComponent("MEG", 0.000083156844);
+      //  testSystem.addComponent("water", 10.35509484);
+       testSystem.addComponent("MEG", 10.000083156844);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);

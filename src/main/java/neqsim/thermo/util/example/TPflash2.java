@@ -27,16 +27,13 @@ public class TPflash2 {
 
 	public static void main(String[] args) {
 
-		SystemInterface testSystem = new SystemSrkEos(273.15 + 36.0, 120.0);//
-		testSystem.addComponent("methane", 82.71604938);
-		testSystem.addComponent("ethane", 6.172839506);
-		testSystem.addComponent("propane", 4.938271605);
-		testSystem.addComponent("i-butane", 3.703703704);
-		testSystem.addComponent("n-butane", 1.234567901);
-		testSystem.addComponent("n-hexane", 1.234567901);
+		SystemInterface testSystem = new SystemSrkCPAstatoil(273.15+80.0, 1.01325);//
+		testSystem.addComponent("nitrogen", 8.71604938);
+		//testSystem.addComponent("oxygen", 22.71604938);
+		testSystem.addComponent("water", 	110.234567901);
 		testSystem.createDatabase(true);
-		testSystem.setMixingRule(2);
-	 //   testSystem.setMultiPhaseCheck(true);
+		testSystem.setMixingRule(10);
+	//    testSystem.setMultiPhaseCheck(true);
 
 		ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 

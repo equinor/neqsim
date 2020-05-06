@@ -21,6 +21,12 @@ public interface PhaseInterface extends Cloneable {
     
     public double getPhaseFraction();
     
+	/**
+	 * @param unit The unit as a string - molefraction/wtfraction/molespersec/volumefraction
+	 *  @return composition array with unit 
+	 */
+	public double[] getComposition(String unit);
+	
     public double getCp0();
     
     /**
