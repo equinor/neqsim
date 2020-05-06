@@ -113,6 +113,7 @@ public class TEGAbsorberTest{
         
         
         operations.run();
-        operations.displayResult();
+        mix.displayResult();
+      //  operations.displayResult();
     }
 }

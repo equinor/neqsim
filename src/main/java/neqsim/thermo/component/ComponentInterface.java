@@ -29,6 +29,10 @@ public interface ComponentInterface {
 
     public String getCASnumber();
 
+    public double getPureComponentCpLiquid(double temperature);
+    
+    public double getPureComponentCpSolid(double temperature);
+    
     public double getdrhodN();
 
     public double getVolumeCorrectionT_CPA();

@@ -27,11 +27,11 @@ public class BubbleFlash {
     }
     
     public static void main(String args[]){
-        //SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 1.0);
-        SystemInterface testSystem = new SystemSrkEos(288, 26.9);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 +25.0, 1.0);
+     //   SystemInterface testSystem = new SystemSrkEos(288, 26.9);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         
-        testSystem.addComponent("i-butane", 0.05175);
+        testSystem.addComponent("PG", 0.05175);
      //   testSystem.addComponent("n-butane", 0.5175);
        // testSystem.addComponent("TEG", 0.0000000225);
        
@@ -40,11 +40,12 @@ public class BubbleFlash {
         testSystem.createDatabase(true);
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
-        testSystem.setMixingRule(2);
+        testSystem.setMixingRule(10);
         //testSystem.setMixingRule("HV", "UNIFAC_PSRK");
         try{
            // testOps.dewPointPressureFlash();
-            testOps.bubblePointTemperatureFlash();
+          //  testOps.bubblePointTemperatureFlash();
+            testOps.TPflash(); 
            // testSystem.display();
          //   testOps.constantPhaseFractionPressureFlash(1.0);
              testSystem.display();

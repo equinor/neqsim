@@ -46,9 +46,9 @@ public class TVflash {
         SystemInterface testSystem = new SystemSrkEos(273.15+55,50.0);
         
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("methane", 31.0);
-        testSystem.addComponent("ethane", 4.0);
-        testSystem.addComponent("n-heptane", 0.2);
+        testSystem.addComponent("methane", 11.0);
+      //  testSystem.addComponent("ethane", 4.0);
+        testSystem.addComponent("n-heptane", 210.2);
 //        testSystem.addComponent("water", 10.5);
         
         //testSystem.addComponent("water", 1.0);
@@ -61,7 +61,7 @@ public class TVflash {
         try{
             testOps.TPflash();
             testSystem.display();
-            testSystem.setTemperature(273.15+20);
+            testSystem.setTemperature(273.15+55.1);
             testOps.TVflash(testSystem.getVolume());
              testSystem.display();
             // testOps.PVrefluxFlash(0.05, 1);
