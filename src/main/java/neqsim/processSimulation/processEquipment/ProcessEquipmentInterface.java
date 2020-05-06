@@ -23,6 +23,7 @@ package neqsim.processSimulation.processEquipment;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  *
@@ -52,4 +53,8 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
     public ControllerDeviceInterface getController();
     
     public boolean solved();
+    
+    public SystemInterface getThermoSystem();
+    
+    public SystemInterface getFluid();
 }

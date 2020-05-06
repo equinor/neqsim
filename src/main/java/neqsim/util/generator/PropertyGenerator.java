@@ -1,9 +1,15 @@
 package neqsim.util.generator;
 
 import java.util.HashMap;
+//import org.apache.spark.sql.Dataset;
+//import org.apache.spark.sql.Row;
+
+
+
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+//import org.apache.spark.sql.SparkSession;
 
 public class PropertyGenerator {
 
@@ -308,7 +314,20 @@ public class PropertyGenerator {
 		
 		return properties;
 	}
-
+	
+	/*
+	public void test(Dataset<Row> teenagersDF){
+		SparkSession spark = SparkSession
+				  .builder()
+				  .appName("Java Spark SQL basic example")
+				  .config("spark.some.config.option", "some-value")
+				  .getOrCreate();
+	//	Dataset<Row> df = spark.read().json("examples/src/main/resources/people.json");
+		Dataset<Row> df = teenagersDF;
+		// Displays the content of the DataFrame to stdout
+		df.show();
+	}
+*/
 	public double getValue(String propertyName) {
 		return 0.0;
 	}

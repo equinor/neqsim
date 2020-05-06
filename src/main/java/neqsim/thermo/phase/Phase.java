@@ -262,6 +262,21 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
 		}
 		return comp;
 	}
+	
+	/**
+	 * Returns the composition vector in unit molefraction/wtfraction/molespersec/volumefraction
+	 */
+	public double[] getComposition(String unit) {
+		double[] comp = new double[getNumberOfComponents()];
+
+		for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+			if(unit.equals("molefraction")) comp[compNumb] = getComponent(compNumb).getx();
+			if(unit.equals("wtfraction")) comp[compNumb] = getWtFrac(compNumb);
+			if(unit.equals("molespersec")) comp[compNumb] = getWtFrac(compNumb);
+			if(unit.equals("volumefraction")) comp[compNumb] = getComponent(compNumb).getVoli()/getVolume();
+		}
+		return comp;
+	}
 
     public double getMixGibbsEnergy() {
         double gmix = 0.0;

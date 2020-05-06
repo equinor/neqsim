@@ -904,6 +904,15 @@ public interface SystemInterface extends Cloneable {
     public boolean allowPhaseShift();
 
     public void allowPhaseShift(boolean allowPhaseShift);
+    
+    /**
+     * method to return phase fraction of selected phase
+     *
+     * @param phaseTypeName: gas/oil/aqueous
+     * @param unit: mole/volume/weight
+     * @return phase: fraction in given unit
+     */
+    public double getPhaseFraction(String phaseTypeName, String unit);
 
     public void setPhaseType(String phases, int newPhaseType);
 

@@ -1161,4 +1161,23 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
 		resultTable = getOperation().getResultTable();
 
 	}
+	
+	public void flash(String flashType, double spec1, double spec2, String unitSpec1, String unitSpec2) {
+		if(flashType.equals("TP")){
+			system.setTemperature(spec1, unitSpec1);	
+			system.setPressure(spec2, unitSpec2);	
+		}
+		else if(flashType.equals("TV")){
+			system.setTemperature(spec1, unitSpec1);	
+			TVflash(spec2, unitSpec2);
+		}
+		else if(flashType.equals("PH")){
+			system.setPressure(spec1, unitSpec1);	
+			PHflash(spec2, unitSpec2);
+		}
+		else if(flashType.equals("TS")){
+				system.setTemperature(spec1, unitSpec1);	
+			TSflash(spec2, unitSpec2);
+		}
+	}
 }

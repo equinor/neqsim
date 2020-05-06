@@ -48,7 +48,7 @@ public class TVflash extends Flash implements java.io.Serializable {
     public double calcdQdVV(){
         double dQdVV=0.0;
         for(int i=0; i<system.getNumberOfPhases();i++){
-            dQdVV += 1.0/system.getPhase(i).getdPdVTn();//*system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
+            dQdVV += 1.0/(system.getPhase(i).getVolume()/system.getVolume())*1.0/system.getPhase(i).getdPdVTn();//*system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
         }
         return dQdVV;
     }
@@ -66,11 +66,14 @@ public class TVflash extends Flash implements java.io.Serializable {
             oldPres = nyPres;
             system.init(3);
             nyPres = oldPres - (iterations)/(iterations+10.0)*calcdQdV()/calcdQdVV();
-            //System.out.println("volume: " + system.getVolume());
+            if(nyPres<=0.0 || Math.abs(oldPres-nyPres)>10.0) {
+            	nyPres = Math.abs(oldPres - 1.0);
+            }
             system.setPressure(nyPres);
             tpFlash.run();
+            //System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + " error " + Math.abs((nyPres-oldPres)/(nyPres)) + " numberofphases"+system.getNumberOfPhases());    
         }
-        while(Math.abs((nyPres-oldPres)/(nyPres))>1e-9 && iterations<1000);
+        while(Math.abs((nyPres-oldPres)/(nyPres))>1e-9 && iterations<1000 || iterations<3);
         return nyPres;
     }
     
