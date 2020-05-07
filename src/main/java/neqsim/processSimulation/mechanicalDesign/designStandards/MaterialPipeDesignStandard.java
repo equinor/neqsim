@@ -91,7 +91,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         grade = grade;
         specificationNumber = specNo;
 
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
