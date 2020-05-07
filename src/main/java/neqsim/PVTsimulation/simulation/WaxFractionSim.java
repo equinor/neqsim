@@ -10,6 +10,7 @@ import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
@@ -110,15 +111,21 @@ public class WaxFractionSim extends BasePVTsimulation {
             if (getThermoSystem().hasPhaseType("wax")) {
                 waxFraction[i] = getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
             }
+            //System.out.println("wax fraction " + waxFraction[i]);
         }
     }
 
     public static void main(String[] args) {
+    	
+     	NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+    	NeqSimDataBase.setCreateTemporaryTables(true);
+    	
+    	
         SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
         tempSystem.addComponent("methane", 6.78);
 
         tempSystem.addTBPfraction("C19", 10.13, 170.0 / 1000.0, 0.7814);
-        tempSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.80871882888);
+        tempSystem.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.850871882888);
 
         tempSystem.getCharacterization().characterisePlusFraction();
         tempSystem.getWaxModel().addTBPWax();
@@ -126,7 +133,7 @@ public class WaxFractionSim extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
         tempSystem.addSolidComplexPhase("wax");
         tempSystem.setMultiphaseWaxCheck(true);
-        // tempSystem.setMultiPhaseCheck(true);
+        tempSystem.setMultiPhaseCheck(true);
         tempSystem.init(0);
         tempSystem.init(1);
 
@@ -135,13 +142,13 @@ public class WaxFractionSim extends BasePVTsimulation {
         double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
         sepSim.setTemperaturesAndPressures(temps, pres);
 
-        //   sepSim.runCalc();
-        //   sepSim.getThermoSystem().display();
+           sepSim.runCalc();
+           sepSim.getThermoSystem().display();
         double[][] expData = {{4, 7, 9, 10, 11, 12, 13}};
         sepSim.setExperimentalData(expData);
         //String[] params = {"Mplus", "waxParam1", "waxParam2"};
         // sepSim.getOptimizer().setTuningParameters("")
-        sepSim.getOptimizer().setNumberOfTuningParameters(5);
+        sepSim.getOptimizer().setNumberOfTuningParameters(3);
         sepSim.getOptimizer().setMaxNumberOfIterations(20);
         sepSim.runTuning();
         sepSim.runCalc();
