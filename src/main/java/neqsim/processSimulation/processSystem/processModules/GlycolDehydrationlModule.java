@@ -24,10 +24,12 @@
  */
 package neqsim.processSimulation.processSystem.processModules;
 
+import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
 import neqsim.processSimulation.processEquipment.distillation.Reboiler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
+import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -45,17 +47,21 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     protected StreamInterface gasStreamToAbsorber = null, gasStreamFromAbsorber = null, gasFromStripper = null, leanTEGStreamToAbsorber = null;
     protected SimpleTEGAbsorber absorbtionColumn = null;
-    protected DistillationColumn stripperColumn = null;
+   // protected DistillationColumn stripperColumn = null;
+    protected Separator stripperColumn = null;
+    Heater reboiler = null;
     protected Pump HPpump = null;
     protected Separator glycolFlashDrum = null, waterSeparator = null;
     protected ThrottlingValve valveHP = null, valveMP = null;
     Cooler heatExchanger1 = null, heatExchanger2 = null, heatExchanger3 = null;
     double waterDewPontSpecification = 273.15 - 10.0;
     double numberOfTheoreticalEquilibriumStages = 2;
+	private double flashPressure = 5.0;
     double designStandardGasFlowRate = 20.0, maxAbsorberDesignPressure = 70.0;
     double designGasFeedTemperature = 273.15 + 30.0;
     double leanGlycolMolarFraction = 0.95, leanGlycolwtFraction = 0.99, leanGlycolMolarFlowRate = 1.0, maxglycolFlowRate = 1;
     String glycolTypeName = "TEG";
+    double reboilerTemperature = 273.15+204.0, regenerationPressure=1.4;
 
     /**
      * Creates a new instance of SnohvitCO2RemovalModule
@@ -75,7 +81,17 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         }
         if (streamName.equals("gasStreamFromAbsorber")) {
             return this.gasStreamFromAbsorber;
-        } else {
+        }
+        if (streamName.equals("liquidFromStripper")) {
+            return this.stripperColumn.getLiquidOutStream();
+        }
+        if (streamName.equals("liquidFromStripper")) {
+            return this.stripperColumn.getLiquidOutStream();
+        }
+        if (streamName.equals("condenserStripper")) {
+            return this.stripperColumn.getGasOutStream();
+        }
+        else {
             return null;
         }
     }
@@ -146,17 +162,26 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         absorbtionColumn.addSolventInStream(leanTEGStreamToAbsorber);
 
         valveHP = new ThrottlingValve(absorbtionColumn.getLiquidOutStream());
-        valveHP.setOutletPressure(7.0);
+        valveHP.setOutletPressure(flashPressure);
 
-        glycolFlashDrum = new Separator(valveHP.getOutStream());
+        glycolFlashDrum = new Separator("flash drum", valveHP.getOutStream());
 
         valveMP = new ThrottlingValve(glycolFlashDrum.getLiquidOutStream());
-        valveMP.setOutletPressure(1.01325);
+        valveMP.setOutletPressure(regenerationPressure);
 
+        /*
         stripperColumn = new DistillationColumn(5, true, false);
         stripperColumn.addFeedStream(valveMP.getOutStream(), 3);
         stripperColumn.setCondenserTemperature(273.15 + 80.0);
         ((Reboiler) stripperColumn.getReboiler()).setRefluxRatio(11.7);
+        
+        */
+        
+        Heater reboiler = new Heater(valveMP.getOutStream());
+        reboiler.setName("reboiler");
+        reboiler.setOutTemperature(reboilerTemperature);
+        
+        stripperColumn = new Separator(reboiler.getOutStream());
 
         heatExchanger1 = new Cooler(stripperColumn.getLiquidOutStream());
         heatExchanger1.setOutTemperature(100.0);
@@ -170,7 +195,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         heatExchanger3 = new Cooler(stripperColumn.getGasOutStream());
         heatExchanger3.setOutTemperature(273.15 + 30.0);
 
-        waterSeparator = new Separator(heatExchanger3.getOutStream());
+        waterSeparator = new Separator("watersep", heatExchanger3.getOutStream());
 
         //leanTEGStreamToAbsorber = heatExchanger2.getOutStream();
         //  getOperations().add(gasStreamToAbsorber);
@@ -180,6 +205,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         getOperations().add(valveHP);
         getOperations().add(glycolFlashDrum);
         getOperations().add(valveMP);
+        getOperations().add(reboiler);
         getOperations().add(stripperColumn);
 
         getOperations().add(heatExchanger1);
@@ -214,6 +240,16 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         if (specificationName.equals("maxglycolFlowRate")) {
             maxglycolFlowRate = value;
         }
+        if (specificationName.equals("flashPressure")) {
+            flashPressure = value;
+        }
+        if (specificationName.equals("reboilerTemperature")) {
+        	reboilerTemperature = value;
+        }
+        if (specificationName.equals("regenerationPressure")) {
+        	regenerationPressure = value;
+        }
+        
     }
 
     public double calcGlycolConcentration(double y0) {
@@ -327,6 +363,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         testSystem.addComponent("TEG", 1.0e-19);
 
         testSystem.createDatabase(true);
+        testSystem.setMultiPhaseCheck(true);
         testSystem.setMixingRule(10);
         testSystem.setTotalFlowRate(5, "MSm^3/day");
 
@@ -341,9 +378,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         TEGplant.setSpecification("designStandardGasFlowRate", 5.0e6);
         TEGplant.setSpecification("maxglycolFlowRate", 10.0);
         TEGplant.setSpecification("designGasFeedTemperature", 273.15 + 30);
-        TEGplant.setSpecification("flashPressure", 7.0);
-        TEGplant.setSpecification("regenerationPressure", 1.01325);
-        TEGplant.setSpecification("regenerationTemperature", 273.15 + 205.0);
+        TEGplant.setSpecification("flashPressure", 3.0);
+        TEGplant.setSpecification("regenerationPressure", 1.21325);
+        TEGplant.setSpecification("reboilerTemperature", 273.15 + 205.0);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(gasinletStream);
@@ -351,11 +388,30 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         operations.add(TEGplant);
 
         operations.run();
-
+        ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
         // separator.getGasOutStream().displayResult();
-        TEGplant.displayResult();
+       // TEGplant.displayResult();
         // TEGplant.calcDesign();
         //TEGplant.setDesign();
-        //TEGplant.getOutputStream("gasStreamFromAbsorber").displayResult();
+        TEGplant.getOutputStream("gasStreamFromAbsorber").displayResult();
+
+        TEGplant.getOutputStream("liquidFromStripper").run();
+        TEGplant.getOutputStream("liquidFromStripper").displayResult();
+        System.out.println("wt TEG " + TEGplant.getOutputStream("liquidFromStripper").getFluid().getPhase(0).getWtFrac("TEG"));
+
+        ((Separator) operations.getUnit("flash drum")).displayResult();
+        ((Separator) operations.getUnit("watersep")).displayResult();
+        ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
+        ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).displayResult();
+       // TEGplant.getOutputStream("condenserStripper").displayResult();
+        
     }
+
+	public double getFlashPressure() {
+		return flashPressure;
+	}
+
+	public void setFlashPressure(double flashPressure) {
+		this.flashPressure = flashPressure;
+	}
 }

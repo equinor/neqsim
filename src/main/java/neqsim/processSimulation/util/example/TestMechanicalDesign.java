@@ -36,10 +36,11 @@ public class TestMechanicalDesign {
          */
 
         Separator sep = new Separator(stream_1);
-        sep.addSeparatorSection("tray", "");
+        //sep.addSeparatorSection("tray", "");
         //sep.getMechanicalDesign().getMaterialDesignStandard().readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
         // sep.getMechanicalDesign().getJointEfficiencyStandard().readJointEfficiencyStandard("Double Welded", "Fully Redipgraphed");
         sep.getMechanicalDesign().setMaxOperationPressure(150.0);
+        sep.addSeparatorSection("top mesh", "meshpad");
 
         /*
         sep.setInternalDiameter(3.750);
