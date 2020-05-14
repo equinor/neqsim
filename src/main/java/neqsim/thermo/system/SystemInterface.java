@@ -3,6 +3,7 @@ package neqsim.thermo.system;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /*
@@ -757,6 +758,10 @@ public interface SystemInterface extends Cloneable {
     public double getInternalEnergy();
 
     public double getHelmholtzEnergy();
+    
+    public ComponentInterface getComponent(String name);
+    
+	public ComponentInterface getComponent(int number);
 
     public double getNumberOfMoles();
 

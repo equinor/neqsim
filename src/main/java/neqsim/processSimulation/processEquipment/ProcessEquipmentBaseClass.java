@@ -24,6 +24,8 @@
  */
 package neqsim.processSimulation.processEquipment;
 
+import java.util.HashMap;
+
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
@@ -43,6 +45,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public MechanicalDesign mechanicalDesign = new MechanicalDesign(this);
     public String specification = "TP";
     public String[][] report = new String[0][0];
+    public HashMap<String, String> properties = new HashMap<String, String>();
 
     /**
      * Creates a new instance of ProcessEquipmentBaseClass
@@ -84,6 +87,13 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 
     public void setName(String name) {
         this.name = name;
+    }
+    
+    public Object getProperty(String propertyName) {
+    	//if(properties.containsKey(propertyName)) {
+    	//return properties.get(properties).getValue();
+    	//}
+     return null;
     }
 
     public void setRegulatorOutSignal(double signal) {

@@ -4006,6 +4006,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public int getMixingRule() {
 		return mixingRule;
 	}
+	
+	public ComponentInterface getComponent(String name) {
+		return getPhase(0).getComponent(name);
+	}
+	
+	public ComponentInterface getComponent(int number) {
+		return getPhase(0).getComponent(number);
+	}
 
 	public void orderByDensity() {
 		boolean change = false;

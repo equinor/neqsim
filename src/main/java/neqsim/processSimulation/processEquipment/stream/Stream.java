@@ -285,4 +285,15 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public String[][] reportResults() {
         return thermoSystem.getResultTable();
     }
+    
+    public Object getProperty(String propertyName, String unit, String phase, String component) {
+    //	getFluid().getProperties.containsKey(propertyName)) {
+    //	if(properties.containsKey(propertyName)) {
+    		
+    		
+   // 	}
+   // 	else 
+    		return null;
+    }
+
 }
