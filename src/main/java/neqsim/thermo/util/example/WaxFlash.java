@@ -14,7 +14,7 @@ public class WaxFlash {
 
     public static void main(String args[]) {
     	
-    	NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+    	NeqSimDataBase.setConnectionString("jdbc:derby:/workspace/neqsim/src/main/resources/data/neqsimthermodatabase");
     	NeqSimDataBase.setCreateTemporaryTables(true);
     	
     	
@@ -50,7 +50,7 @@ public class WaxFlash {
 
             testOps.calcWAT();
          //   testOps.TPflash();
-            testSystem.display();
+            //testSystem.display();
          
         } catch (Exception e) {
             logger.error("error", e);
@@ -60,6 +60,6 @@ public class WaxFlash {
             waxVOlumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndexOfPhase("wax"));
         }
         //    testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac, 1000.0);
-        //   System.out.println("viscosity wax-oil suspesion " + testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac, 1000.0));
+          System.out.println("viscosity wax-oil suspesion " + testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac, 1000.0));
     }
 }
