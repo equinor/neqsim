@@ -3722,7 +3722,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		pdfDocument.getDocument().open();
 		try {
 			pdfDocument.getDocument()
-					.add(new com.lowagie.text.Paragraph("Summary of caluclation for stream: " + getFluidName(),
+					.add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
 							com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
 
 			com.lowagie.text.List list = new com.lowagie.text.List(true, 20);
@@ -3757,6 +3757,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	public void displayPDF() {
+		generatePDF();
 		((neqsim.dataPresentation.iTextPDF.PdfCreator) pdfDocument).openPDF();
 	}
 

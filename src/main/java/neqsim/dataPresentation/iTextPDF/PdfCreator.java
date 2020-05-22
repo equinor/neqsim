@@ -5,8 +5,6 @@
  */
 
 package neqsim.dataPresentation.iTextPDF;
-import com.lowagie.text.*;
-import com.lowagie.text.pdf.*;
 /**
  *
  * @author  ESOL
@@ -17,25 +15,25 @@ public class PdfCreator {
     //Rectangle pageSize = new Rectangle(144, 720);
     //Document document = new Document(pageSize);
     //Document document = new Document(PageSize.A5, 36, 72, 108, 180);
-    Document document = new Document(com.lowagie.text.PageSize.A4);
+    com.lowagie.text.Document document = null;;
     String docName = "";
     /** Creates a new instance of pdfCreator */
     public PdfCreator() {
         try{
-            //document.getPageSize().setBackgroundColor(new java.awt.Color(0xFF, 0xFF, 0xDE));
-            docName = "c:/java/neqsim/work/neqsimResults.pdf";
+        	document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4);
+            docName = "c:/temp/neqsimResults.pdf";
             if(System.getProperty("NeqSim.home")!= null) {
                 docName = System.getProperty("NeqSim.home")+"/work/neqsimResults.pdf";
             }
             
-            PdfWriter.getInstance(document, new java.io.FileOutputStream(docName));
+            com.lowagie.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(docName));
         }
         catch(Exception e){
             e.printStackTrace();
         }
     }
     
-    public Document getDocument(){
+    public com.lowagie.text.Document getDocument(){
         return document;
     }
     
@@ -50,7 +48,6 @@ public class PdfCreator {
     
     public void openPDF(){
         try{
-            //java.lang.Process runtest = new 
             Runtime.getRuntime().exec("cmd.exe /C start acrord32 /h " + docName);
         }
         catch(Exception e){
