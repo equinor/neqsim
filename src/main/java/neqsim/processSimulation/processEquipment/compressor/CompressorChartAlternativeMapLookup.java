@@ -179,8 +179,28 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
 		return 100.0;
 	}
 
-	public double getSpeed(double flow, double head) {
-		return 1000.0;
+	public int getSpeed(double flow, double head) {
+		
+		int iter=1;
+		double error = 1.0, derrordspeed=1.0;
+		double  newspeed= referenceSpeed;
+		double newhead = 0.0;
+		double oldspeed = newspeed+1.0;
+		double oldhead = getPolytropicHead(flow, oldspeed);
+		double olderror = oldhead-head;
+		do{
+			iter++;
+			newhead = getPolytropicHead(flow, newspeed);
+			error = newhead - head;
+			derrordspeed = (error-olderror)/(newspeed-oldspeed);
+			newspeed -= error/derrordspeed;
+			//System.out.println("speed " + newspeed);
+		}
+		while(Math.abs(error)>1e-6 && iter<100);
+		
+	//	change speed to minimize
+	//	Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
+		return (int) Math.round(newspeed);
 	}
 
 	public boolean checkSurge1(double flow, double head) {
@@ -374,5 +394,7 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
 	        }
 	    }
 	}
+	
+
 
 }

@@ -195,4 +195,8 @@ public class ComponentSolid extends ComponentSrk {
 			logger.error("error occured", e);
 		}
 	}
+	
+	  public double getVolumeCorrection2() {
+		  return 0.0;
+	  }
 }
