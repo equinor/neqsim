@@ -1042,14 +1042,37 @@ abstract class Phase extends Object implements PhaseInterface, ThermodynamicCons
             refPhase[i].setTemperature(temperature);
             refPhase[i].setPressure(pressure);
             if (getComponent(i).getReferenceStateType().equals("solvent") || onlyPure) {
-                refPhase[i].addcomponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
+            	if(getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
+            		  refPhase[i].addcomponent("default", 10.0, 10.0, 0);
+            		  refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
+                      refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
+                      refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
+                      refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
+                      refPhase[i].getComponent(0).setComponentType("TBPfraction");
+                      refPhase[i].getComponent(0).setIsTBPfraction(true);
+            	}
+            	else {
+            		refPhase[i].addcomponent(getComponent(i).getComponentName(), 10.0, 10.0, 0);
+            	}
                 refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
                 refPhase[i].setPhaseType(this.getPhaseType());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(), 1.0);
+				
             } else {
                 //System.out.println("ref " + name);
+            	if(getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
+          		  refPhase[i].addcomponent("default", 10.0, 10.0, 0);
+          		  refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
+                  refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
+                  refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
+                  refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
+                  refPhase[i].getComponent(0).setComponentType("TBPfraction");
+                  refPhase[i].getComponent(0).setIsTBPfraction(true);
+          	}
+          	else {
                 refPhase[i].addcomponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
+          	}
                 refPhase[i].addcomponent(name, 10.0, 10.0, 1);
                 refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());

@@ -271,13 +271,14 @@ public class CompressorChart implements CompressorChartInterface {
 		System.out.println("speed " + comp1.getCompressorChart().getSpeed(stream_1.getThermoSystem().getFlowRate("m3/hr")+10.0, comp1.getPolytropicHead()));
 		System.out.println("pressure out "+ comp1.getOutletPressure());
 		System.out.println("temperature out "+ (comp1.getOutTemperature()-273.15)+ " C");
-		double temperatureOut = 353.0;
-		comp1.setOutletPressure(72.0);
+		double temperatureOut = 333.0;
+		comp1.setOutletPressure(71.0);
 		comp1.setOutTemperature(temperatureOut);
 		operations.run();
 		  double polytropicHead = comp1.getPolytropicHead();
 				  double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");
 						  double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate, polytropicHead);
+						  System.out.println("temperature out "+ (comp1.getOutTemperature()-273.15)+ " C");
 						  System.out.println("calculated speed "+ calcSpeed);
 						  System.out.println("power " + comp1.getPower());
 		
