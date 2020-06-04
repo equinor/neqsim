@@ -42,7 +42,8 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
     double E[];
     double Q = 0;
     int solidComponent = 0;
-
+boolean hasRemovedPhase = false;
+boolean secondTime = false;
     /** Creates new TPflash */
     public SolidFlash() {
     }
@@ -205,8 +206,26 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
 
             //calcSolidBeta();
             calcSolidBeta();
+            
+            if (!hasRemovedPhase) {
+                for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+                    if (Math.abs(system.getBeta(i))<1.01e-9) {
+                        system.removePhaseKeepTotalComposition(i);
+                        hasRemovedPhase = true;
+                    }
+                }
+            }
 
-
+            /*
+             * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
+             * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())<1e-6
+             * && !hasRemovedPhase) { system.removePhase(i+1);
+             * doStabilityAnalysis=false; hasRemovedPhase = true; } }
+             */
+            if (hasRemovedPhase  && !secondTime) {
+            	secondTime=true;
+                run();
+            }
             //system.init(1);
             //            calcE();
             //            setXY();

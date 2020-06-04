@@ -18,6 +18,8 @@ public class CompressorChart implements CompressorChartInterface {
 	private SurgeCurve surgeCurve = new SurgeCurve();
 	private StoneWallCurve stoneWallCurve = new StoneWallCurve();
 	boolean isSurge = false;
+	double maxSpeedCurve = 0;
+	double minSpeedCurve =1e10;
 	boolean isStoneWall = false;
 	double refMW;
     private String headUnit= "meter";
@@ -46,9 +48,11 @@ public class CompressorChart implements CompressorChartInterface {
 
 	public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
 			double[][] polyEff) {
-		referenceSpeed = speed[0];
+		
 
 		for (int i = 0; i < speed.length; i++) {
+			if(speed[i]>maxSpeedCurve) maxSpeedCurve=speed[i];
+			if(speed[i]<minSpeedCurve) minSpeedCurve=speed[i];
 			CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
 			chartValues.add(curve);
 			for (int j = 0; j < flow[i].length; j++) {
@@ -58,6 +62,9 @@ public class CompressorChart implements CompressorChartInterface {
 				fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
 			}
 		}
+		
+		referenceSpeed = (maxSpeedCurve+minSpeedCurve)/2.0;
+		
 		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
 
 		reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
@@ -85,6 +92,32 @@ public class CompressorChart implements CompressorChartInterface {
 		// return reducedPolytropicEfficiencyFunc.value(reducedHeadFitterFunc*flow /
 		// speed);
 	}
+	
+	
+	
+	public int getSpeed(double flow, double head) {
+		
+		int iter=1;
+		double error = 1.0, derrordspeed=1.0;
+		double  newspeed= referenceSpeed;
+		double newhead = 0.0;
+		double oldspeed = newspeed+1.0;
+		double oldhead = getPolytropicHead(flow, oldspeed);
+		double olderror = oldhead-head;
+		do{
+			iter++;
+			newhead = getPolytropicHead(flow, newspeed);
+			error = newhead - head;
+			derrordspeed = (error-olderror)/(newspeed-oldspeed);
+			newspeed -= error/derrordspeed;
+			//System.out.println("speed " + newspeed);
+		}
+		while(Math.abs(error)>1e-6 && iter<100);
+		
+	//	change speed to minimize
+	//	Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
+		return (int) Math.round(newspeed);
+	}
 
 	public void addSurgeCurve(double[] flow, double[] head) {
 		surgeCurve = new SurgeCurve(flow, head);
@@ -97,10 +130,6 @@ public class CompressorChart implements CompressorChartInterface {
 
 	public double polytropicEfficiency(double flow, double speed) {
 		return 100.0;
-	}
-
-	public double getSpeed(double flow, double head) {
-		return 1000.0;
 	}
 
 	public boolean checkSurge1(double flow, double head) {
@@ -231,14 +260,32 @@ public class CompressorChart implements CompressorChartInterface {
 		operations.add(stream_1);
 		operations.add(comp1);
 		operations.run();
-		operations.displayResult();
+		//operations.displayResult();
 
 		System.out.println("power " + comp1.getPower());
 		System.out.println("fraction in anti surge line " + comp1.getAntiSurge().getCurrentSurgeFraction());
 		System.out.println("Polytropic head from curve:" + comp1.getPolytropicHead());
 		System.out.println("Polytropic eff from curve:" + comp1.getPolytropicEfficiency()*100.0);
 		System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
-
+		
+		System.out.println("speed " + comp1.getCompressorChart().getSpeed(stream_1.getThermoSystem().getFlowRate("m3/hr")+10.0, comp1.getPolytropicHead()));
+		System.out.println("pressure out "+ comp1.getOutletPressure());
+		System.out.println("temperature out "+ (comp1.getOutTemperature()-273.15)+ " C");
+		double temperatureOut = 333.0;
+		comp1.setOutletPressure(71.0);
+		comp1.setOutTemperature(temperatureOut);
+		operations.run();
+		  double polytropicHead = comp1.getPolytropicHead();
+				  double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");
+						  double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate, polytropicHead);
+						  System.out.println("temperature out "+ (comp1.getOutTemperature()-273.15)+ " C");
+						  System.out.println("calculated speed "+ calcSpeed);
+						  System.out.println("power " + comp1.getPower());
+		
+		
+		
+		
+		
 	}
 
 	public boolean isUseCompressorChart() {

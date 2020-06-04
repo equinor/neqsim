@@ -85,5 +85,7 @@ public interface CompressorChartInterface extends Cloneable {
 
 	public void setStoneWallCurve(StoneWallCurve stoneWallCurve);
 	
+	public int getSpeed(double flow, double head);
+	
 	
 }

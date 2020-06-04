@@ -179,7 +179,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
             y_solve = AMA_matrix.det();
             //System.out.println("AMA det "+y_solve);
             y_solve = A_solve.rank();
-            System.out.println("Rank " + y_solve);
+            //System.out.println("Rank " + y_solve);
             //M_Jama_matrix.print(5,5);
             //b_solve.print(5,5);
             //System.out.println("det A " + A_solve.rank());
@@ -189,9 +189,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         try {
             x_solve = A_solve.solve(b_solve);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("\nError x " + system.getPhase(phasenumb).getComponent(0).getx());
-            System.out.println("Error T " + system.getTemperature());
+          //  e.printStackTrace();
+          //  System.out.println("\nError x " + system.getPhase(phasenumb).getComponent(0).getx());
+          //  System.out.println("Error T " + system.getTemperature());
         }
         //   d_n_t = x_solve.get(NELE,0)*n_t;
 

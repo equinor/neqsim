@@ -298,15 +298,16 @@ public class TPflash extends Flash implements java.io.Serializable {
 						// system.orderByDensity();
 						// system.init(3);
 					}
+					if (solidCheck) {
+						this.solidPhaseFlash();
+					}
 					if (system.isMultiphaseWaxCheck()) {
 						TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
 						operation.run();
 					}
-					// if (solidCheck) {
-					// this.solidPhaseFlash();
-					// }
-
+					
 					system.orderByDensity();
+					system.init(1);
 					return;
 				}
 			}
@@ -436,6 +437,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 			TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
 			operation.run();
 		}
+		//system.initPhysicalProperties("density");
 		system.orderByDensity();
 		system.init(1);
 	}

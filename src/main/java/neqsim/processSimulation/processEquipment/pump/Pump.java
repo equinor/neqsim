@@ -179,5 +179,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public void setMolarFlow(double molarFlow) {
         this.molarFlow = molarFlow;
     }
+    
+    public SystemInterface getThermoSystem() {
+        return thermoSystem;
+    }
 
 }

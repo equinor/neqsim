@@ -34,7 +34,7 @@ public class SeparatorDesignStandard extends DesignStandard {
 
     public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
-        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
