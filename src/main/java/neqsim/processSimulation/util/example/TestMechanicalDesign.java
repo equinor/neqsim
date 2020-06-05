@@ -22,8 +22,8 @@ public class TestMechanicalDesign {
     public static void main(String args[]) {
 
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
-        testSystem.addComponent("methane", 5e6, "Sm^3/day");
-        testSystem.addComponent("water", 3000, "m^3/day");
+        testSystem.addComponent("methane", 5e6, "Sm3/day");
+        testSystem.addComponent("water", 3000, "kg/hr");
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -36,10 +36,11 @@ public class TestMechanicalDesign {
          */
 
         Separator sep = new Separator(stream_1);
-        sep.addSeparatorSection("tray", "");
-        // sep.getMechanicalDesign().getMaterialDesignStandard().readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
+        //sep.addSeparatorSection("tray", "");
+        //sep.getMechanicalDesign().getMaterialDesignStandard().readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
         // sep.getMechanicalDesign().getJointEfficiencyStandard().readJointEfficiencyStandard("Double Welded", "Fully Redipgraphed");
         sep.getMechanicalDesign().setMaxOperationPressure(150.0);
+        sep.addSeparatorSection("top mesh", "meshpad");
 
         /*
         sep.setInternalDiameter(3.750);

@@ -606,8 +606,8 @@ public class DuanSun {
 	//	fluid1.addComponent("oxygen", 1.0, "mol/sec");
 //		fluid1.addComponent("methane", 1.0, "mol/sec");
 		fluid1.addComponent("water", 1.0, "mol/sec");
-		fluid1.addComponent("Na+", 0.01, "mol/sec");
-		fluid1.addComponent("Cl-", 0.01, "mol/sec");
+		//fluid1.addComponent("Na+", 0.01, "mol/sec");
+		//fluid1.addComponent("Cl-", 0.01, "mol/sec");
 		fluid1.setMixingRule(2);
 		ThermodynamicOperations thermoOPs = new ThermodynamicOperations(fluid1);
 		try {
@@ -618,7 +618,7 @@ public class DuanSun {
 			e.printStackTrace();
 		}
 		
-		System.out.println("CO2 in liquid " + fluid1.getPhase("liquid").getComponent("CO2").getx());
+		System.out.println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
 		
 	}
 

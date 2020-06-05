@@ -53,6 +53,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 			factor = mol_m3 / 1000.0;
 		} else if (name.equals("Am3/hr")) {
 			factor = 1.0 / molarmass / 3600.0 * stddens;
+		} else if (name.equals("Am3/day")) {
+			factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
 		} else if (name.equals("Am3/min")) {
 			factor = 1.0 / molarmass / 60.0 * stddens;
 		} else if (name.equals("Am3/sec")) {
@@ -63,6 +65,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 			factor = 1.0 / 60.0 * 1.0 / (molarmass);
 		} else if (name.equals("kg/hr")) {
 			factor = 1.0 / molarmass / 3600.0;
+		} else if (name.equals("kg/day")) {
+			factor = 1.0 / molarmass / (3600.0 * 24.0);
 		} else if (name.equals("Sm^3/sec") | name.equals("Sm3/sec")) {
 			factor = mol_Sm3;
 		} else if (name.equals("Sm^3/min") | name.equals("Sm3/min")) {

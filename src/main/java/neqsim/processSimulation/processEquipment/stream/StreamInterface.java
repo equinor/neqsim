@@ -36,5 +36,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName);
 
     public void setEmptyThermoSystem(SystemInterface thermoSystem);
+    
+    public void setPressure(double pressure, String unit);
+    
+    public void setTemperature(double temperature, String unit);
 
 }

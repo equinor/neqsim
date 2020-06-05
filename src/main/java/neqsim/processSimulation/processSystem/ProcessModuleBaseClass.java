@@ -125,4 +125,19 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     public SystemInterface getFluid() {
         return getThermoSystem();
     }
+    
+    public void setSpecification(String specificationName, double value) {
+    
+    }
+    
+    public Object getUnit(String name) {
+    	return operations.getUnit("name");
+    }
+    
+    public void setProperty(String propertyName, double value) {
+    	setSpecification(propertyName, value);
+    }
+    
+    public void setProperty(String propertyName, double value, String unit) {
+    }
 }

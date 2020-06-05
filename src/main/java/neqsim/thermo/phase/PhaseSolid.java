@@ -20,7 +20,6 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     public PhaseSolid() {
         super();
         phaseTypeName = "solid";
-
     }
 
     public Object clone() {
@@ -57,4 +56,19 @@ public abstract class PhaseSolid extends PhaseSrkEos {
             ((ComponentSolid) componentArray[i]).setSolidRefFluidPhase(refPhase);
         }
     }
+      
+      /**
+       * method to get density of a phase note: at the moment return density of water (997 kg/m3)
+       *
+       * @return density with unit kg/m3
+       */
+      public double getDensityTemp() {
+    	  double density = 0.0;
+    	  for(int i =0;i<numberOfComponents;i++){
+    		  density += getWtFrac(i)*((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature())*1000.0;
+          }
+    	  molarVolume = density/getMolarMass()*1e-5;
+    	  return density;
+      }
+      
 }

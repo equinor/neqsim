@@ -323,7 +323,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 				system.setPhaseType(0, 0);
 			}
 			system.init(1);
-			if (solidCheck) {
+			if (solidCheck && !system.doMultiPhaseCheck()) {
 				this.solidPhaseFlash();
 			}
 

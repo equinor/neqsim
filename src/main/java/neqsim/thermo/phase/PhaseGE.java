@@ -31,6 +31,7 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
         super();
         phaseTypeName = "liquid";
         componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
+        useVolumeCorrection=false;
     }
     
     public void init(double temperature, double pressure, double totalNumberOfMoles,double beta, int numberOfComponents, int type, int phase){ // type = 0 start init type =1 gi nye betingelser
@@ -183,4 +184,33 @@ public class PhaseGE extends Phase  implements PhaseGEInterface,neqsim.thermo.Th
           return getCp();
     }
     
+    // return speed of sound in water constant 1470.0 m/sec
+    public double getZ() {
+    	double densityIdealGas = pressure*1e5/8.314/temperature*getMolarMass();
+        return densityIdealGas/getDensity("kg/m3");
+    }
+    
+    // return speed of sound in water constant 1470.0 m/sec
+    public double getSoundSpeed() {
+        return 1470.0;
+    }
+    
+ // return speed of JT coefficient of water at K/bar (assumed constant)
+    public double getJouleThomsonCoefficient() {
+        return -0.125/10.0;
+    }
+    
+    /**
+     * method to get density of a phase note: at the moment return density of water (997 kg/m3)
+     *
+     * @return density with unit kg/m3
+     */
+    public double getDensity() {
+        return 997.0;
+    }
+    
+    public double getMolarVolume() {
+        return 1.0/(getDensity()/getMolarMass())*1.0e5;
+    }
+
 }

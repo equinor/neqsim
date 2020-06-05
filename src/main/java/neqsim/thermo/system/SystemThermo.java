@@ -3722,7 +3722,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		pdfDocument.getDocument().open();
 		try {
 			pdfDocument.getDocument()
-					.add(new com.lowagie.text.Paragraph("Summary of caluclation for stream: " + getFluidName(),
+					.add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
 							com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
 
 			com.lowagie.text.List list = new com.lowagie.text.List(true, 20);
@@ -3757,6 +3757,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	public void displayPDF() {
+		generatePDF();
 		((neqsim.dataPresentation.iTextPDF.PdfCreator) pdfDocument).openPDF();
 	}
 
@@ -4006,16 +4007,20 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public int getMixingRule() {
 		return mixingRule;
 	}
+	
+	public ComponentInterface getComponent(String name) {
+		return getPhase(0).getComponent(name);
+	}
+	
+	public ComponentInterface getComponent(int number) {
+		return getPhase(0).getComponent(number);
+	}
 
 	public void orderByDensity() {
 		boolean change = false;
 		int count = 0;
-
-		if (getPhase(0).getPhysicalProperties() == null) {
-			getPhase(0).initPhysicalProperties("density");
-		}
-
-		for (int i = 1; i < getNumberOfPhases(); i++) {
+		
+		for (int i = 0; i < getNumberOfPhases(); i++) {
 			if (getPhase(i).getPhysicalProperties() == null) {
 				getPhase(i).initPhysicalProperties("density");
 			}

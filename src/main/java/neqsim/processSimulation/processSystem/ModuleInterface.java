@@ -53,5 +53,13 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
     public void setIsCalcDesign(boolean isCalcDesign);
 
     public boolean isCalcDesign();
+    
+    public Object getUnit(String name);
+    
+    public void setProperty(String propertyName, double value);
+    
+    public String getName();
+    
+    public void setName(String name);
 
 }

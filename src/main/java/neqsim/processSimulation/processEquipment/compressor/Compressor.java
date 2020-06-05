@@ -108,6 +108,17 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		return getTotalWork();
 	}
 
+	public double getPower(String unit) {
+		double conversionFactor = 1.0;
+		if(unit.equals("MW")) {
+		 conversionFactor = 1.0/1.0e6;
+		}
+		else if(unit.equals("kW")) {
+			 conversionFactor = 1.0/1.0e3;
+			}
+		return conversionFactor*getPower();
+	}
+	
 	public void setPower(double p) {
 		powerSet = true;
 		dH = p;
@@ -233,6 +244,16 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				//System.out.println("isentropic eff " + isentropicEfficiency);
 				polytropicFluidHead = polytropicPower / getThermoSystem().getFlowRate("kg/sec") / 1000.0;
 				polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
+				polytropicHead = polytropicFluidHead;
+				if(getCompressorChart().isUseCompressorChart()) {
+				if (getCompressorChart().getHeadUnit().equals("meter")) {
+					polytropicHead = polytropicHeadMeter;
+				} else {
+					polytropicHead = polytropicFluidHead;
+				}
+				}
+				outStream.setThermoSystem(getThermoSystem());
+
 				return;
 			}
 		}
@@ -554,7 +575,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public int getSpeed() {
 		return speed;
 	}
-
+	
 	public void setSpeed(int speed) {
 		this.speed = speed;
 	}

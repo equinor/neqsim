@@ -32,7 +32,7 @@ public class WaxFlash {
        // testSystem.addComponent("ethane", 4.5);
        // testSystem.addTBPfraction("C7", 10.0, 93.30 / 1000.0, 0.73);
        // testSystem.addTBPfraction("C8", 10.0, 106.60 / 1000.0, 0.7533);
-        testSystem.addPlusFraction("C11", 0.095, 207.0 / 1000.0, 0.8331);
+        testSystem.addPlusFraction("C9", 0.095, 207.0 / 1000.0, 0.8331);
          testSystem.getCharacterization().characterisePlusFraction();
         testSystem.getWaxModel().addTBPWax();
         
