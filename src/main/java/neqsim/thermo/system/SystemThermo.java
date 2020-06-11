@@ -3721,9 +3721,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 		pdfDocument.getDocument().open();
 		try {
-			pdfDocument.getDocument()
-					.add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
-							com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
+			pdfDocument.getDocument().add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
+					com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
 
 			com.lowagie.text.List list = new com.lowagie.text.List(true, 20);
 			list.add(new com.lowagie.text.ListItem("Thermodynamic model: " + getModelName()));
@@ -3903,7 +3902,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				tempModel = new SystemSrkTwuCoonStatoilEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
 			} else if (model.equals("SRK-TwuCoon-Param-EOS")) {
 				tempModel = new SystemSrkTwuCoonParamEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
-			} else {
+			}
+			else if (model.equals("Duan-Sun")) {
+				tempModel = new SystemDuanSun(getPhase(0).getTemperature(), getPhase(0).getPressure());
+			}
+			else {
 				logger.error("model : " + model + " not defined.....");
 			}
 			// tempModel.getCharacterization().setTBPModel("RiaziDaubert");
@@ -4007,11 +4010,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public int getMixingRule() {
 		return mixingRule;
 	}
-	
+
 	public ComponentInterface getComponent(String name) {
 		return getPhase(0).getComponent(name);
 	}
-	
+
 	public ComponentInterface getComponent(int number) {
 		return getPhase(0).getComponent(number);
 	}
@@ -4019,7 +4022,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void orderByDensity() {
 		boolean change = false;
 		int count = 0;
-		
+
 		for (int i = 0; i < getNumberOfPhases(); i++) {
 			if (getPhase(i).getPhysicalProperties() == null) {
 				getPhase(i).initPhysicalProperties("density");
