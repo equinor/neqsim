@@ -97,9 +97,9 @@ public  class SystemSrkCPA extends SystemSrkEos {
     }
 
     public void addComponent(String componentName, double moles) {
-        if (componentName.equals("Ca++") || componentName.equals("Na+") || componentName.equals("Cl-")) {
-            componentName = "NaCl";
-        }
+  //      if (componentName.equals("Ca++") || componentName.equals("Na+") || componentName.equals("Cl-")) {
+   //         componentName = "NaCl";
+   //     }
         super.addComponent(componentName, moles);
     }
 }
