@@ -1,10 +1,3 @@
-/*
- /*
- * ComponentGEUniquac.java
- *
- * Created on 10. juli 2000, 21:06
- */
-
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseGE;
@@ -221,8 +214,6 @@ public class ComponentGeDuanSun extends ComponentGE {
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
 			int phasetype, double[][] HValpha, double[][] HVgij) {
 
-		//System.out.println("comp name  " + getComponentName()  + " isIon " + isIsIon());
-		
 		if (componentName.equals("CO2")) {
 			return 0.9;
 		} else if (componentName.equals("water")) {
@@ -231,7 +222,7 @@ public class ComponentGeDuanSun extends ComponentGE {
 			return 1.0;
 		}
 	}
-
+	
 /*	public double getHenryCoef(double temperature) {
 		// System.out.println("henry " +
 		// Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
@@ -253,9 +244,10 @@ public class ComponentGeDuanSun extends ComponentGE {
                 int waternumb = phase.getComponent("water").getComponentNumber();
                 activinf = gamma /((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
             } else {
-                activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
-            }
-
+                activinf = gamma /((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
+                }
+//            activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
+            
           //Born function
     		double BORN=0.0;
     		double EPS=0.0; double EPS1000=0.0;double CB=0.0;double BB=0.0;
@@ -289,18 +281,20 @@ public class ComponentGeDuanSun extends ComponentGE {
     		{
     		a1=-9.0283127*Math.pow(10.0,-1.0);a2=3.6492938*Math.pow(10.0,-2.0);a3=4.3610019*Math.pow(10.0,-4.0);a4=-3.10936036*Math.pow(10.0,-6.0);a5=4.592053*Math.pow(10.0,-9.0);a6=1.62996873*Math.pow(10.0,1.0);a7=2.81119409*Math.pow(10.0,-2.0);	
     		}
-
+    		
     		K[0]=Math.pow(10.0,(ACO20+ACO21*phase.getTemperature()+ACO22/phase.getTemperature()+ACO23*Math.log10(phase.getTemperature())+ACO24/(Math.pow(phase.getTemperature(),2.0))+ACO25*Math.pow(phase.getTemperature(),2.0)))*Math.exp(Poynteff[0]);
     		K[1]=Math.pow(10.0,(AN20+AN21*phase.getTemperature()+AN22/phase.getTemperature()+AN23*Math.log10(phase.getTemperature())+AN24/(Math.pow(phase.getTemperature(),2.0))+AN25*Math.pow(phase.getTemperature(),2.0)))*Math.exp(Poynteff[1]);
             K[2]=Math.pow(10.0,(AO20+AO21*phase.getTemperature()+AO22/phase.getTemperature()+AO23*Math.log10(phase.getTemperature())+AO24/(Math.pow(phase.getTemperature(),2.0))+AO25*Math.pow(phase.getTemperature(),2.0)))*Math.exp(Poynteff[2]);
             K[3]=(a1+a2*phase.getTemperature()+a3*Math.pow(phase.getTemperature(),2.0)+a4*Math.pow(phase.getTemperature(),3.0)+a5*Math.pow(phase.getTemperature(),4.0))*Math.exp((phase.getPressure()-1.0)*(a6+a7*phase.getTemperature())/(1000.0*(R/100.0)*phase.getTemperature()));
 
             if (componentName.equals("CO2")) {
-            fugasityCoeffisient = activinf*K[0]*gamma*((1000.0/18.0)+25.689/(gamma*K[0]))/ phase.getPressure();	
+            fugasityCoeffisient = activinf*K[0]*gamma*(1000/18.02)/phase.getPressure();//+25.689/(gamma*K[0]))/ phase.getPressure();	
             }else if (componentName.equals("nitrogen")) {
-            fugasityCoeffisient = activinf*K[1]*gamma*((1000.0/18.0)+50.585/(gamma*K[1]))/ phase.getPressure();	
+            fugasityCoeffisient = activinf*K[1]*gamma*(1000/18.02)/phase.getPressure();//+50.585/(gamma*K[1]))/ phase.getPressure();	
             }else if (componentName.equals("oxygen")) {
-            fugasityCoeffisient = activinf*K[2]*gamma*((1000.0/18.0)+46.9157/(gamma*K[2]))/ phase.getPressure();	
+            fugasityCoeffisient = activinf*K[2]*gamma*(1000/18.02)/phase.getPressure();//+46.9157/(gamma*K[2]))/ phase.getPressure();	
+            }else if (componentName.contentEquals("water")){
+            fugasityCoeffisient = activinf*K[3]*(1000/18.02)/phase.getPressure();	
             }else {
             fugasityCoeffisient = activinf*K[3]/phase.getPressure();	
             }
@@ -312,19 +306,24 @@ public class ComponentGeDuanSun extends ComponentGE {
     }
 
 /////////////////////////////////////////////////////	
-	public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype,
-			double salinity) {
+	public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype, double salinity) {
 		double P=pressure;
 		double T=temperature;
 		double S=salinity;        
-
-		double lamdaCO2Na=-0.411370585+0.000607632*T+97.5347708/T-0.023762247*P/T+0.017065624*P/(630.0-T)+1.41335834*Math.pow(10.0,-5.0)*T*Math.log(P);
+//		double salinity2=0;
+		
+//		if(isIsIon()) {
+//			salinity2=getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfMolesInPhase()*phase.getComponent("water").getMolarMass());
+//		}
+		
+//		double S=salinity;
+		double lamdaCO2Na=(-0.411370585+0.000607632*T+97.5347708/T-0.023762247*P/T+0.017065624*P/(630.0-T)+1.41335834*Math.pow(10.0,-5.0)*T*Math.log(P));
 		double lamdaN2Na=-2.4434074+0.0036351795*T+447.47364/T-0.000013711527*P+0.0000071037217*Math.pow(P,2.0)/T;
 		double lamdaO2Na=0.19997;
 		double zetaN2NaCl=-0.58071053*Math.pow(10.0,-2.0);
 		double zetaO2NaCl=-1.2793*Math.pow(10.0,-2.0);
 		double zetaCO2NaCl=0.00033639-1.9829898*Math.pow(10.0,-5.0)*T+0.002122208*P/T-0.005248733*P/(630.-T);
-
+	
 		if (componentName.equals("CO2")) {
 			gamma=Math.exp(2.0*S*lamdaCO2Na+Math.pow(S,2.0)*zetaCO2NaCl);
 		} else if (componentName.equals("nitrogen")) {
@@ -334,18 +333,18 @@ public class ComponentGeDuanSun extends ComponentGE {
 		} else {
 			gamma=1.0;
 		}
-
+		
 //		double gammaCO2=Math.exp(2.0*S*lamdaCO2Na+Math.pow(S,2.0)*zetaCO2NaCl);
 //		double gammaN2=Math.exp(2.0*S*lamdaN2Na+Math.pow(S,2.0)*zetaN2NaCl);
 //		double gammaO2=Math.exp(2.0*S*lamdaO2Na+Math.pow(S,2.0)*zetaO2NaCl);
 //		gamma=1.0;
-
+		
 		lngamma=Math.log(gamma);
-
+		
 //		System.out.println("gamma CO2 = " + gammaCO2);
 //		System.out.println("gamma N2 = " + gammaN2);
 //		System.out.println("gamma O2 = " + gammaO2);
-
+		
 //		if (componentName.equals("CO2")) {
 //		return gammaCO2;
 //		}else if (componentName.equals("nitrogen")) {
@@ -354,7 +353,7 @@ public class ComponentGeDuanSun extends ComponentGE {
 //		return gammaO2;
 //		}else 
 		return gamma;
-
+			
 	}
 /////////////////////////////////////////////////////
 	/*

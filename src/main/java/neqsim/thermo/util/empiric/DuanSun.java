@@ -1,6 +1,7 @@
 package neqsim.thermo.util.empiric;
 
 import neqsim.thermo.system.SystemDuanSun;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
@@ -601,23 +602,41 @@ public class DuanSun {
 		
 		*/
 		
-		SystemInterface fluid1 = new SystemDuanSun(298.15, 10.0);
-		fluid1.addComponent("CO2", 1.01, "mol/sec");
+		SystemInterface fluid1 = new SystemElectrolyteCPAstatoil(298.15, 12.0);
+		fluid1.addComponent("CO2", 0.5, "mol/sec");
 	//	fluid1.addComponent("oxygen", 1.0, "mol/sec");
-//		fluid1.addComponent("methane", 1.0, "mol/sec");
-		fluid1.addComponent("water", 1.0, "mol/sec");
-		//fluid1.addComponent("Na+", 0.01, "mol/sec");
-		//fluid1.addComponent("Cl-", 0.01, "mol/sec");
-		fluid1.setMixingRule(2);
+	//	fluid1.addComponent("methane", 1.0, "mol/sec");
+		fluid1.addComponent("water", 0.5, "mol/sec");
+		fluid1.addComponent("Na+", 0.001, "mol/sec");
+		fluid1.addComponent("Cl-", 0.001, "mol/sec");
+		fluid1.setMixingRule(10);
 		ThermodynamicOperations thermoOPs = new ThermodynamicOperations(fluid1);
 		try {
 		thermoOPs.TPflash();
+		//	fluid1.init(0);
 		fluid1.display();
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
+		fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
+		fluid1.init(1);
+		try {
+			thermoOPs.TPflash();
+			//	fluid1.init(0);
+			fluid1.display();
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		String fluidname = ""
+				+ "";
+		fluid1.saveObjectToFile(fluidname, fluidname);
 		
+		fluid1.setPhaseIndex(0, 1);
+		//fluid1.save
+		System.out.println("CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getLogFugasityCoeffisient());
+		System.out.println("CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugasityCoeffisient());
 		System.out.println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
 		
 	}

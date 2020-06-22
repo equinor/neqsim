@@ -568,6 +568,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 		if (getMolarMass() < 1e-20) {
 			init(0);
+			init(1);
 		}
 		if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("Am3/sec")) {
 			initPhysicalProperties("density");
@@ -612,11 +613,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			return totalNumberOfMoles * getMolarMass() * 3600.0;
 		} else if (flowunit.equals("m3/hr")) {
 			// return getVolume() / 1.0e5 * 3600.0;
+			initPhysicalProperties("density");
 			return totalNumberOfMoles * getMolarMass() * 3600.0 / getDensity("kg/m3");
 		} else if (flowunit.equals("m3/min")) {
+			initPhysicalProperties("density");
 			return totalNumberOfMoles * getMolarMass() * 60.0 / getDensity("kg/m3");
 			// return getVolume() / 1.0e5 * 60.0;
 		} else if (flowunit.equals("m3/sec")) {
+			initPhysicalProperties("density");
 			return totalNumberOfMoles * getMolarMass() / getDensity("kg/m3");
 			// return getVolume() / 1.0e5;
 		} else if (flowunit.equals("mole/sec")) {
@@ -3721,9 +3725,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 		pdfDocument.getDocument().open();
 		try {
-			pdfDocument.getDocument()
-					.add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
-							com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
+			pdfDocument.getDocument().add(new com.lowagie.text.Paragraph("Properties of fluid: " + getFluidName(),
+					com.lowagie.text.FontFactory.getFont(com.lowagie.text.FontFactory.TIMES_ROMAN, 12)));
 
 			com.lowagie.text.List list = new com.lowagie.text.List(true, 20);
 			list.add(new com.lowagie.text.ListItem("Thermodynamic model: " + getModelName()));
@@ -3891,7 +3894,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				tempModel = new SystemSrkCPAs(getPhase(0).getTemperature(), getPhase(0).getPressure());
 			} else if (model.equals("CPAs-SRK-EOS-statoil")) {
 				tempModel = new SystemSrkCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
-			} else if (model.equals("Electrolyte-CPA-EOS-statoil")) {
+			} else if (model.equals("Electrolyte-CPA-EOS-statoil") || model.equals("Electrolyte-CPA-EOS")) {
 				tempModel = new SystemElectrolyteCPAstatoil(getPhase(0).getTemperature(), getPhase(0).getPressure());
 			} else if (model.equals("UMR-PRU-EoS")) {
 				tempModel = new SystemUMRPRUMCEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
@@ -3903,7 +3906,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				tempModel = new SystemSrkTwuCoonStatoilEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
 			} else if (model.equals("SRK-TwuCoon-Param-EOS")) {
 				tempModel = new SystemSrkTwuCoonParamEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
-			} else {
+			}
+			else if (model.equals("Duan-Sun")) {
+				tempModel = new SystemDuanSun(getPhase(0).getTemperature(), getPhase(0).getPressure());
+			}
+			else {
 				logger.error("model : " + model + " not defined.....");
 			}
 			// tempModel.getCharacterization().setTBPModel("RiaziDaubert");
@@ -3981,7 +3988,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void autoSelectMixingRule() {
 		logger.info("setting mixing rule");
 		if (modelName.equals("CPAs-SRK-EOS") || modelName.equals("CPA-SRK-EOS")
-				|| modelName.equals("Electrolyte-CPA-EOS-statoil") || modelName.equals("CPAs-SRK-EOS-statoil")) {
+				|| modelName.equals("Electrolyte-CPA-EOS-statoil") || modelName.equals("CPAs-SRK-EOS-statoil") || modelName.equals("Electrolyte-CPA-EOS") ) {
 			this.setMixingRule(10);
 			// System.out.println("mix rule 10");
 		} else if ((modelName.equals("ScRK-EOS-HV") || modelName.equals("SRK-EOS") || modelName.equals("ScRK-EOS"))
@@ -4007,11 +4014,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public int getMixingRule() {
 		return mixingRule;
 	}
-	
+
 	public ComponentInterface getComponent(String name) {
 		return getPhase(0).getComponent(name);
 	}
-	
+
 	public ComponentInterface getComponent(int number) {
 		return getPhase(0).getComponent(number);
 	}
@@ -4019,7 +4026,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void orderByDensity() {
 		boolean change = false;
 		int count = 0;
-		
+
 		for (int i = 0; i < getNumberOfPhases(); i++) {
 			if (getPhase(i).getPhysicalProperties() == null) {
 				getPhase(i).initPhysicalProperties("density");

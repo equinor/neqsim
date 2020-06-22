@@ -53,10 +53,34 @@ public class PhaseDuanSun extends PhaseGE {
         }
     }
     
+
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
         GE = 0;
+        double salinity=0.0;
+//        double k=0.0;
+//        salinity=salinity+phase.getComponent("Na+").getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass());
+
+//        for (int i=2;i<numberOfComponents;i++) {
+//        	salinity=salinity+phase.getComponents()[i].getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass()); 
+//        }
+        for (int i=0;i<numberOfComponents;i++) {
+		if(phase.getComponents()[i].isIsIon()) {
+			salinity=salinity+phase.getComponents()[i].getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfMolesInPhase()*phase.getComponent("water").getMolarMass());
+		}
+        }
+//        for (int i=0; i < numberOfComponents; i++) {
+//           	if(phase.getComponents()[i].isIsIon()) {
+//        	salinity=salinity+phase.getComponents()[i].getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass());
+//        	phase.getComponent("Na+").getNumberOfmoles()
+//          }
+//       }
+        
+//       salinity=salinity+phase.getComponent("Na+").getNumberOfmoles()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass());
+        
+        
         for (int i=0; i < numberOfComponents; i++){
-            GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun) componentArray[i]).getGamma(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij));
+//          GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun) componentArray[i]).getGammaNRTL(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij));
+            GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun) componentArray[i]).getGammaPitzer(phase, numberOfComponents, temperature,  pressure, phasetype, salinity));
         }
         
         return R*temperature*numberOfMolesInPhase*GE;//phase.getNumberOfMolesInPhase()*
