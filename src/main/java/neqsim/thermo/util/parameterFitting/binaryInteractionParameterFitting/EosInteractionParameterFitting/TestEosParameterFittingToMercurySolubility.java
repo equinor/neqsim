@@ -6,6 +6,8 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import neqsim.util.database.NeqSimDataBase;
+import neqsim.util.database.NeqSimExperimentDatabase;
+
 import java.sql.*;
 import java.util.*;
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -37,7 +39,7 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
         ArrayList sampleList = new ArrayList();
 
         // inserting samples from database
-        NeqSimDataBase database = new NeqSimDataBase();
+        NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
 
         ResultSet dataSet = database.getResultSet( "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='mercury' AND ComponentSolvent='n-hexane'");
         //   double parameterGuess[] = {0.13}; // mercury-methane

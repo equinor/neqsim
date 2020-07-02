@@ -347,14 +347,18 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
 
         JDialog dialog = new JDialog(new JFrame(), "Node-Report");
         Container dialogContentPane = dialog.getContentPane();
-        dialogContentPane.setLayout(new FlowLayout());
-
+        dialogContentPane.setLayout(new BorderLayout());
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
         String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         String[][] table = createTable(name);
         JTable Jtab = new JTable(table, names);
         JScrollPane scrollpane = new JScrollPane(Jtab);
         dialogContentPane.add(scrollpane);
-        dialog.pack();
+        Jtab.setRowHeight(dialog.getHeight() / table.length);
+		Jtab.setFont(new Font("Serif", Font.PLAIN,
+			dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
+   //     dialog.pack();
         dialog.setVisible(true);
     }
 

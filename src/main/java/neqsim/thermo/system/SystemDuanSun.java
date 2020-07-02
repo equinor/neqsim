@@ -27,6 +27,8 @@ public class SystemDuanSun extends SystemEos {
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     //  SystemSrkEos clonedSystem;
+    protected String[] CapeOpenProperties11 = { "molecularWeight", "fugacityCoefficient",
+			"logFugacityCoefficient"};
     
     public SystemDuanSun(){
         super();
@@ -36,6 +38,7 @@ public class SystemDuanSun extends SystemEos {
         for (int i=1;i<numberOfPhases;i++){
             phaseArray[i] = new PhaseDuanSun();
         }
+       
     }
     
     

@@ -22,6 +22,8 @@
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
 import org.apache.logging.log4j.*;
 
 /**
@@ -195,6 +197,10 @@ public class TPflash extends Flash implements java.io.Serializable {
 				system.setPhaseIndex(0, 0);
 			} else {
 				system.setPhaseIndex(0, 1);
+			}
+			if (solidCheck) {
+				ThermodynamicOperations operation = new ThermodynamicOperations(system);
+				operation.TPSolidflash();
 			}
 			return;
 		}
