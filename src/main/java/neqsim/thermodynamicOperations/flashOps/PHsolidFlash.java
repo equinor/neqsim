@@ -85,7 +85,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
             }
             tpFlash.run();
 
-//            logger.info("temp " + system.getTemperature() + " err " + err);
+           logger.info("temp " + system.getTemperature() + " err " + err);
         } while (Math.abs(dt) > 1e-8 && iter<200);
 
     }
