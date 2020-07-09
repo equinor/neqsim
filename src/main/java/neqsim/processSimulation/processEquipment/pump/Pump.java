@@ -81,10 +81,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 //        thermoSystem.setPressure(pressure);
 //        System.out.println("entropy inn.." + entropy);
 //        thermoOps.PSflash(entropy);
-        thermoSystem.init(3);
         dH = thermoSystem.getEnthalpy() - hinn;
         outStream.setThermoSystem(thermoSystem);
-        outStream.run();
+      //  outStream.run();
     }
 
     public void displayResult() {
