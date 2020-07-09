@@ -24,7 +24,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
     private static final long serialVersionUID = 1000;
 
-    protected ArrayList streams = new ArrayList(0);
+    protected ArrayList<StreamInterface> streams = new ArrayList(0);
     protected double pressure = 0;
     protected int numberOfInputStreams = 0;
     protected Stream mixedStream;
@@ -55,7 +55,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
     public void addStream(StreamInterface newStream) {
         streams.add(newStream);
-
         if (numberOfInputStreams == 0) {
             mixedStream = (Stream) ((StreamInterface) streams.get(0)).clone();
             mixedStream.getThermoSystem().setNumberOfPhases(2);
@@ -77,6 +76,11 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
         solventInStream = (Stream) newStream;
         solventOutStream = (Stream) newStream.clone();
         addStream(newStream);
+    }
+    
+    public void replaceSolventInStream(StreamInterface newStream) {
+        solventInStream = (Stream) newStream;
+        streams.set(1, solventInStream);
     }
 
     public void setPressure(double pressure) {
