@@ -81,12 +81,13 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         System.out.println("Starting.....");
 
         SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(285.15, 200.0);
-        testSystem.addComponent("methane", 29000.0);
-        testSystem.addComponent("ethane", 1221.10);
+        testSystem.addComponent("methane", 0.9);
+        testSystem.addComponent("ethane", 0.1);
         testSystem.createDatabase(true);
         testSystem.init(0);
         testSystem.init(3);
         testSystem.initPhysicalProperties();
+        testSystem.setTotalFlowRate(60.0, "MSm3/day");
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new PipeFlowSystem();
 
         double[] height = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -114,8 +115,6 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         pipe.setLegOuterTemperatures(outerTemperature);
         pipe.setLegWallHeatTransferCoefficients(wallHeacCoef);
         pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
-        //pipe.getNode(0).getGeometry().
-
 
         pipe.createSystem();
         pipe.init();
@@ -149,9 +148,9 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
            //       double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01};
         //       pipe.getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
-         pipe.solveTransient(20);
+      //   pipe.solveTransient(20);
           //   pipe.getDisplay().displayResult("composition");
-            pipe.getDisplay().displayResult("pressure");
+       //     pipe.getDisplay().displayResult("pressure");
         //   pipe.getDisplay().displayResult("composition");
         //   pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
         // pipe.getDisplay(1).displayResult();

@@ -20,7 +20,6 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 
     private static final long serialVersionUID = 1000;
 
-    ThermodynamicOperations testOps;
     boolean setTemperature = false;
     StreamInterface[] outStream;
     StreamInterface[] inStream;
@@ -114,7 +113,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
         //double corrected_Entalphy = dEntalphy;// * inStream[1].getThermoSystem().getNumberOfMoles() / inStream[0].getThermoSystem().getNumberOfMoles();
 
         //System.out.println("dent " + dEntalphy);
-        testOps = new ThermodynamicOperations(outStream[streamToCalculate].getThermoSystem());
+        ThermodynamicOperations testOps = new ThermodynamicOperations(outStream[streamToCalculate].getThermoSystem());
         testOps.PHflash(inStream[streamToCalculate].getThermoSystem().getEnthalpy() - dEntalphy, 0);
         //outStream[0].setThermoSystem(systemOut0);
         //System.out.println("temperature out " + outStream[streamToCalculate].getTemperature());

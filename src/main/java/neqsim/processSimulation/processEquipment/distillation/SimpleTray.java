@@ -38,6 +38,9 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
+        if(isSetEnergyStream()) {
+        	enthalpy-=energyStream.getDuty();
+        }
        
         for (int k=0; k < streams.size(); k++) {
             ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
@@ -50,6 +53,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     public void run(){
       super.run();
+      temperature = mixedStream.getTemperature(); 
     }
 
     public void runTransient() {

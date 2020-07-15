@@ -25,7 +25,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
-    protected ThermodynamicOperations testOps;
     protected Stream outStream;
     protected Stream inStream;
     protected FlowSystemInterface pipe;

@@ -28,7 +28,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     protected ArrayList streams = new ArrayList(0);
     private int numberOfInputStreams = 0;
     protected Stream mixedStream;
-    public ThermodynamicOperations testOps = null;
     private boolean isSetOutTemperature = false;
     private double outTemperature = Double.NaN;
     static Logger logger = LogManager.getLogger(Mixer.class);
@@ -165,8 +164,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
             enthalpy = calcMixStreamEnthalpy();
            //  System.out.println("temp guess " + guessTemperature());
+            if(!isSetOutTemperature) {
             mixedStream.getThermoSystem().setTemperature(guessTemperature());
-           
+            }
+            else {
+            	mixedStream.setTemperature(outTemperature, "K");
+            }
            //System.out.println("filan temp  " + mixedStream.getTemperature());
         }
         if(isSetOutTemperature) {

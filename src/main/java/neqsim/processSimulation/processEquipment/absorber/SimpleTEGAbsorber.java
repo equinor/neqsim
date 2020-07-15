@@ -33,7 +33,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     private Stream gasOutStream;
     private Stream solventOutStream;
     protected String name = "mixer";
-    protected ThermodynamicOperations testOps;
     protected Stream outStream;
     private double waterDewPointTemperature = 263.15, dewPressure = 70.0, kwater = 1e-4;
 
@@ -215,7 +214,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
             double enthalpy = calcMixStreamEnthalpy();
             ////System.out.println("temp guess " + guessTemperature());
             mixedStream.getThermoSystem().setTemperature(guessTemperature());
-            testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
+            ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
             testOps.TPflash();
             testOps.PHflash(enthalpy, 0);
 

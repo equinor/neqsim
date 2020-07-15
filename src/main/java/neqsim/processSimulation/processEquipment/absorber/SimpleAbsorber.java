@@ -21,7 +21,6 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
 
     private static final long serialVersionUID = 1000;
 
-    ThermodynamicOperations testOps;
     boolean setTemperature = false;
     String name = new String();
     Stream[] outStream;

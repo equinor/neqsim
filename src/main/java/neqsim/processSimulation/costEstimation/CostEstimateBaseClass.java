@@ -13,7 +13,7 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  *
  * @author ESOL
  */
-public class CostEstimateBaseClass {
+public class CostEstimateBaseClass extends java.lang.Object implements java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
 

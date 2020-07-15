@@ -21,7 +21,6 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface{
 
     private static final long serialVersionUID = 1000;
     
-    ThermodynamicOperations testOps;
     StreamInterface outStream;
     StreamInterface inStream;
     SystemInterface system;

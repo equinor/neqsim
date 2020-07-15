@@ -23,7 +23,6 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     protected String name = new String();
     private boolean valveCvSet = false, isoThermal = false;
     SystemInterface thermoSystem;
-    ThermodynamicOperations thermoOps;
     StreamInterface inletStream;
     StreamInterface outStream;
     double pressure = 0.0;
@@ -85,7 +84,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         //System.out.println("valve running..");
         //outStream.setSpecification(inletStream.getSpecification());
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);
         double enthalpy = thermoSystem.getEnthalpy();
         thermoSystem.setPressure(pressure);
@@ -134,7 +133,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         runController(dt);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoSystem.init(3);
 
         double enthalpy = thermoSystem.getEnthalpy();

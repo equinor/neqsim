@@ -16,6 +16,12 @@
 
 package neqsim.processSimulation.processSystem;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import org.apache.logging.log4j.*;
 /*
  * thermoOps.java
  *
@@ -23,10 +29,13 @@ package neqsim.processSimulation.processSystem;
  */
 import java.util.*;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
+import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  *
@@ -42,12 +51,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     String[][] signalDB = new String[100][100];
     private double time = 0;
     private int timeStepNumber = 0;
-    private ArrayList unitOperations = new ArrayList(0);
-    ArrayList measurementDevices = new ArrayList(0);
+    private ArrayList<ProcessEquipmentBaseClass> unitOperations = new ArrayList(0);
+    ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList(0);
     private double timeStep = 1.0;
     private String name = "process name";
     private SystemMechanicalDesign systemMechanicalDesign = null;
     private CostEstimateBaseClass costEstimator = null;
+    static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
     /**
      * Creates new thermoOps
@@ -131,6 +141,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         boolean isConverged = true;
         boolean hasResycle = false;
         int iter = 0;
+        
         do {
             iter++;
             isConverged = true;
@@ -157,6 +168,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
             }
         } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
+        
     }
 
     public void runTransient() {
@@ -222,6 +234,39 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
         }
     }
+    
+    public void save(String filePath) {
+
+		ObjectOutputStream out = null;
+		InputStream in = null;
+		try {
+			FileOutputStream fout = new FileOutputStream(filePath, false);
+			out = new ObjectOutputStream(fout);
+			out.writeObject(this);
+			out.close();
+			logger.info("process file saved to:  " + filePath);
+		} catch (Exception e) {
+			logger.error(e.toString());
+			e.printStackTrace();
+		}
+	}
+    
+    public static ProcessSystem open(String filePath) {
+
+		FileInputStream streamIn = null;
+		InputStream in = null;
+		ProcessSystem tempSystem = null;
+		try {
+			streamIn = new FileInputStream(filePath);
+			ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
+			tempSystem = (ProcessSystem) objectinputstream.readObject();
+			logger.info("process file open ok:  " + filePath);
+		} catch (Exception e) {
+			logger.error(e.toString());
+			e.printStackTrace();
+		}
+		return tempSystem;
+	}
 
     public String[][] reportResults() {
         String[][] text = new String[200][];

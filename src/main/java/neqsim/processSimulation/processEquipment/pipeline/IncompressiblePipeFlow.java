@@ -74,7 +74,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         calcPressureOut();
         system.setPressure(calcPressureOut());
 
-        testOps = new ThermodynamicOperations(system);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
         // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);

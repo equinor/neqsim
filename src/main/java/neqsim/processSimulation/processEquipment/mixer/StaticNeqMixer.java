@@ -94,7 +94,7 @@ public class StaticNeqMixer extends StaticMixer implements ProcessEquipmentInter
         SystemInterface syst = (SystemInterface) mixedStream.getThermoSystem().clone();
         syst.setTemperature(((StreamInterface) streams.get(0)).getThermoSystem().getTemperature());
         syst.setPressure(((StreamInterface) streams.get(0)).getThermoSystem().getPressure());
-        testOps = new ThermodynamicOperations(syst);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(syst);
         testOps.PHflash(enthalpy, 0);
         System.out.println("temp " + syst.getTemperature());
         mixedStream.getThermoSystem().setTemperature(syst.getTemperature());

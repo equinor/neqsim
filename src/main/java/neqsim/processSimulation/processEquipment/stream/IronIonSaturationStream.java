@@ -60,7 +60,7 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
         // reactiveThermoSystem.chemicalReactionInit();
         // reactiveThermoSystem.createDatabase(true);
 //        reactiveThermoSystem.addComponent("water", reactiveThermoSystem.getPhase(0).getComponent("MEG").getNumberOfmoles());
-        thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
         thermoOps.TPflash();
         reactiveThermoSystem.display();
         try {

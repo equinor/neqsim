@@ -27,7 +27,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     protected ArrayList streams = new ArrayList(0);
     protected int numberOfInputStreams = 0;
     protected Stream mixedStream;
-    public ThermodynamicOperations testOps = null;
     Stream lastIterationStream = null;
     
     private double tolerance = 1e-3;
@@ -162,7 +161,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
             testOps.TPflash();
         }
         setError(massBalanceCheck());
-        System.out.println("Recycle error: " + getError());
+        System.out.println(name +  " recycle error: " + getError());
         lastIterationStream = (Stream) mixedStream.clone();
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);

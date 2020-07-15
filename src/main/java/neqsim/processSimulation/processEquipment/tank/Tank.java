@@ -23,7 +23,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    ThermodynamicOperations thermoOps;
     Stream gasOutStream;
     Stream liquidOutStream;
     private int numberOfInputStreams = 0;
@@ -191,7 +190,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         }
 
         System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.VUflash(volume1,newEnergy);
 
         setOutComposition(thermoSystem);

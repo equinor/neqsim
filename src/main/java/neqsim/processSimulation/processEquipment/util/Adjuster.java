@@ -26,7 +26,6 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
 
     private static final long serialVersionUID = 1000;
 
-    public ThermodynamicOperations testOps = null;
     ProcessEquipmentInterface adjustedEquipment = null, targetEquipment=null;
     String adjustedVarialble = "", targetVariable="", targetPhase="", targetComponent="";
     double targetValue = 0.0;

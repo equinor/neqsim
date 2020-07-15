@@ -33,7 +33,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface thermoSystem;
-    protected ThermodynamicOperations thermoOps;
+    
     protected int streamNumber = 0;
     protected static int numberOfStreams = 0;
     private double gasQuality = 0.5;
@@ -66,7 +66,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         }
         try {
             thermoSystem.setHydrateCheck(true);
-            thermoOps = new ThermodynamicOperations(thermoSystem);
+            ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
             thermoOps.hydrateFormationTemperature();
             return thermoSystem.getTemperature();
         } catch (Exception e) {
@@ -80,12 +80,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         try {
             if (solidName.equals("hydrate")) {
                 thermoSystem.setHydrateCheck(true);
-                thermoOps = new ThermodynamicOperations(thermoSystem);
+                ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
                 thermoOps.hydrateFormationTemperature();
             } else {
                 thermoSystem.setSolidPhaseCheck(false);
                 thermoSystem.setSolidPhaseCheck(solidName);
-                thermoOps = new ThermodynamicOperations(thermoSystem);
+                ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
                 thermoOps.freezingPointTemperatureFlash();
             }
             return thermoSystem.getTemperature();
@@ -195,8 +195,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
         }
-        thermoOps = new ThermodynamicOperations(thermoSystem);
 
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+/*
         if (specification.equals("TP")) {
             thermoOps.TPflash();
         } else if (specification.equals("dewP")) {
@@ -254,6 +255,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         thermoSystem.initProperties();
         //System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         //System.out.println("beta: " + thermoSystem.getBeta());
+         *
+         */
     }
 
     public void displayResult() {
