@@ -24,7 +24,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
     StreamInterface inletStream;
     StreamInterface[] splitStream;
-    String name = new String();
     protected int splitNumber;
     double[] splitFactor = new double[1];
 
@@ -55,9 +54,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
         splitFactor = splitFact;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -93,9 +89,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     public void displayResult() {
     }
 
-    public String getName() {
-        return name;
-    }
 
     public void runTransient(double dt) {
     }

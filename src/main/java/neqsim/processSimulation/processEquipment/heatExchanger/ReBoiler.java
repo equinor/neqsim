@@ -22,7 +22,6 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
     private static final long serialVersionUID = 1000;
     
     boolean setTemperature=false;
-    String name= new String();
     StreamInterface outStream;
     StreamInterface inStream;
     SystemInterface system;
@@ -34,10 +33,6 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
     public ReBoiler(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (StreamInterface) inStream.clone();
-    }
-    
-    public void setName(String name){
-        this.name = name;
     }
     
     
@@ -69,10 +64,6 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
     
     public void displayResult(){
        System.out.println("out Temperature " + reboilerDuty);
-    }
-    
-    public String getName() {
-        return name;
     }
     
     public void runTransient() {

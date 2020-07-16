@@ -23,7 +23,6 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
 
     private static final long serialVersionUID = 1000;
 
-    protected String name = new String();
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
     StreamInterface inletStream;
@@ -45,11 +44,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         this.name = name;
         setInletStream(inletStream);
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
+    
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
@@ -163,10 +158,6 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         dialogContentPane.add(scrollpane);
         dialog.pack();
         dialog.setVisible(true);
-    }
-
-    public String getName() {
-        return name;
     }
 
     public void runTransient() {

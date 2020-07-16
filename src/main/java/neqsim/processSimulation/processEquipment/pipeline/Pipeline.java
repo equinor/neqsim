@@ -30,7 +30,6 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     protected FlowSystemInterface pipe;
     protected SystemInterface system;
     String flowPattern = "stratified";
-    String name = new String();
     double[] times;
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
     // default variables

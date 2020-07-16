@@ -197,7 +197,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         }
 
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-/*
+
         if (specification.equals("TP")) {
             thermoOps.TPflash();
         } else if (specification.equals("dewP")) {
@@ -255,8 +255,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         thermoSystem.initProperties();
         //System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         //System.out.println("beta: " + thermoSystem.getBeta());
-         *
-         */
     }
 
     public void displayResult() {

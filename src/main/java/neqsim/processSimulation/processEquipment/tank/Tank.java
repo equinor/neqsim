@@ -27,7 +27,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     Stream liquidOutStream;
     private int numberOfInputStreams = 0;
     Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
-    String name = new String();
     private double efficiency = 1.0;
     private double liquidCarryoverFraction = 0.0;
     private double gasCarryunderFraction = 0.0;
@@ -50,9 +49,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         addStream(inletStream);
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+
 
     public void setInletStream(Stream inletStream) {
         inletStreamMixer.addStream(inletStream);
@@ -146,10 +143,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
 
     public void displayResult() {
         thermoSystem.display();
-    }
-
-    public String getName() {
-        return name;
     }
 
     public void runTransient(double dt) {

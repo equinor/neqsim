@@ -141,10 +141,6 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
         outStream[1].displayResult();
     }
 
-    public String getName() {
-        return name;
-    }
-
     /**
      * @return the UAvalue
      */

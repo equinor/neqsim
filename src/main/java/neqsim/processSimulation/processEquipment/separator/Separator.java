@@ -53,7 +53,6 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	private double internalDiameter = 1.0;
 	private int numberOfInputStreams = 0;
 	Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
-	String name = new String();
 	private double efficiency = 1.0;
 	private double liquidCarryoverFraction = 0.0;
 	private double gasCarryunderFraction = 0.0;
@@ -78,10 +77,6 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
 	public Separator(String name, StreamInterface inletStream) {
 		this(inletStream);
-		this.name = name;
-	}
-
-	public void setName(String name) {
 		this.name = name;
 	}
 
@@ -187,10 +182,6 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
 	public void displayResult() {
 		thermoSystem.display();
-	}
-
-	public String getName() {
-		return name;
 	}
 
 	public void runTransient(double dt) {
