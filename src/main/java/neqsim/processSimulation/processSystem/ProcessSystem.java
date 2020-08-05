@@ -35,6 +35,7 @@ import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.processSimulation.processEquipment.util.RecycleController;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -53,6 +54,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     private int timeStepNumber = 0;
     private ArrayList<ProcessEquipmentBaseClass> unitOperations = new ArrayList(0);
     ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList(0);
+    RecycleController recycleController = new RecycleController();
     private double timeStep = 1.0;
     private String name = "process name";
     private SystemMechanicalDesign systemMechanicalDesign = null;
@@ -142,20 +144,36 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         boolean hasResycle = false;
         int iter = 0;
         
+        //Initializing recycle controller
+        recycleController.clear();
+        for (int i = 0; i < unitOperations.size(); i++) {
+            if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
+            	hasResycle = true;
+            	recycleController.addRecycle((Recycle)unitOperations.get(i));
+            }
+        }
+        recycleController.init();
+        
         do {
             iter++;
             isConverged = true;
             for (int i = 0; i < unitOperations.size(); i++) {
-                ((Runnable) unitOperations.get(i)).run();
-                if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
-                    hasResycle = true;
-                    //System.out.println("Testing Recycle " + ((ProcessEquipmentInterface) unitOperations.get(i)).getName() + " error " + ((Recycle) unitOperations.get(i)).getError());
-                    if (((Recycle) unitOperations.get(i)).getTolerance() <= ((Recycle) unitOperations.get(i)).getError()) {
-                        isConverged = false;
-                    }
+            	if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) ((Runnable) unitOperations.get(i)).run();
+                if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle") && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
+                	((Runnable) unitOperations.get(i)).run();
                 }
-                if(!((ProcessEquipmentInterface)unitOperations.get(i)).solved()) isConverged=false;
             }
+            if(!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
+        		isConverged=false;
+        	}
+        	if(recycleController.solvedCurrentPriorityLevel()) {
+        		recycleController.nextPriorityLevel();
+        	}
+        	else if(recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
+        		recycleController.resetPriorityLevel();
+        		//isConverged=true;
+        	}
+        	
 
             signalDB = new String[1000][1 + 3 * measurementDevices.size()];
 

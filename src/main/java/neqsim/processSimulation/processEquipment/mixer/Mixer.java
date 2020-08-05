@@ -175,6 +175,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         if(isSetOutTemperature) {
         	if(!Double.isNaN(getOutTemperature())) mixedStream.getThermoSystem().setTemperature(getOutTemperature());
         	testOps.TPflash();
+        	mixedStream.getThermoSystem().init(2);
         }
         else {
         	try { 
@@ -187,7 +188,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         	}
         	
         	
+        	
         }
+
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());

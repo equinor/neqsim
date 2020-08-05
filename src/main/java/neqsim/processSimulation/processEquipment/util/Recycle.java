@@ -25,12 +25,15 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     private static final long serialVersionUID = 1000;
 
     protected ArrayList streams = new ArrayList(0);
+    private ArrayList<String> downstreamProperty = new ArrayList<String>(0);
     protected int numberOfInputStreams = 0;
     protected Stream mixedStream;
     Stream lastIterationStream = null;
-    
-    private double tolerance = 1e-3;
+    private Stream outletStream = null;
+    private double tolerance = 1e-6;
     private double error = 1e6;
+    private int priority = 100;
+   
 
     /** Creates new staticMixer */
     public Recycle() {
@@ -44,6 +47,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         return mixedStream.getThermoSystem();
     }
 
+    public void setDownstreamProperty(String property) {
+    	downstreamProperty.add(property);
+    }
    
     public void replaceStream(int i, StreamInterface newStream) {
         streams.set(i, newStream);
@@ -135,7 +141,18 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     public void runTransient() {
         run();
     }
+    
+    public void initiateDownstreamProperties(Stream outstream) {
+    	 lastIterationStream=(Stream)outstream.clone();
+    }
 
+    public void setDownstreamProperties() {
+    	  if(downstreamProperty.size()>0) {
+          	for(int i=0;i<downstreamProperty.size();i++) {
+          		if(downstreamProperty.get(i).equals("flow rate")) mixedStream.setFlowRate(lastIterationStream.getFlowRate("kg/hr"), "kg/hr");
+          	}
+          }
+    }
     public void run() {
         double enthalpy = 0.0;
 
@@ -151,6 +168,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
             mixedStream.getThermoSystem().init(0);
 
             mixStream();
+            
+            setDownstreamProperties();
 
             enthalpy = calcMixStreamEnthalpy();
             // System.out.println("temp guess " + guessTemperature());
@@ -163,6 +182,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         setError(massBalanceCheck());
         System.out.println(name +  " recycle error: " + getError());
         lastIterationStream = (Stream) mixedStream.clone();
+        outletStream = lastIterationStream;
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());
@@ -174,7 +194,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 
     public double massBalanceCheck(){
         double error = 0.0;
+        System.out.println("flow rate new " + mixedStream.getThermoSystem().getFlowRate("kg/hr"));
+        System.out.println("temperature " + mixedStream.getThermoSystem().getTemperature("C"));
+        System.out.println("pressure " + mixedStream.getThermoSystem().getPressure("bara"));
         for(int i=0;i<mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents();i++){
+        	System.out.println("x last " + lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
+        	System.out.println("x new " + mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
             error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx() - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
         }
         return Math.abs(error);
@@ -224,4 +249,34 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     public void setError(double error) {
         this.error = error;
     }
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+	
+	   public boolean solved() {
+		   if(error<tolerance) return true;
+		   else return false;
+	    }
+
+	public ArrayList<String> getDownstreamProperty() {
+		return downstreamProperty;
+	}
+
+	public void setDownstreamProperty(ArrayList<String> upstreamProperty) {
+		this.downstreamProperty = upstreamProperty;
+	}
+
+	public Stream getOutletStream() {
+		return outletStream;
+	}
+
+	public void setOutletStream(Stream outletStream) {
+		this.outletStream = outletStream;
+		lastIterationStream = outletStream;
+	}
 }

@@ -173,6 +173,13 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     }
 
     public double calcY0() {
+    	double fugacityWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getFugacity("water");
+    	double xrel = mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
+    	double y0 = xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
+        return y0;
+    }
+    
+    public double calcY02() {
         SystemInterface tempSolventSystem = (SystemInterface) gasInStream.getThermoSystem().clone();
         //tempSolventSystem.addComponent("methane", tempSolventSystem.getPhase(0).getNumberOfMolesInPhase() / 10.0);
         tempSolventSystem.setTemperature(waterDewPointTemperature);
@@ -226,8 +233,9 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
             double yMean = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx();
             double molesWaterToMove = (yMean - y1) * mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            //System.out.println("mole water to move " + molesWaterToMove);
-
+            System.out.println("mole water to move " + molesWaterToMove);
+            System.out.println("total moles water " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
+            System.out.println("total moles water " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
             Stream stream = (Stream) mixedStream.clone();
             stream.setName("test");
             stream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);

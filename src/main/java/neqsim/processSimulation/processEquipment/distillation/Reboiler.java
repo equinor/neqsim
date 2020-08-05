@@ -19,7 +19,7 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
 
 	private double refluxRatio = 0.1;
 	boolean refluxIsSet = false;
-
+	double duty = 0.0;
 	public Reboiler() {
 	}
 
@@ -39,7 +39,8 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
 	}
 
 	public double getDuty() {
-		return -calcMixStreamEnthalpy();
+		return duty;
+//		return calcMixStreamEnthalpy();
 	}
 
 	public void run() {
@@ -61,5 +62,7 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
 		// mixedStream.getThermoSystem().getTemperature());
 
 		// System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
+		 duty = mixedStream.getFluid().getEnthalpy()- calcMixStreamEnthalpy0();
 	}
+	
 }
