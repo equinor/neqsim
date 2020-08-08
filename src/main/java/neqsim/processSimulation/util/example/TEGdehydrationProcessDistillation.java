@@ -66,7 +66,7 @@ public class TEGdehydrationProcessDistillation {
 		absorber.addGasInStream(waterSaturatedFeedGas);
 		absorber.addSolventInStream(TEGFeed);
 		absorber.setNumberOfStages(10);
-		absorber.setStageEfficiency(0.35);
+		absorber.setStageEfficiency(0.3);
 		absorber.setWaterDewPointTemperature(223.15, 70.0);
 
 		Stream dehydratedGas = new Stream(absorber.getGasOutStream());
@@ -112,9 +112,9 @@ public class TEGdehydrationProcessDistillation {
 
 		Stream gasToReboiler = (Stream)strippingGas.clone();
 		
-		DistillationColumn column = new DistillationColumn(4, true, true);
+		DistillationColumn column = new DistillationColumn(2, true, true);
 		column.setName("TEG regeneration column");
-		column.addFeedStream(richGLycolHeater2.getOutStream(), 4);
+		column.addFeedStream(richGLycolHeater2.getOutStream(), 2);
 		column.getReboiler().setOutTemperature(273.15 + 206.0);
 		column.getCondenser().setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
 		column.getReboiler().addStream(gasToReboiler);
@@ -135,7 +135,7 @@ public class TEGdehydrationProcessDistillation {
 		WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
 		stripper.addSolventInStream(column.getLiquidOutStream());
 		stripper.addGasInStream(strippingGas);
-		stripper.setNumberOfStages(5);
+		stripper.setNumberOfStages(4);
 		stripper.setStageEfficiency(0.5);
 
 		

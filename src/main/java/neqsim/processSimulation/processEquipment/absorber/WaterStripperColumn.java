@@ -172,7 +172,7 @@ int solventStreamNumber = 0;
 
     public double calcEa() {
         double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase() / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
-        absorptionEfficiency = (Math.pow(A, getNumberOfTheoreticalStages()) - A) / (Math.pow(A, getNumberOfTheoreticalStages()) - 1.0);
+        absorptionEfficiency = (Math.pow(A, getNumberOfTheoreticalStages()+1) - A) / (Math.pow(A, getNumberOfTheoreticalStages()+1) - 1.0);
         return absorptionEfficiency;
     }
 
@@ -219,14 +219,14 @@ int solventStreamNumber = 0;
             double x1 = x2 - (Math.pow(revA, Ntheoretical+1) - revA) / (Math.pow(revA, Ntheoretical+1) - 1.0) * (x2-x0);
             		
           
-            double xMean = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx();
-            double molesWaterToMove = (xMean - x1) * mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
+            double xMean = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+            double molesWaterToMove = (xMean - x1) * mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase();
             //System.out.println("mole water to move " + molesWaterToMove);
 
             Stream stream = (Stream) mixedStream.clone();
             stream.setName("test");
-           // stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
-           // stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
+            stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
+            stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
             stream.getThermoSystem().initBeta();
             stream.getThermoSystem().init_x_y();
             stream.getThermoSystem().init(2);

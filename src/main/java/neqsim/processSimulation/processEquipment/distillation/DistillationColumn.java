@@ -221,7 +221,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 				err += Math.abs(oldtemps[i] - ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature());
 			}
 			System.out.println("error iter " + err + " iteration " + iter);
-			massBalanceCheck();
+			//massBalanceCheck();
 		} while (err > 1e-2 && iter < 10);
 
 		for (int i = 0; i <= numberOfTrays-1; i++) {

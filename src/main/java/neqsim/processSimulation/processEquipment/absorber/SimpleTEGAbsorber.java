@@ -169,7 +169,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
     public double calcEa() {
         double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase() / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
-        absorptionEfficiency = (Math.pow(A, getNumberOfTheoreticalStages()) - A) / (Math.pow(A, getNumberOfTheoreticalStages()) - 1.0);
+        absorptionEfficiency = (Math.pow(A, getNumberOfTheoreticalStages()+1) - A) / (Math.pow(A, getNumberOfTheoreticalStages()+1) - 1.0);
         return absorptionEfficiency;
     }
 
