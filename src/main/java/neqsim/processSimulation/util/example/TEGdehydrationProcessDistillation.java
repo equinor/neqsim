@@ -80,7 +80,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
 		richGLycolHeaterCondenser.setName("rich TEG preheater");
-		richGLycolHeaterCondenser.setOutTemperature(273.15 + 37.0);
+		richGLycolHeaterCondenser.setOutTemperature(273.15 + 36.5);
 
 		Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
 		richGLycolHeater.setName("rich TEG heater HP");
@@ -112,9 +112,9 @@ public class TEGdehydrationProcessDistillation {
 
 		Stream gasToReboiler = (Stream)strippingGas.clone();
 		
-		DistillationColumn column = new DistillationColumn(6, true, true);
+		DistillationColumn column = new DistillationColumn(4, true, true);
 		column.setName("TEG regeneration column");
-		column.addFeedStream(richGLycolHeater2.getOutStream(), 6);
+		column.addFeedStream(richGLycolHeater2.getOutStream(), 4);
 		column.getReboiler().setOutTemperature(273.15 + 206.0);
 		column.getCondenser().setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
 		column.getReboiler().addStream(gasToReboiler);
@@ -142,8 +142,9 @@ public class TEGdehydrationProcessDistillation {
 		Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
 		recycleGasFromStripper.addStream(stripper.getGasOutStream());
 		recycleGasFromStripper.setOutletStream(gasToReboiler);
-
-		Pump hotLeanTEGPump = new Pump(column.getLiquidOutStream());//stripper.getSolventOutStream());
+		
+		
+		Pump hotLeanTEGPump = new Pump(stripper.getSolventOutStream());//stripper.getSolventOutStream());
 		hotLeanTEGPump.setName("hot lean TEG pump");
 		hotLeanTEGPump.setOutletPressure(20.0);
 
@@ -157,7 +158,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Heater coolerhOTteg3 = new Heater(coolerhOTteg2.getOutStream());
 		coolerhOTteg3.setName("lean TEG cooler");
-		coolerhOTteg3.setOutTemperature(273.15 + 44.85);
+		coolerhOTteg3.setOutTemperature(273.15 + 35.4);
 
 		Pump hotLeanTEGPump2 = new Pump(coolerhOTteg3.getOutStream());
 		hotLeanTEGPump2.setName("lean TEG HP pump");
@@ -259,8 +260,15 @@ public class TEGdehydrationProcessDistillation {
 		System.out.println("flow rate from reboiler " + ((Reboiler)column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
 		System.out.println("flow rate from stripping column " + stripper.getLiquidOutStream().getFlowRate("kg/hr"));
 		System.out.println("flow rate from pump2  " + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
+		System.out.println("makeup TEG  " + makeupTEG.getFluid().getFlowRate("kg/hr"));
+		
 		System.out.println("pump power " + hotLeanTEGPump.getDuty());
 		System.out.println("pump2 power " + hotLeanTEGPump2.getDuty());
+		System.out.println("wt lean TEG after reboiler "
+		+ column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
+		System.out.println("temperature from pump " + (hotLeanTEGPump2.getOutStream().getTemperature()-273.15));
+	System.out.println("wt lean TEG after stripper "
+			+ stripper.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 	//	((ThrottlingValve) operations.getUnit("Flash valve2")).displayResult();
 	//	((Stream)((DistillationColumn) operations.getUnit("TEG regeneration column")).getLiquidOutStream()).displayResult();
 //		operations.run();

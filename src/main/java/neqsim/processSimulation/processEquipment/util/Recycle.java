@@ -24,13 +24,13 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 
     private static final long serialVersionUID = 1000;
 
-    protected ArrayList streams = new ArrayList(0);
+    protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     private ArrayList<String> downstreamProperty = new ArrayList<String>(0);
     protected int numberOfInputStreams = 0;
-    protected Stream mixedStream;
-    Stream lastIterationStream = null;
-    private Stream outletStream = null;
-    private double tolerance = 1e-6;
+    protected StreamInterface mixedStream;
+    StreamInterface lastIterationStream = null;
+    private StreamInterface outletStream = null;
+    private double tolerance = 1e-4;
     private double error = 1e6;
     private int priority = 100;
    
@@ -59,7 +59,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         streams.add(newStream);
 
         if (numberOfInputStreams == 0) {
-            mixedStream = (Stream) ((StreamInterface) streams.get(0)).clone();
+            mixedStream = (StreamInterface) ((StreamInterface) streams.get(0)).clone();
 //            mixedStream.getThermoSystem().setNumberOfPhases(2);
 //            mixedStream.getThermoSystem().reInitPhaseType();
 //            mixedStream.getThermoSystem().init(0);
@@ -67,7 +67,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         }
         mixedStream.setEmptyThermoSystem(((StreamInterface) streams.get(0)).getThermoSystem());
         numberOfInputStreams++;
-        lastIterationStream = (Stream) mixedStream.clone();
+        lastIterationStream = (StreamInterface) mixedStream.clone();
     }
 
     public StreamInterface getStream(int i) {
@@ -135,7 +135,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     public Stream getOutStream() {
-        return mixedStream;
+        return (Stream)mixedStream;
     }
 
     public void runTransient() {
@@ -155,7 +155,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
     public void run() {
         double enthalpy = 0.0;
-
+        System.out.println("flow rate old in recycle " + outletStream.getFlowRate("kg/hr"));
 //        ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
         // System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());
@@ -182,7 +182,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         setError(massBalanceCheck());
         System.out.println(name +  " recycle error: " + getError());
         lastIterationStream = (Stream) mixedStream.clone();
-        outletStream = lastIterationStream;
+        outletStream.setThermoSystem(mixedStream.getThermoSystem());
+    	System.out.println("flow rate new in recycle " + outletStream.getFlowRate("kg/hr"));
+    	
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());
@@ -198,8 +200,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         System.out.println("temperature " + mixedStream.getThermoSystem().getTemperature("C"));
         System.out.println("pressure " + mixedStream.getThermoSystem().getPressure("bara"));
         for(int i=0;i<mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents();i++){
-        	System.out.println("x last " + lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
-        	System.out.println("x new " + mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
+        	//System.out.println("x last " + lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
+        	//System.out.println("x new " + mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());
             error += Math.abs(mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx() - lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
         }
         return Math.abs(error);
@@ -271,12 +273,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 		this.downstreamProperty = upstreamProperty;
 	}
 
-	public Stream getOutletStream() {
+	public StreamInterface getOutletStream() {
 		return outletStream;
 	}
 
-	public void setOutletStream(Stream outletStream) {
+	public void setOutletStream(StreamInterface outletStream) {
 		this.outletStream = outletStream;
-		lastIterationStream = outletStream;
+		lastIterationStream = this.outletStream;
 	}
 }

@@ -25,7 +25,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
     private static final long serialVersionUID = 1000;
 
-    protected ArrayList streams = new ArrayList(0);
+    protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     private int numberOfInputStreams = 0;
     protected Stream mixedStream;
     private boolean isSetOutTemperature = false;
@@ -146,9 +146,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
     public void run() {
         double enthalpy = 0.0;
-
-//        ((Stream) streams.get(0)).getThermoSystem().display();
-
+        double flowRate =  ((Stream) streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
+      //  ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
         
         //System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());

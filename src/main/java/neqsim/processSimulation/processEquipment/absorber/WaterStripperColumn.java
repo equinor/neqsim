@@ -35,7 +35,7 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     protected String name = "mixer";
     protected Stream outStream;
     private double waterDewPointTemperature = 263.15, dewPressure = 70.0, kwater = 1e-4;
-
+int solventStreamNumber = 0;
     /**
      * Creates new staticMixer
      */
@@ -75,11 +75,12 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
         solventInStream = (Stream) newStream;
         solventOutStream = (Stream) newStream.clone();
         addStream(newStream);
+        solventStreamNumber = streams.size()-1;
     }
     
     public void replaceSolventInStream(StreamInterface newStream) {
         solventInStream = (Stream) newStream;
-        streams.set(1, solventInStream);
+        streams.set(solventStreamNumber, solventInStream);
     }
 
     public void setPressure(double pressure) {
@@ -224,8 +225,8 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
 
             Stream stream = (Stream) mixedStream.clone();
             stream.setName("test");
-            stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
-            stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
+           // stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
+           // stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
             stream.getThermoSystem().initBeta();
             stream.getThermoSystem().init_x_y();
             stream.getThermoSystem().init(2);
@@ -241,6 +242,10 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
             SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
             liqTemp.init(2);
             solventOutStream.setThermoSystem(liqTemp);
+            solventOutStream.run();
+            System.out.println("Gas from water stripper " + gasOutStream.getFlowRate("kg/hr") +  " kg/hr");
+
+            System.out.println("TEG from water stripper " + solventOutStream.getFlowRate("kg/hr") +  " kg/hr");
 
         } catch (Exception e) {
             e.printStackTrace();

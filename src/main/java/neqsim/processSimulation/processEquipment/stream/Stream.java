@@ -109,6 +109,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
+        if(stream!=null) clonedSystem.stream = (Stream) stream.clone();;
         clonedSystem.thermoSystem = (SystemInterface) getThermoSystem().clone();
         return clonedSystem;
     }
