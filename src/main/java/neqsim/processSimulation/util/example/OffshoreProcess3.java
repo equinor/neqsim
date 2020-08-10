@@ -11,8 +11,11 @@ import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.TwoPhaseSeparator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
+import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -25,15 +28,16 @@ public class OffshoreProcess3 {
 
     public static void main(String[] args) {
         double reservoirTemperature = 350.0, reservoirPressure = 110.0;
-        SystemInterface testSystem = new SystemSrkEos(reservoirTemperature, reservoirPressure);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(reservoirTemperature, reservoirPressure);
 
-     //   testSystem.addComponent("nitrogen", 0.9);
- //      testSystem.addComponent("CO2", 1.3);
+        testSystem.addComponent("nitrogen", 0.9);
+       testSystem.addComponent("CO2", 1.3);
         testSystem.addComponent("methane", 40.3);
         testSystem.addComponent("ethane", 3);
         testSystem.addComponent("propane", 2);
         testSystem.addComponent("i-butane", 1);
         testSystem.addComponent("n-heptane", 11);
+        testSystem.addComponent("water", 11);
       //  testSystem.addTBPfraction("C7", 4.3, 90.7 / 1000.0, 0.745);
      //   testSystem.addTBPfraction("C10", 10.3, 110.7 / 1000.0, 0.79);
 
@@ -41,6 +45,7 @@ public class OffshoreProcess3 {
         testSystem.setMixingRule(2);
 
         Stream wellStream = new Stream("WellStream", testSystem);
+        wellStream.setFlowRate(11.23, "MSm3/day");
         ThrottlingValve valve = new ThrottlingValve(wellStream);
         valve.setOutletPressure(75.0);
         Heater cooler1 = new Heater(valve.getOutStream());
@@ -92,7 +97,13 @@ public class OffshoreProcess3 {
         mixerHP.addStream(inletSeparator.getGasOutStream());
 
         Heater cooler1stagecomp = new Heater(mixerHP.getOutStream());
-        cooler1stagecomp.setOutTemperature(268.0);
+        cooler1stagecomp.setName("outlet cooler");
+        cooler1stagecomp.setOutTemperature(273.15+34.21);
+        cooler1stagecomp.setOutPressure(52.21);
+        
+        StreamInterface outletStream = cooler1stagecomp.getOutStream();
+        outletStream.setName("richgas");
+        
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(wellStream);
@@ -117,12 +128,15 @@ public class OffshoreProcess3 {
         operations.add(compressor1stage);
         operations.add(mixerHP);
         operations.add(cooler1stagecomp);
+        operations.add(outletStream);
         operations.run();
         operations.run();
         operations.displayResult();
         //mixerHP.displayResult();
         //lppump.displayResult();
-        
+        operations.save("c:/temp/offshorePro.neqsim");
+        ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
+        operations2.run();
         //cooler1stagecomp.getOutStream().phaseEnvelope();
     }
 }

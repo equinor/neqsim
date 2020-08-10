@@ -111,6 +111,7 @@ public class TEGdehydrationProcessDistillation {
 		strippingGas.setPressure(1.23, "bara");
 
 		Stream gasToReboiler = (Stream)strippingGas.clone();
+		gasToReboiler.setName("gas to reboiler");
 		
 		DistillationColumn column = new DistillationColumn(2, true, true);
 		column.setName("TEG regeneration column");
@@ -241,7 +242,6 @@ public class TEGdehydrationProcessDistillation {
 		//((ThrottlingValve) operations.getUnit("Flash valve2")).displayResult();
 //		((Stream)((DistillationColumn) operations.getUnit("TEG regeneration column")).getLiquidOutStream()).displayResult();
 		operations.run();
-		glycol_flash_valve.getFluid().display();
 		double waterInWetGasppm = waterSaturatedFeedGas.getFluid().getPhase(0).getComponent("water").getz()*1.0e6;
 		double waterInWetGaskgMSm3 = waterInWetGasppm*0.01802*101325.0/(8.314*288.15);
 		double TEGfeedwt = TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG");
@@ -302,7 +302,7 @@ public class TEGdehydrationProcessDistillation {
 		//column.getReboiler().addStream(strippingGas);
 		//resycleLeanTEG.initiateDownstreamProperties(absorber.getSolventInStream());
 		//absorber.replaceSolventInStream(resycleLeanTEG.getOutStream());
-		operations.run();
+		//operations.run();
 		operations.save("c:/temp/TEGprocessFullFullRecirc.neqsim");
 		System.out.println("flow rate from reboiler " + ((Reboiler)column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
 	//	System.out.println("flow rate from stripping column " + stripper.getLiquidOutStream().getFlowRate("kg/hr"));

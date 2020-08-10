@@ -100,6 +100,27 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         }
         return null;
     }
+    
+    public int getUnitNumber(String name) {
+        for (int i = 0; i < getUnitOperations().size(); i++) {
+            if (getUnitOperations().get(i) instanceof ModuleInterface) {
+                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().size(); j++) {
+
+                    if (((ProcessEquipmentInterface) ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().get(j)).getName().equals(name)) {
+                        return j;
+                    }
+                }
+            } else if (((ProcessEquipmentInterface) getUnitOperations().get(i)).getName().equals(name)) {
+                return i;
+            }
+
+        }
+        return 0;
+    }
+    
+    public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
+    	unitOperations.set(getUnitNumber(name), operation);
+    }
 
     public ArrayList getAllUnitNames() {
         ArrayList unitNames = new ArrayList(0);
@@ -136,8 +157,25 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     public void clear() {
         unitOperations = new ArrayList(0);
     }
+    
+    public void setFluid(SystemInterface fluid1, SystemInterface fluid2) {
+    	fluid1.removeMoles();
+    	for(int i=0;i<fluid2.getNumberOfComponents();i++) {
+    		if(fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())){
+    			fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+    		}
+    	}
+    	fluid1.init(0);
+    	fluid1.setTemperature(fluid2.getTemperature());
+    	fluid1.setPressure(fluid2.getPressure());
+    }
 
  
+    public Thread runAsThread() {
+    	 Thread processThread = new Thread(this);
+    	 processThread.start();
+    	 return processThread;
+    }
 
     public void run() {
         boolean isConverged = true;

@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
-public class CompressorCurve {
+import java.io.Serializable;
+
+public class CompressorCurve implements Serializable{
 	private static final long serialVersionUID = 1000;
 	public double[] flow;
 	public double[] head;
