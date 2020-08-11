@@ -97,10 +97,6 @@ public class TEGdehydrationProcessDistillation {
 		richGLycolHeater2.setName("LP rich glycol heater");
 		richGLycolHeater2.setOutTemperature(273.15 + 139.0);
 		richGLycolHeater2.setOutPressure(1.23);
-
-	//	ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Flash valve2", richGLycolHeater2.getOutStream());
-//		glycol_flash_valve2.setName("LP flash valve");
-//		glycol_flash_valve2.setOutletPressure(1.23);
 		
 		neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
 		stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
@@ -171,7 +167,7 @@ public class TEGdehydrationProcessDistillation {
 		neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
 		pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
-		Stream makeupTEG = new Stream("lean TEG to absorber", pureTEG);
+		Stream makeupTEG = new Stream("makeup TEG", pureTEG);
 		makeupTEG.setFlowRate(1e-6, "kg/hr");
 		makeupTEG.setTemperature(35.4, "C");
 		makeupTEG.setPressure(52.21, "bara");
