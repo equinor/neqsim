@@ -127,7 +127,7 @@ public class TEGdehydrationProcessDistillation {
 		gasToFlare.setName("gas to flare");
 		
 		Stream liquidToTrreatment = new Stream(sepregenGas.getLiquidOutStream());
-		liquidToTrreatment.setName("liquid to treatment");
+		liquidToTrreatment.setName("water to treatment");
 		
 		WaterStripperColumn stripper = new WaterStripperColumn("TEG stripper");
 		stripper.addSolventInStream(column.getLiquidOutStream());
@@ -224,33 +224,19 @@ public class TEGdehydrationProcessDistillation {
 		operations.add(makeupTEG);
 		operations.add(makeupMixer);
 		operations.add(resycleLeanTEG);
-		 
-		//operations = ProcessSystem.open("c:/temp/TEGprocessFullFullRecirc.neqsim");
-		/*
-		System.out.println("wt lean TEG after reboiler "
-				+ ((Stream)((DistillationColumn) operations.getUnit("TEG regeneration column")).getLiquidOutStream()).getFluid().getPhase("aqueous").getWtFrac("TEG"));
-
-		System.out.println("wt lean TEG after stripper "
-				+ ((Stream)((WaterStripperColumn) operations.getUnit("SimpleTEGstripper")).getSolventOutStream()).getFluid().getPhase("aqueous").getWtFrac("TEG"));
-		
-		*/
-		
-		//((ThrottlingValve) operations.getUnit("Flash valve2")).displayResult();
-//		((Stream)((DistillationColumn) operations.getUnit("TEG regeneration column")).getLiquidOutStream()).displayResult();
+	
 		operations.run();
+		
+		operations.save("c:/temp/TEGprocess.neqsim");
+		
+		
 		double waterInWetGasppm = waterSaturatedFeedGas.getFluid().getPhase(0).getComponent("water").getz()*1.0e6;
 		double waterInWetGaskgMSm3 = waterInWetGasppm*0.01802*101325.0/(8.314*288.15);
 		double TEGfeedwt = TEGFeed.getFluid().getPhase("aqueous").getWtFrac("TEG");
 		double TEGfeedflw = TEGFeed.getFlowRate("kg/hr");
-		
 		double waterInDehydratedGasppm = dehydratedGas.getFluid().getPhase(0).getComponent("water").getz()*1.0e6;
 		double waterInDryGaskgMSm3 = waterInDehydratedGasppm*0.01802*101325.0/(8.314*288.15);
-
 		double richTEG2 = richTEG.getFluid().getPhase("aqueous").getWtFrac("TEG");
-		
-		//glycol_flash_valve2.getFluid().display();
-		((Condenser)column.getCondenser()).getFluid().display();
-		double a = 1;
 		System.out.println("reboiler duty (KW) "
 				+ ((Reboiler)column.getReboiler()).getDuty()/1.0e3);
 		System.out.println("flow rate from reboiler " + ((Reboiler)column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
@@ -263,84 +249,10 @@ public class TEGdehydrationProcessDistillation {
 		System.out.println("wt lean TEG after reboiler "
 		+ column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 		System.out.println("temperature from pump " + (hotLeanTEGPump2.getOutStream().getTemperature()-273.15));
-	System.out.println("wt lean TEG after stripper "
-			+ stripper.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
-	//	((ThrottlingValve) operations.getUnit("Flash valve2")).displayResult();
-	//	((Stream)((DistillationColumn) operations.getUnit("TEG regeneration column")).getLiquidOutStream()).displayResult();
-//		operations.run();
-		//operations.save("c:/temp/TEGprocessTest.neqsim");
-		/*
-		System.out.println("wt lean TEG after reboiler2 "
-				+ ((Stream)((DistillationColumn) operations.getUnit("TEG regeneration column")).getLiquidOutStream()).getFluid().getPhase("aqueous").getWtFrac("TEG"));
 
-		System.out.println("wt lean TEG after stripper2 "
-				+ ((Stream)((WaterStripperColumn) operations.getUnit("SimpleTEGstripper")).getSolventOutStream()).getFluid().getPhase("aqueous").getWtFrac("TEG"));
-		
-		*/
-	
-		
-		//operations = ProcessSystem.open("c:/temp/TEGprocessTest.neqsim");
-		
-		
-		
-		//operations.save("c:/temp/TEGprocessFullNoRecirc3.neqsim");
-	//	operations.run();
-	//	operations.save("c:/temp/TEGprocessFullNoRecircAfterRun.neqsim");
-		//operations.save("c:/temp/TEGprocessFullNoRecirc4.neqsim");
-	//	System.out.println("wt lean TEG after reboiler "
-	//			+ column.getLiquidOutStream().getFluid().getPhase("aqueous").getComponent("water").getFlowRate(flowunit)NumberOfmoles()  getTotgetWtFrac("TEG"));
-
-	//	System.out.println("wt lean TEG after stripper "
-//				+ stripper.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
-
-		//column.getReboiler().addStream(recycleGasFromStripper.getOutStream());
-
-		//column.getReboiler().addStream(strippingGas);
-		//resycleLeanTEG.initiateDownstreamProperties(absorber.getSolventInStream());
-		//absorber.replaceSolventInStream(resycleLeanTEG.getOutStream());
-		//operations.run();
-		operations.save("c:/temp/TEGprocessFullFullRecirc.neqsim");
 		System.out.println("flow rate from reboiler " + ((Reboiler)column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
-	//	System.out.println("flow rate from stripping column " + stripper.getLiquidOutStream().getFlowRate("kg/hr"));
 		System.out.println("flow rate from pump2  " + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
-	 //   operations = ProcessSystem.open("c:/temp/TEGprocessFull.neqsim");
-		System.out.println("wt lean TEG after reboiler "
-				+ column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 
-	//	System.out.println("wt lean TEG after stripper "
-//				+ stripper.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
-		System.out.println("reboiler duty (KW) "
-				+ ((Reboiler)column.getReboiler()).getDuty()/1.0e3);
-		//gasToFlare.getFluid().display();
-		/*
-		 * 
-		 * DistillationColumn column2 = new DistillationColumn(2, true, true);
-		 * column2.addFeedStream(glycol_flash_valve2.getOutStream(), 2);
-		 * column2.getReboiler().setOutTemperature(273.15+206.0);
-		 * column2.getCondenser().setEnergyStream(richGLycolHeaterCondeser.
-		 * getEnergyStream()); column2.run();
-		 * column2.getReboiler().getFluid().display();
-		 * System.out.println("wt lean TEG after reboiler " +
-		 * column2.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"))
-		 * ; /*
-		 * 
-		 * WaterStripperColumn stripper = new WaterStripperColumn("SimpleTEGstripper");
-		 * stripper.addGasInStream(strippingGas);
-		 * stripper.addSolventInStream(column2.getLiquidOutStream());
-		 * stripper.setNumberOfStages(5); stripper.setStageEfficiency(0.5);
-		 * stripper.run();
-		 * 
-		 * 
-		 * System.out.println("Energy condenser1 " +
-		 * richGLycolHeaterCondeser.getEnergyStream().getDuty());
-		 * 
-		 * // System.out.println("wt lean TEG after reboiler " +
-		 * column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
-		 * 
-		 * // System.out.println("wt lean TEG after stripper " +
-		 * stripper.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG")
-		 * );
-		 */
 	}
 
 }
