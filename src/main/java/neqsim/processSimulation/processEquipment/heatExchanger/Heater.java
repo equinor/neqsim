@@ -7,6 +7,7 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.stream.EnergyStream;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -21,7 +22,6 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
 
     private static final long serialVersionUID = 1000;
 
-    ThermodynamicOperations testOps;
     boolean setTemperature = false, setOutPressure = false;
     private StreamInterface outStream;
     StreamInterface inStream;
@@ -30,6 +30,7 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     private boolean setEnergyInput = false;
     private double energyInput = 0.0;
     private double pressureDrop = 0.0;
+
 
     /**
      * Creates new Heater
@@ -85,12 +86,15 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         system = (SystemInterface) inStream.getThermoSystem().clone();
         system.init(3);
         double oldH = system.getEnthalpy();
+        if(isSetEnergyStream()) {
+        	energyInput-=energyStream.getDuty();
+        }
         double newEnthalpy = energyInput + oldH;
         system.setPressure(system.getPressure() - pressureDrop);
         if (setOutPressure) {
             system.setPressure(pressureOut);
         }
-        testOps = new ThermodynamicOperations(system);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         if (specification.equals("out stream")) {
             getOutStream().run();
             temperatureOut = getOutStream().getTemperature();
@@ -98,7 +102,7 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         } else if (setTemperature) {
             system.setTemperature(temperatureOut);
             testOps.TPflash();
-        } else if (setEnergyInput) {
+        } else if (setEnergyInput || isSetEnergyStream()) {
             testOps.PHflash(newEnthalpy, 0);
         } else {
            // System.out.println("temperaturee out " + inStream.getTemperature());
@@ -110,6 +114,9 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         system.init(3);
         double newH = system.getEnthalpy();
         energyInput = newH - oldH;
+        if(!isSetEnergyStream()){
+        	getEnergyStream().setDuty(energyInput);
+        }
         // system.setTemperature(temperatureOut);
         //  testOps.TPflash();
         //    system.setTemperature(temperatureOut);
@@ -171,4 +178,6 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     public void setOutStream(Stream outStream) {
         this.outStream = outStream;
     }
+
+
 }

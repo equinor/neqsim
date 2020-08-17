@@ -25,13 +25,11 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
-    protected ThermodynamicOperations testOps;
     protected Stream outStream;
     protected Stream inStream;
     protected FlowSystemInterface pipe;
     protected SystemInterface system;
     String flowPattern = "stratified";
-    String name = new String();
     double[] times;
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
     // default variables

@@ -35,9 +35,24 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
     public void setHeatInput(double heatinp) {
         this.heatInput = heatinp;
     }
+    
+    public double calcMixStreamEnthalpy0() {
+        double enthalpy = 0;
+      
+        for (int k=0; k < streams.size(); k++) {
+            ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
+            enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
+           // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream) streams.get(k)).getThermoSystem()).getEnthalpy());
+        }
+     //   System.out.println("total enthalpy of streams: " + enthalpy);
+        return enthalpy;
+    }
 
     public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
+        if(isSetEnergyStream()) {
+        	enthalpy-=energyStream.getDuty();
+        }
        
         for (int k=0; k < streams.size(); k++) {
             ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
@@ -50,6 +65,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     public void run(){
       super.run();
+      temperature = mixedStream.getTemperature(); 
     }
 
     public void runTransient() {

@@ -21,7 +21,6 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    ThermodynamicOperations thermoOps;
     Stream inletStream;
     Stream gasOutStream;
     Stream liquidOutStream;
@@ -82,7 +81,7 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     public void run() {
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         if (separatorSection.size() > 0) {
             calcLiquidCarryoverFraction();

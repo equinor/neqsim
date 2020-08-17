@@ -28,7 +28,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	static Logger logger = LogManager.getLogger(Compressor.class);
 	String name = new String();
 	public SystemInterface thermoSystem;
-	public ThermodynamicOperations thermoOps;
 	public StreamInterface inletStream;
 	public StreamInterface outStream;
 	private double outTemperature = 298.15;
@@ -172,6 +171,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		getThermoSystem().setPressure(getThermoSystem().getPressure() + 1.0);
 
 		// System.out.println("entropy inn.." + entropy);
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
 		thermoOps.PSflash(entropy);
 
 		double houtGuess = hinn + dH / polytropicEfficiency;
@@ -183,6 +183,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public void run() {
 		// System.out.println("compressor running..");
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
 		thermoOps = new ThermodynamicOperations(getThermoSystem());
 		getThermoSystem().init(3);
 		double presinn = getThermoSystem().getPressure();
@@ -206,12 +207,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				double MW = thermoSystem.getMolarMass();
 
 				thermoSystem.setPressure(getOutletPressure());
+			 thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PSflash(entropy);
 				thermoSystem.initPhysicalProperties("density");
 				double densOutIsentropic = thermoSystem.getDensity("kg/m3");
 				double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
 				//System.out.println("temperature isentropic "+thermoSystem.getTemperature());
 				thermoSystem.setTemperature(outTemperature);
+			    thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.TPflash();
 				thermoSystem.init(2);
 				thermoSystem.initPhysicalProperties("density");
@@ -331,6 +334,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				thermoSystem.setPressure(pressure);
 				// findOutPressure(hinn, hout, polytropicEfficiency);
 				// System.out.println("hout " + hout);
+			 thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PHflash(hout, 0);
 			} else {
 				int numbersteps = numberOfCompresorCalcSteps;
@@ -339,6 +343,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					entropy = getThermoSystem().getEntropy();
 					hinn = getThermoSystem().getEnthalpy();
 					getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
+				 thermoOps = new ThermodynamicOperations(getThermoSystem());
 					thermoOps.PSflash(entropy);
 					double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) / polytropicEfficiency;
 					thermoOps.PHflash(hout, 0);
@@ -367,6 +372,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		} else {
 			getThermoSystem().setPressure(pressure);
 			// System.out.println("entropy inn.." + entropy);
+		 thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PSflash(entropy);
 			// double densOutIdeal = getThermoSystem().getDensity();
 			if (!powerSet) {
@@ -375,6 +381,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			double hout = hinn + dH;
 			isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
 			dH = hout - hinn;
+		    thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PHflash(hout, 0);
 		}
 		// thermoSystem.display();

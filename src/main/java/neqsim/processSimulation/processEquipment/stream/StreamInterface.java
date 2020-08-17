@@ -19,9 +19,18 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
     public void setThermoSystem(SystemInterface thermoSystem);
 
+    public void setFlowRate(double flowrate, String unit);
+    
+    public double getPressure(String unit);
+    
+    public double getTemperature(String unit);
     public void setName(String name);
 
     public double getTemperature();
+    
+    public double getFlowRate(String unit);
+    
+    
 
     public double getMolarRate();
 

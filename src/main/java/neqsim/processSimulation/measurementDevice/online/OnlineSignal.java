@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.measurementDevice.online;
 
+import java.io.Serializable;
 import java.util.Date;
 import neqsim.util.database.AspenIP21Database;
 
@@ -12,7 +13,7 @@ import neqsim.util.database.AspenIP21Database;
  *
  * @author esol
  */
-public class OnlineSignal {
+public class OnlineSignal implements Serializable{
 
     private static final long serialVersionUID = 1000;
 

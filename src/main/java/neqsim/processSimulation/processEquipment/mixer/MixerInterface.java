@@ -24,7 +24,7 @@ public interface MixerInterface extends ProcessEquipmentInterface {
     public Stream getOutStream();
 
     public void setName(String name);
-
+    public void replaceStream(int i, StreamInterface newStream);
     public String getName();
 
     public SystemInterface getThermoSystem();

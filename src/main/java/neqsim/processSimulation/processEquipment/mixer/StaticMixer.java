@@ -93,7 +93,7 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
         mixedStream.getThermoSystem().setNumberOfPhases(2);
         mixedStream.getThermoSystem().reInitPhaseType();
         mixStream();
-        testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
+        ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
         testOps.PHflash(enthalpy, 0);
         //System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
         mixedStream.getThermoSystem().init(3);

@@ -22,6 +22,8 @@
 
 package neqsim.thermodynamicOperations;
 
+import java.io.Serializable;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -29,7 +31,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author  Even Solbraa
  * @version
  */
-public interface OperationInterface extends Runnable {
+public interface OperationInterface extends Runnable, Serializable{
     public void displayResult();
     public double[][] getPoints(int i);
     public void addData(String name, double[][] data);

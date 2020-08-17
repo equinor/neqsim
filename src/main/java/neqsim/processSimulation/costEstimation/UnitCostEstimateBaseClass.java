@@ -5,13 +5,15 @@
  */
 package neqsim.processSimulation.costEstimation;
 
+import java.io.Serializable;
+
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
  *
  * @author esol
  */
-public class UnitCostEstimateBaseClass {
+public class UnitCostEstimateBaseClass implements Serializable{
 
     private static final long serialVersionUID = 1000;
 

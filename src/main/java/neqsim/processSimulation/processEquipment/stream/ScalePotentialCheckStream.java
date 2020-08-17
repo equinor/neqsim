@@ -57,7 +57,7 @@ public class ScalePotentialCheckStream extends Stream implements StreamInterface
             reactiveThermoSystem = this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
         }
         
-        thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
         thermoOps.TPflash();
         reactiveThermoSystem.init(3);
         

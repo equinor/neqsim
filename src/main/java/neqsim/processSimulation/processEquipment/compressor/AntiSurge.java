@@ -1,6 +1,8 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
-public class AntiSurge {
+import java.io.Serializable;
+
+public class AntiSurge implements Serializable{
 	private static final long serialVersionUID = 1000;
 	private boolean isActive = false;
 	private boolean isSurge = false;

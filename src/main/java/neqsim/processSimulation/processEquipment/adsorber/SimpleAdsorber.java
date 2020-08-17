@@ -22,7 +22,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass implements Process
 
     private static final long serialVersionUID = 1000;
 
-    ThermodynamicOperations testOps;
     boolean setTemperature = false;
     String name = new String();
     StreamInterface[] outStream;

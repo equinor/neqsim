@@ -28,6 +28,7 @@ import java.util.HashMap;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
+import neqsim.processSimulation.processEquipment.stream.EnergyStream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -46,7 +47,8 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public String specification = "TP";
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
-
+    public EnergyStream energyStream = new EnergyStream();
+    private boolean isSetEnergyStream = false;
     /**
      * Creates a new instance of ProcessEquipmentBaseClass
      */
@@ -147,5 +149,22 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public boolean solved() {
     	return true;
     }
+    
+	public EnergyStream getEnergyStream() {
+		return energyStream;
+	}
+
+	public void setEnergyStream(EnergyStream energyStream) {
+		setEnergyStream(true);
+		this.energyStream = energyStream;
+	}
+
+	public boolean isSetEnergyStream() {
+		return isSetEnergyStream;
+	}
+
+	public void setEnergyStream(boolean isSetEnergyStream) {
+		this.isSetEnergyStream = isSetEnergyStream;
+	}
 
 }

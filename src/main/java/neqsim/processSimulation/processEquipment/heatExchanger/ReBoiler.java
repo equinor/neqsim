@@ -21,9 +21,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
 
     private static final long serialVersionUID = 1000;
     
-    ThermodynamicOperations testOps;
     boolean setTemperature=false;
-    String name= new String();
     StreamInterface outStream;
     StreamInterface inStream;
     SystemInterface system;
@@ -37,10 +35,6 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
         outStream = (StreamInterface) inStream.clone();
     }
     
-    public void setName(String name){
-        this.name = name;
-    }
-    
     
     public StreamInterface getOutStream(){
         return outStream;
@@ -48,7 +42,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
     
     public void run(){
         system = (SystemInterface) inStream.getThermoSystem().clone();
-        testOps = new ThermodynamicOperations(system);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
         double oldH = system.getEnthalpy();
         testOps = new ThermodynamicOperations(system);
@@ -70,10 +64,6 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
     
     public void displayResult(){
        System.out.println("out Temperature " + reboilerDuty);
-    }
-    
-    public String getName() {
-        return name;
     }
     
     public void runTransient() {

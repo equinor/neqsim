@@ -22,10 +22,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    ThermodynamicOperations thermoOps;
     StreamInterface inletStream;
     StreamInterface[] splitStream;
-    String name = new String();
     protected int splitNumber;
     double[] splitFactor = new double[1];
 
@@ -56,9 +54,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
         splitFactor = splitFact;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -86,7 +81,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
                 double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
                 splitStream[i].getThermoSystem().addComponent(index, moles * splitFactor[i] - moles);
             }
-            thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
+            ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
             thermoOps.TPflash();
         }
     }
@@ -94,9 +89,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     public void displayResult() {
     }
 
-    public String getName() {
-        return name;
-    }
 
     public void runTransient(double dt) {
     }

@@ -16,6 +16,12 @@
 
 package neqsim.processSimulation.processSystem;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import org.apache.logging.log4j.*;
 /*
  * thermoOps.java
  *
@@ -23,10 +29,14 @@ package neqsim.processSimulation.processSystem;
  */
 import java.util.*;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
+import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
+import neqsim.processSimulation.processEquipment.util.RecycleController;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  *
@@ -42,12 +52,14 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     String[][] signalDB = new String[100][100];
     private double time = 0;
     private int timeStepNumber = 0;
-    private ArrayList unitOperations = new ArrayList(0);
-    ArrayList measurementDevices = new ArrayList(0);
+    private ArrayList<ProcessEquipmentBaseClass> unitOperations = new ArrayList(0);
+    ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList(0);
+    RecycleController recycleController = new RecycleController();
     private double timeStep = 1.0;
     private String name = "process name";
     private SystemMechanicalDesign systemMechanicalDesign = null;
     private CostEstimateBaseClass costEstimator = null;
+    static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
     /**
      * Creates new thermoOps
@@ -88,6 +100,27 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         }
         return null;
     }
+    
+    public int getUnitNumber(String name) {
+        for (int i = 0; i < getUnitOperations().size(); i++) {
+            if (getUnitOperations().get(i) instanceof ModuleInterface) {
+                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().size(); j++) {
+
+                    if (((ProcessEquipmentInterface) ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations().get(j)).getName().equals(name)) {
+                        return j;
+                    }
+                }
+            } else if (((ProcessEquipmentInterface) getUnitOperations().get(i)).getName().equals(name)) {
+                return i;
+            }
+
+        }
+        return 0;
+    }
+    
+    public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
+    	unitOperations.set(getUnitNumber(name), operation);
+    }
 
     public ArrayList getAllUnitNames() {
         ArrayList unitNames = new ArrayList(0);
@@ -124,27 +157,61 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     public void clear() {
         unitOperations = new ArrayList(0);
     }
+    
+    public void setFluid(SystemInterface fluid1, SystemInterface fluid2) {
+    	fluid1.removeMoles();
+    	for(int i=0;i<fluid2.getNumberOfComponents();i++) {
+    		if(fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())){
+    			fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+    		}
+    	}
+    	fluid1.init(0);
+    	fluid1.setTemperature(fluid2.getTemperature());
+    	fluid1.setPressure(fluid2.getPressure());
+    }
 
  
+    public Thread runAsThread() {
+    	 Thread processThread = new Thread(this);
+    	 processThread.start();
+    	 return processThread;
+    }
 
     public void run() {
         boolean isConverged = true;
         boolean hasResycle = false;
         int iter = 0;
+        
+        //Initializing recycle controller
+        recycleController.clear();
+        for (int i = 0; i < unitOperations.size(); i++) {
+            if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
+            	hasResycle = true;
+            	recycleController.addRecycle((Recycle)unitOperations.get(i));
+            }
+        }
+        recycleController.init();
+        
         do {
             iter++;
             isConverged = true;
             for (int i = 0; i < unitOperations.size(); i++) {
-                ((Runnable) unitOperations.get(i)).run();
-                if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
-                    hasResycle = true;
-                    //System.out.println("Testing Recycle " + ((ProcessEquipmentInterface) unitOperations.get(i)).getName() + " error " + ((Recycle) unitOperations.get(i)).getError());
-                    if (((Recycle) unitOperations.get(i)).getTolerance() <= ((Recycle) unitOperations.get(i)).getError()) {
-                        isConverged = false;
-                    }
+            	if (!unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) ((Runnable) unitOperations.get(i)).run();
+                if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle") && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {
+                	((Runnable) unitOperations.get(i)).run();
                 }
-                if(!((ProcessEquipmentInterface)unitOperations.get(i)).solved()) isConverged=false;
             }
+            if(!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
+        		isConverged=false;
+        	}
+        	if(recycleController.solvedCurrentPriorityLevel()) {
+        		recycleController.nextPriorityLevel();
+        	}
+        	else if(recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
+        		recycleController.resetPriorityLevel();
+        		//isConverged=true;
+        	}
+        	
 
             signalDB = new String[1000][1 + 3 * measurementDevices.size()];
 
@@ -157,6 +224,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
             }
         } while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
+        
     }
 
     public void runTransient() {
@@ -222,6 +290,39 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
         }
     }
+    
+    public void save(String filePath) {
+
+		ObjectOutputStream out = null;
+		InputStream in = null;
+		try {
+			FileOutputStream fout = new FileOutputStream(filePath, false);
+			out = new ObjectOutputStream(fout);
+			out.writeObject(this);
+			out.close();
+			logger.info("process file saved to:  " + filePath);
+		} catch (Exception e) {
+			logger.error(e.toString());
+			e.printStackTrace();
+		}
+	}
+    
+    public static ProcessSystem open(String filePath) {
+
+		FileInputStream streamIn = null;
+		InputStream in = null;
+		ProcessSystem tempSystem = null;
+		try {
+			streamIn = new FileInputStream(filePath);
+			ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
+			tempSystem = (ProcessSystem) objectinputstream.readObject();
+			logger.info("process file open ok:  " + filePath);
+		} catch (Exception e) {
+			logger.error(e.toString());
+			e.printStackTrace();
+		}
+		return tempSystem;
+	}
 
     public String[][] reportResults() {
         String[][] text = new String[200][];

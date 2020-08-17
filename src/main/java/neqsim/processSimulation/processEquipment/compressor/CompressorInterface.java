@@ -5,6 +5,8 @@
  */
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.io.Serializable;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
@@ -13,7 +15,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author  esol
  * @version
  */
-public interface CompressorInterface extends ProcessEquipmentInterface {
+public interface CompressorInterface extends ProcessEquipmentInterface, Serializable {
 
     public void run();
 
