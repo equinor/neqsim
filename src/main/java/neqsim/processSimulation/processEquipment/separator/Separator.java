@@ -47,14 +47,12 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
 	SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned, thermoSystem2;
 	private String orientation = "horizontal";
-	ThermodynamicOperations thermoOps;
 	StreamInterface gasOutStream;
 	StreamInterface liquidOutStream;
 	private double pressureDrop = 0.0;
 	private double internalDiameter = 1.0;
 	private int numberOfInputStreams = 0;
 	Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
-	String name = new String();
 	private double efficiency = 1.0;
 	private double liquidCarryoverFraction = 0.0;
 	private double gasCarryunderFraction = 0.0;
@@ -79,10 +77,6 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
 	public Separator(String name, StreamInterface inletStream) {
 		this(inletStream);
-		this.name = name;
-	}
-
-	public void setName(String name) {
 		this.name = name;
 	}
 
@@ -190,10 +184,6 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 		thermoSystem.display();
 	}
 
-	public String getName() {
-		return name;
-	}
-
 	public void runTransient(double dt) {
 		inletStreamMixer.run();
 
@@ -222,7 +212,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 					inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentNumber(),
 					dn * dt);
 		}
-		thermoOps = new ThermodynamicOperations(thermoSystem);
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 		thermoOps.VUflash(volume1, newEnergy);
 
 		setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());

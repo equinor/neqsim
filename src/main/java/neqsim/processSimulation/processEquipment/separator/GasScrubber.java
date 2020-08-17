@@ -24,7 +24,6 @@ public class GasScrubber extends Separator implements ProcessEquipmentInterface,
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
     ArrayList<SeparatorSection> scrubberSection = null;
-    ThermodynamicOperations thermoOps;
     Stream inletStream;
     Stream gasOutStream;
     Stream liquidOutStream;

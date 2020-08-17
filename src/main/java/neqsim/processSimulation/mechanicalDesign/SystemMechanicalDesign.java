@@ -29,7 +29,7 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  *
  * @author esol
  */
-public class SystemMechanicalDesign {
+public class SystemMechanicalDesign  implements java.io.Serializable{
 
     private static final long serialVersionUID = 1000;
 

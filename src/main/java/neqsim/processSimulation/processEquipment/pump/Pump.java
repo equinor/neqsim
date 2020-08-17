@@ -23,7 +23,6 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
-    ThermodynamicOperations thermoOps;
     StreamInterface inletStream;
     StreamInterface outStream;
     double dH = 0.0;
@@ -62,6 +61,10 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public double getPower() {
         return dH;
     }
+    
+    public double getDuty() {
+        return dH;
+    }
 
     public StreamInterface getOutStream() {
         return outStream;
@@ -69,14 +72,16 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
     public void run() {
         //System.out.println("pump running..");
+        inletStream.getThermoSystem().init(3);
+        double hinn = inletStream.getThermoSystem().getEnthalpy();
+        
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         // thermoSystem.setTotalNumberOfMoles(molarFlow);
         thermoSystem.setPressure(pressure);
         thermoOps.TPflash();
         thermoSystem.init(3);
-        inletStream.getThermoSystem().init(3);
-        double hinn = inletStream.getThermoSystem().getEnthalpy();
+
 //        double entropy= inletStream.getThermoSystem().getEntropy();
 //        thermoSystem.setPressure(pressure);
 //        System.out.println("entropy inn.." + entropy);

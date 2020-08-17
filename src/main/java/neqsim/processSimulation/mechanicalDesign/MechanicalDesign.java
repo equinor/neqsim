@@ -22,6 +22,7 @@ package neqsim.processSimulation.mechanicalDesign;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.io.Serializable;
 import java.util.Hashtable;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -43,7 +44,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  *
  * @author esol
  */
-public class MechanicalDesign {
+public class MechanicalDesign implements Serializable{
 
     private static final long serialVersionUID = 1000;
 

@@ -21,9 +21,7 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
 
     private static final long serialVersionUID = 1000;
 
-    ThermodynamicOperations testOps;
     boolean setTemperature = false;
-    String name = new String();
     Stream[] outStream;
     Stream[] inStream;
     SystemInterface system;
@@ -70,9 +68,9 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
     }
 
     public void setName(String name) {
-        outStream[0].setName(name + "_Sout1");
-        outStream[1].setName(name + "_Sout2");
-        this.name = name;
+    //    outStream[0].setName(name + "_Sout1");
+    //    outStream[1].setName(name + "_Sout2");
+       super.setName(name);
     }
 
     public void setdT(double dT) {
@@ -136,10 +134,6 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
     public void displayResult() {
         outStream[0].displayResult();
         outStream[1].displayResult();
-    }
-
-    public String getName() {
-        return name;
     }
 
     public void runTransient() {

@@ -192,8 +192,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
         double liquid_dT = this.flowDirection[1] * heatFluxLiquid * getGeometry().getNodeLength() / getVelocity(1) / getBulkSystem().getPhase(1).getCp();
         double gas_dT = this.flowDirection[0] * heatFluxGas * getGeometry().getNodeLength() / getVelocity(0) / getBulkSystem().getPhase(0).getCp();
-        liquid_dT -= getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this) * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1) * getGeometry().getNodeLength() / getBulkSystem().getPhase(1).getCp();
-        gas_dT -= getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this) * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0) * getGeometry().getNodeLength() / getBulkSystem().getPhase(0).getCp();
+        liquid_dT -= 0*getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this) * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(1) * getGeometry().getNodeLength() / getBulkSystem().getPhase(1).getCp();
+        gas_dT -= 0*getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this) * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature()) * getWallContactLength(0) * getGeometry().getNodeLength() / getBulkSystem().getPhase(0).getCp();
         //liquid_dT += getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)* (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())* getWallContactLength(0) * getGeometry().getNodeLength()/getBulkSystem().getPhase(0).getCp();
         //liquid_dT += 10*this.flowDirection[1]*getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat()/getBulkSystem().getPhase(1).getCp();
         //System.out.println("Cp " + getBulkSystem().getPhase(1).getCp());
@@ -206,7 +206,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
 
         double JolprK = 3.14 * 0.2032 * 0.0094 * getGeometry().getNodeLength() * 7500 * 500;
         double fluxOut = -50.0 * 3.14 * (0.2032 + 0.01) * getGeometry().getNodeLength() * (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
-        double dTwall = (fluxOut + fluxwallinternal) / JolprK;
+        double dTwall = 0*(fluxOut + fluxwallinternal) / JolprK;
         pipe.setInnerWallTemperature(pipe.getInnerWallTemperature() + dTwall);
 
         getBulkSystem().getPhase(1).setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);

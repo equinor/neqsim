@@ -23,12 +23,10 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    ThermodynamicOperations thermoOps;
     Stream gasOutStream;
     Stream liquidOutStream;
     private int numberOfInputStreams = 0;
     Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
-    String name = new String();
     private double efficiency = 1.0;
     private double liquidCarryoverFraction = 0.0;
     private double gasCarryunderFraction = 0.0;
@@ -51,9 +49,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         addStream(inletStream);
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+
 
     public void setInletStream(Stream inletStream) {
         inletStreamMixer.addStream(inletStream);
@@ -149,10 +145,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         thermoSystem.display();
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void runTransient(double dt) {
         inletStreamMixer.run();
 
@@ -191,7 +183,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         }
 
         System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.VUflash(volume1,newEnergy);
 
         setOutComposition(thermoSystem);

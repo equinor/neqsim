@@ -111,7 +111,7 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 		thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
 
 		thermoSystem.setMultiPhaseCheck(true);
-		thermoOps = new ThermodynamicOperations(thermoSystem);
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 		thermoOps.TPflash();
 
 		thermoSystem.addPhaseFractionToPhase(gasInAqueous, "mole", "gas", "aqueous");

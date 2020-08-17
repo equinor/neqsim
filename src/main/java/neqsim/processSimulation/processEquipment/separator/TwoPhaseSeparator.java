@@ -22,7 +22,6 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
     private static final long serialVersionUID = 1000;
     
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
-    ThermodynamicOperations thermoOps;
     StreamInterface inletStream;
     StreamInterface gasOutStream;
     StreamInterface liquidOutStream;

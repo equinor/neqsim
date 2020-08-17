@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.io.Serializable;
 import java.util.*;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -11,7 +12,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-public class CompressorChart implements CompressorChartInterface {
+public class CompressorChart implements CompressorChartInterface, Serializable {
 	private static final long serialVersionUID = 1000;
 	static Logger logger = LogManager.getLogger(CompressorChart.class);
 	ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();

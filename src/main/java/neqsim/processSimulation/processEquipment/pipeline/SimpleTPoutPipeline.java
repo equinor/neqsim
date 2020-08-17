@@ -21,7 +21,6 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
 
     private static final long serialVersionUID = 1000;
     
-    ThermodynamicOperations testOps;
     boolean setTemperature=false;
     protected double temperatureOut =0, pressureOut=0.0;
     double dH=0.0;
@@ -55,7 +54,7 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
       //  system.setMultiPhaseCheck(true);
         system.setTemperature(this.temperatureOut);
         system.setPressure(this.pressureOut);
-        testOps = new ThermodynamicOperations(system);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
        // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);

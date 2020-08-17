@@ -1337,6 +1337,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				x += getPhase(j).getComponents()[i].getx();
 				z += getPhase(j).getComponents()[i].getz();
 			}
+			getPhase(j).normalize();
 		}
 	}
 

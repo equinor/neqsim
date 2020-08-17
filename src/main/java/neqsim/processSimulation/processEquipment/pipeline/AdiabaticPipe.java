@@ -22,7 +22,6 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
 
     private static final long serialVersionUID = 1000;
     
-    ThermodynamicOperations testOps;
     double inletPressure = 0;
     boolean setTemperature = false, setPressureOut = false;
     protected double temperatureOut = 270, pressureOut = 0.0;
@@ -144,7 +143,7 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
             system.setPressure(pressureOut);
             system.init(3);
         }
-        testOps = new ThermodynamicOperations(system);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
         // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);

@@ -53,7 +53,7 @@ public class EquilibriumStream extends Stream{
     
     public void run(){
         System.out.println("start flashing stream... " + streamNumber);
-        thermoOps = new ThermodynamicOperations(thermoSystem);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());

@@ -25,10 +25,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
     private static final long serialVersionUID = 1000;
 
-    protected ArrayList streams = new ArrayList(0);
+    protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     private int numberOfInputStreams = 0;
     protected Stream mixedStream;
-    public ThermodynamicOperations testOps = null;
     private boolean isSetOutTemperature = false;
     private double outTemperature = Double.NaN;
     static Logger logger = LogManager.getLogger(Mixer.class);
@@ -147,9 +146,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
     public void run() {
         double enthalpy = 0.0;
-
-//        ((Stream) streams.get(0)).getThermoSystem().display();
-
+        double flowRate =  ((Stream) streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
+      //  ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
         
         //System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());
@@ -165,13 +163,18 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
             enthalpy = calcMixStreamEnthalpy();
            //  System.out.println("temp guess " + guessTemperature());
+            if(!isSetOutTemperature) {
             mixedStream.getThermoSystem().setTemperature(guessTemperature());
-           
+            }
+            else {
+            	mixedStream.setTemperature(outTemperature, "K");
+            }
            //System.out.println("filan temp  " + mixedStream.getTemperature());
         }
         if(isSetOutTemperature) {
         	if(!Double.isNaN(getOutTemperature())) mixedStream.getThermoSystem().setTemperature(getOutTemperature());
         	testOps.TPflash();
+        	mixedStream.getThermoSystem().init(2);
         }
         else {
         	try { 
@@ -184,7 +187,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         	}
         	
         	
+        	
         }
+
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());

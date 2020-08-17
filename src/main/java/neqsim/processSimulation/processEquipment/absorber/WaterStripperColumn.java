@@ -20,7 +20,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version
  */
-public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterface {
+public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -32,22 +32,25 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     protected Stream solventInStream;
     private Stream gasOutStream;
     private Stream solventOutStream;
+    protected String name = "mixer";
     protected Stream outStream;
     private double waterDewPointTemperature = 263.15, dewPressure = 70.0, kwater = 1e-4;
-    int solventStreamNumber = 0;
+int solventStreamNumber = 0;
     /**
      * Creates new staticMixer
      */
-    public SimpleTEGAbsorber() {
+    public WaterStripperColumn() {
         mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
-    public SimpleTEGAbsorber(String name) {
-    	super();
-        setName(name);
+    public WaterStripperColumn(String name) {
+        this.name = name;
         mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public void addStream(StreamInterface newStream) {
         streams.add(newStream);
@@ -173,28 +176,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
         return absorptionEfficiency;
     }
 
-    public double calcY0() {
-    	double fugacityWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getFugacity("water");
-    	double xrel = mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
-    	double y0 = xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
-        return y0;
-    }
-    
-    public double calcY02() {
-        SystemInterface tempSolventSystem = (SystemInterface) gasInStream.getThermoSystem().clone();
-        //tempSolventSystem.addComponent("methane", tempSolventSystem.getPhase(0).getNumberOfMolesInPhase() / 10.0);
-        tempSolventSystem.setTemperature(waterDewPointTemperature);
-        ThermodynamicOperations testOps3 = new ThermodynamicOperations(tempSolventSystem);
-        try{
-        testOps3.TPflash();
-        }
-        catch(Exception e){
-        e.printStackTrace();
-        }
-            //System.out.println("water in gas " + (tempSolventSystem.getPhase(0).getComponent("water").getx()));
-        //tempSolventSystem.display();
-        double y0 = tempSolventSystem.getPhase(0).getComponent("water").getx();
-        return y0;
+    public double calcX0() {
+        return 0.0;
     }
 
     public double calcNumberOfTheoreticalStages() {
@@ -209,7 +192,8 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
     public void run() {
         try {
-            double y0 = 0.0, y1 = 0.0, yN = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx();
+        	double x2 = getSolventInStream().getFluid().getPhase(0).getComponent("water").getz();
+        	double x0=0.0;
             double absorptionEffiency = 0.0;
             mixedStream.setThermoSystem(((SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone()));
             mixedStream.getThermoSystem().setNumberOfPhases(2);
@@ -225,24 +209,24 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
             kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx() / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
 
-            calcNumberOfTheoreticalStages();
+            double Ntheoretical = calcNumberOfTheoreticalStages();
             //System.out.println("number of theoretical stages " + getNumberOfTheoreticalStages());
             absorptionEffiency = calcEa();
 
-            y0 = calcY0();
-            y1 = gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx() - absorptionEffiency * (gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx() - y0);
-
-            double yMean = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx();
-            double molesWaterToMove = (yMean - y1) * mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase();
-            System.out.println("Lean TEG to absorber " +solventInStream.getFlowRate("kg/hr"));
+            x0 = calcX0();
+            double revA = 1.0/absorptionEffiency;
             
-            System.out.println("mole water to move " + molesWaterToMove);
-            System.out.println("total moles water " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
-            System.out.println("total moles water " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
+            double x1 = x2 - (Math.pow(revA, Ntheoretical+1) - revA) / (Math.pow(revA, Ntheoretical+1) - 1.0) * (x2-x0);
+            		
+          
+            double xMean = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
+            double molesWaterToMove = (xMean - x1) * mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase();
+            //System.out.println("mole water to move " + molesWaterToMove);
+
             Stream stream = (Stream) mixedStream.clone();
             stream.setName("test");
-            stream.getThermoSystem().addComponent("water", -molesWaterToMove, 0);
-            stream.getThermoSystem().addComponent("water", molesWaterToMove, 1);
+            stream.getThermoSystem().addComponent("water", molesWaterToMove, 0);
+            stream.getThermoSystem().addComponent("water", -molesWaterToMove, 1);
             stream.getThermoSystem().initBeta();
             stream.getThermoSystem().init_x_y();
             stream.getThermoSystem().init(2);
@@ -258,21 +242,14 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
             SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
             liqTemp.init(2);
             solventOutStream.setThermoSystem(liqTemp);
+            solventOutStream.run();
+            System.out.println("Gas from water stripper " + gasOutStream.getFlowRate("kg/hr") +  " kg/hr");
 
+            System.out.println("TEG from water stripper " + solventOutStream.getFlowRate("kg/hr") +  " kg/hr");
 
-            setNTU(calcNTU(y0, y1, gasInStream.getThermoSystem().getPhase(0).getComponent("water").getx(), yMean));
-            //System.out.println("NTU " + getNTU());
-
-            double Ks = 0.055;
-            getSolventOutStream().getThermoSystem().initPhysicalProperties();
-            getGasOutStream().getThermoSystem().initPhysicalProperties();
-            double vtemp = Ks * Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity() - getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity()) / getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
-            double d = Math.sqrt(4.0 * getGasOutStream().getMolarRate() * getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() / getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity() / 3.14 / vtemp);
-            //System.out.println("diameter " + d);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("rich TEG from absorber " + getSolventOutStream().getFlowRate("kg/hr"));
 
     }
 
@@ -349,7 +326,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][0] = "Stream";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][i + 1] = getName();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][i + 1] = name;
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 13][4] = "-";
         }
 
@@ -358,6 +335,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
         dialogContentPane.add(scrollpane);
         dialog.pack();
         dialog.setVisible(true);
+    }
+
+    public String getName() {
+        return name;
     }
 
     public double getWaterDewPointTemperature() {
