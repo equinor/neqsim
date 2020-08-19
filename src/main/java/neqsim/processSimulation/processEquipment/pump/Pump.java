@@ -29,6 +29,11 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     double pressure = 0.0;
     private double molarFlow = 10.0;
 
+	private double outTemperature = 298.15;
+	private boolean useOutTemperature = false;
+	public double isentropicEfficiency = 1.0;
+	public boolean powerSet = false;
+
     /**
      * Creates new ThrottelValve
      */
@@ -74,13 +79,33 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         //System.out.println("pump running..");
         inletStream.getThermoSystem().init(3);
         double hinn = inletStream.getThermoSystem().getEnthalpy();
-        
+		double entropy = inletStream.getThermoSystem().getEntropy();
+		
+        if(useOutTemperature) {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         // thermoSystem.setTotalNumberOfMoles(molarFlow);
+        thermoSystem.setTemperature(outTemperature);
         thermoSystem.setPressure(pressure);
         thermoOps.TPflash();
         thermoSystem.init(3);
+        }
+        else {
+        	thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        	thermoSystem.setPressure(pressure);
+			// System.out.println("entropy inn.." + entropy);
+        	ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+			thermoOps.PSflash(entropy);
+			// double densOutIdeal = getThermoSystem().getDensity();
+			if (!powerSet) {
+				dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
+			}
+			double hout = hinn + dH;
+			isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
+			dH = hout - hinn;
+		    thermoOps = new ThermodynamicOperations(getThermoSystem());
+			thermoOps.PHflash(hout, 0);
+        }
 
 //        double entropy= inletStream.getThermoSystem().getEntropy();
 //        thermoSystem.setPressure(pressure);
@@ -187,5 +212,31 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
+    
+	/**
+	 * @return the isentropicEfficientcy
+	 */
+	public double getIsentropicEfficiency() {
+		return isentropicEfficiency;
+	}
+
+	/**
+	 * @param isentropicEfficientcy the isentropicEfficientcy to set
+	 */
+	public void setIsentropicEfficiency(double isentropicEfficientcy) {
+		this.isentropicEfficiency = isentropicEfficientcy;
+	}
+	
+	public double getOutTemperature() {
+		if (useOutTemperature)
+			return outTemperature;
+		else
+			return getThermoSystem().getTemperature();
+	}
+    
+	public void setOutTemperature(double outTemperature) {
+		useOutTemperature = true;
+		this.outTemperature = outTemperature;
+	}
 
 }
