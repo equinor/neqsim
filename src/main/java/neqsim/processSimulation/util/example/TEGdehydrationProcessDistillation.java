@@ -61,7 +61,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
 		TEGFeed.setFlowRate(6.1 * 1100.0, "kg/hr");
-		TEGFeed.setTemperature(35.4, "C");
+		TEGFeed.setTemperature(43.0, "C");
 		TEGFeed.setPressure(52.21, "bara");
 
 		SimpleTEGAbsorber absorber = new SimpleTEGAbsorber();
@@ -162,7 +162,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Heater coolerhOTteg3 = new Heater(coolerhOTteg2.getOutStream());
 		coolerhOTteg3.setName("lean TEG cooler");
-		coolerhOTteg3.setOutTemperature(273.15 + 35.4);
+		coolerhOTteg3.setOutTemperature(273.15 + 43.0);
 
 		Pump hotLeanTEGPump2 = new Pump(coolerhOTteg3.getOutStream());
 		hotLeanTEGPump2.setName("lean TEG HP pump");
@@ -177,7 +177,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Stream makeupTEG = new Stream("makeup TEG", pureTEG);
 		makeupTEG.setFlowRate(1e-6, "kg/hr");
-		makeupTEG.setTemperature(35.4, "C");
+		makeupTEG.setTemperature(43.0, "C");
 		makeupTEG.setPressure(52.21, "bara");
 		
 		Calculator makeupCalculator = new Calculator("makeup calculator");
@@ -232,10 +232,15 @@ public class TEGdehydrationProcessDistillation {
 		operations.add(makeupMixer);
 		operations.add(resycleLeanTEG);
 	
-		operations.run();
+		//operations.run();
 		
-		operations.save("c:/temp/TEGprocess.neqsim");
-		//operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+		//operations.save("c:/temp/TEGprocess.neqsim");
+		operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+		((Pump)operations.getUnit("hot lean TEG pump")).setOutletPressure(20.0) ;   
+		((Pump)operations.getUnit("hot lean TEG pump")).setIsentropicEfficiency(0.75);                  
+		((Pump)operations.getUnit("lean TEG HP pump")).setOutletPressure(51.2)         ;                 
+		((Pump)operations.getUnit("lean TEG HP pump")).setIsentropicEfficiency(0.75);
+		operations.run();
 		//((DistillationColumn)operations.getUnit("TEG regeneration column")).setNumberOfTrays(2);
 		System.out.println("water in wet gas  " + ((Stream)operations.getUnit("water saturated feed gas")).getFluid().getPhase(0).getComponent("water").getz()*1.0e6*0.01802*101325.0/(8.314*288.15));
 		System.out.println("water in dry gas  " + ((Stream)operations.getUnit("dry gas from absorber")).getFluid().getPhase(0).getComponent("water").getz()*1.0e6);

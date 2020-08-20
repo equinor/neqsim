@@ -45,7 +45,6 @@ public class TEGAbsorberTest{
         absorber.addSolventInStream(TEGstreamIn);
         absorber.setNumberOfStages(5);
         absorber.setStageEfficiency(0.5);
-        absorber.setWaterDewPointTemperature(253.15, 70.0);
 //
         Stream gasStreamOut = new Stream( absorber.getGasOutStream());
         gasStreamOut.setName("gasStreamOut");
