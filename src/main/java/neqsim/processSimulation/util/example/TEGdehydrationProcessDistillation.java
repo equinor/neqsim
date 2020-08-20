@@ -60,7 +60,7 @@ public class TEGdehydrationProcessDistillation {
 		feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
 
 		Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
-		TEGFeed.setFlowRate(6.1 * 1100.0, "kg/hr");
+		TEGFeed.setFlowRate(6.1 * 1125.0, "kg/hr");
 		TEGFeed.setTemperature(43.0, "C");
 		TEGFeed.setPressure(52.21, "bara");
 
@@ -69,7 +69,7 @@ public class TEGdehydrationProcessDistillation {
 		absorber.addGasInStream(waterSaturatedFeedGas);
 		absorber.addSolventInStream(TEGFeed);
 		absorber.setNumberOfStages(5);
-		absorber.setStageEfficiency(0.5);
+		absorber.setStageEfficiency(0.55);
 
 		Stream dehydratedGas = new Stream(absorber.getGasOutStream());
 		dehydratedGas.setName("dry gas from absorber");
@@ -232,15 +232,11 @@ public class TEGdehydrationProcessDistillation {
 		operations.add(makeupMixer);
 		operations.add(resycleLeanTEG);
 	
-		//operations.run();
-		
-		//operations.save("c:/temp/TEGprocess.neqsim");
-		operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
-		((Pump)operations.getUnit("hot lean TEG pump")).setOutletPressure(20.0) ;   
-		((Pump)operations.getUnit("hot lean TEG pump")).setIsentropicEfficiency(0.75);                  
-		((Pump)operations.getUnit("lean TEG HP pump")).setOutletPressure(51.2)         ;                 
-		((Pump)operations.getUnit("lean TEG HP pump")).setIsentropicEfficiency(0.75);
 		operations.run();
+		
+		operations.save("c:/temp/TEGprocess.neqsim");
+		//operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+
 		//((DistillationColumn)operations.getUnit("TEG regeneration column")).setNumberOfTrays(2);
 		System.out.println("water in wet gas  " + ((Stream)operations.getUnit("water saturated feed gas")).getFluid().getPhase(0).getComponent("water").getz()*1.0e6*0.01802*101325.0/(8.314*288.15));
 		System.out.println("water in dry gas  " + ((Stream)operations.getUnit("dry gas from absorber")).getFluid().getPhase(0).getComponent("water").getz()*1.0e6);
