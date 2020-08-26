@@ -60,7 +60,7 @@ public class TEGdehydrationProcessDistillation {
 		feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
 
 		Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
-		TEGFeed.setFlowRate(6.1 * 1125.0, "kg/hr");
+		TEGFeed.setFlowRate(6862.5, "kg/hr");
 		TEGFeed.setTemperature(43.0, "C");
 		TEGFeed.setPressure(52.21, "bara");
 
@@ -69,7 +69,7 @@ public class TEGdehydrationProcessDistillation {
 		absorber.addGasInStream(waterSaturatedFeedGas);
 		absorber.addSolventInStream(TEGFeed);
 		absorber.setNumberOfStages(5);
-		absorber.setStageEfficiency(0.55);
+		absorber.setStageEfficiency(0.485);
 
 		Stream dehydratedGas = new Stream(absorber.getGasOutStream());
 		dehydratedGas.setName("dry gas from absorber");
@@ -82,7 +82,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
 		richGLycolHeaterCondenser.setName("rich TEG preheater");
-		richGLycolHeaterCondenser.setOutTemperature(273.15 + 37.5);
+		richGLycolHeaterCondenser.setOutTemperature(273.15 + 35.5);
 
 		Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
 		richGLycolHeater.setName("rich TEG heater HP");
@@ -119,12 +119,12 @@ public class TEGdehydrationProcessDistillation {
 		column.getReboiler().setOutTemperature(273.15 + 206.6);
 		column.getCondenser().setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
 		column.getReboiler().addStream(gasToReboiler);
-		column.setTopPressure(1.2);
+		column.setTopPressure(1.1);
 		column.setBottomPressure(1.23);
 		
 		Heater coolerRegenGas = new Heater(column.getGasOutStream());
 		coolerRegenGas.setName("regen gas cooler");
-		coolerRegenGas.setOutTemperature(273.15 + 36.5);
+		coolerRegenGas.setOutTemperature(273.15 + 37.5);
 
 		Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
 		sepregenGas.setName("regen gas separator");
@@ -233,10 +233,12 @@ public class TEGdehydrationProcessDistillation {
 		operations.add(resycleLeanTEG);
 	
 		operations.run();
+		//operations.run();
 		
 		operations.save("c:/temp/TEGprocess.neqsim");
-		//operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
-
+		///operations = ProcessSystem.open("c:/temp/TEGprocess.neqsim");
+		//((DistillationColumn)operations.getUnit("TEG regeneration column")).setTopPressure(1.2);
+		//operations.run();
 		//((DistillationColumn)operations.getUnit("TEG regeneration column")).setNumberOfTrays(2);
 		System.out.println("water in wet gas  " + ((Stream)operations.getUnit("water saturated feed gas")).getFluid().getPhase(0).getComponent("water").getz()*1.0e6*0.01802*101325.0/(8.314*288.15));
 		System.out.println("water in dry gas  " + ((Stream)operations.getUnit("dry gas from absorber")).getFluid().getPhase(0).getComponent("water").getz()*1.0e6);

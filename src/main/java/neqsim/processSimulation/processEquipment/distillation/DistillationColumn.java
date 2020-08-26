@@ -203,12 +203,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		if (isDoInitializion()) {
 			this.init();
 		}
-		double err = 1.0;
+		double err = 1.0e10, errOld;
 		int iter = 0;
 		double[] oldtemps = new double[numberOfTrays];
 
 		do {
 			iter++;
+			errOld = err;
 			err = 0.0;
 			for (int i = 0; i < numberOfTrays; i++) {
 				oldtemps[i] = ((MixerInterface) trays.get(i)).getThermoSystem().getTemperature();
@@ -262,7 +263,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 			}
 			System.out.println("error iter " + err + " iteration " + iter);
 			// massBalanceCheck();
-		} while (err > 1e-2 && iter < 10);
+		} while (err > 1e-2 && err<errOld && iter < 10);
 
 		for (int i = 0; i <= numberOfTrays - 1; i++) {
 			// ((Mixer) trays.get(i)).getFluid().display();
@@ -271,7 +272,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 
 		}
 
-		// massBalanceCheck();
+		//massBalanceCheck();
 
 		gasOutStream.setThermoSystem((SystemInterface) ((SimpleTray) trays.get(numberOfTrays - 1)).getGasOutStream()
 				.getThermoSystem().clone());

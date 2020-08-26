@@ -18,7 +18,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 	private static final long serialVersionUID = 1000;
 
 	double heatInput = 0.0;
-	private double temperature = 273.15, trayPressure = -1.0;
+	private double temperature = Double.NaN, trayPressure = -1.0;
 
 	public SimpleTray() {
 	}
@@ -80,8 +80,9 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
 		// System.out.println("total number of moles " +
 		// thermoSystem2.getTotalNumberOfMoles());
-		if (trayPressure > 0)
+		if (trayPressure > 0) {
 			thermoSystem2.setPressure(trayPressure);
+		}
 		mixedStream.setThermoSystem(thermoSystem2);
 		// thermoSystem2.display();
 		ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
@@ -147,6 +148,23 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 	 */
 	public void setTemperature(double temperature) {
 		this.temperature = temperature;
+	}
+
+	public double guessTemperature() {
+		if (Double.isNaN(temperature)) {
+			double gtemp = 0;
+			for (int k = 0; k < streams.size(); k++) {
+				gtemp += ((StreamInterface) streams.get(k)).getThermoSystem().getTemperature()
+						* ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfMoles()
+						/ mixedStream.getThermoSystem().getNumberOfMoles();
+
+			}
+			//System.out.println("guess temperature " + gtemp);
+			return gtemp;
+		} else {
+			//System.out.println("temperature " + temperature);
+			return temperature;
+	}
 	}
 
 }
