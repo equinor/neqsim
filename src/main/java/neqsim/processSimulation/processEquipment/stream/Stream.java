@@ -37,7 +37,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     protected int streamNumber = 0;
     protected static int numberOfStreams = 0;
     private double gasQuality = 0.5;
-    protected String name = new String();
     protected StreamInterface stream = null;
 
     /**
@@ -114,9 +113,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         return clonedSystem;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public double getTemperature() {
         return thermoSystem.getTemperature();
@@ -262,9 +258,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         thermoSystem.display(name);
     }
 
-    public String getName() {
-        return name;
-    }
 
     public void runTransient(double dt) {
         run();

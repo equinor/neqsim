@@ -180,6 +180,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     public void run() {
         boolean isConverged = true;
         boolean hasResycle = false;
+        boolean hasAdjuster = false;
         int iter = 0;
         
         //Initializing recycle controller
@@ -188,6 +189,9 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
             if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")) {
             	hasResycle = true;
             	recycleController.addRecycle((Recycle)unitOperations.get(i));
+            }
+            if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
+            	hasAdjuster = true;
             }
         }
         recycleController.init();
@@ -211,6 +215,14 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         		recycleController.resetPriorityLevel();
         		//isConverged=true;
         	}
+        	
+        	 for (int i = 0; i < unitOperations.size(); i++) {
+        		 if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
+        			 if(!((neqsim.processSimulation.processEquipment.util.Adjuster)unitOperations.get(i)).solved()){
+        				 isConverged=false;
+        				 }
+        			 }
+        	 }
         	
 
             signalDB = new String[1000][1 + 3 * measurementDevices.size()];

@@ -51,7 +51,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     public void setSplitFactors(double[] splitFact) {
+    	splitNumber = splitFact.length;
         splitFactor = splitFact;
+        setInletStream(inletStream);
     }
 
 
@@ -75,6 +77,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     public void run() {
         for (int i = 0; i < splitNumber; i++) {
             thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+            thermoSystem.init(0);
             splitStream[i].setThermoSystem(thermoSystem);
             for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
             	int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
