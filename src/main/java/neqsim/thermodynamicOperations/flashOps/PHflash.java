@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
- /*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
+/*
+* PHflash.java
+*
+* Created on 8. mars 2001, 10:56
+*/
 package neqsim.thermodynamicOperations.flashOps;
+
+import com.google.common.net.InetAddresses.TeredoInfo;
 
 import neqsim.thermo.system.SystemInterface;
 
@@ -30,95 +32,167 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class PHflash extends Flash implements java.io.Serializable {
 
-    private static final long serialVersionUID = 1000;
+	private static final long serialVersionUID = 1000;
 
-    double Hspec = 0;
-    Flash tpFlash;
-    int type = 0;
+	double Hspec = 0;
+	Flash tpFlash;
+	int type = 0;
 
-    /**
-     * Creates new PHflash
-     */
-    public PHflash() {
-    }
+	/**
+	 * Creates new PHflash
+	 */
+	public PHflash() {
+	}
 
-    public PHflash(SystemInterface system, double Hspec, int type) {
-        this.system = system;
-        this.tpFlash = new TPflash(system);
-        this.Hspec = Hspec;
-        this.type = type;
-    }
+	public PHflash(SystemInterface system, double Hspec, int type) {
+		this.system = system;
+		this.tpFlash = new TPflash(system);
+		this.Hspec = Hspec;
+		this.type = type;
+	}
 
-    public double calcdQdTT() {
-        double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
-        return dQdTT;
-    }
+	public double calcdQdTT() {
+		double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
+		return dQdTT/Math.abs(Hspec);
+	}
 
-    public double calcdQdT() {
-        double dQ = system.getEnthalpy() - Hspec;
-        return dQ;
-    }
+	public double calcdQdT() {
+		double dQ = (system.getEnthalpy() - Hspec)/Math.abs(Hspec);
+		return dQ;
+	}
 
-    public double solveQ() {
-        double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
-        double iterations = 1;
-        double error = 1.0, erorOld = 1.0e10;
-        double factor = 0.8;
-        double newCorr = 1.0;
-        system.init(2);
-        boolean correctFactor = true;
-        do {
-            if (error > erorOld && factor > 0.1 && correctFactor) {
-                factor *= 0.5;
-            } else if (error < erorOld && correctFactor) {
-                factor = iterations/(iterations+1.0)*1.0;
-            }
-            iterations++;
-            oldTemp = nyTemp;
-            newCorr = factor * calcdQdT() / calcdQdTT();
-            nyTemp = oldTemp - newCorr;
-            if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-                nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
-                correctFactor = false;
-            } else if (nyTemp < 0) {
-                nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
-                correctFactor = false;
-            } else if (Double.isNaN(nyTemp)) {
-                nyTemp = oldTemp + 0.1;
-                correctFactor = false;
-            } else {
-                correctFactor = true;
-            }
-            system.setTemperature(1.0 / nyTemp);
-            tpFlash.run();
-            system.init(2);
-            erorOld = error;
-            error = Math.abs(calcdQdT());
-           // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-           // System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
+	public double solveQ() {
+		double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+		double iterations = 1;
+		double error = 1.0, erorOld = 1.0e10;
+		double factor = 0.8;
+		double newCorr = 1.0;
+		system.init(2);
+		boolean correctFactor = true;
 
-        } while (((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+		double maxTemperature = 1e10, minTemperature = 0.0;
 
-        return 1.0 / nyTemp;
-    }
+		do {
+			if (Math.abs(error) > Math.abs(erorOld) && factor > 0.1 && correctFactor) {
+				factor *= 0.5;
+			} else if (Math.abs(error) < Math.abs(erorOld) && correctFactor) {
+				factor = iterations / (iterations + 1.0) * 1.0;
+			}
+			iterations++;
+			oldTemp = nyTemp;
+			newCorr = factor * calcdQdT() / calcdQdTT();
+			nyTemp = oldTemp - newCorr;
 
-    public void run() {
-        tpFlash.run();
-        //System.out.println("enthalpy start: " + system.getEnthalpy());
-        if (type == 0) {
-            solveQ();
-        } else {
-            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 0);
-            secondOrderSolver.setSpec(Hspec);
-            secondOrderSolver.solve(1);
+			if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
+				nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+				correctFactor = false;
+			} else if (nyTemp < 0) {
+				nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+				correctFactor = false;
+			} else if (Double.isNaN(nyTemp)) {
+				nyTemp = oldTemp + 0.1;
+				correctFactor = false;
+			} else {
+				correctFactor = true;
+			}
+			system.setTemperature(1.0 / nyTemp);
+			if (system.getTemperature() > maxTemperature) {
+				system.setTemperature(maxTemperature - 0.1);
+			} else if (system.getTemperature() < minTemperature) {
+				system.setTemperature(minTemperature + 0.1);
+			}
+			tpFlash.run();
+			system.init(2);
+			erorOld = error;
+			error = calcdQdT();
 
-        }
-        //System.out.println("enthalpy: " + system.getEnthalpy());
+			if (error > 0 && system.getTemperature() > maxTemperature) {
+				maxTemperature = system.getTemperature();
+			} else if (error < 0 && system.getTemperature() < minTemperature) {
+				minTemperature = system.getTemperature();
+			}
+			
+			if (false && error * erorOld < 0) {
+				system.setTemperature((Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(erorOld) + Math.abs(error)));
+				tpFlash.run();
+				system.init(2);
+				erorOld = error;
+				error = calcdQdT();
+				System.out.println("reset temperature -- new temp " + system.getTemperature() + " error " + error + " iter " + iterations);
+			}
+			// error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+			//System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
+
+		} while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+		//System.out.println("temp " + system.getTemperature() + " iter " + iterations + " error " + error);
+		return 1.0 / nyTemp;
+	}
+
+	public double solveQ2() {
+		double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+		double iterations = 1;
+		double error = 1.0, erorOld = 1.0e10;
+		double factor = 0.8;
+		double newCorr = 1.0;
+		system.init(2);
+		boolean correctFactor = true;
+		// System.out.println("temp start " + system.getTemperature());
+		do {
+			if (error > erorOld && factor > 0.1 && correctFactor) {
+				factor *= 0.5;
+			} else if (error < erorOld && correctFactor) {
+				factor = iterations / (iterations + 1.0) * 1.0;
+			}
+			iterations++;
+			oldTemp = nyTemp;
+			newCorr = factor * calcdQdT() / calcdQdTT();
+			nyTemp = oldTemp - newCorr;
+			if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
+				nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+				correctFactor = false;
+			} else if (nyTemp < 0) {
+				nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
+				correctFactor = false;
+			} else if (Double.isNaN(nyTemp)) {
+				nyTemp = oldTemp + 0.1;
+				correctFactor = false;
+			} else {
+				correctFactor = true;
+			}
+			system.setTemperature(1.0 / nyTemp);
+			tpFlash.run();
+			system.init(2);
+			erorOld = error;
+			error = Math.abs(calcdQdT());
+			// error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+			// if(iterations>100) System.out.println("temp " + system.getTemperature() + "
+			// iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
+			// "+ factor);
+
+		} while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+		// System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
+		// " error "+ error );
+		return 1.0 / nyTemp;
+	}
+
+	public void run() {
+		tpFlash.run();
+		// System.out.println("enthalpy start: " + system.getEnthalpy());
+		if (type == 0) {
+			solveQ();
+		} else {
+			sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
+					system.getPhases()[0].getNumberOfComponents(), 0);
+			secondOrderSolver.setSpec(Hspec);
+			secondOrderSolver.solve(1);
+
+		}
+		// System.out.println("enthalpy: " + system.getEnthalpy());
 //        System.out.println("Temperature: " + system.getTemperature());
-    }
+	}
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
-        return null;
-    }
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+		return null;
+	}
 
 }
