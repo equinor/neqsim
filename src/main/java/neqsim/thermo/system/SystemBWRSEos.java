@@ -79,9 +79,9 @@ public class SystemBWRSEos extends SystemEos {
     }
     
     public Object clone(){
-        PhaseBWRSEos clonedSystem = null;
+    	SystemBWRSEos clonedSystem = null;
         try{
-            clonedSystem = (PhaseBWRSEos) super.clone();
+            clonedSystem = (SystemBWRSEos) super.clone();
         }
         catch(Exception e) {
             logger.error("Cloning failed.", e);
