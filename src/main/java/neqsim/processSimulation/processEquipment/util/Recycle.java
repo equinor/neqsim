@@ -149,7 +149,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     public void setDownstreamProperties() {
     	  if(downstreamProperty.size()>0) {
           	for(int i=0;i<downstreamProperty.size();i++) {
-          		if(downstreamProperty.get(i).equals("flow rate")) mixedStream.setFlowRate(lastIterationStream.getFlowRate("kg/hr"), "kg/hr");
+          		if(downstreamProperty.get(i).equals("flow rate")) mixedStream.setFlowRate(outletStream.getFlowRate("kg/hr"), "kg/hr");
           	}
           }
     }
@@ -279,6 +279,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 
 	public void setOutletStream(StreamInterface outletStream) {
 		this.outletStream = outletStream;
-		lastIterationStream = this.outletStream;
+		lastIterationStream = (StreamInterface) this.outletStream.clone();
 	}
 }

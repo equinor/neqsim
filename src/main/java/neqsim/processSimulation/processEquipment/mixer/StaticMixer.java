@@ -98,10 +98,7 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
         //System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
         mixedStream.getThermoSystem().init(3);
     }
-    
-    public String getName(){
-        return name;
-    }
+
     
     public void runTransient() {
     }

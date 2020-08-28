@@ -38,14 +38,6 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         refluxIsSet = true;
     }
 
-    public double guessTemperature() {
-        double gtemp = 0;
-        for (int k = 0; k < streams.size(); k++) {
-            gtemp += ((StreamInterface) streams.get(k)).getThermoSystem().getTemperature() * ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfMoles() / mixedStream.getThermoSystem().getNumberOfMoles();
-
-        }
-        return gtemp;
-    }
     
      public double getDuty(){
       //  return calcMixStreamEnthalpy();
@@ -53,6 +45,8 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     }
 
     public void run() {
+    	double oldTemp= getTemperature();
+    	//System.out.println("guess temperature " + getTemperature());
         if (!refluxIsSet) {
             super.run();
         } else {
@@ -65,9 +59,7 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());
-
         duty = mixedStream.getFluid().getEnthalpy()- calcMixStreamEnthalpy0();
-        
     //    System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     }
 }

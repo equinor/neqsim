@@ -33,7 +33,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     private Stream gasOutStream;
     private Stream solventOutStream;
     protected Stream outStream;
-    private double waterDewPointTemperature = 263.15, dewPressure = 70.0, kwater = 1e-4;
+    private double kwater = 1e-4;
     int solventStreamNumber = 0;
     /**
      * Creates new staticMixer
@@ -177,23 +177,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     	double fugacityWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getFugacity("water");
     	double xrel = mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
     	double y0 = xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
-        return y0;
-    }
-    
-    public double calcY02() {
-        SystemInterface tempSolventSystem = (SystemInterface) gasInStream.getThermoSystem().clone();
-        //tempSolventSystem.addComponent("methane", tempSolventSystem.getPhase(0).getNumberOfMolesInPhase() / 10.0);
-        tempSolventSystem.setTemperature(waterDewPointTemperature);
-        ThermodynamicOperations testOps3 = new ThermodynamicOperations(tempSolventSystem);
-        try{
-        testOps3.TPflash();
-        }
-        catch(Exception e){
-        e.printStackTrace();
-        }
-            //System.out.println("water in gas " + (tempSolventSystem.getPhase(0).getComponent("water").getx()));
-        //tempSolventSystem.display();
-        double y0 = tempSolventSystem.getPhase(0).getComponent("water").getx();
         return y0;
     }
 
@@ -360,14 +343,6 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
         dialog.setVisible(true);
     }
 
-    public double getWaterDewPointTemperature() {
-        return waterDewPointTemperature;
-    }
-
-    public void setWaterDewPointTemperature(double waterDewPointTemperature, double dewPressure) {
-        this.waterDewPointTemperature = waterDewPointTemperature;
-        this.dewPressure = dewPressure;
-    }
 
     public void setGasOutStream(Stream gasOutStream) {
         this.gasOutStream = gasOutStream;

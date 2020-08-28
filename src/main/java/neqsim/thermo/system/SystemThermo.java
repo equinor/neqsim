@@ -565,11 +565,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	}
 
 	public void setTotalFlowRate(double flowRate, String flowunit) {
-
-		if (getMolarMass() < 1e-20) {
-			init(0);
-			init(1);
-		}
+		init(0);
+		init(1);
+		
 		if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("Am3/sec")) {
 			initPhysicalProperties("density");
 		}
