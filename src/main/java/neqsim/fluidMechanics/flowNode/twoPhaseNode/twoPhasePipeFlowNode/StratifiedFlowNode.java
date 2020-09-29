@@ -71,23 +71,25 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 11.0, 60.0);
-        //SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
+        //SystemInterface testSystem = new SystemSrkEos(273.15 + 11.0, 60.0);
+        SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(285.3, 100.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        PipeData pipe1 = new PipeData(0.203, 0.00025);
-
+        PipeData pipe1 = new PipeData(0.50203, 0.00025);
+        testSystem.addComponent("methane",0.1061152181,"MSm3/hr", 0);
+        testSystem.addComponent("water", 1.206862204876,"kg/min", 0);
+        testSystem.addComponent("methanol", 101.206862204876,"kg/min", 1);
        // testSystem.addComponent("nitrogen", 25.0, 0);
       //  testSystem.addComponent("CO2", 250.0, 0);
-        testSystem.addComponent("methane", 5.0, 0);
+  //      testSystem.addComponent("methane", 5.0, 0);
        // testSystem.addComponent("nitrogen", 5.0, 1);
        // testSystem.addComponent("CO2", 250.0, 1);
        // testSystem.addComponent("methane", 25.0, 1);
-        testSystem.addComponent("n-pentane", 25.0, 1);
+    //   testSystem.addComponent("n-pentane", 25.0, 1);
         //testSystem.addComponent("MDEA", 0.08, 1);
         //testSystem.getPhase(1).setTemperature(275);
         // testSystem.chemicalReactionInit();
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(2);
+        testSystem.setMixingRule(10);
         //testSystem.getPhase(0).setTemperature(273.15 + 100.0);
         testSystem.initPhysicalProperties();
         //  
@@ -103,12 +105,14 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         //testSystem.setTemperature(273.15+20);
         //    testSystem.initPhysicalProperties();
 
-        FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
+   //    FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
+   //    FlowNodeInterface test = new AnnularFlow(testSystem, pipe1);
+        FlowNodeInterface test = new DropletFlowNode(testSystem, pipe1);
         test.setInterphaseModelType(1);
-        test.setLengthOfNode(0.005);
+        test.setLengthOfNode(0.01);
         test.getGeometry().getSurroundingEnvironment().setTemperature(273.15 + 4.0);
 
-        test.getFluidBoundary().setHeatTransferCalc(true);
+        test.getFluidBoundary().setHeatTransferCalc(false);
         test.getFluidBoundary().setMassTransferCalc(true);
         double length = 0;
         test.initFlowCalc();
@@ -118,13 +122,13 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
             length += test.getLengthOfNode();
             test.initFlowCalc();
             test.calcFluxes();
-            if (i > 1 && (i % 20) == 0) {
+            if (i > 1 && (i % 1) == 0) {
                 k++;
                 test.display("length " + length);
                 // test.getBulkSystem().display("length " + length);
-                test.getInterphaseSystem().display("length " + length);
+               // test.getInterphaseSystem().display("length " + length);
                 //test.getFluidBoundary().display("length " + length);
-                test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+               // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
                 temperatures2[0][k] = length;
                 temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
                 // test.getFluidBoundary().display("test");
@@ -132,8 +136,8 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
 
             //test.getBulkSystem().display();
             test.update();
-            test.getFluidBoundary().display("length " + length);
-            test.getInterphaseSystem().display("length " + length);
+           // test.getFluidBoundary().display("length " + length);
+          //  test.getInterphaseSystem().display("length " + length);
 
 
             //test.getFluidBoundary().display("test");
@@ -142,5 +146,6 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         for (int i = 0; i < k; i++) {
             System.out.println("len temp  " + temperatures2[0][i] + " " + temperatures2[1][i]);
         }
+        System.out.println("contact length " + test.getInterphaseContactArea());
     }
 }

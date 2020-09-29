@@ -69,7 +69,7 @@ public class TEGdehydrationProcessDistillation {
 		absorber.addGasInStream(waterSaturatedFeedGas);
 		absorber.addSolventInStream(TEGFeed);
 		absorber.setNumberOfStages(5);
-		absorber.setStageEfficiency(0.485);
+		absorber.setStageEfficiency(0.55);
 
 		Stream dehydratedGas = new Stream(absorber.getGasOutStream());
 		dehydratedGas.setName("dry gas from absorber");
@@ -82,7 +82,7 @@ public class TEGdehydrationProcessDistillation {
 
 		Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
 		richGLycolHeaterCondenser.setName("rich TEG preheater");
-		richGLycolHeaterCondenser.setOutTemperature(273.15 + 35.5);
+		richGLycolHeaterCondenser.setOutTemperature(273.15 + 37.5);
 
 		Heater richGLycolHeater = new Heater(richGLycolHeaterCondenser.getOutStream());
 		richGLycolHeater.setName("rich TEG heater HP");
@@ -106,7 +106,7 @@ public class TEGdehydrationProcessDistillation {
 		stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
 		Stream strippingGas = new Stream("stripGas", stripGas);
-		strippingGas.setFlowRate(90.0, "Sm3/hr");
+		strippingGas.setFlowRate(91.2, "Sm3/hr");
 		strippingGas.setTemperature(80.0, "C");
 		strippingGas.setPressure(1.23, "bara");
 
@@ -117,14 +117,15 @@ public class TEGdehydrationProcessDistillation {
 		column.setName("TEG regeneration column");
 		column.addFeedStream(richGLycolHeater2.getOutStream(), 2);
 		column.getReboiler().setOutTemperature(273.15 + 206.6);
-		column.getCondenser().setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
+		column.getCondenser().setOutTemperature(273.15 +102.0);
+		//column.getCondenser().setEnergyStream(richGLycolHeaterCondenser.getEnergyStream());
 		column.getReboiler().addStream(gasToReboiler);
-		column.setTopPressure(1.1);
+		column.setTopPressure(1.2);
 		column.setBottomPressure(1.23);
 		
 		Heater coolerRegenGas = new Heater(column.getGasOutStream());
 		coolerRegenGas.setName("regen gas cooler");
-		coolerRegenGas.setOutTemperature(273.15 + 37.5);
+		coolerRegenGas.setOutTemperature(273.15 + 35.5);
 
 		Separator sepregenGas = new Separator(coolerRegenGas.getOutStream());
 		sepregenGas.setName("regen gas separator");
@@ -261,18 +262,19 @@ public class TEGdehydrationProcessDistillation {
 		System.out.println("flow rate from pump2  " + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
 		System.out.println("makeup TEG  " + makeupTEG.getFluid().getFlowRate("kg/hr"));
 		
-		
-		
+		TEGFeed.getFluid().display();
+		absorber.run();
 		
 		System.out.println("pump power " + hotLeanTEGPump.getDuty());
 		System.out.println("pump2 power " + hotLeanTEGPump2.getDuty());
 		System.out.println("wt lean TEG after reboiler "
 		+ column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("TEG"));
 		System.out.println("temperature from pump " + (hotLeanTEGPump2.getOutStream().getTemperature()-273.15));
-
+		
 		System.out.println("flow rate from reboiler " + ((Reboiler)column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
 		System.out.println("flow rate from pump2  " + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
+		System.out.println("condenser duty  "  + ((Condenser)((DistillationColumn)operations.getUnit("TEG regeneration column")).getCondenser()).getDuty()/1.0e3);
+		System.out.println("richGLycolHeaterCondenser duty  "  + richGLycolHeaterCondenser.getDuty()/1.0e3);
 
 	}
-
 }

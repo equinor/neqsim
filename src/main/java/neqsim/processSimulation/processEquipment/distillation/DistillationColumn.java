@@ -263,7 +263,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 			}
 			System.out.println("error iter " + err + " iteration " + iter);
 			// massBalanceCheck();
-		} while (err > 1e-2 && err<errOld && iter < 10);
+		} while (err > 1e-4 && err<errOld && iter < 10);
 
 		for (int i = 0; i <= numberOfTrays - 1; i++) {
 			// ((Mixer) trays.get(i)).getFluid().display();
@@ -272,8 +272,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 
 		}
 
-		//massBalanceCheck();
-
+		massBalanceCheck();
+		//energyBalanceCheck();
 		gasOutStream.setThermoSystem((SystemInterface) ((SimpleTray) trays.get(numberOfTrays - 1)).getGasOutStream()
 				.getThermoSystem().clone());
 		liquidOutStream.setThermoSystem(
@@ -314,6 +314,26 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 			massBalance[i] = massInput[i] - massOutput[i];
 			System.out.println("tray " + i + " number of input streams " + numberOfInputStreams + " massinput "
 					+ massInput[i] + " massoutput " + massOutput[i] + " massbalance " + massBalance[i] + " gasout "
+					+ trays.get(i).getGasOutStream().getFlowRate("kg/hr") + " liquidout "
+					+ trays.get(i).getLiquidOutStream().getFlowRate("kg/hr") + " pressure "+ trays.get(i).getGasOutStream().getPressure() + " temperature "+ trays.get(i).getGasOutStream().getTemperature("C"));
+		}
+	}
+	
+	public void energyBalanceCheck() {
+
+		double[] energyInput = new double[numberOfTrays];
+		double[] energyOutput = new double[numberOfTrays];
+		double[] energyBalance = new double[numberOfTrays];
+		for (int i = 0; i < numberOfTrays; i++) {
+			int numberOfInputStreams = trays.get(i).getNumberOfInputStreams();
+			for (int j = 0; j < numberOfInputStreams; j++) {
+				energyInput[i] += trays.get(i).getStream(j).getFluid().getEnthalpy();
+			}
+			energyOutput[i] += trays.get(i).getGasOutStream().getFluid().getEnthalpy();
+			energyOutput[i] += trays.get(i).getLiquidOutStream().getFluid().getEnthalpy();
+			energyBalance[i] = energyInput[i] - energyOutput[i];
+			System.out.println("tray " + i + " number of input streams " + numberOfInputStreams + " energyinput "
+					+ energyInput[i] + " energyoutput " + energyOutput[i] + " energybalance " + energyBalance[i] + " gasout "
 					+ trays.get(i).getGasOutStream().getFlowRate("kg/hr") + " liquidout "
 					+ trays.get(i).getLiquidOutStream().getFlowRate("kg/hr") + " pressure "+ trays.get(i).getGasOutStream().getPressure() + " temperature "+ trays.get(i).getGasOutStream().getTemperature("C"));
 		}

@@ -7,6 +7,7 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.stirredCell.StirredCell;
 import static neqsim.thermo.ThermodynamicConstantsInterface.pi;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -88,7 +89,7 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         for(int componentNumber=0;componentNumber<getBulkSystem().getPhases()[0].getNumberOfComponents();componentNumber++){
             double liquidMolarRate =  getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea()*getDt();
             double gasMolarRate =  - getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea()*getDt();
-            System.out.println("liquidMolarRate" + liquidMolarRate);
+           // System.out.println("liquidMolarRate" + liquidMolarRate);
             getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
             getBulkSystem().getPhases()[1].addMoles(componentNumber, liquidMolarRate);
         }
@@ -149,33 +150,35 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
     
     public static void main(String[] args){
         //SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
-        SystemInterface testSystem = new SystemSrkEos(313.3, 10.01325);
+       // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(313.3, 70.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        StirredCell pipe1 = new StirredCell(0.05, 0.05);
+        StirredCell pipe1 = new StirredCell(2.0, 0.05);
         
-        testSystem.addComponent("nitrogen", 10.61152181,"Nlitre/min", 0);
-        testSystem.addComponent("water", 0.206862204876,"kg/min", 1);
+        testSystem.addComponent("methane",0.1061152181,"MSm3/hr", 0);
+        testSystem.addComponent("water", 10.206862204876,"kg/min", 0);
+        testSystem.addComponent("methanol", 1011.206862204876,"kg/min", 1);
         testSystem.createDatabase(true);
-        testSystem.setMixingRule(4);
+        testSystem.setMixingRule(10);
         testSystem.initPhysicalProperties();
         StirredCellNode test = new StirredCellNode(testSystem, pipe1);
         test.setInterphaseModelType(1);
         test.getFluidBoundary().useFiniteFluxCorrection(true);
         test.getFluidBoundary().useThermodynamicCorrections(true);
-        test.setStirrerSpeed(50.0/60.0);
+        test.setStirrerSpeed(111350.0/60.0);
         test.setStirrerDiameter(0.05);
-        test.setDt(0.10);
+        test.setDt(1.10);
         
         test.initFlowCalc();
         //        testSystem.init(0);
         //        testOps.TPflash();
       
         test.display();
-        for(int i=0;i<20;i++){
+        for(int i=0;i<120;i++){
             test.initFlowCalc();
             test.calcFluxes();
             test.update();
-            test.display("new");
+          //  test.display("new");
             test.getBulkSystem().display();
             //test.getFluidBoundary().display("test");
         }

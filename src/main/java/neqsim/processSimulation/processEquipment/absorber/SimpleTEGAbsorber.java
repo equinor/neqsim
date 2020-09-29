@@ -174,10 +174,12 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     }
 
     public double calcY0() {
-    	double fugacityWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getFugacity("water");
-    	double xrel = mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
-    	double y0 = xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
-        return y0;
+    	//double fugacityWaterLiquid = mixedStream.getThermoSystem().getPhase(1).getFugacity("water");
+    	//double xrel = mixedStream.getFluid().getPhase(0).getComponent("water").getx()/solventInStream.getFluid().getPhase(0).getComponent("water").getx();
+    	//double y0 = xrel*fugacityWaterLiquid/(mixedStream.getFluid().getPhase(0).getComponent("water").getFugasityCoefficient()*mixedStream.getFluid().getPressure());
+    	double fugCoefRef = mixedStream.getThermoSystem().getPhase(1).getComponent("water").getFugasityCoefficient();
+    	double y0 = solventInStream.getFluid().getPhase(0).getComponent("water").getx()*fugCoefRef/(mixedStream.getThermoSystem().getPhase(0).getComponent("water").getFugasityCoefficient());
+    	return y0;
     }
 
     public double calcNumberOfTheoreticalStages() {
@@ -220,7 +222,7 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
             System.out.println("Lean TEG to absorber " +solventInStream.getFlowRate("kg/hr"));
             
             System.out.println("mole water to move " + molesWaterToMove);
-            System.out.println("total moles water " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
+            System.out.println("total moles water in gas " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase());
             System.out.println("total moles water " + mixedStream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles());
             Stream stream = (Stream) mixedStream.clone();
             stream.setName("test");
