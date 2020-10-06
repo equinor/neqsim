@@ -1,0 +1,165 @@
+package neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode;
+
+import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
+import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.InterphaseDropletFlow;
+import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
+import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
+import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
+import static neqsim.thermo.ThermodynamicConstantsInterface.pi;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
+
+public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
+
+    private static final long serialVersionUID = 1000;
+    private double averageBubbleDiameter = 0.001;
+    
+    public BubbleFlowNode() {
+        this.flowNodeType = "bubble";
+    }
+
+    public BubbleFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
+        super(system, pipe);
+        this.flowNodeType = "bubble";
+        this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
+        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(this);
+    }
+
+    public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+        super(system, pipe);
+        this.flowNodeType = "bubble";
+        this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
+        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(this);
+    }
+    
+
+    public double calcGasLiquidContactArea() {
+        interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
+        return interphaseContactArea;
+    }
+
+    public void initFlowCalc() {
+
+    	// phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
+        phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
+        phaseFraction[1] = 1.0 - phaseFraction[0];
+        initVelocity();
+        this.init();
+
+        initVelocity();
+    }
+
+    public Object clone() {
+        BubbleFlowNode clonedSystem = null;
+        try {
+            clonedSystem = (BubbleFlowNode) super.clone();
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
+
+        return clonedSystem;
+    }
+
+    public void init() {
+        inclination = 0.0;
+        this.calcContactLength();
+        //System.out.println("len " + this.calcContactLength());
+        super.init();
+    }
+    
+  
+
+    public double calcContactLength() {
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        wallContactLength[1] = phaseAngel * pipe.getDiameter();
+        wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
+        interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
+        interphaseContactLength[1] = pipe.getDiameter() * Math.sin(phaseAngel);
+        
+        double volumeOfBubble =  4.0/3.0*Math.PI*Math.pow(averageBubbleDiameter/2.0, 3.0);
+        double surfaceAreaOfBubble =  4.0*Math.PI*Math.pow(averageBubbleDiameter/2.0, 2.0);
+        
+        double numbDropletsPerTime = getBulkSystem().getPhase(0).getVolume("m3")/volumeOfBubble;
+        interphaseContactLength[0] = numbDropletsPerTime*surfaceAreaOfBubble/velocity[0];
+        interphaseContactLength[1]= interphaseContactLength[0];
+        		
+        return wallContactLength[0];
+    }
+
+    public FlowNodeInterface getNextNode() {
+        BubbleFlowNode newNode = (BubbleFlowNode) this.clone();
+
+        for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+            //          newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
+            //          newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
+        }
+
+        return newNode;
+    }
+
+   
+    public static void main(String[] args) {
+        SystemInterface testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        PipeData pipe1 = new PipeData(0.0250203, 0.00025);
+        testSystem.addComponent("CO2",100.1061152181,"kg/hr", 0);
+        testSystem.addComponent("water", 1000.206862204876,"kg/hr", 1);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(4);
+        testSystem.initPhysicalProperties();
+        testSystem.init_x_y();
+        testSystem.initBeta();
+        testSystem.init(3);
+
+        testSystem.display();
+        FlowNodeInterface test = new BubbleFlowNode(testSystem, pipe1);
+        test.setInterphaseModelType(1);
+        test.setLengthOfNode(0.0001);
+        test.getGeometry().getSurroundingEnvironment().setTemperature(273.15 + 20.0);
+
+        test.getFluidBoundary().setHeatTransferCalc(false);
+        test.getFluidBoundary().setMassTransferCalc(true);
+        double length = 0;
+        test.initFlowCalc();
+        double[][] temperatures2 = new double[3][1000];
+        int k = 0;
+        for (int i = 0; i < 10000; i++) {
+            length += test.getLengthOfNode();
+            test.initFlowCalc();
+            test.calcFluxes();
+            if (i > 1 && (i % 100) == 0) {
+                k++;
+                test.display("length " + length);
+                test.getBulkSystem().display("length " + length);
+               // test.getInterphaseSystem().display("length " + length);
+                //test.getFluidBoundary().display("length " + length);
+               // test.setLengthOfNode(0.000005 + test.getLengthOfNode() / 2.0);
+                temperatures2[0][k] = length;
+                temperatures2[1][k] = test.getGeometry().getInnerWallTemperature();
+                // test.getFluidBoundary().display("test");
+            }
+
+            //test.getBulkSystem().display();
+            test.update();
+           // test.getFluidBoundary().display("length " + length);
+          //  test.getInterphaseSystem().display("length " + length);
+
+
+            //test.getFluidBoundary().display("test");
+        }
+
+        for (int i = 0; i < k; i++) {
+            System.out.println("len temp  " + temperatures2[0][i] + " " + temperatures2[1][i]);
+        }
+        System.out.println("contact length " + test.getInterphaseContactArea());
+    }
+
+	public double getAverageBubbleDiameter() {
+		return averageBubbleDiameter;
+	}
+
+	public void setAverageBubbleDiameter(double averageBubbleDiameter) {
+		this.averageBubbleDiameter = averageBubbleDiameter;
+	}
+}
