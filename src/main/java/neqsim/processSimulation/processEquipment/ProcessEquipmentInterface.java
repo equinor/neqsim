@@ -32,29 +32,33 @@ import neqsim.thermo.system.SystemInterface;
  */
 public interface ProcessEquipmentInterface extends Runnable, java.io.Serializable {
 
-    public void run();
-    
-    public String[][] reportResults();
+	public void run();
 
-    public void runTransient(double dt);
+	public String[][] reportResults();
 
-    public MechanicalDesign getMechanicalDesign();
+	public void runTransient(double dt);
 
-    public void displayResult();
+	public MechanicalDesign getMechanicalDesign();
 
-    public String getName();
+	public void displayResult();
 
-    public void setName(String name);
+	public String getName();
 
-    public void setRegulatorOutSignal(double signal);
+	public void setName(String name);
 
-    public void setController(ControllerDeviceInterface controller);
+	public void setRegulatorOutSignal(double signal);
 
-    public ControllerDeviceInterface getController();
-    
-    public boolean solved();
-    
-    public SystemInterface getThermoSystem();
-    
-    public SystemInterface getFluid();
+	public void setController(ControllerDeviceInterface controller);
+
+	public ControllerDeviceInterface getController();
+
+	public boolean solved();
+
+	public SystemInterface getThermoSystem();
+
+	public SystemInterface getFluid();
+
+	public double getPressure();
+
+	public void setPressure(double pressure);
 }

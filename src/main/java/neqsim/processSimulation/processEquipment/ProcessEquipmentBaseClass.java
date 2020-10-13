@@ -166,5 +166,13 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 	public void setEnergyStream(boolean isSetEnergyStream) {
 		this.isSetEnergyStream = isSetEnergyStream;
 	}
+	
+	public double getPressure() {
+		return 1.0;
+	}
+
+	public void setPressure(double pressure) {
+		
+	}
 
 }

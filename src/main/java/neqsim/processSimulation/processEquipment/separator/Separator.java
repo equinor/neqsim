@@ -425,4 +425,8 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	public void setDesignLiquidLevelFraction(double designLiquidLevelFraction) {
 		this.designLiquidLevelFraction = designLiquidLevelFraction;
 	}
+	
+	public double getPressure() {
+		return getThermoSystem().getPressure();
+	}
 }

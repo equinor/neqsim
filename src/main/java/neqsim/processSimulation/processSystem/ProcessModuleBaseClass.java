@@ -140,4 +140,12 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     
     public void setProperty(String propertyName, double value, String unit) {
     }
+    
+    public double getPressure() {
+		return 1.0;
+	}
+
+	public void setPressure(double pressure) {
+		
+	}
 }

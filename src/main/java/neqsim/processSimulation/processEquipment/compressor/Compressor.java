@@ -109,15 +109,14 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public double getPower(String unit) {
 		double conversionFactor = 1.0;
-		if(unit.equals("MW")) {
-		 conversionFactor = 1.0/1.0e6;
+		if (unit.equals("MW")) {
+			conversionFactor = 1.0 / 1.0e6;
+		} else if (unit.equals("kW")) {
+			conversionFactor = 1.0 / 1.0e3;
 		}
-		else if(unit.equals("kW")) {
-			 conversionFactor = 1.0/1.0e3;
-			}
-		return conversionFactor*getPower();
+		return conversionFactor * getPower();
 	}
-	
+
 	public void setPower(double p) {
 		powerSet = true;
 		dH = p;
@@ -207,53 +206,56 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				double MW = thermoSystem.getMolarMass();
 
 				thermoSystem.setPressure(getOutletPressure());
-			 thermoOps = new ThermodynamicOperations(getThermoSystem());
+				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PSflash(entropy);
 				thermoSystem.initPhysicalProperties("density");
 				double densOutIsentropic = thermoSystem.getDensity("kg/m3");
 				double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
-				//System.out.println("temperature isentropic "+thermoSystem.getTemperature());
+				// System.out.println("temperature isentropic "+thermoSystem.getTemperature());
 				thermoSystem.setTemperature(outTemperature);
-			    thermoOps = new ThermodynamicOperations(getThermoSystem());
+				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.TPflash();
 				thermoSystem.init(2);
 				thermoSystem.initPhysicalProperties("density");
 				double outEnthalpy = thermoSystem.getEnthalpy();
 				dH = outEnthalpy - inletEnthalpy;
-				//System.out.println("total power " + dH/getThermoSystem().getFlowRate("kg/sec"));
+				// System.out.println("total power " +
+				// dH/getThermoSystem().getFlowRate("kg/sec"));
 				double densOut = thermoSystem.getDensity("kg/m3");
-				
+
 				double n = Math.log(getOutletPressure() / presinn) / Math.log(densOut / densInn);
-				double CF = (enthalpyOutIsentropic-inletEnthalpy) / thermoSystem.getFlowRate("kg/sec")
+				double CF = (enthalpyOutIsentropic - inletEnthalpy) / thermoSystem.getFlowRate("kg/sec")
 						/ (n / (n - 1.0) * (getOutletPressure() * 1e5 / densOutIsentropic - presinn * 1e5 / densInn));
-				
+
 				double F1 = thermoSystem.getTotalNumberOfMoles();
-				double polytropicPower = F1 * MW * (n / (n - 1.0)) * CF * presinn*1e5 / densInn
+				double polytropicPower = F1 * MW * (n / (n - 1.0)) * CF * presinn * 1e5 / densInn
 						* (Math.pow((getOutletPressure() / presinn), (n - 1.0) / n) - 1.0);
-				//System.out.println("polytropic power " + polytropicPower/getThermoSystem().getFlowRate("kg/sec"));
-				polytropicEfficiency = polytropicPower/getThermoSystem().getFlowRate("kg/sec")/(dH/getThermoSystem().getFlowRate("kg/sec"));
-				isentropicEfficiency = (enthalpyOutIsentropic-inletEnthalpy)/dH;
-				
-				//isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
-				
+				// System.out.println("polytropic power " +
+				// polytropicPower/getThermoSystem().getFlowRate("kg/sec"));
+				polytropicEfficiency = polytropicPower / getThermoSystem().getFlowRate("kg/sec")
+						/ (dH / getThermoSystem().getFlowRate("kg/sec"));
+				isentropicEfficiency = (enthalpyOutIsentropic - inletEnthalpy) / dH;
+
+				// isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
+
 				double k = Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
-				double term1 = Math.pow(getOutletPressure() / presinn, (n-1.0)/n)-1.0;
-				double term2 = n/(n-1.0)*(k-1.0)/k;
-				double term3 = Math.pow(getOutletPressure() / presinn, (k-1.0)/k)-1.0;
-				double polyPow =term1*term2/term3*isentropicEfficiency; 
+				double term1 = Math.pow(getOutletPressure() / presinn, (n - 1.0) / n) - 1.0;
+				double term2 = n / (n - 1.0) * (k - 1.0) / k;
+				double term3 = Math.pow(getOutletPressure() / presinn, (k - 1.0) / k) - 1.0;
+				double polyPow = term1 * term2 / term3 * isentropicEfficiency;
 				polytropicEfficiency = polyPow;
-				polytropicPower = dH*polytropicEfficiency;
-				//System.out.println("polytropic eff " + polytropicEfficiency);
-				//System.out.println("isentropic eff " + isentropicEfficiency);
+				polytropicPower = dH * polytropicEfficiency;
+				// System.out.println("polytropic eff " + polytropicEfficiency);
+				// System.out.println("isentropic eff " + isentropicEfficiency);
 				polytropicFluidHead = polytropicPower / getThermoSystem().getFlowRate("kg/sec") / 1000.0;
 				polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
 				polytropicHead = polytropicFluidHead;
-				if(getCompressorChart().isUseCompressorChart()) {
-				if (getCompressorChart().getHeadUnit().equals("meter")) {
-					polytropicHead = polytropicHeadMeter;
-				} else {
-					polytropicHead = polytropicFluidHead;
-				}
+				if (getCompressorChart().isUseCompressorChart()) {
+					if (getCompressorChart().getHeadUnit().equals("meter")) {
+						polytropicHead = polytropicHeadMeter;
+					} else {
+						polytropicHead = polytropicFluidHead;
+					}
 				}
 				outStream.setThermoSystem(getThermoSystem());
 
@@ -334,7 +336,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				thermoSystem.setPressure(pressure);
 				// findOutPressure(hinn, hout, polytropicEfficiency);
 				// System.out.println("hout " + hout);
-			 thermoOps = new ThermodynamicOperations(getThermoSystem());
+				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PHflash(hout, 0);
 			} else {
 				int numbersteps = numberOfCompresorCalcSteps;
@@ -343,7 +345,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 					entropy = getThermoSystem().getEntropy();
 					hinn = getThermoSystem().getEnthalpy();
 					getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
-				 thermoOps = new ThermodynamicOperations(getThermoSystem());
+					thermoOps = new ThermodynamicOperations(getThermoSystem());
 					thermoOps.PSflash(entropy);
 					double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) / polytropicEfficiency;
 					thermoOps.PHflash(hout, 0);
@@ -372,7 +374,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		} else {
 			getThermoSystem().setPressure(pressure);
 			// System.out.println("entropy inn.." + entropy);
-		 thermoOps = new ThermodynamicOperations(getThermoSystem());
+			thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PSflash(entropy);
 			// double densOutIdeal = getThermoSystem().getDensity();
 			if (!powerSet) {
@@ -381,7 +383,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			double hout = hinn + dH;
 			isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
 			dH = hout - hinn;
-		    thermoOps = new ThermodynamicOperations(getThermoSystem());
+			thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PHflash(hout, 0);
 		}
 		// thermoSystem.display();
@@ -582,7 +584,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public int getSpeed() {
 		return speed;
 	}
-	
+
 	public void setSpeed(int speed) {
 		this.speed = speed;
 	}
@@ -646,6 +648,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public void setUseRigorousPolytropicMethod(boolean useRigorousPolytropicMethod) {
 		this.useRigorousPolytropicMethod = useRigorousPolytropicMethod;
+	}
+
+	public void setPressure(double pressure) {
+		setOutletPressure(pressure);
 	}
 
 }
