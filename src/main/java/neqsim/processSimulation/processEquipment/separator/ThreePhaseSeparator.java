@@ -48,10 +48,12 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 
 	public ThreePhaseSeparator(StreamInterface inletStream) {
 		super(inletStream);
+		setInletStream(inletStream);
 	}
 
 	public ThreePhaseSeparator(String name, StreamInterface inletStream) {
 		super(name, inletStream);
+		setInletStream(inletStream);
 	}
 
 	public void setEntrainment(double val, String specType, String phaseFrom, String phaseTo) {

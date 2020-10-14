@@ -155,7 +155,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
     public void run() {
         double enthalpy = 0.0;
-        System.out.println("flow rate old in recycle " + outletStream.getFlowRate("kg/hr"));
+       // System.out.println("flow rate old in recycle " + outletStream.getFlowRate("kg/hr"));
 //        ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
         // System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());
@@ -183,7 +183,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         System.out.println(name +  " recycle error: " + getError());
         lastIterationStream = (Stream) mixedStream.clone();
         outletStream.setThermoSystem(mixedStream.getThermoSystem());
-    	System.out.println("flow rate new in recycle " + outletStream.getFlowRate("kg/hr"));
+    	//System.out.println("flow rate new in recycle " + outletStream.getFlowRate("kg/hr"));
     	
     //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
     //        System.out.println("enthalpy: " + enthalpy);
@@ -196,9 +196,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 
     public double massBalanceCheck(){
         double error = 0.0;
-        System.out.println("flow rate new " + mixedStream.getThermoSystem().getFlowRate("kg/hr"));
-        System.out.println("temperature " + mixedStream.getThermoSystem().getTemperature("C"));
-        System.out.println("pressure " + mixedStream.getThermoSystem().getPressure("bara"));
+        //System.out.println("flow rate new " + mixedStream.getThermoSystem().getFlowRate("kg/hr"));
+        //System.out.println("temperature " + mixedStream.getThermoSystem().getTemperature("C"));
+        //System.out.println("pressure " + mixedStream.getThermoSystem().getPressure("bara"));
         for(int i=0;i<mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents();i++){
         	//System.out.println("x last " + lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
         	//System.out.println("x new " + mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());

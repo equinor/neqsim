@@ -13,7 +13,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
 
     private static final long serialVersionUID = 1000;
-
+    private double averageDropletDiameter = 100.0e-6;
+    
     public DropletFlowNode() {
         this.flowNodeType = "droplet";
     }
@@ -31,6 +32,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
         this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(this);
     }
+    
 
     public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
@@ -39,7 +41,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
 
     public void initFlowCalc() {
 
-        phaseFraction[0] = getBulkSystem().getPhases()[0].getBeta();
+    	// phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
+        phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
         phaseFraction[1] = 1.0 - phaseFraction[0];
         initVelocity();
         this.init();
@@ -64,6 +67,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         //System.out.println("len " + this.calcContactLength());
         super.init();
     }
+    
+  
 
     public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
@@ -71,6 +76,14 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
         interphaseContactLength[1] = pipe.getDiameter() * Math.sin(phaseAngel);
+        
+        double volumeOfDroplet =  4.0/3.0*Math.PI*Math.pow(averageDropletDiameter/2.0, 3.0);
+        double surfaceAreaOfDroplet =  4.0*Math.PI*Math.pow(averageDropletDiameter/2.0, 2.0);
+        
+        double numbDropletsPerTime = getBulkSystem().getPhase(1).getVolume("m3")/volumeOfDroplet;
+        interphaseContactLength[0] = numbDropletsPerTime*surfaceAreaOfDroplet/velocity[0];
+        interphaseContactLength[1]= interphaseContactLength[0];
+        		
         return wallContactLength[0];
     }
 
@@ -231,4 +244,12 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         testSystem.display();
 
     }
+
+	public double getAverageDropletDiameter() {
+		return averageDropletDiameter;
+	}
+
+	public void setAverageDropletDiameter(double averageDropletDiameter) {
+		this.averageDropletDiameter = averageDropletDiameter;
+	}
 }

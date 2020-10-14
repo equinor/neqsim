@@ -73,7 +73,7 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         setEnergyInput = false;
         this.temperatureOut = temperature;
     }
-
+    
     public void setOutTP(double temperature, double pressure) {
         setTemperature = true;
         setEnergyInput = false;
@@ -87,7 +87,7 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         system.init(3);
         double oldH = system.getEnthalpy();
         if(isSetEnergyStream()) {
-        	energyInput-=energyStream.getDuty();
+        	energyInput=-energyStream.getDuty();
         }
         double newEnthalpy = energyInput + oldH;
         system.setPressure(system.getPressure() - pressureDrop);
@@ -149,6 +149,11 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         setTemperature = false;
         setEnergyInput = true;
     }
+    
+    public void setDuty(double energyInput) {
+    	setEnergyInput(energyInput);
+    }
+    
 
     public boolean isSetEnergyInput() {
         return setEnergyInput;
