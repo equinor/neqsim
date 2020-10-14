@@ -206,6 +206,24 @@ int solventStreamNumber = 0;
             ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
             testOps.TPflash();
             testOps.PHflash(enthalpy, 0);
+            
+            if(mixedStream.getThermoSystem().getNumberOfPhases()==1) {
+            	if(mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("aqueous")) {
+            		SystemInterface tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
+                	gasOutStream.setEmptyThermoSystem(tempSystem);
+                	gasOutStream.run();
+                	solventOutStream.setThermoSystem(tempSystem);
+                	solventOutStream.run();
+            	}
+            	if(mixedStream.getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
+            		SystemInterface tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
+            		solventOutStream.setEmptyThermoSystem(tempSystem);
+            		solventOutStream.run();
+            		gasOutStream.setThermoSystem(tempSystem);
+            		gasOutStream.run();
+            	}
+            	return;
+            }
 
             kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx() / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
 
@@ -243,9 +261,9 @@ int solventStreamNumber = 0;
             liqTemp.init(2);
             solventOutStream.setThermoSystem(liqTemp);
             solventOutStream.run();
-            System.out.println("Gas from water stripper " + gasOutStream.getFlowRate("kg/hr") +  " kg/hr");
+            //System.out.println("Gas from water stripper " + gasOutStream.getFlowRate("kg/hr") +  " kg/hr");
 
-            System.out.println("TEG from water stripper " + solventOutStream.getFlowRate("kg/hr") +  " kg/hr");
+            //System.out.println("TEG from water stripper " + solventOutStream.getFlowRate("kg/hr") +  " kg/hr");
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -60,6 +60,7 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     //        System.out.println("enthalpy: " + enthalpy);
     // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());
         duty = mixedStream.getFluid().getEnthalpy()- calcMixStreamEnthalpy0();
+        energyStream.setDuty(duty);
     //    System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     }
 }
