@@ -134,6 +134,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		}
 	}
 
+	public void setFluid(SystemInterface fluid) {
+		this.setThermoSystem(fluid);
+	}
+
 	public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName) {
 		if (phaseTypeName.equals("liquid")) {
 			if (thermoSystem.hasPhaseType("oil") && thermoSystem.hasPhaseType("aqueous")) {

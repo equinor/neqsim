@@ -47,13 +47,14 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 	}
 
 	public ThreePhaseSeparator(StreamInterface inletStream) {
-		super(inletStream);
-		setInletStream(inletStream);
+		this();
+		addStream(inletStream);
 	}
 
 	public ThreePhaseSeparator(String name, StreamInterface inletStream) {
-		super(name, inletStream);
-		setInletStream(inletStream);
+		this();
+		setName(name);
+		addStream(inletStream);
 	}
 
 	public void setEntrainment(double val, String specType, String phaseFrom, String phaseTo) {
@@ -85,15 +86,7 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 	}
 
 	public void setInletStream(StreamInterface inletStream) {
-		inletStreamMixer.addStream(inletStream);
-
-		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-		gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-		gasOutStream = new Stream(gasSystem);
-
-		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-		liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-		liquidOutStream = new Stream(liquidSystem);
+		super.setInletStream(inletStream);
 
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
 		waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);

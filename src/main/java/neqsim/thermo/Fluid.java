@@ -116,7 +116,20 @@ public class Fluid {
 			double[] molarMass = new double[] { 0.20, 0.25, 0.3, 0.36, 0.4 };
 			double[] density = new double[] { 700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
 			addCharacterized(charNames, charFlowrate, molarMass, density);
-		} else if (fluidType.equals("heavy oil")) {
+		} 
+		else if (fluidType.equals("black oil with water")) {
+			compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
+					"i-pentane", "n-pentane", "n-hexane"};
+			flowrate = new double[] { 0.01, 0.02, 0.22, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01};
+			createFluid(compNames, flowrate, "mole/sec");
+			String[] charNames = new String[] { "C10-C15", "C16-C19", "C20-C30", "C31-C50", "C51-C80" };
+			double[] charFlowrate = new double[] { 0.2, 0.1, 0.1, 0.05, 0.01 };
+			double[] molarMass = new double[] { 0.20, 0.25, 0.3, 0.36, 0.4 };
+			double[] density = new double[] { 700.0e-3, 750.0e-3, 810.0e-3, 880.0e-3, 920.0e-3 };
+			addCharacterized(charNames, charFlowrate, molarMass, density);
+			setHasWater(true);
+		}		
+		else if (fluidType.equals("heavy oil")) {
 			compNames = new String[] { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
 					"i-pentane", "n-pentane", "n-hexane" };
 			flowrate = new double[] { 0.01, 0.01, 0.12, 0.11, 0.05, 0.01, 0.012, 0.01, 0.01, 0.01 };
@@ -221,6 +234,10 @@ public class Fluid {
 		neqsim.thermo.system.SystemInterface fluid2 = neqsim.thermo.Fluid.create("dry gas");
 		fluid2.display();
 		fluid2.getNumberOfComponents();
+		
+		neqsim.thermo.system.SystemInterface fluid3 = neqsim.thermo.Fluid.create("black oil with water");
+		fluid3.display();
+		fluid3.getNumberOfComponents();
 	}
 
 	public static boolean isHasWater() {

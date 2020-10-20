@@ -80,7 +80,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 		this.name = name;
 	}
 
-	public void setInletStream(Stream inletStream) {
+	public void setInletStream(StreamInterface inletStream) {
 		inletStreamMixer.addStream(inletStream);
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
 		gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);

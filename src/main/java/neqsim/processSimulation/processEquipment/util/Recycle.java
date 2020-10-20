@@ -199,6 +199,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         //System.out.println("flow rate new " + mixedStream.getThermoSystem().getFlowRate("kg/hr"));
         //System.out.println("temperature " + mixedStream.getThermoSystem().getTemperature("C"));
         //System.out.println("pressure " + mixedStream.getThermoSystem().getPressure("bara"));
+        if(lastIterationStream.getFluid().getNumberOfComponents()!=mixedStream.getFluid().getNumberOfComponents()) {
+        	return 10.0;
+        }
         for(int i=0;i<mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents();i++){
         	//System.out.println("x last " + lastIterationStream.getThermoSystem().getPhase(0).getComponent(i).getx());
         	//System.out.println("x new " + mixedStream.getThermoSystem().getPhase(0).getComponent(i).getx());

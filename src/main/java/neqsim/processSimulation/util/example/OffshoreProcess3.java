@@ -42,14 +42,15 @@ public class OffshoreProcess3 {
 		testSystem.addComponent("i-pentane", 0.21);
 		testSystem.addComponent("n-pentane", 0.19);
 		testSystem.addComponent("n-hexane", 0.28);
-		testSystem.addComponent("n-heptane", 11);
-		testSystem.addComponent("water", 1);
+		testSystem.addComponent("n-heptane", 5.0);
+		testSystem.addComponent("water", 1.5);
 
 		testSystem.createDatabase(true);
 		testSystem.setMixingRule(2);
 		testSystem.setMultiPhaseCheck(true);
-
-		Stream wellStream = new Stream("well stream", testSystem);
+		neqsim.thermo.system.SystemInterface fluid3 = neqsim.thermo.Fluid.create("black oil with water");
+		
+		Stream wellStream = new Stream("well stream", fluid3);
 		wellStream.setFlowRate(14.23, "MSm3/day");
 		wellStream.setTemperature(40.0, "C");
 		wellStream.setPressure(120.0, "bara");
@@ -58,7 +59,7 @@ public class OffshoreProcess3 {
 		valve.setOutletPressure(52.21);
 
 		ThreePhaseSeparator inletSeparator = new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
-
+		inletSeparator.setEntrainment(0.01, "mole", "oil", "aqueous");
 		Stream oilToInletSep = new Stream((SystemInterface) testSystem.clone());
 		oilToInletSep.setFlowRate(1e-10, "kg/hr");
 		inletSeparator.addStream(oilToInletSep);
@@ -77,6 +78,9 @@ public class OffshoreProcess3 {
 
 		Separator waterStabSep = new Separator("water degasing separator", waterDPvalve.getOutStream());
 
+		Stream waterToTreatment = new Stream(waterStabSep.getLiquidOutStream());
+		waterToTreatment.setName("water to treatment");
+		
 		ThreePhaseSeparator mpseparator = new ThreePhaseSeparator("2nd stage separator", cooler1.getOutStream());
 
 		Stream oilToSep = new Stream((SystemInterface) testSystem.clone());
@@ -84,14 +88,16 @@ public class OffshoreProcess3 {
 		mpseparator.addStream(oilToSep);
 
 		ThrottlingValve valvempValve = new ThrottlingValve(mpseparator.getOilOutStream());
+		valvempValve.setName("oil MP to LP valve");
 		valvempValve.setOutletPressure(2.8);
 
 		ThreePhaseSeparator lpseparator = new ThreePhaseSeparator("3rd stage separator", valvempValve.getOutStream());
-
+		Stream stableOilStream  = (Stream) lpseparator.getOilOutStream();
+		stableOilStream.setName("stable oil");
+		
 		Compressor lpcompressor = new Compressor(lpseparator.getGasOutStream());
-		lpcompressor.setName("1st stage compressor");
+		lpcompressor.setName("1st stage recompressor");
 		//lpcompressor.setOutletPressure(15.0);
-
 		SetPoint compressorPresSet2 = new SetPoint("comp pres LP set", lpcompressor, "pressure",valve2.getOutStream());
 		
 		
@@ -110,7 +116,7 @@ public class OffshoreProcess3 {
 		mixermp.addStream(mpseparator.getGasOutStream());
 
 		Compressor compressor2stage = new Compressor(mixermp.getOutStream());
-		compressor2stage.setName("2nd stage compressor");
+		compressor2stage.setName("2nd stage recompressor");
 	//	compressor2stage.setOutletPressure(75.0);
 
 		SetPoint compressorPresSet = new SetPoint("comp pres set", compressor2stage, "pressure",inletSeparator);
@@ -145,16 +151,19 @@ public class OffshoreProcess3 {
 		operations.add(wellStream);
 		operations.add(valve);
 		operations.add(inletSeparator);
+		
 		operations.add(oilToInletSep);
 
 		operations.add(valve2);
 		operations.add(cooler1);
 		operations.add(waterDPvalve);
 		operations.add(waterStabSep);
+		operations.add(waterToTreatment);
 		operations.add(mpseparator);
 		operations.add(oilToSep);
 		operations.add(valvempValve);
 		operations.add(lpseparator);
+		operations.add(stableOilStream);
 		operations.add(compressorPresSet2);
 		operations.add(lpcompressor);
 		operations.add(lpgasheater);
@@ -173,6 +182,9 @@ public class OffshoreProcess3 {
 		operations.add(liqFrommpscrubber);
 		operations.add(mpscrubberResyc);
 		operations.add(richGas);
+		
+		
+	
 		//ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
 		//((Heater) operations2.getUnit("dew point scrubber cooler2")).setOutTemperature(298.15);
 		//operations2.run();
@@ -188,8 +200,11 @@ public class OffshoreProcess3 {
 		// lppump.displayResult();
 		
 	    operations.run();
-		System.out.println("second stage comp power " + ((Compressor) operations.getUnit("2nd stage compressor")).getPower()/1.0e3 + " kW");
-		System.out.println("first stage   comp power " + ((Compressor) operations.getUnit("1st stage compressor")).getPower()/1.0e3 + " kW");
+	//	System.out.println("second stage comp power " + ((Compressor) operations.getUnit("2nd stage recompressor")).getPower()/1.0e3 + " kW");
+//		System.out.println("first stage   comp power " + ((Compressor) operations.getUnit("1st stage recompressor")).getPower()/1.0e3 + " kW");
+		
+		System.out.println("gas from inlet separator " + ((Separator) operations.getUnit("1st stage separator")).getGasOutStream().getFluid().getFlowRate("MSm3/day"));
+	
 		
 		// liqFromlpscrubber.displayResult();
 		// richGas.phaseEnvelope();

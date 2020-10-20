@@ -30,7 +30,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     
     public double getFlowRate(String unit);
     
-    
+    public void setFluid(SystemInterface fluid);
 
     public double getMolarRate();
 
