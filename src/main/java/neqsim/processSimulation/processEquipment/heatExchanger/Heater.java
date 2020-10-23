@@ -30,7 +30,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
     private boolean setEnergyInput = false;
     private double energyInput = 0.0;
     private double pressureDrop = 0.0;
-
+    private String temperatureUnit = "K";
+    private String pressureUnit = "bara";
 
     /**
      * Creates new Heater
@@ -67,10 +68,23 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         setOutPressure = true;
         this.pressureOut = pressure;
     }
+    
+    public void setOutPressure(double pressure, String unit) {
+        setOutPressure = true;
+        this.pressureOut = pressure;
+        this.pressureUnit = unit;
+    }
 
     public void setOutTemperature(double temperature) {
         setTemperature = true;
         setEnergyInput = false;
+        this.temperatureOut = temperature;
+    }
+    
+    public void setOutTemperature(double temperature, String unit) {
+        setTemperature = true;
+        setEnergyInput = false;
+        this.temperatureUnit = unit;
         this.temperatureOut = temperature;
     }
     
@@ -90,9 +104,9 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         	energyInput=-energyStream.getDuty();
         }
         double newEnthalpy = energyInput + oldH;
-        system.setPressure(system.getPressure() - pressureDrop);
+        system.setPressure(system.getPressure() - pressureDrop, pressureUnit);
         if (setOutPressure) {
-            system.setPressure(pressureOut);
+            system.setPressure(pressureOut, pressureUnit);
         }
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         if (specification.equals("out stream")) {
@@ -100,13 +114,13 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
             temperatureOut = getOutStream().getTemperature();
             system = (SystemInterface) getOutStream().getThermoSystem().clone();
         } else if (setTemperature) {
-            system.setTemperature(temperatureOut);
+            system.setTemperature(temperatureOut, temperatureUnit);
             testOps.TPflash();
         } else if (setEnergyInput || isSetEnergyStream()) {
             testOps.PHflash(newEnthalpy, 0);
         } else {
            // System.out.println("temperaturee out " + inStream.getTemperature());
-            system.setTemperature(inStream.getTemperature() + dT);
+            system.setTemperature(inStream.getTemperature() + dT, temperatureUnit);
             testOps.TPflash();
         }
 

@@ -161,9 +161,10 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 				thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
 						/ (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + totalliquidVolume));
 			}
+			thermoSystem.initBeta();
 			thermoSystem.init(3);
 			// System.out.println("moles in separator " + thermoSystem.getNumberOfMoles());
-			double volume1 = thermoSystem.getVolume();
+		//	double volume1 = thermoSystem.getVolume();
 			// System.out.println("volume1 bef " + volume1);
 			// System.out.println("beta " + thermoSystem.getBeta());
 

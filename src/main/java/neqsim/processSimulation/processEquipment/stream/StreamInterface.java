@@ -25,10 +25,12 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     
     public double getTemperature(String unit);
     public void setName(String name);
-
+	public double CCT(String unit);
     public double getTemperature();
-    
+	public double CCB(String unit);
     public double getFlowRate(String unit);
+    
+    public double TVP(double temperature, String unit);
     
     public void setFluid(SystemInterface fluid);
 

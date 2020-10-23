@@ -277,12 +277,60 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	}
 
 	public void phaseEnvelope() {
-		ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
 		ops.setRunAsThread(true);
 		ops.calcPTphaseEnvelope(true);
 		boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
 		ops.displayResult();
 		// ops.getJfreeChart();
+	}
+	
+	public double CCB(String unit) {
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+		ops.setRunAsThread(true);
+		ops.calcPTphaseEnvelope(true);
+		boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+		if(unit.equals("bara") || unit.equals("bar") ) {
+			return ops.get("cricondenbar")[1];
+		}
+		else {
+			if(unit.equals("C")) return ops.get("cricondenbar")[0]-273.15;
+			else return ops.get("cricondenbar")[0];
+		}
+		//return ops.get
+		// ops.getJfreeChart();
+	}
+	
+	public double CCT(String unit) {
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+		ops.setRunAsThread(true);
+		ops.calcPTphaseEnvelope(true);
+		boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+		if(unit.equals("bara") || unit.equals("bar") ) {
+			return ops.get("cricondentherm")[1];
+		}
+		else {
+			if(unit.equals("C")) return ops.get("cricondentherm")[0]-273.15;
+			else return ops.get("cricondentherm")[0];
+		}
+		//return ops.get
+		// ops.getJfreeChart();
+	}
+	
+	public double TVP(double temperature, String unit) {
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		localSyst.setTemperature(temperature, unit);
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+		try {
+		ops.bubblePointPressureFlash(false);
+		}
+		catch(Exception e) {
+			String error = e.getMessage();
+		}
+		return localSyst.getPressure("unit");
 	}
 
 	public String[][] reportResults() {

@@ -51,26 +51,33 @@ public class OffshoreProcess3 {
 		neqsim.thermo.system.SystemInterface fluid3 = neqsim.thermo.Fluid.create("black oil with water");
 		
 		Stream wellStream = new Stream("well stream", fluid3);
+		//wellStream.setFluid(testSystem);
 		wellStream.setFlowRate(14.23, "MSm3/day");
-		wellStream.setTemperature(40.0, "C");
+		wellStream.setTemperature(41.0, "C");
 		wellStream.setPressure(120.0, "bara");
+		
+		Heater inletTempControl = new Heater(wellStream);
+		inletTempControl.setName("well stream cooler/heater");
+		inletTempControl.setOutTemperature(50.0, "C");
+		inletTempControl.setOutPressure(35.21, "bara");
 
-		ThrottlingValve valve = new ThrottlingValve("inlet choke valve", wellStream);
-		valve.setOutletPressure(52.21);
-
+		ThrottlingValve valve = new ThrottlingValve("inlet choke valve", inletTempControl.getOutStream());
+		valve.setOutletPressure(35.21);
+		
+		Stream oilToInletSep = new Stream((SystemInterface) fluid3.clone());
+		oilToInletSep.setFlowRate(1e-10, "kg/hr");
+		
 		ThreePhaseSeparator inletSeparator = new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
 		inletSeparator.setEntrainment(0.01, "mole", "oil", "aqueous");
-		Stream oilToInletSep = new Stream((SystemInterface) testSystem.clone());
-		oilToInletSep.setFlowRate(1e-10, "kg/hr");
 		inletSeparator.addStream(oilToInletSep);
 
-		ThrottlingValve valve2 = new ThrottlingValve(inletSeparator.getOilOutStream());
-		valve2.setName("oil HP to MP valve");
-		valve2.setOutletPressure(15.0);
-
-		Heater cooler1 = new Heater(valve2.getOutStream());
+		Heater cooler1 = new Heater(inletSeparator.getOilOutStream());
 		cooler1.setName("oil cooler/heater to 2nd stage");
-		cooler1.setOutTemperature(323.15);
+		cooler1.setOutTemperature(90.0, "C");
+		
+		ThrottlingValve valve2 = new ThrottlingValve(cooler1.getOutStream());
+		valve2.setName("oil HP to MP valve");
+		valve2.setOutletPressure(7.0);
 
 		ThrottlingValve waterDPvalve = new ThrottlingValve(inletSeparator.getWaterOutStream());
 		waterDPvalve.setName("Water HP to LP valve");
@@ -81,15 +88,18 @@ public class OffshoreProcess3 {
 		Stream waterToTreatment = new Stream(waterStabSep.getLiquidOutStream());
 		waterToTreatment.setName("water to treatment");
 		
-		ThreePhaseSeparator mpseparator = new ThreePhaseSeparator("2nd stage separator", cooler1.getOutStream());
-
-		Stream oilToSep = new Stream((SystemInterface) testSystem.clone());
+		Stream gasFromWaterTreatment = new Stream(waterStabSep.getGasOutStream());
+		gasFromWaterTreatment.setName("gas from water treatment");
+		
+		Stream oilToSep = new Stream((SystemInterface) fluid3.clone());
 		oilToSep.setFlowRate(1e-10, "kg/hr");
+		
+		ThreePhaseSeparator mpseparator = new ThreePhaseSeparator("2nd stage separator", valve2.getOutStream());
 		mpseparator.addStream(oilToSep);
 
 		ThrottlingValve valvempValve = new ThrottlingValve(mpseparator.getOilOutStream());
 		valvempValve.setName("oil MP to LP valve");
-		valvempValve.setOutletPressure(2.8);
+		valvempValve.setOutletPressure(2.1);
 
 		ThreePhaseSeparator lpseparator = new ThreePhaseSeparator("3rd stage separator", valvempValve.getOutStream());
 		Stream stableOilStream  = (Stream) lpseparator.getOilOutStream();
@@ -100,9 +110,9 @@ public class OffshoreProcess3 {
 		//lpcompressor.setOutletPressure(15.0);
 		SetPoint compressorPresSet2 = new SetPoint("comp pres LP set", lpcompressor, "pressure",valve2.getOutStream());
 		
-		
 		Heater lpgasheater = new Heater(lpcompressor.getOutStream());
-		lpgasheater.setOutTemperature(290.0);
+		lpgasheater.setName("1st stage gas cooler");
+		lpgasheater.setOutTemperature(35.0, "C");
 
 		Separator lpscrubber = new Separator("2nd stage scrubber", lpgasheater.getOutStream());
 		Stream liqFromlpscrubber = (Stream) lpscrubber.getLiquidOutStream();
@@ -149,16 +159,16 @@ public class OffshoreProcess3 {
 
 		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
 		operations.add(wellStream);
+		operations.add(inletTempControl);
 		operations.add(valve);
 		operations.add(inletSeparator);
-		
 		operations.add(oilToInletSep);
-
-		operations.add(valve2);
 		operations.add(cooler1);
+		operations.add(valve2);
 		operations.add(waterDPvalve);
 		operations.add(waterStabSep);
 		operations.add(waterToTreatment);
+		operations.add(gasFromWaterTreatment);
 		operations.add(mpseparator);
 		operations.add(oilToSep);
 		operations.add(valvempValve);
@@ -205,6 +215,11 @@ public class OffshoreProcess3 {
 		
 		System.out.println("gas from inlet separator " + ((Separator) operations.getUnit("1st stage separator")).getGasOutStream().getFluid().getFlowRate("MSm3/day"));
 	
+		System.out.println("pressure of export oil  " + ((Stream) operations.getUnit("stable oil")).getPressure("bara"));
+		
+		System.out.println("temperature of export oil  " + ((Stream) operations.getUnit("stable oil")).getTemperature("C"));
+		
+		System.out.println("TVP of export oil (30.0 C) " + ((Stream) operations.getUnit("stable oil")).TVP(30.0, "C"));
 		
 		// liqFromlpscrubber.displayResult();
 		// richGas.phaseEnvelope();

@@ -46,7 +46,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	private double polytropicExponent = 0;
 	private int numberOfCompresorCalcSteps = 40;
 	private boolean useRigorousPolytropicMethod = false;
-
+    private String pressureUnit = "bara";
+    
 	/**
 	 * Creates new ThrottelValve
 	 */
@@ -93,6 +94,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public void setOutletPressure(double pressure) {
 		this.pressure = pressure;
+	}
+	
+	public void setOutletPressure(double pressure, String unit) {
+		this.pressure = pressure;
+		this.pressureUnit = unit;
 	}
 
 	public double getOutletPressure() {
@@ -167,7 +173,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public double findOutPressure(double hinn, double hout, double polytropicEfficiency) {
 		double entropy = getThermoSystem().getEntropy();
-		getThermoSystem().setPressure(getThermoSystem().getPressure() + 1.0);
+		getThermoSystem().setPressure(getThermoSystem().getPressure() + 1.0, pressureUnit);
 
 		// System.out.println("entropy inn.." + entropy);
 		ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -205,7 +211,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			} else {
 				double MW = thermoSystem.getMolarMass();
 
-				thermoSystem.setPressure(getOutletPressure());
+				thermoSystem.setPressure(getOutletPressure(), pressureUnit);
 				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PSflash(entropy);
 				thermoSystem.initPhysicalProperties("density");
@@ -333,7 +339,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			if (powerSet) {
 				// dH = (getPower() - hinn) / polytropicEfficiency;
 				double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
-				thermoSystem.setPressure(pressure);
+				thermoSystem.setPressure(pressure, pressureUnit);
 				// findOutPressure(hinn, hout, polytropicEfficiency);
 				// System.out.println("hout " + hout);
 				thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -344,7 +350,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				for (int i = 0; i < numbersteps; i++) {
 					entropy = getThermoSystem().getEntropy();
 					hinn = getThermoSystem().getEnthalpy();
-					getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
+					getThermoSystem().setPressure(getThermoSystem().getPressure() + dp, pressureUnit);
 					thermoOps = new ThermodynamicOperations(getThermoSystem());
 					thermoOps.PSflash(entropy);
 					double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) / polytropicEfficiency;
@@ -372,7 +378,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 			 *
 			 */
 		} else {
-			getThermoSystem().setPressure(pressure);
+			getThermoSystem().setPressure(pressure, pressureUnit);
 			// System.out.println("entropy inn.." + entropy);
 			thermoOps = new ThermodynamicOperations(getThermoSystem());
 			thermoOps.PSflash(entropy);
@@ -652,6 +658,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	public void setPressure(double pressure) {
 		setOutletPressure(pressure);
+	}
+	
+	public void setPressure(double pressure, String unit) {
+		setOutletPressure(pressure);
+		pressureUnit = unit;
 	}
 
 }
