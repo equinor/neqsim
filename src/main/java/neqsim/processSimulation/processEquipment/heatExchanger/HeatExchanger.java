@@ -119,7 +119,6 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		// systemOut1.setTemperature(inTemp1);
 		outStream[streamToSet].setThermoSystem(systemOut0);
 		outStream[streamToCalculate].setThermoSystem(systemOut1);
-
 		double temper = inStream[streamToCalculate].getThermoSystem().getTemperature();
 		outStream[streamToSet].setTemperature(inStream[streamToCalculate].getThermoSystem().getTemperature(), "K");
 		outStream[streamToSet].getThermoSystem()
@@ -219,6 +218,34 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 
 	public void setGuessOutTemperature(double guessOutTemperature) {
 		this.guessOutTemperature = guessOutTemperature;
+	}
+	
+	public double getEntropyProduction(String unit) {
+		//
+		double entrop=0.0;
+		
+		for(int i=0;i<2;i++) {
+			inStream[i].run();
+			inStream[i].getFluid().init(3);
+			outStream[i].run();
+			outStream[i].getFluid().init(3);
+			entrop +=  outStream[i].getThermoSystem().getEntropy(unit) - inStream[i].getThermoSystem().getEntropy(unit);
+		}
+		return entrop;
+	}
+	
+	public double getMassBalance(String unit) {
+		//
+double mass=0.0;
+		
+		for(int i=0;i<2;i++) {
+			inStream[i].run();
+			inStream[i].getFluid().init(3);
+			outStream[i].run();
+			outStream[i].getFluid().init(3);
+			mass +=  outStream[i].getThermoSystem().getFlowRate(unit) - inStream[i].getThermoSystem().getFlowRate(unit);
+		}
+		return mass;	
 	}
 
 }

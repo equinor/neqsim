@@ -321,4 +321,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 	public int getNumberOfInputStreams() {
 		return numberOfInputStreams;
 	}
+	
+	public double getEntropyProduction(String unit) {
+		getOutStream().run();
+		double entrop=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			getStream(i).getFluid().init(3);
+			entrop +=getStream(i).getFluid().getEntropy(unit);
+		}
+		getOutStream().getThermoSystem().init(3);
+		return getOutStream().getThermoSystem().getEntropy(unit)-entrop;
+	}
 }

@@ -51,7 +51,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	StreamInterface liquidOutStream;
 	private double pressureDrop = 0.0;
 	private double internalDiameter = 1.0;
-	private int numberOfInputStreams = 0;
+	public int numberOfInputStreams = 0;
 	Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
 	private double efficiency = 1.0;
 	private double liquidCarryoverFraction = 0.0;
@@ -136,7 +136,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 		} else {
 			liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
 		}
-		// liquidOutStream.run();
+		 liquidOutStream.run();
 		// liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
 		try {
 			thermoSystem = (SystemInterface) thermoSystem2.clone();
@@ -429,5 +429,29 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	
 	public double getPressure() {
 		return getThermoSystem().getPressure();
+	}
+	
+	public double getEntropyProduction(String unit) {
+		//
+		double entrop=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			entrop +=inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+		}
+		getLiquidOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		return getLiquidOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getEntropy(unit)-entrop;
+	}
+	
+	public double getMassBalance(String unit) {
+		//
+		double flow=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			flow +=inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+		}
+		getLiquidOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		return getLiquidOutStream().getThermoSystem().getFlowRate(unit)+getGasOutStream().getThermoSystem().getFlowRate(unit)-flow;
 	}
 }

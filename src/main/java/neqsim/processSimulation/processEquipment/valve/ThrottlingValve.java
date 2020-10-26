@@ -235,4 +235,10 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 	public void setIsoThermal(boolean isoThermal) {
 		this.isoThermal = isoThermal;
 	}
+	
+	public double getEntropyProduction(String unit) {
+		outStream.getThermoSystem().init(3);
+		inletStream.getThermoSystem().init(3);
+		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
+	}
 }

@@ -498,10 +498,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			}
 		}
 
+		
 		newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase() / 1.0e30);
 
 		newSystem.init(0);
-		newSystem.init(1);
+		//newSystem.init(1);
 		return newSystem;
 	}
 

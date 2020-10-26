@@ -239,4 +239,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         pipe.getTimeSeries().setInletThermoSystems(systems);
         pipe.getTimeSeries().setNumberOfTimeStepsInInterval(timestepininterval);
     }
+    
+    public double getEntropyProduction(String unit) {
+		return outStream.getThermoSystem().getEntropy(unit)-inStream.getThermoSystem().getEntropy(unit);
+	}
 }

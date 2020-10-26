@@ -456,4 +456,14 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 	public CostEstimateBaseClass getCostEstimator() {
 		return costEstimator;
 	}
+	
+	public double getEntropyProduction(String unit) {
+		double entropyProduction=0.0;
+		for (int i = 0; i < unitOperations.size(); i++) {
+			entropyProduction += unitOperations.get(i).getEntropyProduction(unit);
+			System.out.println("unit " + unitOperations.get(i).getName() + " entropy production " + unitOperations.get(i).getEntropyProduction(unit));
+		}
+		return entropyProduction;
+	}
+	
 }

@@ -239,4 +239,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 		this.outTemperature = outTemperature;
 	}
 
+	public double getEntropyProduction(String unit) {
+		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
+	}
 }

@@ -664,5 +664,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		setOutletPressure(pressure);
 		pressureUnit = unit;
 	}
+	
+	public double getEntropyProduction(String unit) {
+		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
+	}
 
 }
