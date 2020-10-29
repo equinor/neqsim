@@ -182,5 +182,11 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 	public double getMassBalance(String unit) {
 		return 0.0;
 	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		return 0.0;
+	}
+		
+		
 
 }

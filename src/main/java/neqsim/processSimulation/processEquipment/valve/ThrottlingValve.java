@@ -241,4 +241,10 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 		inletStream.getThermoSystem().init(3);
 		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
 	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		outStream.getThermoSystem().init(3);
+		inletStream.getThermoSystem().init(3);
+		return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)-inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+	}
 }

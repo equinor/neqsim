@@ -454,4 +454,17 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 		getGasOutStream().getThermoSystem().init(3);
 		return getLiquidOutStream().getThermoSystem().getFlowRate(unit)+getGasOutStream().getThermoSystem().getFlowRate(unit)-flow;
 	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		
+		//
+		double exergy=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			exergy +=inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+		}
+		getLiquidOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		return getLiquidOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)+getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)-exergy;
+	}
 }

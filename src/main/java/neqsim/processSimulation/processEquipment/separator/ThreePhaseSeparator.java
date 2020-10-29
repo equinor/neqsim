@@ -186,4 +186,17 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 		
 		return getWaterOutStream().getThermoSystem().getEntropy(unit)+getOilOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getEntropy(unit)-entrop;
 	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		double entrop=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			entrop +=inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+		}
+		getWaterOutStream().getThermoSystem().init(3);
+		getOilOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		
+		return getWaterOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)+getOilOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)-entrop;
+	}
 }

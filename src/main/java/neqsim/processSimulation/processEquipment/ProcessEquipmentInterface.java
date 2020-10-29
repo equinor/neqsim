@@ -68,4 +68,12 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * @return entropy in specified unit
      */
 	public double getEntropyProduction(String unit);
+	
+	 /**
+     * method to return exergy change production of the unit operation
+     * * @param sourrondingTemperature The surrounding temperature in Kelvin
+       * @param unit The unit as a string. Supported units are J and kJ
+     * @return change in exergy in specified unit
+     */
+	public double getExergyChange(String unit, double sourrondingTemperature);
 }

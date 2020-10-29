@@ -51,6 +51,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 	// ProcessEquipmentInterface[]
 	String[][] signalDB = new String[100][100];
 	private double time = 0;
+	private double surroundingTemperature = 288.15;
 	private int timeStepNumber = 0;
 	private ArrayList<ProcessEquipmentBaseClass> unitOperations = new ArrayList(0);
 	ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList(0);
@@ -464,6 +465,60 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 			System.out.println("unit " + unitOperations.get(i).getName() + " entropy production " + unitOperations.get(i).getEntropyProduction(unit));
 		}
 		return entropyProduction;
+	}
+	
+	public double getExergyChange(String unit) {
+		double exergyChange=0.0;
+		for (int i = 0; i < unitOperations.size(); i++) {
+			exergyChange += unitOperations.get(i).getExergyChange("J", getSurroundingTemperature());
+			System.out.println("unit " + unitOperations.get(i).getName() + " exergy change  " + unitOperations.get(i).getExergyChange("J", getSurroundingTemperature()));
+		}
+		return exergyChange;
+	}
+	
+	public double getPower(String unit) {
+		double power =0.0;
+		for (int i = 0; i < unitOperations.size(); i++) {
+			if (unitOperations.get(i).getClass().getSimpleName().equals("Compressor")) {
+				power += ((neqsim.processSimulation.processEquipment.compressor.Compressor) unitOperations.get(i)).getPower();
+			}
+			else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
+				power += ((neqsim.processSimulation.processEquipment.pump.Pump) unitOperations.get(i)).getPower();
+			}
+			}
+		return power;
+	}
+	
+	public double getCoolerDuty(String unit) {
+		double heat =0.0;
+		for (int i = 0; i < unitOperations.size(); i++) {
+			if (unitOperations.get(i).getClass().getSimpleName().equals("Cooler")) {
+				heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Cooler) unitOperations.get(i)).getDuty();
+			}
+		}
+		return heat;
+	}
+	
+	public double getHeaterDuty(String unit) {
+		double heat =0.0;
+		for (int i = 0; i < unitOperations.size(); i++) {
+			if (unitOperations.get(i).getClass().getSimpleName().equals("Heater")) {
+				heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Heater) unitOperations.get(i)).getDuty();
+			}
+		}
+		return heat;
+	}
+	
+	public double getMechanicalWeight(String unit) {
+		return 0.0;
+	}
+
+	public double getSurroundingTemperature() {
+		return surroundingTemperature;
+	}
+
+	public void setSurroundingTemperature(double surroundingTemperature) {
+		this.surroundingTemperature = surroundingTemperature;
 	}
 	
 }

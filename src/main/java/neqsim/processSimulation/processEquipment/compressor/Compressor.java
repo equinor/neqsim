@@ -26,7 +26,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
 	private static final long serialVersionUID = 1000;
 	static Logger logger = LogManager.getLogger(Compressor.class);
-	String name = new String();
 	public SystemInterface thermoSystem;
 	public StreamInterface inletStream;
 	public StreamInterface outStream;
@@ -73,9 +72,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 		}
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
 
 	public void setInletStream(StreamInterface inletStream) {
 		this.inletStream = inletStream;
@@ -668,5 +664,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public double getEntropyProduction(String unit) {
 		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
 	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)-inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+		}
 
 }

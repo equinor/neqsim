@@ -28,6 +28,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 	double dH = 0.0;
 	private double UAvalue = 500.0;
 	double thermalEffectivness = 0.6;
+	double duty= 0.0;
 	boolean firstTime = true;
 	public double guessOutTemperature = 273.15 + 130.0;
 
@@ -169,6 +170,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 			testOps = new ThermodynamicOperations(outStream[streamToSet].getThermoSystem());
 			testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
 		}
+		duty = dEntalphy;
 
 		//System.out.println("temperatur Stream 1 out " + outStream[0].getTemperature());
 		//System.out.println("temperatur Stream 0 out " + outStream[1].getTemperature());
@@ -191,6 +193,10 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		 * - corrected_Entalphy, 0); outStream[1].setThermoSystem(systemOut1);
 		 * System.out.println("temperatur out " + outStream[1].getTemperature()); }
 		 */
+	}
+	
+	public double getDuty() {
+		return duty;
 	}
 
 	public void displayResult() {
@@ -231,7 +237,17 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 			outStream[i].getFluid().init(3);
 			entrop +=  outStream[i].getThermoSystem().getEntropy(unit) - inStream[i].getThermoSystem().getEntropy(unit);
 		}
-		return entrop;
+		
+		int stream1 = 0;
+		int stream2 = 1;
+		if(inStream[0].getTemperature()<inStream[1].getTemperature()) {
+			stream2=0;
+			stream1=1;
+		}
+		double heatTransferEntropyProd = Math.abs(getDuty())*(1.0/inStream[stream2].getTemperature()-1.0/(inStream[stream1].getTemperature()));
+		//System.out.println("heat entropy " + heatTransferEntropyProd);
+		
+		return entrop+heatTransferEntropyProd;
 	}
 	
 	public double getMassBalance(String unit) {

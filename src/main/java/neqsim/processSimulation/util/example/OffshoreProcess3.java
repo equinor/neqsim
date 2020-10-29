@@ -5,6 +5,7 @@
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
@@ -72,11 +73,11 @@ public class OffshoreProcess3 {
 		inletSeparator.setEntrainment(0.01, "mole", "oil", "aqueous");
 		inletSeparator.addStream(oilToInletSep);
 
-		Heater cooler1 = new Heater(inletSeparator.getOilOutStream());
-		cooler1.setName("oil cooler/heater to 2nd stage");
-		cooler1.setOutTemperature(80.0, "C");
+		Heater heater1 = new Heater(inletSeparator.getOilOutStream());
+		heater1.setName("oil cooler/heater to 2nd stage");
+		heater1.setOutTemperature(85.0, "C");
 
-		ThrottlingValve valve2 = new ThrottlingValve(cooler1.getOutStream());
+		ThrottlingValve valve2 = new ThrottlingValve(heater1.getOutStream());
 		valve2.setName("oil HP to MP valve");
 		valve2.setOutletPressure(7.0);
 
@@ -111,7 +112,7 @@ public class OffshoreProcess3 {
 		// lpcompressor.setOutletPressure(15.0);
 		SetPoint compressorPresSet2 = new SetPoint("comp pres LP set", lpcompressor, "pressure", valve2.getOutStream());
 
-		Heater lpgasheater = new Heater(lpcompressor.getOutStream());
+		Cooler lpgasheater = new Cooler(lpcompressor.getOutStream());
 		lpgasheater.setName("1st stage gas cooler");
 		lpgasheater.setOutTemperature(35.0, "C");
 		
@@ -120,6 +121,7 @@ public class OffshoreProcess3 {
 		coolingWaterSYstm.removeMoles();
 		coolingWaterSYstm.addComponent("water",1.0);
 		
+		/*
 		Stream coolingWater = new Stream("cooling water", coolingWaterSYstm);
 		coolingWater.setFlowRate(500900.2, "kg/hr");
 		coolingWater.setTemperature(10.0, "C");
@@ -131,10 +133,10 @@ public class OffshoreProcess3 {
 		heatEx.setUAvalue(45000.0);
 		heatEx.setFeedStream(1, coolingWater);
 
-		
+		*/
 	
 		
-		Heater lpHeatExchanger = new Heater(lpcompressor.getOutStream());
+		Cooler lpHeatExchanger = new Cooler(lpcompressor.getOutStream());
 		lpgasheater.setName("1st stage gas heat exchanger");
 		lpgasheater.setOutTemperature(35.0, "C");
 
@@ -188,7 +190,7 @@ public class OffshoreProcess3 {
 		operations.add(valve);
 		operations.add(inletSeparator);
 		operations.add(oilToInletSep);
-		operations.add(cooler1);
+		operations.add(heater1);
 		operations.add(valve2);
 		operations.add(waterDPvalve);
 		operations.add(waterStabSep);
@@ -263,13 +265,19 @@ public class OffshoreProcess3 {
 		// ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
 		// operations2.run();
 		// cooler1stagecomp.getOutStream().phaseEnvelope();
-		coolingWater.run();
-		coolingWater.getFluid().init(3);
-		heatEx.run();heatEx.run();
-		heatEx.getOutStream(0).getFluid().display();
-		heatEx.getOutStream(1).getFluid().display();
-		System.out.println("entropy production heat exchanger " +heatEx.getEntropyProduction("J/K") + " J/K");
-		System.out.println("mass balance production heat exchanger " +heatEx.getMassBalance("kg/sec"));
+	//	coolingWater.run();
+//		coolingWater.getFluid().init(3);
+//		heatEx.run();heatEx.run();
+//		heatEx.getOutStream(0).getFluid().display();
+//		heatEx.getOutStream(1).getFluid().display();
+//		System.out.println("entropy production heat exchanger " +heatEx.getEntropyProduction("J/K") + " J/K");
+//		System.out.println("mass balance production heat exchanger " +heatEx.getMassBalance("kg/sec"));
+
+		System.out.println("Cooler Duty " +operations.getCoolerDuty("J/sec")/1.0e6 +" MW");
+		System.out.println("Heater Duty " +operations.getHeaterDuty("J/sec")/1.0e6+" MW");
+		System.out.println("Power " +operations.getPower("W")/1.0e6+" MW");
+		
+		System.out.println("exergy change " + operations.getExergyChange("J"));
 
 		
 	}

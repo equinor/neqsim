@@ -51,5 +51,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setPressure(double pressure, String unit);
     
     public void setTemperature(double temperature, String unit);
+    
+    public double GCV();
+    
+    public double LCV();
 
 }

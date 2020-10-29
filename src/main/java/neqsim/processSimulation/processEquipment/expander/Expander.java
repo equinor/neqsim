@@ -27,7 +27,7 @@ public class Expander extends Compressor implements ExpanderInterface {
         super();
     }
 
-    public Expander(Stream inletStream) {
+    public Expander(StreamInterface inletStream) {
         super(inletStream);
     }
 
