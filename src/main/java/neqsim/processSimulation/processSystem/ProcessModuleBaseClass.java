@@ -127,6 +127,19 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
 	public void setSpecification(String specificationName, double value) {
 
 	}
+	
+	 /**
+     * @return the specification
+     */
+    public String getSpecification() {
+        return null;
+    }
+
+    /**
+     * @param specification the specification to set
+     */
+    public void setSpecification(String specification) {
+    }
 
 	public Object getUnit(String name) {
 		return operations.getUnit("name");

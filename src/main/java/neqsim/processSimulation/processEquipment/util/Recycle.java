@@ -32,6 +32,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 	private double tolerance = 1e-4;
 	private double error = 1e6;
 	private int priority = 100;
+	boolean firstTime = true;
+	int iterations=0;
+	int maxIterations = 10;
 
 	/** Creates new staticMixer */
 	public Recycle() {
@@ -163,6 +166,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 	}
 
 	public void run() {
+		iterations++;
+	/*	if(firstTime || iterations>maxIterations) {
+			firstTime=false;
+			return;
+			
+		}*/
 		double enthalpy = 0.0;
 		// System.out.println("flow rate old in recycle " +
 		// outletStream.getFlowRate("kg/hr"));
@@ -171,9 +180,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 		// System.out.println("total number of moles " +
 		// thermoSystem2.getTotalNumberOfMoles());
 		mixedStream.setThermoSystem(thermoSystem2);
-		// thermoSystem2.display();
 		ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
-		if (streams.size() > 0) {
+		if (streams.size() > 1) {
 			mixedStream.getThermoSystem().setNumberOfPhases(2);
 			mixedStream.getThermoSystem().reInitPhaseType();
 			mixedStream.getThermoSystem().init(0);

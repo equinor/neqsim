@@ -70,6 +70,14 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 	public double getInletPressure() {
 		return inletStream.getThermoSystem().getPressure();
 	}
+	
+	public void setPressure(double pressure) {
+		setOutletPressure(pressure);
+	}
+	
+	public void setPressure(double pressure,String unit) {
+		setOutletPressure(pressure, unit);
+	}
 
 	public void setOutletPressure(double pressure) {
 		this.pressure = pressure;
@@ -95,7 +103,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 		thermoSystem.init(3);
 		double enthalpy = thermoSystem.getEnthalpy();
 		thermoSystem.setPressure(pressure, pressureUnit);
-		if (specification.equals("out stream")) {
+		if (getSpecification().equals("out stream")) {
 			thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
 		}
 		// System.out.println("enthalpy inn.." + enthalpy);
@@ -126,12 +134,12 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 		// System.out.println("molar flow " + molarFlow);
 
 		inletStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-		inletStream.getThermoSystem().init(1);
+		inletStream.getThermoSystem().init(3);
 		// inletStream.run();
 
 		outStream.setThermoSystem((SystemInterface) thermoSystem.clone());
 		outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
-		outStream.getThermoSystem().init(1);
+		outStream.getThermoSystem().init(3);
 		// outStream.run();
 //        Cv = inletStream.getThermoSystem().getTotalNumberOfMoles()/Math.sqrt(inletStream.getPressure()-outStream.getPressure());
 //        molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();

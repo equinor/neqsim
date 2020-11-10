@@ -184,7 +184,7 @@ public class TEGdehydrationProcessDistillation {
 		makeupTEG.setTemperature(43.0, "C");
 		makeupTEG.setPressure(52.21, "bara");
 
-		Calculator makeupCalculator = new Calculator("makeup calculator");
+		Calculator makeupCalculator = new Calculator("TEG makeup calculator");
 		makeupCalculator.addInputVariable(dehydratedGas);
 		makeupCalculator.addInputVariable(flashGas);
 		makeupCalculator.addInputVariable(gasToFlare);

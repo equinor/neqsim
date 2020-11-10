@@ -110,7 +110,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
 			system.setPressure(pressureOut, pressureUnit);
 		}
 		ThermodynamicOperations testOps = new ThermodynamicOperations(system);
-		if (specification.equals("out stream")) {
+		if (getSpecification().equals("out stream")) {
+			getOutStream().setFlowRate(getInStream().getFlowRate("kg/sec"), "kg/sec");
 			getOutStream().run();
 			temperatureOut = getOutStream().getTemperature();
 			system = (SystemInterface) getOutStream().getThermoSystem().clone();

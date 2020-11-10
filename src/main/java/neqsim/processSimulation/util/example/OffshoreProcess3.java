@@ -278,7 +278,7 @@ public class OffshoreProcess3 {
 		System.out.println("Power " +operations.getPower("W")/1.0e6+" MW");
 		
 		System.out.println("exergy change " + operations.getExergyChange("J"));
-
+		System.out.println("total weight " + operations.getMechanicalWeight("kg") +" kg");
 		
 	}
 }

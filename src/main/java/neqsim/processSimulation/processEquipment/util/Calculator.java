@@ -35,11 +35,19 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
 			double sum = 0.0;
 
+			if(name.equals("MEG makeup calculator")) {
+				for (int i = 0; i < inputVariable.size(); i++) {
+					sum += inputVariable.get(i).getFluid().getPhase(0).getComponent("MEG").getFlowRate("kg/hr");
+				}
+			}
+			else {
 			for (int i = 0; i < inputVariable.size(); i++) {
 				sum += inputVariable.get(i).getFluid().getPhase(0).getComponent("TEG").getFlowRate("kg/hr");
 			}
+			}
+			
 
-			//System.out.println("make up TEG " + sum);
+			System.out.println("make up MEG " + sum);
 			outputVariable.getFluid().setTotalFlowRate(sum, "kg/hr");
 			try {
 				((Stream) outputVariable).setFlowRate(sum, "kg/hr");

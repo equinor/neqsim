@@ -65,10 +65,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 			return 0.0;
 		}
 		try {
-			thermoSystem.setHydrateCheck(true);
-			ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+			SystemInterface copySystem = (SystemInterface) thermoSystem.clone();
+			copySystem.setHydrateCheck(true);
+			ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
 			thermoOps.hydrateFormationTemperature();
-			return thermoSystem.getTemperature();
+			return copySystem.getTemperature();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -76,19 +77,20 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	}
 
 	public double getSolidFormationTemperature(String solidName) {
-
+		SystemInterface copySystem = (SystemInterface) thermoSystem.clone();
+		
 		try {
 			if (solidName.equals("hydrate")) {
-				thermoSystem.setHydrateCheck(true);
-				ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+				copySystem.setHydrateCheck(true);
+				ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
 				thermoOps.hydrateFormationTemperature();
 			} else {
-				thermoSystem.setSolidPhaseCheck(false);
-				thermoSystem.setSolidPhaseCheck(solidName);
-				ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+				copySystem.setSolidPhaseCheck(false);
+				copySystem.setSolidPhaseCheck(solidName);
+				ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
 				thermoOps.freezingPointTemperatureFlash();
 			}
-			return thermoSystem.getTemperature();
+			return copySystem.getTemperature();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -197,31 +199,42 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		return getFluid().getTemperature(unit);
 	}
 
+	public void runTPflash() {
+		if (stream != null) {
+			thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+		}
+	
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+		thermoOps.TPflash();
+		thermoSystem.initProperties();
+	}
 	public void run() {
 		// System.out.println("start flashing stream... " + streamNumber);
 		if (stream != null) {
 			thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
 		}
-
+		if(getThermoSystem().getNumberOfComponents()==1 && getSpecification().equals("TP")) {
+			setSpecification("PH");
+		}
 		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
-		if (specification.equals("TP")) {
+		if (getSpecification().equals("TP")) {
 			thermoOps.TPflash();
-		} else if (specification.equals("dewP")) {
+		} else if (getSpecification().equals("dewP")) {
 			try {
 				thermoOps.dewPointTemperatureFlash();
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("dewT")) {
+		} else if (getSpecification().equals("dewT")) {
 			try {
 				thermoOps.dewPointPressureFlash();
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("gas quality")) {
+		} else if (getSpecification().equals("gas quality")) {
 			try {
 				thermoSystem.init(0);
 				thermoSystem.init(2);
@@ -234,21 +247,21 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("bubP")) {
+		} else if (getSpecification().equals("bubP")) {
 			try {
 				thermoOps.bubblePointTemperatureFlash();
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("bubT")) {
+		} else if (getSpecification().equals("bubT")) {
 			try {
 				thermoOps.bubblePointPressureFlash(false);
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("PH")) {
+		} else if (getSpecification().equals("PH")) {
 			try {
 				thermoOps.PHflash(getThermoSystem().getEnthalpy(), 0);
 			} catch (Exception e) {
@@ -331,7 +344,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		catch(Exception e) {
 			String error = e.getMessage();
 		}
-		return localSyst.getPressure("unit");
+		return localSyst.getPressure(unit);
 	}
 
 	public String[][] reportResults() {

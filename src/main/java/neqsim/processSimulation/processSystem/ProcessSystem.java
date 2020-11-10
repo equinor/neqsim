@@ -510,7 +510,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 	}
 	
 	public double getMechanicalWeight(String unit) {
-		return 0.0;
+		double weight =0.0;
+		for (int i = 0; i < unitOperations.size(); i++) {
+			unitOperations.get(i).getMechanicalDesign().calcDesign();
+			System.out.println("Name " + unitOperations.get(i).getName() + "  weight " +unitOperations.get(i).getMechanicalDesign().getWeightTotal());
+			weight +=  unitOperations.get(i).getMechanicalDesign().getWeightTotal();
+		}
+		return weight;
 	}
 
 	public double getSurroundingTemperature() {

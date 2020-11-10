@@ -128,15 +128,18 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
 		if (thermoSystem2.hasPhaseType("gas")) {
 			gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
+			gasOutStream.getFluid().init(2);
 		} else {
 			gasOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
 		}
 		if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
 			liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "liquid");
+			liquidOutStream.getFluid().init(2);
 		} else {
 			liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
 		}
-		 liquidOutStream.run();
+		gasOutStream.run();
+		liquidOutStream.run();
 		// liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
 		try {
 			thermoSystem = (SystemInterface) thermoSystem2.clone();

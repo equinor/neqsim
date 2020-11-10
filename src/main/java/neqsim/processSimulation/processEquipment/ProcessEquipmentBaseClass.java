@@ -44,7 +44,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public boolean hasController = false;
     public String name = new String();
     public MechanicalDesign mechanicalDesign = new MechanicalDesign(this);
-    public String specification = "TP";
+    private String specification = "TP";
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
     public EnergyStream energyStream = new EnergyStream();

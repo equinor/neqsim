@@ -81,6 +81,11 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		return outStream[i];
 	}
 
+	
+	public StreamInterface getInStream(int i) {
+		return inStream[i];
+	}
+	
 	public void setOutTemperature(double temperature) {
 		this.temperatureOut = temperature;
 	}
@@ -98,11 +103,11 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		// inStream[0].run();
 		// inStream[1].displayResult();
 		if (firstTime) {
-			inStream[0].getThermoSystem().setTemperature(guessOutTemperature);
-			inStream[0].run();
+			firstTime = false;
 			SystemInterface systemOut0 = (SystemInterface) inStream[0].getThermoSystem().clone();
 			outStream[0].setThermoSystem(systemOut0);
-			firstTime = false;
+			outStream[0].getThermoSystem().setTemperature(guessOutTemperature);
+			outStream[0].run();
 			return;
 		}
 
@@ -124,6 +129,9 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		outStream[streamToSet].setTemperature(inStream[streamToCalculate].getThermoSystem().getTemperature(), "K");
 		outStream[streamToSet].getThermoSystem()
 				.setTemperature(inStream[streamToCalculate].getThermoSystem().getTemperature());
+		if(!outStream[streamToSet].getSpecification().equals("TP")) {
+			outStream[streamToSet].runTPflash();
+		}
 		outStream[streamToSet].run();
 		double dEntalphy1 = outStream[streamToSet].getThermoSystem().getEnthalpy()
 				- inStream[streamToSet].getThermoSystem().getEnthalpy();
@@ -134,6 +142,9 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		outStream[streamToCalculate].setTemperature(inStream[streamToSet].getThermoSystem().getTemperature(), "K");
 		outStream[streamToCalculate].getThermoSystem()
 				.setTemperature(inStream[streamToSet].getThermoSystem().getTemperature());
+		if(!outStream[streamToCalculate].getSpecification().equals("TP")) {
+			outStream[streamToCalculate].runTPflash();
+		}
 		outStream[streamToCalculate].run();
 		double dEntalphy2 = outStream[streamToCalculate].getThermoSystem().getEnthalpy()
 				- inStream[streamToCalculate].getThermoSystem().getEnthalpy();
@@ -171,7 +182,8 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 			testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
 		}
 		duty = dEntalphy;
-
+		//outStream[0].displayResult();
+		//outStream[1].displayResult();
 		//System.out.println("temperatur Stream 1 out " + outStream[0].getTemperature());
 		//System.out.println("temperatur Stream 0 out " + outStream[1].getTemperature());
 		// outStream[0].setThermoSystem(systemOut0);
