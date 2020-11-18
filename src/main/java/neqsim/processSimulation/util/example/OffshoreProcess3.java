@@ -10,6 +10,7 @@ import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
+import neqsim.processSimulation.processEquipment.separator.Hydrocyclone;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 import neqsim.processSimulation.processEquipment.separator.TwoPhaseSeparator;
@@ -70,7 +71,8 @@ public class OffshoreProcess3 {
 		oilToInletSep.setFlowRate(1e-10, "kg/hr");
 
 		ThreePhaseSeparator inletSeparator = new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
-		inletSeparator.setEntrainment(0.01, "mole", "oil", "aqueous");
+		inletSeparator.setEntrainment(0.005,"mass", "product", "aqueous", "oil");
+		inletSeparator.setEntrainment(500e-6,"mole", "product", "oil", "aqueous");
 		inletSeparator.addStream(oilToInletSep);
 
 		Heater heater1 = new Heater(inletSeparator.getOilOutStream());
@@ -254,14 +256,22 @@ public class OffshoreProcess3 {
 
 		System.out.println("TVP of export oil (30.0 C) " + ((Stream) operations.getUnit("stable oil")).TVP(30.0, "C"));
 
-		System.out.println("entropy production " + operations.getEntropyProduction("J/K") + " J/K");
-		System.out.println("mass balance  separator " + ((Separator) operations.getUnit("scrubber of mix gas HP")).getMassBalance("kg/sec") + " kg/sec");
+	//	System.out.println("entropy production " + operations.getEntropyProduction("J/K") + " J/K");
+//		System.out.println("mass balance  separator " + ((Separator) operations.getUnit("scrubber of mix gas HP")).getMassBalance("kg/sec") + " kg/sec");
 
 		// liqFromlpscrubber.displayResult();
 		// richGas.phaseEnvelope();
 		// richGas.displayResult();
 		operations.save("c:/temp/offshorePro.neqsim");
+		inletSeparator.getLiquidOutStream().getFluid().display();
+		inletSeparator.getWaterOutStream().getFluid().display();
 		
+		/*
+		Hydrocyclone hydroSyc = new Hydrocyclone(inletSeparator.getWaterOutStream());
+		hydroSyc.run();
+		hydroSyc.getGasOutStream().getFluid().display();
+		hydroSyc.getLiquidOutStream().getFluid().display();
+		*/
 		// ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
 		// operations2.run();
 		// cooler1stagecomp.getOutStream().phaseEnvelope();
