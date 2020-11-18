@@ -81,13 +81,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		((MixerInterface) trays.get(numberOfTrays - 1))
 				.addStream(((SimpleTray) trays.get(feedTrayNumber)).getGasOutStream());
 		((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem().setTotalNumberOfMoles(
-				((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem().getTotalNumberOfMoles() * (1.0e-3));
+				((Mixer) trays.get(numberOfTrays - 1)).getStream(0).getThermoSystem().getTotalNumberOfMoles() * (1.0e-6));
 		((MixerInterface) trays.get(0)).addStream(((SimpleTray) trays.get(feedTrayNumber)).getLiquidOutStream());
 		int streamNumbReboil = ((Reboiler) trays.get(0)).getNumberOfInputStreams() - 1;
 		((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().setTotalNumberOfMoles(
-				((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles() * (1.0e-3));
+				((Mixer) trays.get(0)).getStream(streamNumbReboil).getThermoSystem().getTotalNumberOfMoles() * (1.0e-6));
 
-		((Runnable) trays.get(numberOfTrays - 1)).run();
+	//	((Runnable) trays.get(numberOfTrays - 1)).run();
 		((Runnable) trays.get(0)).run();
 
 		condeserTemperature = ((MixerInterface) trays.get(numberOfTrays - 1)).getThermoSystem().getTemperature();
@@ -249,7 +249,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		  //  massBalanceCheck();
 		} while (err > 1e-4 && err<errOld && iter < 10);// && !massBalanceCheck());
 
-		 massBalanceCheck();
+		// massBalanceCheck();
 		gasOutStream.setThermoSystem((SystemInterface) ((SimpleTray) trays.get(numberOfTrays - 1)).getGasOutStream()
 				.getThermoSystem().clone());
 		liquidOutStream.setThermoSystem(

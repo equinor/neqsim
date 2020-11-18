@@ -498,11 +498,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			}
 		}
 
-		
 		newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase() / 1.0e30);
 
 		newSystem.init(0);
-		//newSystem.init(1);
+		// newSystem.init(1);
 		return newSystem;
 	}
 
@@ -4077,7 +4076,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 	public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
 			String toPhaseName) {
-		if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-25)) {
+		if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-30)) {
 			return;
 		}
 		int phaseNumbFrom = getPhaseNumberOfPhase(fromPhaseName);
@@ -4087,6 +4086,51 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			addComponent(i, change, phaseNumbTo);
 			addComponent(i, -change, phaseNumbFrom);
 		}
+		init_x_y();
+	}
+
+	public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,
+			String fromPhaseName, String toPhaseName) {
+		double moleFraction = fraction;
+		if (!hasPhaseType(fromPhaseName) || !hasPhaseType(toPhaseName) || fraction < 1e-30) {
+			return;
+		}
+		int phaseNumbFrom = getPhaseNumberOfPhase(fromPhaseName);
+		int phaseNumbTo = getPhaseNumberOfPhase(toPhaseName);
+
+		if (specifiedStream.equals("feed")) {
+			moleFraction = fraction;
+
+		} else if (specifiedStream.equals("product")) {
+			double specFractionFrom = getPhaseFraction(specification, fromPhaseName);
+			double specFractionTo = getPhaseFraction(specification, toPhaseName);
+
+			double moleFractionFrom = getMoleFraction(phaseNumbFrom);
+			double moleFractionTo = getMoleFraction(phaseNumbTo);
+
+			if (specification.equals("volume") || specification.equals("mass")) {
+				double test = fraction * specFractionTo / (fraction * specFractionTo + specFractionTo);
+				moleFraction = test * moleFractionTo / specFractionTo;
+			}
+			else if (specification.equals("mole")) {
+				double test = fraction * moleFractionTo/ (fraction * moleFractionTo + moleFractionTo);
+				moleFraction = test;
+			}
+
+			moleFraction=moleFraction*moleFractionTo/moleFractionFrom;
+			if (moleFraction > moleFractionFrom) {
+				logger.debug("error in addPhaseFractionToPhase()...to low fraction in from phase");
+				moleFraction = moleFractionFrom;
+			}
+		}
+
+		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+			double change = 0.0;
+			change = getPhase(phaseNumbFrom).getComponent(i).getNumberOfMolesInPhase() * moleFraction;
+			addComponent(i, change, phaseNumbTo);
+			addComponent(i, -change, phaseNumbFrom);
+		}
+		init_x_y();
 	}
 
 	public void renameComponent(String oldName, String newName) {

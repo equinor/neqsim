@@ -31,6 +31,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 	double duty= 0.0;
 	boolean firstTime = true;
 	public double guessOutTemperature = 273.15 + 130.0;
+	int outStreamSpecificationNumber = 0;
 
 	/**
 	 * Creates new Heater
@@ -98,7 +99,44 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		inStream[i].getThermoSystem().getTemperature();
 	}
 
+	/**
+	 * @param outStream the outStream to set
+	 */
+	public void setOutStream(int streamNumber , StreamInterface outStream) {
+		this.outStream[streamNumber] = outStream;
+		outStreamSpecificationNumber = streamNumber;
+	}
+	
+	public void runSpecifiedStream() {
+		int nonOutStreamSpecifiedStreamNumber = 0;
+		if(outStreamSpecificationNumber==0) {
+			nonOutStreamSpecifiedStreamNumber=1;
+		}
+		
+		SystemInterface systemOut0 = (SystemInterface) inStream[nonOutStreamSpecifiedStreamNumber].getThermoSystem().clone();
+		//SystemInterface systemOut1 = (SystemInterface) inStream[outStreamSpecificationNumber].getThermoSystem().clone();
+
+		if (getSpecification().equals("out stream")) {
+			outStream[outStreamSpecificationNumber].setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
+			outStream[outStreamSpecificationNumber].run();
+			temperatureOut = outStream[outStreamSpecificationNumber].getTemperature();
+			//system = (SystemInterface) outStream[outStreamSpecificationNumber].getThermoSystem().clone();
+		}
+		
+		double deltaEnthalpy =  outStream[outStreamSpecificationNumber].getFluid().getEnthalpy()-inStream[outStreamSpecificationNumber].getFluid().getEnthalpy();
+		double enthalpyOutRef =  inStream[nonOutStreamSpecifiedStreamNumber].getFluid().getEnthalpy() - deltaEnthalpy;
+		
+		ThermodynamicOperations testOps = new ThermodynamicOperations(systemOut0);
+		testOps.PHflash(enthalpyOutRef);
+		System.out.println("out temperature " + systemOut0.getTemperature("C"));
+		outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
+	}
+	
 	public void run() {
+		if (getSpecification().equals("out stream")) {
+			runSpecifiedStream();
+			return;
+		}
 
 		// inStream[0].run();
 		// inStream[1].displayResult();

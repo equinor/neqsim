@@ -441,8 +441,18 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 			inletStreamMixer.getStream(i).getFluid().init(3);
 			entrop +=inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
 		}
-		getLiquidOutStream().getThermoSystem().init(3);
-		getGasOutStream().getThermoSystem().init(3);
+		if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
+			try {
+			getLiquidOutStream().getThermoSystem().init(3);
+			}
+			catch(Exception e) {
+				
+			}
+		}
+		if (thermoSystem.hasPhaseType("gas")) {
+			getGasOutStream().getThermoSystem().init(3);
+		}
+		
 		return getLiquidOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getEntropy(unit)-entrop;
 	}
 	

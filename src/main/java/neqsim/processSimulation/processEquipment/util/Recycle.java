@@ -200,6 +200,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 			testOps.PHflash(enthalpy, 0);
 			// System.out.println("filan temp " + mixedStream.getTemperature());
 		} else {
+			setDownstreamProperties();
 			testOps.TPflash();
 		}
 		setError(massBalanceCheck());
