@@ -73,7 +73,7 @@ public class OnshoreMEGprocess {
 
 		Splitter MEGsplitter1 = new Splitter(MEGFeed);
 		MEGsplitter1.setName("lean MEG header");
-		MEGsplitter1.setSplitFactors(new double[] { 0.6, 0.3 , 0.1});
+		MEGsplitter1.setSplitFactors(new double[] { 0.01, 0.94 , 0.05});
 
 		StaticMixer MEGmixer1 = new StaticMixer("MEG mixer 1");
 		MEGmixer1.addStream(inletCompressor2ndstage.getOutStream());
@@ -115,9 +115,13 @@ public class OnshoreMEGprocess {
 		Heater richMEGstreamHeater = new Heater(richMEGstream);
 		richMEGstreamHeater.setOutTemperature(15.0, "C");
 		richMEGstreamHeater.setName("rich MEG pre-heater");
+		
+		Heater richMEGstreamHeater2 = new Heater(richMEGstreamHeater.getOutStream());
+	//	richMEGstreamHeater2.setOutTemperature(22.0, "C");
+		richMEGstreamHeater2.setName("column condenser HX");
 
-		ThrottlingValve presRedValve3 = new ThrottlingValve("valve to flash drum", richMEGstreamHeater.getOutStream());
-		presRedValve3.setOutletPressure(10.0);
+		ThrottlingValve presRedValve3 = new ThrottlingValve("valve to flash drum", richMEGstreamHeater2.getOutStream());
+		presRedValve3.setOutletPressure(3.9);
 
 		Separator flashDrumSep = new Separator("rich MEG flash drum", presRedValve3.getOutStream());
 		
@@ -137,10 +141,10 @@ public class OnshoreMEGprocess {
 
 		DistillationColumn column = new DistillationColumn(2, true, true);
 		column.setName("MEG regeneration column");
-		column.addFeedStream(presRedValve4.getOutStream(), 1);
+		column.addFeedStream(presRedValve4.getOutStream(), 0);
 		column.getReboiler().setOutTemperature(273.15 + 135.0);
 		column.getCondenser().setOutTemperature(273.15 + 105.0);
-		column.setTopPressure(1.1);
+		column.setTopPressure(1.0);
 		column.setBottomPressure(1.23);
 
 		Cooler coolerRegenGas = new Cooler(column.getGasOutStream());
@@ -161,7 +165,7 @@ public class OnshoreMEGprocess {
 		
 		Pump hotLeanMEGPump = new Pump(bufferTank.getOutStream());
 		hotLeanMEGPump.setName("hot lean MEG pump");
-		hotLeanMEGPump.setOutletPressure(20.0);
+		hotLeanMEGPump.setOutletPressure(105.0);
 		hotLeanMEGPump.setIsentropicEfficiency(0.75);
 		
 		Stream streamHotPump = new Stream(hotLeanMEGPump.getOutStream());
@@ -169,12 +173,7 @@ public class OnshoreMEGprocess {
 		
 		columnPreHeater.setFeedStream(1, streamHotPump);
 
-		Pump hotLeanMEGPump2 = new Pump(columnPreHeater.getOutStream(1));
-		hotLeanMEGPump2.setName("lean MEG HP pump");
-		hotLeanMEGPump2.setOutletPressure(105.0);
-		hotLeanMEGPump2.setIsentropicEfficiency(0.75);
-		
-		Cooler coolerHotMEG2 = new Cooler(hotLeanMEGPump2.getOutStream());
+		Cooler coolerHotMEG2 = new Cooler(columnPreHeater.getOutStream(1));
 		coolerHotMEG2.setName("lean MEG cooler");
 		coolerHotMEG2.setOutTemperature(273.15 + 20.0);
 
@@ -207,6 +206,8 @@ public class OnshoreMEGprocess {
 		resycleLeanMEG.setOutletStream(MEGFeed);
 		//resycleLeanMEG.setPriority(200);
 		resycleLeanMEG.setDownstreamProperty("flow rate");
+		
+		richMEGstreamHeater2.setEnergyStream(column.getCondenser().getEnergyStream());
 
 		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
 		operations.add(dryFeedGas);
@@ -228,6 +229,7 @@ public class OnshoreMEGprocess {
 		operations.add(heatedGasFromLPSep);
 		operations.add(richMEGstream);
 		operations.add(richMEGstreamHeater);
+		operations.add(richMEGstreamHeater2);
 		operations.add(presRedValve3);
 		operations.add(flashDrumSep);
 		operations.add(flashGasStream);
@@ -243,7 +245,6 @@ public class OnshoreMEGprocess {
 		operations.add(hotLeanMEGPump);
 		operations.add(streamHotPump);
 		operations.add(columnPreHeater);
-		operations.add(hotLeanMEGPump2);
 		operations.add(coolerHotMEG2);
 		operations.add(leanMEGtoMixer);
 		operations.add(makeupCalculator);
@@ -262,6 +263,13 @@ public class OnshoreMEGprocess {
 		//presRedValve4.displayResult();
 	//	System.out.println(
 //				"temperature after cross cooler  " +heatEx.getOutStream(0).getTemperature("C"));
+		
+		System.out.println(
+				"Heat ex 2 duty " + richMEGstreamHeater2.getDuty()/1.0e3 + " kW");
+		System.out.println(
+				"Heat ex 2 duty2 " + richMEGstreamHeater2.getDuty()/1.0e3 + " kW");
+	
+		
 		System.out.println(
 				"MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
 		System.out.println(
