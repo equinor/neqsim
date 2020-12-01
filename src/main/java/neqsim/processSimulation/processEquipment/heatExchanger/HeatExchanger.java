@@ -5,6 +5,7 @@
  */
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
+import neqsim.processSimulation.conditionMonitor.ConditionMonitorSpecifications;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -302,7 +303,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 	
 	public double getMassBalance(String unit) {
 		//
-double mass=0.0;
+		double mass=0.0;
 		
 		for(int i=0;i<2;i++) {
 			inStream[i].run();
@@ -312,6 +313,36 @@ double mass=0.0;
 			mass +=  outStream[i].getThermoSystem().getFlowRate(unit) - inStream[i].getThermoSystem().getFlowRate(unit);
 		}
 		return mass;	
+	}
+	
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+		double heatBalanceError = 0.0;
+		HeatExchanger refEx = (HeatExchanger)refExchanger;
+		for(int i=0;i<2;i++) {
+			inStream[i].run();
+			inStream[i].getFluid().initProperties();
+			outStream[i].run();
+			outStream[i].getFluid().initProperties();
+			heatBalanceError +=  outStream[i].getThermoSystem().getEnthalpy("kJ/kg") - inStream[i].getThermoSystem().getEnthalpy("kJ/kg");
+		
+			if(Math.abs(refEx.getInStream(i).getTemperature("C") - getInStream(i).getTemperature("C"))>ConditionMonitorSpecifications.HXmaxDeltaT){
+				conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
+			}
+			else if(Math.abs(refEx.getOutStream(i).getTemperature("C") - getOutStream(i).getTemperature("C"))>ConditionMonitorSpecifications.HXmaxDeltaT){
+				conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
+			}
+		}
+		if(Math.abs(heatBalanceError)>1.0) {
+			String error = "Heat balance not fulfilled. Error: " + heatBalanceError + " ";
+			conditionAnalysisMessage +=error;
+		}
+		
+		conditionAnalysisMessage +="/analysis ended/";
+		
+	}
+	
+	public void runConditionAnalysis() {
+		runConditionAnalysis(this);
 	}
 
 }

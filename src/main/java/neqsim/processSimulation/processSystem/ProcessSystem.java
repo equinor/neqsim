@@ -21,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.*;
 /*
  * thermoOps.java
@@ -28,6 +30,9 @@ import org.apache.logging.log4j.*;
  * Created on 2. oktober 2000, 20:27
  */
 import java.util.*;
+
+import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
+import neqsim.processSimulation.conditionMonitor.ConditionMonitorSpecifications;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -101,6 +106,15 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 				return getUnitOperations().get(i);
 			}
 
+		}
+		return null;
+	}
+	
+	public Object getMeasurementDevice(String name) {
+		for (int i = 0; i < measurementDevices.size(); i++) {
+			if (((MeasurementDeviceInterface) measurementDevices.get(i)).getName().equals(name)) {
+				return (MeasurementDeviceInterface) measurementDevices.get(i);
+			}
 		}
 		return null;
 	}
@@ -280,6 +294,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 				}
 			}
 
+			/*
 			signalDB = new String[1000][1 + 3 * measurementDevices.size()];
 
 			signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
@@ -293,8 +308,31 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 						.getUnit();
 
 			}
+			*/
 		} while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 
+	}
+
+	public void runTransient(double deltat) {
+		timeStep = deltat;
+		runTransient();
+	}
+
+	public double getTime() {
+		return time;
+	}
+
+	public double getTime(String unit) {
+		if (unit.equals("sec")) {
+			return time;
+		} else if (unit.equals("hr")) {
+			return time / 3600.0;
+		} else if (unit.equals("day")) {
+			return time / (3600.0 * 24);
+		} else if (unit.equals("year")) {
+			return time / (3600.0 * 24 * 365);
+		}
+		return time;
 	}
 
 	public void runTransient() {
@@ -457,64 +495,75 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 	public CostEstimateBaseClass getCostEstimator() {
 		return costEstimator;
 	}
-	
+
 	public double getEntropyProduction(String unit) {
-		double entropyProduction=0.0;
+		double entropyProduction = 0.0;
 		for (int i = 0; i < unitOperations.size(); i++) {
 			entropyProduction += unitOperations.get(i).getEntropyProduction(unit);
-			System.out.println("unit " + unitOperations.get(i).getName() + " entropy production " + unitOperations.get(i).getEntropyProduction(unit));
+			System.out.println("unit " + unitOperations.get(i).getName() + " entropy production "
+					+ unitOperations.get(i).getEntropyProduction(unit));
 		}
 		return entropyProduction;
 	}
-	
+
 	public double getExergyChange(String unit) {
-		double exergyChange=0.0;
+		double exergyChange = 0.0;
 		for (int i = 0; i < unitOperations.size(); i++) {
 			exergyChange += unitOperations.get(i).getExergyChange("J", getSurroundingTemperature());
-			System.out.println("unit " + unitOperations.get(i).getName() + " exergy change  " + unitOperations.get(i).getExergyChange("J", getSurroundingTemperature()));
+			System.out.println("unit " + unitOperations.get(i).getName() + " exergy change  "
+					+ unitOperations.get(i).getExergyChange("J", getSurroundingTemperature()));
 		}
 		return exergyChange;
 	}
-	
+
 	public double getPower(String unit) {
-		double power =0.0;
+		double power = 0.0;
 		for (int i = 0; i < unitOperations.size(); i++) {
 			if (unitOperations.get(i).getClass().getSimpleName().equals("Compressor")) {
-				power += ((neqsim.processSimulation.processEquipment.compressor.Compressor) unitOperations.get(i)).getPower();
-			}
-			else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
+				power += ((neqsim.processSimulation.processEquipment.compressor.Compressor) unitOperations.get(i))
+						.getPower();
+			} else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
 				power += ((neqsim.processSimulation.processEquipment.pump.Pump) unitOperations.get(i)).getPower();
 			}
-			}
-		return power;
+		}
+		if(unit.equals("MW")) {
+			return power/1.0e6;
+		}
+		else if(unit.equals("kW")) {
+			return power/1.0e3;
+		}
+		else return power;
 	}
-	
+
 	public double getCoolerDuty(String unit) {
-		double heat =0.0;
+		double heat = 0.0;
 		for (int i = 0; i < unitOperations.size(); i++) {
 			if (unitOperations.get(i).getClass().getSimpleName().equals("Cooler")) {
-				heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Cooler) unitOperations.get(i)).getDuty();
+				heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Cooler) unitOperations.get(i))
+						.getDuty();
 			}
 		}
 		return heat;
 	}
-	
+
 	public double getHeaterDuty(String unit) {
-		double heat =0.0;
+		double heat = 0.0;
 		for (int i = 0; i < unitOperations.size(); i++) {
 			if (unitOperations.get(i).getClass().getSimpleName().equals("Heater")) {
-				heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Heater) unitOperations.get(i)).getDuty();
+				heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Heater) unitOperations.get(i))
+						.getDuty();
 			}
 		}
 		return heat;
 	}
-	
+
 	public double getMechanicalWeight(String unit) {
-		double weight =0.0;
+		double weight = 0.0;
 		for (int i = 0; i < unitOperations.size(); i++) {
 			unitOperations.get(i).getMechanicalDesign().calcDesign();
-			System.out.println("Name " + unitOperations.get(i).getName() + "  weight " +unitOperations.get(i).getMechanicalDesign().getWeightTotal());
-			weight +=  unitOperations.get(i).getMechanicalDesign().getWeightTotal();
+			System.out.println("Name " + unitOperations.get(i).getName() + "  weight "
+					+ unitOperations.get(i).getMechanicalDesign().getWeightTotal());
+			weight += unitOperations.get(i).getMechanicalDesign().getWeightTotal();
 		}
 		return weight;
 	}
@@ -527,4 +576,14 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 		this.surroundingTemperature = surroundingTemperature;
 	}
 	
+	public ProcessSystem copy() {
+		byte[] bytes = SerializationUtils.serialize(this);
+		ProcessSystem copyOperation = (ProcessSystem) SerializationUtils.deserialize(bytes);
+		return copyOperation;
+	}
+	
+	public ConditionMonitor getConditionMonitor() {
+		return new ConditionMonitor(this);
+	}
+
 }

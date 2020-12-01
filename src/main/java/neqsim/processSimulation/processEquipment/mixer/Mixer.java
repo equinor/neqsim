@@ -146,8 +146,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
 
     public void run() {
         double enthalpy = 0.0;
-        double flowRate =  ((Stream) streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
-      //  ((Stream) streams.get(0)).getThermoSystem().display();
+        //  ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
         
         //System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());

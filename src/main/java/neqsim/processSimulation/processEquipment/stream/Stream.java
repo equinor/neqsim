@@ -53,7 +53,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	}
 
 	public Stream(StreamInterface stream) {
-		this.stream = stream;
+		this.setStream(stream);
 		thermoSystem = stream.getThermoSystem();
 		numberOfStreams++;
 		streamNumber = numberOfStreams;
@@ -112,7 +112,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 			e.printStackTrace(System.err);
 		}
 		if (stream != null)
-			clonedSystem.stream = (Stream) stream.clone();
+			clonedSystem.setStream((Stream) stream.clone());
 		;
 		clonedSystem.thermoSystem = (SystemInterface) getThermoSystem().clone();
 		return clonedSystem;
@@ -374,6 +374,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	        standard.setReferenceType("molar");
 	        standard.calculate();
 	        return standard.getValue("LCV")*1.0e3/42.2949;
+	}
+
+	public void setStream(StreamInterface stream) {
+		this.stream = stream;
 	}
 
 }

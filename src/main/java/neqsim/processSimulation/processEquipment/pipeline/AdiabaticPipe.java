@@ -10,6 +10,7 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -47,7 +48,7 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         insideDiameter = nominalDiameter / 1000.0;
     }
     
-    public AdiabaticPipe(Stream inStream) {
+    public AdiabaticPipe(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
@@ -56,7 +57,7 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         this.name = name;
     }
     
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
     
@@ -114,7 +115,7 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
             flow = 1.1494e-3 * 288.15 / (system.getPressure()*100) * temp;
             system.setTotalFlowRate(flow/1e6, "MSm^3/day");
             system.init(1);
-            System.out.println("flow " + flow + " velocity "  + velocity);
+           // System.out.println("flow " + flow + " velocity "  + velocity);
         } while (Math.abs(reynoldsNumber - oldReynold) / reynoldsNumber > 1e-3);
         return flow;
     }
@@ -145,6 +146,9 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         }
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
+        if (setPressureOut) {
+        	inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate("kg/sec"), "kg/sec");
+        }
         // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);
     }
@@ -158,6 +162,8 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
     }
     
     public void runTransient() {
+
+        run();
     }
     
     public FlowSystemInterface getPipe() {

@@ -9,6 +9,7 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -28,7 +29,7 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
     public SimpleTPoutPipeline() {
     }
     
-    public SimpleTPoutPipeline(Stream inStream) {
+    public SimpleTPoutPipeline(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
@@ -37,7 +38,7 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
         this.name = name;
     }
     
-    public Stream getOutStream(){
+    public StreamInterface getOutStream(){
         return outStream;
     }
     

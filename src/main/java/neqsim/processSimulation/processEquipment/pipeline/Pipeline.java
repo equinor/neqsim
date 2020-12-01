@@ -12,6 +12,7 @@ import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeis
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -25,8 +26,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
-    protected Stream outStream;
-    protected Stream inStream;
+    protected StreamInterface outStream;
+    protected StreamInterface inStream;
     protected FlowSystemInterface pipe;
     protected SystemInterface system;
     String flowPattern = "stratified";
@@ -49,13 +50,13 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
-    public Pipeline(Stream inStream) {
+    public Pipeline(StreamInterface inStream) {
         this();
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
 
-    public Pipeline(String name, Stream inStream) {
+    public Pipeline(String name, StreamInterface inStream) {
         this();
         this.name = name;
         this.inStream = inStream;
@@ -66,7 +67,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         this.fileName = name;
     }
 
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 

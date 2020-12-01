@@ -4664,7 +4664,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			return getVolumeFraction(phaseNumber);
 		case "mass":
 			initPhysicalProperties("density");
-			return getPhase(phaseNumber).getVolume() * getPhase(phaseNumber).getDensity() / getDensity();
+			return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3") / getDensity("kg/m3");
 		default:
 			return getBeta(phaseNumber);
 		}

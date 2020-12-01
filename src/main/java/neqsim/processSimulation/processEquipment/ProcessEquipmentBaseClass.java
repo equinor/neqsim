@@ -186,6 +186,18 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 	public double getExergyChange(String unit, double sourrondingTemperature) {
 		return 0.0;
 	}
+	
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+		
+	}
+	
+
+    public String conditionAnalysisMessage = "";
+    
+	public String getConditionAnalysisMessage() {
+		return conditionAnalysisMessage;
+	}
+
 		
 		
 

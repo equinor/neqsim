@@ -26,6 +26,7 @@ package neqsim.processSimulation.processSystem;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -170,5 +171,13 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
 	
 	public double getExergyChange(String unit, double sourrondingTemperature) {
 		return 0.0;
+	}
+	
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+		
+	}
+	
+	public String getConditionAnalysisMessage() {
+		return null;
 	}
 }

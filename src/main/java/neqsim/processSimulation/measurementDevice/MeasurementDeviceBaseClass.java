@@ -55,6 +55,11 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     private boolean logging = false;
     private OnlineSignal onlineSignal = null;
     private boolean isOnlineSignal = false;
+    private double onlineMeasurementValue = 0.0;
+    private String onlineMeasurementValueUnit = "";
+    private boolean conditionAnalysis = true;
+    private String conditionAnalysisMessage = "";
+    private double conditionAnalysisMaxDeviation = 0.0;
 
     /**
      * Creates a new instance of ProcessEquipmentBaseClass
@@ -117,4 +122,50 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     public double getOnlineValue() {
         return getOnlineSignal().getValue();
     }
+    
+    public double getMeasuredValue(String unit){
+    	return 0.0;
+    }
+    
+    public void setOnlineMeasurementValue(double value, String unit) {
+    	onlineMeasurementValue = value;
+    	onlineMeasurementValueUnit = unit;
+    }
+    
+    public double getOnlineMeasurementValue() {
+        return onlineMeasurementValue;
+    }
+    
+	public boolean doConditionAnalysis() {
+		return conditionAnalysis;
+	}
+
+	public void setConditionAnalysis(boolean conditionMonitor) {
+		this.conditionAnalysis = conditionMonitor;
+	}
+	
+	public void runConditionAnalysis() {
+		if(Math.abs(getMeasuredValue(onlineMeasurementValueUnit) - onlineMeasurementValue)<getConditionAnalysisMaxDeviation()) {
+			conditionAnalysisMessage = "ok";
+		}
+		else {
+			conditionAnalysisMessage = "fail";
+		}
+	}
+
+	public String getConditionAnalysisMessage() {
+		return conditionAnalysisMessage;
+	}
+
+	public void setQualityCheckMessage(String conditionAnalysisMessage) {
+		this.conditionAnalysisMessage = conditionAnalysisMessage;
+	}
+
+	public double getConditionAnalysisMaxDeviation() {
+		return conditionAnalysisMaxDeviation;
+	}
+
+	public void setConditionAnalysisMaxDeviation(double conditionAnalysisMaxDeviation) {
+		this.conditionAnalysisMaxDeviation = conditionAnalysisMaxDeviation;
+	}
 }

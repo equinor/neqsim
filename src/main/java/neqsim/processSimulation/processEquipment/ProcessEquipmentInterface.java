@@ -67,6 +67,10 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
 	public double getPressure();
 
 	public void setPressure(double pressure);
+	
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger);
+	
+	public String getConditionAnalysisMessage();
 
 	/**
 	 * method to return entropy production of the unit operation
