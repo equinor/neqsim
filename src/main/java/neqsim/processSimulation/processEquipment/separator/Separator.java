@@ -51,7 +51,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	StreamInterface liquidOutStream;
 	private double pressureDrop = 0.0;
 	private double internalDiameter = 1.0;
-	private int numberOfInputStreams = 0;
+	public int numberOfInputStreams = 0;
 	Mixer inletStreamMixer = new Mixer("Separator Inlet Stream Mixer");
 	private double efficiency = 1.0;
 	private double liquidCarryoverFraction = 0.0;
@@ -80,7 +80,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 		this.name = name;
 	}
 
-	public void setInletStream(Stream inletStream) {
+	public void setInletStream(StreamInterface inletStream) {
 		inletStreamMixer.addStream(inletStream);
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
 		gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
@@ -128,15 +128,18 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
 		if (thermoSystem2.hasPhaseType("gas")) {
 			gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
+			gasOutStream.getFluid().init(2);
 		} else {
 			gasOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
 		}
 		if (thermoSystem2.hasPhaseType("aqueous") || thermoSystem2.hasPhaseType("oil")) {
 			liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "liquid");
+			liquidOutStream.getFluid().init(2);
 		} else {
 			liquidOutStream.setThermoSystem(thermoSystem2.getEmptySystemClone());
 		}
-		// liquidOutStream.run();
+		gasOutStream.run();
+		liquidOutStream.run();
 		// liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
 		try {
 			thermoSystem = (SystemInterface) thermoSystem2.clone();
@@ -161,9 +164,10 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 				thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
 						/ (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + totalliquidVolume));
 			}
+			thermoSystem.initBeta();
 			thermoSystem.init(3);
 			// System.out.println("moles in separator " + thermoSystem.getNumberOfMoles());
-			double volume1 = thermoSystem.getVolume();
+		//	double volume1 = thermoSystem.getVolume();
 			// System.out.println("volume1 bef " + volume1);
 			// System.out.println("beta " + thermoSystem.getBeta());
 
@@ -428,5 +432,52 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	
 	public double getPressure() {
 		return getThermoSystem().getPressure();
+	}
+	
+	public double getEntropyProduction(String unit) {
+		//
+		double entrop=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			entrop +=inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+		}
+		if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
+			try {
+			getLiquidOutStream().getThermoSystem().init(3);
+			}
+			catch(Exception e) {
+				
+			}
+		}
+		if (thermoSystem.hasPhaseType("gas")) {
+			getGasOutStream().getThermoSystem().init(3);
+		}
+		
+		return getLiquidOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getEntropy(unit)-entrop;
+	}
+	
+	public double getMassBalance(String unit) {
+		//
+		double flow=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			flow +=inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+		}
+		getLiquidOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		return getLiquidOutStream().getThermoSystem().getFlowRate(unit)+getGasOutStream().getThermoSystem().getFlowRate(unit)-flow;
+	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		
+		//
+		double exergy=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			exergy +=inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+		}
+		getLiquidOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		return getLiquidOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)+getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)-exergy;
 	}
 }

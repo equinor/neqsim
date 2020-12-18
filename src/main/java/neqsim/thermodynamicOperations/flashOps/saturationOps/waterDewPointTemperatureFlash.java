@@ -40,7 +40,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash{
                 system.setTemperature(system.getPhases()[0].getComponents()[k].getMeltingPointTemperature());
                 for(int l=0;l<system.getPhases()[0].getNumberOfComponents();l++){
                     system.getPhase(1).getComponent(l).setx(1e-30);
-                    logger.info("here");
+                   // logger.info("here");
                 }
                 system.getPhase(1).getComponent(k).setx(1.0);
                 system.init(1);
@@ -57,14 +57,14 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash{
                         funk -= system.getPhases()[0].getBeta()*system.getPhases()[1].getComponents()[k].getFugasityCoeffisient()/system.getPhases()[0].getComponents()[k].getFugasityCoeffisient();
                         deriv -= system.getPhases()[0].getBeta()*(system.getPhases()[1].getComponents()[k].getFugasityCoeffisient()*system.getPhases()[0].getComponents()[k].getdfugdt()*-1.0/Math.pow(system.getPhases()[0].getComponents()[k].getFugasityCoeffisient(),2.0) + system.getPhases()[1].getComponents()[k].getdfugdt()/system.getPhases()[i].getComponents()[k].getFugasityCoeffisient());
                     
-                    logger.info("funk " + funk);
+                    //logger.info("funk " + funk);
                     
                     //double newTemp = system.getTemperature() - funk/deriv;
                     //system.setTemperature(newTemp);
                     
                     system.setTemperature(system.getTemperature() + 100.0*funk);
                     
-                    logger.info("temp " + system.getTemperature());
+                   // logger.info("temp " + system.getTemperature());
                     //if(system.getPhase(0).getComponent(k).getComponentName().equals("MEG")) logger.info("funk " + funk + " temp " + system.getTemperature());
                     
                 }

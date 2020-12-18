@@ -22,7 +22,9 @@ public interface MeasurementDeviceInterface extends java.io.Serializable {
 
     public double getMeasuredValue();
     
-      public OnlineSignal getOnlineSignal();
+    public double getMeasuredValue(String unit);
+    
+     public OnlineSignal getOnlineSignal();
 
     public double getMeasuredPercentValue();
 

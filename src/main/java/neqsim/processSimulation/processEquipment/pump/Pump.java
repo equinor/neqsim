@@ -33,6 +33,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 	private boolean useOutTemperature = false;
 	public double isentropicEfficiency = 1.0;
 	public boolean powerSet = false;
+    private String pressureUnit = "bara";
 
     /**
      * Creates new ThrottelValve
@@ -86,13 +87,13 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         // thermoSystem.setTotalNumberOfMoles(molarFlow);
         thermoSystem.setTemperature(outTemperature);
-        thermoSystem.setPressure(pressure);
+        thermoSystem.setPressure(pressure, pressureUnit);
         thermoOps.TPflash();
         thermoSystem.init(3);
         }
         else {
         	thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        	thermoSystem.setPressure(pressure);
+        	thermoSystem.setPressure(pressure,pressureUnit);
 			// System.out.println("entropy inn.." + entropy);
         	ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 			thermoOps.PSflash(entropy);
@@ -239,4 +240,16 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 		this.outTemperature = outTemperature;
 	}
 
+	public double getEntropyProduction(String unit) {
+		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
+	}
+	
+	public void setPressure(double pressure) {
+		setOutletPressure(pressure);
+	}
+	
+	public void setPressure(double pressure, String unit) {
+		setOutletPressure(pressure);
+		pressureUnit = unit;
+	}
 }

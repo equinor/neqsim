@@ -97,7 +97,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 			enthalpy = calcMixStreamEnthalpy();
 			// System.out.println("temp guess " + guessTemperature());
 			if (!isSetOutTemperature()) {
-				mixedStream.getThermoSystem().setTemperature(guessTemperature());
+			//	mixedStream.getThermoSystem().setTemperature(guessTemperature());
 			} else {
 				mixedStream.setTemperature(getOutTemperature(), "K");
 			}

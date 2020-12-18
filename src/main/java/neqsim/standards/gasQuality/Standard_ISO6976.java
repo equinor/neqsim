@@ -217,6 +217,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard implements neqsi
         if (returnParameter.equals("GCV")) {
             returnParameter = "SuperiorCalorificValue";
         }
+        if (returnParameter.equals("LCV")) {
+            returnParameter = "InferiorCalorificValue";
+        }
 
         double returnValue = 0.0;
 

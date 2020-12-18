@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
+import neqsim.standards.gasQuality.Standard_ISO6976;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -52,7 +53,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	}
 
 	public Stream(StreamInterface stream) {
-		this.stream = stream;
+		this.setStream(stream);
 		thermoSystem = stream.getThermoSystem();
 		numberOfStreams++;
 		streamNumber = numberOfStreams;
@@ -64,10 +65,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 			return 0.0;
 		}
 		try {
-			thermoSystem.setHydrateCheck(true);
-			ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+			SystemInterface copySystem = (SystemInterface) thermoSystem.clone();
+			copySystem.setHydrateCheck(true);
+			ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
 			thermoOps.hydrateFormationTemperature();
-			return thermoSystem.getTemperature();
+			return copySystem.getTemperature();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -75,19 +77,20 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	}
 
 	public double getSolidFormationTemperature(String solidName) {
-
+		SystemInterface copySystem = (SystemInterface) thermoSystem.clone();
+		
 		try {
 			if (solidName.equals("hydrate")) {
-				thermoSystem.setHydrateCheck(true);
-				ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+				copySystem.setHydrateCheck(true);
+				ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
 				thermoOps.hydrateFormationTemperature();
 			} else {
-				thermoSystem.setSolidPhaseCheck(false);
-				thermoSystem.setSolidPhaseCheck(solidName);
-				ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+				copySystem.setSolidPhaseCheck(false);
+				copySystem.setSolidPhaseCheck(solidName);
+				ThermodynamicOperations thermoOps = new ThermodynamicOperations(copySystem);
 				thermoOps.freezingPointTemperatureFlash();
 			}
-			return thermoSystem.getTemperature();
+			return copySystem.getTemperature();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -109,7 +112,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 			e.printStackTrace(System.err);
 		}
 		if (stream != null)
-			clonedSystem.stream = (Stream) stream.clone();
+			clonedSystem.setStream((Stream) stream.clone());
 		;
 		clonedSystem.thermoSystem = (SystemInterface) getThermoSystem().clone();
 		return clonedSystem;
@@ -132,6 +135,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		if (stream != null) {
 			stream.setThermoSystem(thermoSystem);
 		}
+	}
+
+	public void setFluid(SystemInterface fluid) {
+		this.setThermoSystem(fluid);
 	}
 
 	public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName) {
@@ -192,31 +199,42 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		return getFluid().getTemperature(unit);
 	}
 
+	public void runTPflash() {
+		if (stream != null) {
+			thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
+		}
+	
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+		thermoOps.TPflash();
+		thermoSystem.initProperties();
+	}
 	public void run() {
 		// System.out.println("start flashing stream... " + streamNumber);
 		if (stream != null) {
 			thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
 		}
-
+		if(getThermoSystem().getNumberOfComponents()==1 && getSpecification().equals("TP")) {
+			setSpecification("PH");
+		}
 		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
-		if (specification.equals("TP")) {
+		if (getSpecification().equals("TP")) {
 			thermoOps.TPflash();
-		} else if (specification.equals("dewP")) {
+		} else if (getSpecification().equals("dewP")) {
 			try {
 				thermoOps.dewPointTemperatureFlash();
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("dewT")) {
+		} else if (getSpecification().equals("dewT")) {
 			try {
 				thermoOps.dewPointPressureFlash();
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("gas quality")) {
+		} else if (getSpecification().equals("gas quality")) {
 			try {
 				thermoSystem.init(0);
 				thermoSystem.init(2);
@@ -229,21 +247,21 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("bubP")) {
+		} else if (getSpecification().equals("bubP")) {
 			try {
 				thermoOps.bubblePointTemperatureFlash();
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("bubT")) {
+		} else if (getSpecification().equals("bubT")) {
 			try {
 				thermoOps.bubblePointPressureFlash(false);
 			} catch (Exception e) {
 				e.printStackTrace();
 				thermoOps.TPflash();
 			}
-		} else if (specification.equals("PH")) {
+		} else if (getSpecification().equals("PH")) {
 			try {
 				thermoOps.PHflash(getThermoSystem().getEnthalpy(), 0);
 			} catch (Exception e) {
@@ -273,12 +291,60 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	}
 
 	public void phaseEnvelope() {
-		ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
 		ops.setRunAsThread(true);
 		ops.calcPTphaseEnvelope(true);
 		boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
 		ops.displayResult();
 		// ops.getJfreeChart();
+	}
+	
+	public double CCB(String unit) {
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+		ops.setRunAsThread(true);
+		ops.calcPTphaseEnvelope(true);
+		boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+		if(unit.equals("bara") || unit.equals("bar") ) {
+			return ops.get("cricondenbar")[1];
+		}
+		else {
+			if(unit.equals("C")) return ops.get("cricondenbar")[0]-273.15;
+			else return ops.get("cricondenbar")[0];
+		}
+		//return ops.get
+		// ops.getJfreeChart();
+	}
+	
+	public double CCT(String unit) {
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+		ops.setRunAsThread(true);
+		ops.calcPTphaseEnvelope(true);
+		boolean isFinished = ops.waitAndCheckForFinishedCalculation(10000);
+		if(unit.equals("bara") || unit.equals("bar") ) {
+			return ops.get("cricondentherm")[1];
+		}
+		else {
+			if(unit.equals("C")) return ops.get("cricondentherm")[0]-273.15;
+			else return ops.get("cricondentherm")[0];
+		}
+		//return ops.get
+		// ops.getJfreeChart();
+	}
+	
+	public double TVP(double temperature, String unit) {
+		SystemInterface localSyst = (SystemInterface)thermoSystem.clone();
+		localSyst.setTemperature(temperature, unit);
+		ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
+		try {
+		ops.bubblePointPressureFlash(false);
+		}
+		catch(Exception e) {
+			String error = e.getMessage();
+		}
+		return localSyst.getPressure(unit);
 	}
 
 	public String[][] reportResults() {
@@ -292,6 +358,26 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		// }
 		// else
 		return null;
+	}
+	
+	public double GCV() {
+		  Standard_ISO6976 standard = new Standard_ISO6976((SystemInterface)thermoSystem.clone(), 0, 15.55, "volume");
+	        standard.setReferenceState("real");
+	        standard.setReferenceType("molar");
+	        standard.calculate();
+	        return standard.getValue("GCV")*1.0e3/42.2949;
+	}
+	
+	public double LCV() {
+		  Standard_ISO6976 standard = new Standard_ISO6976((SystemInterface)thermoSystem.clone(), 0, 15.55, "volume");
+	        standard.setReferenceState("real");
+	        standard.setReferenceType("molar");
+	        standard.calculate();
+	        return standard.getValue("LCV")*1.0e3/42.2949;
+	}
+
+	public void setStream(StreamInterface stream) {
+		this.stream = stream;
 	}
 
 }

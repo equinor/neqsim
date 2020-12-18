@@ -56,7 +56,7 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
                 }
                 else {
                     //System.out.println("ikke gaa hit");
-                    mixedStream.getThermoSystem().addComponent(compName, moles, 0);
+                	 mixedStream.getThermoSystem().addComponent(compName, moles, 0);
                 }
             }
         }

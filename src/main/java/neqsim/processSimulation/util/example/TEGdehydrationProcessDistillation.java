@@ -28,8 +28,7 @@ public class TEGdehydrationProcessDistillation {
 
 		// Create the input fluid to the TEG process and saturate it with water at
 		// scrubber conditions
-		neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
-				10.00);
+		neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
 		feedGas.addComponent("nitrogen", 1.03);
 		feedGas.addComponent("CO2", 1.42);
 		feedGas.addComponent("methane", 83.88);
@@ -113,20 +112,20 @@ public class TEGdehydrationProcessDistillation {
 		stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
 		Stream strippingGas = new Stream("stripGas", stripGas);
-		strippingGas.setFlowRate(90.0, "Sm3/hr");
+		strippingGas.setFlowRate(40.0, "Sm3/hr");
 		strippingGas.setTemperature(80.0, "C");
 		strippingGas.setPressure(1.23, "bara");
 
 		Stream gasToReboiler = (Stream) strippingGas.clone();
 		gasToReboiler.setName("gas to reboiler");
 
-		DistillationColumn column = new DistillationColumn(2, true, true);
+		DistillationColumn column = new DistillationColumn(1, true, true);
 		column.setName("TEG regeneration column");
-		column.addFeedStream(glycol_flash_valve2.getOutStream(), 2);
+		column.addFeedStream(glycol_flash_valve2.getOutStream(), 0);
 		column.getReboiler().setOutTemperature(273.15 + 206.6);
 		column.getCondenser().setOutTemperature(273.15 + 100.0);
 		column.getReboiler().addStream(gasToReboiler);
-		column.setTopPressure(1.2);
+		column.setTopPressure(1.0);
 		column.setBottomPressure(1.23);
 
 		Heater coolerRegenGas = new Heater(column.getGasOutStream());
@@ -184,7 +183,7 @@ public class TEGdehydrationProcessDistillation {
 		makeupTEG.setTemperature(43.0, "C");
 		makeupTEG.setPressure(52.21, "bara");
 
-		Calculator makeupCalculator = new Calculator("makeup calculator");
+		Calculator makeupCalculator = new Calculator("TEG makeup calculator");
 		makeupCalculator.addInputVariable(dehydratedGas);
 		makeupCalculator.addInputVariable(flashGas);
 		makeupCalculator.addInputVariable(gasToFlare);
@@ -285,6 +284,8 @@ public class TEGdehydrationProcessDistillation {
 		System.out.println("flow rate from reboiler "
 				+ ((Reboiler) column.getReboiler()).getLiquidOutStream().getFlowRate("kg/hr"));
 		System.out.println("flow rate from pump2  " + hotLeanTEGPump2.getOutStream().getFluid().getFlowRate("kg/hr"));
+		System.out.println("flow rate to flare  " + gasToFlare.getFluid().getFlowRate("kg/hr"));
+		
 		System.out.println("condenser duty  "
 				+ ((Condenser) ((DistillationColumn) operations.getUnit("TEG regeneration column")).getCondenser())
 						.getDuty() / 1.0e3);
