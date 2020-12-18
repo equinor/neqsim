@@ -23,6 +23,7 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 
 	StreamInterface waterOutStream = new Stream(waterSystem);
 
+	String specifiedStream = "feed";
 	double gasInAqueous = 0.00;
 	String gasInAqueousSpec = "mole";
 
@@ -47,16 +48,18 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 	}
 
 	public ThreePhaseSeparator(StreamInterface inletStream) {
-		super(inletStream);
-		setInletStream(inletStream);
+		this();
+		addStream(inletStream);
 	}
 
 	public ThreePhaseSeparator(String name, StreamInterface inletStream) {
-		super(name, inletStream);
-		setInletStream(inletStream);
+		this();
+		setName(name);
+		addStream(inletStream);
 	}
 
-	public void setEntrainment(double val, String specType, String phaseFrom, String phaseTo) {
+	public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom, String phaseTo) {
+		this.specifiedStream = specifiedStream;
 		if (phaseFrom.equals("gas") && phaseTo.equals("aqueous")) {
 			gasInAqueous = val;
 			gasInAqueousSpec = specType;
@@ -85,15 +88,7 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 	}
 
 	public void setInletStream(StreamInterface inletStream) {
-		inletStreamMixer.addStream(inletStream);
-
-		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-		gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
-		gasOutStream = new Stream(gasSystem);
-
-		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-		liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
-		liquidOutStream = new Stream(liquidSystem);
+		super.setInletStream(inletStream);
 
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
 		waterSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
@@ -115,14 +110,15 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 		thermoSystem.setMultiPhaseCheck(true);
 		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 		thermoOps.TPflash();
-
-		thermoSystem.addPhaseFractionToPhase(gasInAqueous, "mole", "gas", "aqueous");
-		thermoSystem.addPhaseFractionToPhase(gasInOil, "mole", "gas", "oil");
-		thermoSystem.addPhaseFractionToPhase(oilInAqueous, "mole", "oil", "aqueous");
-		thermoSystem.addPhaseFractionToPhase(oilInGas, "mole", "oil", "gas");
-		thermoSystem.addPhaseFractionToPhase(aqueousInGas, "mole", "aqueous", "gas");
-		thermoSystem.addPhaseFractionToPhase(aqueousInOil, "mole", "aqueous", "oil");
-		// thermoSystem.display();
+	//	thermoSystem.display();
+		thermoSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas", "aqueous");
+		thermoSystem.addPhaseFractionToPhase(gasInOil, gasInOilSpec,specifiedStream,  "gas", "oil");
+		thermoSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil", "aqueous");
+		thermoSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+		thermoSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream, "aqueous", "gas");
+		thermoSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
+	//	thermoSystem.init_x_y();
+	//	thermoSystem.display();
 //        thermoSystem.init(3);
 //        thermoSystem.setMultiPhaseCheck(false);
 
@@ -154,6 +150,9 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 		} else {
 			waterOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
 		}
+		gasOutStream.run();
+		liquidOutStream.run();
+		waterOutStream.run();
 //        //waterOutStream.run();
 	}
 
@@ -180,5 +179,30 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 
 	public void runTransient() {
 	}
-
+	
+	public double getEntropyProduction(String unit) {
+		double entrop=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			entrop +=inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+		}
+		getWaterOutStream().getThermoSystem().init(3);
+		getOilOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		
+		return getWaterOutStream().getThermoSystem().getEntropy(unit)+getOilOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getEntropy(unit)-entrop;
+	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		double entrop=0.0;
+		for(int i=0;i<numberOfInputStreams;i++) {
+			inletStreamMixer.getStream(i).getFluid().init(3);
+			entrop +=inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+		}
+		getWaterOutStream().getThermoSystem().init(3);
+		getOilOutStream().getThermoSystem().init(3);
+		getGasOutStream().getThermoSystem().init(3);
+		
+		return getWaterOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)+getOilOutStream().getThermoSystem().getEntropy(unit)+getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)-entrop;
+	}
 }

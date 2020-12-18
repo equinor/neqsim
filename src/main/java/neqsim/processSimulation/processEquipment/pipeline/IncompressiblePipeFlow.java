@@ -6,6 +6,7 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -28,7 +29,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     public IncompressiblePipeFlow() {
     }
 
-    public IncompressiblePipeFlow(Stream inStream) {
+    public IncompressiblePipeFlow(StreamInterface inStream) {
         super(inStream);
     }
 

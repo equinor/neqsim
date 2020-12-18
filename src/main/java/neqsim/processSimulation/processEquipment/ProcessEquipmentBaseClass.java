@@ -44,7 +44,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public boolean hasController = false;
     public String name = new String();
     public MechanicalDesign mechanicalDesign = new MechanicalDesign(this);
-    public String specification = "TP";
+    private String specification = "TP";
     public String[][] report = new String[0][0];
     public HashMap<String, String> properties = new HashMap<String, String>();
     public EnergyStream energyStream = new EnergyStream();
@@ -174,5 +174,31 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 	public void setPressure(double pressure) {
 		
 	}
+	
+	public double getEntropyProduction(String unit) {
+		return 0.0;
+	}
+	
+	public double getMassBalance(String unit) {
+		return 0.0;
+	}
+	
+	public double getExergyChange(String unit, double sourrondingTemperature) {
+		return 0.0;
+	}
+	
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+		
+	}
+	
+
+    public String conditionAnalysisMessage = "";
+    
+	public String getConditionAnalysisMessage() {
+		return conditionAnalysisMessage;
+	}
+
+		
+		
 
 }

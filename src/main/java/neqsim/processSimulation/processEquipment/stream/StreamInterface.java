@@ -22,15 +22,17 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setFlowRate(double flowrate, String unit);
     
     public double getPressure(String unit);
-    
+    public void runTPflash() ;
     public double getTemperature(String unit);
     public void setName(String name);
-
+	public double CCT(String unit);
     public double getTemperature();
-    
+	public double CCB(String unit);
     public double getFlowRate(String unit);
     
+    public double TVP(double temperature, String unit);
     
+    public void setFluid(SystemInterface fluid);
 
     public double getMolarRate();
 
@@ -49,5 +51,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setPressure(double pressure, String unit);
     
     public void setTemperature(double temperature, String unit);
+    
+    public double GCV();
+    
+    public double LCV();
 
 }

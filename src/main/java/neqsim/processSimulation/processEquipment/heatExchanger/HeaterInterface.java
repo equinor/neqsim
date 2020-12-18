@@ -19,4 +19,8 @@ public interface HeaterInterface {
     public void setdT(double dT);
 
     public void setOutTP(double temperature, double pressure);
+    
+    public void setOutTemperature(double temperature, String unit);
+    
+    public void setOutPressure(double pressure, String unit);
 }

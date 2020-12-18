@@ -14,9 +14,18 @@ import neqsim.thermo.phase.PhaseInterface;
 public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID);
-
+    
+    public String getComponentNameTag();
+    public void setComponentNameTagOnNormalComponents(String nameTag);
+    
     public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName, String toPhaseName);
     
+    public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,  String fromPhaseName, String toPhaseName);
+
+    public void renameComponent(String oldName, String newName);
+    	
+    public void setComponentNameTag(String nameTag);
+    	
 	public int getNumberOfComponents();
 	
 	/**

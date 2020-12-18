@@ -61,10 +61,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	private boolean useTVasIndependentVariables = false;
 	protected double criticalPressure = 0;
 	private double totalNumberOfMoles = 0;
+	public String componentNameTag = "";
 	protected neqsim.thermo.characterization.WaxCharacterise waxCharacterisation = null;// new WaxCharacterise(this);
 	protected double[] beta = new double[6];
 	protected int a, initType = 3;
-	private ArrayList componentNames = new ArrayList();
+	private ArrayList<String> componentNames = new ArrayList<String>();
 	protected ArrayList resultArray1 = new ArrayList();
 	protected String[] CapeOpenProperties11 = { "molecularWeight", "speedOfSound", "jouleThomsonCoefficient",
 			"internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
@@ -178,6 +179,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		clonedSystem.attractiveTermNumber = attractiveTermNumber;
 		clonedSystem.phaseType = phaseType.clone();
 		clonedSystem.phaseIndex = phaseIndex.clone();
+		clonedSystem.componentNames = (ArrayList<String>) componentNames.clone();
 		if (interfaceProp != null) {
 			// clonedSystem.interfaceProp = (InterphasePropertiesInterface)
 			// interfaceProp.clone();
@@ -187,6 +189,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			clonedSystem.waxCharacterisation = (neqsim.thermo.characterization.WaxCharacterise) waxCharacterisation
 					.clone();
 		}
+
 		System.arraycopy(this.beta, 0, clonedSystem.beta, 0, beta.length);
 		System.arraycopy(this.phaseType, 0, clonedSystem.phaseType, 0, phaseType.length);
 		System.arraycopy(this.phaseIndex, 0, clonedSystem.phaseIndex, 0, phaseIndex.length);
@@ -498,7 +501,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		newSystem.setTotalNumberOfMoles(getPhase(phaseNumber).getNumberOfMolesInPhase() / 1.0e30);
 
 		newSystem.init(0);
-		newSystem.init(1);
+		// newSystem.init(1);
 		return newSystem;
 	}
 
@@ -572,8 +575,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			initPhysicalProperties("density");
 		}
 		density = getPhase(0).getDensity("kg/m3");
-		neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(),
-				density, 0);
+		neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
 		double SIval = unit.getSIvalue();
 		double totalNumberOfMolesLocal = totalNumberOfMoles;
 		for (int i = 0; i < numberOfComponents; i++) {
@@ -610,9 +612,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 					* ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
 		} else if (flowunit.equals("MSm3/day")) {
 			return totalNumberOfMoles * 3600.0 * 24.0 * ThermodynamicConstantsInterface.R
-					* ThermodynamicConstantsInterface.standardStateTemperature / 101325.0/1.0e6;
-		}
-		else if (flowunit.equals("kg/hr")) {
+					* ThermodynamicConstantsInterface.standardStateTemperature / 101325.0 / 1.0e6;
+		} else if (flowunit.equals("kg/hr")) {
 			return totalNumberOfMoles * getMolarMass() * 3600.0;
 		} else if (flowunit.equals("m3/hr")) {
 			// return getVolume() / 1.0e5 * 3600.0;
@@ -3910,11 +3911,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 				tempModel = new SystemSrkTwuCoonStatoilEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
 			} else if (model.equals("SRK-TwuCoon-Param-EOS")) {
 				tempModel = new SystemSrkTwuCoonParamEos(getPhase(0).getTemperature(), getPhase(0).getPressure());
-			}
-			else if (model.equals("Duan-Sun")) {
+			} else if (model.equals("Duan-Sun")) {
 				tempModel = new SystemDuanSun(getPhase(0).getTemperature(), getPhase(0).getPressure());
-			}
-			else {
+			} else {
 				logger.error("model : " + model + " not defined.....");
 			}
 			// tempModel.getCharacterization().setTBPModel("RiaziDaubert");
@@ -3992,7 +3991,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 	public void autoSelectMixingRule() {
 		logger.info("setting mixing rule");
 		if (modelName.equals("CPAs-SRK-EOS") || modelName.equals("CPA-SRK-EOS")
-				|| modelName.equals("Electrolyte-CPA-EOS-statoil") || modelName.equals("CPAs-SRK-EOS-statoil") || modelName.equals("Electrolyte-CPA-EOS") ) {
+				|| modelName.equals("Electrolyte-CPA-EOS-statoil") || modelName.equals("CPAs-SRK-EOS-statoil")
+				|| modelName.equals("Electrolyte-CPA-EOS")) {
 			this.setMixingRule(10);
 			// System.out.println("mix rule 10");
 		} else if ((modelName.equals("ScRK-EOS-HV") || modelName.equals("SRK-EOS") || modelName.equals("ScRK-EOS"))
@@ -4076,7 +4076,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 
 	public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
 			String toPhaseName) {
-		if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-25)) {
+		if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-30)) {
 			return;
 		}
 		int phaseNumbFrom = getPhaseNumberOfPhase(fromPhaseName);
@@ -4086,6 +4086,78 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			addComponent(i, change, phaseNumbTo);
 			addComponent(i, -change, phaseNumbFrom);
 		}
+		init_x_y();
+	}
+
+	public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,
+			String fromPhaseName, String toPhaseName) {
+		double moleFraction = fraction;
+		if (!hasPhaseType(fromPhaseName) || !hasPhaseType(toPhaseName) || fraction < 1e-30) {
+			return;
+		}
+		int phaseNumbFrom = getPhaseNumberOfPhase(fromPhaseName);
+		int phaseNumbTo = getPhaseNumberOfPhase(toPhaseName);
+
+		if (specifiedStream.equals("feed")) {
+			moleFraction = fraction;
+
+		} else if (specifiedStream.equals("product")) {
+			double specFractionFrom = getPhaseFraction(specification, fromPhaseName);
+			double specFractionTo = getPhaseFraction(specification, toPhaseName);
+
+			double moleFractionFrom = getMoleFraction(phaseNumbFrom);
+			double moleFractionTo = getMoleFraction(phaseNumbTo);
+
+			if (specification.equals("volume") || specification.equals("mass")) {
+				double test = fraction * specFractionTo / (fraction * specFractionTo + specFractionTo);
+				moleFraction = test * moleFractionTo / specFractionTo;
+			}
+			else if (specification.equals("mole")) {
+				double test = fraction * moleFractionTo/ (fraction * moleFractionTo + moleFractionTo);
+				moleFraction = test;
+			}
+
+			moleFraction=moleFraction*moleFractionTo/moleFractionFrom;
+			if (moleFraction > moleFractionFrom) {
+				logger.debug("error in addPhaseFractionToPhase()...to low fraction in from phase");
+				moleFraction = moleFractionFrom;
+			}
+		}
+
+		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+			double change = 0.0;
+			change = getPhase(phaseNumbFrom).getComponent(i).getNumberOfMolesInPhase() * moleFraction;
+			addComponent(i, change, phaseNumbTo);
+			addComponent(i, -change, phaseNumbFrom);
+		}
+		init_x_y();
+	}
+
+	public void renameComponent(String oldName, String newName) {
+		componentNames.set(getPhase(0).getComponent(oldName).getComponentNumber(), newName);
+		for (int i = 0; i < maxNumberOfPhases; i++) {
+			getPhase(i).getComponent(oldName).setComponentName(newName);
+		}
+	}
+
+	public void setComponentNameTag(String nameTag) {
+		componentNameTag = nameTag;
+		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+			renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
+		}
+	}
+
+	public void setComponentNameTagOnNormalComponents(String nameTag) {
+		componentNameTag = nameTag;
+		for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+			if (!getPhase(0).getComponent(i).isIsTBPfraction() && !getPhase(0).getComponent(i).isIsPlusFraction()) {
+				renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
+			}
+		}
+	}
+
+	public String getComponentNameTag() {
+		return componentNameTag;
 	}
 
 	public void addGasToLiquid(double fraction) {
@@ -4592,7 +4664,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			return getVolumeFraction(phaseNumber);
 		case "mass":
 			initPhysicalProperties("density");
-			return getPhase(phaseNumber).getVolume() * getPhase(phaseNumber).getDensity() / getDensity();
+			return getVolumeFraction(phaseNumber) * getPhase(phaseNumber).getDensity("kg/m3") / getDensity("kg/m3");
 		default:
 			return getBeta(phaseNumber);
 		}

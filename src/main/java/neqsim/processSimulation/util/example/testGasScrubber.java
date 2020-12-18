@@ -7,6 +7,7 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
 import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  *
@@ -55,7 +56,7 @@ public class testGasScrubber {
         pipe.setDiameter(0.4);
         pipe.setLength(10);
 
-        Stream stream_3 = pipe.getOutStream();
+        StreamInterface stream_3 = pipe.getOutStream();
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
