@@ -33,6 +33,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
 	double inputValue = 0.0, oldInputValue = 0.0;
 	private double error = 1e6, oldError = 1.0e6;
 	int iterations = 0;
+	private boolean activateWhenLess = false;
 
 	static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
@@ -81,10 +82,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
 	}
 
 	public void run() {
-		iterations++;
 		oldError = error;
-		
-		
 		
 		if (adjustedVarialble.equals("mass flow")) {
 			inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
@@ -92,15 +90,28 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
 			inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
 		}
 		
-		
 		double targetValueCurrent = 0.0;
 		if (targetVariable.equals("mass fraction") && !targetPhase.equals("") && !targetComponent.equals("")) {
 			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPhase(targetPhase)
 					.getWtFrac(targetComponent);
-		} else {
+		}
+		else if (targetVariable.equals("gasVolumeFlow")) {
+			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
+		}
+		else if (targetVariable.equals("pressure")) {
+			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPressure(targetUnit);
+		}
+		else {
 			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
 		}
+		
+		if(activateWhenLess && targetValueCurrent>targetValue) {
+			error=0.0;
+			activateWhenLess=true;
+			return;
+		}
 
+		iterations++;
 		double deviation = targetValue - targetValueCurrent;
 
 		error = deviation;
@@ -170,7 +181,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
 		Stream stream_1 = new Stream("Stream1", testSystem);
 		Adjuster adjuster1 = new Adjuster();
 		adjuster1.setAdjustedVariable(stream_1, "molarFlow");
-		adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "", "MSm3/day");
+		adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day","");
 
 		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
 		operations.add(stream_1);
@@ -178,5 +189,14 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
 
 		operations.run();
 	}
+
+	public boolean isActivateWhenLess() {
+		return activateWhenLess;
+	}
+
+	public void setActivateWhenLess(boolean activateWhenLess) {
+		this.activateWhenLess = activateWhenLess;
+	}
+	
 
 }

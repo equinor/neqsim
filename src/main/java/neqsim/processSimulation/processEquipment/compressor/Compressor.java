@@ -182,11 +182,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	}
 
 	public void run() {
-		// System.out.println("compressor running..");
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
 		ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
 		thermoOps = new ThermodynamicOperations(getThermoSystem());
 		getThermoSystem().init(3);
+		getThermoSystem().initPhysicalProperties("density");
 		double presinn = getThermoSystem().getPressure();
 		double hinn = getThermoSystem().getEnthalpy();
 		double densInn = getThermoSystem().getDensity();
@@ -206,16 +206,12 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				return;
 			} else {
 				double MW = thermoSystem.getMolarMass();
-
 				thermoSystem.setPressure(getOutletPressure(), pressureUnit);
-				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.PSflash(entropy);
 				thermoSystem.initPhysicalProperties("density");
 				double densOutIsentropic = thermoSystem.getDensity("kg/m3");
 				double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
-				// System.out.println("temperature isentropic "+thermoSystem.getTemperature());
 				thermoSystem.setTemperature(outTemperature);
-				thermoOps = new ThermodynamicOperations(getThermoSystem());
 				thermoOps.TPflash();
 				thermoSystem.init(2);
 				thermoSystem.initPhysicalProperties("density");
@@ -269,8 +265,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 				double polytropEff = getCompressorChart().getPolytropicEfficiency(thermoSystem.getFlowRate("m3/hr"),
 						getSpeed());
 				setPolytropicEfficiency(polytropEff / 100.0);
-				// logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + "
-				// m/hr");
+				// logger.info("actual inlet flow " + thermoSystem.getFlowRate("m3/hr") + " m/hr");
 				polytropicHead = getCompressorChart().getPolytropicHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 				double temperature_inlet = thermoSystem.getTemperature();
 				double z_inlet = thermoSystem.getZ();

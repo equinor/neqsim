@@ -9,7 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Well implements Serializable{
 	
 	private StreamInterface stream = null;
-	String name;
+	private String name;
 	double x, y, z;
 	
 	public Well() {
@@ -17,7 +17,7 @@ public class Well implements Serializable{
 	}
 
 	public Well(String name) {
-		this.name = name;
+		this.setName(name);
 	}
 
 	public StreamInterface getStream() {
@@ -65,6 +65,14 @@ public class Well implements Serializable{
 			volume = locStream.getPhase("oil").getVolume("m3");
 		}
 		return volume;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 	

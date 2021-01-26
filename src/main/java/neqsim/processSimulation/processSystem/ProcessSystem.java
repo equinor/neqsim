@@ -311,6 +311,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 			*/
 		} while ((!isConverged || (iter < 2 && hasResycle)) && iter < 100);
 
+		for (int i = 0; i < unitOperations.size(); i++) {
+			if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
+				if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations.get(i)).solved()) {
+					isConverged = false;
+				}
+			}
+		}
 	}
 
 	public void runTransient(double deltat) {

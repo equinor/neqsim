@@ -376,7 +376,7 @@ abstract class Component extends Object
 				}
 				// System.out.println("crit visc " + criticalViscosity);
 				if (normalLiquidDensity == 0) {
-					normalLiquidDensity = molarMass / (0.285 * Math.pow(criticalVolume, 1.048));
+					normalLiquidDensity = molarMass / (0.285 * Math.pow(criticalVolume, 1.048))*1000.0;
 				}
 				if (dataSet.getString("HydrateFormer").equals("yes")) {
 					setIsHydrateFormer(true);
