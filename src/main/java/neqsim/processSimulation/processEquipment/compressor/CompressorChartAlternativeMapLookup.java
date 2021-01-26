@@ -394,7 +394,9 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
 	        }
 	    }
 	}
-	
+	public void plot() {
+		
+	}
 
 
 }

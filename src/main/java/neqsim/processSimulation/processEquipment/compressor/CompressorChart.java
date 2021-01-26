@@ -8,6 +8,7 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.*;
 
+import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -38,7 +39,8 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 	PolynomialFunction reducedHeadFitterFunc = null;
 	PolynomialFunction reducedPolytropicEfficiencyFunc = null;
 	PolynomialFunction fanLawCorrectionFunc = null;
-
+	double[] speed; double[][] flow; double[][] head; double[][] polytropicEfficiency;
+	double[][] redflow; double[][] redhead; double[][] redpolytropicEfficiency;
 	public CompressorChart() {
 	}
 
@@ -50,15 +52,26 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 	public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
 			double[][] polyEff) {
 		
-
+		this.speed = speed;
+		this.head = head;
+		this.polytropicEfficiency = polyEff;
+		this.flow = flow;
+		
+		this.redhead = new double[head.length][head[0].length];
+		this.redpolytropicEfficiency = new double[polyEff.length][polyEff[0].length];
+		this.redflow = new double[flow.length][flow[0].length];
+		
 		for (int i = 0; i < speed.length; i++) {
 			if(speed[i]>maxSpeedCurve) maxSpeedCurve=speed[i];
 			if(speed[i]<minSpeedCurve) minSpeedCurve=speed[i];
 			CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
 			chartValues.add(curve);
 			for (int j = 0; j < flow[i].length; j++) {
-				reducedHeadFitter.add(flow[i][j] / speed[i], head[i][j] / speed[i] / speed[i]);
-				reducedPolytropicEfficiencyFitter.add(flow[i][j] / speed[i], polyEff[i][j]);
+				redflow[i][j] = flow[i][j] / speed[i];
+				redpolytropicEfficiency[i][j] = polyEff[i][j];
+				redhead[i][j] = head[i][j] / speed[i] / speed[i];
+				reducedHeadFitter.add(redflow[i][j], redhead[i][j]);
+				reducedPolytropicEfficiencyFitter.add(redflow[i][j], redpolytropicEfficiency[i][j]);
 				double flowFanLaw = flow[i][j] * speed[i] / speed[0]; // MLLU: not correct. speed[0] should be the requested speed
 				fanLawCorrectionFitter.add(speed[i] / speed[0], flow[i][j] / flowFanLaw);
 			}
@@ -67,7 +80,7 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 		referenceSpeed = (maxSpeedCurve+minSpeedCurve)/2.0;
 		
 		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
-
+		
 		reducedHeadFitterFunc = new PolynomialFunction(fitter.fit(reducedHeadFitter.toList()));
 		reducedPolytropicEfficiencyFunc = new PolynomialFunction(
 				fitter.fit(reducedPolytropicEfficiencyFitter.toList()));
@@ -189,13 +202,13 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 
 		testFluid.setTemperature(24.0, "C");
 		testFluid.setPressure(48.0, "bara");
-		testFluid.setTotalFlowRate(5.4, "MSm3/day");
+		testFluid.setTotalFlowRate(4.5, "MSm3/day");
 
 		Stream stream_1 = new Stream("Stream1", testFluid);
 		Compressor comp1 = new Compressor(stream_1);
 		comp1.setUsePolytropicCalc(true);
 		//comp1.getAntiSurge().setActive(true);
-		comp1.setSpeed(11918);
+		comp1.setSpeed(12918);
 
 		
 		  double[] chartConditions = new double[] { 0.3, 1.0, 1.0, 1.0 }; 
@@ -272,19 +285,21 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 		System.out.println("speed " + comp1.getCompressorChart().getSpeed(stream_1.getThermoSystem().getFlowRate("m3/hr")+10.0, comp1.getPolytropicHead()));
 		System.out.println("pressure out "+ comp1.getOutletPressure());
 		System.out.println("temperature out "+ (comp1.getOutTemperature()-273.15)+ " C");
-		double temperatureOut = 333.0;
-		comp1.setOutletPressure(71.0);
+		double temperatureOut = 273.15+84;
+		comp1.setOutletPressure(96.0);
 		comp1.setOutTemperature(temperatureOut);
 		operations.run();
-		  double polytropicHead = comp1.getPolytropicHead();
+		double polytropicHead = comp1.getPolytropicHead();
 				  double flowRate = stream_1.getThermoSystem().getFlowRate("m3/hr");
 						  double calcSpeed = comp1.getCompressorChart().getSpeed(flowRate, polytropicHead);
+						  System.out.println("polytopic head "+ polytropicHead);
+						  System.out.println("polytopic efficiency " + comp1.getPolytropicEfficiency());
 						  System.out.println("temperature out "+ (comp1.getOutTemperature()-273.15)+ " C");
 						  System.out.println("calculated speed "+ calcSpeed);
 						  System.out.println("power " + comp1.getPower());
 		
-		
-		
+						
+						  comp1.getCompressorChart().plot();
 		
 		
 	}
@@ -311,6 +326,17 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 
 	public void setUseRealKappa(boolean useRealKappa) {
 		this.useRealKappa = useRealKappa;
+	}
+	
+	public void plot() {
+		neqsim.dataPresentation.JFreeChart.graph2b graph = new neqsim.dataPresentation.JFreeChart.graph2b(flow, head, Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "head vs flow","flow", "head");
+		graph.setVisible(true);
+		neqsim.dataPresentation.JFreeChart.graph2b graph2 = new neqsim.dataPresentation.JFreeChart.graph2b(flow, polytropicEfficiency, Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "eff vs flow","flow", "eff");
+		graph2.setVisible(true);
+		neqsim.dataPresentation.JFreeChart.graph2b graph3 = new neqsim.dataPresentation.JFreeChart.graph2b(redflow, redhead, Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "red head vs red flow","red flow", "red head");
+		graph3.setVisible(true);
+		neqsim.dataPresentation.JFreeChart.graph2b graph4 = new neqsim.dataPresentation.JFreeChart.graph2b(redflow, polytropicEfficiency, Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "red eff vs red dflow","red flow", "red eff");
+		graph4.setVisible(true);
 	}
 
 }

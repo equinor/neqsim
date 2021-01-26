@@ -236,7 +236,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
         ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
         CVDsim.setTemperature(315.0);
-        CVDsim.setPressures(new double[]{400, 300.0, 200.0, 100.0});
+        CVDsim.setPressures(new double[]{400, 300.0, 200.0, 150.0, 100.0, 50.0});
         CVDsim.runCalc();
         CVDsim.setTemperaturesAndPressures(new double[]{313, 313, 313, 313}, new double[]{400, 300.0, 200.0, 100.0});
         double[][] expData = {{0.95, 0.99, 1.0, 1.1}};

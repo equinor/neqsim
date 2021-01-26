@@ -214,6 +214,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		int index = -1;
 		for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
 			if (!getPhase(0).hasComponent(addSystem.getPhase(0).getComponent(i).getComponentName())) {
+				index = -1;
 				addedNewComponent = true;
 			} else {
 				index = getPhase(0).getComponent(addSystem.getPhase(0).getComponent(i).getComponentName())
@@ -918,6 +919,17 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		for (int i = 0; i < getMaxNumberOfPhases(); i++) {
 			getPhase(i).addMolesChemReac(componentIndex, moles, moles);
 		}
+	}
+	
+	/**
+	 * add a component to a fluid. If component already exists, it will be added to
+	 * the component
+	 *
+	 * @param componentName Name of the component to be added. See NeqSim database
+	 *                      for available components in the database.
+	 */
+	public void addComponent(String name) {
+		addComponent(name, 0.0);
 	}
 
 	/**
@@ -2082,6 +2094,25 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 			break;
 		case "cP":
 			conversionFactor = 1.0e3;
+			break;
+		default:
+			throw new RuntimeException();
+		}
+		return refViscosity * conversionFactor;
+	}
+	
+	/**
+	 * method to return kinematic viscosity in a given unit
+	 *
+	 * @param unit The unit as a string. Supported units are m2/sec
+	 * @return kinematic viscosity in specified unit
+	 */
+	public double getKinematicViscosity(String unit) {
+		double refViscosity = getViscosity("kg/msec")/getDensity("kg/m3"); // viscosity in kg/msec
+		double conversionFactor = 1.0;
+		switch (unit) {
+		case "m2/sec":
+			conversionFactor = 1.0;
 			break;
 		default:
 			throw new RuntimeException();

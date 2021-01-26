@@ -28,6 +28,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 	private String equipment = "pipeline";
 	String flowPattern = "stratified";
 	private double length = 1.0;
+	public int numberOfNodes = 100;
 	private double ID = 0.5;
 	private double outerTemperature = 283.15;
 	public double interfacialArea = 0.0;
@@ -67,7 +68,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 		PipeData pipe1 = new PipeData(getID(), 0.00025);
 		FlowNodeInterface test = new DropletFlowNode(thermoSystem, pipe1);
 		test.setInterphaseModelType(1);
-		test.setLengthOfNode(getLength() / 100.0);
+		test.setLengthOfNode(getLength() / (numberOfNodes*1.0));
 		test.getGeometry().getSurroundingEnvironment().setTemperature(getOuterTemperature());
 
 		test.getFluidBoundary().setHeatTransferCalc(false);
@@ -77,7 +78,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 		double[][] temperatures2 = new double[3][1000];
 		int k = 0;
 		interfacialArea = 0.0;
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < numberOfNodes; i++) {
 			interfacialArea = getInterfacialArea() + test.getInterphaseContactArea();
 			length += test.getLengthOfNode();
 			test.initFlowCalc();
@@ -114,7 +115,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 		PipeData pipe1 = new PipeData(getID(), 0.00025);
 		FlowNodeInterface test = new StratifiedFlowNode(thermoSystem, pipe1);
 		test.setInterphaseModelType(1);
-		test.setLengthOfNode(getLength() / 100.0);
+		test.setLengthOfNode(getLength() / (numberOfNodes*1.0));
 		test.getGeometry().getSurroundingEnvironment().setTemperature(getOuterTemperature());
 
 		test.getFluidBoundary().setHeatTransferCalc(false);
@@ -124,7 +125,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 		double[][] temperatures2 = new double[3][1000];
 		int k = 0;
 		interfacialArea = 0.0;
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < numberOfNodes; i++) {
 			interfacialArea = getInterfacialArea() + test.getInterphaseContactArea();
 			length += test.getLengthOfNode();
 			test.initFlowCalc();
@@ -161,7 +162,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 		PipeData pipe1 = new PipeData(getID(), 0.00025);
 		FlowNodeInterface test = new AnnularFlow(thermoSystem, pipe1);
 		test.setInterphaseModelType(1);
-		test.setLengthOfNode(getLength() / 100.0);
+		test.setLengthOfNode(getLength() / (numberOfNodes*1.0));
 		test.getGeometry().getSurroundingEnvironment().setTemperature(getOuterTemperature());
 
 		test.getFluidBoundary().setHeatTransferCalc(false);
@@ -171,7 +172,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 		double[][] temperatures2 = new double[3][1000];
 		int k = 0;
 		interfacialArea = 0.0;
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < numberOfNodes; i++) {
 			interfacialArea = getInterfacialArea() + test.getInterphaseContactArea();
 			length += test.getLengthOfNode();
 			test.initFlowCalc();
@@ -238,5 +239,13 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
 
 	public double getInterfacialArea() {
 		return interfacialArea;
+	}
+
+	public int getNumberOfNodes() {
+		return numberOfNodes;
+	}
+
+	public void setNumberOfNodes(int numberOfNodes) {
+		this.numberOfNodes = numberOfNodes;
 	}
 }
