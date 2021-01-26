@@ -26,6 +26,15 @@ public interface SystemInterface extends Cloneable {
     	
     public void setComponentNameTag(String nameTag);
     	
+    
+    /**
+	 * method to return kinematic viscosity in a given unit
+	 *
+	 * @param unit The unit as a string. Supported units are m2/sec
+	 * @return kinematic viscosity in specified unit
+	 */
+	public double getKinematicViscosity(String unit);
+	
 	public int getNumberOfComponents();
 	
 	/**
@@ -327,6 +336,17 @@ public interface SystemInterface extends Cloneable {
 
     public neqsim.thermo.characterization.Characterise getCharacterization();
 
+	/**
+	 * add a component to a fluid. If component already exists, it will be added to
+	 * the component
+	 *
+	 * @param componentName Name of the component to be added. See NeqSim database
+	 *                      for available components in the database.
+	 * @param moles         number of moles (per second) of the component to be
+	 *                      added to the fluid
+	 */
+	public void addComponent(String name);
+	
     /**
      * add a component to a fluid. If component already exists, it will be added
      * to the component

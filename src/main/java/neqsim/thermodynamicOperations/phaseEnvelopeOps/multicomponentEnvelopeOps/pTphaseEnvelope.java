@@ -500,7 +500,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
 			} catch (Exception e2) {
 				double nef = 0.;
-				logger.error("error", e2);
+				//logger.error("error", e2);
 			}
 
 			try {
@@ -560,10 +560,10 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 			navn[3] = "bubble point 1";
 		} else {
 			// dew point side and does not crash
-			navn[0] = "dew point";
-			navn[1] = "bubble point";
-			navn[2] = "dew point";
-			navn[3] = "bubbl point";
+			navn[0] = "dew point 2";
+			navn[1] = "bubble point 2";
+			navn[2] = "dew point 1";
+			navn[3] = "bubbl point 1";
 		}
 
 		double TC = system.getTC();

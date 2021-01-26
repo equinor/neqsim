@@ -1,6 +1,7 @@
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
+import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.pipeline.OnePhasePipeLine;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
@@ -37,14 +38,24 @@ public class gasPipeline {
         simplePipeline.setInletElevation(0.0);
         simplePipeline.setOutletElevation(-100.0);
         
+        AdiabaticTwoPhasePipe simplePipeline2phase = new AdiabaticTwoPhasePipe(stream_1);
+        simplePipeline2phase.setDiameter(10.2);
+        simplePipeline2phase.setLength(100);
+        simplePipeline2phase.setInletElevation(0.0);
+        simplePipeline2phase.setOutletElevation(-100.0);
+        
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         //operations.add(pipeline);
         operations.add(simplePipeline);
+       // operations.add(simplePipeline2phase);
 
         operations.run();
         //pipeline.getOutStream().displayResult();
-        simplePipeline.getOutStream().displayResult();
+       simplePipeline.getOutStream().displayResult();
+      //  simplePipeline2phase.getOutStream().displayResult();
+        
+
         //.displayResult();
     }
 }

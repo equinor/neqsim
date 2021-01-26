@@ -32,6 +32,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 	private double percentValveOpening = 100.0;
 	double molarFlow = 0.0;
     private String pressureUnit = "bara";
+    private boolean acceptNegativeDP=true;
 
 	/**
 	 * Creates new ThrottelValve
@@ -43,6 +44,9 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 		setInletStream(inletStream);
 	}
 
+	public double getDeltaPressure(String unit) {
+			return inletStream.getFluid().getPressure(unit)- thermoSystem.getPressure(unit);
+	}
 	public ThrottlingValve(String name, StreamInterface inletStream) {
 		this.name = name;
 		setInletStream(inletStream);
@@ -102,7 +106,13 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 		thermoSystem.init(3);
 		double enthalpy = thermoSystem.getEnthalpy();
-		thermoSystem.setPressure(pressure, pressureUnit);
+		if( (thermoSystem.getPressure(pressureUnit)-pressure)<0) {
+			if(isAcceptNegativeDP()) thermoSystem.setPressure(pressure, pressureUnit);
+		}
+		else {
+			thermoSystem.setPressure(pressure, pressureUnit);
+		}
+	
 		if (getSpecification().equals("out stream")) {
 			thermoSystem.setPressure(outStream.getPressure(), pressureUnit);
 		}
@@ -254,5 +264,13 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 		outStream.getThermoSystem().init(3);
 		inletStream.getThermoSystem().init(3);
 		return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)-inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
+	}
+
+	public boolean isAcceptNegativeDP() {
+		return acceptNegativeDP;
+	}
+
+	public void setAcceptNegativeDP(boolean acceptNegativeDP) {
+		this.acceptNegativeDP = acceptNegativeDP;
 	}
 }

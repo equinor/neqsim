@@ -168,6 +168,15 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
 	public Well getOilProducer(int i) {
 		return oilProducer.get(i);
 	}
+	
+	public Well getOilProducer(String name) {
+		for(int i=0;i<oilProducer.size();i++) {
+			if(oilProducer.get(i).getName().equals(name)) {
+				return oilProducer.get(i);
+			}
+		}
+		return null;
+	}
 
 	public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume,
 			double waterVolume) {

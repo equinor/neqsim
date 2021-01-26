@@ -72,12 +72,12 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
 
     public static void main(String[] args) {
         //SystemInterface testSystem = new SystemSrkEos(273.15 + 11.0, 60.0);
-        SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(285.3, 100.01325);
+        SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(325.3, 100.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        PipeData pipe1 = new PipeData(0.50203, 0.00025);
-        testSystem.addComponent("methane",0.1061152181,"MSm3/hr", 0);
-        testSystem.addComponent("water", 1.206862204876,"kg/min", 0);
-        testSystem.addComponent("methanol", 101.206862204876,"kg/min", 1);
+        PipeData pipe1 = new PipeData(0.250203, 0.00025);
+        testSystem.addComponent("methane",0.1,"MSm3/day", 0);
+        testSystem.addComponent("water", 0.4*5.0,"kg/hr", 1);
+        testSystem.addComponent("MEG", 0.6*5.0,"kg/hr", 1);
        // testSystem.addComponent("nitrogen", 25.0, 0);
       //  testSystem.addComponent("CO2", 250.0, 0);
   //      testSystem.addComponent("methane", 5.0, 0);
@@ -100,7 +100,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         testSystem.initBeta();
         testSystem.init(3);
 
-        //testOps.TPflash();
+     //   testOps.TPflash();
         testSystem.display();
         //testSystem.setTemperature(273.15+20);
         //    testSystem.initPhysicalProperties();
@@ -109,7 +109,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
    //    FlowNodeInterface test = new AnnularFlow(testSystem, pipe1);
         FlowNodeInterface test = new DropletFlowNode(testSystem, pipe1);
         test.setInterphaseModelType(1);
-        test.setLengthOfNode(0.01);
+        test.setLengthOfNode(0.001);
         test.getGeometry().getSurroundingEnvironment().setTemperature(273.15 + 4.0);
 
         test.getFluidBoundary().setHeatTransferCalc(false);
@@ -118,13 +118,14 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         test.initFlowCalc();
         double[][] temperatures2 = new double[3][1000];
         int k = 0;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100000; i++) {
             length += test.getLengthOfNode();
             test.initFlowCalc();
             test.calcFluxes();
-            if (i > 1 && (i % 1) == 0) {
+            if (i > 1 && (i % 1000) == 0) {
                 k++;
                 test.display("length " + length);
+               System.out.println("length " + length + " wt% MEG " + test.getBulkSystem().getPhase("aqueous").getWtFrac("MEG")*100.0);
                 // test.getBulkSystem().display("length " + length);
                // test.getInterphaseSystem().display("length " + length);
                 //test.getFluidBoundary().display("length " + length);
