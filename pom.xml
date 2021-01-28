@@ -13,8 +13,8 @@
 		<revision>2.2.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
 	</properties>
 
 	<repositories>
@@ -79,7 +79,7 @@
 		<dependency>
 			<groupId>com.lowagie</groupId>
 			<artifactId>itext</artifactId>
-			<version>1.02b</version>
+			<version>1.4.8</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
