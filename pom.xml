@@ -13,8 +13,8 @@
 		<revision>2.2.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
 	</properties>
 
 	<repositories>
@@ -109,7 +109,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.16</version>
+			<version>8.0.23</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.ucar</groupId>
