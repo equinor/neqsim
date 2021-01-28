@@ -13,8 +13,8 @@
 		<revision>2.2.0</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<sha1 />
-		<changelist />
+		<sha1/>
+		<changelist/>
 	</properties>
 
 	<repositories>
@@ -134,7 +134,7 @@
 		<dependency>
 			<groupId>io.airlift</groupId>
 			<artifactId>units</artifactId>
-			<version>0.68</version>
+			<version>0.134</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.wisc.ssec</groupId>
