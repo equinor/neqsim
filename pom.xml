@@ -79,7 +79,7 @@
 		<dependency>
 			<groupId>com.lowagie</groupId>
 			<artifactId>itext</artifactId>
-			<version>1.02b</version>
+			<version>1.4.8</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nist.math</groupId>
