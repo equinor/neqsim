@@ -433,9 +433,9 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 			streamIn = new FileInputStream(filePath);
 			ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
 			tempSystem = (ProcessSystem) objectinputstream.readObject();
-			logger.info("process file open ok:  " + filePath);
+			//logger.info("process file open ok:  " + filePath);
 		} catch (Exception e) {
-			logger.error(e.toString());
+			//logger.error(e.toString());
 			e.printStackTrace();
 		}
 		return tempSystem;
