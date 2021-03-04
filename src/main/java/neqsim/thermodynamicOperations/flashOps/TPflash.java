@@ -38,7 +38,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 
 	SystemInterface clonedSystem;
 	double betaTolerance = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
-
+	double presdiff = 1.0;
 	/**
 	 * Creates new TPflash
 	 */
@@ -63,6 +63,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 
 	public void sucsSubs() {
 		deviation = 0;
+		
 		for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
 			if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
 				Kold = system.getPhase(0).getComponent(i).getK();
@@ -73,7 +74,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 				system.getPhase(0).getComponent(i)
 						.setK(system.getPhase(1).getComponent(i).getFugasityCoeffisient()
 								/ system.getPhase(0).getComponent(i).getFugasityCoeffisient()
-								* system.getPhase(1).getPressure() / system.getPhase(0).getPressure());
+								* presdiff);
 				if (Double.isNaN(system.getPhase(0).getComponent(i).getK())) {
 					system.getPhase(0).getComponent(i).setK(Kold);
 					system.init(1);
@@ -182,15 +183,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 			minGibbsPhase = 1;
 			minimumGibbsEnergy = system.getPhase(1).getGibbsEnergy();
 		}
-
-		minGibsPhaseLogZ = new double[system.getPhase(0).getNumberOfComponents()];
-		minGibsLogFugCoef = new double[system.getPhase(0).getNumberOfComponents()];
-
-		for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-			minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
-			minGibsLogFugCoef[i] = system.getPhase(minGibbsPhase).getComponent(i).getLogFugasityCoeffisient();
-		}
-
+		
 		if (system.getPhase(0).getNumberOfComponents() == 1 || system.getMaxNumberOfPhases() == 1) {
 			system.setNumberOfPhases(1);
 			if (minGibbsPhase == 0) {
@@ -205,10 +198,19 @@ public class TPflash extends Flash implements java.io.Serializable {
 			return;
 		}
 
+		minGibsPhaseLogZ = new double[system.getPhase(0).getNumberOfComponents()];
+		minGibsLogFugCoef = new double[system.getPhase(0).getNumberOfComponents()];
+
+		for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+			minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
+			minGibsLogFugCoef[i] = system.getPhase(minGibbsPhase).getComponent(i).getLogFugasityCoeffisient();
+		}
+		
+		presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
 		if (Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) > 1e-12) {
 			for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
 				system.getPhase(0).getComponent(i).setK(system.getPhase(0).getComponent(i).getK()
-						* system.getPhase(1).getPressure() / system.getPhase(0).getPressure());
+						* presdiff);
 				system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
 			}
 		}
@@ -226,22 +228,27 @@ public class TPflash extends Flash implements java.io.Serializable {
 		}
 		system.calc_x_y();
 		system.init(1);
-		
-		// If phase fraction using Wilson K factor returns pure gas or pure liquid, we try with another K value guess based on calculated fugacities.
-		// This solves some problems when we have high volumes of water and heavy hydrocarbons returning only one liquid phase (and this phase desolves all gas)
+		// If phase fraction using Wilson K factor returns pure gas or pure liquid, we
+		// try with another K value guess based on calculated fugacities.
+		// This solves some problems when we have high volumes of water and heavy
+		// hydrocarbons returning only one liquid phase (and this phase desolves all
+		// gas)
 		if (system.getBeta() > (1.0 - betaTolerance * 1.1) || system.getBeta() < (betaTolerance * 1.1)) {
 			system.setBeta(0.5);
 			sucsSubs();
 		}
-		
+
 		// Performs three iterations of successive substitution
 		for (int k = 0; k < 3; k++) {
 			if (system.getBeta() < (1.0 - betaTolerance * 1.1) && system.getBeta() > (betaTolerance * 1.1)) {
 				sucsSubs();
+				if((system.getGibbsEnergy()-minimumGibbsEnergy)/Math.abs(minimumGibbsEnergy)<-1e-12){
+					break;
+				}
 			}
 		}
-		
-		//System.out.println("beta " + system.getBeta());
+
+		// System.out.println("beta " + system.getBeta());
 
 		int totiter = 0;
 		double tpdx = 1.0;
@@ -252,7 +259,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 			tpdx = 1.0;
 			tpdy = 1.0;
 			dgonRT = 1.0;
-		} else if (system.getGibbsEnergy() < (minimumGibbsEnergy * (1.0 - 1.0e-10))) {
+		} else if (system.getGibbsEnergy() < (minimumGibbsEnergy * (1.0 - 1.0e-12))) {
 			tpdx = -1.0;
 			tpdy = -1.0;
 			dgonRT = -1.0;
@@ -274,9 +281,10 @@ public class TPflash extends Flash implements java.io.Serializable {
 				if (tpdx < 0) {
 					for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
 						system.getPhase(0).getComponent(i)
-								.setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
-										- minGibsLogFugCoef[i]) * system.getPhase(1).getPressure()
-										/ system.getPhase(0).getPressure());
+								.setK(Math
+										.exp(Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
+												- minGibsLogFugCoef[i])
+										* presdiff);
 						system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
 					}
 				} else if (tpdy < 0) {
@@ -284,7 +292,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 						system.getPhase(0).getComponents()[i].setK(Math
 								.exp(minGibsLogFugCoef[i]
 										- Math.log(system.getPhase(0).getComponent(i).getFugasityCoeffisient()))
-								* system.getPhase(1).getPressure() / system.getPhase(0).getPressure());
+								* presdiff);
 						system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
 					}
 				} else {
@@ -311,7 +319,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 						TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
 						operation.run();
 					}
-					
+
 					system.orderByDensity();
 					system.init(1);
 					return;
@@ -382,7 +390,7 @@ public class TPflash extends Flash implements java.io.Serializable {
 					timeFromLastGibbsFail++;
 					setNewK();
 				}
-			//	 logger.info("iterations " + iterations + " error " + deviation);
+				// logger.info("iterations " + iterations + " error " + deviation);
 			} while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
 			// logger.info("iterations " + iterations + " error " + deviation);
 			if (system.isChemicalSystem()) {
@@ -443,7 +451,13 @@ public class TPflash extends Flash implements java.io.Serializable {
 			TPmultiflashWAX operation = new TPmultiflashWAX(system, true);
 			operation.run();
 		}
-		//system.initPhysicalProperties("density");
+
+		for (int i = 0; i < system.getNumberOfPhases(); i++) {
+			if (system.getBeta(i) < betaTolerance*1.01) {
+				system.removePhase(i);
+			}
+		}
+		// system.initPhysicalProperties("density");
 		system.orderByDensity();
 		system.init(1);
 	}
