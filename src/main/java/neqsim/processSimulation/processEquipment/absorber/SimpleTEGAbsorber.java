@@ -9,7 +9,11 @@ import java.awt.*;
 import java.text.*;
 import java.util.*;
 import javax.swing.*;
+
+import neqsim.processSimulation.conditionMonitor.ConditionMonitorSpecifications;
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
+import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -156,6 +160,10 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
         return gasOutStream;
     }
 
+    public Stream getGasInStream() {
+        return gasInStream;
+    }
+    
     public Stream getLiquidOutStream() {
         return solventOutStream;
     }
@@ -361,4 +369,14 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
     public void setSolventOutStream(Stream solventOutStream) {
         this.solventOutStream = solventOutStream;
     }
+    
+    
+	public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
+		double yin = getGasInStream().getFluid().getPhase("gas").getComponent("water").getx();
+	    double yout = getGasOutStream().getFluid().getPhase("gas").getComponent("water").getx();		
+	    double y0 = calcY0();
+	    double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase() / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
+	    double N = Math.log(((A - 1.0)/A) * ((yin - y0)/(yout - y0)) + (1.0 / A))/Math.log(A);
+	    setNumberOfTheoreticalStages(N);
+	}
 }
