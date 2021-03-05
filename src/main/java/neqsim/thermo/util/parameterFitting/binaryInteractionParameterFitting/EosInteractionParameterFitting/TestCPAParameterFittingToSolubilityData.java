@@ -41,20 +41,20 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
 
         // inserting samples from database
         NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
-        //ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>283.15 AND Temperature<373.15 AND Pressure<60.01325");
-        ResultSet dataSet = database.getResultSet( "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='nitrogen' AND ComponentSolvent='water'  AND Temperature>298.0 AND Temperature<330.0");
-        double parameterGuess[] = {0.08, 0.0001340991545744328435900};//, 0.000117974}; //cpa
+        ResultSet dataSet =  database.getResultSet(  "SELECT * FROM binarySolubilityData WHERE ComponentSolute='CO2' AND ComponentSolvent='water' AND Reference='Houghton1957' AND Reference<>'Nighswander1989' AND Temperature>283.15 AND Temperature<373.15 AND Pressure<60.01325 ORDER BY Temperature");
+        //ResultSet dataSet = database.getResultSet( "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='methane' AND ComponentSolvent='water'  AND Temperature>278.0 AND Temperature<350.0");
+        double parameterGuess[] = {-0.27686, 0.001121};//, 0.000117974}; //cpa
                
         try {
             int p = 0;
             logger.info("adding....");
-            while (dataSet.next() && p < 20) {
+            while (dataSet.next() && p < 200) {
                 p++;
                 CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData(1,0);
 
                 SystemInterface testSystem = new SystemSrkCPAstatoil(290, 1.0);
                 //SystemInterface testSystem = new SystemSrkEos(290, 1.0);
-                testSystem.addComponent("nitrogen", 1.0);
+                testSystem.addComponent("CO2", 1.0);
                 testSystem.addComponent("water", 10.0);
                 testSystem.createDatabase(true);
                 testSystem.setMixingRule(10);
@@ -118,10 +118,10 @@ public class TestCPAParameterFittingToSolubilityData extends java.lang.Object {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        optim.solve();
+   //     optim.solve();
         //optim.runMonteCarloSimulation();
-     //   optim.calcDeviation();
-  //          optim.displayResult();
+       optim.calcDeviation();
+            optim.displayResult();
         optim.displayCurveFit();
         //optim.writeToCdfFile("c:/testFit.nc");
         //optim.writeToTextFile("c:/testFit.txt");

@@ -43,13 +43,16 @@ public class TVflash {
     public static void main(String args[]){
         //SystemInterface testSystem2 = (SystemInterface) util.serialization.SerializationManager.open("c:/test.fluid");
         //testSystem2.display();
-        SystemInterface testSystem = new SystemSrkEos(273.15+55,50.0);
+        SystemInterface testSystem = new SystemSrkEos(273.15+5,1.0);
         
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("methane", 11.0);
+        testSystem.addComponent("nitrogen", 90.0);
       //  testSystem.addComponent("ethane", 4.0);
-        testSystem.addComponent("n-heptane", 210.2);
-//        testSystem.addComponent("water", 10.5);
+        testSystem.addComponent("oxygen", 10.2);
+        testSystem.addComponent("water", 1.5);
+        
+        
+        //1500 m3 vann
         
         //testSystem.addComponent("water", 1.0);
         testSystem.createDatabase(true);

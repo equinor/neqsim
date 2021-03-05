@@ -589,26 +589,26 @@ public class DuanSun {
 	}
 
 	public static void main(String[] args) {
-/*
+
 		DuanSun testDuanSun = new DuanSun();
 
-		double CO2solubility = testDuanSun.calcCO2solubility(298.15, 10.0, 2.0);
+		double CO2solubility = testDuanSun.calcCO2solubility(273.15+30.0, 	100.0,3.00);
 
-		System.out.println("CO2solubility " + CO2solubility + " mol/mol");
+		System.out.println("CO2solubility " + CO2solubility/0.01802 + " mol/kg");
 
-		double CO2solubility2 = testDuanSun.bublePointPressure(298.15, CO2solubility, 2.0);
+		//double CO2solubility2 = testDuanSun.bublePointPressure(298.15, CO2solubility, 2.0);
 
-		System.out.println("Total pressure " + CO2solubility2 + " bara");
+//		System.out.println("Total pressure " + CO2solubility2 + " bara");
 		
-		*/
 		
-		SystemInterface fluid1 = new SystemElectrolyteCPAstatoil(298.15, 12.0);
-		fluid1.addComponent("CO2", 0.5, "mol/sec");
+		
+		SystemInterface fluid1 = new SystemElectrolyteCPAstatoil(298.15, 10.0);
+		fluid1.addComponent("CO2", 0.05, "kg/sec");
 	//	fluid1.addComponent("oxygen", 1.0, "mol/sec");
 	//	fluid1.addComponent("methane", 1.0, "mol/sec");
-		fluid1.addComponent("water", 0.5, "mol/sec");
-		fluid1.addComponent("Na+", 0.001, "mol/sec");
-		fluid1.addComponent("Cl-", 0.001, "mol/sec");
+		fluid1.addComponent("water", 0.5, "kg/sec");
+		fluid1.addComponent("Na+", 0.1, "mol/sec");
+		fluid1.addComponent("Cl-", 0.1, "mol/sec");
 		fluid1.setMixingRule(10);
 		ThermodynamicOperations thermoOPs = new ThermodynamicOperations(fluid1);
 		try {
@@ -619,7 +619,7 @@ public class DuanSun {
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
+	//	fluid1.setMolarComposition(new double[] {0.5, 0.5, 0.0, 0.0});
 		fluid1.init(1);
 		try {
 			thermoOPs.TPflash();

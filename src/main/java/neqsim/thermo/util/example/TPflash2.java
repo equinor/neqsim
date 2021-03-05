@@ -34,7 +34,13 @@ public class TPflash2 {
 		testSystem.createDatabase(true);
 		testSystem.setMixingRule(10);
 	//    testSystem.setMultiPhaseCheck(true);
-
+		SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.15+80.0, 1.01325);//
+		testSystem2.addComponent("nitrogen", 8.71604938);
+		//testSystem.addComponent("oxygen", 22.71604938);
+		testSystem2.addComponent("MEG", 	110.234567901);
+		testSystem2.createDatabase(true);
+		testSystem2.setMixingRule(10);
+		testSystem.addFluid(testSystem2);
 		ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
 		// testOps.TPflash();

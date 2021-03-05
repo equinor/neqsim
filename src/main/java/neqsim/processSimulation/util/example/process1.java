@@ -1,6 +1,7 @@
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class process1 {
 
@@ -11,7 +12,7 @@ public class process1 {
      */
     public static void main(String args[]) {
 
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPA((273.15 + 25.0), 50.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 25.0), 50.00);
         testSystem.addComponent("methane", 180.00);
         testSystem.addComponent("ethane", 10.00);
         testSystem.addComponent("propane", 1.00);
@@ -19,8 +20,24 @@ public class process1 {
       //  testSystem.addComponent("water", 1.00);
         testSystem.createDatabase(true);
         testSystem.setMultiPhaseCheck(true);
-        testSystem.setMixingRule(2);
+        testSystem.setMixingRule(10);
         
+        testSystem.setPressure(20.0, "bara");
+        testSystem.setTemperature(20.0, "C");
+        testSystem.setTotalFlowRate(100.0, "Am3/hr");
+        
+        testSystem.useVolumeCorrection(false);
+        
+        ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+        ops.TPflash();
+        System.out.println("actual flow 1 " + testSystem.getFlowRate("m3/hr"));
+        double stdflowrate = testSystem.getFlowRate("Sm3/day");
+        testSystem.setTotalFlowRate(stdflowrate, "Sm3/day");
+        ops.TPflash();
+        
+        double actFLowRate = testSystem.getFlowRate("m3/hr");
+        
+        System.out.println("actual flow 2 " +actFLowRate);
         
         Stream stream_1 = new Stream("Stream1", testSystem);
 
@@ -37,6 +54,7 @@ public class process1 {
 
         operations.run();
         compr.displayResult();
+        System.out.println("polytropic head " + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
         System.out.println("polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
         System.out.println("polytropic efficiency " + compr.getPolytropicEfficiency());
         

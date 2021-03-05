@@ -82,7 +82,7 @@ public class TPflash {
 		}
 		
 		testSystem.display();
-		
+		testSystem.displayPDF();
 
 	}
 }

@@ -69,7 +69,6 @@ public class OffshoreProcess3 {
 
 		Stream oilToInletSep = new Stream((SystemInterface) fluid3.clone());
 		oilToInletSep.setFlowRate(1e-10, "kg/hr");
-
 		ThreePhaseSeparator inletSeparator = new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
 		inletSeparator.setEntrainment(0.005,"mass", "product", "aqueous", "oil");
 		inletSeparator.setEntrainment(500e-6,"mole", "product", "oil", "aqueous");

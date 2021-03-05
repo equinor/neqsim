@@ -57,7 +57,7 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameterij(0, 1, value);
             
         }
-        if (i == 10) {
+        if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
         }
