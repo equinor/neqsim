@@ -13,12 +13,6 @@ A Java Runtime Environment (JRE) or Java Development Kit (JDK) must be installed
 ## Getting Started as a NeqSim Java developer
 A Java Development Kit (JDK) must be installed in order to run See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim library. NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
 
-## Discussion forum
-Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).
-
-### Prerequisites
-NeqSim source code can be compiled with JDK8+ and is dependent on a number of third part java libraries. The needed java libraries are listed in the pom.xml file and on the [NeqSim dependencies page](https://github.com/equinor/neqsimsource/network/dependencies).
-
 ### Initial setup
 The NeqSim source code is downloaded by cloning the library to your local computer (alternatively fork it to your private reprository). The following commands are dependent on a local installation of [GIT](https://git-scm.com/) and [Maven](https://maven.apache.org/).
 
@@ -41,9 +35,8 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 ## Contributing
 See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
 
-## Collaboration hub
-Discussions related to NeqSim development and use is done using [Slack for NeqSim](https://neqsim.slack.com). 
-Use the [invitation link](https://join.slack.com/t/neqsim/signup) to join the group.
+## Discussion forum
+Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).
 
 ## Versioning
 NeqSim use [SemVer](https://semver.org/) for versioning.
