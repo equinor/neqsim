@@ -11,7 +11,10 @@ The basis for NeqSim is a library of fundamental mathematical models related to 
 A Java Runtime Environment (JRE) or Java Development Kit (JDK) must be installed in order to run NeqSim. NeqSim can be used in a Java application by adding the NeqSim.jar found in [NeqSim releases](https://github.com/equinor/neqsimsource/releases) to the classpath. A demonstration of downloading the library and running a TPflash  benchmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). 
 
 ## Getting Started as a NeqSim Java developer
-A Java Development Kit (JDK) must be installed in order to run See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim API. NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
+A Java Development Kit (JDK) must be installed in order to run See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim library. NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
+
+## Discussion forum
+Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).
 
 ### Prerequisites
 NeqSim source code can be compiled with JDK8+ and is dependent on a number of third part java libraries. The needed java libraries are listed in the pom.xml file and on the [NeqSim dependencies page](https://github.com/equinor/neqsimsource/network/dependencies).
