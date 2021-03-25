@@ -2321,6 +2321,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
 		case "kg/m3":
 			conversionFactor = 1.0;
 			break;
+		case "kg/Sm3":
+			return getMolarMass()*101325.0/ThermodynamicConstantsInterface.R/ThermodynamicConstantsInterface.standardStateTemperature;
 		case "mol/m3":
 			conversionFactor = 1.0 / getMolarMass();
 			break;

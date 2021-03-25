@@ -58,8 +58,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 	private double time = 0;
 	private double surroundingTemperature = 288.15;
 	private int timeStepNumber = 0;
-	private ArrayList<ProcessEquipmentBaseClass> unitOperations = new ArrayList(0);
-	ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList(0);
+	private ArrayList<ProcessEquipmentInterface> unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
+	ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
 	RecycleController recycleController = new RecycleController();
 	private double timeStep = 1.0;
 	private String name = "process name";
@@ -142,8 +142,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 		unitOperations.set(getUnitNumber(name), operation);
 	}
 
-	public ArrayList getAllUnitNames() {
-		ArrayList unitNames = new ArrayList(0);
+	public ArrayList<String> getAllUnitNames() {
+		ArrayList<String> unitNames = new ArrayList<String>();
 		for (int i = 0; i < getUnitOperations().size(); i++) {
 			if (getUnitOperations().get(i) instanceof ModuleInterface) {
 				for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
@@ -160,7 +160,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 	/**
 	 * @return the unitOperations
 	 */
-	public ArrayList getUnitOperations() {
+	public ArrayList<ProcessEquipmentInterface> getUnitOperations() {
 		return unitOperations;
 	}
 
