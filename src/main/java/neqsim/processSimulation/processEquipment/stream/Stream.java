@@ -213,11 +213,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 		if (stream != null) {
 			thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
 		}
-		if(getThermoSystem().getNumberOfComponents()==1 && getSpecification().equals("TP")) {
+		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+		
+		if(stream != null && getThermoSystem().getNumberOfComponents()==1 && getSpecification().equals("TP")) {
 			setSpecification("PH");
 		}
-		ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-
 		if (getSpecification().equals("TP")) {
 			thermoOps.TPflash();
 		} else if (getSpecification().equals("dewP")) {

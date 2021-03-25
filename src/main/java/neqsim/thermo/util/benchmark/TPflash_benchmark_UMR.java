@@ -56,7 +56,7 @@ public class TPflash_benchmark_UMR {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         time = System.currentTimeMillis();
         
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 1000; i++) {
             testOps.TPflash();
            // testSystem.init(3);
             try {

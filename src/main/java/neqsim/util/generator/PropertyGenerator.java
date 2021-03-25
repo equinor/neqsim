@@ -105,8 +105,13 @@ public class PropertyGenerator {
 		for (int i = 0; i < length; i++) {
 			fluid.setTemperature(temperatures[i]);
 			fluid.setPressure(pressures[i]);
+			try {
 			ops.TPflash();
 			fluid.initProperties();
+			}
+			catch(Exception e) {
+				continue;
+			}
 			molarmass[i] = fluid.getMolarMass();
 			Z[i] = fluid.getZ();
 			viscosity[i] = fluid.getViscosity("cP");

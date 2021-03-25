@@ -7,6 +7,18 @@
   <version>2.2.0</version>
   <dependencies>
     <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.14.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.14.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>colt</groupId>
       <artifactId>colt</artifactId>
       <version>1.2.0</version>
@@ -31,63 +43,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
-      <version>2.13.3</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-api</artifactId>
-      <version>2.13.3</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>org.ejml</groupId>
-      <artifactId>ejml-cdense</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-core</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-ddense</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-dsparse</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-experimental</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-fdense</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-simple</artifactId>
-      <version>0.39</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ejml</groupId>
-      <artifactId>ejml-zdense</artifactId>
-      <version>0.39</version>
+      <artifactId>ejml-all</artifactId>
+      <version>0.40</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -109,9 +67,9 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>jfree</groupId>
+      <groupId>org.jfree</groupId>
       <artifactId>jfreechart</artifactId>
-      <version>1.0.13</version>
+      <version>1.5.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -153,7 +111,7 @@
     <dependency>
       <groupId>net.sf.ucanaccess</groupId>
       <artifactId>ucanaccess</artifactId>
-      <version>4.0.4</version>
+      <version>5.0.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

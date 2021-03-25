@@ -56,8 +56,12 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     
     private static String dataBaseType = "Derby";
     private static String connectionString = "jdbc:derby:classpath:data/neqsimthermodatabase";
-    	private static String username = "remote";
+    private static String username = "remote";
 	private static String password = "remote";
+	
+//static String dataBaseType = "MSAccessUCanAccess";
+//public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
+	   
   
     private Statement statement = null;
     protected Connection databaseConnection = null;

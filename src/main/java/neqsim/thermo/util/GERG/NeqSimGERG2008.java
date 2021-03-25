@@ -238,8 +238,8 @@ public class NeqSimGERG2008 {
 	public static void main(String[] args) {
 //test HitHub
 		SystemInterface fluid1 = new SystemSrkEos();
-		fluid1.addComponent("methane",90.0);
-				fluid1.addComponent("hydrogen", 10.0);
+		fluid1.addComponent("methane",10.0);
+				fluid1.addComponent("hydrogen", 90.0);
 //				fluid1.addComponent("CO2", 1.0);
 //	fluid1.addComponent("ethane", 10.0);
 //		fluid1.addComponent("propane", 3.0);
@@ -257,7 +257,7 @@ public class NeqSimGERG2008 {
 		//fluid1.addComponent("propane", 5.0);
 		//fluid1.addTBPfraction("C8", 0.01, 211.0/1000.0, 0.82);
 		fluid1.setTemperature(273.15+20);
-		fluid1.setPressure(50.0);
+		fluid1.setPressure(150.0);
 		fluid1.init(0);
 		ThermodynamicOperations ops = new ThermodynamicOperations(fluid1);
 		ops.TPflash();

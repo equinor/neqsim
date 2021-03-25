@@ -1,5 +1,6 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
+import java.io.Serializable;
 import java.util.*;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -20,7 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * This class is an implementation of the compressor chart class that uses Fan laws and "double" interpolation to
  * navigate the compressor map (as opposed to the standard class using reduced variables according to Fan laws).
  */
-public class CompressorChartAlternativeMapLookup implements CompressorChartInterface {
+public class CompressorChartAlternativeMapLookup implements CompressorChartInterface, Serializable {
 
 
 	static Logger logger = LogManager.getLogger(CompressorChart.class);

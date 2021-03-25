@@ -56,6 +56,7 @@ public class TPflash_benchmark {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
+        
         //  testSystem.autoSelectMixingRule();
         //    testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         logger.info("start benchmark TPflash......");

@@ -100,20 +100,18 @@ public class TEGdehydrationProcessDistillationAaHa {
 		HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(dehydratedGas);
 		waterDewPointAnalyser.setName("water dew point analyser");
 
-		ThrottlingValve glycol_flash_valve = new ThrottlingValve("Flash valve", richTEG);
+		ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
 		glycol_flash_valve.setName("Rich TEG HP flash valve");
 		glycol_flash_valve.setOutletPressure(5.5);
 
 		Heater richGLycolHeaterCondenser = new Heater(glycol_flash_valve.getOutStream());
 		richGLycolHeaterCondenser.setName("rich TEG preheater");
 
-
 		HeatExchanger heatEx2 = new HeatExchanger(richGLycolHeaterCondenser.getOutStream());
 		heatEx2.setName("rich TEG heat exchanger 1");
 		heatEx2.setGuessOutTemperature(273.15+62.0);
 		heatEx2.setUAvalue(200.0);
 		
-
 		Separator flashSep = new Separator(heatEx2.getOutStream(0));
 		flashSep.setName("degasing separator");
 
@@ -123,10 +121,15 @@ public class TEGdehydrationProcessDistillationAaHa {
 		Stream flashLiquid = new Stream(flashSep.getLiquidOutStream());
 		flashLiquid.setName("liquid from degasing separator");
 		
-		Filter filter = new Filter(flashLiquid);
-		filter.setName("filters");
+		Filter fineFilter = new Filter(flashLiquid);
+		fineFilter.setName("TEG fine filter");
+		fineFilter.setDeltaP(0.05, "bara");
 
-		HeatExchanger heatEx = new HeatExchanger(filter.getOutStream());
+		Filter carbonFilter = new Filter(fineFilter.getOutStream());
+		carbonFilter.setName("activated carbon filter");
+		carbonFilter.setDeltaP(0.01, "bara");
+		
+		HeatExchanger heatEx = new HeatExchanger(carbonFilter.getOutStream());
 		heatEx.setName("rich TEG heat exchanger 2");
 		heatEx.setGuessOutTemperature(273.15+130.0);
 		heatEx.setUAvalue(390.0);
@@ -251,7 +254,8 @@ public class TEGdehydrationProcessDistillationAaHa {
 		operations.add(flashGas);
 		
 		operations.add(flashLiquid);
-		operations.add(filter);
+		operations.add(fineFilter);
+		operations.add(carbonFilter);
 		operations.add(heatEx);
 		operations.add(glycol_flash_valve2);
 		operations.add(gasToReboiler);
@@ -385,6 +389,7 @@ public class TEGdehydrationProcessDistillationAaHa {
 		*/
 		
 		ConditionMonitor monitor = operations.getConditionMonitor();
+		monitor.conditionAnalysis();
 		
 		//Condition monitor TEG absorber
 		double xcalc = ((SimpleTEGAbsorber)monitor.getProcess().getUnit("TEG absorber")).getGasOutStream().getFluid().getPhase("gas").getComponent("water").getx()*1.1;
@@ -401,5 +406,18 @@ public class TEGdehydrationProcessDistillationAaHa {
 		//Condition monitor water dew point analyser
 	    ((HydrateEquilibriumTemperatureAnalyser)monitor.getProcess().getMeasurementDevice("water dew point analyser")).setOnlineMeasurementValue(-23.5, "C");
 	    ((HydrateEquilibriumTemperatureAnalyser)monitor.getProcess().getMeasurementDevice("water dew point analyser")).runConditionAnalysis();
+	
+	    //Condition monitor TEG fine filter
+	    ((Filter) monitor.getProcess().getUnit("TEG fine filter")).setDeltaP(0.2, "bara");
+	    monitor.conditionAnalysis("TEG fine filter");
+	    System.out.println("fine filter deltaP " + ((Filter) monitor.getProcess().getUnit("TEG fine filter")).getDeltaP());
+	    System.out.println("fine filter deltaP2 " + ((Filter) operations.getUnit("TEG fine filter")).getDeltaP());
+	    double relativeCv = ((Filter) monitor.getProcess().getUnit("TEG fine filter")).getCvFactor()/((Filter) operations.getUnit("TEG fine filter")).getCvFactor();
+	
+
+	    double filterCv1 = ((Filter) operations.getUnit("TEG fine filter")).getCvFactor();
+	    double filterCv2 = ((Filter) operations.getUnit("activated carbon filter")).getCvFactor();
+	
+	    System.out.println("filterCv1" + filterCv1 + " filterCv2 " + filterCv2);
 	}
 }

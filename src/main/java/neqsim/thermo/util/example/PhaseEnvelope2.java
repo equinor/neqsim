@@ -32,7 +32,7 @@ public class PhaseEnvelope2 {
 		testSystem.addComponent("n-hexane", 1.433);
 		testSystem.setMixingRule(2);
 		try {
-			testOps.calcPTphaseEnvelope(true);
+			testOps.calcPTphaseEnvelope();
 			testOps.displayResult();
 		} catch (Exception e) {
 			logger.error("error", e);
