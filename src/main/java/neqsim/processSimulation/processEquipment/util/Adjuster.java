@@ -23,180 +23,176 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
 
-	private static final long serialVersionUID = 1000;
+    private static final long serialVersionUID = 1000;
 
-	ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
-	String adjustedVarialble = "", targetVariable = "", targetPhase = "", targetComponent = "";
-	double targetValue = 0.0;
-	String targetUnit = "";
-	private double tolerance = 1e-6;
-	double inputValue = 0.0, oldInputValue = 0.0;
-	private double error = 1e6, oldError = 1.0e6;
-	int iterations = 0;
-	private boolean activateWhenLess = false;
+    ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
+    String adjustedVarialble = "", targetVariable = "", targetPhase = "", targetComponent = "";
+    double targetValue = 0.0;
+    String targetUnit = "";
+    private double tolerance = 1e-6;
+    double inputValue = 0.0, oldInputValue = 0.0;
+    private double error = 1e6, oldError = 1.0e6;
+    int iterations = 0;
+    private boolean activateWhenLess = false;
 
-	static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
-	/** Creates new staticMixer */
-	public Adjuster() {
-	}
+    /** Creates new staticMixer */
+    public Adjuster() {
+    }
 
-	public Adjuster(String name) {
-		super(name);
-	}
+    public Adjuster(String name) {
+        super(name);
+    }
 
-	public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
-		this.adjustedEquipment = adjustedEquipment;
-		this.adjustedVarialble = adjstedVariable;
-	}
+    public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
+        this.adjustedEquipment = adjustedEquipment;
+        this.adjustedVarialble = adjstedVariable;
+    }
 
-	public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-			String targetUnit) {
-		this.targetEquipment = targetEquipment;
-		this.targetVariable = targetVariable;
-		this.targetValue = targetValue;
-		this.targetUnit = targetUnit;
-	}
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+            String targetUnit) {
+        this.targetEquipment = targetEquipment;
+        this.targetVariable = targetVariable;
+        this.targetValue = targetValue;
+        this.targetUnit = targetUnit;
+    }
 
-	public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-			String targetUnit, String targetPhase) {
-		this.targetEquipment = targetEquipment;
-		this.targetVariable = targetVariable;
-		this.targetValue = targetValue;
-		this.targetUnit = targetUnit;
-		this.targetPhase = targetPhase;
-	}
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+            String targetUnit, String targetPhase) {
+        this.targetEquipment = targetEquipment;
+        this.targetVariable = targetVariable;
+        this.targetValue = targetValue;
+        this.targetUnit = targetUnit;
+        this.targetPhase = targetPhase;
+    }
 
-	public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-			String targetUnit, String targetPhase, String targetComponent) {
-		this.targetEquipment = targetEquipment;
-		this.targetVariable = targetVariable;
-		this.targetValue = targetValue;
-		this.targetUnit = targetUnit;
-		this.targetPhase = targetPhase;
-		this.targetComponent = targetComponent;
-	}
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
+            String targetUnit, String targetPhase, String targetComponent) {
+        this.targetEquipment = targetEquipment;
+        this.targetVariable = targetVariable;
+        this.targetValue = targetValue;
+        this.targetUnit = targetUnit;
+        this.targetPhase = targetPhase;
+        this.targetComponent = targetComponent;
+    }
 
-	public void runTransient() {
-		run();
-	}
+    public void runTransient() {
+        run();
+    }
 
-	public void run() {
-		oldError = error;
-		
-		if (adjustedVarialble.equals("mass flow")) {
-			inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
-		} else {
-			inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
-		}
-		
-		double targetValueCurrent = 0.0;
-		if (targetVariable.equals("mass fraction") && !targetPhase.equals("") && !targetComponent.equals("")) {
-			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPhase(targetPhase)
-					.getWtFrac(targetComponent);
-		}
-		else if (targetVariable.equals("gasVolumeFlow")) {
-			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
-		}
-		else if (targetVariable.equals("pressure")) {
-			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPressure(targetUnit);
-		}
-		else {
-			targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
-		}
-		
-		if(activateWhenLess && targetValueCurrent>targetValue) {
-			error=0.0;
-			activateWhenLess=true;
-			return;
-		}
+    public void run() {
+        oldError = error;
 
-		iterations++;
-		double deviation = targetValue - targetValueCurrent;
+        if (adjustedVarialble.equals("mass flow")) {
+            inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
+        } else {
+            inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
+        }
 
-		error = deviation;
-		logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
-		if (iterations < 2) {
-			if (adjustedVarialble.equals("mass flow")) {
-				((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation, "kg/hr");
-			} else {
-				((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation, "mol/sec");
-			}
-		} else {
-			double derivate = (error - oldError) / (inputValue - oldInputValue);
-			double newVal = error / derivate;
-			if (adjustedVarialble.equals("mass flow")) {
-				((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal, "kg/hr");
-			} else {
-				((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal, "mol/sec");
-			}
-		}
+        double targetValueCurrent = 0.0;
+        if (targetVariable.equals("mass fraction") && !targetPhase.equals("") && !targetComponent.equals("")) {
+            targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPhase(targetPhase)
+                    .getWtFrac(targetComponent);
+        } else if (targetVariable.equals("gasVolumeFlow")) {
+            targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
+        } else if (targetVariable.equals("pressure")) {
+            targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPressure(targetUnit);
+        } else {
+            targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
+        }
 
-		oldInputValue = inputValue;
-	}
+        if (activateWhenLess && targetValueCurrent > targetValue) {
+            error = 0.0;
+            activateWhenLess = true;
+            return;
+        }
 
-	public boolean solved() {
-		if (Math.abs(error) < tolerance)
-			return true;
-		else
-			return false;
-	}
+        iterations++;
+        double deviation = targetValue - targetValueCurrent;
 
-	public void displayResult() {
+        error = deviation;
+        logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
+        if (iterations < 2) {
+            if (adjustedVarialble.equals("mass flow")) {
+                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation, "kg/hr");
+            } else {
+                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation, "mol/sec");
+            }
+        } else {
+            double derivate = (error - oldError) / (inputValue - oldInputValue);
+            double newVal = error / derivate;
+            if (adjustedVarialble.equals("mass flow")) {
+                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal, "kg/hr");
+            } else {
+                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal, "mol/sec");
+            }
+        }
 
-	}
+        oldInputValue = inputValue;
+    }
 
-	public double getTolerance() {
-		return tolerance;
-	}
+    public boolean solved() {
+        if (Math.abs(error) < tolerance)
+            return true;
+        else
+            return false;
+    }
 
-	/**
-	 * @param tolerance the tolerance to set
-	 */
-	public void setTolerance(double tolerance) {
-		this.tolerance = tolerance;
-	}
+    public void displayResult() {
 
-	/**
-	 * @return the error
-	 */
-	public double getError() {
-		return error;
-	}
+    }
 
-	/**
-	 * @param error the error to set
-	 */
-	public void setError(double error) {
-		this.error = error;
-	}
+    public double getTolerance() {
+        return tolerance;
+    }
 
-	public static void main(String[] args) {
-		// test code for adjuster...
-		neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
-		testSystem.addComponent("methane", 1000.00);
-		testSystem.createDatabase(true);
-		testSystem.setMixingRule(2);
+    /**
+     * @param tolerance the tolerance to set
+     */
+    public void setTolerance(double tolerance) {
+        this.tolerance = tolerance;
+    }
 
-		Stream stream_1 = new Stream("Stream1", testSystem);
-		Adjuster adjuster1 = new Adjuster();
-		adjuster1.setAdjustedVariable(stream_1, "molarFlow");
-		adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day","");
+    /**
+     * @return the error
+     */
+    public double getError() {
+        return error;
+    }
 
-		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
-		operations.add(stream_1);
-		operations.add(adjuster1);
+    /**
+     * @param error the error to set
+     */
+    public void setError(double error) {
+        this.error = error;
+    }
 
-		operations.run();
-	}
+    public static void main(String[] args) {
+        // test code for adjuster...
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+        testSystem.addComponent("methane", 1000.00);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(2);
 
-	public boolean isActivateWhenLess() {
-		return activateWhenLess;
-	}
+        Stream stream_1 = new Stream("Stream1", testSystem);
+        Adjuster adjuster1 = new Adjuster();
+        adjuster1.setAdjustedVariable(stream_1, "molarFlow");
+        adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day", "");
 
-	public void setActivateWhenLess(boolean activateWhenLess) {
-		this.activateWhenLess = activateWhenLess;
-	}
-	
+        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        operations.add(stream_1);
+        operations.add(adjuster1);
+
+        operations.run();
+    }
+
+    public boolean isActivateWhenLess() {
+        return activateWhenLess;
+    }
+
+    public void setActivateWhenLess(boolean activateWhenLess) {
+        this.activateWhenLess = activateWhenLess;
+    }
 
 }

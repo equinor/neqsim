@@ -39,21 +39,19 @@ public class Test_ISO6578 {
         testSystem.addComponent("n-butane", 0.003255);
         testSystem.addComponent("i-pentane", 0.000657);
         testSystem.addComponent("n-pentane", 0.000545);
-        
-        
 
         testSystem.createDatabase(true);
-        //testSystem.setMultiphaseWaxCheck(true);
+        // testSystem.setMultiphaseWaxCheck(true);
         testSystem.setMixingRule(2);
 
         testSystem.init(0);
-        StandardInterface standard = new Standard_ISO6578();//testSystem);
+        StandardInterface standard = new Standard_ISO6578();// testSystem);
         standard.setThermoSystem(testSystem);
         standard.calculate();
         testSystem.display();
 
         System.out.println("corrfactor " + ((Standard_ISO6578) standard).getCorrFactor1());
-      //  ((Standard_ISO6578) standard).useISO6578VolumeCorrectionFacotrs(false);
+        // ((Standard_ISO6578) standard).useISO6578VolumeCorrectionFacotrs(false);
 
         standard.calculate();
         System.out.println("corrfactor " + ((Standard_ISO6578) standard).getCorrFactor1());

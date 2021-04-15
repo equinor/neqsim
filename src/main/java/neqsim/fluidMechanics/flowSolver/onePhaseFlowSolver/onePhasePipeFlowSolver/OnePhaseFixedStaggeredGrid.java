@@ -13,7 +13,8 @@ import neqsim.MathLib.generalMath.TDMAsolve;
  * @author Even Solbraa
  * @version
  */
-public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
+        implements neqsim.thermo.ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -39,7 +40,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
     /**
      * Creates new nonlin
      */
-    public OnePhaseFixedStaggeredGrid(neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem pipe, double length, int nodes, boolean dynamic) {
+    public OnePhaseFixedStaggeredGrid(
+            neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem pipe, double length,
+            int nodes, boolean dynamic) {
         super(pipe, length, nodes);
         this.dynamic = dynamic;
         oldMass = new double[nodes];
@@ -75,33 +78,58 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             pipe.getNode(0).init();
             pipe.getNode(0).setVelocityIn(pipe.getNode(0).getVelocity());
             for (int i = 0; i < numberOfNodes - 1; i++) {
-                //setting temperatures
+                // setting temperatures
                 pipe.getNode(i).init();
                 oldTemp = pipe.getNode(i + 1).getBulkSystem().getTemperature();
-                pipe.getNode(i + 1).getBulkSystem().setTemperature((4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0) * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature() - pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature()) / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp() / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase() / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass() * pipe.getNode(i + 1).getVelocity() * pipe.getNode(i + 1).getGeometry().getDiameter() * pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getDensity()) + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient() * dpdx) * (pipe.getNode(i + 1).getGeometry().getNodeLength() + pipe.getNode(i).getGeometry().getNodeLength()) * 0.5 + pipe.getNode(i).getBulkSystem().getTemperature());
+                pipe.getNode(i + 1).getBulkSystem().setTemperature((4.0
+                        * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
+                        * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
+                                - pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature())
+                        / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()
+                                / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
+                                / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()
+                                * pipe.getNode(i + 1).getVelocity() * pipe.getNode(i + 1).getGeometry().getDiameter()
+                                * pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getDensity())
+                        + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient() * dpdx)
+                        * (pipe.getNode(i + 1).getGeometry().getNodeLength()
+                                + pipe.getNode(i).getGeometry().getNodeLength())
+                        * 0.5 + pipe.getNode(i).getBulkSystem().getTemperature());
                 if (pipe.getNode(i + 1).getBulkSystem().getTemperature() < 10.5) {
                     pipe.getNode(i + 1).getBulkSystem().setTemperature(10.5);
                 }
                 pipe.getNode(i + 1).initFlowCalc();
                 pipe.getNode(i + 1).init();
 
-                //System.out.println("velocity " + pipe.getNode(i).getVelocity());
+                // System.out.println("velocity " + pipe.getNode(i).getVelocity());
                 // setting pressures
                 System.out.println("presbef : " + pipe.getNode(i + 1).getBulkSystem().getPressure());
                 oldPres = pipe.getNode(i + 1).getBulkSystem().getPressure();
-                pipe.getNode(i + 1).getBulkSystem().setPressure(-pipe.getNode(i).getWallFrictionFactor() * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity() * pipe.getNode(i).getVelocity() / pipe.getNode(i).getGeometry().getDiameter() / 2.0 * (pipe.getNode(i).getGeometry().getNodeLength()) / 1e5 - gravity * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * (pipe.getNode(i + 1).getVerticalPositionOfNode() - pipe.getNode(i).getVerticalPositionOfNode()) / 1e5 + pipe.getNode(i).getBulkSystem().getPressure());
-                // if(pipe.getNode(i+1).getBulkSystem().getPressure()<10.5) pipe.getNode(i+1).getBulkSystem().setPressure(1.0);
+                pipe.getNode(i + 1).getBulkSystem().setPressure(-pipe.getNode(i).getWallFrictionFactor()
+                        * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity()
+                        * pipe.getNode(i).getVelocity() / pipe.getNode(i).getGeometry().getDiameter() / 2.0
+                        * (pipe.getNode(i).getGeometry().getNodeLength()) / 1e5
+                        - gravity * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                                * (pipe.getNode(i + 1).getVerticalPositionOfNode()
+                                        - pipe.getNode(i).getVerticalPositionOfNode())
+                                / 1e5
+                        + pipe.getNode(i).getBulkSystem().getPressure());
+                // if(pipe.getNode(i+1).getBulkSystem().getPressure()<10.5)
+                // pipe.getNode(i+1).getBulkSystem().setPressure(1.0);
                 err += (oldPres - pipe.getNode(i + 1).getBulkSystem().getPressure());
                 pipe.getNode(i + 1).initFlowCalc();
                 pipe.getNode(i + 1).init();
-                dpdx = (pipe.getNode(i + 1).getBulkSystem().getPressure() - pipe.getNode(i).getBulkSystem().getPressure()) / ((pipe.getNode(i + 1).getGeometry().getNodeLength() + pipe.getNode(i).getGeometry().getNodeLength()) * 0.5);
-                
+                dpdx = (pipe.getNode(i + 1).getBulkSystem().getPressure()
+                        - pipe.getNode(i).getBulkSystem().getPressure())
+                        / ((pipe.getNode(i + 1).getGeometry().getNodeLength()
+                                + pipe.getNode(i).getGeometry().getNodeLength()) * 0.5);
+
                 System.out.println("pres : " + pipe.getNode(i + 1).getBulkSystem().getPressure());
                 System.out.println("temp : " + pipe.getNode(i + 1).getBulkSystem().getTemperature());
                 System.out.println("velocity : " + pipe.getNode(i + 1).getVelocity());
                 System.out.println("dpdx : " + dpdx);
-                System.out.println("JT coeff : " + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient());
-                //setting velocities
+                System.out.println("JT coeff : "
+                        + pipe.getNode(i + 1).getBulkSystem().getPhases()[0].getJouleThomsonCoefficient());
+                // setting velocities
                 pipe.getNode(i + 1).setVelocityIn(pipe.getNode(i + 1).getVelocity());
                 pipe.getNode(i + 1).setVelocity((pipe.getNode(i + 1).getVelocityIn().doubleValue()));
                 pipe.getNode(i + 1).init();
@@ -114,31 +142,42 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
     public void initMatrix() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
-            double enthalpy = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy() / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase() / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+            double enthalpy = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy()
+                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
+                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
             solMatrix.set(i, 0, pipe.getNode(i).getVelocityIn().doubleValue());
             sol3Matrix.set(i, 0, enthalpy);
             sol2Matrix.set(i, 0, pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity());
             for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfComponents(); j++) {
-                sol4Matrix[j].set(i, 0, pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass() / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass());
+                sol4Matrix[j].set(i, 0,
+                        pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
+                                * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()
+                                / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass());
             }
         }
     }
 
     public void initPressure(int iteration) {
         for (int i = 0; i < numberOfNodes; i++) {
-            //                   if(dynamic) System.out.println(" old pressure " + pipe.getNode(i).getBulkSystem().getPressure());
+            // if(dynamic) System.out.println(" old pressure " +
+            // pipe.getNode(i).getBulkSystem().getPressure());
 
-            pipe.getNode(i).getBulkSystem().setPressure(pipe.getNode(i).getBulkSystem().getPhases()[0].getdPdrho() * diffMatrix.get(i, 0) * 1e-5 + pipe.getNode(i).getBulkSystem().getPressure());
+            pipe.getNode(i).getBulkSystem().setPressure(
+                    pipe.getNode(i).getBulkSystem().getPhases()[0].getdPdrho() * diffMatrix.get(i, 0) * 1e-5
+                            + pipe.getNode(i).getBulkSystem().getPressure());
             pipe.getNode(i).init();
-            //                if(dynamic) System.out.println("i " + i +" diff 0 " +(diffMatrix.get(i, 0) ) + " new pressure " + pipe.getNode(i).getBulkSystem().getPressure());
+            // if(dynamic) System.out.println("i " + i +" diff 0 " +(diffMatrix.get(i, 0) )
+            // + " new pressure " + pipe.getNode(i).getBulkSystem().getPressure());
 
         }
     }
 
     public void initVelocity(int iteration) {
         for (int i = 0; i < numberOfNodes; i++) {
-            pipe.getNode(i).setVelocityIn(pipe.getNode(i).getVelocityIn().doubleValue() + (solMatrix.get(i, 0) - pipe.getNode(i).getVelocityIn().doubleValue()));
-            //  if(dynamic) System.out.println("i " + i +" diffvel 0 " +(solMatrix.get(i, 0) - pipe.getNode(i).getVelocityIn().doubleValue()));
+            pipe.getNode(i).setVelocityIn(pipe.getNode(i).getVelocityIn().doubleValue()
+                    + (solMatrix.get(i, 0) - pipe.getNode(i).getVelocityIn().doubleValue()));
+            // if(dynamic) System.out.println("i " + i +" diffvel 0 " +(solMatrix.get(i, 0)
+            // - pipe.getNode(i).getVelocityIn().doubleValue()));
         }
 
         for (int i = 0; i < numberOfNodes; i++) {
@@ -146,32 +185,43 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             if (i == numberOfNodes - 1) {
                 meanVelocity = pipe.getNode(i).getVelocityIn().doubleValue();//
             } else {
-                meanVelocity = (pipe.getNode(i).getVelocityIn().doubleValue() + pipe.getNode(i).getVelocityOut().doubleValue()) / 2.0;
+                meanVelocity = (pipe.getNode(i).getVelocityIn().doubleValue()
+                        + pipe.getNode(i).getVelocityOut().doubleValue()) / 2.0;
             }
             pipe.getNode(i).setVelocity(meanVelocity);
             pipe.getNode(i).init();
         }
 
-        //  if(dynamic){
-        //      pipe.getNode(numberOfNodes-1).setVelocity(0.001);
-        //      pipe.getNode(numberOfNodes-1).init();
-        //  }
+        // if(dynamic){
+        // pipe.getNode(numberOfNodes-1).setVelocity(0.001);
+        // pipe.getNode(numberOfNodes-1).init();
+        // }
     }
 
     public void initTemperature(int iteration) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
-            pipe.getNode(i).getBulkSystem().setTemperature(pipe.getNode(i).getBulkSystem().getTemperature() + iteration * 1.0 / (10.0 + iteration) * diffMatrix.get(i, 0) / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp() / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase() / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()));
+            pipe.getNode(i).getBulkSystem()
+                    .setTemperature(pipe.getNode(i).getBulkSystem().getTemperature()
+                            + iteration * 1.0 / (10.0 + iteration) * diffMatrix.get(i, 0)
+                                    / (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()
+                                            / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
+                                            / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()));
             pipe.getNode(i).init();
 
-            //   System.out.println("cp: " + (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()/pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()));
+            // System.out.println("cp: " +
+            // (pipe.getNode(i).getBulkSystem().getPhases()[0].getCp()/pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass()));
         }
     }
 
     public void initComposition(int iter) {
         for (int j = 1; j < numberOfNodes; j++) {
             for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); p++) {
-                pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].setx(sol4Matrix[p].get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass() / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass());//pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx() + 0.5*diff4Matrix[p].get(j,0));
+                pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p]
+                        .setx(sol4Matrix[p].get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[0].getMolarMass()
+                                / pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
+                                                                                                                    // +
+                                                                                                                    // 0.5*diff4Matrix[p].get(j,0));
 
             }
 
@@ -193,8 +243,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             double Aw = pipe.getNode(0).getGeometry().getArea();
             double Fw = pipe.getNode(0).getVelocityIn().doubleValue() * Aw;
             double Fe = oldVelocity[1] * Ae;
-            // System.out.println("new- old : " + (pipe.getNode(0).getVelocityIn().doubleValue() - oldVelocity[0]));
-            oldMass[0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea() * pipe.getNode(0).getGeometry().getNodeLength();
+            // System.out.println("new- old : " +
+            // (pipe.getNode(0).getVelocityIn().doubleValue() - oldVelocity[0]));
+            oldMass[0] = 1.0 / timeStep * pipe.getNode(0).getGeometry().getArea()
+                    * pipe.getNode(0).getGeometry().getNodeLength();
 
             a[0] = Math.max(Fw, 0);
             c[0] = Math.max(-Fe, 0);
@@ -202,8 +254,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             r[0] = oldMass[0] * oldDensity[0];
 
             // setter ligningen paa rett form
-            //           a[0] = - a[0];
-            //           c[0] = -c[0];
+            // a[0] = - a[0];
+            // c[0] = -c[0];
         }
 
         for (int i = 1; i < numberOfNodes - 1; i++) {
@@ -213,7 +265,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             double Fw = pipe.getNode(i).getVelocityIn().doubleValue() * Aw;
 
             if (dynamic) {
-                oldMass[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea() * pipe.getNode(i).getGeometry().getNodeLength();
+                oldMass[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+                        * pipe.getNode(i).getGeometry().getNodeLength();
             } else {
                 oldMass[i] = 0.0;
             }
@@ -235,7 +288,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         double Fw = pipe.getNode(i).getVelocityIn().doubleValue() * Aw;
 
         if (dynamic) {
-            oldMass[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea() * pipe.getNode(i).getGeometry().getNodeLength();
+            oldMass[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+                    * pipe.getNode(i).getGeometry().getNodeLength();
         } else {
             oldMass[i] = 0.0;
         }
@@ -252,16 +306,15 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         double SU = 0.0, SP = 0.0;
         double Fw = 0.0, Fe = 0.0;
 
-        //pipe.getNode(0).initFlowCalc();
-        //pipe.getNode(0).init();
-        //pipe.getNode(0).setVelocityIn(pipe.getNode(0).getVelocity());
+        // pipe.getNode(0).initFlowCalc();
+        // pipe.getNode(0).init();
+        // pipe.getNode(0).setVelocityIn(pipe.getNode(0).getVelocity());
 
         a[0] = 0;
         b[0] = 1.0;
         c[0] = 0;
 
         r[0] = pipe.getNode(0).getVelocityIn().doubleValue();
-
 
         a[1] = 0;
         b[1] = 1.0;
@@ -275,16 +328,28 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
             double Amean = pipe.getNode(i - 1).getGeometry().getArea();
             double meanDiameter = pipe.getNode(i - 1).getGeometry().getDiameter();
             double meanFrik = pipe.getNode(i - 1).getWallFrictionFactor();
-            double meanDensity = (pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() + pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()) / 2.0;
+            double meanDensity = (pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                    + pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()) / 2.0;
             double oldMeanDensity = (oldDensity[i - 1] + oldDensity[i]) / 2.0;
             double meanVelocity = (pipe.getNode(i - 1).getVelocity() + pipe.getNode(i).getVelocity()) / 2.0;
-            double vertposchange = pipe.getNode(i).getVerticalPositionOfNode() - pipe.getNode(i - 1).getVerticalPositionOfNode();
+            double vertposchange = pipe.getNode(i).getVerticalPositionOfNode()
+                    - pipe.getNode(i - 1).getVerticalPositionOfNode();
             double nodeLength = pipe.getNode(i - 1).getGeometry().getNodeLength();
 
-            SU = -Amean * (pipe.getNode(i).getBulkSystem().getPressure() - pipe.getNode(i - 1).getBulkSystem().getPressure()) * 1e5 - Amean * gravity * meanDensity * vertposchange + Amean * nodeLength * meanDensity * meanFrik / meanDiameter * meanVelocity * Math.abs(meanVelocity) / 2.0;
+            SU = -Amean
+                    * (pipe.getNode(i).getBulkSystem().getPressure()
+                            - pipe.getNode(i - 1).getBulkSystem().getPressure())
+                    * 1e5 - Amean * gravity * meanDensity * vertposchange
+                    + Amean * nodeLength * meanDensity * meanFrik / meanDiameter * meanVelocity * Math.abs(meanVelocity)
+                            / 2.0;
             SP = -Amean * nodeLength * meanDensity * meanFrik / meanDiameter * meanVelocity;
-            Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * (pipe.getNode(i - 1).getVelocityIn().doubleValue() + pipe.getNode(i - 1).getVelocityOut().doubleValue()) / 2.0;
-            Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * (pipe.getNode(i).getVelocityIn().doubleValue() + pipe.getNode(i).getVelocityOut().doubleValue()) / 2.0;
+            Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
+                    * (pipe.getNode(i - 1).getVelocityIn().doubleValue()
+                            + pipe.getNode(i - 1).getVelocityOut().doubleValue())
+                    / 2.0;
+            Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                    * (pipe.getNode(i).getVelocityIn().doubleValue() + pipe.getNode(i).getVelocityOut().doubleValue())
+                    / 2.0;
 
             if (dynamic) {
                 oldImpuls[i] = 1.0 / timeStep * oldMeanDensity * nodeLength * Amean;
@@ -292,10 +357,10 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
                 oldImpuls[i] = 0.0;
             }
             a[i] = Math.max(Fw, 0);
-            c[i] = Math.max(-Fe, 0);//- Fe/2.0;
+            c[i] = Math.max(-Fe, 0);// - Fe/2.0;
 
             b[i] = a[i] + c[i] + (Fe - Fw) - SP + oldImpuls[i];
-            //   System.out.println("Fe-Fw: " +(Fe - Fw)  +  "   Fe: " + Fe);
+            // System.out.println("Fe-Fw: " +(Fe - Fw) + " Fe: " + Fe);
             r[i] = SU + oldImpuls[i] * oldVelocity[i];
             // setter ligningen paa rett form
             a[i] = -a[i];
@@ -311,13 +376,23 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         double meanDensity = pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity();
         double oldMeanDensity = oldDensity[i - 1];
         double meanVelocity = pipe.getNode(i - 1).getVelocity();
-        double vertposchange = pipe.getNode(i).getVerticalPositionOfNode() - pipe.getNode(i - 1).getVerticalPositionOfNode();
+        double vertposchange = pipe.getNode(i).getVerticalPositionOfNode()
+                - pipe.getNode(i - 1).getVerticalPositionOfNode();
         double nodeLength = pipe.getNode(i - 1).getGeometry().getNodeLength();
 
-        SU = -Amean * (pipe.getNode(i).getBulkSystem().getPressure() - pipe.getNode(i - 1).getBulkSystem().getPressure()) * 1e5 - Amean * gravity * meanDensity * vertposchange + Amean * nodeLength * meanDensity * meanFrik / meanDiameter * meanVelocity * Math.abs(meanVelocity) / 2.0;
+        SU = -Amean
+                * (pipe.getNode(i).getBulkSystem().getPressure() - pipe.getNode(i - 1).getBulkSystem().getPressure())
+                * 1e5 - Amean * gravity * meanDensity * vertposchange
+                + Amean * nodeLength * meanDensity * meanFrik / meanDiameter * meanVelocity * Math.abs(meanVelocity)
+                        / 2.0;
         SP = -Amean * nodeLength * meanDensity * meanFrik / meanDiameter * meanVelocity;
-        Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * (pipe.getNode(i - 1).getVelocityIn().doubleValue() + pipe.getNode(i - 1).getVelocityOut().doubleValue()) / 2.0;
-        Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * (pipe.getNode(i).getVelocityIn().doubleValue() + pipe.getNode(i).getVelocityOut().doubleValue()) / 2.0;
+        Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
+                * (pipe.getNode(i - 1).getVelocityIn().doubleValue()
+                        + pipe.getNode(i - 1).getVelocityOut().doubleValue())
+                / 2.0;
+        Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                * (pipe.getNode(i).getVelocityIn().doubleValue() + pipe.getNode(i).getVelocityOut().doubleValue())
+                / 2.0;
 
         if (dynamic) {
             oldImpuls[i] = 1.0 / timeStep * oldMeanDensity * nodeLength * Amean;
@@ -340,23 +415,43 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         a[0] = 0;
         b[0] = 1.0;
         c[0] = 0;
-        double SU = pipe.getNode(0).getBulkSystem().getPhases()[0].getEnthalpy() / pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase() / pipe.getNode(0).getBulkSystem().getPhases()[0].getMolarMass();
+        double SU = pipe.getNode(0).getBulkSystem().getPhases()[0].getEnthalpy()
+                / pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
+                / pipe.getNode(0).getBulkSystem().getPhases()[0].getMolarMass();
         r[0] = SU;
 
         for (int i = 1; i < numberOfNodes - 1; i++) {
-            double fe = pipe.getNode(i + 1).getGeometry().getNodeLength() / (pipe.getNode(i).getGeometry().getNodeLength() + pipe.getNode(i + 1).getGeometry().getNodeLength());
-            double fw = pipe.getNode(i - 1).getGeometry().getNodeLength() / (pipe.getNode(i).getGeometry().getNodeLength() + pipe.getNode(i - 1).getGeometry().getNodeLength());
+            double fe = pipe.getNode(i + 1).getGeometry().getNodeLength()
+                    / (pipe.getNode(i).getGeometry().getNodeLength()
+                            + pipe.getNode(i + 1).getGeometry().getNodeLength());
+            double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
+                    / (pipe.getNode(i).getGeometry().getNodeLength()
+                            + pipe.getNode(i - 1).getGeometry().getNodeLength());
             double Ae = pipe.getNode(i).getGeometry().getArea();
             double Aw = pipe.getNode(i - 1).getGeometry().getArea();
-            double vertposchange = (1 - fe) * (pipe.getNode(i + 1).getVerticalPositionOfNode() - pipe.getNode(i).getVerticalPositionOfNode()) + (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode() - pipe.getNode(i - 1).getVerticalPositionOfNode());
+            double vertposchange = (1 - fe)
+                    * (pipe.getNode(i + 1).getVerticalPositionOfNode() - pipe.getNode(i).getVerticalPositionOfNode())
+                    + (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
+                            - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
-            SU = -pipe.getNode(i).getGeometry().getArea() * gravity * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity() * vertposchange + pipe.getNode(i).getGeometry().getArea() * 4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0) * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature() - pipe.getNode(i).getBulkSystem().getTemperature()) / (pipe.getNode(i).getGeometry().getDiameter()) * pipe.getNode(i).getGeometry().getNodeLength();
+            SU = -pipe.getNode(i).getGeometry().getArea() * gravity
+                    * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity()
+                    * vertposchange
+                    + pipe.getNode(i).getGeometry().getArea() * 4.0
+                            * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
+                            * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
+                                    - pipe.getNode(i).getBulkSystem().getTemperature())
+                            / (pipe.getNode(i).getGeometry().getDiameter())
+                            * pipe.getNode(i).getGeometry().getNodeLength();
             double SP = 0;
-            double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocityIn().doubleValue();
-            double Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocityOut().doubleValue();
+            double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
+                    * pipe.getNode(i).getVelocityIn().doubleValue();
+            double Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()
+                    * pipe.getNode(i).getVelocityOut().doubleValue();
 
             if (dynamic) {
-                oldEnergy[i] = 1.0 / timeStep * oldDensity[i] * pipe.getNode(i).getGeometry().getNodeLength() * pipe.getNode(i).getGeometry().getArea();
+                oldEnergy[i] = 1.0 / timeStep * oldDensity[i] * pipe.getNode(i).getGeometry().getNodeLength()
+                        * pipe.getNode(i).getGeometry().getArea();
             } else {
                 oldEnergy[i] = 0.0;
             }
@@ -372,21 +467,33 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
 
         int i = numberOfNodes - 1;
 
-        double fw = pipe.getNode(i - 1).getGeometry().getNodeLength() / (pipe.getNode(i).getGeometry().getNodeLength() + pipe.getNode(i - 1).getGeometry().getNodeLength());
-        double Ae = pipe.getNode(i).getGeometry().getArea();//1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea() + fe/pipe.getNode(i+1).getGeometry().getArea());
+        double fw = pipe.getNode(i - 1).getGeometry().getNodeLength()
+                / (pipe.getNode(i).getGeometry().getNodeLength() + pipe.getNode(i - 1).getGeometry().getNodeLength());
+        double Ae = pipe.getNode(i).getGeometry().getArea();// 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea() +
+                                                            // fe/pipe.getNode(i+1).getGeometry().getArea());
 
-        double Aw = pipe.getNode(i - 1).getGeometry().getArea();//1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea() + fw/pipe.getNode(i-1).getGeometry().getArea());
+        double Aw = pipe.getNode(i - 1).getGeometry().getArea();// 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea()
+                                                                // + fw/pipe.getNode(i-1).getGeometry().getArea());
 
-        double vertposchange = (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode() - pipe.getNode(i - 1).getVerticalPositionOfNode());
+        double vertposchange = (1 - fw)
+                * (pipe.getNode(i).getVerticalPositionOfNode() - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
-        SU = -pipe.getNode(i).getGeometry().getArea() * gravity * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity() * vertposchange + pipe.getNode(i).getGeometry().getArea() * 4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0) * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature() - pipe.getNode(i).getBulkSystem().getTemperature()) / (pipe.getNode(i).getGeometry().getDiameter()) * pipe.getNode(i).getGeometry().getNodeLength();
-        double SP = 0;//-pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+        SU = -pipe.getNode(i).getGeometry().getArea() * gravity
+                * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity()
+                * vertposchange
+                + pipe.getNode(i).getGeometry().getArea() * 4.0 * pipe.getNode(i).calcTotalHeatTransferCoefficient(0)
+                        * (pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature()
+                                - pipe.getNode(i).getBulkSystem().getTemperature())
+                        / (pipe.getNode(i).getGeometry().getDiameter()) * pipe.getNode(i).getGeometry().getNodeLength();
+        double SP = 0;// -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
-        double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocityIn().doubleValue();
+        double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity()
+                * pipe.getNode(i).getVelocityIn().doubleValue();
         double Fe = Ae * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * pipe.getNode(i).getVelocity();
 
         if (dynamic) {
-            oldEnergy[i] = 1.0 / timeStep * oldDensity[i] * pipe.getNode(i).getGeometry().getNodeLength() * pipe.getNode(i).getGeometry().getArea();
+            oldEnergy[i] = 1.0 / timeStep * oldDensity[i] * pipe.getNode(i).getGeometry().getNodeLength()
+                    * pipe.getNode(i).getGeometry().getArea();
         } else {
             oldEnergy[i] = 0.0;
         }
@@ -403,18 +510,25 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         a[0] = 0;
         b[0] = 1.0;
         c[0] = 0;
-        SU = pipe.getNode(0).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getx() * pipe.getNode(0).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getMolarMass() / pipe.getNode(0).getBulkSystem().getPhases()[0].getMolarMass();
+        SU = pipe.getNode(0).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getx()
+                * pipe.getNode(0).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getMolarMass()
+                / pipe.getNode(0).getBulkSystem().getPhases()[0].getMolarMass();
         r[0] = SU;
 
         for (int i = 1; i < numberOfNodes - 1; i++) {
             double Ae = pipe.getNode(i).getGeometry().getArea();
             double Aw = pipe.getNode(i - 1).getGeometry().getArea();
 
-            double Fe = pipe.getNode(i).getVelocityOut().doubleValue() * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
-            double Fw = pipe.getNode(i).getVelocityIn().doubleValue() * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
-            //System.out.println("vel: " + pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
+            double Fe = pipe.getNode(i).getVelocityOut().doubleValue()
+                    * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+            double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+                    * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+            // System.out.println("vel: " +
+            // pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
             if (dynamic) {
-                oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea() * pipe.getNode(i).getGeometry().getNodeLength() * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+                oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+                        * pipe.getNode(i).getGeometry().getNodeLength()
+                        * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
             } else {
                 oldComp[i] = 0.0;
             }
@@ -429,15 +543,19 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         }
 
         int i = numberOfNodes - 1;
-        // double fw = pipe.getNode(i-1).getGeometry().getNodeLength()/(pipe.getNode(i).getGeometry().getNodeLength()+pipe.getNode(i-1).getGeometry().getNodeLength());
+        // double fw =
+        // pipe.getNode(i-1).getGeometry().getNodeLength()/(pipe.getNode(i).getGeometry().getNodeLength()+pipe.getNode(i-1).getGeometry().getNodeLength());
         double Ae = pipe.getNode(i).getGeometry().getArea();
         double Aw = pipe.getNode(i - 1).getGeometry().getArea();
 
         double Fe = pipe.getNode(i).getVelocity() * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
-        double Fw = pipe.getNode(i).getVelocityIn().doubleValue() * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+        double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+                * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
 
         if (dynamic) {
-            oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea() * pipe.getNode(i).getGeometry().getNodeLength() * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+            oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+                    * pipe.getNode(i).getGeometry().getNodeLength()
+                    * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
         } else {
             oldComp[i] = 0.0;
         }
@@ -454,10 +572,14 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
         for (int i = 0; i < numberOfNodes; i++) {
             oldVelocity[i] = pipe.getNode(i).getVelocityIn().doubleValue();
             oldDensity[i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
-            oldInternalEnergy[i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy() / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase() / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+            oldInternalEnergy[i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy()
+                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
+                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
 
             for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfComponents(); j++) {
-                oldComposition[j][i] = sol4Matrix[j].get(i, 0); //pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx() * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+                oldComposition[j][i] = sol4Matrix[j].get(i, 0); // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
+                                                                // *
+                                                                // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
 
             }
 
@@ -491,11 +613,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
                         d = TDMAsolve.solve(a, b, c, r);
                         solMatrix = new Matrix(d, 1).transpose();
                         diffMatrix = solMatrix.minus(solOld);
-                        //           if(dynamic)  solMatrix.print(10,10);
+                        // if(dynamic) solMatrix.print(10,10);
 
                         // System.out.println("diff1: ");
-                        //diffMatrix.print(10,10);
-                        //System.out.println("diff1: "+ diffMatrix.norm1()/solMatrix.norm1());
+                        // diffMatrix.print(10,10);
+                        // System.out.println("diff1: "+ diffMatrix.norm1()/solMatrix.norm1());
                         initVelocity(iter);
 
                         diff = Math.abs(diffMatrix.norm1() / solMatrix.norm1());
@@ -523,7 +645,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
                             }
                         } while (diff > 1e-15 && iter < 10);
                     }
-                    //System.out.println("max diff " + maxDiff);
+                    // System.out.println("max diff " + maxDiff);
                 } while (Math.abs(maxDiff) > 1e-10);
             }
 
@@ -562,12 +684,12 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver implement
                         }
                     }
                     initComposition(iter);
-                    //solMatrix.print(10,10);
+                    // solMatrix.print(10,10);
                 } while (diff > 1e-15 && iter < 10);
             }
 
             System.out.println("maxDiff " + maxDiff);
-        } while (Math.abs(maxDiff) > 1e-10 && iterTop < 100);//diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
+        } while (Math.abs(maxDiff) > 1e-10 && iterTop < 100);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
         initFinalResults();
     }

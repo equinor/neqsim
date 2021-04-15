@@ -39,8 +39,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
         tempSystem.resetCharacterisation();
         tempSystem.createDatabase(true);
         tempSystem.setMixingRule(system.getMixingRule());
-        
-        
+
         tempSystem.getPhase(0).getComponent(plusNumber).setMolarMass(molarMass);
         tempSystem.getPhase(1).getComponent(plusNumber).setMolarMass(molarMass);
         tempSystem.setTemperature(dependentValues[0]);
@@ -50,10 +49,10 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
         tempSystem.setMixingRule(system.getMixingRule());
         tempSystem.init(0);
         tempSystem.init(1);
-        //\\tempSystem.display();
+        // \\tempSystem.display();
         SaturationPressure satCalc = new SaturationPressure(tempSystem);
         double satPres = satCalc.calcSaturationPressure();
-        //tempSystem.display();
+        // tempSystem.display();
         return satPres;
     }
 

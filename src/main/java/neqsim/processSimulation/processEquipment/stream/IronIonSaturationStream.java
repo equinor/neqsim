@@ -11,52 +11,51 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class IronIonSaturationStream extends Stream implements StreamInterface, Cloneable{
+public class IronIonSaturationStream extends Stream implements StreamInterface, Cloneable {
 
     private static final long serialVersionUID = 1000;
-    
-    
+
     protected SystemInterface reactiveThermoSystem;
+
     /** Creates new Stream */
     public IronIonSaturationStream() {
         super();
     }
-    
+
     public IronIonSaturationStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
-    
+
     public IronIonSaturationStream(StreamInterface stream) {
         super(stream);
     }
-    
+
     public IronIonSaturationStream(String name, SystemInterface thermoSystem) {
-        super(name,thermoSystem);
+        super(name, thermoSystem);
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         IronIonSaturationStream clonedSystem = null;
-        try{
+        try {
             clonedSystem = (IronIonSaturationStream) super.clone();
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
         return clonedSystem;
     }
-    
-    
-    public void run(){
+
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
-        if(stream!=null) {
+        if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
         }
-        if(stream!=null) {
+        if (stream != null) {
             reactiveThermoSystem = this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
         }
-        reactiveThermoSystem.addComponent("Fe++",1e-6);
+        reactiveThermoSystem.addComponent("Fe++", 1e-6);
         // reactiveThermoSystem.chemicalReactionInit();
         // reactiveThermoSystem.createDatabase(true);
 //        reactiveThermoSystem.addComponent("water", reactiveThermoSystem.getPhase(0).getComponent("MEG").getNumberOfmoles());
@@ -73,9 +72,9 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
         System.out.println("number of phases: " + reactiveThermoSystem.getNumberOfPhases());
         System.out.println("beta: " + reactiveThermoSystem.getBeta());
     }
-    
-    public void displayResult(){
+
+    public void displayResult() {
         reactiveThermoSystem.display(name);
     }
-    
+
 }

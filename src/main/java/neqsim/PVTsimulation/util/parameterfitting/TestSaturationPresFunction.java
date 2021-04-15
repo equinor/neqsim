@@ -31,13 +31,12 @@ public class TestSaturationPresFunction extends java.lang.Object {
 
         ArrayList sampleList = new ArrayList();
 
-
         try {
             System.out.println("adding....");
             int i = 0;
             while (i < 1) {
                 SaturationPressureFunction function = new SaturationPressureFunction();
-                double guess[] = {341.6 / 1000.0};
+                double guess[] = { 341.6 / 1000.0 };
                 function.setInitialGuess(guess);
 
                 SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
@@ -57,15 +56,15 @@ public class TestSaturationPresFunction extends java.lang.Object {
                 tempSystem.addTBPfraction("C10", 0.8, 135.3 / 1000.0, 0.7864);
                 tempSystem.addPlusFraction("C11", 4.58, 341.2 / 1000.0, 0.8398);
                 tempSystem.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(12);
-                //tempSystem.getCharacterization().characterisePlusFraction();
+                // tempSystem.getCharacterization().characterisePlusFraction();
                 tempSystem.createDatabase(true);
                 tempSystem.setMixingRule(2);
                 tempSystem.init(0);
                 tempSystem.init(1);
 
-                double sample1[] = {273.15 + 100};
+                double sample1[] = { 273.15 + 100 };
                 double satPres = 400.0;
-                double standardDeviation1[] = {1.5};
+                double standardDeviation1[] = { 1.5 };
                 SampleValue sample = new SampleValue(satPres, satPres / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 function.setInitialGuess(guess);
@@ -82,7 +81,7 @@ public class TestSaturationPresFunction extends java.lang.Object {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
         optim.setMaxNumberOfIterations(5);
-        
+
         optim.setSampleSet(sampleSet);
         optim.solve();
         optim.displayCurveFit();

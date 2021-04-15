@@ -21,7 +21,8 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
 
         flowNode = new neqsim.fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.onePhasePipeFlowNode[totalNumberOfNodes];
         System.out.println("nodes: " + totalNumberOfNodes);
-        flowNode[0] = new neqsim.fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.onePhasePipeFlowNode(thermoSystem, this.equipmentGeometry[0]);
+        flowNode[0] = new neqsim.fluidMechanics.flowNode.onePhaseNode.onePhasePipeFlowNode.onePhasePipeFlowNode(
+                thermoSystem, this.equipmentGeometry[0]);
         flowNode[0].initFlowCalc();
         super.createSystem();
         this.setNodes();
@@ -38,17 +39,21 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         }
     }
 
-    public void solveSteadyState(int solverType) {  // should set solve-type: int 1-bare masse og impuls 2 energi og impuls 3 energi impuls og komponenter
-        double[] times = {0.0};
+    public void solveSteadyState(int solverType) { // should set solve-type: int 1-bare masse og impuls 2 energi og
+                                                   // impuls 3 energi impuls og komponenter
+        double[] times = { 0.0 };
         display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
         getTimeSeries().setTimes(times);
-        SystemInterface[] systems = {flowNode[0].getBulkSystem()};
+        SystemInterface[] systems = { flowNode[0].getBulkSystem() };
         getTimeSeries().setInletThermoSystems(systems);
         getTimeSeries().setNumberOfTimeStepsInInterval(1);
-        double[] outletFlowRates = {0.0, 0.0}; // this is not yet implemented
+        double[] outletFlowRates = { 0.0, 0.0 }; // this is not yet implemented
         getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
-        //  SteadystateOnePhasePipeFlowSolver pipeSolve = new SteadystateOnePhasePipeFlowSolver(this, getSystemLength(), getTotalNumberOfNodes());
-        flowSolver = new neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.onePhasePipeFlowSolver.OnePhaseFixedStaggeredGrid(this, getSystemLength(), getTotalNumberOfNodes(), false);
+        // SteadystateOnePhasePipeFlowSolver pipeSolve = new
+        // SteadystateOnePhasePipeFlowSolver(this, getSystemLength(),
+        // getTotalNumberOfNodes());
+        flowSolver = new neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.onePhasePipeFlowSolver.OnePhaseFixedStaggeredGrid(
+                this, getSystemLength(), getTotalNumberOfNodes(), false);
         flowSolver.setSolverType(solverType);
         flowSolver.solveTDMA();
         getTimeSeries().init(this);
@@ -62,17 +67,18 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         flowSolver.setSolverType(solverType);
         for (int i = 0; i < this.getTimeSeries().getTime().length; i++) {
             getNode(0).setBulkSystem(this.getTimeSeries().getThermoSystem()[i]);
-            //    getNode(0).getBulkSystem().setPressure();
+            // getNode(0).getBulkSystem().setPressure();
             getNode(0).initFlowCalc();
             getNode(0).setVelocityIn(getNode(0).getVelocity());
             flowNode[0].setVelocityOut(this.flowNode[0].getVelocity());
-            //   flowNode[1].setVelocityIn(this.flowNode[0].getVelocity());
-            //flowNode[getTotalNumberOfNodes()-1].setVelocity(this.getTimeSeries().getOutletMolarFlowRates()[i]);
+            // flowNode[1].setVelocityIn(this.flowNode[0].getVelocity());
+            // flowNode[getTotalNumberOfNodes()-1].setVelocity(this.getTimeSeries().getOutletMolarFlowRates()[i]);
             System.out.println("vel: " + this.flowNode[0].getVelocity());
             getSolver().setTimeStep(this.getTimeSeries().getTimeStep()[i]);
-            // System.out.println("time step: " + i + "  " + this.getTimeSeries().getTimeStep()[i]);
-            // System.out.println("time: " + i + "  " + this.getTimeSeries().getTime()[i]);
-            //    flowSolver.solveTDMA();
+            // System.out.println("time step: " + i + " " +
+            // this.getTimeSeries().getTimeStep()[i]);
+            // System.out.println("time: " + i + " " + this.getTimeSeries().getTime()[i]);
+            // flowSolver.solveTDMA();
             display.setNextData(this, this.getTimeSeries().getTime(i));
         }
     }
@@ -90,14 +96,14 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         testSystem.setTotalFlowRate(60.0, "MSm3/day");
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new PipeFlowSystem();
 
-        double[] height = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        double[] diameter = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-        double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
-        double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
-        double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
+        double[] height = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] diameter = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };
+        double[] roughness = { 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5 };
+        double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
+        double[] wallHeacCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
 
-        double[] length = {0, 10000, 50000, 150000, 200000, 400000, 500000, 600000, 650000, 700000, 750000};
-        double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0};
+        double[] length = { 0, 10000, 50000, 150000, 200000, 400000, 500000, 600000, 650000, 700000, 750000 };
+        double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0 };
 
         neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGeometry = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[10];
 
@@ -120,40 +126,41 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         pipe.init();
         pipe.solveSteadyState(10);
         pipe.print();
-        
+
         // transient solver
-        double[] times = {0, 10000, 20000};//, 30000, 40000, 50000};//, 60000, 70000, 80000, 90000};
+        double[] times = { 0, 10000, 20000 };// , 30000, 40000, 50000};//, 60000, 70000, 80000, 90000};
         pipe.getTimeSeries().setTimes(times);
-        
-        SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos(285.15,200.0);
+
+        SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos(285.15, 200.0);
         testSystem2.addComponent("methane", 29000.0);
         testSystem2.addComponent("ethane", 1221.10);
-        
+
         testSystem2 = new neqsim.thermo.system.SystemSrkEos(315.15, 200.0);
         testSystem2.addComponent("methane", 26000.0);
         testSystem2.addComponent("ethane", 1.10);
-         testSystem2.init(0);
+        testSystem2.init(0);
         testSystem2.init(3);
         testSystem2.initPhysicalProperties();
-        
-        
-        SystemInterface testSystem3 = new neqsim.thermo.system.SystemSrkEos(285.15,200.0);
+
+        SystemInterface testSystem3 = new neqsim.thermo.system.SystemSrkEos(285.15, 200.0);
         testSystem.addComponent("methane", 29000.0);
         testSystem.addComponent("ethane", 1221.10);
         testSystem3.init(0);
-        
-        SystemInterface[] systems = {testSystem, testSystem2, testSystem2};//, testSystem2, testSystem2, testSystem2};//,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
+
+        SystemInterface[] systems = { testSystem, testSystem2, testSystem2 };// , testSystem2, testSystem2,
+                                                                             // testSystem2};//,testSystem2,testSystem2,testSystem2,testSystem2,testSystem2};
         pipe.getTimeSeries().setInletThermoSystems(systems);
         pipe.getTimeSeries().setNumberOfTimeStepsInInterval(10);
-           //       double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01};
-        //       pipe.getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
+        // double[] outletFlowRates = {0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+        // 0.01, 0.01, 0.01};
+        // pipe.getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
-      //   pipe.solveTransient(20);
-          //   pipe.getDisplay().displayResult("composition");
-       //     pipe.getDisplay().displayResult("pressure");
-        //   pipe.getDisplay().displayResult("composition");
-        //   pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
+        // pipe.solveTransient(20);
+        // pipe.getDisplay().displayResult("composition");
+        // pipe.getDisplay().displayResult("pressure");
+        // pipe.getDisplay().displayResult("composition");
+        // pipe.getDisplay().createNetCdfFile("c:/temp5.nc");
         // pipe.getDisplay(1).displayResult();
-      
+
     }
 }

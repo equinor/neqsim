@@ -11,39 +11,38 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class AntoineSolidFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunction.class);
-    
+
     /** Creates new Test */
     public AntoineSolidFunction() {
         params = new double[2];
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.init(0);
-        try{
+        try {
             thermoOps.freezingPointTemperatureFlash();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             logger.error(e.toString());
         }
         return system.getTemperature();
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        if(i==1){
+        if (i == 1) {
             system.getPhases()[0].getComponents()[0].setAntoineASolid(value);
             system.getPhases()[1].getComponents()[0].setAntoineASolid(value);
             system.getPhases()[2].getComponents()[0].setAntoineASolid(value);
             system.getPhases()[3].getComponents()[0].setAntoineASolid(value);
         }
-        if(i==0) {
+        if (i == 0) {
             system.getPhases()[0].getComponents()[0].setAntoineBSolid(value);
             system.getPhases()[1].getComponents()[0].setAntoineBSolid(value);
             system.getPhases()[2].getComponents()[0].setAntoineBSolid(value);

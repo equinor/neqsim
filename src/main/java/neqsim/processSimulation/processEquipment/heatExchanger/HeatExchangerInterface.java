@@ -8,10 +8,9 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public interface HeatExchangerInterface extends HeaterInterface{
-     public neqsim.processSimulation.processEquipment.stream.StreamInterface getOutStream(int i);
+public interface HeatExchangerInterface extends HeaterInterface {
+    public neqsim.processSimulation.processEquipment.stream.StreamInterface getOutStream(int i);
 }
-

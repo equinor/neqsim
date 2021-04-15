@@ -24,14 +24,14 @@ public class SaturationPressure extends BasePVTsimulation {
     public double calcSaturationPressure() {
         getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
         getThermoSystem().setPressure(1.0);
-		do {
-			getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-			thermoOps.TPflash();
-		} while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure()<1000.0);
-		do {
-			getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-			thermoOps.TPflash();
-		} while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure()<1000.0);
+        do {
+            getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+            thermoOps.TPflash();
+        } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
+        do {
+            getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+            thermoOps.TPflash();
+        } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
         double minPres = getThermoSystem().getPressure() - 10.0;
         double maxPres = getThermoSystem().getPressure();
         int iteration = 0;
@@ -56,8 +56,8 @@ public class SaturationPressure extends BasePVTsimulation {
     }
 
     public static void main(String[] args) {
-      //  SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
-         SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
+        // SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
+        SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
         tempSystem.addComponent("nitrogen", 0.34);
         tempSystem.addComponent("CO2", 3.59);
         tempSystem.addComponent("methane", 67.42);
@@ -75,33 +75,28 @@ public class SaturationPressure extends BasePVTsimulation {
         tempSystem.addPlusFraction("C11", 4.58, 256.2 / 1000.0, 0.8398);
         tempSystem.getCharacterization().characterisePlusFraction();
         tempSystem.createDatabase(true);
-        tempSystem.setMixingRule(9);//"HV", "UNIFAC_UMRPRU");
+        tempSystem.setMixingRule(9);// "HV", "UNIFAC_UMRPRU");
         tempSystem.init(0);
         tempSystem.init(1);
         tempSystem.saveFluid(928);
-
 
         SimulationInterface satPresSim = new SaturationPressure(tempSystem);
         satPresSim.run();
         satPresSim.getThermoSystem().display();
 
-
-             double saturationPressure = 350.0;
-           double saturationTemperature = 273.15 + 80;
-/*
-        
-         TuningInterface tuning = new TuneToSaturation(satPresSim);
-         tuning.setSaturationConditions(saturationTemperature,
-         saturationPressure);
-         tuning.run();
-         tuning.getSimulation().getThermoSystem().display();
+        double saturationPressure = 350.0;
+        double saturationTemperature = 273.15 + 80;
+        /*
+         * 
+         * TuningInterface tuning = new TuneToSaturation(satPresSim);
+         * tuning.setSaturationConditions(saturationTemperature, saturationPressure);
+         * tuning.run(); tuning.getSimulation().getThermoSystem().display();
          */
-
 
     }
 
-	public double getSaturationPressure() {
-		return saturationPressure;
-	}
+    public double getSaturationPressure() {
+        return saturationPressure;
+    }
 
 }

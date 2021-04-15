@@ -10,10 +10,9 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public interface FluidBoundaryNodeInterface {
-  public SystemInterface getBulkSystem();
+    public SystemInterface getBulkSystem();
 }
-

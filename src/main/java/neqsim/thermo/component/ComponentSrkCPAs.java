@@ -9,15 +9,15 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ComponentSrkCPAs extends ComponentSrkCPA {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new System_SRK_EOS
-     * Ev liten fil ja.
+    /**
+     * Creates new System_SRK_EOS Ev liten fil ja.
      */
     public ComponentSrkCPAs() {
     }
@@ -46,32 +46,30 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
         return clonedComponent;
     }
     /*
-    public double calc_lngi2(PhaseInterface phase) {
-    return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
-    }
+     * public double calc_lngi2(PhaseInterface phase) { return 0.475 / (1.0 - 0.475
+     * * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
+     * }
      */
 
     public double calc_lngi(PhaseInterface phase) {
         return 0.475 * getBi() / (phase.getTotalVolume() - 0.475 * phase.getB());
     }
     /*
-    public double calc_lngi(PhaseInterface phase) {
-    double nbet = phase.getB() / 4.0 / phase.getVolume();
-    double dlngdb = 1.9 / (1.0 - 1.9 * nbet);
-    double nbeti = nbet / phase.getB() * getBi();
-    return dlngdb * nbeti;
-    }
+     * public double calc_lngi(PhaseInterface phase) { double nbet = phase.getB() /
+     * 4.0 / phase.getVolume(); double dlngdb = 1.9 / (1.0 - 1.9 * nbet); double
+     * nbeti = nbet / phase.getB() * getBi(); return dlngdb * nbeti; }
      */
 
     public double calc_lngidV(PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
-        return -0.475 * getBi() / (temp*temp);
+        return -0.475 * getBi() / (temp * temp);
     }
 
     public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
-       // System.out.println("B " + phase.getB() + " Bi " + getBi() + "  bij " + getBij(j));
-        return 0.475 * getBij(j)*0 / (phase.getTotalVolume() - 0.475 * phase.getB()) -
-                0.475 * getBi() * 1.0 / (temp*temp)* (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
+        // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
+        // getBij(j));
+        return 0.475 * getBij(j) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB()) - 0.475 * getBi() * 1.0
+                / (temp * temp) * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
     }
 }

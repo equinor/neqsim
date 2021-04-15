@@ -47,12 +47,14 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
     private static final long serialVersionUID = 1000;
 
-    StreamInterface ethaneOvhComp, gasDistColumnExit, liquidDistColumnExit, feedStream, gasExitStream, oilExitStream, glycolFeedStream, glycolExitStream;
+    StreamInterface ethaneOvhComp, gasDistColumnExit, liquidDistColumnExit, feedStream, gasExitStream, oilExitStream,
+            glycolFeedStream, glycolExitStream;
     Separator glycolScrubber;
     Separator inletSeparator;
-    double inletSepTemperature = 50.00, pressureAfterRedValve = 55.0; //bar'
-    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0, glycolScrubberTemperature = 20.0, secondStageOutPressure = 200.0; //bar
-    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0, liquidPumpPressure = 150.0; //m^3/hr
+    double inletSepTemperature = 50.00, pressureAfterRedValve = 55.0; // bar'
+    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0, glycolScrubberTemperature = 20.0,
+            secondStageOutPressure = 200.0; // bar
+    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0, liquidPumpPressure = 150.0; // m^3/hr
     Separator LTseparator;
     HeatExchanger heatExchanger1;
     ThrottlingValve valve1;
@@ -98,13 +100,13 @@ public class DPCUModule extends ProcessModuleBaseClass {
         // heatExchanger1.setOutTemperature(273.15 - 18);
         // heatExchanger1.setUAvalue(10000.0);
         heatExchanger1.setName("heatExchanger1");
-        //     heatExchanger1.addInStream(feedStream2);
+        // heatExchanger1.addInStream(feedStream2);
 
         Cooler heatExchanger2 = new Cooler(heatExchanger1.getOutStream(0));
-        //heatExchanger2.setUAvalue(1000.0);
+        // heatExchanger2.setUAvalue(1000.0);
         heatExchanger1.setOutTemperature(273.15 - 21.0);
         heatExchanger2.setName("heatExchanger2");
-        //heatExchanger1.addInStream(feedStream2);
+        // heatExchanger1.addInStream(feedStream2);
 
         expander = new Expander("expander", heatExchanger2.getOutStream());
         expander.setOutletPressure(46.0);
@@ -112,7 +114,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         LTseparator = new Separator("LTseparator", expander.getOutStream());
 
         Splitter splitter = new Splitter("LTsplitter", LTseparator.getGasOutStream(), 2);
-        splitter.setSplitFactors(new double[]{0.9, 0.1});
+        splitter.setSplitFactors(new double[] { 0.9, 0.1 });
 
         heatExchanger1.addInStream(splitter.getSplitStream(0));
 
@@ -131,8 +133,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
         distColumn = new DistillationColumn(10, true, true);
         distColumn.addFeedStream(valve1.getOutStream(), 2);
-       //  distColumn.setCondenserTemperature(273.15 - 72.0);
-       //  distColumn.setReboilerTemperature(273.0+40.0);
+        // distColumn.setCondenserTemperature(273.15 - 72.0);
+        // distColumn.setReboilerTemperature(273.0+40.0);
         ((Reboiler) distColumn.getReboiler()).setRefluxRatio(10.7);
         ((Condenser) distColumn.getCondenser()).setRefluxRatio(10.7);
 
@@ -147,61 +149,63 @@ public class DPCUModule extends ProcessModuleBaseClass {
         getOperations().add(compressor1);
         getOperations().add(recycl);
         getOperations().add(valve1);
-       // getOperations().add(distColumn);
+        // getOperations().add(distColumn);
 
         /*
-        Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
-        inletCooler.setOutTemperature(inletSepTemperature + 273.15);
-
-        inletSeparator = new Separator("Inlet separator", inletCooler.getOutStream());
-
-        Cooler gasCooler = new Cooler("separator gas cooler", inletSeparator.getGasOutStream());
-        gasCooler.setOutTemperature(gasScrubberTemperature + 273.15);
-
-        oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
-        oilPump.setOutletPressure(liquidPumpPressure);
-
-        Separator gasScrubber = new Separator("HC dew point control scrubber", gasCooler.getOutStream());
-
-        Recycle HPliquidRecycle = new Recycle("Resycle");
-        double tolerance = 1e-2;
-        HPliquidRecycle.setTolerance(tolerance);
-        HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
-        inletSeparator.addStream(HPliquidRecycle.getOutStream());
-
-        Compressor firstStageCompressor = new Compressor("1st stage compressor", gasScrubber.getGasOutStream());
-        firstStageCompressor.setOutletPressure(firstStageOutPressure);
-
-        glycolFeedStream.getThermoSystem().setPressure(firstStageOutPressure);
-
-        Mixer glycolMixer = new Mixer("glycol injection mixer");
-        glycolMixer.addStream(firstStageCompressor.getOutStream());
-        glycolMixer.addStream(glycolFeedStream);
-
-        Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler", glycolMixer.getOutStream());
-        mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
-
-        glycolScrubber = new Separator("Water dew point control scrubber", mixerAfterCooler.getOutStream());
-
-        secondStageCompressor = new Compressor("2nd stage compressor", glycolScrubber.getGasOutStream());
-        secondStageCompressor.setOutletPressure(secondStageOutPressure);
-
-        secondStageAfterCooler = new Cooler("second stage after cooler", secondStageCompressor.getOutStream());
-        secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
-
-        getOperations().add(inletCooler);
-        getOperations().add(inletSeparator);
-        getOperations().add(gasCooler);
-        getOperations().add(oilPump);
-        getOperations().add(gasScrubber);
-        getOperations().add(HPliquidRecycle);
-        getOperations().add(firstStageCompressor);
-        getOperations().add(glycolMixer);
-        getOperations().add(mixerAfterCooler);
-        getOperations().add(glycolScrubber);
-        getOperations().add(secondStageCompressor);
-        getOperations().add(secondStageAfterCooler);
-
+         * Cooler inletCooler = new Cooler("inlet well stream cooler", feedStream);
+         * inletCooler.setOutTemperature(inletSepTemperature + 273.15);
+         * 
+         * inletSeparator = new Separator("Inlet separator",
+         * inletCooler.getOutStream());
+         * 
+         * Cooler gasCooler = new Cooler("separator gas cooler",
+         * inletSeparator.getGasOutStream());
+         * gasCooler.setOutTemperature(gasScrubberTemperature + 273.15);
+         * 
+         * oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
+         * oilPump.setOutletPressure(liquidPumpPressure);
+         * 
+         * Separator gasScrubber = new Separator("HC dew point control scrubber",
+         * gasCooler.getOutStream());
+         * 
+         * Recycle HPliquidRecycle = new Recycle("Resycle"); double tolerance = 1e-2;
+         * HPliquidRecycle.setTolerance(tolerance);
+         * HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
+         * inletSeparator.addStream(HPliquidRecycle.getOutStream());
+         * 
+         * Compressor firstStageCompressor = new Compressor("1st stage compressor",
+         * gasScrubber.getGasOutStream());
+         * firstStageCompressor.setOutletPressure(firstStageOutPressure);
+         * 
+         * glycolFeedStream.getThermoSystem().setPressure(firstStageOutPressure);
+         * 
+         * Mixer glycolMixer = new Mixer("glycol injection mixer");
+         * glycolMixer.addStream(firstStageCompressor.getOutStream());
+         * glycolMixer.addStream(glycolFeedStream);
+         * 
+         * Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler",
+         * glycolMixer.getOutStream());
+         * mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
+         * 
+         * glycolScrubber = new Separator("Water dew point control scrubber",
+         * mixerAfterCooler.getOutStream());
+         * 
+         * secondStageCompressor = new Compressor("2nd stage compressor",
+         * glycolScrubber.getGasOutStream());
+         * secondStageCompressor.setOutletPressure(secondStageOutPressure);
+         * 
+         * secondStageAfterCooler = new Cooler("second stage after cooler",
+         * secondStageCompressor.getOutStream());
+         * secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
+         * 
+         * getOperations().add(inletCooler); getOperations().add(inletSeparator);
+         * getOperations().add(gasCooler); getOperations().add(oilPump);
+         * getOperations().add(gasScrubber); getOperations().add(HPliquidRecycle);
+         * getOperations().add(firstStageCompressor); getOperations().add(glycolMixer);
+         * getOperations().add(mixerAfterCooler); getOperations().add(glycolScrubber);
+         * getOperations().add(secondStageCompressor);
+         * getOperations().add(secondStageAfterCooler);
+         * 
          */
     }
 
@@ -264,7 +268,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         testSystem.addComponent("n-pentane", 0.00211497210679094);
         testSystem.addComponent("n-hexane", 0.000512675581812218);
         testSystem.addComponent("n-heptane", 0.000205410042894726);
-         testSystem.addComponent("n-octane", 0.000677697183000435);
+        testSystem.addComponent("n-octane", 0.000677697183000435);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -272,8 +276,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
         Stream feedStream = new Stream("Well stream", testSystem);
         feedStream.getThermoSystem().setTotalFlowRate(5, "MSm^3/hr");
 
-        //  feedStream.addAnalogMeasurement("Name", "type");
-        //  feedStream.addAlarm("type", );..
+        // feedStream.addAnalogMeasurement("Name", "type");
+        // feedStream.addAlarm("type", );..
         DPCUModule dpcuModule = new DPCUModule();
         dpcuModule.addInputStream("feed stream", feedStream);
         dpcuModule.setSpecification("pressure after reduction valve", 108.0);

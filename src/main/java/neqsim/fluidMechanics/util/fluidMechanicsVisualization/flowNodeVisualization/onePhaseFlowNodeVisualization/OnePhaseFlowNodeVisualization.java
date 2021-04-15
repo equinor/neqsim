@@ -10,10 +10,10 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
-public class OnePhaseFlowNodeVisualization extends FlowNodeVisualization{
+public class OnePhaseFlowNodeVisualization extends FlowNodeVisualization {
 
     private static final long serialVersionUID = 1000;
 

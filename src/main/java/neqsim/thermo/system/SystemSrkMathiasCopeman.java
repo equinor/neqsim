@@ -11,47 +11,48 @@ package neqsim.thermo.system;
  * @version
  */
 
-/** This class defines a thermodynamic system using the SRK with Mathias Copeman equation of state
+/**
+ * This class defines a thermodynamic system using the SRK with Mathias Copeman
+ * equation of state
  */
 public class SystemSrkMathiasCopeman extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
+
     /** Creates a thermodynamic system using the SRK equation of state. */
-    //  SystemSrkEos clonedSystem;
-    public SystemSrkMathiasCopeman(){
+    // SystemSrkEos clonedSystem;
+    public SystemSrkMathiasCopeman() {
         super();
         modelName = "Mathias-Copeman-SRK-EOS";
         attractiveTermNumber = 4;
     }
-    
+
     public SystemSrkMathiasCopeman(double T, double P) {
-        super(T,P);
+        super(T, P);
         modelName = "Mathias-Copeman-SRK-EOS";
         attractiveTermNumber = 4;
     }
-    
+
     public SystemSrkMathiasCopeman(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         attractiveTermNumber = 4;
         modelName = "Mathias-Copeman-SRK-EOS";
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         SystemSrkMathiasCopeman clonedSystem = null;
-        try{
+        try {
             clonedSystem = (SystemSrkMathiasCopeman) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
+
 //        
 //        for(int i = 0; i < numberOfPhases; i++) {
 //            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
 //        }
-        
+
         return clonedSystem;
     }
-    
-    
+
 }

@@ -8,29 +8,30 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunction{
+public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunction {
 
     private static final long serialVersionUID = 1000;
-    
+
     int phase = 1;
+
     /** Creates new Test */
     public BinaryHVParameterFittingToSolubilityData2() {
     }
-    
+
     public BinaryHVParameterFittingToSolubilityData2(int phase) {
         this.phase = phase;
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
-        //System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
+        // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
         return system.getPhases()[phase].getComponents()[0].getx();
     }
-    
-    public double calcTrueValue(double val){
+
+    public double calcTrueValue(double val) {
         return val;
     }
 }

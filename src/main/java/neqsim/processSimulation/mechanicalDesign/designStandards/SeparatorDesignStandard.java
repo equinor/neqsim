@@ -28,6 +28,7 @@ public class SeparatorDesignStandard extends DesignStandard {
     public void setFg(double Fg) {
         this.Fg = Fg;
     }
+
     double gasLoadFactor = 0.11;
     private double Fg = 0.8;
     private double volumetricDesignFactor = 1.0;
@@ -38,17 +39,22 @@ public class SeparatorDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='" + standardName + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Separator' AND Company='"
+                                + standardName + "'"));
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("GasLoadFactor")) {
-                        gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE")) + Double.parseDouble(dataSet.getString("MINVALUE")))/2.0;
+                        gasLoadFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+                                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
                     }
                     if (specName.equals("Fg")) {
-                        Fg = (Double.parseDouble(dataSet.getString("MAXVALUE")) + Double.parseDouble(dataSet.getString("MINVALUE")))/2.0;
+                        Fg = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+                                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
                     }
                     if (specName.equals("VolumetricDesignFactor")) {
-                        volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE")) + Double.parseDouble(dataSet.getString("MINVALUE")))/2.0;
+                        volumetricDesignFactor = (Double.parseDouble(dataSet.getString("MAXVALUE"))
+                                + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
                     }
                 }
 
@@ -56,7 +62,7 @@ public class SeparatorDesignStandard extends DesignStandard {
                 e.printStackTrace();
             }
 
-            //gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+            // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -93,17 +99,19 @@ public class SeparatorDesignStandard extends DesignStandard {
     public void setVolumetricDesignFactor(double volumetricDesignFactor) {
         this.volumetricDesignFactor = volumetricDesignFactor;
     }
-    
-    public double getLiquidRetentionTime(String name, MechanicalDesign equipmentInn){
+
+    public double getLiquidRetentionTime(String name, MechanicalDesign equipmentInn) {
         double retTime = 90.0;
-        double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem().getPhase(1).getPhysicalProperties().getDensity()/1000.0;
-        
-        
+        double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem().getPhase(1)
+                .getPhysicalProperties().getDensity() / 1000.0;
+
         // select correct residensetime from database
         // to be implmented
-        if(name.equals("API12J")){
-            if(dens<0.85) retTime = 60.0;
-            else if(dens>0.93) retTime = 180.0;
+        if (name.equals("API12J")) {
+            if (dens < 0.85)
+                retTime = 60.0;
+            else if (dens > 0.93)
+                retTime = 180.0;
         }
         return retTime;
     }

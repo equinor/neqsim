@@ -10,13 +10,13 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class FlowNodeVisualization implements FlowNodeVisualizationInterface{
+public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
 
     private static final long serialVersionUID = 1000;
-    
+
     public double[] temperature = new double[2];
     public double[] reynoldsNumber = new double[2];
     public double[] interfaceTemperature = new double[2];
@@ -24,15 +24,16 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface{
     public double[] velocity = new double[2];
     public double[] phaseFraction = new double[2];
     public double[] wallContactLength = new double[2];
-    public double[][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient,effectiveSchmidtNumber;
+    public double[][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient, effectiveSchmidtNumber;
     public double[][] molarFlux;
     public double interphaseContactLength = 0.0;
     public double nodeCenter;
-    public int numberOfComponents=0;
+    public int numberOfComponents = 0;
+
     /** Creates new FlowNodeVisualization */
     public FlowNodeVisualization() {
     }
-    
+
     public void setData(FlowNodeInterface node) {
         temperature[0] = node.getBulkSystem().getPhases()[0].getTemperature();
         temperature[1] = node.getBulkSystem().getPhases()[1].getTemperature();
@@ -47,65 +48,65 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface{
         numberOfComponents = node.getBulkSystem().getPhases()[0].getNumberOfComponents();
         nodeCenter = node.getDistanceToCenterOfNode();
     }
-    
-    public int getNumberOfComponents(){
+
+    public int getNumberOfComponents() {
         return numberOfComponents;
     }
-    
-    public double getInterphaseContactLength(){
+
+    public double getInterphaseContactLength() {
         return interphaseContactLength;
     }
-    
-     public double getWallContactLength(int phase){
+
+    public double getWallContactLength(int phase) {
         return wallContactLength[phase];
     }
-    
-    public double getPressure(int i){
+
+    public double getPressure(int i) {
         return pressure[i];
     }
-    
-    public double getReynoldsNumber(int i){
+
+    public double getReynoldsNumber(int i) {
         return reynoldsNumber[i];
     }
-    
-    public double getDistanceToCenterOfNode(){
+
+    public double getDistanceToCenterOfNode() {
         return nodeCenter;
     }
-    
-    public double getTemperature(int i){
+
+    public double getTemperature(int i) {
         return temperature[i];
     }
-    
-    public double getInterfaceTemperature(int i){
+
+    public double getInterfaceTemperature(int i) {
         return interfaceTemperature[i];
     }
-    
-    public double getVelocity(int i){
+
+    public double getVelocity(int i) {
         return velocity[i];
     }
-    
-    public double getBulkComposition(int i, int phase){
+
+    public double getBulkComposition(int i, int phase) {
         return bulkComposition[phase][i];
     }
-    
-    public double getInterfaceComposition(int i, int phase){
+
+    public double getInterfaceComposition(int i, int phase) {
         return interfaceComposition[phase][i];
     }
-    
-    public double getMolarFlux(int i, int phase){
+
+    public double getMolarFlux(int i, int phase) {
         return molarFlux[phase][i];
     }
-    
-    public double getEffectiveMassTransferCoefficient(int i, int phase){
+
+    public double getEffectiveMassTransferCoefficient(int i, int phase) {
         return effectiveMassTransferCoefficient[phase][i];
     }
-    
-    public double getEffectiveSchmidtNumber(int i, int phase){
+
+    public double getEffectiveSchmidtNumber(int i, int phase) {
         return effectiveSchmidtNumber[phase][i];
     }
-    
-    public double getPhaseFraction(int phase){
+
+    public double getPhaseFraction(int phase) {
         return phaseFraction[phase];
     }
-    
+
 }

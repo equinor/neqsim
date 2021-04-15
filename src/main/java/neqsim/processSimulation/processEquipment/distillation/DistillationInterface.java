@@ -8,12 +8,13 @@ package neqsim.processSimulation.processEquipment.distillation;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface DistillationInterface {
     public void setName(String name);
+
     public String getName();
+
     public void setNumberOfTrays(int number);
 }
-

@@ -10,7 +10,7 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface GeometryDefinitionInterface extends Cloneable {
@@ -56,8 +56,8 @@ public interface GeometryDefinitionInterface extends Cloneable {
     public double getInnerWallTemperature();
 
     public void setInnerWallTemperature(double temperature);
-    
-     public SurroundingEnvironment getSurroundingEnvironment();
+
+    public SurroundingEnvironment getSurroundingEnvironment();
+
     public void setSurroundingEnvironment(SurroundingEnvironment surroundingEnvironment);
 }
-

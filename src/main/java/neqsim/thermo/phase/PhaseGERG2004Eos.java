@@ -10,7 +10,7 @@ import neqsim.thermo.util.JNI.GERG2004EOS;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class PhaseGERG2004Eos extends PhaseEos {
@@ -23,7 +23,8 @@ public class PhaseGERG2004Eos extends PhaseEos {
     ;
     int IPHASE = 0;
     boolean okVolume = true;
-    double enthalpy = 0.0, entropy = 0.0, gibbsEnergy = 0.0, CpGERG = 0.0, CvGERG = 0.0, internalEnery = 0.0, JTcoef = 0.0;
+    double enthalpy = 0.0, entropy = 0.0, gibbsEnergy = 0.0, CpGERG = 0.0, CvGERG = 0.0, internalEnery = 0.0,
+            JTcoef = 0.0;
 
     /** Creates new PhaseSrkEos */
     public PhaseGERG2004Eos() {
@@ -70,7 +71,10 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
         if (type >= 1) {
             double[] temp = new double[18];
-            temp = GERG2004EOS.SPHIOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE);
+            temp = GERG2004EOS.SPHIOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
+                    xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9],
+                    xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15],
+                    xFracGERG[16], xFracGERG[17], IPHASE);
 
             for (int j = 0; j < gergEOS.getNameList().length; j++) {
                 if (hasComponent(gergEOS.getNameList()[j])) {
@@ -82,7 +86,10 @@ public class PhaseGERG2004Eos extends PhaseEos {
                     }
                 }
             }
-            temp = GERG2004EOS.SPHIOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE);
+            temp = GERG2004EOS.SPHIOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
+                    xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9],
+                    xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15],
+                    xFracGERG[16], xFracGERG[17], IPHASE);
 
             for (int j = 0; j < gergEOS.getNameList().length; j++) {
                 if (hasComponent(gergEOS.getNameList()[j])) {
@@ -91,14 +98,23 @@ public class PhaseGERG2004Eos extends PhaseEos {
             }
 
             double[] alloTPX = new double[17];
-            alloTPX = GERG2004EOS.SALLOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE);
+            alloTPX = GERG2004EOS.SALLOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
+                    xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9],
+                    xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15],
+                    xFracGERG[16], xFracGERG[17], IPHASE);
 
-            gibbsEnergy = alloTPX[10]; // gergEOS.GOTPX(temperature,pressure/10.0, xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-            internalEnery = alloTPX[9]; // .UOTPX(temperature,pressure/10.0, xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-            enthalpy = alloTPX[2]; // gergEOS.HOTPX(temperature,pressure/10.0, xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-            entropy = alloTPX[3]; // gergEOS.SOTPX(temperature,pressure/10.0, xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-            CpGERG = alloTPX[4]; // gergEOS.CPOTPX(temperature,pressure/10.0, xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-            CvGERG = alloTPX[5]; // gergEOS.CPOTPX(temperature,pressure/10.0, xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+            gibbsEnergy = alloTPX[10]; // gergEOS.GOTPX(temperature,pressure/10.0,
+                                       // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+            internalEnery = alloTPX[9]; // .UOTPX(temperature,pressure/10.0,
+                                        // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+            enthalpy = alloTPX[2]; // gergEOS.HOTPX(temperature,pressure/10.0,
+                                   // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+            entropy = alloTPX[3]; // gergEOS.SOTPX(temperature,pressure/10.0,
+                                  // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+            CpGERG = alloTPX[4]; // gergEOS.CPOTPX(temperature,pressure/10.0,
+                                 // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+            CvGERG = alloTPX[5]; // gergEOS.CPOTPX(temperature,pressure/10.0,
+                                 // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
             super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         }
     }
@@ -131,10 +147,17 @@ public class PhaseGERG2004Eos extends PhaseEos {
         return CvGERG;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
-        double temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE) * 8.314 * temperature / (pressure);
-      
-        temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2], xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9], xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17], IPHASE) * 8.314 * temperature / (pressure);
+    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+        double temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
+                xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9],
+                xFracGERG[10], xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16],
+                xFracGERG[17], IPHASE) * 8.314 * temperature / (pressure);
+
+        temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2], xFracGERG[3],
+                xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9], xFracGERG[10],
+                xFracGERG[11], xFracGERG[12], xFracGERG[13], xFracGERG[14], xFracGERG[15], xFracGERG[16], xFracGERG[17],
+                IPHASE) * 8.314 * temperature / (pressure);
         okVolume = !(Math.abs(2222 + temp) < 0.1 || Math.abs(1111 + temp) < 0.1);
         return temp;
     }

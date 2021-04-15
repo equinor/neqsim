@@ -26,77 +26,78 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
-public class PUflash  extends Flash implements java.io.Serializable {
+public class PUflash extends Flash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    
-    double Uspec=0;
+
+    double Uspec = 0;
     Flash tpFlash;
+
     /** Creates new PHflash */
     public PUflash() {
     }
-    
+
     public PUflash(SystemInterface system, double Uspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Uspec = Uspec;
     }
-    
-    public double calcdQdTT(){
-        double dQdTT = - system.getTemperature() * system.getTemperature() * system.getCv();
+
+    public double calcdQdTT() {
+        double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCv();
         return dQdTT;
     }
-    
-    public double calcdQdT(){
-        double dQ = system.getInternalEnergy()-Uspec;
+
+    public double calcdQdT() {
+        double dQ = system.getInternalEnergy() - Uspec;
         return dQ;
     }
-    
-    public double solveQ(){
-        double oldTemp=1.0/system.getTemperature(), nyTemp=1.0/system.getTemperature();
-        double iterations=1;
-        double error=1.0,erorOld=10.0e10;
+
+    public double solveQ() {
+        double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
+        double iterations = 1;
+        double error = 1.0, erorOld = 10.0e10;
         double factor = 0.8;
-        do{
-         if(error>erorOld){
+        do {
+            if (error > erorOld) {
                 factor /= 2.0;
-            }
-            else if(error<erorOld && factor<0.8){
+            } else if (error < erorOld && factor < 0.8) {
                 factor *= 1.1;
             }
             iterations++;
             oldTemp = nyTemp;
             system.init(2);
-            nyTemp = oldTemp - factor*calcdQdT()/calcdQdTT();
-           //f(Math.abs(1.0/nyTemp-1.0/oldTemp)>5.0) nyTemp = 1.0/(1.0/oldTemp + Math.signum(1.0/nyTemp-1.0/oldTemp)*5.0);
-            if(Double.isNaN(nyTemp)) {
-                nyTemp = oldTemp+1.0;
-         }
-            system.setTemperature(1.0/nyTemp);
+            nyTemp = oldTemp - factor * calcdQdT() / calcdQdTT();
+            // f(Math.abs(1.0/nyTemp-1.0/oldTemp)>5.0) nyTemp = 1.0/(1.0/oldTemp +
+            // Math.signum(1.0/nyTemp-1.0/oldTemp)*5.0);
+            if (Double.isNaN(nyTemp)) {
+                nyTemp = oldTemp + 1.0;
+            }
+            system.setTemperature(1.0 / nyTemp);
             tpFlash.run();
             erorOld = error;
-            error = Math.abs((1.0/nyTemp-1.0/oldTemp)/(1.0/oldTemp));
-           // System.out.println("temperature " + system.getTemperature() + " " + iterations);
-        }
-        while(error>1e-8 && iterations<500);
-        
-        return 1.0/nyTemp;
+            error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+            // System.out.println("temperature " + system.getTemperature() + " " +
+            // iterations);
+        } while (error > 1e-8 && iterations < 500);
+
+        return 1.0 / nyTemp;
     }
-    
-    public void run(){
+
+    public void run() {
         tpFlash.run();
-        //System.out.println("enthalpy start: " + system.getEnthalpy());
-            solveQ();
-       
-        //System.out.println("enthalpy: " + system.getEnthalpy());
+        // System.out.println("enthalpy start: " + system.getEnthalpy());
+        solveQ();
+
+        // System.out.println("enthalpy: " + system.getEnthalpy());
 //        System.out.println("Temperature: " + system.getTemperature());
     }
-    
-    public org.jfree.chart.JFreeChart getJFreeChart(String name){
+
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-    
+
 }

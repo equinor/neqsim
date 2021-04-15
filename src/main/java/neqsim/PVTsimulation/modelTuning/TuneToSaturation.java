@@ -42,7 +42,7 @@ public class TuneToSaturation extends BaseTuningClass {
         double plusMolarMass = 0;
         getSimulation().getThermoSystem().setTemperature(saturationTemperature);
         getSimulation().getThermoSystem().setPressure(saturationPressure - 50.0);
-        //getSimulation().getThermoSystem().display();
+        // getSimulation().getThermoSystem().display();
         for (int i = 0; i < getSimulation().getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
             if (getSimulation().getThermoSystem().getPhase(0).getComponent(i).isIsPlusFraction()) {
                 plusNumber = i;
@@ -71,29 +71,29 @@ public class TuneToSaturation extends BaseTuningClass {
             getSimulation().getThermoSystem().resetCharacterisation();
             getSimulation().getThermoSystem().createDatabase(true);
             getSimulation().getThermoSystem().setMixingRule(getSimulation().getThermoSystem().getMixingRule());
-            //getSimulation().getThermoSystem().init(0);
-            //getSimulation().getThermoSystem().init(1);
+            // getSimulation().getThermoSystem().init(0);
+            // getSimulation().getThermoSystem().init(1);
             getSimulation().getThermoSystem().setTemperature(saturationTemperature);
             getSimulation().getThermoSystem().setPressure(saturationPressure);
 //            getSimulation().getThermoSystem().display();
             for (int i = 0; i < getSimulation().getThermoSystem().getMaxNumberOfPhases(); i++) {
                 getSimulation().getThermoSystem().getPhase(i).getComponent(plusNumber).setMolarMass(plusMolarMass);
             }
-            //getSimulation().getThermoSystem().display();
+            // getSimulation().getThermoSystem().display();
             getSimulation().getThermoSystem().getCharacterization().characterisePlusFraction();
             getSimulation().getThermoSystem().createDatabase(true);
             getSimulation().getThermoSystem().setMixingRule(getSimulation().getThermoSystem().getMixingRule());
-            //getSimulation().getThermoSystem().init(0);
-            //getSimulation().getThermoSystem().init(1);
+            // getSimulation().getThermoSystem().init(0);
+            // getSimulation().getThermoSystem().init(1);
             getSimulation().run();
             if (Math.abs(dpOld) < Math.abs(dp)) {
                 sign *= -1.0;
             }
             dpOld = dp;
 
-            System.out.println("pressure " + getSimulation().getThermoSystem().getPressure() + "dp " + dp + " molarmass" + plusMolarMass);
+            System.out.println("pressure " + getSimulation().getThermoSystem().getPressure() + "dp " + dp + " molarmass"
+                    + plusMolarMass);
         }
-
 
     }
 }

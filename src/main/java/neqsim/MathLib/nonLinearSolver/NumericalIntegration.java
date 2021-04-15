@@ -8,15 +8,14 @@ package neqsim.MathLib.nonLinearSolver;
 
 /**
  *
- * @author  ESOL
+ * @author ESOL
  */
 public class NumericalIntegration {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates a new instance of NumericalIntegration */
     public NumericalIntegration() {
     }
-    
-    
+
 }

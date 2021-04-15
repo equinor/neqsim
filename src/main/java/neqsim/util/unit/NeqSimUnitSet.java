@@ -35,8 +35,6 @@ public class NeqSimUnitSet {
         this.componentConcentrationUnit = componentConcentrationUnit;
     }
 
-
-
     private static final long serialVersionUID = 1000;
 
     /**

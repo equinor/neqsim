@@ -10,11 +10,11 @@ import neqsim.thermodynamicOperations.OperationInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface constantDutyFlashInterface extends OperationInterface {
     public void setBeta(double beta);
-     public boolean isSuperCritical();
-}
 
+    public boolean isSuperCritical();
+}

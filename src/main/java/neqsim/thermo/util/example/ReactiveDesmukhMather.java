@@ -12,7 +12,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public class ReactiveDesmukhMather {
@@ -33,7 +33,7 @@ public class ReactiveDesmukhMather {
         testSystem.chemicalReactionInit();
         testSystem.setMixingRule(2);
         testSystem.createDatabase(true);
-        //testSystem.setPhysicalPropertyModel(3);
+        // testSystem.setPhysicalPropertyModel(3);
 
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
 

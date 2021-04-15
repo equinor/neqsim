@@ -71,6 +71,7 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     ;
+
     public String getName() {
         return name;
     }
@@ -122,50 +123,50 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     public double getOnlineValue() {
         return getOnlineSignal().getValue();
     }
-    
-    public double getMeasuredValue(String unit){
-    	return 0.0;
+
+    public double getMeasuredValue(String unit) {
+        return 0.0;
     }
-    
+
     public void setOnlineMeasurementValue(double value, String unit) {
-    	onlineMeasurementValue = value;
-    	onlineMeasurementValueUnit = unit;
+        onlineMeasurementValue = value;
+        onlineMeasurementValueUnit = unit;
     }
-    
+
     public double getOnlineMeasurementValue() {
         return onlineMeasurementValue;
     }
-    
-	public boolean doConditionAnalysis() {
-		return conditionAnalysis;
-	}
 
-	public void setConditionAnalysis(boolean conditionMonitor) {
-		this.conditionAnalysis = conditionMonitor;
-	}
-	
-	public void runConditionAnalysis() {
-		if(Math.abs(getMeasuredValue(onlineMeasurementValueUnit) - onlineMeasurementValue)<getConditionAnalysisMaxDeviation()) {
-			conditionAnalysisMessage = "ok";
-		}
-		else {
-			conditionAnalysisMessage = "fail";
-		}
-	}
+    public boolean doConditionAnalysis() {
+        return conditionAnalysis;
+    }
 
-	public String getConditionAnalysisMessage() {
-		return conditionAnalysisMessage;
-	}
+    public void setConditionAnalysis(boolean conditionMonitor) {
+        this.conditionAnalysis = conditionMonitor;
+    }
 
-	public void setQualityCheckMessage(String conditionAnalysisMessage) {
-		this.conditionAnalysisMessage = conditionAnalysisMessage;
-	}
+    public void runConditionAnalysis() {
+        if (Math.abs(getMeasuredValue(onlineMeasurementValueUnit)
+                - onlineMeasurementValue) < getConditionAnalysisMaxDeviation()) {
+            conditionAnalysisMessage = "ok";
+        } else {
+            conditionAnalysisMessage = "fail";
+        }
+    }
 
-	public double getConditionAnalysisMaxDeviation() {
-		return conditionAnalysisMaxDeviation;
-	}
+    public String getConditionAnalysisMessage() {
+        return conditionAnalysisMessage;
+    }
 
-	public void setConditionAnalysisMaxDeviation(double conditionAnalysisMaxDeviation) {
-		this.conditionAnalysisMaxDeviation = conditionAnalysisMaxDeviation;
-	}
+    public void setQualityCheckMessage(String conditionAnalysisMessage) {
+        this.conditionAnalysisMessage = conditionAnalysisMessage;
+    }
+
+    public double getConditionAnalysisMaxDeviation() {
+        return conditionAnalysisMaxDeviation;
+    }
+
+    public void setConditionAnalysisMaxDeviation(double conditionAnalysisMaxDeviation) {
+        this.conditionAnalysisMaxDeviation = conditionAnalysisMaxDeviation;
+    }
 }

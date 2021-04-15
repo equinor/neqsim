@@ -27,7 +27,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public class ActivityCalc {
@@ -42,7 +42,7 @@ public class ActivityCalc {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42, 1.01325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-     
+
         testSystem.addComponent("TEG", 0.99);
         testSystem.addComponent("water", 0.01);
 

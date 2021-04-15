@@ -45,11 +45,10 @@ public class CMEFunction extends LevenbergMarquardtFunction {
                 maxPres = system.getPressure();
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
-        /* try {
-         thermoOps.dewPointPressureFlash();
-         } catch (Exception e) {
-         e.printStackTrace();
-         }*/
+        /*
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
+         * e.printStackTrace(); }
+         */
         saturationVolume = system.getVolume();
         saturationPressure = system.getPressure();
         Zsaturation = system.getZ();
@@ -79,7 +78,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
         calcSaturationConditions(tempSystem);
         tempSystem.setTemperature(dependentValues[0]);
         tempSystem.setPressure(dependentValues[1]);
-        //    thermoOps.setSystem(tempSystem);
+        // thermoOps.setSystem(tempSystem);
         thermoOps.TPflash();
 
         double totalVolume = tempSystem.getVolume();
@@ -89,14 +88,14 @@ public class CMEFunction extends LevenbergMarquardtFunction {
 
     public void setFittingParams(int i, double value) {
         params[i] = value;
-        int plusNumber=0;
-          for (int ii = 0; ii < system.getPhase(0).getNumberOfComponents(); ii++) {
+        int plusNumber = 0;
+        for (int ii = 0; ii < system.getPhase(0).getNumberOfComponents(); ii++) {
             if (system.getPhase(0).getComponent(ii).isIsPlusFraction()) {
                 plusNumber = ii;
             }
         }
         system.getPhase(0).getComponent(plusNumber).setMolarMass(value);
         system.getPhase(1).getComponent(plusNumber).setMolarMass(value);
-        //system.get
+        // system.get
     }
 }

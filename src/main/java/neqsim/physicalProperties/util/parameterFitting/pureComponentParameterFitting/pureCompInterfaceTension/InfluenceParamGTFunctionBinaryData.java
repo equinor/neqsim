@@ -10,8 +10,8 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
 public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFunction {
 
@@ -25,12 +25,13 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
     public double calcValue(double[] dependentValues) {
         system.init(3);
         try {
-            thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(), "dewPointTemperature", system.getTemperature());
+            thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(), "dewPointTemperature",
+                    system.getTemperature());
         } catch (Exception e) {
             logger.error("error", e);
         }
         system.initPhysicalProperties();
-        return system.getInterphaseProperties().getSurfaceTension(0,1) * 1e3;
+        return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
     public void setFittingParams(int i, double value) {

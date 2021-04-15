@@ -44,7 +44,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  *
  * @author esol
  */
-public class MechanicalDesign implements Serializable{
+public class MechanicalDesign implements Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -87,10 +87,10 @@ public class MechanicalDesign implements Serializable{
     public double maxDesignWaterVolumeFlow = 0.0, minDesignWaterVolumeFLow = 0.0;// m^3/sec
     private String companySpecificDesignStandards = "Statoil";
     private ProcessEquipmentInterface processEquipment = null;
-    //private String pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
-    //private String pipingDesignStandard="Statoil";
-    //private String valveDesignStandard="Statoil";
-    private double tensileStrength = 483; //MPa
+    // private String pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
+    // private String pipingDesignStandard="Statoil";
+    // private String valveDesignStandard="Statoil";
+    private double tensileStrength = 483; // MPa
     private double jointEfficiency = 1.0; // fully radiographed
     private MaterialPlateDesignStandard materialPlateDesignStandard = new MaterialPlateDesignStandard();
     private MaterialPipeDesignStandard materialPipeDesignStandard = new MaterialPipeDesignStandard();
@@ -100,9 +100,10 @@ public class MechanicalDesign implements Serializable{
     public double innerDiameter = 0.0;
     public double outerDiameter = 0.0;
     public double wallThickness = 0.0;
-    public double tantanLength = 0.0; //tantan is same as seamtoseam length
+    public double tantanLength = 0.0; // tantan is same as seamtoseam length
     private double weightTotal = 0.0, volumeTotal = 2.0;
-    public double weigthInternals = 0.0, weightNozzle = 0.0, weightPiping = 0.0, weightElectroInstrument = 0.0, weightStructualSteel = 0.0, weightVessel = 0.0, weigthVesselShell = 0.0;
+    public double weigthInternals = 0.0, weightNozzle = 0.0, weightPiping = 0.0, weightElectroInstrument = 0.0,
+            weightStructualSteel = 0.0, weightVessel = 0.0, weigthVesselShell = 0.0;
     public double moduleHeight = 0.0, moduleWidth = 0, moduleLength = 0.0;
     public Hashtable<String, DesignStandard> designStandard = new Hashtable<String, DesignStandard>();
     public UnitCostEstimateBaseClass costEstimate = null;
@@ -283,7 +284,7 @@ public class MechanicalDesign implements Serializable{
     }
 
     public double getOuterDiameter() {
-        return 1.0;//processEquipment.getInternalDiameter();
+        return 1.0;// processEquipment.getInternalDiameter();
     }
 
     /**
@@ -294,38 +295,51 @@ public class MechanicalDesign implements Serializable{
     }
 
     /**
-     * @param companySpecificDesignStandards the companySpecificDesignStandards
-     * to set
+     * @param companySpecificDesignStandards the companySpecificDesignStandards to
+     *                                       set
      */
     public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
         this.companySpecificDesignStandards = companySpecificDesignStandards;
 
         if (companySpecificDesignStandards.equals("StatoilTR")) {
 
-            getDesignStandard().put("pressure vessel design code", new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+            getDesignStandard().put("pressure vessel design code",
+                    new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
             getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
-            getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("adsorption dehydration process design", new AdsorptionDehydrationDesignStandard("", this));
+            getDesignStandard().put("gas scrubber process design",
+                    new GasScrubberDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("adsorption dehydration process design",
+                    new AdsorptionDehydrationDesignStandard("", this));
             getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("plate Joint Efficiency design codes", new JointEfficiencyPlateStandard("Statoil_TR1414", this));
-            getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("material plate design codes",
+                    new MaterialPlateDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("plate Joint Efficiency design codes",
+                    new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+            getDesignStandard().put("material pipe design codes",
+                    new MaterialPipeDesignStandard("Statoil_TR1414", this));
 
 //pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
-            //setPipingDesignStandard("TR1945_Statoil");
+            // setPipingDesignStandard("TR1945_Statoil");
             // setValveDesignStandard("TR1903_Statoil");
         } else {
-            System.out.println("using default mechanical design standards...no design standard " + companySpecificDesignStandards);
-            getDesignStandard().put("pressure vessel design code", new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
+            System.out.println(
+                    "using default mechanical design standards...no design standard " + companySpecificDesignStandards);
+            getDesignStandard().put("pressure vessel design code",
+                    new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
             getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
-            getDesignStandard().put("gas scrubber process design", new GasScrubberDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("adsorption dehydration process design", new AdsorptionDehydrationDesignStandard("", this));
+            getDesignStandard().put("gas scrubber process design",
+                    new GasScrubberDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("adsorption dehydration process design",
+                    new AdsorptionDehydrationDesignStandard("", this));
             getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("material plate design codes", new MaterialPlateDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("plate Joint Efficiency design codes", new JointEfficiencyPlateStandard("Statoil_TR1414", this));
-            getDesignStandard().put("material pipe design codes", new MaterialPipeDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("material plate design codes",
+                    new MaterialPlateDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("plate Joint Efficiency design codes",
+                    new JointEfficiencyPlateStandard("Statoil_TR1414", this));
+            getDesignStandard().put("material pipe design codes",
+                    new MaterialPipeDesignStandard("Statoil_TR1414", this));
 
         }
         hasSetCompanySpecificDesignStandards = true;
@@ -666,8 +680,8 @@ public class MechanicalDesign implements Serializable{
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = {"", "Volume", "Weight"};
-        String[][] table = new String[3][3];//createTable(getProcessEquipment().getName());
+        String[] names = { "", "Volume", "Weight" };
+        String[][] table = new String[3][3];// createTable(getProcessEquipment().getName());
         table[1][0] = getProcessEquipment().getName();
         table[1][1] = Double.toString(getWeightTotal());
         table[1][2] = Double.toString(getVolumeTotal());
@@ -675,7 +689,7 @@ public class MechanicalDesign implements Serializable{
         JScrollPane scrollpane = new JScrollPane(Jtab);
         dialogContentPane.add(scrollpane);
         dialog.setSize(800, 600); // pack();
-        //dialog.pack();
+        // dialog.pack();
         dialog.setVisible(true);
     }
 
@@ -695,7 +709,8 @@ public class MechanicalDesign implements Serializable{
 
     /**
      * @param hasSetCompanySpecificDesignStandards the
-     * hasSetCompanySpecificDesignStandards to set
+     *                                             hasSetCompanySpecificDesignStandards
+     *                                             to set
      */
     public void setHasSetCompanySpecificDesignStandards(boolean hasSetCompanySpecificDesignStandards) {
         this.hasSetCompanySpecificDesignStandards = hasSetCompanySpecificDesignStandards;

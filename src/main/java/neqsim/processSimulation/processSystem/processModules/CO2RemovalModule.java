@@ -37,74 +37,76 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 public class CO2RemovalModule extends ProcessModuleBaseClass {
 
     private static final long serialVersionUID = 1000;
-    
-    protected StreamInterface streamToAbsorber = null, streamFromAbsorber = null, gasFromCO2Stripper=null;
-    
+
+    protected StreamInterface streamToAbsorber = null, streamFromAbsorber = null, gasFromCO2Stripper = null;
+
     protected Separator inletSeparator = null;
-    
+
     /** Creates a new instance of SnohvitCO2RemovalModule */
     public CO2RemovalModule() {
     }
-    
-    public void addInputStream(String streamName, StreamInterface stream){
-        if(streamName.equals("streamToAbsorber")) {
+
+    public void addInputStream(String streamName, StreamInterface stream) {
+        if (streamName.equals("streamToAbsorber")) {
             this.streamToAbsorber = stream;
         }
     }
-    
-    public StreamInterface getOutputStream(String streamName){
-        if(!isInitializedStreams) {
+
+    public StreamInterface getOutputStream(String streamName) {
+        if (!isInitializedStreams) {
             initializeStreams();
         }
-        if(streamName.equals("streamFromAbsorber")) {
+        if (streamName.equals("streamFromAbsorber")) {
             return this.streamFromAbsorber;
         } else {
             return null;
         }
     }
-    
-    public void run(){
-        if(!isInitializedModule) {
+
+    public void run() {
+        if (!isInitializedModule) {
             initializeModule();
         }
         getOperations().run();
-        
+
         streamFromAbsorber = (Stream) inletSeparator.getGasOutStream().clone();
-        streamFromAbsorber.getThermoSystem().addComponent("CO2",-streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()*0.99);
-        streamFromAbsorber.getThermoSystem().addComponent("MEG",-streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("MEG").getNumberOfMolesInPhase()*0.99);
+        streamFromAbsorber.getThermoSystem().addComponent("CO2",
+                -streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase() * 0.99);
+        streamFromAbsorber.getThermoSystem().addComponent("MEG",
+                -streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("MEG").getNumberOfMolesInPhase() * 0.99);
         streamFromAbsorber.getThermoSystem().init(1);
     }
-    
-    public void initializeStreams(){
+
+    public void initializeStreams() {
         isInitializedStreams = true;
-        try{
+        try {
             this.streamFromAbsorber = (Stream) this.streamToAbsorber.clone();
             this.streamFromAbsorber.setName("Stream from ABsorber");
-            
+
             this.gasFromCO2Stripper = (Stream) this.streamToAbsorber.clone();
             this.gasFromCO2Stripper.setName("Gas stream from Stripper");
-        } catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-    public void initializeModule(){
+
+    public void initializeModule() {
         isInitializedModule = true;
         inletSeparator = new Separator(streamToAbsorber);
-        
+
         getOperations().add(inletSeparator);
     }
-    
-    public void runTransient(double dt){
+
+    public void runTransient(double dt) {
         getOperations().runTransient();
     }
-    
-     public void calcDesign() {
+
+    public void calcDesign() {
         // design is done here //
     }
 
     public void setDesign() {
         // set design is done here //
     }
-    
+
 }

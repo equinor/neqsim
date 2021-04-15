@@ -17,6 +17,7 @@ public class PhaseGEWilson extends PhaseGE {
     private static final long serialVersionUID = 1000;
 
     double GE = 0;
+
     /**
      * Creates new PhaseGEUniquac
      */
@@ -25,12 +26,15 @@ public class PhaseGEWilson extends PhaseGE {
         componentArray = new ComponentGEWilson[MAX_NUMBER_OF_COMPONENTS];
     }
 
-    public PhaseGEWilson(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule, double[][] intparam) {
+    public PhaseGEWilson(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
+            double[][] intparam) {
         super();
         componentArray = new ComponentGEWilson[alpha[0].length];
         for (int i = 0; i < alpha[0].length; i++) {
             numberOfComponents++;
-            componentArray[i] = new ComponentGEWilson(phase.getComponents()[i].getName(), phase.getComponents()[i].getNumberOfmoles(), phase.getComponents()[i].getNumberOfMolesInPhase(), phase.getComponents()[i].getComponentNumber());
+            componentArray[i] = new ComponentGEWilson(phase.getComponents()[i].getName(),
+                    phase.getComponents()[i].getNumberOfmoles(), phase.getComponents()[i].getNumberOfMolesInPhase(),
+                    phase.getComponents()[i].getComponentNumber());
         }
     }
 
@@ -47,10 +51,12 @@ public class PhaseGEWilson extends PhaseGE {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype) {
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+            int phasetype) {
         GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
-            GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoeffisient(phase));
+            GE += phase.getComponents()[i].getx()
+                    * Math.log(((ComponentGEWilson) componentArray[i]).getWilsonActivityCoeffisient(phase));
         }
 
         return R * temperature * numberOfMolesInPhase * GE;
@@ -61,7 +67,8 @@ public class PhaseGEWilson extends PhaseGE {
     }
 
     public double getExessGibbsEnergy() {
-        //GE = getExessGibbsEnergy(this, numberOfComponents, temperature,  pressure, phaseType);
+        // GE = getExessGibbsEnergy(this, numberOfComponents, temperature, pressure,
+        // phaseType);
         return GE;
     }
 }

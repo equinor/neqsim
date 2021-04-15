@@ -9,31 +9,30 @@ package neqsim.MathLib.nonLinearSolver;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
-
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
 public class NumericalDerivative extends Object implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    
+
     final static double CON = 1.4;
-    final static double CON2 = CON*CON;
-    final static double  BIG = 1*Math.pow(10,30);
+    final static double CON2 = CON * CON;
+    final static double BIG = 1 * Math.pow(10, 30);
     final static int NTAB = 100;
     final static double SAFE = 2;
-  
+
     /** Creates new NumericalDerivative */
     public NumericalDerivative() {
     }
-    
-      
-    public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase, int numberOfComponents, double temperature, double pressure){
-         
-        double errt, fac, hh,ans=0.00001, err=0.0000000001;
-        double h=pressure/50;
+
+    public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure) {
+
+        double errt, fac, hh, ans = 0.00001, err = 0.0000000001;
+        double h = pressure / 50;
 //        
 //        if(h==0.0){System.out.println("h must be larger than 0!");}
 //        double[][] a = new double[NTAB][NTAB];
@@ -68,12 +67,12 @@ public class NumericalDerivative extends Object implements java.io.Serializable 
 //     //     System.out.println("ans " + ans);
         return ans;
     }
-       
-    
-     public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
-     
-        double errt, fac, hh,ans=0.000001, err=0.00000000000001;
-        double h= temperature/50;
+
+    public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure, int phasetype) {
+
+        double errt, fac, hh, ans = 0.000001, err = 0.00000000000001;
+        double h = temperature / 50;
 //        
 //        if(h==0.0){System.out.println("h must be larger than 0!");}
 //        double[][] a = new double[NTAB][NTAB];
@@ -107,6 +106,5 @@ public class NumericalDerivative extends Object implements java.io.Serializable 
 //        }
         return ans;
     }
-    
 
 }

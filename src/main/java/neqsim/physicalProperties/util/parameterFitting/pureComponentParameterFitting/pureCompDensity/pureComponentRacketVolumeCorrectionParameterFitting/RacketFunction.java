@@ -10,26 +10,25 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
-public class RacketFunction extends LevenbergMarquardtFunction{
+public class RacketFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
 
-   
-   public RacketFunction() {
+    public RacketFunction() {
         params = new double[1];
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(1);
         system.initPhysicalProperties();
-         return system.getPhases()[1].getPhysicalProperties().getDensity();
+        return system.getPhases()[1].getPhysicalProperties().getDensity();
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[i].setRacketZ(value);
         system.getPhases()[1].getComponents()[i].setRacketZ(value);

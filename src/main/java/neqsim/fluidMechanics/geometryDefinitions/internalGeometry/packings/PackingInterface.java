@@ -8,13 +8,15 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface PackingInterface {
     public double getSize();
+
     public double getSurfaceAreaPrVolume();
+
     public double getVoidFractionPacking();
+
     public void setVoidFractionPacking(double voidFractionPacking);
 }
-

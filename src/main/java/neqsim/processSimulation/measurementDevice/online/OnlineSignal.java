@@ -13,7 +13,7 @@ import neqsim.util.database.AspenIP21Database;
  *
  * @author esol
  */
-public class OnlineSignal implements Serializable{
+public class OnlineSignal implements Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -58,7 +58,7 @@ public class OnlineSignal implements Serializable{
             dataSet.next();
             value = dataSet.getDouble("IP_VALUE");
         } catch (Exception e) {
-            //dataSet.close();
+            // dataSet.close();
             return false;
         }
         return true;
@@ -70,19 +70,19 @@ public class OnlineSignal implements Serializable{
 
     public double getValue() {
         try {
-           // System.out.println("reading online vale from: " + transmitterName );
+            // System.out.println("reading online vale from: " + transmitterName );
             dataSet = database.getResultSet(("SELECT * FROM IP_AnalogDef WHERE NAME='" + transmitterName + "'"));
             dataSet.next();
             value = dataSet.getDouble("IP_VALUE");
-            //System.out.println("value + " + value );
+            // System.out.println("value + " + value );
         } catch (Exception e) {
-            //dataSet.close();
+            // dataSet.close();
             return 0;
         } finally {
             try {
                 dataSet.close();
             } catch (Exception e) {
-                //dataSet.close();
+                // dataSet.close();
                 return 0;
             }
         }

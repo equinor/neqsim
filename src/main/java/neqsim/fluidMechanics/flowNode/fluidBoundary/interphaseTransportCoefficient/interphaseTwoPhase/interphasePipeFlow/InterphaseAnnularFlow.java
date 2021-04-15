@@ -10,23 +10,23 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class InterphaseAnnularFlow extends InterphaseStratifiedFlow{
+public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
 
     private static final long serialVersionUID = 1000;
-    
-    /** Creates new FrictionFactorBaseClass
-     * All frictionfactors are the fanning frictionfactor.
+
+    /**
+     * Creates new FrictionFactorBaseClass All frictionfactors are the fanning
+     * frictionfactor.
      */
-    
+
     public InterphaseAnnularFlow() {
     }
-    
+
     public InterphaseAnnularFlow(FlowNodeInterface node) {
-        //      flowNode = node;
+        // flowNode = node;
     }
-    
-    
+
 }

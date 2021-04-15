@@ -11,33 +11,32 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class AcentricFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AcentricFunction.class);
-    
+
     /** Creates new Test */
     public AcentricFunction() {
         params = new double[1];
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(0);
         system.init(1);
-        try{
+        try {
             thermoOps.bubblePointPressureFlash(false);
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             logger.error(e.toString());
         }
         return Math.log(system.getPressure());
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[i].setAcentricFactor(value);
         system.getPhases()[1].getComponents()[i].setAcentricFactor(value);

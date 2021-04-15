@@ -12,14 +12,15 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author ESOL
  */
-public class Condenser extends neqsim.processSimulation.processEquipment.distillation.SimpleTray implements TrayInterface {
+public class Condenser extends neqsim.processSimulation.processEquipment.distillation.SimpleTray
+        implements TrayInterface {
 
     private static final long serialVersionUID = 1000;
 
     private double refluxRatio = 0.1;
     boolean refluxIsSet = false;
-	double duty = 0.0;
-	
+    double duty = 0.0;
+
     public Condenser() {
     }
 
@@ -38,29 +39,32 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         refluxIsSet = true;
     }
 
-    
-     public double getDuty(){
-      //  return calcMixStreamEnthalpy();
+    public double getDuty() {
+        // return calcMixStreamEnthalpy();
         return duty;
     }
 
     public void run() {
-    	double oldTemp= getTemperature();
-    	//System.out.println("guess temperature " + getTemperature());
+        double oldTemp = getTemperature();
+        // System.out.println("guess temperature " + getTemperature());
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
-            //System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());
+            SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem()
+                    .clone();
+            // System.out.println("total number of moles " +
+            // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);
             ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
             testOps.PVrefluxFlash(refluxRatio, 0);
         }
-    //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
-    //        System.out.println("enthalpy: " + enthalpy);
-    // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());
-        duty = mixedStream.getFluid().getEnthalpy()- calcMixStreamEnthalpy0();
+        // System.out.println("enthalpy: " +
+        // mixedStream.getThermoSystem().getEnthalpy());
+        // System.out.println("enthalpy: " + enthalpy);
+        // System.out.println("temperature: " +
+        // mixedStream.getThermoSystem().getTemperature());
+        duty = mixedStream.getFluid().getEnthalpy() - calcMixStreamEnthalpy0();
         energyStream.setDuty(duty);
-    //    System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
+        // System.out.println("beta " + mixedStream.getThermoSystem().getBeta())
     }
 }

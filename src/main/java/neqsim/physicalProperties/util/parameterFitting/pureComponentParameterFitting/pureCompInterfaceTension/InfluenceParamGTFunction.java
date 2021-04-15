@@ -10,8 +10,8 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
 public class InfluenceParamGTFunction extends LevenbergMarquardtFunction {
 
@@ -24,14 +24,13 @@ public class InfluenceParamGTFunction extends LevenbergMarquardtFunction {
 
     public double calcValue(double[] dependentValues) {
         system.init(3);
-        try{
-        thermoOps.bubblePointPressureFlash(false);
-        }
-        catch(Exception e){
+        try {
+            thermoOps.bubblePointPressureFlash(false);
+        } catch (Exception e) {
             logger.error("error", e);
         }
         system.initPhysicalProperties();
-        return system.getInterphaseProperties().getSurfaceTension(0,1)*1e3;
+        return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
     public void setFittingParams(int i, double value) {

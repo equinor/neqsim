@@ -37,8 +37,10 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("compressor design codes")) {
-            System.out.println("compressor code standard: " + getDesignStandard().get("compressor design codes").getStandardName());
-            compressorFactor = ((CompressorDesignStandard) getDesignStandard().get("compressor design codes")).getCompressorFactor();
+            System.out.println("compressor code standard: "
+                    + getDesignStandard().get("compressor design codes").getStandardName());
+            compressorFactor = ((CompressorDesignStandard) getDesignStandard().get("compressor design codes"))
+                    .getCompressorFactor();
         } else {
             System.out.println("no pressure vessel code standard specified......");
         }
@@ -51,8 +53,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = {"Name", "Value", "Unit"};
-        String[][] table = new String[16][3];//createTable(getProcessEquipment().getName());
+        String[] names = { "Name", "Value", "Unit" };
+        String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
 
         table[1][0] = "Separator Inner Diameter";
         table[1][1] = Double.toString(getInnerDiameter());
@@ -90,14 +92,14 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         table[11][1] = Double.toString(getWeightTotal());
         table[11][2] = "kg";
 
-        //      table[5][0] = "Module Total Cost";
-        //    //  table[5][1] = Double.toString(getMod());
-        //      table[5][2] = "kg";
+        // table[5][0] = "Module Total Cost";
+        // // table[5][1] = Double.toString(getMod());
+        // table[5][2] = "kg";
         JTable Jtab = new JTable(table, names);
         JScrollPane scrollpane = new JScrollPane(Jtab);
         dialogContentPane.add(scrollpane);
         dialog.setSize(800, 600); // pack();
-        //dialog.pack();
+        // dialog.pack();
         dialog.setVisible(true);
     }
 
@@ -110,26 +112,33 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         double pipingWeight = 0.0, structualWeight = 0.0, electricalWeight = 0.0;
         double totalSkidWeight = 0.0;
 
-        //  double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
+        // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
         double materialsCost = 0.0;
-        
-        double molecularWeight = ((Compressor) getProcessEquipment()).getThermoSystem().getMolarMass()*1000.0;
-        double flowRate = ((Compressor) getProcessEquipment()).getThermoSystem().getVolume()/1.0e5;
-       // double gasDensity = ((Compressor) getProcessEquipment()).getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
-       // double liqDensity = ((Compressor) getProcessEquipment()).getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
-       // double liqViscosity = ((Compressor) getProcessEquipment()).getThermoSystem().getPhase(1).getPhysicalProperties().getViscosity();
 
-    //    maxDesignVolumeFlow = ((Compressor) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;
+        double molecularWeight = ((Compressor) getProcessEquipment()).getThermoSystem().getMolarMass() * 1000.0;
+        double flowRate = ((Compressor) getProcessEquipment()).getThermoSystem().getVolume() / 1.0e5;
+        // double gasDensity = ((Compressor)
+        // getProcessEquipment()).getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+        // double liqDensity = ((Compressor)
+        // getProcessEquipment()).getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
+        // double liqViscosity = ((Compressor)
+        // getProcessEquipment()).getThermoSystem().getPhase(1).getPhysicalProperties().getViscosity();
 
-        double maxGasVelocity = 1;//Math.sqrt((liqDensity - gasDensity) / gasDensity);
-        innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow() / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+        // maxDesignVolumeFlow = ((Compressor)
+        // getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;
+
+        double maxGasVelocity = 1;// Math.sqrt((liqDensity - gasDensity) / gasDensity);
+        innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow()
+                / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
         tantanLength = innerDiameter * 5.0;
         System.out.println("inner Diameter " + innerDiameter);
 
         // alternative design
         double bubbleDiameter = 250.0e-6;
-        double bubVelocity = 1;//9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
-        double Ar = 1.0;//((Separator) getProcessEquipment()).getThermoSystem().getPhase(1).getVolume() / 1e5 / bubVelocity;
+        double bubVelocity = 1;// 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 /
+                               // liqViscosity;
+        double Ar = 1.0;// ((Separator) getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
+                        // / 1e5 / bubVelocity;
         double Daim = Math.sqrt(Ar / 4.0);
         double Length2 = 4.0 * Daim;
 
@@ -137,12 +146,11 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
             innerDiameter = Daim;
             tantanLength = Length2;
         }
-        // calculating from standard codes 
-        //  sepLength = innerDiameter * 2.0;
+        // calculating from standard codes
+        // sepLength = innerDiameter * 2.0;
         emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
 
-        System.out.println(
-                "internal weight " + internalsWeight);
+        System.out.println("internal weight " + internalsWeight);
 
         externalNozzelsWeight = 0.0;
         double Wv = emptyVesselWeight + internalsWeight + externalNozzelsWeight;
@@ -159,16 +167,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
         setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
 
-        System.out.println(
-                "wall thickness: " + compressor.getName() + " " + getWallThickness() + " m");
-        System.out.println(
-                "separator dry weigth: " + emptyVesselWeight + " kg");
-        System.out.println(
-                "total skid weigth: " + totalSkidWeight + " kg");
+        System.out.println("wall thickness: " + compressor.getName() + " " + getWallThickness() + " m");
+        System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+        System.out.println("total skid weigth: " + totalSkidWeight + " kg");
         System.out.println(
                 "foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
-        System.out.println(
-                "mechanical price: " + materialsCost + " kNOK");
+        System.out.println("mechanical price: " + materialsCost + " kNOK");
 
         setWeigthVesselShell(emptyVesselWeight);
 

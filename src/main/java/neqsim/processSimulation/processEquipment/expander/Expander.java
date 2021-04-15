@@ -34,9 +34,9 @@ public class Expander extends Compressor implements ExpanderInterface {
     public Expander(String name, StreamInterface inletStream) {
         super(name, inletStream);
     }
-    
-        public void run() {
-       // System.out.println("expander running..");
+
+    public void run() {
+        // System.out.println("expander running..");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -62,41 +62,38 @@ public class Expander extends Compressor implements ExpanderInterface {
              * HYSYS method double oldPolyt = 10.5; int iter = 0; do {
              *
              *
-             * iter++; double n = Math.log(thermoSystem.getPressure() / presinn)
-             * / Math.log(thermoSystem.getDensity() / densInn); double k =
-             * Math.log(thermoSystem.getPressure() / presinn) /
-             * Math.log(densOutIdeal / densInn); double factor =
-             * ((Math.pow(thermoSystem.getPressure() / presinn, (n - 1.0) / n) -
-             * 1.0) * (n / (n - 1.0)) * (k - 1) / k) /
-             * (Math.pow(thermoSystem.getPressure() / presinn, (k - 1.0) / k) -
-             * 1.0); oldPolyt = polytropicEfficiency; polytropicEfficiency =
-             * factor * isentropicEfficiency; dH = thermoSystem.getEnthalpy() -
-             * hinn; hout = hinn + dH / polytropicEfficiency;
-             * thermoOps.PHflash(hout, 0); System.out.println(" factor " +
-             * factor + " n " + n + " k " + k + " polytropic effici " +
-             * polytropicEfficiency + " iter " + iter);
+             * iter++; double n = Math.log(thermoSystem.getPressure() / presinn) /
+             * Math.log(thermoSystem.getDensity() / densInn); double k =
+             * Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal /
+             * densInn); double factor = ((Math.pow(thermoSystem.getPressure() / presinn, (n
+             * - 1.0) / n) - 1.0) * (n / (n - 1.0)) * (k - 1) / k) /
+             * (Math.pow(thermoSystem.getPressure() / presinn, (k - 1.0) / k) - 1.0);
+             * oldPolyt = polytropicEfficiency; polytropicEfficiency = factor *
+             * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn +
+             * dH / polytropicEfficiency; thermoOps.PHflash(hout, 0);
+             * System.out.println(" factor " + factor + " n " + n + " k " + k +
+             * " polytropic effici " + polytropicEfficiency + " iter " + iter);
              *
-             * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) >
-             * 1e-5 && iter < 500); // polytropicEfficiency =
-             * isentropicEfficiency * ();
+             * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 &&
+             * iter < 500); // polytropicEfficiency = isentropicEfficiency * ();
              *
              */
         } else {
             getThermoSystem().setPressure(pressure);
 
-            //System.out.println("entropy inn.." + entropy);
+            // System.out.println("entropy inn.." + entropy);
             thermoOps.PSflash(entropy);
             double densOutIdeal = getThermoSystem().getDensity();
             if (!powerSet) {
                 dH = (getThermoSystem().getEnthalpy() - hinn) * isentropicEfficiency;
             }
             double hout = hinn + dH;
-            isentropicEfficiency =  dH/(getThermoSystem().getEnthalpy() - hinn);
-            //System.out.println("isentropicEfficiency.. " + isentropicEfficiency);
+            isentropicEfficiency = dH / (getThermoSystem().getEnthalpy() - hinn);
+            // System.out.println("isentropicEfficiency.. " + isentropicEfficiency);
             dH = hout - hinn;
             thermoOps.PHflash(hout, 0);
         }
-        //thermoSystem.display();
+        // thermoSystem.display();
         outStream.setThermoSystem(getThermoSystem());
     }
 

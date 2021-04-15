@@ -5,12 +5,12 @@
  */
 
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
+
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public interface SurfaceTensionInterface{
+public interface SurfaceTensionInterface {
     public double calcSurfaceTension(int int1, int int2);
 }
-

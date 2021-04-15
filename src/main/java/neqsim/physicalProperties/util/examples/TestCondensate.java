@@ -11,11 +11,11 @@ import org.apache.logging.log4j.*;
  * Created on 27. september 2001, 09:43
  */
 
- /*
- *
- * @author  esol
- * @version
- */
+/*
+*
+* @author  esol
+* @version
+*/
 public class TestCondensate {
 
     private static final long serialVersionUID = 1000;
@@ -30,7 +30,7 @@ public class TestCondensate {
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 1.01325);
         SystemInterface testSystem = new SystemPrEos(273.15 + 15.0, 1.01325);
-        //   testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");
+        // testSystem.getCharacterization().setTBPModel("PedersenSRKHeavyOil");
 
         testSystem.setFluidName("Condensate1");
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

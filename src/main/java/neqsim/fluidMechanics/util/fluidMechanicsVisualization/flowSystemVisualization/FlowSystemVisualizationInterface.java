@@ -10,14 +10,17 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface FlowSystemVisualizationInterface {
     public void setPoints();
+
     public void displayResult(String name);
+
     public void setNextData(FlowSystemInterface system);
+
     public void setNextData(FlowSystemInterface system, double abstime);
+
     public void createNetCdfFile(String name);
 }
-

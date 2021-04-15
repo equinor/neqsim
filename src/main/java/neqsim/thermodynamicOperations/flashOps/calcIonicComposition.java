@@ -48,7 +48,7 @@ public class calcIonicComposition extends Flash implements java.io.Serializable 
     }
 
     public void run() {
-        resultTable = new String[system.getPhase(0).getNumberOfComponents()+2][4];
+        resultTable = new String[system.getPhase(0).getNumberOfComponents() + 2][4];
         resultTable[0][0] = "Component";
         resultTable[0][1] = "mmol/kgSolvent";
         resultTable[0][2] = "mg/kgSolvent";
@@ -61,15 +61,26 @@ public class calcIonicComposition extends Flash implements java.io.Serializable 
         nf.applyPattern("#.#####E0");
         int ionNumber = 0;
         for (int i = 0; i < system.getPhase(phaseNumber).getNumberOfComponents(); i++) {
-         //   if (system.getPhase(phaseNumber).getComponent(i).isIsIon()) {
-                resultTable[ionNumber + 1][0] = system.getPhase(phaseNumber).getComponent(i).getComponentName();
-                resultTable[ionNumber + 1][1] = new Double(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase() * system.getPhase(phaseNumber).getComponent("water").getMolarMass()) * 1000)).toString();
-                resultTable[ionNumber + 1][2] = new Double(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase() * system.getPhase(phaseNumber).getComponent(i).getMolarMass() / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase() * system.getPhase(phaseNumber).getComponent("water").getMolarMass()) * 1e6)).toString();
-                resultTable[ionNumber + 1][3] = new Double(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,system.getPhase(phaseNumber).getComponent("water").getComponentNumber()))).toString();
+            // if (system.getPhase(phaseNumber).getComponent(i).isIsIon()) {
+            resultTable[ionNumber + 1][0] = system.getPhase(phaseNumber).getComponent(i).getComponentName();
+            resultTable[ionNumber
+                    + 1][1] = new Double(
+                            nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
+                                    / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
+                                            * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
+                                    * 1000)).toString();
+            resultTable[ionNumber + 1][2] = new Double(
+                    nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
+                            * system.getPhase(phaseNumber).getComponent(i).getMolarMass()
+                            / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
+                                    * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
+                            * 1e6)).toString();
+            resultTable[ionNumber + 1][3] = new Double(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,
+                    system.getPhase(phaseNumber).getComponent("water").getComponentNumber()))).toString();
 
-                ionNumber++;
+            ionNumber++;
 
-          //  }
+            // }
         }
 
     }

@@ -8,10 +8,10 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 /**
  *
- * @author  even solbraa
- * @version 
+ * @author even solbraa
+ * @version
  */
-public class DataObject extends Object implements DataObjectInterface{
+public class DataObject extends Object implements DataObjectInterface {
 
     private static final long serialVersionUID = 1000;
 

@@ -9,7 +9,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public class AtractiveTermUMRPRU extends AtractiveTermPr {
@@ -19,7 +19,10 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
     /** Creates new AtractiveTermSrk */
     public AtractiveTermUMRPRU(ComponentEosInterface component) {
         super(component);
-        m = (0.384401 + 1.52276 * component.getAcentricFactor() - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor() + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0) - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
+        m = (0.384401 + 1.52276 * component.getAcentricFactor()
+                - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
+                + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0)
+                - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
     }
 
     public Object clone() {
@@ -34,6 +37,9 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
     }
 
     public void init() {
-        m = (0.384401 + 1.52276 * component.getAcentricFactor() - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor() + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0) - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
+        m = (0.384401 + 1.52276 * component.getAcentricFactor()
+                - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
+                + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0)
+                - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
     }
 }

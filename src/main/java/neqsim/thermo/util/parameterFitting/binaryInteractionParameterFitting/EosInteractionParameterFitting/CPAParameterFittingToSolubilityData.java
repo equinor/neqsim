@@ -35,11 +35,11 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
 
     public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
-       // system.display();
+        // system.display();
 
-     //   System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
-        return system.getPhase(phase).getComponent(component).getx();  // for lucia data
-        //return system.getPhases()[0].getComponents()[1].getx(); // for MEG
+        // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
+        return system.getPhase(phase).getComponent(component).getx(); // for lucia data
+        // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
     public double calcTrueValue(double val) {
@@ -51,11 +51,10 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
-        
-        
+
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameterij(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameterij(0, 1, value);
-            
+
         }
         if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
@@ -109,24 +108,34 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         params[i] = value;
 
         if (i == 0) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijParameter(0, 1, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijParameter(0, 1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijParameter(0,
+                    1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijParameter(0,
+                    1, value);
         }
         if (i == 1) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijParameter(1, 0, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijParameter(1, 0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijParameter(1,
+                    0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijParameter(1,
+                    0, value);
         }
         if (i == 2) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijTParameter(0, 1, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijTParameter(0, 1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijTParameter(0,
+                    1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijTParameter(0,
+                    1, value);
         }
         if (i == 3) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijTParameter(1, 0, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijTParameter(1, 0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijTParameter(1,
+                    0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijTParameter(1,
+                    0, value);
         }
         if (i == 4) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHValphaParameter(1, 0, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHValphaParameter(1, 0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHValphaParameter(1,
+                    0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHValphaParameter(1,
+                    0, value);
         }
 
     }

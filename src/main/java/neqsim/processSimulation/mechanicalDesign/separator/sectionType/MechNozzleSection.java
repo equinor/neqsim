@@ -29,15 +29,14 @@ public class MechNozzleSection extends SepDesignSection {
                 totalWeight = 5;
             }
             if (getANSIclass() == 600) {
-                totalWeight =7;
+                totalWeight = 7;
             }
             if (getANSIclass() == 600) {
                 totalWeight = 13;
             }
 
             totalHeight = 0.05;
-        } 
-        else if (nominalSize.equals("DN 100")) {
+        } else if (nominalSize.equals("DN 100")) {
             if (getANSIclass() == 150) {
                 totalWeight = 11;
             }
@@ -52,8 +51,7 @@ public class MechNozzleSection extends SepDesignSection {
             }
 
             totalHeight = 0.05;
-        } 
-        else { // DN 400
+        } else { // DN 400
             if (getANSIclass() == 150) {
                 totalWeight = 97;
             }
@@ -68,6 +66,6 @@ public class MechNozzleSection extends SepDesignSection {
             }
 
             totalHeight = 0.05;
-        } 
+        }
     }
 }

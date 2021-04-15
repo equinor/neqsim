@@ -44,7 +44,8 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
         for (int k = 0; k < streams.size(); k++) {
             ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
             enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
-            System.out.println("total enthalpy k : " + ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem()).getEnthalpy());
+            System.out.println("total enthalpy k : "
+                    + ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem()).getEnthalpy());
         }
         System.out.println("total enthalpy of streams: " + enthalpy);
         return enthalpy;
@@ -56,12 +57,13 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
 //        ((Stream) streams.get(0)).getThermoSystem().display();
 
         SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
-        // System.out.println("total number of moles " + thermoSystem2.getTotalNumberOfMoles());
+        // System.out.println("total number of moles " +
+        // thermoSystem2.getTotalNumberOfMoles());
         mixedStream.setThermoSystem(thermoSystem2);
-        //thermoSystem2.display();
+        // thermoSystem2.display();
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
         if (streams.size() > 0) {
-           // mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
+            // mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
             mixedStream.getThermoSystem().setNumberOfPhases(2);
             mixedStream.getThermoSystem().reInitPhaseType();
             mixedStream.getThermoSystem().init(0);
@@ -69,24 +71,25 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
             mixStream();
 
             enthalpy = calcMixStreamEnthalpy();
-           // mixedStream.getThermoSystem().display();
+            // mixedStream.getThermoSystem().display();
             // System.out.println("temp guess " + guessTemperature());
             mixedStream.getThermoSystem().setSolidPhaseCheck("CO2");
             mixedStream.getThermoSystem().setTemperature(guessTemperature());
             testOps.PHsolidFlash(enthalpy);
             mixedStream.getThermoSystem().display();
-        //   System.out.println("filan temp  " + mixedStream.getTemperature());
+            // System.out.println("filan temp " + mixedStream.getTemperature());
         } else {
             testOps.TPflash();
         }
         mixedStream.getThermoSystem().setSolidPhaseCheck(false);
-    //System.out.println("enthalpy: " + mixedStream.getThermoSystem().getEnthalpy());
-    //        System.out.println("enthalpy: " + enthalpy);
-    // System.out.println("temperature: " + mixedStream.getThermoSystem().getTemperature());
+        // System.out.println("enthalpy: " +
+        // mixedStream.getThermoSystem().getEnthalpy());
+        // System.out.println("enthalpy: " + enthalpy);
+        // System.out.println("temperature: " +
+        // mixedStream.getThermoSystem().getTemperature());
 
-
-    //    System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
-    // outStream.setThermoSystem(mixedStream.getThermoSystem());
+        // System.out.println("beta " + mixedStream.getThermoSystem().getBeta());
+        // outStream.setThermoSystem(mixedStream.getThermoSystem());
     }
 
     public void runTransient() {

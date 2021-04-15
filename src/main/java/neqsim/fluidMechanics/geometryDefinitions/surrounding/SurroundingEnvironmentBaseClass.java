@@ -10,10 +10,10 @@ package neqsim.fluidMechanics.geometryDefinitions.surrounding;
  * @author ESOL
  */
 public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /**
- * @return the heatTransferCoefficient
- */
+                                                                                * @return the heatTransferCoefficient
+                                                                                */
 {
-	private static final long serialVersionUID = 1000;
+    private static final long serialVersionUID = 1000;
 
     /**
      * @return the temperature

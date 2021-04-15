@@ -1,8 +1,8 @@
-  /*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
+/*
+* System_SRK_EOS.java
+*
+* Created on 8. april 2000, 23:14
+*/
 package neqsim.thermo.component;
 
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
@@ -31,13 +31,14 @@ public class ComponentPR extends ComponentEos {
 
         a = .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
         b = .077803333 * R * criticalTemperature / criticalPressure;
-        //   m			= 0.37464 + 1.54226 * acentricFactor - 0.26992* acentricFactor * acentricFactor;
+        // m = 0.37464 + 1.54226 * acentricFactor - 0.26992* acentricFactor *
+        // acentricFactor;
 
         delta1 = 1.0 + Math.sqrt(2.0);
         delta2 = 1.0 - Math.sqrt(2.0);
         atractiveParameter = new AtractiveTermPr(this);
 
-        double[] surfTensInfluenceParamtemp = {1.3192, 1.6606, 1.1173, 0.8443};
+        double[] surfTensInfluenceParamtemp = { 1.3192, 1.6606, 1.1173, 0.8443 };
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
     }
 
@@ -96,16 +97,17 @@ public class ComponentPR extends ComponentEos {
         double AA = -1.0e-16 / (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
         double BB = 1.0e-16 / (surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor());
 
-
-        //  System.out.println("scale2 " + aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB));
+        // System.out.println("scale2 " + aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) *
+        // (AA * TR + BB));
         if (componentName.equals("water")) {
             AA = -6.99632E-17;
             BB = 5.68347E-17;
         }
-        //  System.out.println("AA " + AA + " BB " + BB);
+        // System.out.println("AA " + AA + " BB " + BB);
         if (componentName.equals("MEG")) {
             return 0.00000000000000000007101030813216131;
         }
-        return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);/// Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
+        return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB);/// Math.pow(ThermodynamicConstantsInterface.avagadroNumber,
+                                                                          /// 2.0 / 3.0);
     }
 }

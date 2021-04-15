@@ -8,12 +8,13 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEqu
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public interface EnhancementFactorInterface{
+public interface EnhancementFactorInterface {
     public void calcEnhancementVec(int phase);
+
     public double getEnhancementVec(int index);
+
     public double getHattaNumber(int i);
 }
-

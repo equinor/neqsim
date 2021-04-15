@@ -10,10 +10,12 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public interface DensityInterface extends ThermodynamicConstantsInterface, neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface  {
+public interface DensityInterface extends ThermodynamicConstantsInterface,
+        neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
     public double calcDensity();
+
     public Object clone();
 }

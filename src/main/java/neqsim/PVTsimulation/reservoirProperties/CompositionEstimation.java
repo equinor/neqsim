@@ -18,6 +18,7 @@ public class CompositionEstimation {
         reservoirTemperature = reservoirTemperature;
         reservoirPressure = reservoirPressure;
     }
+
 // correltaion from Haaland et. al. 1999
     public double estimateH2Sconcentration() {
         return 5.0e7 * Math.exp(-6543.0 / reservoirTemperature);
@@ -25,6 +26,6 @@ public class CompositionEstimation {
 
     // reservoir temperatur in Kelvin CO2concentration in molfraction
     public double estimateH2Sconcentration(double CO2concentration) {
-        return Math.exp(11.7 - 4438.3 / reservoirTemperature + 0.7*Math.log(CO2concentration*100.0));
+        return Math.exp(11.7 - 4438.3 / reservoirTemperature + 0.7 * Math.log(CO2concentration * 100.0));
     }
 }
