@@ -1,0 +1,13 @@
+diff a/README.md b/README.md	(rejected hunks)
+@@ -35,9 +35,8 @@
+ ## Contributing
+ See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
+ 
+-## Collaboration hub
+-Discussions related to NeqSim development and use is done using [Slack for NeqSim](https://neqsim.slack.com). 
+-Use the [invitation link](https://join.slack.com/t/neqsim/signup) to join the group.
++## Discussion forum
++Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).
+ 
+ ## Versioning
+ NeqSim use [SemVer](https://semver.org/) for versioning.
