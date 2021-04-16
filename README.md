@@ -20,7 +20,6 @@ A java Runtime Environment (JRE) or Java Development Kit (JDK) must be installed
 
 ## Getting Started as a NeqSim Java developer
 A Java Development Kit (JDK) must be installed in order to run See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim API. NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
->>>>>>> addcfc5... Update README.md
 
 ### Prerequisites
 NeqSim source code can be compiled with JDK8+ and is dependent on a number of third part java libraries. The needed java libraries are listed in the pom.xml file and on the [NeqSim dependencies page](https://github.com/equinor/neqsimsource/network/dependencies).
