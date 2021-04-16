@@ -26,7 +26,23 @@ public interface SystemInterface extends Cloneable {
     	
     public void setComponentNameTag(String nameTag);
     	
-    
+	/**
+	 * add components to a fluid. If component already exists, it will be added to
+	 * the component
+	 *
+	 * @param names Names of the components to be added. See NeqSim database
+	 *                      for available components in the database.
+	 */
+	default public void addComponents(String[] names) {
+		for(int i=0;i<names.length;i++) {
+			addComponent(names[i], 0.0);
+		}
+	}
+	
+	default public String[][] calcResultTable() {
+		return createTable("");
+	}
+	
     /**
 	 * method to return kinematic viscosity in a given unit
 	 *

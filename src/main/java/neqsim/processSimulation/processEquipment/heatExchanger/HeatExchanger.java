@@ -152,6 +152,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 			outStream[0].setThermoSystem(systemOut0);
 			outStream[0].getThermoSystem().setTemperature(guessOutTemperature);
 			outStream[0].run();
+			run();
 			return;
 		}
 
