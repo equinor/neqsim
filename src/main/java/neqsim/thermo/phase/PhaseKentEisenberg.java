@@ -10,23 +10,23 @@ import neqsim.thermo.component.ComponentKentEisenberg;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class PhaseKentEisenberg extends PhaseGENRTL {
 
     private static final long serialVersionUID = 1000;
-    
+
     public PhaseKentEisenberg() {
         super();
     }
-    
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber){
+
+    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentKentEisenberg(componentName, moles, molesInPhase,compNumber);
+        componentArray[compNumber] = new ComponentKentEisenberg(componentName, moles, molesInPhase, compNumber);
     }
-    
-    public double getActivityCoefficient(int k, int p){
-         return 1.0;
+
+    public double getActivityCoefficient(int k, int p) {
+        return 1.0;
     }
 }

@@ -14,40 +14,40 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface{
+public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
 
     private static final long serialVersionUID = 1000;
-    
-    boolean setTemperature=false;
+
+    boolean setTemperature = false;
     StreamInterface outStream;
     StreamInterface inStream;
     SystemInterface system;
     private double reboilerDuty = 0.0;
+
     /** Creates new Heater */
     public ReBoiler() {
     }
-    
+
     public ReBoiler(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (StreamInterface) inStream.clone();
     }
-    
-    
-    public StreamInterface getOutStream(){
+
+    public StreamInterface getOutStream() {
         return outStream;
     }
-    
-    public void run(){
+
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
         double oldH = system.getEnthalpy();
         testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
-        testOps.PHflash(oldH+reboilerDuty,0);
+        testOps.PHflash(oldH + reboilerDuty, 0);
         outStream.setThermoSystem(system);
 //        if(setTemperature) system.setTemperature(temperatureOut);
 //        else system.setTemperature(system.getTemperature()+dT);
@@ -61,20 +61,20 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
 //        //    system.setTemperature(temperatureOut);
 //        outStream.setThermoSystem(system);
     }
-    
-    public void displayResult(){
-       System.out.println("out Temperature " + reboilerDuty);
+
+    public void displayResult() {
+        System.out.println("out Temperature " + reboilerDuty);
     }
-    
+
     public void runTransient() {
     }
-    
+
     public double getReboilerDuty() {
         return reboilerDuty;
     }
-    
+
     public void setReboilerDuty(double reboilerDuty) {
         this.reboilerDuty = reboilerDuty;
     }
-    
+
 }

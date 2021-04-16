@@ -41,7 +41,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     protected StreamInterface gasStreamToAdsorber = null, gasStreamFromAdsorber = null;
     protected SimpleAdsorber[] adsorber = null;
-    double regenerationCycleTime = 1.0, waterDewPontTemperature = 273.15 - 10.0, designFlow = 1.0, designAdsorptionTemperature = 298.0, designRegenerationTemperature = 440.0, designAdsorptionPressure = 60.0;
+    double regenerationCycleTime = 1.0, waterDewPontTemperature = 273.15 - 10.0, designFlow = 1.0,
+            designAdsorptionTemperature = 298.0, designRegenerationTemperature = 440.0, designAdsorptionPressure = 60.0;
     int numberOfAdorptionBeds = 3;
     double adsorberInternalDiameter = 1.0;
     double adsorbentFillingHeight = 3.0;
@@ -87,12 +88,13 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
         gasStreamToAdsorber.run();
 
-
         getOperations().run();
 
-        //gasStreamFromAdsorber = (Stream) inletSeparator.getGasOutStream().clone();
-        //gasStreamFromAdsorber.getThermoSystem().addComponent("water", -gasStreamFromAdsorber.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase() * 0.99);
-        //gasStreamFromAdsorber.getThermoSystem().addComponent("TEG", 1e-10);
+        // gasStreamFromAdsorber = (Stream) inletSeparator.getGasOutStream().clone();
+        // gasStreamFromAdsorber.getThermoSystem().addComponent("water",
+        // -gasStreamFromAdsorber.getThermoSystem().getPhase(0).getComponent("water").getNumberOfMolesInPhase()
+        // * 0.99);
+        // gasStreamFromAdsorber.getThermoSystem().addComponent("TEG", 1e-10);
         // gasStreamFromAdsorber.getThermoSystem().init(1);
     }
 
@@ -154,15 +156,20 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
         double gasVelocity = 67.0 / Math.sqrt(gasDensity);
 
-        double qa = designFlow / (numberOfAdorptionBeds - 1.0) / 1440.0 * (1.01325 / designAdsorptionPressure) * (designAdsorptionTemperature / 288.15) * tempStream.getThermoSystem().getPhase(0).getZ();
+        double qa = designFlow / (numberOfAdorptionBeds - 1.0) / 1440.0 * (1.01325 / designAdsorptionPressure)
+                * (designAdsorptionTemperature / 288.15) * tempStream.getThermoSystem().getPhase(0).getZ();
         adsorberInternalDiameter = Math.sqrt(4.0 * qa / Math.PI / gasVelocity);
 
+        double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
+                * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx()
+                * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass();// 360.0; // kg/cycle
+                                                                                                // this needs to be
+                                                                                                // calculated
+        double usefulDesiccantCapacity = 10.0; // 10%
+        double bulkDensityDesiccant = 750.0; // 10%
 
-        double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667 * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx() * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass();//360.0; // kg/cycle this needs to be calculated
-        double usefulDesiccantCapacity = 10.0; //10%
-        double bulkDensityDesiccant = 750.0; //10%
-
-        adsorbentFillingHeight = 400.0 * waterLoadingCycle / (Math.PI * usefulDesiccantCapacity * bulkDensityDesiccant * adsorberInternalDiameter * adsorberInternalDiameter);
+        adsorbentFillingHeight = 400.0 * waterLoadingCycle / (Math.PI * usefulDesiccantCapacity * bulkDensityDesiccant
+                * adsorberInternalDiameter * adsorberInternalDiameter);
 
         double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
         // design is done here //
@@ -192,15 +199,13 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule adsorptionPlant = new neqsim.processSimulation.processSystem.processModules.AdsorptionDehydrationlModule();
         adsorptionPlant.addInputStream("gasStreamToAdsorber", separator.getGasOutStream());
         adsorptionPlant.setSpecification("water dew point temperature", 273.15 - 100.0);
-        adsorptionPlant.setSpecification("designFlow", 20.0e6); //MSm^3/day
+        adsorptionPlant.setSpecification("designFlow", 20.0e6); // MSm^3/day
         adsorptionPlant.setSpecification("designAdsorptionTemperature", 273.15 + 30);
         adsorptionPlant.setSpecification("designRegenerationTemperature", 273.15 + 250.0);
         adsorptionPlant.setSpecification("designAdsorptionPressure", 60.0);
         adsorptionPlant.setSpecification("regenerationCycleTime", 1.0); // days per cycle
         adsorptionPlant.setSpecification("maxDesignPressure", 100.0);
         adsorptionPlant.setSpecification("maxDesignTemperature", 100.0);
-
-
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(inletStream);
@@ -211,7 +216,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
         adsorptionPlant.calcDesign();
 
-        //TEGplant.getOutputStream("gasStreamFromAdsorber").displayResult();
+        // TEGplant.getOutputStream("gasStreamFromAdsorber").displayResult();
 
     }
 }

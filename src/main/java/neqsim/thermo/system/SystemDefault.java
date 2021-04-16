@@ -14,32 +14,32 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 
-/** This class defines a thermodynamic system using the SRK equation of state
+/**
+ * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemDefault extends SystemThermo {
 
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
-    
-    //  SystemSrkEos clonedSystem;
-    double T=100,P=100;
-    
-    public SystemDefault(){
+
+    // SystemSrkEos clonedSystem;
+    double T = 100, P = 100;
+
+    public SystemDefault() {
         super();
     }
-    
+
     public SystemDefault(double T, double P) {
-        super(T,P);
+        super(T, P);
         this.T = T;
-        this.P= P;
+        this.P = P;
     }
-    
-    public void setPhase(PhaseInterface phaseType){
-        for (int i=0;i<getMaxNumberOfPhases();i++){
-            try{
+
+    public void setPhase(PhaseInterface phaseType) {
+        for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+            try {
                 phaseArray[i] = phaseType.getClass().newInstance();
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 logger.error("err " + e.toString());
             }
             phaseArray[i].setTemperature(T);

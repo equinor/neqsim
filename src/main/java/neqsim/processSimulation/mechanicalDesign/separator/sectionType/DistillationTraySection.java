@@ -36,7 +36,7 @@ public class DistillationTraySection extends SepDesignSection {
 
     public void calcDesign() {
 
-      double vesselDiameter = separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
+        double vesselDiameter = separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
         if (vesselDiameter <= 616) {
             totalWeight = 32.0;
         } else if (vesselDiameter <= 770) {

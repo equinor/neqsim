@@ -12,61 +12,64 @@ import neqsim.thermo.component.ComponentGeNRTL;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class PhaseDuanSun extends PhaseGE {
 
     private static final long serialVersionUID = 1000;
-    
+
     double[][] alpha;
     String[][] mixRule;
     double[][] intparam;
     double[][] Dij;
-    double GE=0.0;
+    double GE = 0.0;
+
     /** Creates new PhaseGENRTLmodifiedHV */
-    
+
     public PhaseDuanSun() {
         super();
     }
-    
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber){
+
+    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentGeDuanSun(componentName, moles, molesInPhase,compNumber);
+        componentArray[compNumber] = new ComponentGeDuanSun(componentName, moles, molesInPhase, compNumber);
     }
-    
-    public void setMixingRule(int type){
+
+    public void setMixingRule(int type) {
         super.setMixingRule(type);
         this.alpha = mixSelect.getNRTLalpha();
         this.Dij = mixSelect.getNRTLDij();
     }
-    
-    public void setAlpha(double[][] alpha){
-        for(int i=0;i<alpha.length;i++){
+
+    public void setAlpha(double[][] alpha) {
+        for (int i = 0; i < alpha.length; i++) {
             System.arraycopy(alpha[i], 0, this.alpha[i], 0, alpha[0].length);
         }
     }
-    
-    public void setDij(double[][] Dij){
-        for(int i=0;i<Dij.length;i++){
+
+    public void setDij(double[][] Dij) {
+        for (int i = 0; i < Dij.length; i++) {
             System.arraycopy(Dij[i], 0, this.Dij[i], 0, Dij[0].length);
         }
     }
-    
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype){
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+            int phasetype) {
         GE = 0;
-        double salinity=0.0;
+        double salinity = 0.0;
 //        double k=0.0;
 //        salinity=salinity+phase.getComponent("Na+").getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass());
 
 //        for (int i=2;i<numberOfComponents;i++) {
 //        	salinity=salinity+phase.getComponents()[i].getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass()); 
 //        }
-        for (int i=0;i<numberOfComponents;i++) {
-		if(phase.getComponents()[i].isIsIon()) {
-			salinity=salinity+phase.getComponents()[i].getNumberOfMolesInPhase()/(phase.getComponent("water").getNumberOfMolesInPhase()*phase.getComponent("water").getMolarMass());
-		}
+        for (int i = 0; i < numberOfComponents; i++) {
+            if (phase.getComponents()[i].isIsIon()) {
+                salinity = salinity + phase.getComponents()[i].getNumberOfMolesInPhase()
+                        / (phase.getComponent("water").getNumberOfMolesInPhase()
+                                * phase.getComponent("water").getMolarMass());
+            }
         }
 //        for (int i=0; i < numberOfComponents; i++) {
 //           	if(phase.getComponents()[i].isIsIon()) {
@@ -74,26 +77,26 @@ public class PhaseDuanSun extends PhaseGE {
 //        	phase.getComponent("Na+").getNumberOfmoles()
 //          }
 //       }
-        
+
 //       salinity=salinity+phase.getComponent("Na+").getNumberOfmoles()/(phase.getComponent("water").getNumberOfmoles()*phase.getComponent("water").getMolarMass());
-        
-        
-        for (int i=0; i < numberOfComponents; i++){
+
+        for (int i = 0; i < numberOfComponents; i++) {
 //          GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun) componentArray[i]).getGammaNRTL(phase, numberOfComponents, temperature,  pressure, phasetype, alpha, Dij));
-            GE += phase.getComponents()[i].getx()*Math.log(((ComponentGeDuanSun) componentArray[i]).getGammaPitzer(phase, numberOfComponents, temperature,  pressure, phasetype, salinity));
+            GE += phase.getComponents()[i].getx() * Math.log(((ComponentGeDuanSun) componentArray[i])
+                    .getGammaPitzer(phase, numberOfComponents, temperature, pressure, phasetype, salinity));
         }
-        
-        return R*temperature*numberOfMolesInPhase*GE;//phase.getNumberOfMolesInPhase()*
+
+        return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
-    
-    public double getGibbsEnergy(){
-        return R*temperature*numberOfMolesInPhase*(GE+Math.log(pressure));
+
+    public double getGibbsEnergy() {
+        return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
-    
-    public double getExessGibbsEnergy(){
-        //double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,  pressure, phaseType);
+
+    public double getExessGibbsEnergy() {
+        // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
+        // pressure, phaseType);
         return GE;
     }
-    
-   
+
 }

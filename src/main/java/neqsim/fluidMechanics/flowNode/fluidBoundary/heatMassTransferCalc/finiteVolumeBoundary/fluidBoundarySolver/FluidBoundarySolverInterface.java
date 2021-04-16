@@ -8,11 +8,11 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finite
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface FluidBoundarySolverInterface {
     public void solve();
+
     public double getMolarFlux(int componentNumber);
 }
-

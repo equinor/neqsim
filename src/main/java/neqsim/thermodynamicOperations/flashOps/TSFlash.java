@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
- /*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
+/*
+* PHflash.java
+*
+* Created on 8. mars 2001, 10:56
+*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -69,26 +69,26 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     public double solveQ() {
-    	// this method is not yet implemented
+        // this method is not yet implemented
         double oldTemp = system.getPressure(), nyTemp = system.getPressure();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
         double factor = 0.8;
-        
+
         boolean correctFactor = true;
         double newCorr = 1.0;
         do {
-           iterations++;
+            iterations++;
             oldTemp = system.getPressure();
             system.init(2);
-            
-            nyTemp = oldTemp - calcdQdT()/10.0;
-  
+
+            nyTemp = oldTemp - calcdQdT() / 10.0;
+
             system.setPressure(nyTemp);
             tpFlash.run();
             erorOld = error;
             error = Math.abs(calcdQdT());
-         } while(((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+        } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }
 
@@ -100,29 +100,27 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
         tpFlash.run();
         solveQ();
     }
-    
+
     public static void main(String[] args) {
-    	   SystemInterface testSystem = new SystemSrkEos(373.15,45.551793);
-           
-           ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-           testSystem.addComponent("methane", 9.4935);
-           testSystem.addComponent("ethane", 5.06499);
-           testSystem.addComponent("n-heptane", 0.2);
-           testSystem.init(0);
-           try{
-               testOps.TPflash();
-               testSystem.display();
-               
-               double Sspec = testSystem.getEntropy("kJ/kgK");
-               System.out.println("S spec " + Sspec);
-               testSystem.setTemperature(293.15);
-               testOps.TSflash(Sspec, "kJ/kgK");
-                testSystem.display();
-           }
-           catch(Exception e){
-               logger.error(e.toString());
-           }
-           
-           
+        SystemInterface testSystem = new SystemSrkEos(373.15, 45.551793);
+
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        testSystem.addComponent("methane", 9.4935);
+        testSystem.addComponent("ethane", 5.06499);
+        testSystem.addComponent("n-heptane", 0.2);
+        testSystem.init(0);
+        try {
+            testOps.TPflash();
+            testSystem.display();
+
+            double Sspec = testSystem.getEntropy("kJ/kgK");
+            System.out.println("S spec " + Sspec);
+            testSystem.setTemperature(293.15);
+            testOps.TSflash(Sspec, "kJ/kgK");
+            testSystem.display();
+        } catch (Exception e) {
+            logger.error(e.toString());
+        }
+
     }
 }

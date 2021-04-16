@@ -22,11 +22,10 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
     }
 
     /** Creates new AtractiveTermSrk */
-     public AttractiveTermTwuCoonStatoil(ComponentEosInterface component, double[] params) {
+    public AttractiveTermTwuCoonStatoil(ComponentEosInterface component, double[] params) {
         this(component);
-        //this.parameters [0] for aa benytte gitte input parametre
+        // this.parameters [0] for aa benytte gitte input parametre
         System.arraycopy(params, 0, this.parameters, 0, params.length);
-
 
     }
 
@@ -42,7 +41,8 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
     }
 
     public void init() {
-        //     m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 * component.getAcentricFactor() * component.getAcentricFactor());
+        // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
+        // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
     public double alpha(double temperature) {
@@ -53,9 +53,9 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         double t = temperature;
         double TC = component.getTC();
         double Tr = (t / TC);
-        // System.out.println("alpha here " + Math.pow( 1.0 + m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
+        // System.out.println("alpha here " + Math.pow( 1.0 +
+        // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
         return Math.pow((Tr), (c * (b - 1))) * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
-
 
     }
 
@@ -78,7 +78,7 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
 //        return 4.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*c*Math.pow(Math.pow(temperature/TC,1.0*d),2.0)*d*d/(temperature*temperature)-2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(temperature/TC,1.0*d)*d*d/(temperature*
 //        temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
 //        temperature/TC,1.0*d)*d/(temperature*temperature);
-    //}
+    // }
     public double aT(double temperature) {
 
         return component.geta() * alpha(temperature);
@@ -93,8 +93,9 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         double TC = component.getTC();
         double Tr = (t / TC);
 
-
-        return Math.pow((Tr), (c * (b - 1))) * c * (b - 1) / t * Math.exp(a * (1 - Math.pow((Tr), (b * c)))) - Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
+        return Math.pow((Tr), (c * (b - 1))) * c * (b - 1) / t * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
+                - Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t
+                        * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
 
     }
 
@@ -105,7 +106,17 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         double t = temperature;
         double TC = component.getTC();
         double Tr = (t / TC);
-        return Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) * (b - 1) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c)))) - Math.pow(Tr, (c * (b - 1))) * c * (b - 1) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c)))) - 2 * Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) / (t * t) * a * Math.pow(Tr, (b * c)) * b * Math.exp(a * (1 - Math.pow(Tr, (b * c)))) - Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * (b * b) * (c * c) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c)))) + Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * b * c / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c)))) + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b) * (c * c) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
+        return Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) * (b - 1) / (t * t)
+                * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                - Math.pow(Tr, (c * (b - 1))) * c * (b - 1) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                - 2 * Math.pow(Tr, (c * (b - 1))) * (c * c) * (b - 1) / (t * t) * a * Math.pow(Tr, (b * c)) * b
+                        * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                - Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * (b * b) * (c * c) / (t * t)
+                        * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                + Math.pow(Tr, (c * (b - 1))) * a * Math.pow(Tr, (b * c)) * b * c / (t * t)
+                        * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
+                + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b) * (c * c) / (t * t)
+                        * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
 
     }
 

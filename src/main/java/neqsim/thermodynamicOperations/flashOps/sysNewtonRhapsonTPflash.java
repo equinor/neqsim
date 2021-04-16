@@ -54,17 +54,17 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
         Xgij = new Matrix(neq, 4);
         setu();
         uold = u.copy();
-        //   System.out.println("Spec : " +speceq);
+        // System.out.println("Spec : " +speceq);
     }
 
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
 
             fvec.set(i, 0,
-                    Math.log(
-                            system.getPhase(0).getComponents()[i].getFugasityCoeffisient() * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
-                    - Math.log(
-                            system.getPhase(1).getComponents()[i].getFugasityCoeffisient() * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
+                    Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+                            * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
+                            - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
+                                    * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
 
         }
     }
@@ -78,10 +78,12 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;//Kroneckers delta
-                tempJ
-                        = 1.0 / system.getBeta() * (dij / system.getPhase(0).getComponents()[i].getx() - 1.0 + system.getPhase(0).getComponents()[i].getdfugdx(j))
-                        + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhase(1).getComponents()[i].getx() - 1.0 + system.getPhase(1).getComponents()[i].getdfugdx(j));
+                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+                tempJ = 1.0 / system.getBeta()
+                        * (dij / system.getPhase(0).getComponents()[i].getx() - 1.0
+                                + system.getPhase(0).getComponents()[i].getdfugdx(j))
+                        + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhase(1).getComponents()[i].getx() - 1.0
+                                + system.getPhase(1).getComponents()[i].getdfugdx(j));
                 Jac.set(i, j, tempJ);
             }
         }
@@ -105,8 +107,10 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
         system.setBeta(temp);
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhase(0).getComponents()[i].setx(u.get(i, 0) / system.getBeta());
-            system.getPhase(1).getComponents()[i].setx((system.getPhase(0).getComponents()[i].getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
-            system.getPhase(0).getComponents()[i].setK(system.getPhase(0).getComponents()[i].getx() / system.getPhase(1).getComponents()[i].getx());
+            system.getPhase(1).getComponents()[i]
+                    .setx((system.getPhase(0).getComponents()[i].getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
+            system.getPhase(0).getComponents()[i]
+                    .setK(system.getPhase(0).getComponents()[i].getx() / system.getPhase(1).getComponents()[i].getx());
             system.getPhase(1).getComponents()[i].setK(system.getPhase(0).getComponents()[i].getK());
 
         }
@@ -122,7 +126,7 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
             setfvec();
             setJac();
             dx = Jac.solve(fvec);
-            //dx.print(10,10);
+            // dx.print(10,10);
             u.minusEquals(dx);
             return (dx.norm2() / u.norm2());
         } catch (Exception e) {

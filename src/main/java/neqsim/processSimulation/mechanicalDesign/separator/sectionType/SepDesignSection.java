@@ -71,7 +71,6 @@ public class SepDesignSection {
         this.ANSIclass = ANSIclass;
     }
 
-   
     /**
      * @return the nominalSize
      */

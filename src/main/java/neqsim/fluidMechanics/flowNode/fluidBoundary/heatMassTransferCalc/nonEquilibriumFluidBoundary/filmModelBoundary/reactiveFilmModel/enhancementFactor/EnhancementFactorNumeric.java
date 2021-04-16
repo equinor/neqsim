@@ -12,18 +12,17 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class EnhancementFactorNumeric extends EnhancementFactor{
+public class EnhancementFactorNumeric extends EnhancementFactor {
 
     private static final long serialVersionUID = 1000;
-    
+
     public EnhancementFactorNumeric() {
         super();
     }
-    
-    
+
     public EnhancementFactorNumeric(FluidBoundaryInterface fluidBoundary) {
         super(fluidBoundary);
         // fluidBoundary.setNumericSolve(true);
@@ -31,21 +30,20 @@ public class EnhancementFactorNumeric extends EnhancementFactor{
         nonReactiveInterface = new FluidBoundarySystemNonReactive(fluidBoundary);
         reactiveInterface.createSystem();
         nonReactiveInterface.createSystem();
-        //   numericInterface.createSystem();
+        // numericInterface.createSystem();
     }
-    
-    public void calcEnhancementMatrix(int phase){
-         reactiveInterface.createSystem();
+
+    public void calcEnhancementMatrix(int phase) {
+        reactiveInterface.createSystem();
         nonReactiveInterface.createSystem();
         nonReactiveInterface.solve();
         reactiveInterface.solve();
-        for(int i=0;i<fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents();i++){
-            for(int j=0;j<fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents();j++){
-                //enhancementFactor[1].set(i,j,0);
-                //System.out.println("num enhancement " + enhancementFactor[1].get(i,j));
+        for (int i = 0; i < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); i++) {
+            for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
+                // enhancementFactor[1].set(i,j,0);
+                // System.out.println("num enhancement " + enhancementFactor[1].get(i,j));
             }
         }
-        
-        
+
     }
 }

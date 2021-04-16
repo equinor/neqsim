@@ -15,18 +15,18 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  *
  * @author ESOL
  */
-public class WaterContentAnalyser extends MeasurementDeviceBaseClass{
+public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
 
     private static final long serialVersionUID = 1000;
-    
-    protected int streamNumber=0;
-    protected static int numberOfStreams=0;
+
+    protected int streamNumber = 0;
+    protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
-    
+
     /** Creates a new instance of TemperatureTransmitter */
     public WaterContentAnalyser() {
     }
-    
+
     public WaterContentAnalyser(StreamInterface stream) {
         this.stream = stream;
         numberOfStreams++;
@@ -34,19 +34,21 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass{
         name = "water analyser";
         unit = "kg/day";
     }
-    
-      public void displayResult(){
+
+    public void displayResult() {
         try {
-            System.out.println("total water production [kg/dag]" + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
-            System.out.println("water in phase 1 (ppm) " + stream.getThermoSystem().getPhase(0).getComponent("water").getx()*1e6);
+            System.out.println("total water production [kg/dag]"
+                    + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
+                            * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24);
+            System.out.println("water in phase 1 (ppm) "
+                    + stream.getThermoSystem().getPhase(0).getComponent("water").getx() * 1e6);
         } finally {
         }
-      }
-          
-      
-    public double getMeasuredValue(){
-        return stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24;
     }
-    
+
+    public double getMeasuredValue() {
+        return stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
+                * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
+    }
 
 }

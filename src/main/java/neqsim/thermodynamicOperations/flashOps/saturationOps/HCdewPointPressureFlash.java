@@ -12,7 +12,6 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HCdewPointPressureFlash.class);
-    
 
     /** Creates new bubblePointFlash */
     public HCdewPointPressureFlash() {
@@ -23,14 +22,15 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
     }
 
     public void run() {
-        if (system.getPhase(0).getNumberOfComponents() == 1 && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
+        if (system.getPhase(0).getNumberOfComponents() == 1
+                && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
             setSuperCritical(true);
         }
 
         int iterations = 0, maxNumberOfIterations = 500;
-        double xold = 0, xtotal = 1, xoldold=0;
+        double xold = 0, xtotal = 1, xoldold = 0;
         double deriv = 0, funk = 0;
-        //logger.info("starting");
+        // logger.info("starting");
         system.init(0);
         system.setBeta(0, 1.0 - 1e-10);
         system.setBeta(1, 1e-10);
@@ -46,7 +46,8 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
             if (system.getPhases()[0].getComponents()[i].getIonicCharge() != 0) {
                 system.getPhases()[0].getComponents()[i].setx(1e-40);
             } else {
-                system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz());
+                system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK()
+                        * system.getPhases()[1].getComponents()[i].getz());
             }
         }
         // system.setPressure(system.getPhases()[0].getAntoineVaporPressure(system.getTemperature()));
@@ -54,7 +55,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
             xtotal += system.getPhases()[1].getComponents()[i].getx();
         }
-        double ktot = 0.0, xTotOld = 0.0, presoldold=0;
+        double ktot = 0.0, xTotOld = 0.0, presoldold = 0;
         do {
             iterations++;
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
@@ -70,10 +71,13 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
                     if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                         system.getPhases()[0].getComponents()[i].setK(1e-40);
                     } else {
-                        system.getPhases()[0].getComponents()[i].setK(Math.exp(Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()) - Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient())));
+                        system.getPhases()[0].getComponents()[i].setK(
+                                Math.exp(Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient())
+                                        - Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient())));
                     }
                     system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
-                    system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz());
+                    system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK()
+                            * system.getPhases()[1].getComponents()[i].getz());
                 } while (Math.abs(system.getPhases()[1].getComponents()[i].getx() - xold) > 1e-4);
                 ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
             }
@@ -88,14 +92,17 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
             if (iterations < 4) {
                 newPres = system.getPressure() + 0.1;
             } else {
-                double dxTOTdP = (xTotOld-xoldold) / (oldPres - presoldold);
-                newPres = system.getPressure() - iterations*1.0/(iterations+20000.0)*(xtotal-1) / dxTOTdP;
+                double dxTOTdP = (xTotOld - xoldold) / (oldPres - presoldold);
+                newPres = system.getPressure() - iterations * 1.0 / (iterations + 20000.0) * (xtotal - 1) / dxTOTdP;
             }
             system.setPressure(newPres);
 
-          //  logger.info("iter " + iterations + " pressure " + system.getPressure() + " xtotal " + xtotal);
-        } while ((((Math.abs(xtotal) - 1.0) > 1e-10) || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9) && (iterations < maxNumberOfIterations));
-        //logger.info("iter " + iterations + " XTOT " +xtotal + " k " +system.getPhases()[1].getComponents()[0].getK());
+            // logger.info("iter " + iterations + " pressure " + system.getPressure() + "
+            // xtotal " + xtotal);
+        } while ((((Math.abs(xtotal) - 1.0) > 1e-10) || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9)
+                && (iterations < maxNumberOfIterations));
+        // logger.info("iter " + iterations + " XTOT " +xtotal + " k "
+        // +system.getPhases()[1].getComponents()[0].getK());
         if (Math.abs(xtotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
             setSuperCritical(true);
         }

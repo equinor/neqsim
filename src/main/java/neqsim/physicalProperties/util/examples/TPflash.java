@@ -28,29 +28,29 @@ public class TPflash {
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 20, 30.0);
-        //  SystemInterface testSystem = new SystemSrkCPAstatoil(273.15+20, 1.0);
+        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15+20, 1.0);
         // SystemInterface testSystem = new SystemPrEos1978(273.15+10, 12.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        //      testSystem.addComponent("TEG", 10.71);
+        // testSystem.addComponent("TEG", 10.71);
         testSystem.addComponent("methane", 14.01);
-      //  testSystem.changeComponentName("methane", "methaneHYME");
-        //  testSystem.addComponent("ethane", 0.01);
-        //     testSystem.addComponent("nitrogen", 1.1);
+        // testSystem.changeComponentName("methane", "methaneHYME");
+        // testSystem.addComponent("ethane", 0.01);
+        // testSystem.addComponent("nitrogen", 1.1);
 //        testSystem.addComponent("n-heptane", 51);
-        //    testSystem.addComponent("ethane", 8.53);
-        //  testSystem.addComponent("methane", 82.7);
-        //  testSystem.addComponent("ethane", 7.5);
-        //  testSystem.addComponent("propane", 3.4);
-        //  testSystem.addComponent("i-butane", 0.5);
-        //  testSystem.addComponent("n-butane", 0.9);
-        //   testSystem.addComponent("i-pentane", 10.24);
-        //    testSystem.addComponent("water", 0.4);
-        testSystem.addComponent("MEG", 99.5);//, "kg/sec");
-        testSystem.addComponent("water", 0.5);//, "kg/sec");
-        //  testSystem.addTBPfraction("C7", 10.36, 110.0 / 1000.0, 0.82);
-        //  testSystem.addTBPfraction("C10", 5.31, 150.0 / 1000.0, 0.89);
-        //   testSystem.addComponent("water", 1.1);
+        // testSystem.addComponent("ethane", 8.53);
+        // testSystem.addComponent("methane", 82.7);
+        // testSystem.addComponent("ethane", 7.5);
+        // testSystem.addComponent("propane", 3.4);
+        // testSystem.addComponent("i-butane", 0.5);
+        // testSystem.addComponent("n-butane", 0.9);
+        // testSystem.addComponent("i-pentane", 10.24);
+        // testSystem.addComponent("water", 0.4);
+        testSystem.addComponent("MEG", 99.5);// , "kg/sec");
+        testSystem.addComponent("water", 0.5);// , "kg/sec");
+        // testSystem.addTBPfraction("C7", 10.36, 110.0 / 1000.0, 0.82);
+        // testSystem.addTBPfraction("C10", 5.31, 150.0 / 1000.0, 0.89);
+        // testSystem.addComponent("water", 1.1);
         /*
          * testSystem.addComponent("i-butane", 1.95);
          * testSystem.addComponent("n-butane", 1.95);
@@ -68,33 +68,35 @@ public class TPflash {
          */
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
-        //    testSystem.setMultiPhaseCheck(true);
-        //testSystem.setPhysicalPropertyModel(6);
-        //testSystem.initPhysicalProperties();
-        //  testSystem.getInterphaseProperties().setInterfacialTensionModel(3);
-        //testSystem.useVolumeCorrection(true);
+        // testSystem.setMultiPhaseCheck(true);
+        // testSystem.setPhysicalPropertyModel(6);
+        // testSystem.initPhysicalProperties();
+        // testSystem.getInterphaseProperties().setInterfacialTensionModel(3);
+        // testSystem.useVolumeCorrection(true);
         try {
             testOps.TPflash();
-            //  testSystem.tuneModel("viscosity",1.5e-4,0);
-            //testOps.bubblePointPressureFlash(false);
+            // testSystem.tuneModel("viscosity",1.5e-4,0);
+            // testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
             logger.error(e.toString());
         }
-        
+
         testSystem.initPhysicalProperties();
-        
-          try {
+
+        try {
             testOps.TPflash();
-            //  testSystem.tuneModel("viscosity",1.5e-4,0);
-            //testOps.bubblePointPressureFlash(false);
+            // testSystem.tuneModel("viscosity",1.5e-4,0);
+            // testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
             logger.error(e.toString());
         }
-        
+
         testSystem.initPhysicalProperties();
-        // double a = testSystem.getPhase("oil").getPhysicalProperties().getDiffusionCoeffisient(0, 1);
+        // double a =
+        // testSystem.getPhase("oil").getPhysicalProperties().getDiffusionCoeffisient(0,
+        // 1);
         // testSystem.setPhysicalPropertyModel(6);
-       // testSystem.getPhase(0).initPhysicalProperties("viscosity");
+        // testSystem.getPhase(0).initPhysicalProperties("viscosity");
         double visc = testSystem.getPhase(1).getPhysicalProperties().getViscosityModel().calcViscosity();
         testSystem.display();
     }

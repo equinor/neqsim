@@ -8,10 +8,9 @@ package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public interface FileWriterInterface {
 
 }
-

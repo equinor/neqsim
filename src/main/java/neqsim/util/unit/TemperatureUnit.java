@@ -37,12 +37,12 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
 
         double conversionFactor = 1.0;
         switch (name) {
-            case "K":
-                conversionFactor = 1.0;
-                break;
-            case "R":
-                conversionFactor = 5.0 / 9.0;
-                break;
+        case "K":
+            conversionFactor = 1.0;
+            break;
+        case "R":
+            conversionFactor = 5.0 / 9.0;
+            break;
         }
         return conversionFactor;
     }

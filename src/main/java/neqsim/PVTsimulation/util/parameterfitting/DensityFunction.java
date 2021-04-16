@@ -37,6 +37,5 @@ public class DensityFunction extends LevenbergMarquardtFunction {
     public void setFittingParams(int i, double value) {
         params[i] = value;
 
-      
     }
 }

@@ -8,12 +8,13 @@ package neqsim.processSimulation.processEquipment.absorber;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface AbsorberInterface {
     public void setName(String name);
+
     public String getName();
+
     public void setAproachToEquilibrium(double eff);
 }
-

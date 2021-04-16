@@ -12,15 +12,18 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public interface SplitterInterface extends ProcessEquipmentInterface{
+public interface SplitterInterface extends ProcessEquipmentInterface {
     public void setName(String name);
-    public void setSplitNumber(int i);
-    public void setInletStream(StreamInterface inletStream);
-    public Stream getSplitStream(int i);
-    public String getName();
-    
-}
 
+    public void setSplitNumber(int i);
+
+    public void setInletStream(StreamInterface inletStream);
+
+    public Stream getSplitStream(int i);
+
+    public String getName();
+
+}

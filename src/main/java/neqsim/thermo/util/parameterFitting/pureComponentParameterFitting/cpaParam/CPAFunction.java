@@ -25,10 +25,10 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     }
 
     public double calcValue(double[] dependentValues) {
-        //system.setTemperature(dependentValues[0]);
+        // system.setTemperature(dependentValues[0]);
         system.init(0);
-        //system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
-        //System.out.println("pres from antoine: " + system.getPressure());
+        // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
+        // System.out.println("pres from antoine: " + system.getPressure());
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -44,9 +44,9 @@ public class CPAFunction extends LevenbergMarquardtFunction {
 
     public void setFittingParams(int i, double value) {
         params[i] = value;
-        
-      //  i += 5;
-        
+
+        // i += 5;
+
         if (i == 11) {
             system.getPhases()[0].getComponents()[0].seta(value * 1e4);
             system.getPhases()[1].getComponents()[0].seta(value * 1e4);
@@ -72,7 +72,7 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
             system.getPhases()[1].getComponents()[0].getAtractiveTerm().setm(value);
         }
-        if (i >= 5 && i<8) {
+        if (i >= 5 && i < 8) {
             system.getPhases()[0].getComponents()[0].setMatiascopemanParams(i - 5, value);
             system.getPhases()[1].getComponents()[0].setMatiascopemanParams(i - 5, value);
             system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i - 5, value);
@@ -82,8 +82,8 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhases()[0].getComponents()[0].setRacketZCPA(value);
             system.getPhases()[1].getComponents()[0].setRacketZCPA(value);
         }
-        
-         if (i == 1) {
+
+        if (i == 1) {
             system.getPhases()[0].getComponents()[0].setVolumeCorrectionT_CPA(value);
             system.getPhases()[1].getComponents()[0].setVolumeCorrectionT_CPA(value);
         }

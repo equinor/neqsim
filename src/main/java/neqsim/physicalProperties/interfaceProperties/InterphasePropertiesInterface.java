@@ -10,15 +10,17 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public interface InterphasePropertiesInterface extends Cloneable{
+public interface InterphasePropertiesInterface extends Cloneable {
 
     public void init();
 
     public void calcAdsorption();
-   public void setInterfacialTensionModel(String phase1, String phase2, String model);
+
+    public void setInterfacialTensionModel(String phase1, String phase2, String model);
+
     public void setSolidAdsorbentMaterial(String material);
 
     public Object clone();
@@ -34,13 +36,12 @@ public interface InterphasePropertiesInterface extends Cloneable{
     public void setInterfacialTensionModel(int interfacialTensionModel);
 
     public SurfaceTensionInterface getSurfaceTensionModel(int i);
-    
+
     public double getSurfaceTension(int numb1, int numb2, String unit);
-    
+
     public AdsorptionInterface[] getAdsorptionCalc();
 
-	public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc);
-	
-	public AdsorptionInterface getAdsorptionCalc(String phaseName);
-}
+    public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc);
 
+    public AdsorptionInterface getAdsorptionCalc(String phaseName);
+}

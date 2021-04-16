@@ -18,16 +18,19 @@ public class PipelineDesignStandard extends DesignStandard {
 
     public PipelineDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
-        
+
         double wallT = 0;
         double maxAllowableStress = equipment.getMaterialDesignStandard().getDivisionClass();
-       // double jointEfficiency = equipment.getJointEfficiencyStandard().getJEFactor();
-        
+        // double jointEfficiency =
+        // equipment.getJointEfficiencyStandard().getJEFactor();
+
         neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Pipeline' AND Company='" + standardName + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Pipeline' AND Company='"
+                                + standardName + "'"));
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("safetyFactor")) {
@@ -53,10 +56,10 @@ public class PipelineDesignStandard extends DesignStandard {
             }
         }
     }
-    
-     public double calcPipelineWallThickness() {
+
+    public double calcPipelineWallThickness() {
         if (standardName.equals("StatoilTR")) {
-            return 0.11*safetyFactor;
+            return 0.11 * safetyFactor;
         } else {
             return 0.01;
         }

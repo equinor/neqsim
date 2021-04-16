@@ -10,55 +10,54 @@ import neqsim.thermo.component.ComponentEosInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class AtractiveTermRk extends AtractiveTermBaseClass{
+public class AtractiveTermRk extends AtractiveTermBaseClass {
 
     private static final long serialVersionUID = 1000;
 
     /** Creates new AtractiveTermSrk */
     public AtractiveTermRk(ComponentEosInterface component) {
         super(component);
-     }
-    
-    public Object clone(){
+    }
+
+    public Object clone() {
         AtractiveTermRk atractiveTerm = null;
-        try{
+        try {
             atractiveTerm = (AtractiveTermRk) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
+
         return atractiveTerm;
     }
-    
-    
-    public double alpha(double temperature){
-        return Math.sqrt(component.getTC()/temperature);
+
+    public double alpha(double temperature) {
+        return Math.sqrt(component.getTC() / temperature);
     }
-    
-    public double aT(double temperature){
+
+    public double aT(double temperature) {
         return component.geta() * alpha(temperature);
     }
-    
+
     public double diffalphaT(double temperature) {
-        return -0.5*component.getTC()/(Math.sqrt(component.getTC()/temperature)*Math.pow(temperature,2.0));
+        return -0.5 * component.getTC() / (Math.sqrt(component.getTC() / temperature) * Math.pow(temperature, 2.0));
     }
-    
+
     public double diffdiffalphaT(double temperature) {
-            return -0.25*component.getTC()*component.getTC()/(Math.pow(component.getTC()/temperature,3.0/2.0)*Math.pow(temperature,4.0))
-            + component.getTC()/(Math.sqrt(component.getTC()/temperature)*Math.pow(temperature,3.0));
-    
+        return -0.25 * component.getTC() * component.getTC()
+                / (Math.pow(component.getTC() / temperature, 3.0 / 2.0) * Math.pow(temperature, 4.0))
+                + component.getTC() / (Math.sqrt(component.getTC() / temperature) * Math.pow(temperature, 3.0));
+
     }
-    
+
     public double diffaT(double temperature) {
-        return component.geta()*diffalphaT(temperature);
+        return component.geta() * diffalphaT(temperature);
     }
-    
+
     public double diffdiffaT(double temperature) {
-        return component.geta()*diffdiffalphaT(temperature);
+        return component.geta() * diffdiffalphaT(temperature);
     }
-    
+
 }

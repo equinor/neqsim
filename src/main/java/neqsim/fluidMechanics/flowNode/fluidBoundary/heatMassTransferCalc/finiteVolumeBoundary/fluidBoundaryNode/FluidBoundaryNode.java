@@ -26,22 +26,23 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class FluidBoundaryNode implements FluidBoundaryNodeInterface{
+public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
 
     private static final long serialVersionUID = 1000;
     protected SystemInterface system;
+
     /** Creates new FluidBoundaryNode */
     public FluidBoundaryNode() {
     }
-    
+
     public FluidBoundaryNode(SystemInterface system) {
         this.system = (SystemInterface) system.clone();
     }
-    
-    public SystemInterface getBulkSystem(){
+
+    public SystemInterface getBulkSystem() {
         return system;
     }
 }

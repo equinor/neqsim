@@ -29,38 +29,40 @@ public class ModelTest {
     }
 
     public static void main(String args[]) {
-        //SystemInterface testSystem = new SystemFurstElectrolyteEos(280.15,10.00);
+        // SystemInterface testSystem = new SystemFurstElectrolyteEos(280.15,10.00);
 
-       //  SystemInterface testSystem = new SystemSrkEos(298.15, 10.01325);
+        // SystemInterface testSystem = new SystemSrkEos(298.15, 10.01325);
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.14 + 92, 42.0);
-        // SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.14 + 12, 61.0);
-        //       SystemInterface testSystem = new SystemFurstElectrolyteEos(273.14 + 12, 61.0);
-         // SystemInterface testSystem = new SystemUMRPRUMCEos(300.0, 10.0);
+        // SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.14 + 12,
+        // 61.0);
+        // SystemInterface testSystem = new SystemFurstElectrolyteEos(273.14 + 12,
+        // 61.0);
+        // SystemInterface testSystem = new SystemUMRPRUMCEos(300.0, 10.0);
         // SystemInterface testSystem = new SystemSrkEos(298.15, 1.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         testSystem.addComponent("methane", 100);
-         testSystem.addComponent("n-heptane", 1);
-       // testSystem.addComponent("water", 100);
-        //   testSystem.addComponent("methane", 1);
-        //      testSystem.addComponent("ethane", 1);
-        //  testSystem.addComponent("TEG", 9);
-        //    testSystem.addComponent("MEG", 3.1);
-        //  testSystem.addComponent("n-octane", 3.1);
-        //    testSystem.addComponent("Na+", 0.1);
-        //    testSystem.addComponent("Cl-", 0.1);
-        //   testSystem.addComponent("MEG", 2.1);
-        //  testSystem.addComponent("methanol", 5.3);
-        ///    testSystem.addComponent("MEG", 5.3);
-          //   testSystem.addComponent("MEG", 10.0);
-         //  testSystem.addTBPfraction("C8", 10.1, 90.0 / 1000.0, 0.8);
-            testSystem.addComponent("MEG", 10.5);
+        testSystem.addComponent("n-heptane", 1);
+        // testSystem.addComponent("water", 100);
+        // testSystem.addComponent("methane", 1);
+        // testSystem.addComponent("ethane", 1);
+        // testSystem.addComponent("TEG", 9);
+        // testSystem.addComponent("MEG", 3.1);
+        // testSystem.addComponent("n-octane", 3.1);
+        // testSystem.addComponent("Na+", 0.1);
+        // testSystem.addComponent("Cl-", 0.1);
+        // testSystem.addComponent("MEG", 2.1);
+        // testSystem.addComponent("methanol", 5.3);
+        /// testSystem.addComponent("MEG", 5.3);
+        // testSystem.addComponent("MEG", 10.0);
+        // testSystem.addTBPfraction("C8", 10.1, 90.0 / 1000.0, 0.8);
+        testSystem.addComponent("MEG", 10.5);
         testSystem.createDatabase(true);
-        //testSystem.useVolumeCorrection(true);
-           testSystem.setMixingRule(2);
+        // testSystem.useVolumeCorrection(true);
+        testSystem.setMixingRule(2);
         // testSystem.setMixingRule("HV", "NRTL");
-        //testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
-        //testSystem.setMixingRule(9);
+        // testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+        // testSystem.setMixingRule(9);
         testSystem.init(0);
         testOps.TPflash();
         testSystem.init(3);

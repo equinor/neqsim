@@ -45,7 +45,7 @@ public class Diamond {
         double temperature, x, pressure, ID;
 
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet( "SELECT * FROM Diamond");
+        ResultSet dataSet = database.getResultSet("SELECT * FROM Diamond");
 
         try {
             while (dataSet.next()) {
@@ -71,7 +71,7 @@ public class Diamond {
                     logger.error(e.toString());
                 }
 
-                //System.out.println(testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx());
+                // System.out.println(testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx());
                 try {
                     outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
                     p = new PrintStream(outfile);

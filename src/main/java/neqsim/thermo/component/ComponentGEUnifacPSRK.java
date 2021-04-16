@@ -29,12 +29,10 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
     public ComponentGEUnifacPSRK(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
-
     }
 
     public double calcaij(PhaseInterface phase, int i, int j) {
-        return ((PhaseGEUnifac) phase).getAij(i, j)
-                + ((PhaseGEUnifac) phase).getBij(i, j) * phase.getTemperature()
+        return ((PhaseGEUnifac) phase).getAij(i, j) + ((PhaseGEUnifac) phase).getBij(i, j) * phase.getTemperature()
                 + ((PhaseGEUnifac) phase).getCij(i, j) * Math.pow(phase.getTemperature(), 2.0);
     }
 
@@ -48,15 +46,25 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         double sum3Comp = 0.0, sum3Mix = 0.0;
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
-            sum1Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature() * calcaij(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
-            sum1Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature() * calcaij(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
+            sum1Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature()
+                    * calcaij(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
+            sum1Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature()
+                    * calcaij(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
             double sum2Comp = 0.0, sum2Mix = 0.0;
             for (int j = 0; j < getNumberOfUNIFACgroups(); j++) {
-                sum2Comp += getUnifacGroup(j).getQComp() * Math.exp(-1.0 / phase.getTemperature() * calcaij(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
-                sum2Mix += getUnifacGroup(j).getQMix() * Math.exp(-1.0 / phase.getTemperature() * calcaij(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
+                sum2Comp += getUnifacGroup(j).getQComp() * Math.exp(-1.0 / phase.getTemperature()
+                        * calcaij(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
+                sum2Mix += getUnifacGroup(j).getQMix() * Math.exp(-1.0 / phase.getTemperature()
+                        * calcaij(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
             }
-            sum3Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature() * calcaij(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex())) / sum2Comp;
-            sum3Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature() * calcaij(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex())) / sum2Mix;
+            sum3Comp += getUnifacGroup(i).getQComp()
+                    * Math.exp(-1.0 / phase.getTemperature()
+                            * calcaij(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex()))
+                    / sum2Comp;
+            sum3Mix += getUnifacGroup(i).getQMix()
+                    * Math.exp(-1.0 / phase.getTemperature()
+                            * calcaij(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex()))
+                    / sum2Mix;
         }
         double tempGammaComp = this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Comp) - sum3Comp);
         double tempGammaMix = this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Mix) - sum3Mix);
@@ -69,15 +77,25 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         double sum3Comp = 0.0, sum3Mix = 0.0;
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
-            sum1Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature() * calcaijdT(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
-            sum1Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature() * calcaijdT(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
+            sum1Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature()
+                    * calcaijdT(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
+            sum1Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature()
+                    * calcaijdT(phase, getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
             double sum2Comp = 0.0, sum2Mix = 0.0;
             for (int j = 0; j < getNumberOfUNIFACgroups(); j++) {
-                sum2Comp += getUnifacGroup(j).getQComp() * Math.exp(-1.0 / phase.getTemperature() * calcaijdT(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
-                sum2Mix += getUnifacGroup(j).getQMix() * Math.exp(-1.0 / phase.getTemperature() * calcaijdT(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
+                sum2Comp += getUnifacGroup(j).getQComp() * Math.exp(-1.0 / phase.getTemperature()
+                        * calcaijdT(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
+                sum2Mix += getUnifacGroup(j).getQMix() * Math.exp(-1.0 / phase.getTemperature()
+                        * calcaijdT(phase, getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
             }
-            sum3Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature() * calcaijdT(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex())) / sum2Comp;
-            sum3Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature() * calcaijdT(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex())) / sum2Mix;
+            sum3Comp += getUnifacGroup(i).getQComp()
+                    * Math.exp(-1.0 / phase.getTemperature()
+                            * calcaijdT(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex()))
+                    / sum2Comp;
+            sum3Mix += getUnifacGroup(i).getQMix()
+                    * Math.exp(-1.0 / phase.getTemperature()
+                            * calcaijdT(phase, getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex()))
+                    / sum2Mix;
         }
         double tempGammaComp = this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Comp) - sum3Comp);
         double tempGammaMix = this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Mix) - sum3Mix);
@@ -85,7 +103,8 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         getUnifacGroup(k).setLnGammaMixdT(tempGammaMix);
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype) {
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+            int phasetype) {
         int initType = phase.getInitType();
         double lngammaCombinational = 0.0, lngammaResidual = 0.0;
         double lngammaCombinationaldT = 0.0, lngammaResidualdT = 0.0;
@@ -98,8 +117,8 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         for (int j = 0; j < numberOfComponents; j++) {
             temp1 += compArray[j].getx() * compArray[j].getR();
             temp2 += (compArray[j].getQ() * compArray[j].getx());
-            suml += compArray[j].getx() * (10.0 / 2.0 * (compArray[j].getR() - compArray[j].getQ())
-                    - (compArray[j].getR() - 1.0));
+            suml += compArray[j].getx()
+                    * (10.0 / 2.0 * (compArray[j].getR() - compArray[j].getQ()) - (compArray[j].getR() - 1.0));
         }
 
         V = this.getx() * this.getR() / temp1;
@@ -107,12 +126,11 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         double li = 10.0 / 2.0 * (getR() - getQ()) - (getR() - 1.0);
         // System.out.println("li " + li);
         lngammaCombinational = (10.0 / 2.0 * getQ() * Math.log(F / V) + li - V / getx() * suml) + Math.log(V / getx());
-        //System.out.println("ln gamma comb " + lngammaCombinational);
-
+        // System.out.println("ln gamma comb " + lngammaCombinational);
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
             getUnifacGroup(i).calcXComp(this);
-           // getUnifacGroup(i).calcXMix((PhaseGEUnifac) phase);
+            // getUnifacGroup(i).calcXMix((PhaseGEUnifac) phase);
             getUnifacGroup(i).calcQComp(this);
             getUnifacGroup(i).calcQMix((PhaseGEUnifac) phase);
         }
@@ -124,21 +142,22 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
         lngammaResidual = 0.0;
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
-            lngammaResidual += getUnifacGroup(i).getN() * (getUnifacGroup(i).getLnGammaMix() - getUnifacGroup(i).getLnGammaComp());
+            lngammaResidual += getUnifacGroup(i).getN()
+                    * (getUnifacGroup(i).getLnGammaMix() - getUnifacGroup(i).getLnGammaComp());
         }
 
         lngamma = lngammaResidual + lngammaCombinational;
         gamma = Math.exp(lngamma);
-        
+
         if (initType > 1) {
             lngammaResidualdT = 0.0;
             for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
                 calclnGammakdT(i, phase);
-                lngammaResidualdT += getUnifacGroup(i).getN() * (getUnifacGroup(i).getLnGammaMixdT() - getUnifacGroup(i).getLnGammaCompdT());
+                lngammaResidualdT += getUnifacGroup(i).getN()
+                        * (getUnifacGroup(i).getLnGammaMixdT() - getUnifacGroup(i).getLnGammaCompdT());
             }
             dlngammadt = lngammaResidualdT;
         }
-        
 
         return gamma;
     }

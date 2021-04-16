@@ -41,14 +41,15 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
         // inserting samples from database
         NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
 
-        ResultSet dataSet = database.getResultSet( "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='mercury' AND ComponentSolvent='n-hexane'");
-        //   double parameterGuess[] = {0.13}; // mercury-methane
+        ResultSet dataSet = database.getResultSet(
+                "SELECT * FROM binarysolubilitydata WHERE ComponentSolute='mercury' AND ComponentSolvent='n-hexane'");
+        // double parameterGuess[] = {0.13}; // mercury-methane
         // double parameterGuess[] = {0.0496811275399517}; // mercury-methane
         // double parameterGuess[] = {0.0704}; // mercury-ethane
-             double parameterGuess[] = {-0.03310000498911416}; // mercury-ibutane
-       // double parameterGuess[] = {0.0674064646735}; // mercury-propane
-        //double parameterGuess[] = { 0.3674008071}; // mercury-CO2
-        //double parameterGuess[] = {  0.016529772608}; // mercury-nitrogen
+        double parameterGuess[] = { -0.03310000498911416 }; // mercury-ibutane
+        // double parameterGuess[] = {0.0674064646735}; // mercury-propane
+        // double parameterGuess[] = { 0.3674008071}; // mercury-CO2
+        // double parameterGuess[] = { 0.016529772608}; // mercury-nitrogen
         try {
             int p = 0;
             logger.info("adding....");
@@ -64,11 +65,11 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
                 testSystem.createDatabase(true);
                 testSystem.setMultiPhaseCheck(true);
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("Temperature")));
-                testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure"))+2);
+                testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")) + 2);
                 testSystem.setMixingRule(2);
                 testSystem.init(0);
-                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};  // temperature
-                double standardDeviation1[] = {0.13}; // std.dev temperature    // presure std.dev pressure
+                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
+                double standardDeviation1[] = { 0.13 }; // std.dev temperature // presure std.dev pressure
                 double x1 = Double.parseDouble(dataSet.getString("x1"));
                 SampleValue sample = new SampleValue(x1, x1 / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
@@ -85,10 +86,10 @@ public class TestEosParameterFittingToMercurySolubility extends java.lang.Object
 
         // do simulations
         optim.solve();
-        //optim.runMonteCarloSimulation();
-        //  optim.displayResult();
+        // optim.runMonteCarloSimulation();
+        // optim.displayResult();
         optim.displayCurveFit();
-        //optim.writeToCdfFile("c:/testFit.nc");
-        //optim.writeToTextFile("c:/testFit.txt");
+        // optim.writeToCdfFile("c:/testFit.nc");
+        // optim.writeToTextFile("c:/testFit.txt");
     }
 }

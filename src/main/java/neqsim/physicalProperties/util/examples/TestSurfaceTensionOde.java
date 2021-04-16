@@ -25,18 +25,18 @@ public class TestSurfaceTensionOde {
         SystemInterface testSystem = new SystemSrkEos(273.15, 1.0);
 
         testSystem.addComponent("methane", 5.0);
-       // testSystem.addComponent("TEG", 5.0);
-            testSystem.addComponent("n-heptane", 2.01);
-        //  testSystem.addComponent("n-heptane", 112.0);
-        //   testSystem.addComponent("water", 10.0);
-     //   testSystem.addComponent("water", 50.0);
-    //    testSystem.addComponent("MEG", 50.0);
+        // testSystem.addComponent("TEG", 5.0);
+        testSystem.addComponent("n-heptane", 2.01);
+        // testSystem.addComponent("n-heptane", 112.0);
+        // testSystem.addComponent("water", 10.0);
+        // testSystem.addComponent("water", 50.0);
+        // testSystem.addComponent("MEG", 50.0);
 
-        //  testSystem.addComponent("water", 100);
+        // testSystem.addComponent("water", 100);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
-      //  testSystem.setMultiPhaseCheck(true);
+        // testSystem.setMultiPhaseCheck(true);
         testSystem.init(0);
         testSystem.getInterphaseProperties().setInterfacialTensionModel(1);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

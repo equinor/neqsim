@@ -15,70 +15,70 @@ import neqsim.thermo.phase.PhaseRK;
  * @version
  */
 
-/** This class defines a thermodynamic system using the RK equation of state
+/**
+ * This class defines a thermodynamic system using the RK equation of state
  */
 public class SystemRKEos extends SystemEos {
 
     private static final long serialVersionUID = 1000;
+
     /** Creates a thermodynamic system using the SRK equation of state. */
-    //  SystemSrkEos clonedSystem;
-    
-    public SystemRKEos(){
+    // SystemSrkEos clonedSystem;
+
+    public SystemRKEos() {
         super();
         modelName = "RK-EOS";
         attractiveTermNumber = 5;
-        for (int i=0;i<numberOfPhases;i++){
+        for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseRK();
             phaseArray[i].setTemperature(298.15);
             phaseArray[i].setPressure(1.0);
         }
     }
-    
+
     public SystemRKEos(double T, double P) {
-        super(T,P);
+        super(T, P);
         attractiveTermNumber = 5;
         modelName = "RK-EOS";
-        for (int i=0;i<numberOfPhases;i++){
+        for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseRK();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
     }
-    
+
     public SystemRKEos(double T, double P, boolean solidCheck) {
-        this(T,P);
+        this(T, P);
         attractiveTermNumber = 5;
         numberOfPhases = 4;
         modelName = "RK-EOS";
         maxNumberOfPhases = 4;
         solidPhaseCheck = solidCheck;
-        
-        for (int i=0;i<numberOfPhases;i++){
+
+        for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseRK();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
         }
-        
-        if(solidPhaseCheck){
-            //System.out.println("here first");
-            phaseArray[numberOfPhases-1] = new PhasePureComponentSolid();
-            phaseArray[numberOfPhases-1].setTemperature(T);
-            phaseArray[numberOfPhases-1].setPressure(P);
-            phaseArray[numberOfPhases-1].setRefPhase(phaseArray[1].getRefPhase());
+
+        if (solidPhaseCheck) {
+            // System.out.println("here first");
+            phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
+            phaseArray[numberOfPhases - 1].setTemperature(T);
+            phaseArray[numberOfPhases - 1].setPressure(P);
+            phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
         }
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         SystemRKEos clonedSystem = null;
-        try{
+        try {
             clonedSystem = (SystemRKEos) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
- 
+
         return clonedSystem;
     }
-    
-    
+
 }

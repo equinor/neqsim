@@ -61,7 +61,7 @@ public class CO2_MDEA_speciation {
         double temperature = 273.16 + 65;
         double pressure = 0.01;
 
-        //for (loading = 5e-4; loading<=0.1;) {
+        // for (loading = 5e-4; loading<=0.1;) {
         n3 = MDEAwt / 119.16;
         n2 = (100 - MDEAwt) / 18.015;
         n1 = n3 * loading;
@@ -152,8 +152,11 @@ public class CO2_MDEA_speciation {
         try {
             outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
             p = new PrintStream(outfile);
-            p.println(loading + " " + testSystem.getPressure() + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx() + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH);
-            //p.println(loading+" "+testSystem.getPressure()+" "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
+            p.println(loading + " " + testSystem.getPressure() + " "
+                    + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx() + " " + nCO2 + " "
+                    + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH);
+            // p.println(loading+" "+testSystem.getPressure()+"
+            // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
             p.close();
         } catch (FileNotFoundException e) {
             logger.error("Could not find file");
@@ -163,7 +166,8 @@ public class CO2_MDEA_speciation {
         try {
             outfile1 = new FileOutputStream("C:/java/NeqSimSource/activity.txt", true);
             p1 = new PrintStream(outfile1);
-            p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3 + " " + aOH);
+            p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3 + " "
+                    + aOH);
             p1.close();
         } catch (FileNotFoundException e) {
             logger.error("Could not find file");
@@ -176,7 +180,7 @@ public class CO2_MDEA_speciation {
             loading += 0.1;
         }
 
-        //}
+        // }
         logger.info("Finished");
     }
 }

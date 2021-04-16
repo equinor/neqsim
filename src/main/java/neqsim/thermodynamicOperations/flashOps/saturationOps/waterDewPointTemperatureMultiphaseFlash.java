@@ -35,20 +35,22 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
             i++;
             TPflashOps.TPflash();
             if (system.hasPhaseType("aqueous")) {
-                dT = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase() / system.getPhase(0).getComponent("water").getNumberOfmoles();
-                if(dT>1.0) {
-                    dT=1.0;
+                dT = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase()
+                        / system.getPhase(0).getComponent("water").getNumberOfmoles();
+                if (dT > 1.0) {
+                    dT = 1.0;
                 }
-                system.setTemperature(system.getTemperature()+dT);
+                system.setTemperature(system.getTemperature() + dT);
             } else {
-                dT = -10.0;//system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase() / system.getNumberOfMoles();
-                system.setTemperature(system.getTemperature()+dT);
-                //system.display();
+                dT = -10.0;// system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase()
+                           // / system.getNumberOfMoles();
+                system.setTemperature(system.getTemperature() + dT);
+                // system.display();
             }
-           // logger.info("dew temperature " + system.getTemperature());
+            // logger.info("dew temperature " + system.getTemperature());
         } while ((i < 350 && Math.abs(dT) > 1e-5));
         logger.info("i " + i);
-        //system.display();
+        // system.display();
 
     }
 

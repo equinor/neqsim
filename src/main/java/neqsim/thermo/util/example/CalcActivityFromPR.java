@@ -23,10 +23,9 @@ public class CalcActivityFromPR {
         testSystem.createDatabase(true);
         testSystem.init(0);
         testSystem.init(3);
-       // System.out.println("activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1,1));
+        // System.out.println("activity coefficient " +
+        // testSystem.getPhase(1).getActivityCoefficient(1,1));
         testSystem.display();
-
-
 
     }
 }

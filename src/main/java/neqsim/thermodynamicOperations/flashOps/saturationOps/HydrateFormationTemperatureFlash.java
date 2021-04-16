@@ -24,15 +24,15 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
     public HydrateFormationTemperatureFlash(SystemInterface system) {
         super(system);
     }
-    
-    public void stop(){
+
+    public void stop() {
         system = null;
     }
 
     public void run() {
         double olfFug = 0.0;
         double temp = 0.0, oldTemp = 0.0, oldDiff = 0.0, oldOldDiff = 0.0;
-        //system.setHydrateCheck(true);
+        // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         system.getPhase(4).getComponent("water").setx(1.0);
         int iter = 0;
@@ -62,24 +62,25 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
                 system.setTemperature(system.getTemperature() - dT);
             }
             if (iter > 2 && Math.abs(diff) > Math.abs(oldDiff)) {
-                system.setTemperature((oldTemp + system.getTemperature()) / 2.0 );
+                system.setTemperature((oldTemp + system.getTemperature()) / 2.0);
             }
-           // logger.info("diff " + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
-          //  logger.info("temperature " + system.getTemperature() + " iter " + iter);
-            //logger.info("x water " + system.getPhase(4).getComponent("water").getx());
-            try{
+            // logger.info("diff " + (system.getPhase(4).getFugacity("water") /
+            // system.getPhase(0).getFugacity("water")));
+            // logger.info("temperature " + system.getTemperature() + " iter " + iter);
+            // logger.info("x water " + system.getPhase(4).getComponent("water").getx());
+            try {
                 Thread.sleep(100);
-            }
-            catch (InterruptedException iex) {
+            } catch (InterruptedException iex) {
             }
 
-        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100 || iter < 3);
+        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100
+                || iter < 3);
     }
 
     public void run2() {
         double olfFug = 0.0;
         double oldTemp = 0.0, oldOldTemp = 0.0, oldDiff = 0.0, oldOldDiff = 0.0;
-        //system.setHydrateCheck(true);
+        // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         system.getPhase(4).getComponent("water").setx(1.0);
         int iter = 0;
@@ -92,14 +93,16 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
             system.getPhase(4).getComponent("water").setx(1.0);
 
             if (iter % 4 == 0) {
-                //logger.info("ny temp " +(system.getTemperature() - oldDiff/((oldDiff-oldOldDiff)/(oldTemp-oldOldTemp))));
+                // logger.info("ny temp " +(system.getTemperature() -
+                // oldDiff/((oldDiff-oldOldDiff)/(oldTemp-oldOldTemp))));
                 double change = -oldDiff / ((oldDiff - oldOldDiff) / (oldTemp - oldOldTemp));
                 if (Math.abs(change) > 5.0) {
                     change = Math.abs(change) / change * 5.0;
                 }
                 system.setTemperature((system.getTemperature() + change));
             } else {
-                double change = (1.0 - system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
+                double change = (1.0
+                        - system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
                 if (Math.abs(change) > 5.0) {
                     change = Math.abs(change) / change * 5.0;
                 }
@@ -107,24 +110,29 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
             }
 
             double diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
-            //logger.info("iter " + iter + " diff " + (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water")));
+            // logger.info("iter " + iter + " diff " +
+            // (system.getPhase(4).getFugacity("water") /
+            // system.getPhase(0).getFugacity("water")));
             oldOldTemp = oldTemp;
             oldTemp = system.getTemperature();
 
             oldOldDiff = oldDiff;
             oldDiff = diff;
 
-           // logger.info("temperature " + system.getTemperature());
-            //logger.info("x water " + system.getPhase(4).getComponent("water").getx());
-        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100 || iter < 3);
+            // logger.info("temperature " + system.getTemperature());
+            // logger.info("x water " + system.getPhase(4).getComponent("water").getx());
+        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100
+                || iter < 3);
     }
 
     public void setFug() {
         system.getPhase(4).getComponent("water").setx(1.0);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-                if (system.getPhase(4).getComponent(j).isHydrateFormer() || system.getPhase(4).getComponent(j).getName().equals("water")) {
-                    ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j, system.getPhase(0).getFugacity(j));
+                if (system.getPhase(4).getComponent(j).isHydrateFormer()
+                        || system.getPhase(4).getComponent(j).getName().equals("water")) {
+                    ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j,
+                            system.getPhase(0).getFugacity(j));
                 } else {
                     ((ComponentHydrate) system.getPhase(4).getComponent(i)).setRefFug(j, 0);
                 }

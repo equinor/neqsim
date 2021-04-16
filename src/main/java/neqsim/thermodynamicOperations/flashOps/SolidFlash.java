@@ -27,7 +27,7 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class SolidFlash extends TPflash implements java.io.Serializable {
@@ -35,15 +35,16 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
-    //   SystemInterface clonedSystem;
+    // SystemInterface clonedSystem;
     boolean multiPhaseTest = false;
     double dQdbeta[];
     double Qmatrix[][];
     double E[];
     double Q = 0;
     int solidComponent = 0;
-boolean hasRemovedPhase = false;
-boolean secondTime = false;
+    boolean hasRemovedPhase = false;
+    boolean secondTime = false;
+
     /** Creates new TPflash */
     public SolidFlash() {
     }
@@ -66,16 +67,15 @@ boolean secondTime = false;
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-                system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz() / E[i] / system.getPhase(k).getComponent(i).getFugasityCoeffisient());
-             /*
-                if (system.getPhase(k).getComponent(i).getx() > 1.0) {
-                    system.getPhase(k).getComponent(i).setx(1.0 - 1e-30);
-                }
-                if (system.getPhase(k).getComponent(i).getx() < 0.0) {
-                    system.getPhase(k).getComponent(i).setx(1.0e-30);
-                }
-              * */
-              
+                system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz() / E[i]
+                        / system.getPhase(k).getComponent(i).getFugasityCoeffisient());
+                /*
+                 * if (system.getPhase(k).getComponent(i).getx() > 1.0) {
+                 * system.getPhase(k).getComponent(i).setx(1.0 - 1e-30); } if
+                 * (system.getPhase(k).getComponent(i).getx() < 0.0) {
+                 * system.getPhase(k).getComponent(i).setx(1.0e-30); }
+                 */
+
             }
             system.getPhase(k).normalize();
         }
@@ -87,9 +87,9 @@ boolean secondTime = false;
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 x += system.getPhase(k).getComponent(i).getx();
             }
-            //logger.info("x tot " + x + " PHASE " + k);
+            // logger.info("x tot " + x + " PHASE " + k);
             if (x < 1.0 - 1e-6) {
-                //logger.info("removing phase " + k);
+                // logger.info("removing phase " + k);
                 system.setBeta(system.getNumberOfPhases() - 2, system.getBeta(system.getNumberOfPhases() - 1));
                 system.setBeta(0, 1.0 - system.getBeta(system.getNumberOfPhases() - 1));
                 system.setNumberOfPhases(system.getNumberOfPhases() - 1);
@@ -110,14 +110,17 @@ boolean secondTime = false;
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
                 E[i] += system.getBeta(k) / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
             }
-            //logger.info("Ei " +E[i]);
-            //if(
+            // logger.info("Ei " +E[i]);
+            // if(
         }
-        // E[solidComponent] += system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient();
-        E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz() / system.getPhases()[3].getComponents()[solidComponent].getFugasityCoeffisient();
-        //        logger.info("Ei " +E[solidComponent]);
-        //        logger.info("fug " +system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient());
-        //        logger.info("zi " +system.getPhase(0).getComponent(solidComponent).getz());
+        // E[solidComponent] +=
+        // system.getBeta(system.getNumberOfPhases()-1)/system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient();
+        E[solidComponent] = system.getPhase(0).getComponent(solidComponent).getz()
+                / system.getPhases()[3].getComponents()[solidComponent].getFugasityCoeffisient();
+        // logger.info("Ei " +E[solidComponent]);
+        // logger.info("fug "
+        // +system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient());
+        // logger.info("zi " +system.getPhase(0).getComponent(solidComponent).getz());
     }
 
     public double calcQ() {
@@ -136,10 +139,12 @@ boolean secondTime = false;
         }
 
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
-            dQdbeta[k] = 1.0 - system.getPhases()[3].getComponents()[solidComponent].getFugasityCoeffisient() / system.getPhase(k).getComponent(solidComponent).getFugasityCoeffisient();
+            dQdbeta[k] = 1.0 - system.getPhases()[3].getComponents()[solidComponent].getFugasityCoeffisient()
+                    / system.getPhase(k).getComponent(solidComponent).getFugasityCoeffisient();
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 if (i != solidComponent) {
-                    dQdbeta[k] -= system.getPhase(0).getComponent(i).getz() * 1.0 / E[i] / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
+                    dQdbeta[k] -= system.getPhase(0).getComponent(i).getz() * 1.0 / E[i]
+                            / system.getPhase(k).getComponent(i).getFugasityCoeffisient();
                 }
             }
         }
@@ -147,12 +152,14 @@ boolean secondTime = false;
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
             Qmatrix[i][i] = 1.0e-9;
             for (int j = 0; j < system.getNumberOfPhases() - 1; j++) {
-                if(i!=j) {
+                if (i != j) {
                     Qmatrix[i][j] = 0;
                 }
                 for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
                     if (k != solidComponent) {
-                        Qmatrix[i][j] += system.getPhase(0).getComponent(k).getz() / (E[k] * E[k] * system.getPhase(j).getComponent(k).getFugasityCoeffisient() * system.getPhase(i).getComponent(k).getFugasityCoeffisient());
+                        Qmatrix[i][j] += system.getPhase(0).getComponent(k).getz()
+                                / (E[k] * E[k] * system.getPhase(j).getComponent(k).getFugasityCoeffisient()
+                                        * system.getPhase(i).getComponent(k).getFugasityCoeffisient());
                     }
                 }
             }
@@ -182,8 +189,8 @@ boolean secondTime = false;
             Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
             Matrix dQM = new Matrix(dQdbeta, 1);
             Matrix dQdBM = new Matrix(Qmatrix);
-            //dQM.print(10,2);
-            //dQdBM.print(10,2);
+            // dQM.print(10,2);
+            // dQdBM.print(10,2);
             try {
                 ans = dQdBM.solve(dQM.transpose());
             } catch (Exception e) {
@@ -191,8 +198,8 @@ boolean secondTime = false;
             }
 
             betaMatrix.minusEquals(ans.times((iter + 1.0) / (10.0 + iter)));
-            //betaMatrix.print(10, 2);
-            //betaMatrix.print(10,2);
+            // betaMatrix.print(10, 2);
+            // betaMatrix.print(10,2);
 
             for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
                 system.setBeta(k, betaMatrix.get(k, 0));
@@ -204,12 +211,12 @@ boolean secondTime = false;
                 }
             }
 
-            //calcSolidBeta();
+            // calcSolidBeta();
             calcSolidBeta();
-            
+
             if (!hasRemovedPhase) {
                 for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-                    if (Math.abs(system.getBeta(i))<1.01e-9) {
+                    if (Math.abs(system.getBeta(i)) < 1.01e-9) {
                         system.removePhaseKeepTotalComposition(i);
                         hasRemovedPhase = true;
                     }
@@ -218,25 +225,25 @@ boolean secondTime = false;
 
             /*
              * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
-             * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())<1e-6
-             * && !hasRemovedPhase) { system.removePhase(i+1);
+             * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())<
+             * 1e-6 && !hasRemovedPhase) { system.removePhase(i+1);
              * doStabilityAnalysis=false; hasRemovedPhase = true; } }
              */
-            if (hasRemovedPhase  && !secondTime) {
-            	secondTime=true;
+            if (hasRemovedPhase && !secondTime) {
+                secondTime = true;
                 run();
             }
-            //system.init(1);
-            //            calcE();
-            //            setXY();
-            //            system.init(1);
-            //            //checkGibbs();
-            //            calcE();
-            //            setXY();
+            // system.init(1);
+            // calcE();
+            // setXY();
+            // system.init(1);
+            // //checkGibbs();
+            // calcE();
+            // setXY();
         } while ((ans.norm2() > 1e-8 && iter < 100) || iter < 2);
         // checkX();
-        //        calcE();
-        //        setXY();
+        // calcE();
+        // setXY();
         system.init(1);
     }
 
@@ -262,17 +269,18 @@ boolean secondTime = false;
         double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();
         double beta = 1.0;
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-            tempVar -= system.getBeta(i) * system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient() / system.getPhase(i).getComponent(solidComponent).getFugasityCoeffisient();
+            tempVar -= system.getBeta(i) * system.getPhase(3).getComponent(solidComponent).getFugasityCoeffisient()
+                    / system.getPhase(i).getComponent(solidComponent).getFugasityCoeffisient();
             beta -= system.getBeta(i);
         }
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);
         }
-        //logger.info("beta " + tempVar);
+        // logger.info("beta " + tempVar);
     }
 
     public void run() {
-        //logger.info("starting ");
+        // logger.info("starting ");
         system.setNumberOfPhases(system.getNumberOfPhases());
         double oldBeta = 0.0;
         int iter = 0;
@@ -288,18 +296,19 @@ boolean secondTime = false;
             if (system.getNumberOfPhases() > 1) {
                 this.solveBeta(true);
             } else {
-                //logger.info("setting beta ");
+                // logger.info("setting beta ");
                 system.setBeta(0, 1.0 - 1e-10);
                 system.reset_x_y();
                 system.init(1);
             }
-            
-            //system.display();
+
+            // system.display();
             checkX();
-            //logger.info("iter " + iter);
-        } while ((Math.abs(system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) > 1e-3 && !(iter > 20)) || iter < 4);
-        //checkX();
-        //logger.info("iter " + iter);
-        //system.setNumberOfPhases(system.getNumberOfPhases()+1);
+            // logger.info("iter " + iter);
+        } while ((Math.abs(system.getBeta(system.getNumberOfPhases() - 1) - oldBeta) > 1e-3 && !(iter > 20))
+                || iter < 4);
+        // checkX();
+        // logger.info("iter " + iter);
+        // system.setNumberOfPhases(system.getNumberOfPhases()+1);
     }
 }

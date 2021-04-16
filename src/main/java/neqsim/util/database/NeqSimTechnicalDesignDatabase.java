@@ -53,8 +53,8 @@ public class NeqSimTechnicalDesignDatabase implements neqsim.util.util.FileSyste
     private static boolean createTemporaryTables = false;
 
     private static String dataBaseType = "MSAccessUCanAccess";
-     public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimTechnicalDesignData.accdb;memory=true";
-  
+    public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimTechnicalDesignData.accdb;memory=true";
+
     private Statement statement = null;
     protected Connection databaseConnection = null;
 
@@ -83,9 +83,10 @@ public class NeqSimTechnicalDesignDatabase implements neqsim.util.util.FileSyste
         javax.sql.DataSource ds = null;
 
         try {
-           if (dataBaseType.equals("MSAccessUCanAccess")) {
+            if (dataBaseType.equals("MSAccessUCanAccess")) {
                 return DriverManager.getConnection(getConnectionString());
-            } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
+            } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU")
+                    || dataBaseType.equals("Derby")) {
                 return DriverManager.getConnection(getConnectionString(), username, password);
             } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
                 ctx = new javax.naming.InitialContext();
@@ -182,16 +183,13 @@ public class NeqSimTechnicalDesignDatabase implements neqsim.util.util.FileSyste
         }
     }
 
-    public Statement
-            getStatement() {
+    public Statement getStatement() {
         return statement;
 
     }
 
-    public void setStatement(Statement statement
-    ) {
-        this.statement
-                = statement;
+    public void setStatement(Statement statement) {
+        this.statement = statement;
 
     }
 
@@ -224,7 +222,7 @@ public class NeqSimTechnicalDesignDatabase implements neqsim.util.util.FileSyste
     }
 
     public static void main(String[] args) {
-       
+
     }
 
 }

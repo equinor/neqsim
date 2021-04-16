@@ -11,153 +11,164 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-
 public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
 
     private static final long serialVersionUID = 1000;
-    
-    private double[] stirrerRate = {1.0,1.0},stirrerDiameter= {1.0,1.0};
-    private double dt=1.0;
-    
-    public StirredCellNode(){
+
+    private double[] stirrerRate = { 1.0, 1.0 }, stirrerDiameter = { 1.0, 1.0 };
+    private double dt = 1.0;
+
+    public StirredCellNode() {
         this.flowNodeType = "stirred cell";
     }
-    
+
     public StirredCellNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stirred cell";
         this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(this);
+        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                this);
     }
-    
+
     public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stirred cell";
         this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(this);
+        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                this);
     }
-    
-    public double calcHydraulicDiameter(){
+
+    public double calcHydraulicDiameter() {
         return getGeometry().getDiameter();
     }
-    
-    public double calcReynoldNumber(){
-        reynoldsNumber[1] = Math.pow(stirrerDiameter[1],2.0) * stirrerRate[1] * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
-        reynoldsNumber[0] = Math.pow(stirrerDiameter[0],2.0) * stirrerRate[0] * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity() / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+
+    public double calcReynoldNumber() {
+        reynoldsNumber[1] = Math.pow(stirrerDiameter[1], 2.0) * stirrerRate[1]
+                * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+                / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+        reynoldsNumber[0] = Math.pow(stirrerDiameter[0], 2.0) * stirrerRate[0]
+                * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
+                / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
         System.out.println("rey liq " + reynoldsNumber[1]);
         System.out.println("rey gas " + reynoldsNumber[0]);
         return reynoldsNumber[1];
     }
-    
-    
-    public Object clone(){
+
+    public Object clone() {
         StirredCellNode clonedSystem = null;
-        try{
+        try {
             clonedSystem = (StirredCellNode) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
-        
+
         return clonedSystem;
     }
-    
-    public void init(){
+
+    public void init() {
         this.calcContactLength();
         super.init();
     }
-    
-    public void initFlowCalc(){
+
+    public void initFlowCalc() {
         this.init();
     }
-    
-    public double calcContactLength(){
+
+    public double calcContactLength() {
         wallContactLength[1] = 1.0;
         wallContactLength[0] = 1.0;
-        
-        interphaseContactLength[0] = pi * Math.pow(pipe.getDiameter(),2.0)/4.0;
+
+        interphaseContactLength[0] = pi * Math.pow(pipe.getDiameter(), 2.0) / 4.0;
         interphaseContactLength[1] = interphaseContactLength[0];
         interphaseContactArea = interphaseContactLength[0];
         return wallContactLength[0];
     }
-    
-    public double calcGasLiquidContactArea(){
-        return pi * Math.pow(pipe.getDiameter(),2.0)/4.0;
+
+    public double calcGasLiquidContactArea() {
+        return pi * Math.pow(pipe.getDiameter(), 2.0) / 4.0;
     }
-    
-    public void update(){
-        for(int componentNumber=0;componentNumber<getBulkSystem().getPhases()[0].getNumberOfComponents();componentNumber++){
-            double liquidMolarRate =  getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea()*getDt();
-            double gasMolarRate =  - getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea()*getDt();
-           // System.out.println("liquidMolarRate" + liquidMolarRate);
+
+    public void update() {
+        for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+                .getNumberOfComponents(); componentNumber++) {
+            double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+                    * getInterphaseContactArea() * getDt();
+            double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+                    * getInterphaseContactArea() * getDt();
+            // System.out.println("liquidMolarRate" + liquidMolarRate);
             getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
             getBulkSystem().getPhases()[1].addMoles(componentNumber, liquidMolarRate);
         }
-        //getBulkSystem().initBeta();
+        // getBulkSystem().initBeta();
         getBulkSystem().init_x_y();
         getBulkSystem().init(1);
-        
-        if(bulkSystem.isChemicalSystem()){
+
+        if (bulkSystem.isChemicalSystem()) {
             getOperations().chemicalEquilibrium();
         }
         getBulkSystem().init(1);
     }
-    
-    public FlowNodeInterface getNextNode(){
+
+    public FlowNodeInterface getNextNode() {
         StirredCellNode newNode = (StirredCellNode) this.clone();
-        for(int i=0;i<getBulkSystem().getPhases()[0].getNumberOfComponents();i++){
-            //          newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
-            //          newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
+        for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+            // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);
+            // newNode.getBulkSystem().getPhases()[1].addMoles(i, +molarMassTransfer[i]);
         }
         return newNode;
     }
-    
-    
-    
-    /** Getter for property stirrerRate.
+
+    /**
+     * Getter for property stirrerRate.
+     * 
      * @return Value of property stirrerRate.
      */
     public double getStirrerRate(int i) {
         return stirrerRate[i];
     }
-    
-    /** Setter for property stirrerRate.
+
+    /**
+     * Setter for property stirrerRate.
+     * 
      * @param stirrerRate New value of property stirrerRate.
      */
     public void setStirrerSpeed(int i, double stirrerRate) {
         this.stirrerRate[i] = stirrerRate;
     }
-    
+
     public void setStirrerSpeed(double stirrerRate) {
         this.stirrerRate[0] = stirrerRate;
         this.stirrerRate[1] = stirrerRate;
     }
-    
-    /** Getter for property dt.
+
+    /**
+     * Getter for property dt.
+     * 
      * @return Value of property dt.
      */
     public double getDt() {
         return dt;
     }
-    
-    /** Setter for property dt.
+
+    /**
+     * Setter for property dt.
+     * 
      * @param dt New value of property dt.
      */
     public void setDt(double dt) {
         this.dt = dt;
     }
-    
-    
-    public static void main(String[] args){
-        //SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
-       // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
+
+    public static void main(String[] args) {
+        // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
+        // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
         SystemInterface testSystem = new SystemSrkCPAstatoil(313.3, 70.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         StirredCell pipe1 = new StirredCell(2.0, 0.05);
-        
-        testSystem.addComponent("methane",0.1061152181,"MSm3/hr", 0);
-        testSystem.addComponent("water", 10.206862204876,"kg/min", 0);
-        testSystem.addComponent("methanol", 1011.206862204876,"kg/min", 1);
+
+        testSystem.addComponent("methane", 0.1061152181, "MSm3/hr", 0);
+        testSystem.addComponent("water", 10.206862204876, "kg/min", 0);
+        testSystem.addComponent("methanol", 1011.206862204876, "kg/min", 1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
         testSystem.initPhysicalProperties();
@@ -165,41 +176,46 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         test.setInterphaseModelType(1);
         test.getFluidBoundary().useFiniteFluxCorrection(true);
         test.getFluidBoundary().useThermodynamicCorrections(true);
-        test.setStirrerSpeed(111350.0/60.0);
+        test.setStirrerSpeed(111350.0 / 60.0);
         test.setStirrerDiameter(0.05);
         test.setDt(1.10);
-        
+
         test.initFlowCalc();
-        //        testSystem.init(0);
-        //        testOps.TPflash();
-      
+        // testSystem.init(0);
+        // testOps.TPflash();
+
         test.display();
-        for(int i=0;i<120;i++){
+        for (int i = 0; i < 120; i++) {
             test.initFlowCalc();
             test.calcFluxes();
             test.update();
-          //  test.display("new");
+            // test.display("new");
             test.getBulkSystem().display();
-            //test.getFluidBoundary().display("test");
+            // test.getFluidBoundary().display("test");
         }
     }
-    
-    /** Getter for property stirrerDiameter.
+
+    /**
+     * Getter for property stirrerDiameter.
+     * 
      * @return Value of property stirrerDiameter.
      */
     public double[] getStirrerDiameter() {
         return this.stirrerDiameter;
     }
-    
-    public void setStirrerDiameter(double stirrerDiameter){
+
+    public void setStirrerDiameter(double stirrerDiameter) {
         this.stirrerDiameter[0] = stirrerDiameter;
         this.stirrerDiameter[1] = stirrerDiameter;
     }
-    /** Setter for property stirrerDiameter.
+
+    /**
+     * Setter for property stirrerDiameter.
+     * 
      * @param stirrerDiameter New value of property stirrerDiameter.
      */
     public void setStirrerDiameter(double[] stirrerDiameter) {
         this.stirrerDiameter = stirrerDiameter;
     }
-    
+
 }

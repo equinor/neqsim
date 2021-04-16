@@ -9,10 +9,10 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  ESOL
+ * @author ESOL
  */
 public class TBPCharacterize extends PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
-    private static final long serialVersionUID = 1000;    
+    private static final long serialVersionUID = 1000;
     int startPlus = 7;
     int endPlus = 20;
     double[] calcTBPfractions = null;
@@ -36,7 +36,6 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         system.init(0);
         double old = 0;
 
-
         TBPfractions = new double[50];
         TBP_Mnom = new double[50];
         TBPdensDenom = new double[50];
@@ -45,49 +44,52 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         int numb = 49;
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-         //   if (system.getPhase(0).getComponent(i).getComponentType().equals("HC")) {
-                double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
+            // if (system.getPhase(0).getComponent(i).getComponentType().equals("HC")) {
+            double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
 
-                if (boilpoint >= 331.0) {
-                    numb = 13;
-                } else if (boilpoint >= 317.0) {
-                    numb = 12;
-                } else if (boilpoint >= 303.0) {
-                    numb = 11;
-                } else if (boilpoint >= 287.0) {
-                    numb = 10;
-                } else if (boilpoint >= 271.1) {
-                    numb = 9;
-                } else if (boilpoint >= 253.9) {
-                    numb = 8;
-                } else if (boilpoint >= 235.9) {
-                    numb = 7;
-                } else if (boilpoint >= 216.8) {
-                    numb = 6;
-                } else if (boilpoint >= 196.4) {
-                    numb = 5;
-                } else if (boilpoint >= 174.6) {
-                    numb = 4;
-                } else if (boilpoint >= 151.3) {
-                    numb = 3;
-                } else if (boilpoint >= 126.1) {
-                    numb = 2;
-                } else if (boilpoint >= 98.9) {
-                    numb = 1;
-                } else if (boilpoint >= 69.2) {
-                    numb = 0;
-                } else {
-                    numb = 49;
-                }
-                if (boilpoint > old) {
-                    length = numb + 1;
-                    old = boilpoint;
-                }
-                TBPmoles[numb] += system.getPhase(0).getComponent(i).getNumberOfmoles();
-                TBPfractions[numb] += system.getPhase(0).getComponent(i).getz();
-                TBP_Mnom[numb] += system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(i).getMolarMass();
-                TBPdensDenom[numb] += system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(i).getMolarMass() / system.getPhase(0).getComponent(i).getNormalLiquidDensity();
-     //       }
+            if (boilpoint >= 331.0) {
+                numb = 13;
+            } else if (boilpoint >= 317.0) {
+                numb = 12;
+            } else if (boilpoint >= 303.0) {
+                numb = 11;
+            } else if (boilpoint >= 287.0) {
+                numb = 10;
+            } else if (boilpoint >= 271.1) {
+                numb = 9;
+            } else if (boilpoint >= 253.9) {
+                numb = 8;
+            } else if (boilpoint >= 235.9) {
+                numb = 7;
+            } else if (boilpoint >= 216.8) {
+                numb = 6;
+            } else if (boilpoint >= 196.4) {
+                numb = 5;
+            } else if (boilpoint >= 174.6) {
+                numb = 4;
+            } else if (boilpoint >= 151.3) {
+                numb = 3;
+            } else if (boilpoint >= 126.1) {
+                numb = 2;
+            } else if (boilpoint >= 98.9) {
+                numb = 1;
+            } else if (boilpoint >= 69.2) {
+                numb = 0;
+            } else {
+                numb = 49;
+            }
+            if (boilpoint > old) {
+                length = numb + 1;
+                old = boilpoint;
+            }
+            TBPmoles[numb] += system.getPhase(0).getComponent(i).getNumberOfmoles();
+            TBPfractions[numb] += system.getPhase(0).getComponent(i).getz();
+            TBP_Mnom[numb] += system.getPhase(0).getComponent(i).getz()
+                    * system.getPhase(0).getComponent(i).getMolarMass();
+            TBPdensDenom[numb] += system.getPhase(0).getComponent(i).getz()
+                    * system.getPhase(0).getComponent(i).getMolarMass()
+                    / system.getPhase(0).getComponent(i).getNormalLiquidDensity();
+            // }
         }
         TBPdens = new double[length];
         TBP_M = new double[length];
@@ -104,26 +106,31 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
 
     public void addTBPFractions() {
         for (int i = 0; i < TBPdens.length; i++) {
-            //System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
-            system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]),TBPmoles[i], TBP_M[i], TBPdens[i]);
+            // System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
+            system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i], TBPdens[i]);
         }
     }
 
     public boolean saveCharacterizedFluid() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        //double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
+            // double boilpoint =
+            // system.getPhase(0).getComponent(i).getNormalBoilingPoint();
         }
         return true;
     }
 
-    /** Getter for property TBPfractions.
+    /**
+     * Getter for property TBPfractions.
+     * 
      * @return Value of property TBPfractions.
      */
     public double[] getTBPfractions() {
         return this.TBPfractions;
     }
 
-    /** Setter for property coefs.
+    /**
+     * Setter for property coefs.
+     * 
      * @param coefs New value of property coefs.
      */
     public void setCoefs(double coef, int i) {
@@ -134,7 +141,9 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         return this.TBPfractions[i];
     }
 
-    /** Setter for property TBPfractions.
+    /**
+     * Setter for property TBPfractions.
+     * 
      * @param TBPfractions New value of property TBPfractions.
      */
     public void setTBPfractions(double[] TBPfractions) {
@@ -151,14 +160,18 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         solver.solve();
     }
 
-    /** Setter for property coefs.
+    /**
+     * Setter for property coefs.
+     * 
      * @param coefs New value of property coefs.
      */
     public void setCoefs(double[] coefs) {
         this.coefs = coefs;
     }
 
-    /** Getter for property TBPdens.
+    /**
+     * Getter for property TBPdens.
+     * 
      * @return Value of property TBPdens.
      */
     public double[] getTBPdens() {
@@ -169,63 +182,81 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         return this.TBPdens[i];
     }
 
-    /** Setter for property TBPdens.
+    /**
+     * Setter for property TBPdens.
+     * 
      * @param TBPdens New value of property TBPdens.
      */
     public void setTBPdens(double[] TBPdens) {
         this.TBPdens = TBPdens;
     }
 
-    /** Getter for property length.
+    /**
+     * Getter for property length.
+     * 
      * @return Value of property length.
      */
     public int getLength() {
         return length;
     }
 
-    /** Getter for property TBP_M.
+    /**
+     * Getter for property TBP_M.
+     * 
      * @return Value of property TBP_M.
      */
     public double[] getTBP_M() {
         return this.TBP_M;
     }
 
-    /** Setter for property TBP_M.
+    /**
+     * Setter for property TBP_M.
+     * 
      * @param TBP_M New value of property TBP_M.
      */
     public void setTBP_M(double[] TBP_M) {
         this.TBP_M = TBP_M;
     }
 
-    /** Getter for property carbonNumberVector.
+    /**
+     * Getter for property carbonNumberVector.
+     * 
      * @return Value of property carbonNumberVector.
      */
     public int[] getCarbonNumberVector() {
         return this.carbonNumberVector;
     }
 
-    /** Setter for property carbonNumberVector.
+    /**
+     * Setter for property carbonNumberVector.
+     * 
      * @param carbonNumberVector New value of property carbonNumberVector.
      */
     public void setCarbonNumberVector(int[] carbonNumberVector) {
         this.carbonNumberVector = carbonNumberVector;
     }
 
-    /** Getter for property calcTBPfractions.
+    /**
+     * Getter for property calcTBPfractions.
+     * 
      * @return Value of property calcTBPfractions.
      */
     public double[] getCalcTBPfractions() {
         return this.calcTBPfractions;
     }
 
-    /** Setter for property calcTBPfractions.
+    /**
+     * Setter for property calcTBPfractions.
+     * 
      * @param calcTBPfractions New value of property calcTBPfractions.
      */
     public void setCalcTBPfractions(double[] calcTBPfractions) {
         this.calcTBPfractions = calcTBPfractions;
     }
 
-    /** Getter for property plusCoefs.
+    /**
+     * Getter for property plusCoefs.
+     * 
      * @return Value of property plusCoefs.
      */
     public double[] getPlusCoefs() {
@@ -236,14 +267,18 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         return this.plusCoefs[i];
     }
 
-    /** Setter for property plusCoefs.
+    /**
+     * Setter for property plusCoefs.
+     * 
      * @param plusCoefs New value of property plusCoefs.
      */
     public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
-    /** Getter for property densPlus.
+    /**
+     * Getter for property densPlus.
+     * 
      * @return Value of property densPlus.
      *
      */
@@ -251,7 +286,9 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         return densPlus;
     }
 
-    /** Setter for property densPlus.
+    /**
+     * Setter for property densPlus.
+     * 
      * @param densPlus New value of property densPlus.
      *
      */

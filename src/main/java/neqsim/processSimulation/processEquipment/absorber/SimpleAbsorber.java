@@ -50,7 +50,6 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
         outStream[0] = (Stream) inStream1.clone();
         outStream[1] = (Stream) inStream1.clone();
 
-
         SystemInterface systemOut1 = (SystemInterface) inStream1.getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
 
@@ -68,9 +67,9 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
     }
 
     public void setName(String name) {
-    //    outStream[0].setName(name + "_Sout1");
-    //    outStream[1].setName(name + "_Sout2");
-       super.setName(name);
+        // outStream[0].setName(name + "_Sout1");
+        // outStream[1].setName(name + "_Sout2");
+        super.setName(name);
     }
 
     public void setdT(double dT) {
@@ -113,21 +112,30 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
         outStream[1].run();
 
         double error = 1e5;
-        error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase() + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
-                / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase() + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
+        error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")
+                .getNumberOfMolesInPhase()
+                + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
+                / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
+                        + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
         int iter = 0;
         do {
             iter++;
-            double factor = (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase() + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
-            //outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
+            double factor = (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
+                    + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
+            // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
             outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
             outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
             outStream[1].run();
-            error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1).getComponent("CO2").getNumberOfMolesInPhase() + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
-                    / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase() + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase()));
+            error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")
+                    .getNumberOfMolesInPhase()
+                    + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
+                    / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
+                            + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+")
+                                    .getNumberOfMolesInPhase()));
 
             System.out.println("error " + error);
-        } while (Math.abs(error) > 1e-4 && iter < 30 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0 && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
+        } while (Math.abs(error) > 1e-4 && iter < 30 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
+                && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
 
     }
 

@@ -10,26 +10,25 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class ChungFunction extends LevenbergMarquardtFunction{
+public class ChungFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    
-    
+
     public ChungFunction() {
         params = new double[1];
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(1);
         system.initPhysicalProperties();
         return system.getPhases()[1].getPhysicalProperties().getViscosity();
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[i].setViscosityAssociationFactor(value);
         system.getPhases()[1].getComponents()[i].setViscosityAssociationFactor(value);

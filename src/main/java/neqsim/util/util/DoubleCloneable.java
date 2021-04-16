@@ -8,44 +8,39 @@ package neqsim.util.util;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class DoubleCloneable implements Cloneable{
+public class DoubleCloneable implements Cloneable {
 
     private static final long serialVersionUID = 1000;
-    
+
     double doubleValue;
+
     /** Creates new DoubleCloneable */
     public DoubleCloneable() {
     }
-    
-     public DoubleCloneable(double val) {
+
+    public DoubleCloneable(double val) {
         this.doubleValue = val;
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         DoubleCloneable clonedSystem = null;
-        try{
+        try {
             clonedSystem = (DoubleCloneable) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
         return clonedSystem;
     }
-    
-    
-    public void set(double val){
+
+    public void set(double val) {
         doubleValue = val;
     }
-    
-    public double doubleValue(){
+
+    public double doubleValue() {
         return doubleValue;
     }
-    
-    
-    
-    
-    
+
 }

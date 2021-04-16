@@ -26,47 +26,47 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
-public abstract class BaseOperation extends java.lang.Object implements OperationInterface, java.io.Serializable{
+public abstract class BaseOperation extends java.lang.Object implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
     SystemInterface systemThermo = null;;
+
     /** Creates new BaseOperation */
     public BaseOperation() {
     }
-    
-    public double[] get(String name){
+
+    public double[] get(String name) {
         return new double[3];
     }
-    
-     public String[][] getResultTable(){
+
+    public String[][] getResultTable() {
         return new String[10][3];
     }
 
-     public SystemInterface getThermoSystem(){
-         return null;
-     }
-     
-     public org.jfree.chart.JFreeChart getJFreeChart(String name){
-         return null;
-     }
-     
-       public void printToFile(String name){
-       }
-       
-       public void createNetCdfFile(String name){
-           
-       }
-       
-       
-    public double[][] getPoints(int i){
+    public SystemInterface getThermoSystem() {
         return null;
     }
-    
-  public void addData(String name, double[][] data){
-        
+
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+        return null;
+    }
+
+    public void printToFile(String name) {
+    }
+
+    public void createNetCdfFile(String name) {
+
+    }
+
+    public double[][] getPoints(int i) {
+        return null;
+    }
+
+    public void addData(String name, double[][] data) {
+
     }
 }

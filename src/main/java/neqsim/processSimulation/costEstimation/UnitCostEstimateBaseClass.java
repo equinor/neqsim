@@ -13,7 +13,7 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  *
  * @author esol
  */
-public class UnitCostEstimateBaseClass implements Serializable{
+public class UnitCostEstimateBaseClass implements Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -32,8 +32,7 @@ public class UnitCostEstimateBaseClass implements Serializable{
      * @return the totaltCost
      */
     public double getTotaltCost() {
-        return this.mechanicalEquipment.getWeightTotal()*costPerWeightUnit;
+        return this.mechanicalEquipment.getWeightTotal() * costPerWeightUnit;
     }
-
 
 }

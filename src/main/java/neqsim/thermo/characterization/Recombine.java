@@ -12,18 +12,18 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class Recombine {
-    private static final long serialVersionUID = 1000;    
+    private static final long serialVersionUID = 1000;
     SystemInterface gas, oil;
     private SystemInterface recombinedSystem = null;
     private double GOR = 1000.0;
     private double oilDesnity = 0.8;
-    
-    public Recombine(SystemInterface gas, SystemInterface oil){
-        
+
+    public Recombine(SystemInterface gas, SystemInterface oil) {
+
     }
-    
-    public SystemInterface runRecombination(){
-        return getRecombinedSystem(); 
+
+    public SystemInterface runRecombination() {
+        return getRecombinedSystem();
     }
 
     /**
@@ -60,6 +60,5 @@ public class Recombine {
     public SystemInterface getRecombinedSystem() {
         return recombinedSystem;
     }
-    
-    
+
 }

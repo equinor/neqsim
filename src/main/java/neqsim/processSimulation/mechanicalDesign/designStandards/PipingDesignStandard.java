@@ -14,11 +14,8 @@ public class PipingDesignStandard extends DesignStandard {
 
     private static final long serialVersionUID = 1000;
 
-    
     public PipingDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
     }
-    
-    
-    
+
 }

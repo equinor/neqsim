@@ -16,8 +16,6 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
 
     private static final long serialVersionUID = 1000;
 
-
-
     double orgpar = 0.0;
     boolean useStandardAlphaForSupercritical = true;
 
@@ -26,15 +24,13 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
      */
     public AtractiveTermMatCopPR(ComponentEosInterface component) {
         super(component);
-        m = (0.37464 + 1.54226 * component.getAcentricFactor() - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
- 
+        m = (0.37464 + 1.54226 * component.getAcentricFactor()
+                - 0.26992 * component.getAcentricFactor() * component.getAcentricFactor());
+
         if (component.getName().equals("water")) {
-            parameters[0] =
-                    0.91256735118818810000000000;
-            parameters[1] =
-                    -0.2872243639795234400000000;
-            parameters[2] =
-                    0.239526763058374250000000000;
+            parameters[0] = 0.91256735118818810000000000;
+            parameters[1] = -0.2872243639795234400000000;
+            parameters[2] = 0.239526763058374250000000000;
         }
         if (component.getName().equals("TEG")) {
             parameters[0] = 1.051E0;
@@ -56,12 +52,9 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         }
 
         if (component.getName().equals("water")) {
-            parameters[0] =
-                    0.91256735118818810000000000;
-            parameters[1] =
-                    -0.2872243639795234400000000;
-            parameters[2] =
-                    0.239526763058374250000000000;
+            parameters[0] = 0.91256735118818810000000000;
+            parameters[1] = -0.2872243639795234400000000;
+            parameters[2] = 0.239526763058374250000000000;
         }
         if (component.getName().equals("TEG")) {
             parameters[0] = 1.05E+00;
@@ -87,8 +80,9 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         } else {
             double Tr = temperature / component.getTC();
             double trRoot = 1.0 - Math.sqrt(Tr);
-            double temp = 1.0 + parameters[0] * trRoot + parameters[1] * trRoot*trRoot + parameters[2] * trRoot*trRoot*trRoot;
-            return temp*temp;
+            double temp = 1.0 + parameters[0] * trRoot + parameters[1] * trRoot * trRoot
+                    + parameters[2] * trRoot * trRoot * trRoot;
+            return temp * temp;
         }
     }
 
@@ -108,10 +102,11 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
         double rootTR = 1.0 - Math.sqrt(Tr);
-        return 2.0 * (1.0 + parameters[0] * rootTR+ parameters[1] * rootTR*rootTR + parameters[2] * rootTR*rootTR*rootTR) * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-                - parameters[1] * rootTR / Math.sqrt(Tr) / TC - 3.0 / 2.0 * parameters[2] * rootTR*rootTR / Math.sqrt(Tr) / TC);
-
-
+        return 2.0
+                * (1.0 + parameters[0] * rootTR + parameters[1] * rootTR * rootTR
+                        + parameters[2] * rootTR * rootTR * rootTR)
+                * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
+                        - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC);
 
     }
 
@@ -123,8 +118,16 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
         double rootTR = 1.0 - Math.sqrt(Tr);
-        return 2.0 * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC - 3.0 / 2.0 * parameters[2] * rootTR*rootTR / Math.sqrt(Tr) / TC, 2.0) + 2.0 * (1.0 + parameters[0] * rootTR + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * rootTR*rootTR*rootTR) * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0 + parameters[1] * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
-                + 3.0 / 2.0 * parameters[2] * rootTR / temperature / TC + 3.0 / 4.0 * parameters[2] * rootTR*rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+        return 2.0
+                * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * rootTR / Math.sqrt(Tr) / TC
+                        - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC, 2.0)
+                + 2.0 * (1.0 + parameters[0] * rootTR + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                        + parameters[2] * rootTR * rootTR * rootTR)
+                        * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
+                                + parameters[1] / temperature / TC / 2.0
+                                + parameters[1] * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
+                                + 3.0 / 2.0 * parameters[2] * rootTR / temperature / TC
+                                + 3.0 / 4.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
     public double diffaT(double temperature) {

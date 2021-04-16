@@ -24,8 +24,8 @@ public class testGasScrubber {
         testSystem.addComponent("ethane", 7.00e3, "kg/hr");
         testSystem.addComponent("propane", 12.0e3, "kg/hr");
         testSystem.addComponent("water", 10.0e3, "kg/hr");
-        //testSystem.addComponent("water", 20.00e3, "kg/hr");
-        //testSystem.addComponent("water", 2000.00, "kg/hr");
+        // testSystem.addComponent("water", 20.00e3, "kg/hr");
+        // testSystem.addComponent("water", 2000.00, "kg/hr");
         testSystem.createDatabase(true);
         testSystem.setMultiPhaseCheck(true);
         testSystem.setMixingRule(2);
@@ -71,29 +71,37 @@ public class testGasScrubber {
         // do design of process
         operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("StatoilTR");
 
-        // operations.runProcessDesignCalculation(); 
-        // prosessdesign do: calculate flow rates of TEG, amine, calculates heat duty requirements, compressor power requirements, number of trays, packing height, numner of theoretical stages, 
+        // operations.runProcessDesignCalculation();
+        // prosessdesign do: calculate flow rates of TEG, amine, calculates heat duty
+        // requirements, compressor power requirements, number of trays, packing height,
+        // numner of theoretical stages,
         // operations.runMechanicalDesignCalculation();
-        // calculates diameters of colums, wall thickness, weight, size of equipment, tray spacing
+        // calculates diameters of colums, wall thickness, weight, size of equipment,
+        // tray spacing
         operations.getSystemMechanicalDesign().runDesignCalculation();
         operations.getSystemMechanicalDesign().setDesign();
         operations.run();
         scrubber.getGasLoadFactor();
         // operations.calcDesign();
         scrubber.getMechanicalDesign().calcDesign();
-        //   scrubber.getMechanicalDesign().setDesignStandard("ASME - Pressure Vessel Code");
-        //   scrubber.getMechanicalDesign().setDesignStandard("BS 5500 - Pressure Vessel");
+        // scrubber.getMechanicalDesign().setDesignStandard("ASME - Pressure Vessel
+        // Code");
+        // scrubber.getMechanicalDesign().setDesignStandard("BS 5500 - Pressure
+        // Vessel");
 
-        System.out.println("vane top veight " + scrubber.getSeparatorSection("inlet vane").getMechanicalDesign().getTotalWeight());
+        System.out.println(
+                "vane top veight " + scrubber.getSeparatorSection("inlet vane").getMechanicalDesign().getTotalWeight());
 
         System.out.println("curryover " + scrubber.calcLiquidCarryoverFraction());
         System.out.println("gas vel " + scrubber.getGasSuperficialVelocity());
         System.out.println("gas load factor oil " + scrubber.getGasLoadFactor());
-        //System.out.println("gas load factor water " + scrubber.getGasLoadFactor(2));
+        // System.out.println("gas load factor water " + scrubber.getGasLoadFactor(2));
         System.out.println("derated gas load factor oil " + scrubber.getDeRatedGasLoadFactor());
-        //System.out.println("derated gas load factor water " + scrubber.getDeRatedGasLoadFactor(2));
+        // System.out.println("derated gas load factor water " +
+        // scrubber.getDeRatedGasLoadFactor(2));
 
-        System.out.println("minimum liquid seal height " + scrubber.getSeparatorSection(0).getMinimumLiquidSealHeight());
-    scrubber.getMechanicalDesign().displayResults();
+        System.out
+                .println("minimum liquid seal height " + scrubber.getSeparatorSection(0).getMinimumLiquidSealHeight());
+        scrubber.getMechanicalDesign().displayResults();
     }
 }

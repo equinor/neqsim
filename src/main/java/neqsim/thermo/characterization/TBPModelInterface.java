@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public interface TBPModelInterface {
-  
+
     public double calcTC(double molarMass, double density);
 
     public double calcPC(double molarMass, double density);

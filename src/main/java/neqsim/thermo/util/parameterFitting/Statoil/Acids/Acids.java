@@ -52,7 +52,8 @@ public class Acids {
         }
 
         int j;
-        int AcidNumb = 0, AcnNumb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0, CO3Numb = 0, OHNumb;
+        int AcidNumb = 0, AcnNumb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0,
+                CO3Numb = 0, OHNumb;
         double nCO2, nMDEA, nHCO3, nCO3, nMDEAp, nOH, nHAc, nAcn;
         double aCO2, aMDEA, aHCO3, awater, aMDEAp, aOH, aCO3, aHAc, aAcn;
         double error, newValue, oldValue, guess, dx, dP, Pold, Pnew;
@@ -167,16 +168,20 @@ public class Acids {
             try {
                 outfile = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt", true);
                 p = new PrintStream(outfile);
-                p.println(loading + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx() + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH + " " + nHAc + " " + nAcn);
+                p.println(loading + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx()
+                        + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " " + nOH + " " + nHAc
+                        + " " + nAcn);
                 p.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file " + e.getMessage());
-            } 
+            }
 
             try {
-                outfile1 = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt", true);
+                outfile1 = new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt",
+                        true);
                 p1 = new PrintStream(outfile1);
-                p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3 + " " + aOH + " " + aHAc + " " + aAcn);
+                p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " " + aMDEAp + " " + aCO3
+                        + " " + aOH + " " + aHAc + " " + aAcn);
                 p1.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());

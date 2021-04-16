@@ -11,7 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
-public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
+public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
+        implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlash.class);
@@ -49,7 +50,8 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                 SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
                 funk = system.getPhase(0).getComponent(k).getz();
                 for (int i = 0; i < system.getNumberOfPhases(); i++) {
-                    funk -= system.getPhase(i).getBeta() * SolidFugCoeff / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
+                    funk -= system.getPhase(i).getBeta() * SolidFugCoeff
+                            / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
                 }
             }
         }
@@ -73,8 +75,9 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                 SolidForms = true;
                 FCompNames[k] = system.getPhase(0).getComponent(k).getComponentName();
                 if (noFreezeFlash) {
-                    //system.setTemperature(trpTemp - 0.8);
-                    logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName());
+                    // system.setTemperature(trpTemp - 0.8);
+                    logger.info("Starting at Triple point temperature "
+                            + system.getPhase(0).getComponent(k).getComponentName());
                 }
 
                 funkOld = 0.0;
@@ -90,7 +93,8 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                     SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
                     funk = system.getPhase(0).getComponent(k).getz();
                     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-                        funk -= system.getPhase(i).getBeta() * SolidFugCoeff / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
+                        funk -= system.getPhase(i).getBeta() * SolidFugCoeff
+                                / system.getPhase(i).getComponents()[k].getFugasityCoeffisient();
                     }
                     logger.info("funk " + funk);
                     if (iterations > 1) {// && oldPhaseType == system.getPhase(0).getPhaseType()) {
@@ -99,7 +103,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                         deriv = funk * 100.0;
                     }
                     if (Math.abs(funk / deriv) > 10.0) {
-                        //deriv = Math.signum(deriv) * Math.abs(funk) * (10.0 / (1.0 * iterations));
+                        // deriv = Math.signum(deriv) * Math.abs(funk) * (10.0 / (1.0 * iterations));
                     }
 
                     logger.info("phase type " + system.getPhase(0).getPhaseType());
@@ -110,7 +114,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                     system.setTemperature(newTemp);
                 } while (Math.abs(funk) >= 1e-12 && iterations < maxNumberOfIterations);
                 FCompTemp[k] = newTemp;
-                //logger.info("iterations " + iterations);
+                // logger.info("iterations " + iterations);
 
                 if (system.getTemperature() < minTemperature) {
                     minTemperature = oldTemperature;
@@ -118,9 +122,9 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
                 if (system.getTemperature() > maxTemperature) {
                     maxTemperature = oldTemperature;
                 }
-            }//end if
+            } // end if
 
-        }// end for lokke
+        } // end for lokke
 
         if (SolidForms) {
             system.setTemperature(maxTemperature);
@@ -145,7 +149,10 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
             for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
 
                 // print line to output file
-                pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure() + "," + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + "," + Niterations);
+                pr_writer.println(
+                        FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure() + ","
+                                + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + ","
+                                + Niterations);
                 pr_writer.flush();
             }
             pr_writer.close();
@@ -155,7 +162,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash 
         } catch (IOException ioe) {
             logger.error("writeFile: caught i/o exception");
         }
-
 
     }
 }

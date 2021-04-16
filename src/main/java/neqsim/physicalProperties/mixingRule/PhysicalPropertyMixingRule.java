@@ -15,7 +15,8 @@ import org.apache.logging.log4j.*;
  * @author esol
  * @version
  */
-public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface, java.io.Serializable {
+public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMixingRuleInterface,
+        ThermodynamicConstantsInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMixingRule.class);
@@ -36,7 +37,7 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
+
         double[][] Gij2 = Gij.clone();
         for (int i = 0; i < Gij2.length; i++) {
             Gij2[i] = Gij2[i].clone();
@@ -65,16 +66,19 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
 
         database = new neqsim.util.database.NeqSimDataBase();
         for (int l = 0; l < phase.getNumberOfComponents(); l++) {
-        	 if (phase.getComponent(l).isIsTBPfraction()  || phase.getComponent(l).getIonicCharge() != 0) {
-                 break;
-             }
+            if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
+                break;
+            }
             String component_name = phase.getComponents()[l].getComponentName();
             for (int k = l; k < phase.getNumberOfComponents(); k++) {
                 if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
                     break;
                 } else {
                     try {
-                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='" + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name + "')");
+                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
+                                + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='"
+                                + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name
+                                + "')");
                         if (dataSet.next()) {
                             Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
                         } else {
@@ -87,12 +91,12 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
                         logger.error(err);
                     } finally {
                         try {
-                        	   if (dataSet != null) {
-                                   dataSet.close();
-                               }
-                           } catch (Exception e) {
-                               logger.error("err closing dataSet in physical property mixing rule...", e);
-                           }
+                            if (dataSet != null) {
+                                dataSet.close();
+                            }
+                        } catch (Exception e) {
+                            logger.error("err closing dataSet in physical property mixing rule...", e);
+                        }
                     }
                 }
             }

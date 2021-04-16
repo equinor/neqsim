@@ -4,7 +4,7 @@ import Jama.*;
 import neqsim.physicalProperties.util.examples.TPflash;
 import neqsim.thermo.system.SystemInterface;
 
-public class cricondenBarTemp1 extends TPflash implements  java.io.Serializable {
+public class cricondenBarTemp1 extends TPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -33,28 +33,29 @@ public class cricondenBarTemp1 extends TPflash implements  java.io.Serializable 
         this.system = system;
         this.numberOfComponents = system.getPhase(0).getNumberOfComponents();
         neq = numberOfComponents;
-        Jac = new Matrix(neq+2, neq+2);
-        fvec = new Matrix(neq+2, 1);
-        u = new Matrix(neq+2, 1);
-        Xgij = new Matrix(neq+2, 4);
+        Jac = new Matrix(neq + 2, neq + 2);
+        fvec = new Matrix(neq + 2, 1);
+        u = new Matrix(neq + 2, 1);
+        Xgij = new Matrix(neq + 2, 4);
         setu();
         uold = u.copy();
-        //   System.out.println("Spec : " +speceq);
+        // System.out.println("Spec : " +speceq);
     }
 
     public void setfvec() {
-        double xtot = 0.0, dQdT=0;
+        double xtot = 0.0, dQdT = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             xtot += system.getPhase(1).getComponent(i).getx();
-            dQdT -= system.getPhase(1).getComponent(i).getx()*(system.getPhase(0).getComponent(i).getdfugdt()-system.getPhase(1).getComponent(i).getdfugdt());
+            dQdT -= system.getPhase(1).getComponent(i).getx()
+                    * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
             fvec.set(i, 0,
-                    Math.log(
-                    system.getPhase(0).getComponents()[i].getFugasityCoeffisient() * system.getPhase(0).getComponents()[i].getz() * system.getPressure()) -
-                    Math.log(
-                    system.getPhases()[1].getComponents()[i].getFugasityCoeffisient() * system.getPhases()[1].getComponents()[i].getx() * system.getPressure()));
+                    Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+                            * system.getPhase(0).getComponents()[i].getz() * system.getPressure())
+                            - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                                    * system.getPhases()[1].getComponents()[i].getx() * system.getPressure()));
         }
-        fvec.set(numberOfComponents,0,1.0-xtot);
-        fvec.set(numberOfComponents+1,0,dQdT);
+        fvec.set(numberOfComponents, 0, 1.0 - xtot);
+        fvec.set(numberOfComponents + 1, 0, dQdT);
     }
 
     public void setJac() {
@@ -66,10 +67,12 @@ public class cricondenBarTemp1 extends TPflash implements  java.io.Serializable 
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;//Kroneckers delta
-                tempJ =
-                        1.0 / system.getBeta() * (dij / system.getPhases()[0].getComponents()[i].getx() - 1.0 + system.getPhases()[0].getComponents()[i].getdfugdx(j)) +
-                        1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponents()[i].getx() - 1.0 + system.getPhases()[1].getComponents()[i].getdfugdx(j));
+                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+                tempJ = 1.0 / system.getBeta()
+                        * (dij / system.getPhases()[0].getComponents()[i].getx() - 1.0
+                                + system.getPhases()[0].getComponents()[i].getdfugdx(j))
+                        + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponents()[i].getx() - 1.0
+                                + system.getPhases()[1].getComponents()[i].getdfugdx(j));
                 Jac.set(i, j, tempJ);
             }
         }
@@ -92,8 +95,10 @@ public class cricondenBarTemp1 extends TPflash implements  java.io.Serializable 
         system.setBeta(temp);
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhases()[0].getComponents()[i].setx(u.get(i, 0) / system.getBeta());
-            system.getPhases()[1].getComponents()[i].setx((system.getPhases()[0].getComponents()[i].getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
-            system.getPhases()[0].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getx() / system.getPhases()[1].getComponents()[i].getx());
+            system.getPhases()[1].getComponents()[i]
+                    .setx((system.getPhases()[0].getComponents()[i].getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
+            system.getPhases()[0].getComponents()[i].setK(
+                    system.getPhases()[0].getComponents()[i].getx() / system.getPhases()[1].getComponents()[i].getx());
             system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
 
         }
@@ -108,7 +113,7 @@ public class cricondenBarTemp1 extends TPflash implements  java.io.Serializable 
         setfvec();
         setJac();
         dx = Jac.solve(fvec);
-        dx.print(10,10);
+        dx.print(10, 10);
         u.minusEquals(dx);
         return (dx.norm2() / u.norm2());
     }
@@ -142,7 +147,7 @@ public class cricondenBarTemp1 extends TPflash implements  java.io.Serializable 
     public void createNetCdfFile(String name) {
     }
 
-    public SystemInterface getThermoSystem(){
-       return system;
-   }
+    public SystemInterface getThermoSystem() {
+        return system;
+    }
 }

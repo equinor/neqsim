@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+/*
+* To change this license header, choose License Headers in Project Properties.
+* To change this template file, choose Tools | Templates
+* and open the template in the editor.
+*/
 package neqsim.util.database;
 
 import java.sql.*;
@@ -52,7 +52,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
             System.out.println("SQLException " + ex.getMessage());
 
         }
-    } 
+    }
 
     public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
         javax.naming.InitialContext ctx = null;
@@ -103,10 +103,10 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         AspenIP21Database database = new AspenIP21Database();
         ResultSet dataSet = database.getResultSet("Karsto", "....'");
         try {
-                     while (dataSet.next()) {
+            while (dataSet.next()) {
 
-                         System.out.println("dataset " + dataSet.getString(4));
-                         System.out.println("dataset value " + dataSet.getDouble("..."));
+                System.out.println("dataset " + dataSet.getString(4));
+                System.out.println("dataset value " + dataSet.getDouble("..."));
             }
         } catch (Exception e) {
             System.out.println("failed " + e.toString());

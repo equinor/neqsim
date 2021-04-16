@@ -46,14 +46,14 @@ public class OLGApropGenerator {
         testSystem.addComponent("n-butane", 0.2696);
         testSystem.addComponent("i-pentane", 0.18108);
         testSystem.addComponent("n-pentane", 0.422286);
-        testSystem.addTBPfraction("C6_PC", 0.01753, 86.178/1000.0, 0.66399);
-        testSystem.addTBPfraction("C7_PC", 0.0231839, 96.0/1000.0, 0.738);
-        testSystem.addTBPfraction("C8_PC", 0.006674, 107.0/1000.0, 0.8097);
-        testSystem.addTBPfraction("C9_PC", 0.000660625, 120.99/1000.0, 0.8863);
-        testSystem.addTBPfraction("C10_PC", 8.07355e-5, 144.178/1000.0, 0.8526);
-        
-     //  testSystem.addComponent("water", 28.97100);
-     //   testSystem.addComponent("TEG",65.65524299);
+        testSystem.addTBPfraction("C6_PC", 0.01753, 86.178 / 1000.0, 0.66399);
+        testSystem.addTBPfraction("C7_PC", 0.0231839, 96.0 / 1000.0, 0.738);
+        testSystem.addTBPfraction("C8_PC", 0.006674, 107.0 / 1000.0, 0.8097);
+        testSystem.addTBPfraction("C9_PC", 0.000660625, 120.99 / 1000.0, 0.8863);
+        testSystem.addTBPfraction("C10_PC", 8.07355e-5, 144.178 / 1000.0, 0.8526);
+
+        // testSystem.addComponent("water", 28.97100);
+        // testSystem.addComponent("TEG",65.65524299);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
@@ -61,10 +61,10 @@ public class OLGApropGenerator {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
-           // testSystem.setTemperature(380.0);
-          //  testSystem.setPressure(80.0);
-          //  testOps.TPflash();
-          //  testSystem.display();
+            // testSystem.setTemperature(380.0);
+            // testSystem.setPressure(80.0);
+            // testOps.TPflash();
+            // testSystem.display();
 
             testSystem.setTemperature(273.15 + 20.85);
             testSystem.setPressure(13);

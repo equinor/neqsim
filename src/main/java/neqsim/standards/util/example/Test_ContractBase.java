@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public class Test_ContractBase {
@@ -36,14 +36,15 @@ public class Test_ContractBase {
         testSystem.addComponent("H2S", 0.000012);
         testSystem.addComponent("water", 0.0000071);
         testSystem.addComponent("oxygen", 0.0012);
-              testSystem.addComponent("CO2", 0.0022);
+        testSystem.addComponent("CO2", 0.0022);
         testSystem.addComponent("nitrogen", 0.022);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(8);
 
         testSystem.init(0);
 
-        //  ContractInterface standard = new BaseContract(testSystem, "EASEE-GAS-CBP", "EUROPE");
+        // ContractInterface standard = new BaseContract(testSystem, "EASEE-GAS-CBP",
+        // "EUROPE");
         ContractInterface standard = new BaseContract(testSystem, "UK-GSMR1996", "UK");
         standard.runCheck();
         standard.display();

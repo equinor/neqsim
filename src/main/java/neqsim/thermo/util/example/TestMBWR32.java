@@ -30,8 +30,8 @@ public class TestMBWR32 {
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemBWRSEos(298.15, 0.101);
-       // SystemInterface testSystem = new SystemSrkEos(111.15, 5.01);
-        //SystemInterface testSystem = new SystemPrEos(111.0, 1.0523);
+        // SystemInterface testSystem = new SystemSrkEos(111.15, 5.01);
+        // SystemInterface testSystem = new SystemPrEos(111.0, 1.0523);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         testSystem.addComponent("methane", 1.0);
@@ -43,11 +43,10 @@ public class TestMBWR32 {
         testSystem.init(3);
         logger.info("Z " + testSystem.getLowestGibbsEnergyPhase().getZ());
 
-
         try {
-            //  testOps.TPflash();
-             testOps.bubblePointTemperatureFlash();
-          //  testOps.bubblePointPressureFlash(false);
+            // testOps.TPflash();
+            testOps.bubblePointTemperatureFlash();
+            // testOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
             logger.info(e.toString());
         }

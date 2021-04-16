@@ -10,10 +10,12 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public interface ConductivityInterface extends ThermodynamicConstantsInterface, neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface{
-     public double calcConductivity();
-     public Object clone();
+public interface ConductivityInterface extends ThermodynamicConstantsInterface,
+        neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
+    public double calcConductivity();
+
+    public Object clone();
 }

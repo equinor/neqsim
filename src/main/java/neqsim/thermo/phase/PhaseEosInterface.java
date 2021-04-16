@@ -27,13 +27,18 @@ public interface PhaseEosInterface extends PhaseInterface {
     public double getPressureRepulsive();
 
     public double getPressureAtractive();
-      public void displayInteractionCoefficients(String intType);
+
+    public void displayInteractionCoefficients(String intType);
     // public double getA();
     // public double getB();
-    //double calcA(ComponentEosInterface[] compArray, double temperature, double pressure, int numbcomp);
-    //double calcB(ComponentEosInterface[] compArray, double temperature, double pressure, int numbcomp);
-    //double calcA(ComponentEosInterface[] compArray, double temperature, double pressure, int numbcomp);
-    //double calcB(ComponentEosInterface[] compArray, double temperature, double pressure, int numbcomp);
+    // double calcA(ComponentEosInterface[] compArray, double temperature, double
+    // pressure, int numbcomp);
+    // double calcB(ComponentEosInterface[] compArray, double temperature, double
+    // pressure, int numbcomp);
+    // double calcA(ComponentEosInterface[] compArray, double temperature, double
+    // pressure, int numbcomp);
+    // double calcB(ComponentEosInterface[] compArray, double temperature, double
+    // pressure, int numbcomp);
 
     public double F();
 

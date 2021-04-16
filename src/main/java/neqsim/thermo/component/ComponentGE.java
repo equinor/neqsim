@@ -11,7 +11,7 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 abstract class ComponentGE extends Component implements ComponentGEInterface {
@@ -19,7 +19,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     private static final long serialVersionUID = 1000;
 
     protected double gamma = 0, gammaRefCor = 0;
-    protected double lngamma = 0, dlngammadt = 0, dlngammadp = 0,dlngammadtdt=0.0;
+    protected double lngamma = 0, dlngammadt = 0, dlngammadp = 0, dlngammadtdt = 0.0;
     protected double[] dlngammadn;
     static Logger logger = LogManager.getLogger(ComponentGE.class);
 
@@ -44,7 +44,8 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
             } else {
                 activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
             }
-            fugasityCoeffisient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();//gamma* benyttes ikke
+            fugasityCoeffisient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();// gamma*
+                                                                                                        // benyttes ikke
             gammaRefCor = activinf;
         }
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
@@ -68,7 +69,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         int numberOfComponents = phase.getNumberOfComponents();
 
         if (referenceStateType.equals("solvent")) {
-            dfugdt = dlngammadt + 1.0/getAntoineVaporPressure(temperature)*getAntoineVaporPressuredT(temperature);
+            dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
             logger.info("check this dfug dt - antoine");
         } else {
             dfugdt = dlngammadt + getHenryCoefdT(temperature);
@@ -79,16 +80,16 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     public double getGamma() {
         return gamma;
     }
-    
-     public double getlnGamma() {
+
+    public double getlnGamma() {
         return lngamma;
     }
 
     public double getlnGammadt() {
         return dlngammadt;
     }
-    
-      public double getlnGammadtdt() {
+
+    public double getlnGammadtdt() {
         return dlngammadtdt;
     }
 
@@ -100,13 +101,14 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         dlngammadn[k] = val;
     }
 
-    /** Getter for property gammaRefCor.
+    /**
+     * Getter for property gammaRefCor.
+     * 
      * @return Value of property gammaRefCor.
      *
      */
     public double getGammaRefCor() {
         return gammaRefCor;
     }
-    
- 
+
 }

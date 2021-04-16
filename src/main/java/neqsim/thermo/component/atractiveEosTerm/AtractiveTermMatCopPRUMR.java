@@ -14,7 +14,6 @@ import neqsim.thermo.component.ComponentEosInterface;
  */
 public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
-
     private static final long serialVersionUID = 1000;
     double orgpar = 0.0;
     boolean useStandardAlphaForSupercritical = false;
@@ -24,15 +23,15 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
      */
     public AtractiveTermMatCopPRUMR(ComponentEosInterface component) {
         super(component);
-        m = (0.384401 + 1.52276 * component.getAcentricFactor() - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor() + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0) - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
+        m = (0.384401 + 1.52276 * component.getAcentricFactor()
+                - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
+                + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0)
+                - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
 
         if (component.getName().equals("water")) {
-            parameters[0] =
-                    0.91256735118818810000000000;
-            parameters[1] =
-                    -0.2872243639795234400000000;
-            parameters[2] =
-                    0.239526763058374250000000000;
+            parameters[0] = 0.91256735118818810000000000;
+            parameters[1] = -0.2872243639795234400000000;
+            parameters[2] = 0.239526763058374250000000000;
         }
         if (component.getName().equals("TEG")) {
             parameters[0] = 1.051E0;
@@ -54,12 +53,9 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
         }
 
         if (component.getName().equals("water")) {
-            parameters[0] =
-                    0.91256735118818810000000000;
-            parameters[1] =
-                    -0.2872243639795234400000000;
-            parameters[2] =
-                    0.239526763058374250000000000;
+            parameters[0] = 0.91256735118818810000000000;
+            parameters[1] = -0.2872243639795234400000000;
+            parameters[2] = 0.239526763058374250000000000;
         }
         if (component.getName().equals("TEG")) {
             parameters[0] = 1.05E+00;
@@ -84,7 +80,10 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
             return super.alpha(temperature);
         } else {
             double Tr = temperature / component.getTC();
-            return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0), 2.0);
+            return Math.pow(
+                    1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                            + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0),
+                    2.0);
         }
     }
 
@@ -103,10 +102,12 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
-        return 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)) * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-                - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC);
-
-
+        return 2.0
+                * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                        + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
+                * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
+                        - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+                        - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC);
 
     }
 
@@ -117,9 +118,21 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
-        return 2.0 * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC, 2.0) + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)) * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0 + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
-                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC + 3.0 / 4.0 * parameters[2] * Math.pow(
-                1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+        return 2.0
+                * Math.pow(
+                        -parameters[0] / Math.sqrt(Tr) / TC / 2.0
+                                - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+                                - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC,
+                        2.0)
+                + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
+                        + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                        + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
+                        * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
+                                + parameters[1] / temperature / TC / 2.0
+                                + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
+                                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC
+                                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                                        / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
     public double diffaT(double temperature) {

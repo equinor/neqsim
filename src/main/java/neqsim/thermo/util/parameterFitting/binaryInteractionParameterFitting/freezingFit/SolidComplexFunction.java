@@ -26,9 +26,9 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
         } catch (Exception e) {
             logger.error("error", e);
         }
-        //System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
-        return system.getTemperature();  // for lucia data
-        //return system.getPhases()[0].getComponents()[1].getx(); // for MEG
+        // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
+        return system.getTemperature(); // for lucia data
+        // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
     public void setFittingParams(int i, double value) {
@@ -40,7 +40,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
             SolidComplexTemperatureCalc.Kcomplex = value;
         }
         if (i == 2) {
-            SolidComplexTemperatureCalc.TrefComplex = value*100.0;
+            SolidComplexTemperatureCalc.TrefComplex = value * 100.0;
         }
     }
 }

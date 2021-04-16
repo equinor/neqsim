@@ -37,21 +37,21 @@ public class CriticalPointFlash {
     static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
 
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkEos(300,80.01325);
+        SystemInterface testSystem = new SystemSrkEos(300, 80.01325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-       // testSystem.addComponent("water", 0.9);
+        // testSystem.addComponent("water", 0.9);
         testSystem.addComponent("methane", 0.1);
         testSystem.addComponent("propane", 0.1);
-      //  testSystem.addComponent("i-butane", 0.1);
+        // testSystem.addComponent("i-butane", 0.1);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.init(0);
         try {
-           testOps.calcCricondenBar();
-            //testOps.criticalPointFlash();
-          //  testOps.calcPTphaseEnvelope(true);
-           // testOps.displayResult();
+            testOps.calcCricondenBar();
+            // testOps.criticalPointFlash();
+            // testOps.calcPTphaseEnvelope(true);
+            // testOps.displayResult();
         } catch (Exception e) {
             logger.error(e.toString());
         }

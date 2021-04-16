@@ -31,95 +31,93 @@ import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
-
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class HPTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable{
+public class HPTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
-    
+
     double[][] points = new double[10][10];
     SystemInterface system;
     ThermodynamicOperations testOps;
     JProgressBar monitor;
     JFrame mainFrame;
     JPanel mainPanel;
-    double startPressure=1, endPressure=0, startTemperature=160, endTemperature=0;
+    double startPressure = 1, endPressure = 0, startTemperature = 160, endTemperature = 0;
     static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
-    
+
     /** Creates new bubblePointFlash */
     public HPTphaseEnvelope() {
     }
-    
+
     public HPTphaseEnvelope(SystemInterface system) {
         testOps = new ThermodynamicOperations(system);
         this.system = system;
         mainFrame = new JFrame("Progress Bar");
         mainPanel = new JPanel();
-        mainPanel.setSize(200,100);
+        mainPanel.setSize(200, 100);
         mainFrame.getContentPane().setLayout(new FlowLayout());
         mainPanel.setLayout(new FlowLayout());
-        mainFrame.setSize(200,100);
-        monitor = new JProgressBar(0,1000);
-        monitor.setSize(200,100);
+        mainFrame.setSize(200, 100);
+        monitor = new JProgressBar(0, 1000);
+        monitor.setSize(200, 100);
         monitor.setStringPainted(true);
         mainPanel.add(monitor);
         mainFrame.getContentPane().add(mainPanel);
         mainFrame.setVisible(true);
     }
-    
-    
-    public void run(){
-        
-        int np =0;
-        
-        for(int i = 0;i<10;i++){
-            system.setPressure(i*0.5+startPressure);
-            for(int j=0;j<10;j++){
+
+    public void run() {
+
+        int np = 0;
+
+        for (int i = 0; i < 10; i++) {
+            system.setPressure(i * 0.5 + startPressure);
+            for (int j = 0; j < 10; j++) {
                 np++;
-                if(np%2==0){
+                if (np % 2 == 0) {
                     monitor.setValue(np);
                     monitor.setString("Calculated points: " + np);
                 }
-                
-                system.setTemperature(startTemperature+j);
+
+                system.setTemperature(startTemperature + j);
                 testOps.TPflash();
                 system.init(3);
                 points[i][j] = system.getEnthalpy();
             }
         }
     }
-    
-    public void displayResult(){
-        try{
+
+    public void displayResult() {
+        try {
             mainFrame.setVisible(false);
             visAd3DPlot plot = new visAd3DPlot("pressure[bar]", "temperature[K]", "enthalpy[J/mol]");
             plot.setXYvals(150, 160, 10, 10, 20, 10);
             plot.setZvals(points);
             plot.init();
-        } catch(Exception e){
+        } catch (Exception e) {
             logger.error("plotting failed");
         }
     }
-    
+
     public void printToFile(String name) {
     }
-    
-    
-    public double[][] getPoints(int i){
+
+    public double[][] getPoints(int i) {
         return points;
     }
-    
-    public void createNetCdfFile(String name){
+
+    public void createNetCdfFile(String name) {
     }
-    public org.jfree.chart.JFreeChart getJFreeChart(String name){
+
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-    
-    public String[][] getResultTable(){
+
+    public String[][] getResultTable() {
         return null;
     }
 }

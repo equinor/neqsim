@@ -30,18 +30,18 @@ public interface ComponentInterface {
     public String getCASnumber();
 
     public double getPureComponentCpLiquid(double temperature);
-    
+
     public double getPureComponentCpSolid(double temperature);
-    
+
     public double getdrhodN();
 
     public double getVolumeCorrectionT_CPA();
-    
+
     /**
      * method to return flow rate of a component
      *
      * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     * m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
      *
      * @return flow rate in specified unit
      */
@@ -169,7 +169,8 @@ public interface ComponentInterface {
 
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type);
 
-    public void Finit(PhaseInterface phase, double temperature, double pressure, double totalNumberOfMoles, double beta, int numberOfComponents, int type);
+    public void Finit(PhaseInterface phase, double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int numberOfComponents, int type);
 
     public double getx();
 
@@ -240,17 +241,17 @@ public interface ComponentInterface {
     public double getdfugdp();
 
     public double getSolidVaporPressure(double temperature);
-	
+
     /**
-	 * @param temperature
-	 * @return ideal gas Cp for the component in the specific phase [J/molK]
-	 */
+     * @param temperature
+     * @return ideal gas Cp for the component in the specific phase [J/molK]
+     */
     public double getCp0(double temperature);
 
-	/**
-	 * @param temperature
-	 * @return ideal gas Cv for the component in the specific phase [J/molK]
-	 */
+    /**
+     * @param temperature
+     * @return ideal gas Cv for the component in the specific phase [J/molK]
+     */
     public double getCv0(double temperature);
 
     public double getHID(double T);
@@ -292,10 +293,14 @@ public interface ComponentInterface {
     public double getSolidVaporPressuredT(double temperature);
 
     public double getChemicalPotential(double temperature, double pressure);
-    //    public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
-    //    public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
-    //    public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
-    //    public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
+    // temperature, double pressure);
+    // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
+    // double temperature, double pressure);
+    // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
+    // double temperature, double pressure);
+    // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
+    // double temperature, double pressure);
 
     public double getGibbsEnergy(double temperature, double pressure);
 
@@ -347,9 +352,11 @@ public interface ComponentInterface {
 
     public double getPureComponentHeatOfVaporization(double temperature);
 
-    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure);
 
-    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure);
 
     public void setdfugdt(double val);
 
@@ -366,7 +373,7 @@ public interface ComponentInterface {
     public int getAtractiveTermNumber();
 
     public double getVoli();
-    
+
     public double getAntoineVaporPressuredT(double temp);
 
     public double[] getMatiascopemanParams();
