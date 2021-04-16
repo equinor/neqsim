@@ -71,8 +71,8 @@ public class OffshoreProcess3 {
 		Stream oilToInletSep = new Stream((SystemInterface) fluid3.clone());
 		oilToInletSep.setFlowRate(1e-10, "kg/hr");
 		ThreePhaseSeparator inletSeparator = new ThreePhaseSeparator("1st stage separator", valve.getOutStream());
-		inletSeparator.setEntrainment(0.005,"mass", "product", "aqueous", "oil");
-		inletSeparator.setEntrainment(500e-6,"mole", "product", "oil", "aqueous");
+		inletSeparator.setEntrainment(0.005, "mass", "product", "aqueous", "oil");
+		inletSeparator.setEntrainment(500e-6, "mole", "product", "oil", "aqueous");
 		inletSeparator.addStream(oilToInletSep);
 
 		Heater heater1 = new Heater(inletSeparator.getOilOutStream());
@@ -117,27 +117,26 @@ public class OffshoreProcess3 {
 		Cooler lpgasheater = new Cooler(lpcompressor.getOutStream());
 		lpgasheater.setName("1st stage gas cooler");
 		lpgasheater.setOutTemperature(35.0, "C");
-		
-		neqsim.thermo.system.SystemInterface coolingWaterSYstm = (neqsim.thermo.system.SystemInterface) fluid3.clone();
-	//	coolingWaterSYstm.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
-		coolingWaterSYstm.removeMoles();
-		coolingWaterSYstm.addComponent("water",1.0);
-		
-		/*
-		Stream coolingWater = new Stream("cooling water", coolingWaterSYstm);
-		coolingWater.setFlowRate(500900.2, "kg/hr");
-		coolingWater.setTemperature(10.0, "C");
-		coolingWater.setPressure(10.0, "bara");
-		
-		HeatExchanger heatEx = new HeatExchanger(lpcompressor.getOutStream());
-		heatEx.setName("LP heat Exchanger");
-		heatEx.setGuessOutTemperature(273.15+40.0);
-		heatEx.setUAvalue(45000.0);
-		heatEx.setFeedStream(1, coolingWater);
 
-		*/
-	
-		
+		neqsim.thermo.system.SystemInterface coolingWaterSYstm = (neqsim.thermo.system.SystemInterface) fluid3.clone();
+		// coolingWaterSYstm.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0,
+		// 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+		coolingWaterSYstm.removeMoles();
+		coolingWaterSYstm.addComponent("water", 1.0);
+
+		/*
+		 * Stream coolingWater = new Stream("cooling water", coolingWaterSYstm);
+		 * coolingWater.setFlowRate(500900.2, "kg/hr");
+		 * coolingWater.setTemperature(10.0, "C"); coolingWater.setPressure(10.0,
+		 * "bara");
+		 * 
+		 * HeatExchanger heatEx = new HeatExchanger(lpcompressor.getOutStream());
+		 * heatEx.setName("LP heat Exchanger");
+		 * heatEx.setGuessOutTemperature(273.15+40.0); heatEx.setUAvalue(45000.0);
+		 * heatEx.setFeedStream(1, coolingWater);
+		 * 
+		 */
+
 		Cooler lpHeatExchanger = new Cooler(lpcompressor.getOutStream());
 		lpgasheater.setName("1st stage gas heat exchanger");
 		lpgasheater.setOutTemperature(35.0, "C");
@@ -185,32 +184,31 @@ public class OffshoreProcess3 {
 
 		MoleFractionControllerUtil waterRemoval = new MoleFractionControllerUtil(mpscrubber.getGasOutStream());
 		waterRemoval.setMoleFraction("water", 10.0e-6);
-		
+
 		Stream richGas = new Stream(waterRemoval.getOutStream());
 		richGas.setName("rich gas");
 
 		Compressor exportGasCompressor = new Compressor(richGas);
 		exportGasCompressor.setName("1st stage export compressor");
 		exportGasCompressor.setIsentropicEfficiency(0.75);
-		exportGasCompressor.setOutletPressure(richGas.getPressure()*2.5);
-		
+		exportGasCompressor.setOutletPressure(richGas.getPressure() * 2.5);
+
 		Cooler exportGasCompressorCooler = new Cooler(exportGasCompressor.getOutStream());
 		exportGasCompressorCooler.setName("1st stage export gas cooler");
 		exportGasCompressorCooler.setOutTemperature(35.0, "C");
-		
+
 		Compressor exportGasCompressor2 = new Compressor(exportGasCompressorCooler.getOutStream());
 		exportGasCompressor2.setName("2nd stage export compressor");
 		exportGasCompressor2.setIsentropicEfficiency(0.75);
-		exportGasCompressor2.setOutletPressure(exportGasCompressorCooler.getOutStream().getPressure()*2.5*2.5);
+		exportGasCompressor2.setOutletPressure(exportGasCompressorCooler.getOutStream().getPressure() * 2.5 * 2.5);
 
-		
 		Cooler exportGasCompressorCooler2 = new Cooler(exportGasCompressor2.getOutStream());
 		exportGasCompressorCooler2.setName("2nd stage export gas cooler");
 		exportGasCompressorCooler2.setOutTemperature(35.0, "C");
-		
+
 		Stream exportGas = new Stream(exportGasCompressorCooler2.getOutStream());
 		exportGas.setName("export gas");
-		
+
 		neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
 		operations.add(wellStream);
 		operations.add(inletTempControl);
@@ -231,8 +229,8 @@ public class OffshoreProcess3 {
 		operations.add(compressorPresSet2);
 		operations.add(lpcompressor);
 		operations.add(lpgasheater);
-		//operations.add(coolingWater);
-		//operations.add(heatEx);
+		// operations.add(coolingWater);
+		// operations.add(heatEx);
 		operations.add(lpHeatExchanger);
 		operations.add(lpscrubber);
 		operations.add(liqFromlpscrubber);
@@ -278,29 +276,48 @@ public class OffshoreProcess3 {
 		exportGasCompressor2.getCompressorChart().setHeadUnit("kJ/kg");
 		exportGasCompressor2.run();
 		System.out.println("power " + exportGasCompressor2.getPower());
-		//operations.run();
+		// operations.run();
 		exportGas.displayResult();
 		/*
-		// System.out.println("second stage comp power " + ((Compressor)
-		// operations.getUnit("2nd stage recompressor")).getPower()/1.0e3 + " kW");
-
-//		System.out.println("first stage   comp power " + ((Compressor) operations.getUnit("1st stage recompressor")).getPower()/1.0e3 + " kW");
-
-        System.out.println("gas from inlet separator " + ((Separator) operations.getUnit("1st stage separator"))
-                .getGasOutStream().getFluid().getFlowRate("MSm3/day"));
-
-        System.out
-                .println("pressure of export oil  " + ((Stream) operations.getUnit("stable oil")).getPressure("bara"));
-
-        System.out.println(
-                "temperature of export oil  " + ((Stream) operations.getUnit("stable oil")).getTemperature("C"));
-
-        System.out.println("TVP of export oil (30.0 C) " + ((Stream) operations.getUnit("stable oil")).TVP(30.0, "C"));
-
-        // System.out.println("entropy production " +
-        // operations.getEntropyProduction("J/K") + " J/K");
-//		System.out.println("mass balance  separator " + ((Separator) operations.getUnit("scrubber of mix gas HP")).getMassBalance("kg/sec") + " kg/sec");
-
+		 * // System.out.println("second stage comp power " + ((Compressor) //
+		 * operations.getUnit("2nd stage recompressor")).getPower()/1.0e3 + " kW");
+		 * 
+		 * // System.out.println("first stage   comp power " + ((Compressor)
+		 * operations.getUnit("1st stage recompressor")).getPower()/1.0e3 + " kW");
+		 * 
+		 * System.out.println("gas from inlet separator " + ((Separator)
+		 * operations.getUnit("1st stage separator"))
+		 * .getGasOutStream().getFluid().getFlowRate("MSm3/day"));
+		 * 
+		 * System.out .println("pressure of export oil  " + ((Stream)
+		 * operations.getUnit("stable oil")).getPressure("bara"));
+		 * 
+		 * System.out.println( "temperature of export oil  " + ((Stream)
+		 * operations.getUnit("stable oil")).getTemperature("C"));
+		 * 
+		 * System.out.println("TVP of export oil (30.0 C) " + ((Stream)
+		 * operations.getUnit("stable oil")).TVP(30.0, "C"));
+		 * 
+		 * // System.out.println("entropy production " + //
+		 * operations.getEntropyProduction("J/K") + " J/K"); //
+		 * System.out.println("mass balance  separator " + ((Separator)
+		 * operations.getUnit("scrubber of mix gas HP")).getMassBalance("kg/sec") +
+		 * " kg/sec");
+		 * 
+		 * 
+		 * // liqFromlpscrubber.displayResult(); // richGas.phaseEnvelope(); //
+		 * richGas.displayResult(); operations.save("c:/temp/offshorePro.neqsim");
+		 * inletSeparator.getLiquidOutStream().getFluid().display();
+		 * inletSeparator.getWaterOutStream().getFluid().display();
+		 * exportGas.displayResult(); /* Hydrocyclone hydroSyc = new
+		 * Hydrocyclone(inletSeparator.getWaterOutStream()); hydroSyc.run();
+		 * hydroSyc.getGasOutStream().getFluid().display();
+		 * hydroSyc.getLiquidOutStream().getFluid().display();
+		 */
+		// ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
+		// operations2.run();
+		// cooler1stagecomp.getOutStream().phaseEnvelope();
+		// coolingWater.run();
 
 		// liqFromlpscrubber.displayResult();
 		// richGas.phaseEnvelope();
@@ -308,34 +325,16 @@ public class OffshoreProcess3 {
 		operations.save("c:/temp/offshorePro.neqsim");
 		inletSeparator.getLiquidOutStream().getFluid().display();
 		inletSeparator.getWaterOutStream().getFluid().display();
-		exportGas.displayResult();
+
 		/*
-		Hydrocyclone hydroSyc = new Hydrocyclone(inletSeparator.getWaterOutStream());
-		hydroSyc.run();
-		hydroSyc.getGasOutStream().getFluid().display();
-		hydroSyc.getLiquidOutStream().getFluid().display();
-		*/
+		 * Hydrocyclone hydroSyc = new Hydrocyclone(inletSeparator.getWaterOutStream());
+		 * hydroSyc.run(); hydroSyc.getGasOutStream().getFluid().display();
+		 * hydroSyc.getLiquidOutStream().getFluid().display();
+		 */
 		// ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
 		// operations2.run();
 		// cooler1stagecomp.getOutStream().phaseEnvelope();
-	//	coolingWater.run();
-
-        // liqFromlpscrubber.displayResult();
-        // richGas.phaseEnvelope();
-        // richGas.displayResult();
-        operations.save("c:/temp/offshorePro.neqsim");
-        inletSeparator.getLiquidOutStream().getFluid().display();
-        inletSeparator.getWaterOutStream().getFluid().display();
-
-        /*
-         * Hydrocyclone hydroSyc = new Hydrocyclone(inletSeparator.getWaterOutStream());
-         * hydroSyc.run(); hydroSyc.getGasOutStream().getFluid().display();
-         * hydroSyc.getLiquidOutStream().getFluid().display();
-         */
-        // ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
-        // operations2.run();
-        // cooler1stagecomp.getOutStream().phaseEnvelope();
-        // coolingWater.run();
+		// coolingWater.run();
 
 //		coolingWater.getFluid().init(3);
 //		heatEx.run();heatEx.run();
@@ -344,22 +343,23 @@ public class OffshoreProcess3 {
 //		System.out.println("entropy production heat exchanger " +heatEx.getEntropyProduction("J/K") + " J/K");
 //		System.out.println("mass balance production heat exchanger " +heatEx.getMassBalance("kg/sec"));
 
-/*
-		System.out.println("Cooler Duty " +operations.getCoolerDuty("J/sec")/1.0e6 +" MW");
-		System.out.println("Heater Duty " +operations.getHeaterDuty("J/sec")/1.0e6+" MW");
-		System.out.println("Power " +operations.getPower("W")/1.0e6+" MW");
-		
+		/*
+		 * System.out.println("Cooler Duty " +operations.getCoolerDuty("J/sec")/1.0e6
+		 * +" MW"); System.out.println("Heater Duty "
+		 * +operations.getHeaterDuty("J/sec")/1.0e6+" MW"); System.out.println("Power "
+		 * +operations.getPower("W")/1.0e6+" MW");
+		 * 
+		 * System.out.println("exergy change " + operations.getExergyChange("J"));
+		 * System.out.println("total weight " + operations.getMechanicalWeight("kg")
+		 * +" kg");
+		 */
+
+		System.out.println("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
+		System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
+		System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
+
 		System.out.println("exergy change " + operations.getExergyChange("J"));
-		System.out.println("total weight " + operations.getMechanicalWeight("kg") +" kg");
-		*/
-		
+		System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
 
-        System.out.println("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
-        System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
-        System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
-
-        System.out.println("exergy change " + operations.getExergyChange("J"));
-        System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
-
-    }
+	}
 }
