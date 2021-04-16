@@ -8,8 +8,8 @@ package neqsim.util.exception;
 
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
 public class IsNaNException extends neqsim.util.exception.ThermoException {
 
@@ -21,14 +21,13 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
     public IsNaNException() {
     }
 
-
     /**
-     * Constructs an <code>VolumeIsNaNException</code> with the specified detail message.
+     * Constructs an <code>VolumeIsNaNException</code> with the specified detail
+     * message.
+     * 
      * @param msg the detail message.
      */
     public IsNaNException(String msg) {
         super(msg);
     }
 }
-
-

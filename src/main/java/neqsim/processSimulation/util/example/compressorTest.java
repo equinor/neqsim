@@ -38,7 +38,7 @@ public class compressorTest {
 
         Compressor comp1 = new Compressor(stream_2);
         comp1.setOutletPressure(50.0);
-        
+
         mixer.addStream(stream_2);
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
@@ -49,10 +49,9 @@ public class compressorTest {
         operations.add(separator);
         operations.add(comp1);
 
-        
         operations.run();
 
         operations.displayResult();
-        
+
     }
 }

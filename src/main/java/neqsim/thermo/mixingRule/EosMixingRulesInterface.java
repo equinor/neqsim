@@ -55,11 +55,15 @@ public interface EosMixingRulesInterface extends Cloneable {
     public int getBmixType();
 
     public void setBmixType(int bmixType2);
-    
+
     public PhaseInterface getGEPhase();
-    
-    // double calcA2(PhaseInterface phase, double temperature, double pressure, int numbcomp);
-    // double calcB2(PhaseInterface phase, double temperature, double pressure, int numbcomp);
-    //public double calcA(ComponentInterface[] te, double temperature, double pressure, int numberOfComponents);
-    //  public double calcB(ComponentInterface[] te, double temperature, double pressure, int numberOfComponents);
+
+    // double calcA2(PhaseInterface phase, double temperature, double pressure, int
+    // numbcomp);
+    // double calcB2(PhaseInterface phase, double temperature, double pressure, int
+    // numbcomp);
+    // public double calcA(ComponentInterface[] te, double temperature, double
+    // pressure, int numberOfComponents);
+    // public double calcB(ComponentInterface[] te, double temperature, double
+    // pressure, int numberOfComponents);
 }

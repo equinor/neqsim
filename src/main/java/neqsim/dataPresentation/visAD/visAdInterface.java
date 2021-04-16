@@ -8,12 +8,12 @@ package neqsim.dataPresentation.visAD;
 
 import java.rmi.RemoteException;
 import visad.*;
+
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public interface visAdInterface {
-  public void init() throws RemoteException, VisADException;
+    public void init() throws RemoteException, VisADException;
 }
-

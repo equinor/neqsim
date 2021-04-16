@@ -45,11 +45,10 @@ public class CVDFunction extends LevenbergMarquardtFunction {
                 maxPres = system.getPressure();
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
-        /* try {
-         thermoOps.dewPointPressureFlash();
-         } catch (Exception e) {
-         e.printStackTrace();
-         }*/
+        /*
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
+         * e.printStackTrace(); }
+         */
         saturationVolume = system.getVolume();
         saturationPressure = system.getPressure();
         Zsaturation = system.getZ();
@@ -81,7 +80,7 @@ public class CVDFunction extends LevenbergMarquardtFunction {
         calcSaturationConditions(tempSystem);
         tempSystem.setTemperature(dependentValues[0]);
         tempSystem.setPressure(dependentValues[1]);
-    //    thermoOps.setSystem(tempSystem);
+        // thermoOps.setSystem(tempSystem);
         thermoOps.TPflash();
 
         double totalVolume = tempSystem.getVolume();
@@ -91,6 +90,6 @@ public class CVDFunction extends LevenbergMarquardtFunction {
 
     public void setFittingParams(int i, double value) {
         params[i] = value;
-        //system.get
+        // system.get
     }
 }

@@ -13,7 +13,7 @@ import org.apache.logging.log4j.*;
  * @author ESOL
  */
 public class WaxCharacterise extends Object implements java.io.Serializable, Cloneable {
-    private static final long serialVersionUID = 1000;    
+    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WaxCharacterise.class);
     SystemInterface thermoSystem = null;
     String name = "";
@@ -97,7 +97,8 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
 
         /**
          * @param parameterWaxTriplePointTemperature the
-         * parameterWaxTriplePointTemperature to set
+         *                                           parameterWaxTriplePointTemperature
+         *                                           to set
          */
         public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature) {
             this.parameterWaxTriplePointTemperature = parameterWaxTriplePointTemperature;
@@ -118,20 +119,29 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         }
 
         public double calcTriplePointTemperature(int componentNumber) {
-            return parameterWaxTriplePointTemperature[0] * (374.5 + (0.02617 * (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0) - 20172.0 / (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0)));
+            return parameterWaxTriplePointTemperature[0] * (374.5 + (0.02617
+                    * (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0)
+                    - 20172.0 / (thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0)));
         }
 
         public double calcHeatOfFusion(int componentNumber) {
-            return getParameterWaxHeatOfFusion()[0] * 0.1426 / 0.238845 * thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0 * thermoSystem.getPhase(0).getComponent(componentNumber).getTriplePointTemperature();
+            return getParameterWaxHeatOfFusion()[0] * 0.1426 / 0.238845
+                    * thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0
+                    * thermoSystem.getPhase(0).getComponent(componentNumber).getTriplePointTemperature();
         }
 
         public double calcParaffinDensity(int componentNumber) {
-            return 0.3915 + 0.0675 * Math.log(thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0);
+            return 0.3915
+                    + 0.0675 * Math.log(thermoSystem.getPhase(0).getComponent(componentNumber).getMolarMass() * 1000.0);
         }
 
         public double calcPCwax(int componentNumber, String normalComponent) {
 
-            return thermoSystem.getPhase(0).getComponent(normalComponent).getPC() * Math.pow(calcParaffinDensity(componentNumber) / thermoSystem.getPhase(0).getComponent(normalComponent).getNormalLiquidDensity(), 3.46);
+            return thermoSystem.getPhase(0).getComponent(normalComponent).getPC()
+                    * Math.pow(
+                            calcParaffinDensity(componentNumber)
+                                    / thermoSystem.getPhase(0).getComponent(normalComponent).getNormalLiquidDensity(),
+                            3.46);
         }
 
         public void addTBPWax() {
@@ -150,37 +160,53 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
 
                     double densityLocal = calcParaffinDensity(i);
 
-                    double molesChange = thermoSystem.getPhase(0).getComponent(compName).getNumberOfmoles() * (1.0 - (A + B * thermoSystem.getPhase(0).getComponent(compName).getMolarMass() * 1000.0) * Math.pow((thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity() - densityLocal) / densityLocal, C));
+                    double molesChange = thermoSystem.getPhase(
+                            0).getComponent(compName).getNumberOfmoles() * (1.0
+                                    - (A + B * thermoSystem.getPhase(0).getComponent(compName).getMolarMass() * 1000.0)
+                                            * Math.pow(
+                                                    (thermoSystem.getPhase(0).getComponent(compName)
+                                                            .getNormalLiquidDensity() - densityLocal) / densityLocal,
+                                                    C));
 
-                    if(molesChange<0) {
-                        molesChange=0.0;
+                    if (molesChange < 0) {
+                        molesChange = 0.0;
                     }
-                  
+
                     thermoSystem.addComponent(compName, -molesChange);
                     thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getName(), molesChange);
                     for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
                         thermoSystem.getPhase(k).getComponent(i).setWaxFormer(true);
                         thermoSystem.getPhase(k).getComponent(i).setHeatOfFusion(calcHeatOfFusion(i));
-                        thermoSystem.getPhase(k).getComponent(i).setTriplePointTemperature(calcTriplePointTemperature(i));
+                        thermoSystem.getPhase(k).getComponent(i)
+                                .setTriplePointTemperature(calcTriplePointTemperature(i));
                     }
-                } else if (!hasWax && (thermoSystem.getPhase(0).getComponent(i).isIsTBPfraction() || thermoSystem.getPhase(0).getComponent(i).isIsPlusFraction())) {
-                    //double A = 1.074, B = 6.584e-4, C = 0.1915;
+                } else if (!hasWax && (thermoSystem.getPhase(0).getComponent(i).isIsTBPfraction()
+                        || thermoSystem.getPhase(0).getComponent(i).isIsPlusFraction())) {
+                    // double A = 1.074, B = 6.584e-4, C = 0.1915;
                     double A = parameterWax[0], B = parameterWax[1], C = parameterWax[2];
 
                     double densityLocal = calcParaffinDensity(i);
-                    double molesChange = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles() * (1.0 - (A + B * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0) * Math.pow((thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity() - densityLocal) / densityLocal, C));
-                   // if(molesChange<0) molesChange=0.0;
-                    //System.out.println("moles change " + molesChange);
-                    thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getComponentName(), -molesChange);
-                    thermoSystem.addTBPfraction("wax" + thermoSystem.getPhase(0).getComponent(i).getComponentName(), molesChange, thermoSystem.getPhase(0).getComponent(i).getMolarMass(), thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
+                    double molesChange = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles() * (1.0
+                            - (A + B * thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000.0) * Math.pow(
+                                    (thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity() - densityLocal)
+                                            / densityLocal,
+                                    C));
+                    // if(molesChange<0) molesChange=0.0;
+                    // System.out.println("moles change " + molesChange);
+                    thermoSystem.addComponent(thermoSystem.getPhase(0).getComponent(i).getComponentName(),
+                            -molesChange);
+                    thermoSystem.addTBPfraction("wax" + thermoSystem.getPhase(0).getComponent(i).getComponentName(),
+                            molesChange, thermoSystem.getPhase(0).getComponent(i).getMolarMass(),
+                            thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity());
 
                     int cNumb = thermoSystem.getPhase(0).getNumberOfComponents() - 1;
-                    double waxPC =  calcPCwax(cNumb,thermoSystem.getPhase(0).getComponent(i).getComponentName());
-                    
+                    double waxPC = calcPCwax(cNumb, thermoSystem.getPhase(0).getComponent(i).getComponentName());
+
                     for (int k = 0; k < thermoSystem.getNumberOfPhases(); k++) {
                         thermoSystem.getPhase(k).getComponent(cNumb).setWaxFormer(true);
                         thermoSystem.getPhase(k).getComponent(cNumb).setHeatOfFusion(calcHeatOfFusion(cNumb));
-                        thermoSystem.getPhase(k).getComponent(cNumb).setTriplePointTemperature(calcTriplePointTemperature(cNumb));
+                        thermoSystem.getPhase(k).getComponent(cNumb)
+                                .setTriplePointTemperature(calcTriplePointTemperature(cNumb));
                         thermoSystem.getPhase(k).getComponent(cNumb).setPC(waxPC);
                     }
                 }

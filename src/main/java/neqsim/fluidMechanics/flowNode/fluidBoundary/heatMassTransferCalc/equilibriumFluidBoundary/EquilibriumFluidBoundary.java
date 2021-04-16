@@ -23,60 +23,58 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-
-public class EquilibriumFluidBoundary extends neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundary{
+public class EquilibriumFluidBoundary
+        extends neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundary {
 
     private static final long serialVersionUID = 1000;
-    
-    
-    public EquilibriumFluidBoundary(){
+
+    public EquilibriumFluidBoundary() {
     }
-    
-    public EquilibriumFluidBoundary(SystemInterface system){
+
+    public EquilibriumFluidBoundary(SystemInterface system) {
         super(system);
         interphaseOps = new ThermodynamicOperations(interphaseSystem);
-        //     interphaseOps.TPflash();
+        // interphaseOps.TPflash();
     }
-    
-    public EquilibriumFluidBoundary(FlowNodeInterface flowNode){
+
+    public EquilibriumFluidBoundary(FlowNodeInterface flowNode) {
         super(flowNode);
         interphaseOps = new ThermodynamicOperations(interphaseSystem);
-        //    interphaseOps.TPflash();
+        // interphaseOps.TPflash();
     }
-    
-    public void init(){
+
+    public void init() {
         super.init();
     }
-    
-    public void solve(){
+
+    public void solve() {
         getInterphaseOpertions().TPflash();
         getBulkSystemOpertions().TPflash();
     }
-    
-    public double[] calcFluxes(){
-        for(int i=0;i<bulkSystem.getPhases()[0].getNumberOfComponents();i++){
-            nFlux.set(i,0,0);
+
+    public double[] calcFluxes() {
+        for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
+            nFlux.set(i, 0, 0);
         }
         return nFlux.getArray()[0];
     }
-    
-    public static void main(String[] args){
+
+    public static void main(String[] args) {
         System.out.println("Starter.....");
         SystemSrkEos testSystem = new SystemSrkEos(295.3, 11.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         PipeData pipe1 = new PipeData(1.0, 0.55);
-        
+
         testSystem.addComponent("methane", 100.152181, 1);
         testSystem.addComponent("water", 10.362204876, 0);
         testSystem.setMixingRule(2);
-        
+
         FlowNodeInterface test = new AnnularFlow(testSystem, pipe1);
         test.init();
-        
+
         EquilibriumFluidBoundary test2 = new EquilibriumFluidBoundary(test);
         test2.solve();
-        
-    }
-    
-}
 
+    }
+
+}

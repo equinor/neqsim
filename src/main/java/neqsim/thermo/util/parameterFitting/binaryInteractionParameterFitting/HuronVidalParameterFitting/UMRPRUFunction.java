@@ -27,7 +27,7 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
 
     public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
-        //  system.display();
+        // system.display();
         return system.getPhases()[0].getComponents()[1].getx();
     }
 
@@ -36,33 +36,39 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
 
         if (i == 0) {
 
-            PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().getGEPhase();
+            PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .getGEPhase();
             unifacp.setAij(0, 2, value);
             unifacp.setAij(1, 2, value);
 
-            PhaseGEUnifac unifacp2 = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().getGEPhase();
+            PhaseGEUnifac unifacp2 = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .getGEPhase();
             unifacp2.setAij(0, 2, value);
             unifacp2.setAij(1, 2, value);
         }
 
-         if (i == 1) {
+        if (i == 1) {
 
-            PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().getGEPhase();
+            PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .getGEPhase();
             unifacp.setBij(0, 2, value);
             unifacp.setBij(1, 2, value);
 
-            PhaseGEUnifac unifacp2 = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().getGEPhase();
+            PhaseGEUnifac unifacp2 = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .getGEPhase();
             unifacp2.setBij(0, 2, value);
             unifacp2.setBij(1, 2, value);
         }
 
         if (i == 2) {
-            PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().getGEPhase();
+            PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .getGEPhase();
             double aa = unifacp.getAij(0, 2);
             unifacp.setAij(2, 0, value);
             unifacp.setAij(2, 1, value);
 
-            PhaseGEUnifac unifacp2 = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().getGEPhase();
+            PhaseGEUnifac unifacp2 = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .getGEPhase();
             unifacp2.setAij(2, 0, value);
             unifacp2.setAij(2, 1, value);
         }

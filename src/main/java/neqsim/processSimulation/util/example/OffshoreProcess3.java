@@ -283,21 +283,24 @@ public class OffshoreProcess3 {
 		/*
 		// System.out.println("second stage comp power " + ((Compressor)
 		// operations.getUnit("2nd stage recompressor")).getPower()/1.0e3 + " kW");
+
 //		System.out.println("first stage   comp power " + ((Compressor) operations.getUnit("1st stage recompressor")).getPower()/1.0e3 + " kW");
 
-		System.out.println("gas from inlet separator " + ((Separator) operations.getUnit("1st stage separator"))
-				.getGasOutStream().getFluid().getFlowRate("MSm3/day"));
+        System.out.println("gas from inlet separator " + ((Separator) operations.getUnit("1st stage separator"))
+                .getGasOutStream().getFluid().getFlowRate("MSm3/day"));
 
-		System.out
-				.println("pressure of export oil  " + ((Stream) operations.getUnit("stable oil")).getPressure("bara"));
+        System.out
+                .println("pressure of export oil  " + ((Stream) operations.getUnit("stable oil")).getPressure("bara"));
 
-		System.out.println(
-				"temperature of export oil  " + ((Stream) operations.getUnit("stable oil")).getTemperature("C"));
+        System.out.println(
+                "temperature of export oil  " + ((Stream) operations.getUnit("stable oil")).getTemperature("C"));
 
-		System.out.println("TVP of export oil (30.0 C) " + ((Stream) operations.getUnit("stable oil")).TVP(30.0, "C"));
+        System.out.println("TVP of export oil (30.0 C) " + ((Stream) operations.getUnit("stable oil")).TVP(30.0, "C"));
 
-	//	System.out.println("entropy production " + operations.getEntropyProduction("J/K") + " J/K");
+        // System.out.println("entropy production " +
+        // operations.getEntropyProduction("J/K") + " J/K");
 //		System.out.println("mass balance  separator " + ((Separator) operations.getUnit("scrubber of mix gas HP")).getMassBalance("kg/sec") + " kg/sec");
+
 
 		// liqFromlpscrubber.displayResult();
 		// richGas.phaseEnvelope();
@@ -316,12 +319,31 @@ public class OffshoreProcess3 {
 		// operations2.run();
 		// cooler1stagecomp.getOutStream().phaseEnvelope();
 	//	coolingWater.run();
+
+        // liqFromlpscrubber.displayResult();
+        // richGas.phaseEnvelope();
+        // richGas.displayResult();
+        operations.save("c:/temp/offshorePro.neqsim");
+        inletSeparator.getLiquidOutStream().getFluid().display();
+        inletSeparator.getWaterOutStream().getFluid().display();
+
+        /*
+         * Hydrocyclone hydroSyc = new Hydrocyclone(inletSeparator.getWaterOutStream());
+         * hydroSyc.run(); hydroSyc.getGasOutStream().getFluid().display();
+         * hydroSyc.getLiquidOutStream().getFluid().display();
+         */
+        // ProcessSystem operations2 = operations.open("c:/temp/offshorePro.neqsim");
+        // operations2.run();
+        // cooler1stagecomp.getOutStream().phaseEnvelope();
+        // coolingWater.run();
+
 //		coolingWater.getFluid().init(3);
 //		heatEx.run();heatEx.run();
 //		heatEx.getOutStream(0).getFluid().display();
 //		heatEx.getOutStream(1).getFluid().display();
 //		System.out.println("entropy production heat exchanger " +heatEx.getEntropyProduction("J/K") + " J/K");
 //		System.out.println("mass balance production heat exchanger " +heatEx.getMassBalance("kg/sec"));
+
 /*
 		System.out.println("Cooler Duty " +operations.getCoolerDuty("J/sec")/1.0e6 +" MW");
 		System.out.println("Heater Duty " +operations.getHeaterDuty("J/sec")/1.0e6+" MW");
@@ -331,5 +353,13 @@ public class OffshoreProcess3 {
 		System.out.println("total weight " + operations.getMechanicalWeight("kg") +" kg");
 		*/
 		
-	}
+
+        System.out.println("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
+        System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
+        System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
+
+        System.out.println("exergy change " + operations.getExergyChange("J"));
+        System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
+
+    }
 }

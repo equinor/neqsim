@@ -15,20 +15,20 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  *
  * @author ESOL
  */
-public class MolarMassAnalyser extends MeasurementDeviceBaseClass{
+public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
 
     private static final long serialVersionUID = 1000;
-    
-    protected int streamNumber=0;
-    protected static int numberOfStreams=0;
+
+    protected int streamNumber = 0;
+    protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
-    
+
     /** Creates a new instance of TemperatureTransmitter */
     public MolarMassAnalyser() {
         name = "molar mass analsyer";
         unit = "gr/mol";
     }
-    
+
     public MolarMassAnalyser(StreamInterface stream) {
         this.stream = stream;
         numberOfStreams++;
@@ -36,12 +36,12 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass{
         name = "molar mass analsyer";
         unit = "gr/mol";
     }
-    
-    public void displayResult(){
-        System.out.println("measured temperature " + stream.getThermoSystem().getMolarMass()*1000.0);
+
+    public void displayResult() {
+        System.out.println("measured temperature " + stream.getThermoSystem().getMolarMass() * 1000.0);
     }
-    
-    public double getMeasuredValue(){
-        return stream.getThermoSystem().getMolarMass()*1000.0;
+
+    public double getMeasuredValue() {
+        return stream.getThermoSystem().getMolarMass() * 1000.0;
     }
 }

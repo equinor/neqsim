@@ -53,12 +53,13 @@ public class MaterialPlateDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='" + name + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='" + name
+                        + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
                 while (dataSet.next()) {
                     if (divClassNo == 1) {
                         divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
                     } else {
-                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; //MPa
+                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
                     }
                 }
 
@@ -66,7 +67,7 @@ public class MaterialPlateDesignStandard extends DesignStandard {
                 e.printStackTrace();
             }
 
-            //gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+            // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

@@ -34,7 +34,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
         this.comp1 = comp1;
         this.comp2 = comp2;
 
-      
         if (comp1.equals("MEG") && comp2.equals("water")) {
             Kcomplex = 0.168048;
             HrefComplex = 14450.0;
@@ -42,12 +41,12 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
         }
         // TEGwater parameters
         if (comp1.equals("TEG") && comp2.equals("water")) {
-            //Kcomplex = 0.157232243643;
+            // Kcomplex = 0.157232243643;
             Kcomplex = 0.148047309951772870;
-           // HrefComplex = 4863.59239495220;
+            // HrefComplex = 4863.59239495220;
             HrefComplex = 6629.1366952637;
             TrefComplex = 244.19;
-           
+
         }
 
         if (comp1.equals("methanol") && comp2.equals("water")) {
@@ -55,13 +54,12 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             HrefComplex = 8540.0;
             TrefComplex = 171.25;
         }
-        
 
     }
 
     public void runOld() {
         double sumx = 0.0;
-        //system.setHydrateCheck(true);
+        // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
         double funkOld = 0.0, deltaT = 1.0;
@@ -74,7 +72,8 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             iter++;
             ops.TPflash();
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                if (system.getPhases()[5].getComponent(i).getName().equals("water") || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
+                if (system.getPhases()[5].getComponent(i).getName().equals("water")
+                        || system.getPhases()[5].getComponent(i).getName().equals("MEG")) {
                     system.getPhases()[5].getComponent(i).setx(0.5);
                 } else {
                     system.getPhases()[5].getComponent(i).setx(1e-20);
@@ -83,11 +82,13 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             logger.info("Temperaure  " + system.getTemperature() + " sumx " + sumx);
             sumx = 0.0;
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                //system.getPhases()[5].getComponent(i).setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
-                //               if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
-                Ksolid[i] = system.getPhase(0).getComponent(i).getFugasityCoefficient() / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
+                // system.getPhases()[5].getComponent(i).setx(Ksolid[i] *
+                // system.getPhase(0).getComponent(i).getx());
+                // if (system.getPhases()[5].getComponent(i).getx() > 0.000001) {
+                Ksolid[i] = system.getPhase(0).getComponent(i).getFugasityCoefficient()
+                        / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
                 sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
-                //               }
+                // }
             }
             double funk = sumx - 1.0;
             double dfunkdt = (funk - funkOld) / deltaT;
@@ -112,13 +113,14 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
     public void run() {
         double sumx = 0.0;
-        //system.setHydrateCheck(true);
+        // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
         double funkOld = 0.0, deltaT = 1.0;
 
-        //logger.info("starting.... ");
-        int compNumber_1 = system.getPhase(0).getComponent(comp1).getComponentNumber(), compNumber_2 = system.getPhase(0).getComponent(comp2).getComponentNumber();
+        // logger.info("starting.... ");
+        int compNumber_1 = system.getPhase(0).getComponent(comp1).getComponentNumber(),
+                compNumber_2 = system.getPhase(0).getComponent(comp2).getComponentNumber();
 
         // MEGwater parameters
 
@@ -132,19 +134,21 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
             // reading activity coefficients
 
-            double complexActivity =
-                    system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1) * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
-                    * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2) * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
+            double complexActivity = system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1)
+                    * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
+                    * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
+                    * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
 
             if (complexActivity < 1e-5) {
                 complexActivity = 1e-5;
             }
-            //logger.info("activityMix.... " + complexActivity);
+            // logger.info("activityMix.... " + complexActivity);
 
             double rightSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
-           // logger.info("right.... " + rightSide);
-            double leftSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(Kcomplex) + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
-           // logger.info("left.... " + leftSide);
+            // logger.info("right.... " + rightSide);
+            double leftSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(Kcomplex)
+                    + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
+            // logger.info("left.... " + leftSide);
             error = rightSide - leftSide;
             double dErrordT = (error - oldError) / (temperature - oldTemperature);
             if (iteration >= 2 && testFalse) {
@@ -160,11 +164,10 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             }
             oldTemperature = temperature;
             oldError = error;
-           // logger.info("temperature " + temperature);
+            // logger.info("temperature " + temperature);
             system.setTemperature(system.getTemperature() + deltaT);
 
         } while (Math.abs(deltaT) > 0.001 && iteration < 50);
-
 
     }
 

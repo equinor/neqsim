@@ -18,17 +18,19 @@ public class PhaseHydrate extends Phase {
 
     private static final long serialVersionUID = 1000;
     String hydrateModel = "PVTsimHydrateModel";
+
     /**
      * Creates new PhaseHydrate
      */
     public PhaseHydrate() {
         phaseTypeName = "hydrate";
     }
-    
-    public PhaseHydrate(String fluidModel){
-        if(fluidModel.isEmpty()) {
+
+    public PhaseHydrate(String fluidModel) {
+        if (fluidModel.isEmpty()) {
             hydrateModel = "PVTsimHydrateModel";
-        } else if(fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS") || fluidModel.equals("CPA-SRK-EOS")) {
+        } else if (fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS")
+                || fluidModel.equals("CPA-SRK-EOS")) {
             hydrateModel = "CPAHydrateModel";
         } else {
             hydrateModel = "PVTsimHydrateModel";
@@ -46,33 +48,42 @@ public class PhaseHydrate extends Phase {
         return clonedPhase;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
-       double sum = 1.0;
-       int hydrateStructure=((ComponentHydrate) getComponent(0)).getHydrateStructure();
-        for(int j=0;j<2;j++){
-        for(int i=0;i<numberOfComponents;i++){
-            sum +=((ComponentHydrate) getComponent(i)).getCavprwat(hydrateStructure,j)*((ComponentHydrate) getComponent(i)).calcYKI(hydrateStructure,j,this);
+    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+        double sum = 1.0;
+        int hydrateStructure = ((ComponentHydrate) getComponent(0)).getHydrateStructure();
+        for (int j = 0; j < 2; j++) {
+            for (int i = 0; i < numberOfComponents; i++) {
+                sum += ((ComponentHydrate) getComponent(i)).getCavprwat(hydrateStructure, j)
+                        * ((ComponentHydrate) getComponent(i)).calcYKI(hydrateStructure, j, this);
+            }
         }
-        }
-        return sum/(((ComponentHydrate) getComponent(0)).getMolarVolumeHydrate(hydrateStructure, temperature));
-       // return 1.0;
+        return sum / (((ComponentHydrate) getComponent(0)).getMolarVolumeHydrate(hydrateStructure, temperature));
+        // return 1.0;
     }
 
     public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
-        // componentArray[compNumber] = new ComponentHydrateStatoil(componentName, moles, molesInPhase, compNumber);
+        // componentArray[compNumber] = new ComponentHydrateStatoil(componentName,
+        // moles, molesInPhase, compNumber);
         if (hydrateModel.equals("CPAHydrateModel")) {
             componentArray[compNumber] = new ComponentHydrateGF(componentName, moles, molesInPhase, compNumber);
-            //System.out.println("hydrate model:  CPA-EoS hydrate model selected");
+            // System.out.println("hydrate model: CPA-EoS hydrate model selected");
         } else {
             componentArray[compNumber] = new ComponentHydratePVTsim(componentName, moles, molesInPhase, compNumber);
-            //System.out.println("hydrate model:  standard PVTsim hydrate model selected");
+            // System.out.println("hydrate model: standard PVTsim hydrate model selected");
         }
-        //  componentArray[compNumber] = new ComponentHydrateBallard(componentName, moles, molesInPhase, compNumber);
-        //componentArray[compNumber] = new ComponentHydratePVTsim(componentName, moles, molesInPhase, compNumber);
+        // componentArray[compNumber] = new ComponentHydrateBallard(componentName,
+        // moles, molesInPhase, compNumber);
+        // componentArray[compNumber] = new ComponentHydratePVTsim(componentName, moles,
+        // molesInPhase, compNumber);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0 start init type =1 gi nye betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+                                                                                                            // start
+                                                                                                            // init type
+                                                                                                            // =1 gi nye
+                                                                                                            // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 

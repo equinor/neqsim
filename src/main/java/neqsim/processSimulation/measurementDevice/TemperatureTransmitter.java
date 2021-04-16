@@ -45,6 +45,4 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
         return stream.getThermoSystem().getTemperature();
     }
 
-   
-
 }

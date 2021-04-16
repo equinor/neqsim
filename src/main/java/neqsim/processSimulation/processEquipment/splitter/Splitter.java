@@ -51,11 +51,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     public void setSplitFactors(double[] splitFact) {
-    	splitNumber = splitFact.length;
+        splitNumber = splitFact.length;
         splitFactor = splitFact;
         setInletStream(inletStream);
     }
-
 
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -80,7 +79,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
             thermoSystem.init(0);
             splitStream[i].setThermoSystem(thermoSystem);
             for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-            	int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
+                int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
                 double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
                 splitStream[i].getThermoSystem().addComponent(index, moles * splitFactor[i] - moles);
             }
@@ -91,7 +90,6 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
 
     public void displayResult() {
     }
-
 
     public void runTransient(double dt) {
     }

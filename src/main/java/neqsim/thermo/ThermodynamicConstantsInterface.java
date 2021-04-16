@@ -8,7 +8,7 @@ package neqsim.thermo;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface ThermodynamicConstantsInterface extends java.io.Serializable {

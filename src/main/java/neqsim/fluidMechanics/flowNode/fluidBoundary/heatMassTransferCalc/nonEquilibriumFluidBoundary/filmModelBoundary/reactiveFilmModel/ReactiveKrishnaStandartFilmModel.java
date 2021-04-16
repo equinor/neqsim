@@ -12,30 +12,32 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEqui
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactorAlg;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactorNumeric;
 import neqsim.thermo.system.SystemInterface;
+
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel{
+public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 
     private static final long serialVersionUID = 1000;
-    
-    int enhancementType=1;
+
+    int enhancementType = 1;
+
     /** Creates new ReactiveKrishnaStandartFilmModel */
     public ReactiveKrishnaStandartFilmModel() {
     }
-    
-    public ReactiveKrishnaStandartFilmModel(SystemInterface system){
+
+    public ReactiveKrishnaStandartFilmModel(SystemInterface system) {
         super(system);
         enhancementFactor = new EnhancementFactorAlg(this);
     }
-    
-    public ReactiveKrishnaStandartFilmModel(FlowNodeInterface flowNode){
+
+    public ReactiveKrishnaStandartFilmModel(FlowNodeInterface flowNode) {
         super(flowNode);
         enhancementFactor = new EnhancementFactorAlg(this);
     }
-    
+
 //    public double calcBinaryMassTransferCoefficients(int phase){
 //        super.calcBinaryMassTransferCoefficients(phase);
 //        enhancementFactor.calcEnhancementVec(phase);
@@ -49,21 +51,22 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel{
 //        }
 //        return 1;
 //    }
-    
-    public void calcTotalMassTransferCoefficientMatrix(int phase){
+
+    public void calcTotalMassTransferCoefficientMatrix(int phase) {
         super.calcTotalMassTransferCoefficientMatrix(phase);
         enhancementFactor.calcEnhancementVec(phase);
-        Matrix enhancementvec = new Matrix(enhancementFactor.getEnhancementVec(),1);
-        totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase].times(enhancementvec.get(0,getBulkSystem().getPhase(0).getNumberOfComponents()-1));
+        Matrix enhancementvec = new Matrix(enhancementFactor.getEnhancementVec(), 1);
+        totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase]
+                .times(enhancementvec.get(0, getBulkSystem().getPhase(0).getNumberOfComponents() - 1));
     }
-    
-    public void setEnhancementType(int type){
+
+    public void setEnhancementType(int type) {
         enhancementType = type;
-        if(enhancementType==1) {
+        if (enhancementType == 1) {
             enhancementFactor = new EnhancementFactorAlg(this);
         } else {
             enhancementFactor = new EnhancementFactorNumeric(this);
         }
     }
-    
+
 }

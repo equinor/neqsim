@@ -18,7 +18,7 @@ import org.apache.logging.log4j.*;
  * @brief Solving for the surface tension by direct Newton method.
  *
  * @todo Make use of binary interaction parameter for the influence parameter
- * \f$\beta_{ij}\f$ when this becomes available in NeqSIM API.
+ *       \f$\beta_{ij}\f$ when this becomes available in NeqSIM API.
  *
  * @author John C. Morud <john.c.morud@sintef.no>
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
@@ -28,14 +28,14 @@ public class GTSurfaceTensionFullGT {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
 
-    private int ncomp;           // Number of components.
+    private int ncomp; // Number of components.
     private SystemInterface sys; // Local work copy of flashed system.
-    private double[] ci;         // Influence parameter.
-    private double[] mueq;       // Chemical potentials at equilibrium.
-    private double[] rho_ph1;    // Density in bulk phase 1.
-    private double[] rho_ph2;    // Density in bulk phase 2.
-    private double t;            // Temperature.
-    private double[] p0;         // Bulk pressure [Pa]
+    private double[] ci; // Influence parameter.
+    private double[] mueq; // Chemical potentials at equilibrium.
+    private double[] rho_ph1; // Density in bulk phase 1.
+    private double[] rho_ph2; // Density in bulk phase 2.
+    private double t; // Temperature.
+    private double[] p0; // Bulk pressure [Pa]
     private static final double Pa = 1e-5; // Scaling factor for NeqSIM conversion.
     private static final double m3 = 1e-5; // Scaling factor for NeqSIM conversion.
     public double normtol = 1e-11;
@@ -43,10 +43,9 @@ public class GTSurfaceTensionFullGT {
     public double abstol = 1e-6;
     public int maxit = 40;
     private static final boolean NDEBUG = true; // Set to false for debug mode.
-    private static final boolean DEBUGPLOT = false;  // Set to true for profile plot.
+    private static final boolean DEBUGPLOT = false; // Set to true for profile plot.
 
-    public GTSurfaceTensionFullGT(SystemInterface flashedSystem, int phase1,
-            int phase2) {
+    public GTSurfaceTensionFullGT(SystemInterface flashedSystem, int phase1, int phase2) {
         int i = 0;
 
         /* Setup local system clone and some parameters. */
@@ -63,20 +62,21 @@ public class GTSurfaceTensionFullGT {
         boolean hasAddedComp = false;
         for (i = 0; i < this.ncomp; i++) {
             if (this.sys.getPhase(phase1).getComponent(i).getx() < Double.MIN_VALUE) {
-                this.sys.addComponent(i, this.sys.getTotalNumberOfMoles()/1e10);
+                this.sys.addComponent(i, this.sys.getTotalNumberOfMoles() / 1e10);
                 hasAddedComp = true;
             }
         }
         if (hasAddedComp) {
-            neqsim.thermodynamicOperations.ThermodynamicOperations ops = new neqsim.thermodynamicOperations.ThermodynamicOperations(this.sys);
+            neqsim.thermodynamicOperations.ThermodynamicOperations ops = new neqsim.thermodynamicOperations.ThermodynamicOperations(
+                    this.sys);
             ops.TPflash();
         }
 
-        /* Get influence parameters and densities at
-         * phase equilibrium. */
+        /*
+         * Get influence parameters and densities at phase equilibrium.
+         */
         for (i = 0; i < this.ncomp; i++) {
-            this.ci[i] = this.sys.getPhase(0).getComponent(i).
-                    getSurfaceTenisionInfluenceParameter(t);
+            this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
             this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx()
                     / this.sys.getPhase(phase1).getMolarVolume() / m3;
             this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx()
@@ -93,7 +93,8 @@ public class GTSurfaceTensionFullGT {
         for (i = 0; i < ncomp; i++) {
             nv[i] = this.rho_ph1[i] * Pa;
         }
-        this.sys.setTotalFlowRate(1.0, "mol/sec"); // added by Even S 18/02/2020 (can not set molar composition if total flow is zero
+        this.sys.setTotalFlowRate(1.0, "mol/sec"); // added by Even S 18/02/2020 (can not set molar composition if total
+                                                   // flow is zero
         this.sys.setMolarComposition(nv);
         this.sys.init_x_y();
         this.sys.setBeta(1.0);
@@ -112,133 +113,130 @@ public class GTSurfaceTensionFullGT {
         double[] delta_mu = new double[this.ncomp];
         double[][] dmu_drho = new double[this.ncomp][this.ncomp];
         double sigma = 0.0;
-        double std; //Width of integrand
+        double std; // Width of integrand
 
-        int Nlevel = 3; //Hard coded
-        //int NN;
+        int Nlevel = 3; // Hard coded
+        // int NN;
         int N1, N2;
-        int Ngrid = (1 << Nlevel) + 1;   //2^(Nlevel) + 1
+        int Ngrid = (1 << Nlevel) + 1; // 2^(Nlevel) + 1
         double rhomat[][] = new double[Ngrid][this.ncomp];
         double rhotmp[][];
         double xgrid[];
 
         int Nrefinements = 7;
-        double StopTolerance = 0.01; //Stop if rel change smaller than this 
+        double StopTolerance = 0.01; // Stop if rel change smaller than this
         double sigma_old = 9.9e99;
 
-        //Geometry
-        double nm = 1.0;             //Use nm as length scale
-        double L = 3 * nm;            //Domain is -L < z < L
+        // Geometry
+        double nm = 1.0; // Use nm as length scale
+        double L = 3 * nm; // Domain is -L < z < L
 
-        //Newton parameters
-        int N_Newton = 20;  //Max Newton iterations per level
-        double maxRelChange = 0.5;  //5; %Only allow relative change in solution below this
-        boolean highOrder = true; //Use deferred correction approach
-        boolean directMethod = true; //Use direct solver (May not be implemented in Java.)        
+        // Newton parameters
+        int N_Newton = 20; // Max Newton iterations per level
+        double maxRelChange = 0.5; // 5; %Only allow relative change in solution below this
+        boolean highOrder = true; // Use deferred correction approach
+        boolean directMethod = true; // Use direct solver (May not be implemented in Java.)
 
-        //For grid remeshing:
-        double H;           //Mesh spacing
-        double Lnew;        //Half-width of domain
-        double xgridNew[];  //Grid   
-        double alpha;       //Interpolation weight
-        double drhodz[][];  //Density gradient
-        int Nhalf;       //Half the number of intervals 
-        int Nideal;      //Ideal number of grid points, current spacing
-        int NgridNew;    //Doubled mesh
+        // For grid remeshing:
+        double H; // Mesh spacing
+        double Lnew; // Half-width of domain
+        double xgridNew[]; // Grid
+        double alpha; // Interpolation weight
+        double drhodz[][]; // Density gradient
+        int Nhalf; // Half the number of intervals
+        int Nideal; // Ideal number of grid points, current spacing
+        int NgridNew; // Doubled mesh
         int kk;
 
-        //        NN=2^Nlevel+1;
-        //        rhomat = new double[2^Nlevel+1][this.ncomp]; //Starting size
+        // NN=2^Nlevel+1;
+        // rhomat = new double[2^Nlevel+1][this.ncomp]; //Starting size
         initmu(sys, ncomp, t, rho_ph1, rho_ph2, mueq, p0, reltol);
 
-        //-----------------------------    
-        //Set up initial solution estimate
-        N2 = 1 << (Nlevel - 1); //2^(Nlevel-1) // N2=(int)Math.pow(2,(Nlevel-1));
+        // -----------------------------
+        // Set up initial solution estimate
+        N2 = 1 << (Nlevel - 1); // 2^(Nlevel-1) // N2=(int)Math.pow(2,(Nlevel-1));
         for (i = 0; i < N2; i++) {
             rhomat[i] = this.rho_ph1.clone();
         }
 
         N1 = N2;
-        N2 = 1 + (1 << Nlevel); //(int)(Math.pow(2,Nlevel))+1;
+        N2 = 1 + (1 << Nlevel); // (int)(Math.pow(2,Nlevel))+1;
         for (i = N1; i < N2; i++) {
             rhomat[i] = this.rho_ph2.clone();
         }
 
-        //-----------------------------    
-        //Get interaction parameters (Already done???) FIXME!!
+        // -----------------------------
+        // Get interaction parameters (Already done???) FIXME!!
         for (i = 0; i < ncomp; i++) {
-            //this.sys.getPhase(0).getComponent(i-1).getSurfaceTenisionInfluenceParameter(this.sys.getPhase(0).getTemperature());
-            this.ci[i] = this.sys.getPhase(0).getComponent(i).
-                    getSurfaceTenisionInfluenceParameter(t);
+            // this.sys.getPhase(0).getComponent(i-1).getSurfaceTenisionInfluenceParameter(this.sys.getPhase(0).getTemperature());
+            this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
         }
 
         /// @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
         /// NeqSIM function for evaluating \f$\beta_{ij}\f$ becomes available.
         for (i = 0; i < ncomp; i++) {
             for (j = i; j < ncomp; j++) {
-                cij[i][j] = 1.e18 * Math.sqrt(this.ci[i] * this.ci[j]); //Use nm as unit for length
+                cij[i][j] = 1.e18 * Math.sqrt(this.ci[i] * this.ci[j]); // Use nm as unit for length
                 cij[j][i] = cij[i][j];
             }
         }
-        //----------------------------
+        // ----------------------------
 
-        //Test the delta_mu routine
-        delta_mu(this.sys, this.ncomp, this.t, this.mueq, this.rho_ph1,
-                delta_mu, dmu_drho);
+        // Test the delta_mu routine
+        delta_mu(this.sys, this.ncomp, this.t, this.mueq, this.rho_ph1, delta_mu, dmu_drho);
         xgrid = linspace(-L, L, Ngrid);
 
         for (i = 0; i < Nrefinements; i++) {
-            sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod,
-                    rhomat, sys, ncomp, t, mueq);
+            sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod, rhomat, sys, ncomp, t, mueq);
             if (!NDEBUG && DEBUGPLOT) {
                 debugPlot(xgrid, rhomat); // create a plot using xaxis and yvalues
             }
-            //Calculate size of interesting region
+            // Calculate size of interesting region
             drhodz = new double[rhomat.length - 1][ncomp];
-            //sigma=sigmaCalc(xgrid[1]-xgrid[0],rhomat, cij, false,   drhodz);
+            // sigma=sigmaCalc(xgrid[1]-xgrid[0],rhomat, cij, false, drhodz);
             sigma = sigmaCalc(xgrid[1] - xgrid[0], rhomat, cij, false, drhodz, ncomp);
-            std = calc_std_integral(xgrid, cij, drhodz); //Width of integrand
+            std = calc_std_integral(xgrid, cij, drhodz); // Width of integrand
 
-            //Termination 
+            // Termination
             if (i > 0 && Math.abs(sigma - sigma_old) < StopTolerance * sigma) {
                 break;
             } else {
                 sigma_old = sigma;
             }
 
-            //Remesh
-            //N = size(rhotmp, 2);
-            H = 2.0 * L / (Ngrid - 1.0);           //Grid size 
-            Nhalf = (int) Math.round(Math.ceil(6.0 * std / H)); //Set domain to +/- 6 times std       
-            Nideal = 2 * Nhalf + 1;  //Ideal number of grid points, current H
-            Lnew = Nhalf * H;      //New half-width 
+            // Remesh
+            // N = size(rhotmp, 2);
+            H = 2.0 * L / (Ngrid - 1.0); // Grid size
+            Nhalf = (int) Math.round(Math.ceil(6.0 * std / H)); // Set domain to +/- 6 times std
+            Nideal = 2 * Nhalf + 1; // Ideal number of grid points, current H
+            Lnew = Nhalf * H; // New half-width
 
-            NgridNew = 2 * Nideal - 1;   //Double #grid points
-            xgridNew = linspace(-Lnew, Lnew, NgridNew); //New mesh
+            NgridNew = 2 * Nideal - 1; // Double #grid points
+            xgridNew = linspace(-Lnew, Lnew, NgridNew); // New mesh
 
             kk = 0;
             rhotmp = new double[NgridNew][this.ncomp];
 
-            //Interpolate old solution to new:
+            // Interpolate old solution to new:
             for (j = 0; j < rhotmp.length; j++) {
-                if (xgridNew[j] < xgrid[0]) { //Pad if outside left boundary               
+                if (xgridNew[j] < xgrid[0]) { // Pad if outside left boundary
                     rhotmp[j] = this.rho_ph1.clone();
-                } else if (xgridNew[j] > xgrid[xgrid.length - 1]) { //Pad right
+                } else if (xgridNew[j] > xgrid[xgrid.length - 1]) { // Pad right
                     rhotmp[j] = this.rho_ph2.clone();
-                } else { //Interpolate known region
-                    while (xgridNew[j] > xgrid[kk + 1]) { //Find correct interval (Should be safe)
+                } else { // Interpolate known region
+                    while (xgridNew[j] > xgrid[kk + 1]) { // Find correct interval (Should be safe)
                         kk++;
                     }
 
                     alpha = (xgrid[kk + 1] - xgridNew[j]) / (xgrid[kk + 1] - xgrid[kk]);
-                    for (k = 0; k < this.ncomp; k++) {  //Linear interpolation                  
+                    for (k = 0; k < this.ncomp; k++) { // Linear interpolation
                         rhotmp[j][k] = alpha * rhomat[kk][k] + (1 - alpha) * rhomat[kk + 1][k];
                     }
                 }
 
             }
 
-            //Update the current guess
+            // Update the current guess
             rhotmp[0] = this.rho_ph1.clone();
             rhotmp[rhotmp.length - 1] = this.rho_ph2.clone();
             L = Lnew;
@@ -249,46 +247,42 @@ public class GTSurfaceTensionFullGT {
             if (!NDEBUG && DEBUGPLOT) {
                 debugPlot(xgrid, rhomat);
             }
-            //End Remesh
+            // End Remesh
 
         }
         return sigma;
     }
 
     /**
-     * @brief Calculate surface tension by full gradient method and Newtons
-     * method
+     * @brief Calculate surface tension by full gradient method and Newtons method
      *
-     * The routine solves the Finite Difference equations for the full Gradient
-     * Theory by Newtons method. Note that the length coordinate is in nm-units.
-     * Method: 1. Calculate delta_mu and its Jacobian 2. Call routine
-     * "directsolve" for Newton step 3. Dampen the step if relative step too
-     * large 4. Iterate until convergence or max #iterations (N_Newton)
+     *        The routine solves the Finite Difference equations for the full
+     *        Gradient Theory by Newtons method. Note that the length coordinate is
+     *        in nm-units. Method: 1. Calculate delta_mu and its Jacobian 2. Call
+     *        routine "directsolve" for Newton step 3. Dampen the step if relative
+     *        step too large 4. Iterate until convergence or max #iterations
+     *        (N_Newton)
      *
      * @param[in] cij Matrix of influence parameters [nm^2(J/mol)/(mol/m^3)]
      * @param[in] L Half-width of solution domain [nm]
      * @param[in] N_Newton Number of Newton steps between refinements
-     * @param[in] allowedRelChange Maximum allowed relative change per Newton
-     * step
+     * @param[in] allowedRelChange Maximum allowed relative change per Newton step
      * @param[in] highOrder If true a 4th order method will be used
-     * @param[in] directMethod If true a direct solver is used (only option for
-     * now)
+     * @param[in] directMethod If true a direct solver is used (only option for now)
      * @param[out] rhomat rhomat[i][j] is the density of species j at grid pt i
-     * [mol/m^3]
+     *             [mol/m^3]
      * @param[in] sys Thermodynamic system
      * @param[in] ncomp Number of chemical species
      * @param[in] t Temperature [K]
      * @param[in] mueq Chemical potential far from interface [J/mol]
      * @return sigma The surface tension [N/m]
      */
-    public static double Newton(double[][] cij, double L, int N_Newton,
-            double allowedRelChange, boolean highOrder, boolean directMethod,
-            double[][] rhomat, SystemInterface sys, int ncomp, double t,
-            double[] mueq) {
+    public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange, boolean highOrder,
+            boolean directMethod, double[][] rhomat, SystemInterface sys, int ncomp, double t, double[] mueq) {
         int i, j, k;
         int NewtonStep;
         int Ngrid = rhomat.length;
-        double H = 2.0 * L / (Ngrid - 1); //Grid spacing
+        double H = 2.0 * L / (Ngrid - 1); // Grid spacing
         double Jac[][][] = new double[Ngrid][ncomp][ncomp];
         double dmu[][] = new double[Ngrid][ncomp];
         double rres[][] = new double[Ngrid][ncomp];
@@ -302,11 +296,10 @@ public class GTSurfaceTensionFullGT {
         double tmp, sum_ztmp, sum_tmp, cg;
         int icorr;
 
-        //Process initial array
+        // Process initial array
         for (i = 0; i < Ngrid; i++) {
-            delta_mu(sys, ncomp, t, mueq, rhomat[i], dmu[i],
-                    Jac[i]);
-            //rres[i]=Matrix.subtract(dmu[i],Matrix.multiply(Jac[i],rhomat[i]));   
+            delta_mu(sys, ncomp, t, mueq, rhomat[i], dmu[i], Jac[i]);
+            // rres[i]=Matrix.subtract(dmu[i],Matrix.multiply(Jac[i],rhomat[i]));
             for (j = 0; j < ncomp; j++) {
                 rres[i][j] = dmu[i][j];
                 for (k = 0; k < ncomp; k++) {
@@ -315,30 +308,31 @@ public class GTSurfaceTensionFullGT {
             }
         }
 
-        //FIXME: Add deferred correction here
+        // FIXME: Add deferred correction here
         if (highOrder) {
-            for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
+            for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
                 for (j = 0; j < ncomp; j++) {
                     rres[i][j] += (dmu[i - 1][j] - 2.0 * dmu[i][j] + dmu[i + 1][j]) / 12.0;
                 }
             }
         }
 
-        for (NewtonStep = 0; NewtonStep < N_Newton; NewtonStep++) { //for NewtonStep=1:N_Newton
-            //rrho_prev = rhomat.clone(); //    rrho_prev = rrho{1}; %Previous solution. Clone not a good idea...
+        for (NewtonStep = 0; NewtonStep < N_Newton; NewtonStep++) { // for NewtonStep=1:N_Newton
+            // rrho_prev = rhomat.clone(); // rrho_prev = rrho{1}; %Previous solution. Clone
+            // not a good idea...
             for (i = 0; i < Ngrid; i++) {
                 for (j = 0; j < ncomp; j++) {
                     rrho_prev[i][j] = rhomat[i][j];
                 }
             }
 
-            //    if directMethod
+            // if directMethod
             directsolve(rres, Jac, cij, H, Ngrid, rhomat, ncomp);
 
-            //    %Limit the Newton step by max relative change in solution
+            // %Limit the Newton step by max relative change in solution
             maxrelchange = 0.0;
-            for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
-                for (j = 0; j < ncomp; j++) {//Each specie    
+            for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
+                for (j = 0; j < ncomp; j++) {// Each specie
                     if (Math.abs(rhomat[i][j] - rrho_prev[i][j]) > maxrelchange * Math.abs(rrho_prev[i][j])) {
                         maxrelchange = Math.abs(rhomat[i][j] - rrho_prev[i][j]) / Math.abs(rrho_prev[i][j]);
                     }
@@ -346,20 +340,20 @@ public class GTSurfaceTensionFullGT {
             }
             urel_Newton = Math.min(allowedRelChange / maxrelchange, 1.0);
 
-            //Update solution
-            for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
-                for (j = 0; j < ncomp; j++) {//Each specie    
+            // Update solution
+            for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
+                for (j = 0; j < ncomp; j++) {// Each specie
                     rhomat[i][j] = urel_Newton * rhomat[i][j] + (1.0 - urel_Newton) * rrho_prev[i][j];
                 }
             }
 
-            if (urel_Newton * maxrelchange < 0.00001) {//%Convergence test  FIXME: Hardcoded tolerance
+            if (urel_Newton * maxrelchange < 0.00001) {// %Convergence test FIXME: Hardcoded tolerance
                 break; // %Converged
             }
 
             sigma = sigmaCalc(H, rhomat, cij, false, drhodz, ncomp);
 
-            //System.out.printf("Sigma=%.12f\n",sigma);
+            // System.out.printf("Sigma=%.12f\n",sigma);
             if (!NDEBUG) {
                 logger.info("Sigma= " + sigma);
             }
@@ -376,17 +370,17 @@ public class GTSurfaceTensionFullGT {
                 sum_ztmp += 0.5 * (xgrid[i + 1] + xgrid[i]) * tmp;
                 sum_tmp += tmp;
             }
-            cg = sum_ztmp / sum_tmp; //Center of gravity
+            cg = sum_ztmp / sum_tmp; // Center of gravity
 
-            icorr = (int) Math.round(cg / H); //Predicted shift to keep centered.
-            if (icorr > 0) {  //Shift left. Fill in with right boundary values
+            icorr = (int) Math.round(cg / H); // Predicted shift to keep centered.
+            if (icorr > 0) { // Shift left. Fill in with right boundary values
                 for (i = 1; i < Ngrid - icorr; i++) {
                     rhomat[i] = rhomat[i + icorr];
                 }
                 for (i = Ngrid - icorr; i < Ngrid - 1; i++) {
                     rhomat[i] = rhomat[Ngrid - 1].clone();
                 }
-            } else if (icorr < 0) { //Shift right
+            } else if (icorr < 0) { // Shift right
                 icorr = -icorr;
                 for (i = Ngrid - 2; i >= icorr; i--) {
                     rhomat[i] = rhomat[i - icorr];
@@ -396,10 +390,9 @@ public class GTSurfaceTensionFullGT {
                 }
             }
 
-            //Update the linearization
-            for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
-                delta_mu(sys, ncomp, t, mueq, rhomat[i],
-                        dmu[i], Jac[i]);
+            // Update the linearization
+            for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
+                delta_mu(sys, ncomp, t, mueq, rhomat[i], dmu[i], Jac[i]);
 
                 for (j = 0; j < ncomp; j++) {
                     rres[i][j] = dmu[i][j];
@@ -409,9 +402,9 @@ public class GTSurfaceTensionFullGT {
                 }
             }
 
-            //    %Deferred correction  
+            // %Deferred correction
             if (highOrder) {
-                for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
+                for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
                     for (j = 0; j < ncomp; j++) {
                         rres[i][j] += (dmu[i - 1][j] - 2.0 * dmu[i][j] + dmu[i + 1][j]) / 12.0;
                     }
@@ -434,8 +427,8 @@ public class GTSurfaceTensionFullGT {
      * @param[in] rhomat rhomat[i][j] is the density for species j at grid pt i
      * @param[in] ncomp Number of components.
      */
-    public static void directsolve(double rres[][], double JJ[][][],
-            double C[][], double H, int Ngrid, double rhomat[][], int ncomp) {
+    public static void directsolve(double rres[][], double JJ[][][], double C[][], double H, int Ngrid,
+            double rhomat[][], int ncomp) {
 
         int i, j, k;
         double H2 = H * H;
@@ -449,23 +442,25 @@ public class GTSurfaceTensionFullGT {
         DenseMatrix bb = new DenseMatrix(Neq, 1);
         DenseMatrix drho = new DenseMatrix(Neq, 1);
 
-        //Construct right hand side
-        iglob = 0; //Global index
-        for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
-            for (j = 0; j < ncomp; j++) {//Each specie
+        // Construct right hand side
+        iglob = 0; // Global index
+        for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
+            for (j = 0; j < ncomp; j++) {// Each specie
                 bbtmp = rres[i][j];
-                for (k = 0; k < ncomp; k++) {//Each specie
-                    //bb[i][j] = rhomat[i][j]  + JJ[i][j][k]*rhomat[i][k] - C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
-                    bbtmp += JJ[i][j][k] * rhomat[i][k] - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
+                for (k = 0; k < ncomp; k++) {// Each specie
+                    // bb[i][j] = rhomat[i][j] + JJ[i][j][k]*rhomat[i][k] -
+                    // C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
+                    bbtmp += JJ[i][j][k] * rhomat[i][k]
+                            - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
                 }
                 bb.set(iglob++, 0, -bbtmp);
             }
         }
 
-        //Add block by block to the jacobian
-        i = 1; //Grid point 2 is the first unknown
-        for (j = 0; j < ncomp; j++) {//Each specie       
-            for (k = 0; k < ncomp; k++) {//Each specie
+        // Add block by block to the jacobian
+        i = 1; // Grid point 2 is the first unknown
+        for (j = 0; j < ncomp; j++) {// Each specie
+            for (k = 0; k < ncomp; k++) {// Each specie
 //            Jac[j][k]=JJ[i][j][k]+2.0/H2*C[j][k];
 //            Jac[j][k+ncomp] = -1.0/H2*C[j][k];
                 Jac.set(j, k, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
@@ -473,10 +468,10 @@ public class GTSurfaceTensionFullGT {
             }
         }
 
-        for (i = 2; i < Ngrid - 2; i++) {  //Inner grid points
+        for (i = 2; i < Ngrid - 2; i++) { // Inner grid points
             skip = ncomp * (i - 1);
-            for (j = 0; j < ncomp; j++) {//Each specie       
-                for (k = 0; k < ncomp; k++) {//Each specie
+            for (j = 0; j < ncomp; j++) {// Each specie
+                for (k = 0; k < ncomp; k++) {// Each specie
 //                Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
 //                Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
 //                Jac[j+skip][k+skip+ncomp] = -1.0/H2*C[j][k];
@@ -487,10 +482,10 @@ public class GTSurfaceTensionFullGT {
             }
         }
 
-        i = Ngrid - 2; //Last unknown grid point
+        i = Ngrid - 2; // Last unknown grid point
         skip = ncomp * (i - 1);
-        for (j = 0; j < ncomp; j++) {//Each specie       
-            for (k = 0; k < ncomp; k++) {//Each specie
+        for (j = 0; j < ncomp; j++) {// Each specie
+            for (k = 0; k < ncomp; k++) {// Each specie
 //            Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
 //            Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
                 Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
@@ -501,10 +496,10 @@ public class GTSurfaceTensionFullGT {
         Jac.solve(bb, drho);
 
         iglob = 0;
-        for (i = 1; i < Ngrid - 1; i++) {  //Inner grid points
-            for (j = 0; j < ncomp; j++) {//Each specie    
-                bbtmp = drho.get(iglob++, 0); //FIXME: Only debugging
-                rhomat[i][j] += bbtmp; //drho.get(iglob++);            
+        for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
+            for (j = 0; j < ncomp; j++) {// Each specie
+                bbtmp = drho.get(iglob++, 0); // FIXME: Only debugging
+                rhomat[i][j] += bbtmp; // drho.get(iglob++);
             }
         }
     }
@@ -512,22 +507,22 @@ public class GTSurfaceTensionFullGT {
     /**
      * @brief Calculates the interface tension
      *
-     * The following integral is solved with the trapezoidal method:
-     * \f{equation}{ \sigma = \int_{-\infty}^{\infty} \boldsymbol{n_z}^T
-     * \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
+     *        The following integral is solved with the trapezoidal method:
+     *        \f{equation}{ \sigma = \int_{-\infty}^{\infty} \boldsymbol{n_z}^T
+     *        \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
      *
      * @param[in] h Grid spacing.
      * @param[in] rrho Array of number density profiles.
      * @param[in] C Cross influence parameter matrix.
-     * @param[in] highOrder Use high order calculation (not yet implemented for
-     * this integral).
+     * @param[in] highOrder Use high order calculation (not yet implemented for this
+     *            integral).
      * @param[out] drhodz Number density derivative
-     * \f$\partial\boldsymbol{\rho}/\partial\mathbf{z}\f$
+     *             \f$\partial\boldsymbol{\rho}/\partial\mathbf{z}\f$
      * @param[in] ncomp Number of components
      * @return sigma The surface tension [N/m]
      */
-    public static double sigmaCalc(double h, double rrho[][], double C[][],
-            boolean highOrder, double drhodz[][], int ncomp) {
+    public static double sigmaCalc(double h, double rrho[][], double C[][], boolean highOrder, double drhodz[][],
+            int ncomp) {
         int i, j, k;
         double drho2; // For each pair of species j,k, drho2=sum_i{drhodz[i][j]*drhodz[i][k]}
         double sigma;
@@ -538,7 +533,7 @@ public class GTSurfaceTensionFullGT {
             }
         }
 
-        //drhodz[i][j]*C(j,k)*drhodz[i][k]
+        // drhodz[i][j]*C(j,k)*drhodz[i][k]
         sigma = 0.0;
         for (j = 0; j < ncomp; j++) {
             for (k = 0; k < ncomp; k++) {
@@ -549,22 +544,22 @@ public class GTSurfaceTensionFullGT {
                 sigma += C[j][k] * drho2;
             }
         }
-        sigma *= h * 1.0e-9; //Multiply grid spacing, convert for nm-unit
+        sigma *= h * 1.0e-9; // Multiply grid spacing, convert for nm-unit
 
-        //FIXME: Add Richardson interpolation
+        // FIXME: Add Richardson interpolation
         return sigma;
     }
 
     /**
      * @brief Calculate width of interface region (length scale)
      *
-     * Estimate the width of interface by calculating the second moment of the
-     * surface tension integrand. Used to adjust the domain size
+     *        Estimate the width of interface by calculating the second moment of
+     *        the surface tension integrand. Used to adjust the domain size
      *
      * @param[in] z Mesh coordinates.
      * @param[in] C Cross influence parameter matrix.
      * @param[in] drhodz Number density derivative
-     * \f$\partial\boldsymbol{\rho}/\partial\mathbf{z}\f$
+     *            \f$\partial\boldsymbol{\rho}/\partial\mathbf{z}\f$
      * @return Interface width (length scale) [nm]
      */
     public double calc_std_integral(double z[], double C[][], double drhodz[][]) {
@@ -593,12 +588,10 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * @brief Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density
-     * derivative.
+     * @brief Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
      */
-    public static void delta_mu(SystemInterface sys, int ncomp, double t,
-            double mueq[], double[] rho, double[] delta_mu,
-            double[][] dmu_drho) {
+    public static void delta_mu(SystemInterface sys, int ncomp, double t, double mueq[], double[] rho,
+            double[] delta_mu, double[][] dmu_drho) {
         int i;
         double[] pdummy = new double[ncomp];
         double[] mu = new double[ncomp];
@@ -611,8 +604,7 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * @brief Make an array of double with N values linearly spaced between a
-     * and b.
+     * @brief Make an array of double with N values linearly spaced between a and b.
      *
      * @param a start of range
      * @param b end of range
@@ -634,7 +626,7 @@ public class GTSurfaceTensionFullGT {
      * @param x abscissa values
      * @param y array of ordinate value arrays.
      */
-    
+
     public static void debugPlot(double[] x, double[][] y) {
         int N = y.length;
         int M = y[0].length;
@@ -646,20 +638,19 @@ public class GTSurfaceTensionFullGT {
                 yy[i] = Math.log10(y[i][j]);
             }
             if (j == 0) {
-  //              plot(x, yy);     // removed EasyJccKit.jar
+                // plot(x, yy); // removed EasyJccKit.jar
             } else {
-  //              addPlot(x, yy);  // removed EasyJccKit.jar
+                // addPlot(x, yy); // removed EasyJccKit.jar
             }
         }
     }
 
     /**
      * @brief Initialize equilibrium chemical potential, and derivative and test
-     * that the bulk equilibrium is satisfied.
+     *        that the bulk equilibrium is satisfied.
      */
-    public static void initmu(SystemInterface sys, int ncomp, double t,
-            double rho_ph1[], double rho_ph2[], double mueq[], double p0[],
-            double reltol) {
+    public static void initmu(SystemInterface sys, int ncomp, double t, double rho_ph1[], double rho_ph2[],
+            double mueq[], double p0[], double reltol) {
         int i;
         double maxerr = 0.;
         double[][] dmu_drho1 = new double[ncomp][ncomp];
@@ -674,7 +665,8 @@ public class GTSurfaceTensionFullGT {
             maxerr = Math.max(maxerr, Math.abs(mueq[i] / mueq2[i] - 1.0));
         }
         if (maxerr > reltol) {
-            logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
+            logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr
+                    + " > " + reltol);
             throw new RuntimeException("Flash not solved!");
         }
     }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
- /*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
+/*
+* PHflash.java
+*
+* Created on 8. mars 2001, 10:56
+*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -73,16 +73,16 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
         double factor = 0.8;
-        
+
         boolean correctFactor = true;
         double newCorr = 1.0;
         do {
-            if (error > erorOld  && factor>0.1 && correctFactor) {
+            if (error > erorOld && factor > 0.1 && correctFactor) {
                 factor *= 0.5;
             } else if (error < erorOld && correctFactor) {
                 factor = 1.0;
             }
-            
+
             iterations++;
             oldTemp = system.getTemperature();
             system.init(2);
@@ -90,28 +90,26 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
                 nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
-               correctFactor = false;
-            }
-            else if (nyTemp < 0) {
+                correctFactor = false;
+            } else if (nyTemp < 0) {
                 nyTemp = Math.abs(system.getTemperature() - 10.0);
                 correctFactor = false;
-            }
-            else if (Double.isNaN(nyTemp)) {
+            } else if (Double.isNaN(nyTemp)) {
                 nyTemp = oldTemp + 1.0;
                 correctFactor = false;
-            }
-            else{
+            } else {
                 correctFactor = true;
             }
 
             system.setTemperature(nyTemp);
             tpFlash.run();
             erorOld = error;
-            error = Math.abs(calcdQdT());//Math.abs((nyTemp - oldTemp) / (nyTemp));
-            //if(error>erorOld) factor *= -1.0;
-             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations + " error "+ error + " correction " + newCorr + " factor "+ factor);
-          //newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
-        } while(((error+erorOld) > 1e-8 || iterations < 3) && iterations < 200);
+            error = Math.abs(calcdQdT());// Math.abs((nyTemp - oldTemp) / (nyTemp));
+            // if(error>erorOld) factor *= -1.0;
+            // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
+            // " error "+ error + " correction " + newCorr + " factor "+ factor);
+            // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
+        } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         return nyTemp;
     }
 
@@ -125,11 +123,12 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         if (type == 0) {
             solveQ();
         } else {
-            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 1);
+            sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
+                    system.getPhases()[0].getNumberOfComponents(), 1);
             secondOrderSolver.setSpec(Sspec);
             secondOrderSolver.solve(1);
         }
-        //System.out.println("Entropy: " + system.getEntropy());
-        //System.out.println("Temperature: " + system.getTemperature());
+        // System.out.println("Entropy: " + system.getEntropy());
+        // System.out.println("Temperature: " + system.getTemperature());
     }
 }

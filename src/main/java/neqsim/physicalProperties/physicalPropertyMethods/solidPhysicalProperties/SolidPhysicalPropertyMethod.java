@@ -8,25 +8,27 @@ package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalPropertie
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class SolidPhysicalPropertyMethod extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod{
+public class SolidPhysicalPropertyMethod
+        extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {
 
     private static final long serialVersionUID = 1000;
-    
+
     protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase;
-    
+
     public SolidPhysicalPropertyMethod() {
         super();
     }
-    
-    public SolidPhysicalPropertyMethod(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+
+    public SolidPhysicalPropertyMethod(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super();
         this.solidPhase = solidPhase;
     }
-    
-     public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase){
+
+    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         this.solidPhase = solidPhase;
     }
 }

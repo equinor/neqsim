@@ -28,13 +28,13 @@ import org.apache.logging.log4j.*;
  * @author esol
  */
 public class Characterise extends Object implements java.io.Serializable, Cloneable {
-    private static final long serialVersionUID = 1000;    
-     SystemInterface system = null;
-     TBPCharacterize TBPCharacterise = null;
-     private TBPModelInterface TBPfractionModel = null;
-     private PlusFractionModel plusFractionModelSelector = null;
-     private PlusFractionModelInterface plusFractionModel = null;
-     private LumpingModelInterface lumpingModel = null;
+    private static final long serialVersionUID = 1000;
+    SystemInterface system = null;
+    TBPCharacterize TBPCharacterise = null;
+    private TBPModelInterface TBPfractionModel = null;
+    private PlusFractionModel plusFractionModelSelector = null;
+    private PlusFractionModelInterface plusFractionModel = null;
+    private LumpingModelInterface lumpingModel = null;
     protected String TBPFractionModelName = "PedersenSRK";
     protected LumpingModel lumpingModelSelector = null;
     protected TBPfractionModel TBPfractionModelSelector;
@@ -69,7 +69,8 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
         Characterise clonedSystem = null;
         try {
             clonedSystem = (Characterise) super.clone();
-            //clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations) chemicalReactionOperations.clone();
+            // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
+            // chemicalReactionOperations.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
@@ -116,17 +117,16 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
 
     /*
      *
-     * public boolean addPlusFraction(int start, int end) { plusFractionModel =
-     * new PlusCharacterize(system); if (TBPCharacterise.hasPlusFraction()) {
-     * TBPCharacterise.groupTBPfractions();
-     * TBPCharacterise.generateTBPFractions(); return true; } else {
-     * System.out.println("not able to generate pluss fraction"); return false;
-     * } }
+     * public boolean addPlusFraction(int start, int end) { plusFractionModel = new
+     * PlusCharacterize(system); if (TBPCharacterise.hasPlusFraction()) {
+     * TBPCharacterise.groupTBPfractions(); TBPCharacterise.generateTBPFractions();
+     * return true; } else {
+     * System.out.println("not able to generate pluss fraction"); return false; } }
      *
      *
-     * public boolean characterize2() { if (TBPCharacterise.groupTBPfractions())
-     * { TBPCharacterise.solve(); return true; } else { System.out.println("not
-     * able to generate pluss fraction"); return false; } }
+     * public boolean characterize2() { if (TBPCharacterise.groupTBPfractions()) {
+     * TBPCharacterise.solve(); return true; } else { System.out.println("not able
+     * to generate pluss fraction"); return false; } }
      *
      *
      */

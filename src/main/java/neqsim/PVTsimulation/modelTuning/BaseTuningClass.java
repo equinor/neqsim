@@ -50,8 +50,7 @@ public class BaseTuningClass implements TuningInterface {
         return simulation;
     }
 
-    public void setSaturationConditions(double temperature, double pressure)
-    {
+    public void setSaturationConditions(double temperature, double pressure) {
         saturationTemperature = temperature;
         saturationPressure = pressure;
     }

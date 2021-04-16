@@ -8,19 +8,19 @@ package neqsim.statistics.experimentalEquipmentData;
 
 /**
  *
- * @author  even solbraa
- * @version 
+ * @author even solbraa
+ * @version
  */
 public class ExperimentalEquipmentData extends Object {
 
     private static final long serialVersionUID = 1000;
-    
-    protected double diameter=0, length=0;
-    protected double volume=0;
-    protected double diameterUncertaty=0, lengthUncertanty=0;
+
+    protected double diameter = 0, length = 0;
+    protected double volume = 0;
+    protected double diameterUncertaty = 0, lengthUncertanty = 0;
 
     /** Creates new ExperimentalEquipmentData */
     public ExperimentalEquipmentData() {
     }
-    
+
 }

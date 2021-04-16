@@ -16,7 +16,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
     double wtfrac = 0.5;
     String inhibitor = "MEG";
-    
+
     static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
 
     /**
@@ -29,8 +29,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         super(system);
         wtfrac = wtfr;
         this.inhibitor = inhibitor;
-        
-        
+
     }
 
     public void stop() {
@@ -56,7 +55,9 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                 } else {
 
                     double newC = -error / derrordC;
-                    double correction = newC * 0.5;//(newC - system.getPhase(0).getComponent(inhibitor).getNumberOfmoles()) * 0.5;
+                    double correction = newC * 0.5;// (newC -
+                                                   // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles()) *
+                                                   // 0.5;
 
                     system.addComponent(inhibitor, correction);
                 }
@@ -65,23 +66,33 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                 ops.TPflash();
                 double wtp = 0.0;
                 if (system.hasPhaseType("aqueous")) {
-                    wtp = system.getPhase("aqueous").getComponent(inhibitor).getx() * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass() / (system.getPhase("aqueous").getComponent(inhibitor).getx() * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass() + system.getPhase("aqueous").getComponent("water").getx() * system.getPhase("aqueous").getComponent("water").getMolarMass());
+                    wtp = system.getPhase("aqueous").getComponent(inhibitor).getx()
+                            * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
+                            / (system.getPhase("aqueous").getComponent(inhibitor).getx()
+                                    * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
+                                    + system.getPhase("aqueous").getComponent("water").getx()
+                                            * system.getPhase("aqueous").getComponent("water").getMolarMass());
                 } else {
                     system.addComponent(inhibitor, system.getTotalNumberOfMoles());
                     ops.TPflash();
-                    wtp = system.getPhase("aqueous").getComponent(inhibitor).getx() * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass() / (system.getPhase("aqueous").getComponent(inhibitor).getx() * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass() + system.getPhase("aqueous").getComponent("water").getx() * system.getPhase("aqueous").getComponent("water").getMolarMass());
-              
+                    wtp = system.getPhase("aqueous").getComponent(inhibitor).getx()
+                            * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
+                            / (system.getPhase("aqueous").getComponent(inhibitor).getx()
+                                    * system.getPhase("aqueous").getComponent(inhibitor).getMolarMass()
+                                    + system.getPhase("aqueous").getComponent("water").getx()
+                                            * system.getPhase("aqueous").getComponent("water").getMolarMass());
+
                 }
                 error = -(wtp - wtfrac);
 
                 logger.info("error " + error);
 
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
 
         } while ((Math.abs(error) > 1e-5 && iter < 100) || iter < 3);
-        //system.display();
+        // system.display();
     }
 
     public void printToFile(String name) {
@@ -94,9 +105,9 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
         testSystem.addComponent("nitrogen", 79.0);
         testSystem.addComponent("oxygen", 21.0);
-     //   testSystem.addComponent("ethane", 0.10);
-       // testSystem.addComponent("propane", 0.050);
-       // testSystem.addComponent("i-butane", 0.0050);
+        // testSystem.addComponent("ethane", 0.10);
+        // testSystem.addComponent("propane", 0.050);
+        // testSystem.addComponent("i-butane", 0.0050);
         testSystem.addComponent("MEG", 0.000001);
         testSystem.addComponent("water", 0.0010);
         testSystem.createDatabase(true);
@@ -108,7 +119,12 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
 
         try {
             testOps.hydrateInhibitorConcentrationSet("MEG", 0.99);
-            double cons = 100 * testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles() * testSystem.getPhase(0).getComponent("MEG").getMolarMass() / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles() * testSystem.getPhase(0).getComponent("MEG").getMolarMass() + testSystem.getPhase(0).getComponent("water").getNumberOfmoles() * testSystem.getPhase(0).getComponent("water").getMolarMass());
+            double cons = 100 * testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
+                    * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
+                    / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
+                            * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
+                            + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
+                                    * testSystem.getPhase(0).getComponent("water").getMolarMass());
             logger.info("hydrate inhibitor concentration " + cons + " wt%");
         } catch (Exception e) {
             e.toString();

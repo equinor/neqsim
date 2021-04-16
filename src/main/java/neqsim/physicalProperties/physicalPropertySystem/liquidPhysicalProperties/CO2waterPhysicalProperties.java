@@ -15,37 +15,35 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
-    
-    
-    
+
     public CO2waterPhysicalProperties() {
     }
-    
-    public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+
+    public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
+            int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         conductivityCalc = new Conductivity(this);
         viscosityCalc = new Viscosity(this);
         diffusivityCalc = new CO2water(this);
         densityCalc = new Density(this);
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         CO2waterPhysicalProperties properties = null;
-        
-        try{
+
+        try {
             properties = (CO2waterPhysicalProperties) super.clone();
-        }
-        catch(Exception e) {
-            logger.error("Cloning failed.",e);
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
         }
         return properties;
     }
-  
+
 }

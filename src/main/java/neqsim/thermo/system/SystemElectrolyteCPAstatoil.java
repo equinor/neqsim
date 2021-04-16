@@ -14,28 +14,31 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
  * @author  Even Solbraa
  * @version
  */
-/** This class defines a thermodynamic system using the Electrolyte CPA EoS of Equinor */
+/**
+ * This class defines a thermodynamic system using the Electrolyte CPA EoS of
+ * Equinor
+ */
 public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates new SystemModifiedFurstElectrolyteEos */
     public SystemElectrolyteCPAstatoil() {
         super();
         modelName = "Electrolyte-CPA-EOS-statoil";
         attractiveTermNumber = 15;
-        for (int i=0;i<numberOfPhases;i++){
+        for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseElectrolyteCPAstatoil();
         }
         FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
         this.useVolumeCorrection(true);
     }
-    
-    public SystemElectrolyteCPAstatoil(double T, double P)  {
-        super(T,P);
+
+    public SystemElectrolyteCPAstatoil(double T, double P) {
+        super(T, P);
         attractiveTermNumber = 15;
         modelName = "Electrolyte-CPA-EOS-statoil";
-        for (int i=0;i<numberOfPhases;i++){
+        for (int i = 0; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseElectrolyteCPAstatoil();
             phaseArray[i].setTemperature(T);
             phaseArray[i].setPressure(P);
@@ -43,25 +46,20 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
         this.useVolumeCorrection(true);
     }
-    
-    
-    public Object clone(){
+
+    public Object clone() {
         SystemElectrolyteCPAstatoil clonedSystem = null;
-        try{
+        try {
             clonedSystem = (SystemElectrolyteCPAstatoil) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
-        
-        //        for(int i = 0; i < numberOfPhases; i++) {
-        //            clonedSystem.phaseArray[i] =(PhaseElectrolyteCPA) phaseArray[i].clone();
-        //        }
-        
+
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] =(PhaseElectrolyteCPA) phaseArray[i].clone();
+        // }
+
         return clonedSystem;
     }
-    
-    
-    
+
 }

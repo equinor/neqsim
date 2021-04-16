@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
- /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+/*
+* To change this license header, choose License Headers in Project Properties.
+* To change this template file, choose Tools | Templates
+* and open the template in the editor.
+*/
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -53,8 +53,8 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
 
     StreamInterface refrigerantStream;
-    private double condenserTemperature = 273.15 + 30.0; //Kelvin
-    private double vaporizerTemperature = 273.15 - 40.0; //Kelvin
+    private double condenserTemperature = 273.15 + 30.0; // Kelvin
+    private double vaporizerTemperature = 273.15 - 40.0; // Kelvin
 
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("refrigerant")) {
@@ -77,7 +77,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
     public void initializeModule() {
         isInitializedModule = true;
-        
+
         refrigerantStream.getThermoSystem().setTemperature(condenserTemperature);
         ((Stream) refrigerantStream).setSpecification("bubT");
         refrigerantStream.run();
@@ -97,7 +97,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         JTvalve.setOutletPressure(stream_2.getPressure());
 
         Compressor compressor1 = new Compressor("propane compressor", stream_2);
-        //compressor1.setIsentropicEfficiency(0.75);
+        // compressor1.setIsentropicEfficiency(0.75);
         // compressor1.setPower(180000);
         compressor1.setOutletPressure(refrigerantStream.getPressure());
 
@@ -112,8 +112,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         getOperations().add(cooler);
         getOperations().add(stream_2);
         getOperations().add(compressor1);
-        getOperations().add(condenser
-        );
+        getOperations().add(condenser);
         System.out.println("finished adding operations....");
     }
 
@@ -124,7 +123,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         System.out.println("running model....");
         getOperations().run();
 
-        //  gasExitStream = secondStageAfterCooler.getOutStream();
+        // gasExitStream = secondStageAfterCooler.getOutStream();
     }
 
     public void initializeStreams() {
@@ -160,21 +159,26 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
         Stream porpane = new Stream(testSystem);
         PropaneCoolingModule propaneModule = new PropaneCoolingModule();
-        propaneModule.setCondenserTemperature(273.15+30);
-        propaneModule.setVaporizerTemperature(273.15-40);
+        propaneModule.setCondenserTemperature(273.15 + 30);
+        propaneModule.setVaporizerTemperature(273.15 - 40);
 
         propaneModule.addInputStream("refrigerant", porpane);
         propaneModule.run();
 
-        double compressorWork = ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor")).getEnergy();
+        double compressorWork = ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor"))
+                .getEnergy();
 
         double evaporatorDuty = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getEnergyInput();
-        double evaporatorPressure = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutStream().getPressure();
-        double evaporatorTemperature = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutStream().getTemperature();
+        double evaporatorPressure = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
+                .getOutStream().getPressure();
+        double evaporatorTemperature = ((Cooler) propaneModule.getOperations().getUnit("propane evaporator"))
+                .getOutStream().getTemperature();
 
         double condenserDuty = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getEnergyInput();
-        double condenserPressure = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream().getPressure();
-        double condenserTemperature = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream().getTemperature();
+        double condenserPressure = ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream()
+                .getPressure();
+        double condenserTemperature = ((Heater) propaneModule.getOperations().getUnit("propane condenser"))
+                .getOutStream().getTemperature();
 
         System.out.println("Compressor work " + compressorWork + " W");
 
@@ -183,14 +187,20 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         System.out.println("evaporator pressure " + evaporatorPressure + " bara");
 
         System.out.println("condenser duty " + condenserDuty + " W");
-         System.out.println("condenser temperature " + (condenserTemperature - 273.15) + " C");
+        System.out.println("condenser temperature " + (condenserTemperature - 273.15) + " C");
         System.out.println("condenser pressure " + condenserPressure + " bara");
-     //   ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getInStream().displayResult();
-      //   ((Cooler) propaneModule.getOperations().getUnit("propane evaporator")).getOutStream().displayResult();
-         
-     //   TT ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor")).displayResult();
-     // ((CompressorInterface) propaneModule.getOperations().getUnit("propane compressor")).getOutStream().displayResult();
-   //       ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getInStream().displayResult();
-    //     ((Heater) propaneModule.getOperations().getUnit("propane condenser")).getOutStream().displayResult();
+        // ((Cooler) propaneModule.getOperations().getUnit("propane
+        // evaporator")).getInStream().displayResult();
+        // ((Cooler) propaneModule.getOperations().getUnit("propane
+        // evaporator")).getOutStream().displayResult();
+
+        // TT ((CompressorInterface) propaneModule.getOperations().getUnit("propane
+        // compressor")).displayResult();
+        // ((CompressorInterface) propaneModule.getOperations().getUnit("propane
+        // compressor")).getOutStream().displayResult();
+        // ((Heater) propaneModule.getOperations().getUnit("propane
+        // condenser")).getInStream().displayResult();
+        // ((Heater) propaneModule.getOperations().getUnit("propane
+        // condenser")).getOutStream().displayResult();
     }
 }

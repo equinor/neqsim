@@ -5,20 +5,21 @@
  */
 
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
+
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
-public class BerlSaddlePacking extends Packing{
+public class BerlSaddlePacking extends Packing {
 
     private static final long serialVersionUID = 1000;
 
     /** Creates new PallRingPacking */
     public BerlSaddlePacking() {
     }
-    
-    public BerlSaddlePacking(String name){
+
+    public BerlSaddlePacking(String name) {
         super(name);
     }
 

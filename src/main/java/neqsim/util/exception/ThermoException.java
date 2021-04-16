@@ -8,8 +8,8 @@ package neqsim.util.exception;
 
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
 public class ThermoException extends java.lang.Exception {
 
@@ -21,14 +21,12 @@ public class ThermoException extends java.lang.Exception {
     public ThermoException() {
     }
 
-
     /**
      * Constructs an <code>ThermoException</code> with the specified detail message.
+     * 
      * @param msg the detail message.
      */
     public ThermoException(String msg) {
         super(msg);
     }
 }
-
-

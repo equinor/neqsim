@@ -10,27 +10,26 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class FreezeSolidFunction extends HuronVidalFunction {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
-    
+
     /** Creates new Test */
     public FreezeSolidFunction() {
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.init(0);
-        try{
+        try {
             thermoOps.freezingPointTemperatureFlash();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             logger.error(e.toString());
         }
         return system.getTemperature();
     }
-    
+
 }

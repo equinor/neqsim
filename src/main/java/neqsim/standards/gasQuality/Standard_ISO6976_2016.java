@@ -21,14 +21,13 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
 
     private static final long serialVersionUID = 1000;
 
-    //metering conditions
-   
+    // metering conditions
+
     double R = 8.3144621;
- 
-  
+
     double Zmix0 = 1.0, Zmix15 = 1.0, Zmix20 = 1.0, Zmix60F = 1.0;
     double Zair0 = 0.999419, Zair15 = 0.999595, Zair60F = 999601, Zair20 = 0.999645;
- 
+
     double[] Z0, Z15, Z20, Z60F;
     double[] bsqrt0, bsqrt15, bsqrt20, bsqrt60F;
     double[] Hsup0, Hsup15, Hsup20, Hsup25, Hsup60F;
@@ -84,7 +83,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
 
                 try {
-                    dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='" + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
+                    dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
+                            + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
                     dataSet.next();
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
 
@@ -92,23 +92,32 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
                     try {
                         dataSet.close();
                         if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("inert")) {
-                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
+                            dataSet = database.getResultSet(
+                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
                         } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("HC")) {
-                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("alcohol") || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("glycol")) {
-                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='methanol'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("TPB") || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("plus")) {
-                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
+                            dataSet = database.getResultSet(
+                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
+                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("alcohol")
+                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("glycol")) {
+                            dataSet = database.getResultSet(
+                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='methanol'"));
+                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("TPB")
+                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("plus")) {
+                            dataSet = database.getResultSet(
+                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
                         } else {
-                            dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
+                            dataSet = database.getResultSet(
+                                    ("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
                         }
                         M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
                         dataSet.next();
                     } catch (Exception er) {
-                    	logger.error(er.toString());
+                        logger.error(er.toString());
                     }
-                    componentsNotDefinedByStandard.add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
-                    logger.info("added component not specified by ISO6976constants2016 " + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+                    componentsNotDefinedByStandard
+                            .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
+                    logger.info("added component not specified by ISO6976constants2016 "
+                            + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
 
                 }
 
@@ -147,7 +156,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
 
     }
 
-    public Standard_ISO6976_2016(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC, double energyReferenceTemperaturedegC, String calculationType) {
+    public Standard_ISO6976_2016(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
+            double energyReferenceTemperaturedegC, String calculationType) {
         this(thermoSystem);
         this.referenceType = calculationType;
         volRefT = volumetricReferenceTemperaturedegC;
@@ -204,7 +214,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
         Zmix60F -= Math.pow(Zmixtemp60F, 2.0);
         Zmix20 -= Math.pow(Zmixtemp20, 2.0);
         molRefm3 = volRefP * 1.0e5 * 1.0 / (R * (getVolRefT() + 273.15) * getValue("CompressionFactor"));
-        //System.out.println("molRefm3 " + molRefm3);
+        // System.out.println("molRefm3 " + molRefm3);
     }
 
     public double getValue(String returnParameter, java.lang.String returnUnit) {
@@ -329,14 +339,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
         }
     }
 
-
     /**
      * @return the energyRefT
      */
-
-
-  
-
-  
 
 }

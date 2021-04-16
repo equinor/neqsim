@@ -7,42 +7,41 @@
 package neqsim.util.serialization;
 
 import java.io.*;
+
 /**
  *
- * @author  ESOL
+ * @author ESOL
  */
 public class SerializationManager {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates a new instance of SerializationManager */
     public SerializationManager() {
     }
-    
-    public static void save(Object obj, String name){
+
+    public static void save(Object obj, String name) {
         FileOutputStream fout = null;
         ObjectOutputStream out = null;
-        try{
+        try {
             fout = new FileOutputStream(name);
             out = new ObjectOutputStream(fout);
             out.writeObject(obj);
             out.close();
-            
-        }
-        catch(Exception e){
+
+        } catch (Exception e) {
             System.out.println(e.toString());
         }
     }
-    
-    public static Object open(String name){
+
+    public static Object open(String name) {
         FileInputStream fin = null;
         ObjectInputStream in = null;
-        try{
+        try {
             fin = new FileInputStream(name);
             in = new ObjectInputStream(fin);
             return in.readObject();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             System.out.println(e.toString());
         }
         return null;

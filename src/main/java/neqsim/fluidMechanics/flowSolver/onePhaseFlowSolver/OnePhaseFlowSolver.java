@@ -8,8 +8,8 @@ package neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver;
 
 /**
  *
- * @author  Even Solbraa
- * @version 
+ * @author Even Solbraa
+ * @version
  */
 public abstract class OnePhaseFlowSolver extends neqsim.fluidMechanics.flowSolver.FlowSolver {
 

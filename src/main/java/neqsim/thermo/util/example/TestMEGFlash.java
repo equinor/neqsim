@@ -5,19 +5,19 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
-
-public class TestMEGFlash{
+public class TestMEGFlash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestMEGFlash.class);
-    public static void main(String args[]){
-        SystemInterface testSystem = new SystemSrkCPAs(273.15+20, 10.0);
-        
+
+    public static void main(String args[]) {
+        SystemInterface testSystem = new SystemSrkCPAs(273.15 + 20, 10.0);
+
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        
+
 //        testSystem.addComponent("CO2", 0.02);
 //        testSystem.addComponent("H2S", 0.00666);
-        //testSystem.addComponent("nitrogen", 0.03412);
+        // testSystem.addComponent("nitrogen", 0.03412);
         testSystem.addComponent("nitrogen", 7.37e-6);
 //        testSystem.addComponent("ethane", 0.053);
 //        testSystem.addComponent("propane", 0.021);
@@ -38,23 +38,20 @@ public class TestMEGFlash{
 //        
 //        testSystem.addComponent("MEG", 1.17/3.0*0.0453);
         testSystem.addComponent("water", 1.0);
-        
-        
-        
-        //testSystem.setSolidPhaseCheck("water");
-        //testSystem.setHydrateCheck(true);
-        
-        //testSystem.createDatabase(true);
+
+        // testSystem.setSolidPhaseCheck("water");
+        // testSystem.setHydrateCheck(true);
+
+        // testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
-        //testSystem.setMultiPhaseCheck(true);
-        try{
-       testOps.bubblePointPressureFlash(false);
-        }
-        catch(Exception e){
-            logger.error("error",e);
+        // testSystem.setMultiPhaseCheck(true);
+        try {
+            testOps.bubblePointPressureFlash(false);
+        } catch (Exception e) {
+            logger.error("error", e);
         }
         testSystem.display();
-        
+
 //        int n = testSystem.getNumberOfPhases()-1;
 //        double megwtfracInit = testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
 //        System.out.println("wt % MEG " + megwtfracInit*100);

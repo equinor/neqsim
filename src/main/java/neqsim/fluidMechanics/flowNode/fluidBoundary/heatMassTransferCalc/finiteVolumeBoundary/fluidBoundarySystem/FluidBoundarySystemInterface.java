@@ -11,19 +11,27 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface FluidBoundarySystemInterface {
     public void addBoundary(FluidBoundaryInterface boundary);
+
     public void setNumberOfNodes(int nodes);
+
     public int getNumberOfNodes();
+
     public void createSystem();
+
     public void setFilmThickness(double filmThickness);
+
     public double getFilmThickness();
+
     public FluidBoundaryNodeInterface getNode(int i);
+
     public FluidBoundaryInterface getFluidBoundary();
+
     public double getNodeLength();
+
     public void solve();
 }
-

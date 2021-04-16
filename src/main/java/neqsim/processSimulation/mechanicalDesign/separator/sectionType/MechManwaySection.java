@@ -36,8 +36,7 @@ public class MechManwaySection extends SepDesignSection {
             }
 
             totalHeight = 0.5;
-        } 
-        else {
+        } else {
             if (separatorSection.getOuterDiameter() > 0.616) {
                 totalWeight = 500.0;
             } else {

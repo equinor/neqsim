@@ -2,43 +2,43 @@ package neqsim.processSimulation.processEquipment.compressor;
 
 import java.io.Serializable;
 
-public class AntiSurge implements Serializable{
-	private static final long serialVersionUID = 1000;
-	private boolean isActive = false;
-	private boolean isSurge = false;
-	private double surgeControlFactor = 1.05;
-	private double currentSurgeFraction = 0.0;
+public class AntiSurge implements Serializable {
+    private static final long serialVersionUID = 1000;
+    private boolean isActive = false;
+    private boolean isSurge = false;
+    private double surgeControlFactor = 1.05;
+    private double currentSurgeFraction = 0.0;
 
-	public boolean isActive() {
-		return isActive;
-	}
+    public boolean isActive() {
+        return isActive;
+    }
 
-	public void setActive(boolean isActive) {
-		this.isActive = isActive;
-	}
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
 
-	public boolean isSurge() {
-		return isSurge;
-	}
+    public boolean isSurge() {
+        return isSurge;
+    }
 
-	public void setSurge(boolean isSurge) {
-		this.isSurge = isSurge;
-	}
+    public void setSurge(boolean isSurge) {
+        this.isSurge = isSurge;
+    }
 
-	public double getSurgeControlFactor() {
-		return surgeControlFactor;
-	}
+    public double getSurgeControlFactor() {
+        return surgeControlFactor;
+    }
 
-	public void setSurgeControlFactor(double antiSurgeSafetyFactor) {
-		this.surgeControlFactor = antiSurgeSafetyFactor;
-	}
+    public void setSurgeControlFactor(double antiSurgeSafetyFactor) {
+        this.surgeControlFactor = antiSurgeSafetyFactor;
+    }
 
-	public double getCurrentSurgeFraction() {
-		return currentSurgeFraction;
-	}
+    public double getCurrentSurgeFraction() {
+        return currentSurgeFraction;
+    }
 
-	public void setCurrentSurgeFraction(double currentSurgeFraction) {
-		this.currentSurgeFraction = currentSurgeFraction;
-	}
-	
+    public void setCurrentSurgeFraction(double currentSurgeFraction) {
+        this.currentSurgeFraction = currentSurgeFraction;
+    }
+
 }

@@ -13,12 +13,12 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  *
  * @author ESOL
  */
-public class CostEstimateBaseClass extends java.lang.Object implements java.io.Serializable{
+public class CostEstimateBaseClass extends java.lang.Object implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
     ProcessSystem procesSystem = null;
-    private double CAPEXperWeight = 1000.0; //KNOK/tones
+    private double CAPEXperWeight = 1000.0; // KNOK/tones
 
     public CostEstimateBaseClass() {
 
@@ -38,7 +38,8 @@ public class CostEstimateBaseClass extends java.lang.Object implements java.io.S
         for (int i = 0; i < names.size(); i++) {
             try {
                 if (!((ProcessEquipmentInterface) procesSystem.getUnit((String) names.get(i)) == null)) {
-                    cost += ((ProcessEquipmentInterface) procesSystem.getUnit((String) names.get(i))).getMechanicalDesign().getCostEstimate().getTotaltCost();
+                    cost += ((ProcessEquipmentInterface) procesSystem.getUnit((String) names.get(i)))
+                            .getMechanicalDesign().getCostEstimate().getTotaltCost();
                 }
             } catch (Exception e) {
                 e.printStackTrace();

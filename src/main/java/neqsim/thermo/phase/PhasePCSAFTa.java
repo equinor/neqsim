@@ -13,7 +13,7 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
@@ -24,7 +24,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     public CPAMixingInterface cpamix;
     double hcpatot = 1.0, hcpatotdT = 0.0, hcpatotdTdT = 0.0;
     int cpaon = 1;
-    
+
     int totalNumberOfAccociationSites = 0;
     double gcpav = 0.0, lngcpa = 0.0, gcpavv = 1.0, gcpavvv = 0.0, gcpa = 0.0;
     int[][][] selfAccociationScheme = null;
@@ -58,11 +58,17 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         gcpa = getGhsSAFT();
         lngcpa = Math.log(getGhsSAFT());
         gcpav = 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV();
-        gcpavv = -1.0 / Math.pow(getGhsSAFT(), 2.0) * dgHSSAFTdN * dgHSSAFTdN * getDnSAFTdV() * getDnSAFTdV() + 1.0 / getGhsSAFT() * dgHSSAFTdNdN * getDnSAFTdV() * getDnSAFTdV() + 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV;
+        gcpavv = -1.0 / Math.pow(getGhsSAFT(), 2.0) * dgHSSAFTdN * dgHSSAFTdN * getDnSAFTdV() * getDnSAFTdV()
+                + 1.0 / getGhsSAFT() * dgHSSAFTdNdN * getDnSAFTdV() * getDnSAFTdV()
+                + 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV;
         gcpavvv = 0.0;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0 start init type =1 gi nye betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+                                                                                                            // start
+                                                                                                            // init type
+                                                                                                            // =1 gi nye
+                                                                                                            // betingelser
         if (type == 0) {
             selfAccociationScheme = new int[numberOfComponents][0][0];
             crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
@@ -98,7 +104,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
     public double dFdV() {
         double dv2 = dFCPAdV();
-        //System.out.println("dv " + dv + "  dvcpa " + dv2);
+        // System.out.println("dv " + dv + " dvcpa " + dv2);
         return super.dFdV() + cpaon * dv2;
     }
 
@@ -133,11 +139,16 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     }
 
     public double dFCPAdVdV() {
-        return -1.0 / getTotalVolume() * dFCPAdV() + hcpatot / (2.0 * getTotalVolume()) * (-gcpav * 1.0E-5 - getTotalVolume() * gcpavv * 1.0E-10);
+        return -1.0 / getTotalVolume() * dFCPAdV()
+                + hcpatot / (2.0 * getTotalVolume()) * (-gcpav * 1.0E-5 - getTotalVolume() * gcpavv * 1.0E-10);
     }
 
     public double dFCPAdVdVdV() {
-        return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 / Math.pow(getTotalVolume(), 2.0) * dFCPAdV() - hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0)) * (-gcpav * 1.0E-5 - getTotalVolume() * gcpavv * 1.0E-10) + hcpatot / (2.0 * getTotalVolume()) * (-gcpavv * 1.0E-10 - getTotalVolume() * gcpavvv * 1.0E-10 - gcpavv * 1.0E-10);
+        return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 / Math.pow(getTotalVolume(), 2.0) * dFCPAdV()
+                - hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0))
+                        * (-gcpav * 1.0E-5 - getTotalVolume() * gcpavv * 1.0E-10)
+                + hcpatot / (2.0 * getTotalVolume())
+                        * (-gcpavv * 1.0E-10 - getTotalVolume() * gcpavvv * 1.0E-10 - gcpavv * 1.0E-10);
     }
 
     public double dFCPAdT() {
@@ -158,7 +169,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             }
             tot += getComponent(i).getNumberOfMolesInPhase() * htot;
         }
-        //System.out.println("tot " +tot );
+        // System.out.println("tot " +tot );
         return tot;
     }
 
@@ -171,14 +182,16 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
                 htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-                        htot += ((ComponentPCSAFTa) getComponent(i)).getXsite()[j] * ((ComponentPCSAFTa) getComponent(k)).getXsite()[l] * cpamix.calcDeltadT(j, l, i, k, this, temperature, pressure, numberOfComponents);
+                        htot += ((ComponentPCSAFTa) getComponent(i)).getXsite()[j]
+                                * ((ComponentPCSAFTa) getComponent(k)).getXsite()[l]
+                                * cpamix.calcDeltadT(j, l, i, k, this, temperature, pressure, numberOfComponents);
                     }
                 }
 
                 tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
             }
         }
-        //System.out.println("tot " +tot );
+        // System.out.println("tot " +tot );
         return tot / getTotalVolume();
     }
 
@@ -191,46 +204,53 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
                 htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-                        htot += ((ComponentPCSAFTa) getComponent(i)).getXsite()[j] * ((ComponentPCSAFTa) getComponent(k)).getXsite()[l] * cpamix.calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
+                        htot += ((ComponentPCSAFTa) getComponent(i)).getXsite()[j]
+                                * ((ComponentPCSAFTa) getComponent(k)).getXsite()[l]
+                                * cpamix.calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
                     }
                 }
 
                 tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
             }
         }
-        //System.out.println("tot " +tot );
+        // System.out.println("tot " +tot );
         return tot / getTotalVolume();
     }
 
     public boolean solveX() {
         double err = .0;
         int iter = 0;
-        
+
         do {
             iter++;
             err = 0.0;
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     double old = ((ComponentPCSAFTa) getComponent(i)).getXsite()[j];
-                    double neeval = cpamix.calcXi(selfAccociationScheme, crossAccociationScheme, j, i, this, temperature, pressure, numberOfComponents);
+                    double neeval = cpamix.calcXi(selfAccociationScheme, crossAccociationScheme, j, i, this,
+                            temperature, pressure, numberOfComponents);
                     ((ComponentCPAInterface) getComponent(i)).setXsite(j, neeval);
                     err += Math.abs((old - neeval) / neeval);
                 }
             }
-        //System.out.println("err " + err);
+            // System.out.println("err " + err);
         } while (Math.abs(err) > 1e-10 && iter < 100);
-        //System.out.println("iter " +iter);
+        // System.out.println("iter " +iter);
         return Math.abs(err) < 1e-10;
     }
 
-    /** Getter for property hcpatot.
+    /**
+     * Getter for property hcpatot.
+     * 
      * @return Value of property hcpatot.
      */
     public double getHcpatot() {
         return hcpatot;
     }
 
-    /** Setter for property hcpatot.
+    /**
+     * Setter for property hcpatot.
+     * 
      * @param hcpatot New value of property hcpatot.
      */
     public void setHcpatot(double hcpatot) {
@@ -245,10 +265,12 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return 0;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
-        double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-        //double BonV = phase== 0 ? 0.99:1e-5;
+        double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        // double BonV = phase== 0 ? 0.99:1e-5;
 
         if (BonV < 0) {
             BonV = 1.0e-6;
@@ -266,22 +288,24 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         }
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
-        //System.out.println("volume " + getVolume());
+        // System.out.println("volume " + getVolume());
         do {
             iterations++;
             this.volInit();
             solveX();
             hcpatot = calc_hCPA();
 
-            //System.out.println("saft volume " + getVolumeSAFT());
+            // System.out.println("saft volume " + getVolumeSAFT());
             BonVold = BonV;
-            h = BonV - Btemp / numberOfMolesInPhase * dFdV() - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+            h = BonV - Btemp / numberOfMolesInPhase * dFdV()
+                    - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
             dh = 1.0 + Btemp / Math.pow(BonV, 2.0) * (Btemp / numberOfMolesInPhase * dFdVdV());
-            dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV()) - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+            dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV())
+                    - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
             d1 = -h / dh;
             d2 = -dh / dhh;
-            BonV += d1;//(1.0+0.5*-1.0);
+            BonV += d1;// (1.0+0.5*-1.0);
 //            if(Math.abs(d1/d2)<=1.0){
 //                BonV += d1*(1.0+0.5*d1/d2);
 //            } else if(d1/d2<-1){
@@ -300,10 +324,9 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 //                BonVold=10;
 //            }
 
-
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-        //System.out.println("Z " + Z);
+            // System.out.println("Z " + Z);
         } while (Math.abs((BonV - BonVold) / BonV) > 1.0e-10 && iterations < 1000);
 //        System.out.println("error BonV " + Math.abs((BonV-BonVold)/BonV));
 //        System.out.println("iterations " + iterations);
@@ -317,7 +340,11 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             throw new neqsim.util.exception.TooManyIterationsException();
         }
         if (Double.isNaN(getMolarVolume())) {
-            throw new neqsim.util.exception.IsNaNException();        // if(phaseType==0) System.out.println("density " + getDensity());//"BonV: " + BonV + " "+"  itert: " +   iterations +" " + "  phase " + phaseType+ "  " + h + " " +dh + " B " + Btemp + "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
+            throw new neqsim.util.exception.IsNaNException(); // if(phaseType==0) System.out.println("density " +
+                                                              // getDensity());//"BonV: " + BonV + " "+" itert: " +
+                                                              // iterations +" " + " phase " + phaseType+ " " + h + "
+                                                              // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV()
+                                                              // + " fv " + fv() + " fvv" + fVV());
         }
         return getMolarVolume();
     }
@@ -330,14 +357,14 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return cpamix;
     }
 
-      public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
+    public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
             return selfAccociationScheme[comp1][site1][site2];
         }
         return crossAccociationScheme[comp1][comp2][site1][site2];
     }
-      
-        /**
+
+    /**
      * @return the totalNumberOfAccociationSites
      */
     public int getTotalNumberOfAccociationSites() {

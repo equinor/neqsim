@@ -19,8 +19,7 @@ import org.ejml.dense.row.NormOps_DDRM;
 /**
  *
  * @author Even Solbraa
- * @version
- * Modified to use procedural oriented ejml matrices by Marlene Lund
+ * @version Modified to use procedural oriented ejml matrices by Marlene Lund
  */
 public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements PhaseCPAInterface {
 
@@ -28,7 +27,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
     public CPAMixing cpaSelect = new CPAMixing();
     public CPAMixingInterface cpamix;
-    double gcpavv = 0.0, gcpavvv = 0.0, gcpa = 0.0, hcpatot = 1.0, FCPA = 0.0, dFCPAdTdV, dFCPAdTdT = 0.0, dFCPAdT = 0, dFCPAdV = 0, dFCPAdVdV = 0.0, dFCPAdVdVdV = 0.0;
+    double gcpavv = 0.0, gcpavvv = 0.0, gcpa = 0.0, hcpatot = 1.0, FCPA = 0.0, dFCPAdTdV, dFCPAdTdT = 0.0, dFCPAdT = 0,
+            dFCPAdV = 0, dFCPAdVdV = 0.0, dFCPAdVdVdV = 0.0;
     private double gcpav = 0.0;
     int cpaon = 1, oldTotalNumberOfAccociationSites = 0;
     private int totalNumberOfAccociationSites = 0;
@@ -37,9 +37,15 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     int[] moleculeNumber = null, assSiteNumber = null;
     private double[][] gvector = null, delta = null, deltaNog = null, deltadT = null, deltadTdT = null;
     private double[][][] Klkni = null;
-    private DMatrixRMaj KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null, mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
-    DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;//new DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);
+    private DMatrixRMaj KlkTVMatrix = null, KlkTTMatrix = null, KlkTMatrix = null, udotTimesmMatrix = null,
+            mVector = null, udotMatrix = null, uMatrix = null, QMatksiksiksi = null, KlkVVVMatrix = null,
+            KlkVVMatrix = null, udotTimesmiMatrix = null, ksiMatrix = null, KlkMatrix = null, hessianMatrix = null,
+            hessianInvers = null, KlkVMatrix = null;
+    DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;// new
+                                                                           // DenseMatrix64F(getTotalNumberOfAccociationSites(),
+                                                                           // 1);
     static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
+
     /**
      * Creates new PhaseSrkEos
      */
@@ -55,7 +61,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             logger.error("Cloning failed.", e);
         }
         // clonedPhase.cpaSelect = (CPAMixing) cpaSelect.clone();
-        //clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
+        // clonedPhase.cpamix = (CPAMixingInterface) cpamix.clone();
         // clonedPhase.cpamix = cpaSelect.getMixingRule(1, this);
 
         return clonedPhase;
@@ -66,7 +72,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0 start init type =1 gi nye betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+                                                                                                            // start
+                                                                                                            // init type
+                                                                                                            // =1 gi nye
+                                                                                                            // betingelser
         if (type == 0) {
             setTotalNumberOfAccociationSites(0);
             selfAccociationScheme = new int[numberOfComponents][0][0];
@@ -76,7 +86,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                     getComponent(i).setNumberOfAssociationSites(0);
                 } else {
                     getComponent(i).setNumberOfAssociationSites(getComponent(i).getOrginalNumberOfAssociationSites());
-                    setTotalNumberOfAccociationSites(getTotalNumberOfAccociationSites() + getComponent(i).getNumberOfAssociationSites());
+                    setTotalNumberOfAccociationSites(
+                            getTotalNumberOfAccociationSites() + getComponent(i).getNumberOfAssociationSites());
                     selfAccociationScheme[i] = cpaSelect.setAssociationScheme(i, this);
                     for (int j = 0; j < numberOfComponents; j++) {
                         crossAccociationScheme[i][j] = cpaSelect.setCrossAssociationScheme(i, j, this);
@@ -111,7 +122,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             deltadT = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
             deltadTdT = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
             QMatksiksiksi = new DMatrixRMaj(getTotalNumberOfAccociationSites(), 1);
-            //    }
+            // }
             udotTimesmiMatrix = new DMatrixRMaj(getNumberOfComponents(), getTotalNumberOfAccociationSites());
 
             oldTotalNumberOfAccociationSites = getTotalNumberOfAccociationSites();
@@ -135,7 +146,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             solveX();
             super.init(totalNumberOfMoles, numberOfComponents, 1, phase, beta);
             gcpa = calc_g();
-            //lngcpa = Math.log(gcpa);
+            // lngcpa = Math.log(gcpa);
             setGcpav(calc_lngV());
             gcpavv = calc_lngVV();
             gcpavvv = calc_lngVVV();
@@ -147,15 +158,16 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
         if (type > 1) {
             initCPAMatrix(type);
-            //hcpatotdT = calc_hCPAdT();
-            //super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
+            // hcpatotdT = calc_hCPAdT();
+            // super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         }
     }
 
     public void calcDelta() {
         for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
             for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-                deltaNog[i][j] = cpamix.calcDeltaNog(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i], moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
+                deltaNog[i][j] = cpamix.calcDeltaNog(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
+                        moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
                 deltaNog[j][i] = deltaNog[i][j];
             }
         }
@@ -197,10 +209,12 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 delta[i][j] = deltaNog[i][j] * getGcpa();
                 delta[j][i] = delta[i][j];
                 if (type > 1) {
-                    deltadT[i][j] = cpamix.calcDeltadT(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i], moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
+                    deltadT[i][j] = cpamix.calcDeltadT(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
+                            moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
                     deltadT[j][i] = deltadT[i][j];
 
-                    deltadTdT[i][j] = cpamix.calcDeltadTdT(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i], moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
+                    deltadTdT[i][j] = cpamix.calcDeltadTdT(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
+                            moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
                     deltadTdT[j][i] = deltadTdT[i][j];
                 }
             }
@@ -216,19 +230,25 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 KlkVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv1);
                 KlkVMatrix.set(j, i, KlkVMatrix.get(i, j));
 
-                KlkVVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv2 + KlkMatrix.get(i, j) * (gcpavv + 1.0 / getTotalVolume() / getTotalVolume()));
+                KlkVVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv2
+                        + KlkMatrix.get(i, j) * (gcpavv + 1.0 / getTotalVolume() / getTotalVolume()));
                 KlkVVMatrix.set(j, i, KlkVVMatrix.get(i, j));
 
-                KlkVVVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv3 + 3.0 * KlkMatrix.get(i, j) * (getGcpav() - 1.0 / getTotalVolume()) * (gcpavv + 1.0 / (totVol * totVol)) + KlkMatrix.get(i, j) * (gcpavvv - 2.0 / (totVol * totVol * totVol)));
+                KlkVVVMatrix.set(i, j,
+                        KlkMatrix.get(i, j) * gdv3
+                                + 3.0 * KlkMatrix.get(i, j) * (getGcpav() - 1.0 / getTotalVolume())
+                                        * (gcpavv + 1.0 / (totVol * totVol))
+                                + KlkMatrix.get(i, j) * (gcpavvv - 2.0 / (totVol * totVol * totVol)));
                 KlkVVVMatrix.set(j, i, KlkVVVMatrix.get(i, j));
 
                 if (type > 1) {
                     double tempVar = deltadT[i][j] / delta[i][j];
-                    double tempVardT = deltadTdT[i][j] / delta[i][j] - (deltadT[i][j] * deltadT[i][j]) / (delta[i][j] * delta[i][j]);
+                    double tempVardT = deltadTdT[i][j] / delta[i][j]
+                            - (deltadT[i][j] * deltadT[i][j]) / (delta[i][j] * delta[i][j]);
 
                     if (!Double.isNaN(tempVar)) {
                         // KlkdT[i][j] = KlkMatrix.getMatrix().unsafe_get(i, j) * tempVar;
-                        //KlkdT[j][i] = KlkdT[i][j];
+                        // KlkdT[j][i] = KlkdT[i][j];
 
                         KlkTMatrix.set(i, j, KlkMatrix.get(i, j) * tempVar);
                         KlkTMatrix.set(j, i, KlkTMatrix.get(i, j));
@@ -249,25 +269,27 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                             if (moleculeNumber[j] == p) {
                                 t2 = 1.0 / mVector.get(j, 0);
                             }
-                            Klkni[p][i][j] = KlkMatrix.get(i, j) * (t1 + t2 + ((ComponentSrkCPA) getComponent(p)).calc_lngi(this));
+                            Klkni[p][i][j] = KlkMatrix.get(i, j)
+                                    * (t1 + t2 + ((ComponentSrkCPA) getComponent(p)).calc_lngi(this));
                             Klkni[p][j][i] = Klkni[p][i][j];
                         }
                     }
                 }
             }
-            QMatksiksiksi.set(i, 0, 2.0 * mVector.get(i, 0) / (ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0)));
+            QMatksiksiksi.set(i, 0,
+                    2.0 * mVector.get(i, 0) / (ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0)));
         }
-        
+
         DMatrixRMaj ksiMatrixTranspose = new DMatrixRMaj();
         CommonOps_DDRM.transpose(ksiMatrix, ksiMatrixTranspose);
 
         // dXdV
         DMatrixRMaj KlkVMatrixksi = new DMatrixRMaj();
         CommonOps_DDRM.mult(KlkVMatrix, ksiMatrix, KlkVMatrixksi);
-        
+
         DMatrixRMaj XV = new DMatrixRMaj();
         DMatrixRMaj XVtranspose = new DMatrixRMaj();
-        CommonOps_DDRM.mult(hessianInvers,KlkVMatrixksi, XV);
+        CommonOps_DDRM.mult(hessianInvers, KlkVMatrixksi, XV);
         CommonOps_DDRM.transpose(XV, XVtranspose);
 
         DMatrixRMaj QCPA = new DMatrixRMaj();
@@ -279,7 +301,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         CommonOps_DDRM.transpose(mVector, mVectorTranspose);
         CommonOps_DDRM.elementMult(ksiMatrix, udotMatrix, ksiMatrixudotMatrix);
         CommonOps_DDRM.scale(0.5, ksiMatrixudotMatrix, ksiMatrixudotMatrixScaled);
-        CommonOps_DDRM.scale(-1.0,ksiMatrixudotMatrixScaled, ksiMatrixudotMatrixScaledNegative);
+        CommonOps_DDRM.scale(-1.0, ksiMatrixudotMatrixScaled, ksiMatrixudotMatrixScaledNegative);
         CommonOps_DDRM.add(uMatrix, ksiMatrixudotMatrixScaledNegative, uMatrixMinusksiMatrixudotMatrixScaled);
         CommonOps_DDRM.mult(mVectorTranspose, uMatrixMinusksiMatrixudotMatrixScaled, QCPA);
         FCPA = QCPA.get(0, 0);
@@ -288,7 +310,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         CommonOps_DDRM.mult(ksiMatrixTranspose, KlkVMatrixksi, tempMatrix);
         CommonOps_DDRM.scale(-0.5, tempMatrix);
         dFCPAdV = tempMatrix.get(0, 0);
-        
+
         DMatrixRMaj KlkVVMatrixTimesKsi = new DMatrixRMaj();
         DMatrixRMaj KlkVMatrixksiTranspose = new DMatrixRMaj();
         DMatrixRMaj KlkVMatrixksiXV = new DMatrixRMaj();
@@ -309,10 +331,10 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         DMatrixRMaj KlkVVVMatrixksi = new DMatrixRMaj();
         CommonOps_DDRM.mult(KlkVVVMatrix, ksiMatrix, KlkVVVMatrixksi);
         CommonOps_DDRM.mult(ksiMatrixTranspose, KlkVVVMatrixksi, QVVV);
-        CommonOps_DDRM.scale(-0.5,QVVV);
+        CommonOps_DDRM.scale(-0.5, QVVV);
         CommonOps_DDRM.scale(-1.0, KlkVVMatrixTimesKsi, QVVksi);
         CommonOps_DDRM.scale(-1.0, KlkVMatrix, QksiVksi);
-        
+
         DMatrixRMaj mat1 = new DMatrixRMaj();
         DMatrixRMaj mat2 = new DMatrixRMaj();
         DMatrixRMaj mat4 = new DMatrixRMaj();
@@ -320,17 +342,17 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         DMatrixRMaj QksiVksiXV = new DMatrixRMaj();
         DMatrixRMaj XVtransposeQMatksiksiksiXVtranspose = new DMatrixRMaj();
         DMatrixRMaj QMatksiksiksiXVtranspose = new DMatrixRMaj();
-        
+
         CommonOps_DDRM.transpose(QVVksi, QVVksiTranspose);
         CommonOps_DDRM.mult(QVVksiTranspose, XV, mat1);
-        CommonOps_DDRM.scale(3.0,  mat1);
+        CommonOps_DDRM.scale(3.0, mat1);
         CommonOps_DDRM.mult(QksiVksi, XV, QksiVksiXV);
         CommonOps_DDRM.mult(XVtranspose, QksiVksiXV, mat2);
-        CommonOps_DDRM.scale(3.0,  mat2);
-        CommonOps_DDRM.mult(QMatksiksiksi, XVtranspose,QMatksiksiksiXVtranspose);
+        CommonOps_DDRM.scale(3.0, mat2);
+        CommonOps_DDRM.mult(QMatksiksiksi, XVtranspose, QMatksiksiksiXVtranspose);
         CommonOps_DDRM.mult(XVtranspose, QMatksiksiksiXVtranspose, XVtransposeQMatksiksiksiXVtranspose);
         CommonOps_DDRM.mult(XVtransposeQMatksiksiksiXVtranspose, XV, mat4);
-        
+
         DMatrixRMaj dFCPAdVdVdVMatrix = new DMatrixRMaj();
         dFCPAdVdVdVMatrix.set(QVVV);
         CommonOps_DDRM.addEquals(dFCPAdVdVdVMatrix, mat1);
@@ -350,7 +372,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             temp += getComponent(p).getNumberOfAssociationSites();
         }
 
-        //KlkTMatrix = new SimpleMatrix(KlkdT);
+        // KlkTMatrix = new SimpleMatrix(KlkdT);
         DMatrixRMaj KlkTMatrixTimesKsi = new DMatrixRMaj();
         CommonOps_DDRM.mult(KlkTMatrix, ksiMatrix, KlkTMatrixTimesKsi);
 
@@ -361,12 +383,13 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         dFCPAdT = tempMatrix2.get(0, 0);
 
         // SimpleMatrix KlkTVMatrix = new SimpleMatrix(KlkdTdV);
-        //SimpleMatrix tempMatrixTV = ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
-        //dFCPAdTdV = tempMatrixTV.get(0, 0);
+        // SimpleMatrix tempMatrixTV =
+        // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
+        // dFCPAdTdV = tempMatrixTV.get(0, 0);
         // dXdT
         DMatrixRMaj XT = new DMatrixRMaj();
         CommonOps_DDRM.mult(hessianInvers, KlkTMatrixTimesKsi, XT);
-        
+
         // dQdTdT
         DMatrixRMaj tempMatrixTT = new DMatrixRMaj();
         DMatrixRMaj KlkTMatrixTimesKsiTranspose = new DMatrixRMaj();
@@ -380,7 +403,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         CommonOps_DDRM.scale(-0.5, ksiMatrixTransposeKlkTTMatrixksi);
         CommonOps_DDRM.scale(-1.0, KlkTMatrixTimesKsiTransposeXT);
         CommonOps_DDRM.add(ksiMatrixTransposeKlkTTMatrixksi, KlkTMatrixTimesKsiTransposeXT, tempMatrixTT);
-    //    SimpleMatrix tempMatrixTT = ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XT));
+        // SimpleMatrix tempMatrixTT =
+        // ksiMatrixTranspose.mult(KlkTTMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XT));
         dFCPAdTdT = tempMatrixTT.get(0, 0);
 
         DMatrixRMaj tempMatrixTV = new DMatrixRMaj();
@@ -394,7 +418,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         CommonOps_DDRM.scale(-0.5, ksiMatrixTransposeKlkTVMatrixksi);
         CommonOps_DDRM.scale(-1.0, KlkTMatrixTimesKsiTransposeXV);
         CommonOps_DDRM.add(ksiMatrixTransposeKlkTVMatrixksi, KlkTMatrixTimesKsiTransposeXV, tempMatrixTV);
-    //    SimpleMatrix tempMatrixTV = ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
+        // SimpleMatrix tempMatrixTV =
+        // ksiMatrixTranspose.mult(KlkTVMatrix.mult(ksiMatrix)).scale(-0.5).minus(KlkTMatrixTImesKsi.transpose().mult(XV));
         dFCPAdTdV = tempMatrixTV.get(0, 0);
 
         temp = 0;
@@ -410,20 +435,27 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
 
         int assSites = 0;
-        //  if(true) return;
+        // if(true) return;
         for (int p = 0; p < numberOfComponents; p++) {
             DMatrixRMaj KiMatrix = new DMatrixRMaj(Klkni[p]);
-            //KiMatrix.print(10,10);
-            //Matrix dQdniMatrix = (ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));  // this methods misses one part of ....
-            //dQdniMatrix.print(10,10);
-            //KiMatrix.print(10, 10);
-            //miMatrix.getMatrix(assSites, assSites, 0, totalNumberOfAccociationSites - 1).print(10, 10);
-            // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0, totalNumberOfAccociationSites - 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));//  ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
-            //  System.out.println("dQdn ");
-            //     tempMatrix20.print(10, 10);
+            // KiMatrix.print(10,10);
+            // Matrix dQdniMatrix =
+            // (ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5)); // this
+            // methods misses one part of ....
+            // dQdniMatrix.print(10,10);
+            // KiMatrix.print(10, 10);
+            // miMatrix.getMatrix(assSites, assSites, 0, totalNumberOfAccociationSites -
+            // 1).print(10, 10);
+            // Matrix tempMatrix20 = miMatrix.getMatrix(assSites, assSites, 0,
+            // totalNumberOfAccociationSites -
+            // 1).times(uMatrix).minus(ksiMatrix.transpose().times(KiMatrix.times(ksiMatrix)).times(-0.5));//
+            // ksiMatrix.transpose().times(KlkTMatrix.times(ksiMatrix)).times(-0.5);
+            // System.out.println("dQdn ");
+            // tempMatrix20.print(10, 10);
             DMatrixRMaj tempMatrix4 = new DMatrixRMaj();
             CommonOps_DDRM.mult(KiMatrix, ksiMatrix, tempMatrix4);
-            //udotTimesmiMatrix.getMatrix(assSites, assSites, 0, totalNumberOfAccociationSites - 1).print(10, 10);
+            // udotTimesmiMatrix.getMatrix(assSites, assSites, 0,
+            // totalNumberOfAccociationSites - 1).print(10, 10);
             DMatrixRMaj tempMatrix5 = new DMatrixRMaj();
             DMatrixRMaj extractedVector = new DMatrixRMaj();
             DMatrixRMaj extractedVectorTranspose = new DMatrixRMaj();
@@ -431,26 +463,28 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             CommonOps_DDRM.transpose(extractedVector, extractedVectorTranspose);
             CommonOps_DDRM.changeSign(tempMatrix4);
             CommonOps_DDRM.add(extractedVectorTranspose, tempMatrix4, tempMatrix5);
-           
-            //tempMki[0] = mki[p];
-            //Matrix amatrix = new Matrix(croeneckerProduct(tempMki, udotMatrix.getArray()));
-            //System.out.println("aMatrix ");
-            //amatrix.transpose().print(10, 10);
+
+            // tempMki[0] = mki[p];
+            // Matrix amatrix = new Matrix(croeneckerProduct(tempMki,
+            // udotMatrix.getArray()));
+            // System.out.println("aMatrix ");
+            // amatrix.transpose().print(10, 10);
             // System.out.println("temp4 matrix");
-            //tempMatrix4.print(10, 10);
-            //Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
-            
+            // tempMatrix4.print(10, 10);
+            // Matrix tempMatrix5 = amatrix.minus(tempMatrix4);
+
             DMatrixRMaj tempMatrix6 = new DMatrixRMaj();
-            CommonOps_DDRM.mult(hessianInvers, tempMatrix5, tempMatrix6);//.scale(-1.0);
-            //System.out.println("dXdni");
-            //  tempMatrix4.print(10, 10);
-            //  tempMatrix5.print(10, 10);
+            CommonOps_DDRM.mult(hessianInvers, tempMatrix5, tempMatrix6);// .scale(-1.0);
+            // System.out.println("dXdni");
+            // tempMatrix4.print(10, 10);
+            // tempMatrix5.print(10, 10);
             // System.out.println("dXdn ");
             // tempMatrix6.print(10, 10);
             int temp2 = 0;
             for (int compp = 0; compp < numberOfComponents; compp++) {
                 for (int kk = 0; kk < getComponent(compp).getNumberOfAssociationSites(); kk++) {
-                    ((ComponentCPAInterface) getComponent(compp)).setXsitedni(kk, p, -1.0 * tempMatrix6.get(temp2 + kk, 0));
+                    ((ComponentCPAInterface) getComponent(compp)).setXsitedni(kk, p,
+                            -1.0 * tempMatrix6.get(temp2 + kk, 0));
                 }
                 temp2 += getComponent(compp).getNumberOfAssociationSites();
             }
@@ -480,7 +514,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return super.dFdV() + cpaon * dv2;
     }
 
-    //  @Override
+    // @Override
     public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
@@ -495,52 +529,47 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
     public double FCPA() {
         /*
-         double tot = 0.0;
-         double ans = 0.0;
-         for (int i = 0; i < numberOfComponents; i++) {
-         tot = 0.0;
-         for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-         double xai = ((ComponentSrkCPA) getComponent(i)).getXsite()[j];
-         tot += (Math.log(xai) - 1.0 / 2.0 * xai + 1.0 / 2.0);
-         }
-         ans += getComponent(i).getNumberOfMolesInPhase() * tot;
-         }
-         return ans;
-         * */
+         * double tot = 0.0; double ans = 0.0; for (int i = 0; i < numberOfComponents;
+         * i++) { tot = 0.0; for (int j = 0; j <
+         * getComponent(i).getNumberOfAssociationSites(); j++) { double xai =
+         * ((ComponentSrkCPA) getComponent(i)).getXsite()[j]; tot += (Math.log(xai) -
+         * 1.0 / 2.0 * xai + 1.0 / 2.0); } ans +=
+         * getComponent(i).getNumberOfMolesInPhase() * tot; } return ans;
+         */
         return FCPA;
     }
 
     public double dFCPAdV() {
-        // return 1.0 / (2.0 * getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav()) * hcpatot;
+        // return 1.0 / (2.0 * getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav())
+        // * hcpatot;
         return dFCPAdV;
     }
 
     public double dFCPAdVdV() {
-        //double sum1 = -1.0 / 2.0 * gcpavv * hcpatot;
-        //return -1.0 / getTotalVolume() * dFCPAdV() + sum1;
+        // double sum1 = -1.0 / 2.0 * gcpavv * hcpatot;
+        // return -1.0 / getTotalVolume() * dFCPAdV() + sum1;
         return dFCPAdVdV;
     }
 
     public double dFCPAdVdVdV() {
         return dFCPAdVdVdV;
-        //return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 / Math.pow(getTotalVolume(), 2.0) * dFCPAdV() - hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0)) * (-getGcpav() - getTotalVolume() * gcpavv) + hcpatot / (2.0 * getTotalVolume()) * (-gcpavv - getTotalVolume() * gcpavvv - gcpavv);
+        // return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 /
+        // Math.pow(getTotalVolume(), 2.0) * dFCPAdV() - hcpatot / (2.0 *
+        // Math.pow(getTotalVolume(), 2.0)) * (-getGcpav() - getTotalVolume() * gcpavv)
+        // + hcpatot / (2.0 * getTotalVolume()) * (-gcpavv - getTotalVolume() * gcpavvv
+        // - gcpavv);
     }
 
     public double dFCPAdT() {
         /*
-         double tot = 0.0;
-         double ans = 0.0;
-         for (int i = 0; i < numberOfComponents; i++) {
-         tot = 0.0;
-         for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-         double xai = ((ComponentSrkCPA) getComponent(i)).getXsite()[j];
-         double xaidT = ((ComponentSrkCPA) getComponent(i)).getXsitedT()[j];
-         tot += 1.0 / xai * xaidT - 0.5 * xaidT;// - 1.0 / 2.0 * xai + 1.0 / 2.0);
-         }
-         ans += getComponent(i).getNumberOfMolesInPhase() * tot;
-         }
-         System.out.println("dFCPAdT1  " + ans + " dfcpa2 " +dFCPAdT);
-         return ans;
+         * double tot = 0.0; double ans = 0.0; for (int i = 0; i < numberOfComponents;
+         * i++) { tot = 0.0; for (int j = 0; j <
+         * getComponent(i).getNumberOfAssociationSites(); j++) { double xai =
+         * ((ComponentSrkCPA) getComponent(i)).getXsite()[j]; double xaidT =
+         * ((ComponentSrkCPA) getComponent(i)).getXsitedT()[j]; tot += 1.0 / xai * xaidT
+         * - 0.5 * xaidT;// - 1.0 / 2.0 * xai + 1.0 / 2.0); } ans +=
+         * getComponent(i).getNumberOfMolesInPhase() * tot; }
+         * System.out.println("dFCPAdT1  " + ans + " dfcpa2 " +dFCPAdT); return ans;
          */
         return dFCPAdT;
     }
@@ -550,14 +579,14 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     }
 
     public double dFCPAdTdV() {
-        //   System.out.println("dFCPAdTdV1  " + dFCPAdTdV + " dFCPAdTdV " +( 1.0 / (2.0 * getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav()) * hcpatotdT));
+        // System.out.println("dFCPAdTdV1 " + dFCPAdTdV + " dFCPAdTdV " +( 1.0 / (2.0 *
+        // getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav()) * hcpatotdT));
         return dFCPAdTdV;
-        /*     if (totalNumberOfAccociationSites > 0) {
-         return 1.0 / (2.0 * getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav()) * hcpatotdT;
-         } else {
-         return 0;
-         }
-         * */
+        /*
+         * if (totalNumberOfAccociationSites > 0) { return 1.0 / (2.0 *
+         * getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav()) * hcpatotdT; } else
+         * { return 0; }
+         */
     }
 
     public double calc_hCPA() {
@@ -581,19 +610,32 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
     public double calc_lngV() {
         double gv2 = 0.0;
-        // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() / ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
+        // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() /
+        // ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
 
-        gv2 = 1.0 / (2.0 - getB() / (4.0 * getTotalVolume())) * getB() / (4.0 * getTotalVolume() * getTotalVolume()) - 3.0 / (1.0 - getB() / (4.0 * getTotalVolume())) * getB() / (4.0 * getTotalVolume() * getTotalVolume());
+        gv2 = 1.0 / (2.0 - getB() / (4.0 * getTotalVolume())) * getB() / (4.0 * getTotalVolume() * getTotalVolume())
+                - 3.0 / (1.0 - getB() / (4.0 * getTotalVolume())) * getB()
+                        / (4.0 * getTotalVolume() * getTotalVolume());
         return gv2;
     }
 
     public double calc_lngVV() {
-        double gvv = 2.0 * (640.0 * Math.pow(getTotalVolume(), 3.0) - 216.0 * getB() * getTotalVolume() * getTotalVolume() + 24.0 * Math.pow(getB(), 2.0) * getTotalVolume() - Math.pow(getB(), 3.0)) * getB() / (getTotalVolume() * getTotalVolume()) / Math.pow(8.0 * getTotalVolume() - getB(), 2.0) / Math.pow(4.0 * getTotalVolume() - getB(), 2.0);
+        double gvv = 2.0
+                * (640.0 * Math.pow(getTotalVolume(), 3.0) - 216.0 * getB() * getTotalVolume() * getTotalVolume()
+                        + 24.0 * Math.pow(getB(), 2.0) * getTotalVolume() - Math.pow(getB(), 3.0))
+                * getB() / (getTotalVolume() * getTotalVolume()) / Math.pow(8.0 * getTotalVolume() - getB(), 2.0)
+                / Math.pow(4.0 * getTotalVolume() - getB(), 2.0);
         return gvv;
     }
 
     public double calc_lngVVV() {
-        double gvvv = 4.0 * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB() - 4192.0 * Math.pow(getTotalVolume(), 3.0) * Math.pow(getB(), 2.0) + 528.0 * Math.pow(getB(), 3.0) * getTotalVolume() * getTotalVolume() - 36.0 * getTotalVolume() * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(getTotalVolume(), 5.0)) * getB() / (Math.pow(getTotalVolume(), 3.0)) / Math.pow(-8.0 * getTotalVolume() + getB(), 3.0) / Math.pow(-4.0 * getTotalVolume() + getB(), 3.0);
+        double gvvv = 4.0
+                * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB()
+                        - 4192.0 * Math.pow(getTotalVolume(), 3.0) * Math.pow(getB(), 2.0)
+                        + 528.0 * Math.pow(getB(), 3.0) * getTotalVolume() * getTotalVolume()
+                        - 36.0 * getTotalVolume() * Math.pow(getB(), 4.0) - 30720.0 * Math.pow(getTotalVolume(), 5.0))
+                * getB() / (Math.pow(getTotalVolume(), 3.0)) / Math.pow(-8.0 * getTotalVolume() + getB(), 3.0)
+                / Math.pow(-4.0 * getTotalVolume() + getB(), 3.0);
         return gvvv;
     }
 
@@ -610,7 +652,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
         boolean solvedX = solveX2(5);
         if (solvedX) {
-            //    return true;
+            // return true;
         }
 
         DMatrixRMaj mat1 = KlkMatrix;
@@ -633,7 +675,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             }
         }
         boolean solved = true;
-        //SimpleMatrix corrMatrix = null;
+        // SimpleMatrix corrMatrix = null;
         do {
             solved = true;
             iter++;
@@ -641,7 +683,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     ksiMatrix.set(temp + j, 0, ((ComponentSrkCPA) getComponent(i)).getXsite()[j]);
-                    //  ksiMatrix.getMatrix().unsafe_set(temp + j, 0, ksiMatrix.getMatrix().unsafe_get(temp + j, 0));
+                    // ksiMatrix.getMatrix().unsafe_set(temp + j, 0,
+                    // ksiMatrix.getMatrix().unsafe_get(temp + j, 0));
                     udotMatrix.set(temp + j, 0, 1.0 / ksiMatrix.get(temp + j, 0) - 1.0);
                     udotTimesmMatrix.set(temp + j, 0, mVector.get(temp + j, 0) * udotMatrix.get(temp + j, 0));
                 }
@@ -650,18 +693,17 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
             for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
                 for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-                    int krondelt
-                            = 0;
+                    int krondelt = 0;
                     if (i == j) {
                         krondelt = 1;
                     }
-                    hessianMatrix.set(i, j, -mVector.get(i, 0)
-                            / (ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0)) * krondelt - KlkMatrix.get(i, j));
+                    hessianMatrix.set(i, j, -mVector.get(i, 0) / (ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0)) * krondelt
+                            - KlkMatrix.get(i, j));
                     hessianMatrix.set(j, i, hessianMatrix.get(i, j));
                 }
             }
 
-            //ksiMatrix = new SimpleMatrix(ksi);
+            // ksiMatrix = new SimpleMatrix(ksi);
             // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
             try {
                 CommonOps_DDRM.invert(hessianMatrix, hessianInvers);
@@ -673,18 +715,18 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
             CommonOps_DDRM.subtract(udotTimesmMatrix, corr2Matrix, corr3Matrix);
             CommonOps_DDRM.mult(hessianInvers, corr3Matrix, corr4Matrix);
-            //SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
-            //  corrMatrix = hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));//.scale(-1.0);
+            // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
+            // corrMatrix =
+            // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix)));//.scale(-1.0);
             temp = 0;
-            //    System.out.println("print SimpleMatrix ...");
-            //       corrMatrix.print(10, 10);
-            //      SimpleMatrix simp = new SimpleMatrix(corr4Matrix);
-            //        System.out.println("print CommonOps ...");
-            //         simp.print(10,10);
+            // System.out.println("print SimpleMatrix ...");
+            // corrMatrix.print(10, 10);
+            // SimpleMatrix simp = new SimpleMatrix(corr4Matrix);
+            // System.out.println("print CommonOps ...");
+            // simp.print(10,10);
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-                    double newX
-                            = ksiMatrix.get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
+                    double newX = ksiMatrix.get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
                     if (newX < 0) {
                         newX = 1e-10;
                         solved = false;
@@ -693,23 +735,24 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 }
                 temp += getComponent(i).getNumberOfAssociationSites();
             }
-            //  System.out.println("corrmatrix error " );
+            // System.out.println("corrmatrix error " );
             // System.out.println("error " + corrMatrix.norm1());
 
         } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
-        // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix)); // corrMatrix.print(10, 10);
-        //ksiMatrix.print(10, 10);
+        // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
+        // // corrMatrix.print(10, 10);
+        // ksiMatrix.print(10, 10);
         return true;
     }
 
     public boolean solveX2(int maxIter) {
         double err = .0;
         int iter = 0;
-        //      if (delta == null) {
-        //      initCPAMatrix(1);
+        // if (delta == null) {
+        // initCPAMatrix(1);
         double old = 0.0, neeval = 0.0;
-        //      }
+        // }
         do {
             iter++;
             err = 0.0;
@@ -717,22 +760,22 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 old = ((ComponentSrkCPA) getComponent(moleculeNumber[i])).getXsite()[assSiteNumber[i]];
                 neeval = 0;
                 for (int j = 0; j < getTotalNumberOfAccociationSites(); j++) {
-                    neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j] * ((ComponentSrkCPA) getComponent(moleculeNumber[j])).getXsite()[assSiteNumber[j]];
+                    neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j]
+                            * ((ComponentSrkCPA) getComponent(moleculeNumber[j])).getXsite()[assSiteNumber[j]];
 
                 }
                 neeval = 1.0 / (1.0 + 1.0 / getTotalVolume() * neeval);
                 ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i], neeval);
-                err
-                        += Math.abs((old - neeval) / neeval);
+                err += Math.abs((old - neeval) / neeval);
             }
         } while (Math.abs(err) > 1e-10 && iter < maxIter);
-        //System.out.println("iter " + iter);
-        //  if (Math.abs(err)
-        //           < 1e-12) {
-        //        return true;
-        //    } else {
+        // System.out.println("iter " + iter);
+        // if (Math.abs(err)
+        // < 1e-12) {
+        // return true;
+        // } else {
         // System.out.println("did not solve for Xi in iterations: " + iter);
-        //System.out.println("error: " + err);
+        // System.out.println("error: " + err);
         return false;
     }
 
@@ -765,7 +808,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         // double[][] matrix = new double[2][2000];
         double BonV = 1.0 - 1e-10;
         try {
-            //molarVolume(pressure, temperature, A, B, phaseType);
+            // molarVolume(pressure, temperature, A, B, phaseType);
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -781,19 +824,17 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
             gcpa = calc_g();
-            //lngcpa =
-            //       Math.log(gcpa);
+            // lngcpa =
+            // Math.log(gcpa);
             setGcpav(calc_lngV());
-            gcpavv
-                    = calc_lngVV();
-            gcpavvv
-                    = calc_lngVVV();
+            gcpavv = calc_lngVV();
+            gcpavvv = calc_lngVVV();
 
             do {
             } while (!solveX());
 
-            h
-                    = BonV - Btemp / numberOfMolesInPhase * dFdV() - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+            h = BonV - Btemp / numberOfMolesInPhase * dFdV()
+                    - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
 
             if (Math.signum(h) * Math.signum(oldh) < 0 && i > 2) {
                 if (solvedBonVlow < 1e-3) {
@@ -810,16 +851,17 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
             }
             solvedBonVHigh = (BonV + BonVold) / 2.0;
             oldh = h;
-            //    matrix[0][i] = BonV;
-            //    matrix[1][i] = h;
+            // matrix[0][i] = BonV;
+            // matrix[1][i] = h;
         }
         if (solvedBonVlow < 1e-3) {
             solvedBonVlow = solvedBonVHigh;
         }
-        // dataPresentation.fileHandeling.createTextFile.TextFile file = new dataPresentation.fileHandeling.createTextFile.TextFile();
-        //  file.setValues(matrix);
-        //   file.setOutputFileName("D:/temp/temp2.txt");
-        //  file.createFile();
+        // dataPresentation.fileHandeling.createTextFile.TextFile file = new
+        // dataPresentation.fileHandeling.createTextFile.TextFile();
+        // file.setValues(matrix);
+        // file.setOutputFileName("D:/temp/temp2.txt");
+        // file.createFile();
         if (phase == 1) {
             return solvedBonVlow;
 
@@ -828,16 +870,18 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phasetype) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
-        double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
-        //if (pressure > 1000) {
-        //    BonV = 0.9999;
+        double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        // if (pressure > 1000) {
+        // BonV = 0.9999;
         // }
 
         // double calcRooBonVtVolFinder = calcRootVolFinder(phasetype);
         // BonV = calcRooBonVtVolFinder;
-        //double BonVInit = BonV;
+        // double BonVInit = BonV;
         if (BonV < 0) {
             BonV = 1.0e-8;
         }
@@ -866,13 +910,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 gcpa = calc_g();
             }
 
-            //lngcpa =
-            //        Math.log(gcpa);
+            // lngcpa =
+            // Math.log(gcpa);
             setGcpav(calc_lngV());
-            gcpavv
-                    = calc_lngVV();
-            gcpavvv
-                    = calc_lngVVV();
+            gcpavv = calc_lngVV();
+            gcpavvv = calc_lngVVV();
 
             if (getTotalNumberOfAccociationSites() > 0) {
                 solveX();
@@ -880,20 +922,17 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
             initCPAMatrix(1);
             double BonV2 = BonV * BonV;
-            BonVold
-                    = BonV;
-            h
-                    = BonV - Btemp / numberOfMolesInPhase * dFdV() - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-            dh
-                    = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
-            dhh
-                    = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV()) - (Btemp * Btemp) / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+            BonVold = BonV;
+            h = BonV - Btemp / numberOfMolesInPhase * dFdV()
+                    - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+            dh = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
+            dhh = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV())
+                    - (Btemp * Btemp) / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
-            d1
-                    = -h / dh;
-            d2
-                    = -dh / dhh;
-            //System.out.println("h " + h + " iter " + iterations + " " + d1 + " d2 " + d2 + " d1 / d2 " + (d1 / d2));
+            d1 = -h / dh;
+            d2 = -dh / dhh;
+            // System.out.println("h " + h + " iter " + iterations + " " + d1 + " d2 " + d2
+            // + " d1 / d2 " + (d1 / d2));
             if (Math.abs(d1 / d2) <= 1.0) {
                 BonV += d1 * (1.0 + 0.5 * d1 / d2);
             } else if (d1 / d2 < -1) {
@@ -902,7 +941,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 BonV += d2;
                 double hnew = h + d2 * dh;
                 if (Math.abs(hnew) > Math.abs(h)) {
-                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
             } else {
                 BonV += 0.5 * d1;
@@ -915,17 +955,21 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 if (iterations < 3) {
                     BonV = (BonVold + BonV) / 2.0;
                 } else {
-                   // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
-                    //  BonV = 0.9999;
-                    //  BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+                    // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+                    // BonV = 0.9999;
+                    // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+                    // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
+                    // temperature * R);
                 }
 
             } else if (BonV < 0) {
                 if (iterations < 3) {
                     BonV = Math.abs(BonVold + BonV) / 2.0;
                 } else {
-                   // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
-                    // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+                    // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+                    // BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+                    // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
+                    // temperature * R);
                 }
             }
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
@@ -934,28 +978,38 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10 || Math.abs(h) > 1e-12) && iterations < 100);
 
         if (Math.abs(h) > 1e-12) {
-            // System.out.println("h failed " + "Z" + Z + " iterations " + iterations + " BonV " + BonV);
-           // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
+            // System.out.println("h failed " + "Z" + Z + " iterations " + iterations + "
+            // BonV " + BonV);
+            // return molarVolumeChangePhase(pressure, temperature, A, B, phasetype);
         }
-        //   System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
-        //   System.out.println("pressure " + Z*R*temperature/getMolarVolume());
-        //    System.out.println("volume " + getTotalVolume() + " molar volume " + getMolarVolume());
-        //if(iterations>=100) throw new util.exception.TooManyIterationsException();
-        //   System.out.println("error in volume " + (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + " firstterm " + (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
+        // System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
+        // System.out.println("pressure " + Z*R*temperature/getMolarVolume());
+        // System.out.println("volume " + getTotalVolume() + " molar volume " +
+        // getMolarVolume());
+        // if(iterations>=100) throw new util.exception.TooManyIterationsException();
+        // System.out.println("error in volume " +
+        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+        // firstterm " + (R*temperature/molarVolume) + " second " +
+        // R*temperature*dFdV());
 // System.out.println("BonV: " + BonV + " "+"  itert: " +   iterations +" " +h + " " +dh + " B " + Btemp  + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
 
         if (Double.isNaN(getMolarVolume())) {
             throw new neqsim.util.exception.IsNaNException();
-            //System.out.println("BonV: " + BonV + " "+"  itert: " +   iterations +" " +h + " " +dh + " B " + Btemp + "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
+            // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
+            // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
+            // + fVV());
         }
         return getMolarVolume();
     }
 
-    public double molarVolumeChangePhase(double pressure, double temperature, double A, double B, int phasetype) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    public double molarVolumeChangePhase(double pressure, double temperature, double A, double B, int phasetype)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
-        //double BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+        // double BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
+        // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
+        // temperature * R);
         double BonV = calcRootVolFinder(phasetype);
-        //double BonVInit = BonV;
+        // double BonVInit = BonV;
         if (BonV < 0) {
             BonV = 1.0e-8;
         }
@@ -966,8 +1020,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         double BonVold = BonV;
         double Btemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
         double d1 = 0, d2 = 0;
-        Btemp
-                = getB();
+        Btemp = getB();
         if (Btemp < 0) {
             logger.info("b negative in volume calc");
         }
@@ -985,31 +1038,25 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 gcpa = calc_g();
             }
 
-            //lngcpa =
-            //        Math.log(gcpa);
+            // lngcpa =
+            // Math.log(gcpa);
             setGcpav(calc_lngV());
-            gcpavv
-                    = calc_lngVV();
-            gcpavvv
-                    = calc_lngVVV();
+            gcpavv = calc_lngVV();
+            gcpavvv = calc_lngVVV();
 
             solveX();
 
             initCPAMatrix(1);
             double BonV2 = BonV * BonV;
-            BonVold
-                    = BonV;
-            h
-                    = BonV - Btemp / numberOfMolesInPhase * dFdV() - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
-            dh
-                    = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
-            dhh
-                    = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV()) - (Btemp * Btemp) / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+            BonVold = BonV;
+            h = BonV - Btemp / numberOfMolesInPhase * dFdV()
+                    - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+            dh = 1.0 + Btemp / (BonV2) * (Btemp / numberOfMolesInPhase * dFdVdV());
+            dhh = -2.0 * Btemp / (BonV2 * BonV) * (Btemp / numberOfMolesInPhase * dFdVdV())
+                    - (Btemp * Btemp) / (BonV2 * BonV2) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
-            d1
-                    = -h / dh;
-            d2
-                    = -dh / dhh;
+            d1 = -h / dh;
+            d2 = -dh / dhh;
             // System.out.println("d1" + d1 + " d2 " + d2 + " d1 / d2 " + (d1 / d2));
             if (Math.abs(d1 / d2) <= 1.0) {
                 BonV += d1 * (1.0 + 0.5 * d1 / d2);
@@ -1019,7 +1066,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 BonV += d2;
                 double hnew = h + d2 * dh;
                 if (Math.abs(hnew) > Math.abs(h)) {
-                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
             } else {
                 BonV += 0.5 * d1;
@@ -1032,7 +1080,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 if (iterations < 3) {
                     BonV = (BonVold + BonV) / 2.0;
                 } else {
-                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
 
             }
@@ -1041,40 +1090,45 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
                 if (iterations < 3) {
                     BonV = Math.abs(BonVold + BonV) / 2.0;
                 } else {
-                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+                    BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+                            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
             }
 
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
 
-            //   System.out.println("Z " + Z + "h " + h + " BONV " + (Math.abs((BonV - BonVold) / BonV)));
+            // System.out.println("Z " + Z + "h " + h + " BONV " + (Math.abs((BonV -
+            // BonVold) / BonV)));
         } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10) && iterations < 100);
 
-        /*  if (Math.abs(h) > 1e-8) {
-         if (phasetype == 0) {
-         molarVolume(pressure, temperature, A, B, 1);
-         } else {
-         molarVolume(pressure, temperature, A, B, 0);
-         }
-         return getMolarVolume();
-         }
-         * */
-        //   System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
-        //   System.out.println("pressure " + Z*R*temperature/getMolarVolume());
-        //    System.out.println("volume " + getTotalVolume() + " molar volume " + getMolarVolume());
-        //if(iterations>=100) throw new util.exception.TooManyIterationsException();
-        //   System.out.println("error in volume " + (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + " firstterm " + (R*temperature/molarVolume) + " second " + R*temperature*dFdV());
+        /*
+         * if (Math.abs(h) > 1e-8) { if (phasetype == 0) { molarVolume(pressure,
+         * temperature, A, B, 1); } else { molarVolume(pressure, temperature, A, B, 0);
+         * } return getMolarVolume(); }
+         */
+        // System.out.println("Z" + Z + " iterations " + iterations + " BonV " + BonV);
+        // System.out.println("pressure " + Z*R*temperature/getMolarVolume());
+        // System.out.println("volume " + getTotalVolume() + " molar volume " +
+        // getMolarVolume());
+        // if(iterations>=100) throw new util.exception.TooManyIterationsException();
+        // System.out.println("error in volume " +
+        // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
+        // firstterm " + (R*temperature/molarVolume) + " second " +
+        // R*temperature*dFdV());
 // System.out.println("BonV: " + BonV + " "+"  itert: " +   iterations +" " +h + " " +dh + " B " + Btemp  + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
         if (Double.isNaN(getMolarVolume())) {
             throw new neqsim.util.exception.IsNaNException();
-            //System.out.println("BonV: " + BonV + " "+"  itert: " +   iterations +" " +h + " " +dh + " B " + Btemp + "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
+            // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
+            // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
+            // + fVV());
         }
 
         return getMolarVolume();
     }
 
-    public double molarVolume2(double pressure, double temperature, double A, double B, int phase) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         Z = phase == 0 ? 1.0 : 1.0e-5;
         setMolarVolume(Z * R * temperature / pressure);
@@ -1085,28 +1139,24 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
         do {
             A = calcA(this, temperature, pressure, numberOfComponents);
-            B
-                    = calcB(this, temperature, pressure, numberOfComponents);
+            B = calcB(this, temperature, pressure, numberOfComponents);
 
             double dFdV = dFdV(), dFdVdV = dFdVdV(), dFdVdVdV = dFdVdVdV();
             double factor1 = 1.0e0, factor2 = 1.0e0;
-            err
-                    = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
+            err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
 
-            //   System.out.println("pressure " + -R * temperature * dFdV + " " + R * temperature / getMolarVolume());
-            //-pressure;
-            dErrdV
-                    = -R * temperature * dFdVdV - R * temperature * numberOfMolesInPhase / Math.pow(getVolume(), 2.0);
+            // System.out.println("pressure " + -R * temperature * dFdV + " " + R *
+            // temperature / getMolarVolume());
+            // -pressure;
+            dErrdV = -R * temperature * dFdVdV - R * temperature * numberOfMolesInPhase / Math.pow(getVolume(), 2.0);
 
             // System.out.println("errdV " + dErrdV);
             // System.out.println("err " + err);
-            deltaV
-                    = -err / dErrdV;
+            deltaV = -err / dErrdV;
 
             setMolarVolume(getMolarVolume() + deltaV / numberOfMolesInPhase);
 
-            Z
-                    = pressure * getMolarVolume() / (R * temperature);
+            Z = pressure * getMolarVolume() / (R * temperature);
             if (Z < 0) {
                 Z = 1e-6;
                 setMolarVolume(Z * R * temperature / pressure);
@@ -1114,7 +1164,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
 //     System.out.println("Z " + Z);
         } while (Math.abs(err) > 1.0e-8 || iterations < 100);
-        //System.out.println("Z " + Z);
+        // System.out.println("Z " + Z);
         return getMolarVolume();
     }
 
@@ -1132,16 +1182,13 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
     public double calcPressure() {
         gcpa = calc_g();
-        //lngcpa =
-        //        Math.log(gcpa);
+        // lngcpa =
+        // Math.log(gcpa);
         setGcpav(calc_lngV());
-        gcpavv
-                = calc_lngVV();
-        gcpavvv
-                = calc_lngVVV();
+        gcpavv = calc_lngVV();
+        gcpavvv = calc_lngVVV();
         solveX();
-        hcpatot
-                = calc_hCPA();
+        hcpatot = calc_hCPA();
 
         initCPAMatrix(1);
         return super.calcPressure();
@@ -1182,8 +1229,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     }
 
     /**
-     * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to
-     * set
+     * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
      */
     public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;

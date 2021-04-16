@@ -1,8 +1,8 @@
-  /*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
+/*
+* System_SRK_EOS.java
+*
+* Created on 8. april 2000, 23:14
+*/
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -10,18 +10,19 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ComponentSrk extends ComponentEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new System_SRK_EOS
+    /**
+     * Creates new System_SRK_EOS
      * 
      */
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
-    
+
     public ComponentSrk() {
     }
 
@@ -32,17 +33,19 @@ public class ComponentSrk extends ComponentEos {
     public ComponentSrk(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
-        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
+                / criticalPressure;
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         delta1 = 1.0;
         delta2 = 0.0;
-        //System.out.println("a " + a);
+        // System.out.println("a " + a);
         // atractiveParameter = new AtractiveTermSchwartzentruber(this);
         atractiveParameter = new AtractiveTermSrk(this);
 
-        double[] surfTensInfluenceParamtemp = {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
+        double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
+                -0.1611763157 };
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-    
+
     }
 
     public ComponentSrk(int number, double TC, double PC, double M, double a, double moles) {
@@ -72,7 +75,8 @@ public class ComponentSrk extends ComponentEos {
         if (Math.abs(this.getRacketZ()) < 1e-10) {
             racketZ = 0.29056 - 0.08775 * getAcentricFactor();
         }
-        //System.out.println("racket Z " +  racketZ + " vol correction " + (0.40768*(0.29441-this.getRacketZ())*R*criticalTemperature/criticalPressure));
+        // System.out.println("racket Z " + racketZ + " vol correction " +
+        // (0.40768*(0.29441-this.getRacketZ())*R*criticalTemperature/criticalPressure));
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
@@ -106,20 +110,24 @@ public class ComponentSrk extends ComponentEos {
             }
         }
         double AA = (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
-        double BB = surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor() + surfTensInfluenceParam[4] * getAcentricFactor() * getAcentricFactor();
+        double BB = surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor()
+                + surfTensInfluenceParam[4] * getAcentricFactor() * getAcentricFactor();
 
-        if(componentName.equals("water")) {
+        if (componentName.equals("water")) {
             return 0.000000000000000000019939776242117276;
         }
-        if(componentName.equals("MEG")) {
+        if (componentName.equals("MEG")) {
             return 0.00000000000000000009784248343727627;
         }
-        if(componentName.equals("TEG")) {
+        if (componentName.equals("TEG")) {
             return 0.000000000000000000901662233371129;
         }
-        //     System.out.println("scale2 " + aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * Math.pow(AA * TR, BB)/1.0e17);
-        //      System.out.println("scale2 " + Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0));
-        return (aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR+ BB)) / Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
+        // System.out.println("scale2 " + aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) *
+        // Math.pow(AA * TR, BB)/1.0e17);
+        // System.out.println("scale2 " +
+        // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0));
+        return (aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB))
+                / Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
 
     }
 }

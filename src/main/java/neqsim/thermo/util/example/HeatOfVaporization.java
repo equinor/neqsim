@@ -39,7 +39,7 @@ public class HeatOfVaporization {
             testSystem.display();
             double heatVap = testSystem.getHeatOfVaporization();
             logger.info("heat of vaporization " + heatVap + " J/mol");
-            logger.info("heat of vaporization " + (heatVap/testSystem.getMolarMass()) + " J/kg");
+            logger.info("heat of vaporization " + (heatVap / testSystem.getMolarMass()) + " J/kg");
         } catch (Exception e) {
             logger.error(e.toString());
         }

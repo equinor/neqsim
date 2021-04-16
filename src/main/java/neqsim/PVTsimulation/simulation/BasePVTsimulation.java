@@ -20,16 +20,15 @@ public class BasePVTsimulation implements SimulationInterface {
     private SystemInterface baseThermoSystem = null;
     public ThermodynamicOperations thermoOps = null;
     private double pressure;
-    public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
+    public double[] pressures = { 381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3 };
     public double temperature = 289.0;
     double[][] experimentalData = null;
     double saturationVolume = 0, saturationPressure = 0;
     double Zsaturation = 0;
     public LevenbergMarquardt optimizer = new LevenbergMarquardt();
-       
 
     public BasePVTsimulation(SystemInterface tempSystem) {
-        thermoSystem = tempSystem;//(SystemInterface) tempSystem.clone();
+        thermoSystem = tempSystem;// (SystemInterface) tempSystem.clone();
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         baseThermoSystem = (SystemInterface) thermoSystem.clone();
     }
@@ -38,9 +37,10 @@ public class BasePVTsimulation implements SimulationInterface {
         experimentalData = expData;
     }
 
-      public double getSaturationPressure(){
+    public double getSaturationPressure() {
         return saturationPressure;
     }
+
     /**
      * @return the thermoSystem
      */
@@ -122,6 +122,5 @@ public class BasePVTsimulation implements SimulationInterface {
     public double getZsaturation() {
         return Zsaturation;
     }
-    
 
 }

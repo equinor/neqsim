@@ -13,7 +13,9 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
-public class Viscosity extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
+public class Viscosity
+        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);

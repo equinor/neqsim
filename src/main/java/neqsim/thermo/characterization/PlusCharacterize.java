@@ -10,10 +10,10 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  ESOL
+ * @author ESOL
  */
 public class PlusCharacterize extends Object implements java.io.Serializable, CharacteriseInterface {
-    private static final long serialVersionUID = 1000;    
+    private static final long serialVersionUID = 1000;
     double TBPfractions[] = null;
     boolean firsttime = true;
     double MPlus = 300.0, zPlus = 0.3, densPlus = 0.98;
@@ -22,12 +22,12 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     protected boolean pseudocomponents = true;
     int firstPlusFractionNumber = 1;
     int lastPlusFractionNumber = 80;
-    int numberOfPseudocomponents = 5;//(lastPlusFractionNumber-firstPlusFractionNumber)*50;
+    int numberOfPseudocomponents = 5;// (lastPlusFractionNumber-firstPlusFractionNumber)*50;
     int length = 0;
-    double[] coefs = {4.4660105006, -1.1266303727, 0.80, 0.0408709562};
-    double[] SRKcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
-    double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
-    double[] plusCoefs = {0.0007774204804, -0.02390179};
+    double[] coefs = { 4.4660105006, -1.1266303727, 0.80, 0.0408709562 };
+    double[] SRKcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
+    double[] PRcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
+    double[] plusCoefs = { 0.0007774204804, -0.02390179 };
     SystemInterface system = null;
     static Logger logger = LogManager.getLogger(PlusCharacterize.class);
 
@@ -37,7 +37,6 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
 
     public PlusCharacterize(SystemInterface system) {
         this.system = system;
-
 
     }
 
@@ -57,9 +56,11 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
                 if (system.getPhase(0).getComponent(i).isIsTBPfraction()) {
                     Integer firstPlusNumber = new Integer(0);
                     if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
+                        firstPlusNumber = new Integer(
+                                system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
                     } else {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
+                        firstPlusNumber = new Integer(
+                                system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
                     }
                     if (plusCompNumber < firstPlusNumber.intValue()) {
                         plusCompNumber = firstPlusNumber.intValue();
@@ -89,9 +90,11 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
                 if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
                     Integer firstPlusNumber = new Integer(0);
                     if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
+                        firstPlusNumber = new Integer(
+                                system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
                     } else {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
+                        firstPlusNumber = new Integer(
+                                system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
                     }
                     if (firstPlusFractionNumber < firstPlusNumber.intValue()) {
                         firstPlusFractionNumber = firstPlusNumber.intValue();
@@ -104,16 +107,18 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         }
         logger.info("first plus fraction number " + firstPlusFractionNumber);
 
-        //      NewtonSolveABCDplus solver = new NewtonSolveABCDplus(system, this);
-        //NewtonSolveCDplus solver2 = new NewtonSolveCDplus(system, this);
-        //      solver.solve();
+        // NewtonSolveABCDplus solver = new NewtonSolveABCDplus(system, this);
+        // NewtonSolveCDplus solver2 = new NewtonSolveCDplus(system, this);
+        // solver.solve();
         // solver2.solve();
 
-     //   NewtonSolveABCD2 solver3 = new NewtonSolveABCD2(system, this);
-     //   solver3.solve();
+        // NewtonSolveABCD2 solver3 = new NewtonSolveABCD2(system, this);
+        // solver3.solve();
     }
 
-    /** Getter for property coefs.
+    /**
+     * Getter for property coefs.
+     * 
      * @return Value of property coefs.
      */
     public double[] getCoefs() {
@@ -124,7 +129,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return this.coefs[i];
     }
 
-    /** Setter for property coefs.
+    /**
+     * Setter for property coefs.
+     * 
      * @param coefs New value of property coefs.
      */
     public void setCoefs(double[] coefs) {
@@ -163,18 +170,22 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
             densSum = mSum / densSum;
 
             this.coefs[3] += 1.0 * (densPlus - densSum) / densSum * this.coefs[3];
-            //System.out.println("coef " + this.coefs[3]);
+            // System.out.println("coef " + this.coefs[3]);
         } while (Math.abs(densPlus - densSum) > 1e-6 && iter < 1000);
     }
 
-    /** Setter for property coefs.
+    /**
+     * Setter for property coefs.
+     * 
      * @param coefs New value of property coefs.
      */
     public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
     }
 
-    /** Getter for property length.
+    /**
+     * Getter for property length.
+     * 
      * @return Value of property length.
      */
     public int getLength() {
@@ -189,7 +200,6 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
 
     public void generateTBPFractions() {
     }
-    
 
     public void addCharacterizedPlusFraction() {
         if (!pseudocomponents) {
@@ -220,14 +230,16 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
             zPlus[k] += Math.exp(getCoef(0) + getCoef(1) * i);
             MPlus[k] += PVTsimMolarMass[i - 6] / 1000.0;
             denstemp1 += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
-            denstemp2 += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0 / (getCoef(2) + getCoef(3) * Math.log(i));
-            //System.out.println("dens " + denstemp1/denstemp2);
+            denstemp2 += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0
+                    / (getCoef(2) + getCoef(3) * Math.log(i));
+            // System.out.println("dens " + denstemp1/denstemp2);
             Maverage += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
             weightFrac += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
-            //System.out.println("weigth " + weightFrac + " i" + i);
+            // System.out.println("weigth " + weightFrac + " i" + i);
             if (weightFrac >= meanWeightFrac || !pseudocomponents || i == getLastPlusFractionNumber() - 1) {
                 pluscomp++;
-                String name = (i == firstPS) ? "PC" + Integer.toString(firstPS) : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
+                String name = (i == firstPS) ? "PC" + Integer.toString(firstPS)
+                        : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
                 system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
                 denstemp1 = 0.0;
                 denstemp2 = 0.0;
@@ -237,7 +249,6 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
                 firstPS = i + 1;
             }
         }
-
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
@@ -250,14 +261,18 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     public void addPseudoTBPfraction(int start, int end) {
     }
 
-    /** Getter for property carbonNumberVector.
+    /**
+     * Getter for property carbonNumberVector.
+     * 
      * @return Value of property carbonNumberVector.
      */
     public int[] getCarbonNumberVector() {
         return this.carbonNumberVector;
     }
 
-    /** Setter for property carbonNumberVector.
+    /**
+     * Setter for property carbonNumberVector.
+     * 
      * @param carbonNumberVector New value of property carbonNumberVector.
      */
     public void setCarbonNumberVector(int[] carbonNumberVector) {
@@ -272,56 +287,72 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return lastPlusFractionNumber;
     }
 
-    /** Setter for property firstPlusFractionNumber.
+    /**
+     * Setter for property firstPlusFractionNumber.
+     * 
      * @param firstPlusFractionNumber New value of property firstPlusFractionNumber.
      */
     public void setFirstPlusFractionNumber(int firstPlusFractionNumber) {
         this.firstPlusFractionNumber = firstPlusFractionNumber;
     }
 
-    /** Getter for property startPlus.
+    /**
+     * Getter for property startPlus.
+     * 
      * @return Value of property startPlus.
      */
     public int getStartPlus() {
         return firstPlusFractionNumber;
     }
 
-    /** Setter for property startPlus.
+    /**
+     * Setter for property startPlus.
+     * 
      * @param startPlus New value of property startPlus.
      */
     public void setStartPlus(int startPlus) {
         this.firstPlusFractionNumber = firstPlusFractionNumber;
     }
 
-    /** Getter for property MPlus.
+    /**
+     * Getter for property MPlus.
+     * 
      * @return Value of property MPlus.
      */
     public double getMPlus() {
         return MPlus;
     }
 
-    /** Setter for property MPlus.
+    /**
+     * Setter for property MPlus.
+     * 
      * @param MPlus New value of property MPlus.
      */
     public void setMPlus(double MPlus) {
         this.MPlus = MPlus;
     }
 
-    /** Getter for property zPlus.
+    /**
+     * Getter for property zPlus.
+     * 
      * @return Value of property zPlus.
      */
     public double getZPlus() {
         return zPlus;
     }
 
-    /** Setter for property zPlus.
+    /**
+     * Setter for property zPlus.
+     * 
      * @param zPlus New value of property zPlus.
      */
     public void setZPlus(double zPlus) {
         this.zPlus = zPlus;
     }
 
-    /** Getter for property plusCoefs.
+    /**
+     * Getter for property plusCoefs.
+     * 
      * @return Value of property plusCoefs.
      */
     public double[] getPlusCoefs() {
@@ -332,14 +363,18 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return this.plusCoefs[i];
     }
 
-    /** Setter for property plusCoefs.
+    /**
+     * Setter for property plusCoefs.
+     * 
      * @param plusCoefs New value of property plusCoefs.
      */
     public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
-    /** Getter for property densPlus.
+    /**
+     * Getter for property densPlus.
+     * 
      * @return Value of property densPlus.
      *
      */
@@ -347,7 +382,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return densPlus;
     }
 
-    /** Setter for property densPlus.
+    /**
+     * Setter for property densPlus.
+     * 
      * @param densPlus New value of property densPlus.
      *
      */
@@ -359,7 +396,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return true;
     }
 
-    /** Getter for property numberOfPseudocomponents.
+    /**
+     * Getter for property numberOfPseudocomponents.
+     * 
      * @return Value of property numberOfPseudocomponents.
      *
      */
@@ -367,15 +406,20 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return numberOfPseudocomponents;
     }
 
-    /** Setter for property numberOfPseudocomponents.
-     * @param numberOfPseudocomponents New value of property numberOfPseudocomponents.
+    /**
+     * Setter for property numberOfPseudocomponents.
+     * 
+     * @param numberOfPseudocomponents New value of property
+     *                                 numberOfPseudocomponents.
      *
      */
     public void setNumberOfPseudocomponents(int numberOfPseudocomponents) {
         this.numberOfPseudocomponents = numberOfPseudocomponents;
     }
 
-    /** Getter for property pseudocomponents.
+    /**
+     * Getter for property pseudocomponents.
+     * 
      * @return Value of property pseudocomponents.
      *
      */
@@ -383,7 +427,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
         return pseudocomponents;
     }
 
-    /** Setter for property pseudocomponents.
+    /**
+     * Setter for property pseudocomponents.
+     * 
      * @param pseudocomponents New value of property pseudocomponents.
      *
      */
@@ -406,7 +452,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
                 logger.info("removing " + list.get(i));
             } catch (Exception e) {
                 logger.error("not able to remove " + list.get(i));
-                //return;
+                // return;
             }
         }
     }
@@ -438,8 +484,8 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
             }
         }
 
-        coefs[0]=0.1;
-        coefs[1]= Math.log(zPlus)/getFirstPlusFractionNumber();
+        coefs[0] = 0.1;
+        coefs[1] = Math.log(zPlus) / getFirstPlusFractionNumber();
         solve();
     }
 }

@@ -48,7 +48,8 @@ public class SeparatorTest extends BasePVTsimulation {
             } else {
                 m3oil[i] = getThermoSystem().getVolume();
             }
-            if (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
+            if (getThermoSystem().getNumberOfPhases() > 1
+                    && getThermoSystem().getPhase(0).getPhaseTypeName().equals("gas")) {
                 getThermoSystem().getPhase(0).setPressure(1.01325);
                 getThermoSystem().getPhase(0).setTemperature(288.15);
                 getThermoSystem().init(1);
@@ -101,8 +102,8 @@ public class SeparatorTest extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
 
         SeparatorTest sepSim = new SeparatorTest(tempSystem);
-        double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-        double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
+        double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
+        double[] pres = { 500, 400, 200, 100, 50.0, 5.0, 1.01325 };
         sepSim.setSeparatorConditions(temps, pres);
         sepSim.runCalc();
 

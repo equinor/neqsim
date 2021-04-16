@@ -8,8 +8,8 @@ package neqsim.processSimulation;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public class test {
 

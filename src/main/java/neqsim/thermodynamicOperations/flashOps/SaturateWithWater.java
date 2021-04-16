@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
- /*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
+/*
+* PHflash.java
+*
+* Created on 8. mars 2001, 10:56
+*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -84,7 +84,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
                 lastdn *= 0.8;
 
             } else {
-                dn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase() / system.getNumberOfMoles();
+                dn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase()
+                        / system.getNumberOfMoles();
                 lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
                 system.addComponent("water", -lastdn);
             }
@@ -95,7 +96,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (i == 50) {
             logger.error("could not find solution - in water sturate : dn  " + dn);
         }
-        //logger.info("i " + i + " dn " + dn);
+        // logger.info("i " + i + " dn " + dn);
         // system.display();
         system.removePhase(system.getNumberOfPhases() - 1);
         tpFlash.run();
@@ -111,7 +112,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         testSystem.addComponent("i-butane", 0.6);
         testSystem.addComponent("n-hexane", 0.3);
         testSystem.addPlusFraction("C6", 1.3, 100.3 / 1000.0, 0.8232);
-       // testSystem.addComponent("water", 0.3);
+        // testSystem.addComponent("water", 0.3);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
@@ -121,13 +122,13 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
             testOps.TPflash();
-            //  testSystem.display();
+            // testSystem.display();
             testOps.saturateWithWater();
-            //     testSystem.display();
-            //   testSystem.addComponent("water", 1);
-            //testOps.saturateWithWater();
+            // testSystem.display();
+            // testSystem.addComponent("water", 1);
+            // testOps.saturateWithWater();
             testSystem.display();
-            //  testOps.TPflash();
+            // testOps.TPflash();
         } catch (Exception e) {
             logger.error(e.toString());
         }

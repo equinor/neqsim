@@ -11,26 +11,26 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 /**
  * /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class ConductivityFunction extends LevenbergMarquardtFunction{
+public class ConductivityFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates new ViscosityFunction */
     public ConductivityFunction() {
         params = new double[3];
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(1);
         system.initPhysicalProperties();
         return system.getPhases()[1].getPhysicalProperties().getConductivity();
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[0].setLiquidConductivityParameter(value, i);
         system.getPhases()[1].getComponents()[0].setLiquidConductivityParameter(value, i);

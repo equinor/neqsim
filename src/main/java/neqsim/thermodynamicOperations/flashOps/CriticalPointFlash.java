@@ -24,7 +24,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
     SimpleMatrix fmatrix = null;
     int numberOfComponents;
     double Vc0, Tc0;
-    //SystemInterface clonedsystem;
+    // SystemInterface clonedsystem;
 
     public CriticalPointFlash(SystemInterface system) {
         this.system = system;
@@ -44,29 +44,36 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         system.setNumberOfPhases(1);
         system.setTemperature(Tc0);
         system.getPhase(0).setTotalVolume(Vc0 * system.getTotalNumberOfMoles());
- system.init(3);
+        system.init(3);
         double dt = 1.0;
 
         for (int iii = 0; iii < 100; iii++) {
             system.setTemperature(system.getTemperature() + dt);
             system.init(3);
-            //system.getPressure();
+            // system.getPressure();
 
             double dij = 0;
             double tempJ = 0;
             for (int i = 0; i < numberOfComponents; i++) {
                 for (int j = 0; j < numberOfComponents; j++) {
-                    dij = i == j ? 1.0 : 0.0;//Kroneckers delta
+                    dij = i == j ? 1.0 : 0.0;// Kroneckers delta
 
-                    tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase() - 1.0 / system.getPhase(0).getNumberOfMolesInPhase() + (system.getPhase(0).getComponent(i).getdfugdn(j) + system.getPhase(0).getComponent(i).getdfugdp() * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn() * -1));
-                    // tempJ =  ((PhaseSrkEos)system.getPhase(0)).dFdNdN(i,j);
+                    tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
+                            - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
+                            + (system.getPhase(0).getComponent(i).getdfugdn(j)
+                                    + system.getPhase(0).getComponent(i).getdfugdp()
+                                            * system.getPhase(0).getComponent(j).getVoli()
+                                            * system.getPhase(0).getdPdVTn() * -1));
+                    // tempJ = ((PhaseSrkEos)system.getPhase(0)).dFdNdN(i,j);
 
                     HeidemannMmatrix.set(i, j, tempJ);
-                    // Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz()) * 
+                    // Math.sqrt(system.getPhase(0).getComponent(i).getz() *
+                    // system.getPhase(0).getComponent(j).getz()) *
                 }
             }
             HeidemannMmatrix.print();
-            logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature " + system.getTemperature()+ " pressure " + system.getPressure());
+            logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature " + system.getTemperature()
+                    + " pressure " + system.getPressure());
         }
     }
 
@@ -76,12 +83,20 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         double tempJ = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
-                dij = i == j ? 1.0 : 0.0;//Kroneckers delta
+                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
 
-                tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase() - 1.0 / system.getPhase(0).getNumberOfMolesInPhase() + (system.getPhase(0).getComponent(i).getdfugdn(j) + system.getPhase(0).getComponent(i).getdfugdp() * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn() * -1.0));
+                tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
+                        - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
+                        + (system.getPhase(0).getComponent(i).getdfugdn(j)
+                                + system.getPhase(0).getComponent(i).getdfugdp()
+                                        * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn()
+                                        * -1.0));
 
-                Mmatrix.set(i, j, Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz()) * tempJ);
-                // Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz()) * 
+                Mmatrix.set(i, j,
+                        Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz())
+                                * tempJ);
+                // Math.sqrt(system.getPhase(0).getComponent(i).getz() *
+                // system.getPhase(0).getComponent(j).getz()) *
             }
         }
     }
@@ -96,14 +111,16 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         double[] newz2 = new double[numberOfComponents];
         double sperturb = 1e-3;
         for (int ii = 0; ii < numberOfComponents; ii++) {
-            newz1[ii] = system.getPhase(0).getComponent(ii).getz() + sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
-            newz2[ii] = system.getPhase(0).getComponent(ii).getz() - sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
+            newz1[ii] = system.getPhase(0).getComponent(ii).getz()
+                    + sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
+            newz2[ii] = system.getPhase(0).getComponent(ii).getz()
+                    - sperturb * eigenVector.get(ii) * Math.sqrt(system.getPhase(0).getComponent(ii).getz());
         }
 
         system.setMolarComposition(newz1);
         system.init(3);
         calcMmatrix();
-        //eigenVector = Mmatrix.eig().getEigenVector(0);
+        // eigenVector = Mmatrix.eig().getEigenVector(0);
         SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
         double perturb1 = evalMatrix.get(0, 0);
 
@@ -129,7 +146,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         calcMmatrixHeidemann();
         system.setNumberOfPhases(1);
 
-        Tc0 =system.getPhase(0).getPseudoCriticalTemperature();
+        Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
         Vc0 = 4 * system.getPhase(0).getb();
 
         system.setUseTVasIndependentVariables(true);
@@ -137,8 +154,8 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         system.setTemperature(Tc0);
         system.getPhase(0).setTotalVolume(Vc0 * system.getTotalNumberOfMoles());
         system.init(3);
-          system.init(3);
-     //   system.display();
+        system.init(3);
+        // system.display();
 
         for (int k = 0; k < 13; k++) {
 
@@ -148,7 +165,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
             int i = Mmatrix.eig().getNumberOfEigenvalues();
             SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
             SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-            detM = Mmatrix.determinant();//evalMatrix.get(0, 0);
+            detM = Mmatrix.determinant();// evalMatrix.get(0, 0);
             int iter = 0;
             system.setTemperature(system.getTemperature() + dT);
             double dTOld = 111110;
@@ -161,42 +178,43 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
                 i = Mmatrix.eig().getNumberOfEigenvalues();
                 eigenVector = Mmatrix.eig().getEigenVector(0);
                 evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-                detM = Mmatrix.determinant();//evalMatrix.get(0, 0);
+                detM = Mmatrix.determinant();// evalMatrix.get(0, 0);
                 ddetdT = (detM - olddetM) / dT;
                 dTOld = dT;
                 dT = -detM / ddetdT;
                 if (Math.abs(dT) > 5.0) {
-                   // dT = Math.signum(dT) * 5.0;
+                    // dT = Math.signum(dT) * 5.0;
                 }
                 double oldTemp = system.getTemperature();
                 system.setTemperature(oldTemp + dT);
                 logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
             } while (Math.abs(dT) > 1e-8 && iter < 112);// && (Math.abs(dT) < Math.abs(dTOld) || iter < 3));
 
-             double dVc = Vc0 / 100.0;
-             double ddetdV, oldVal;
-              system.init(3);
-             double valstart = calcdpd();
-             iter = 0;
-             system.getPhase(0).setTotalVolume(system.getPhase(0).getTotalVolume() + dVc);
-             double dVOld = 1111110;
-             do {
-             oldVal = valstart;
-             system.init(3);
-             iter++;
-             valstart = calcdpd();
-             ddetdV = (valstart - oldVal) / dVc;
-             dVOld = dVc;
-             dVc = -valstart / ddetdV;
-             system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
-             logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart + " pressure " + system.getPressure());
-             } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
-             
+            double dVc = Vc0 / 100.0;
+            double ddetdV, oldVal;
+            system.init(3);
+            double valstart = calcdpd();
+            iter = 0;
+            system.getPhase(0).setTotalVolume(system.getPhase(0).getTotalVolume() + dVc);
+            double dVOld = 1111110;
+            do {
+                oldVal = valstart;
+                system.init(3);
+                iter++;
+                valstart = calcdpd();
+                ddetdV = (valstart - oldVal) / dVc;
+                dVOld = dVc;
+                dVc = -valstart / ddetdV;
+                system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
+                logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart
+                        + " pressure " + system.getPressure());
+            } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
+
         }
         system.display();
-        //solve(fmatrix);
+        // solve(fmatrix);
         // dnMatrix.print(10, 10);
-        //system.display();
-        //clonedsystem.display();
+        // system.display();
+        // clonedsystem.display();
     }
 }

@@ -40,11 +40,10 @@ public class WaxFunction extends LevenbergMarquardtFunction {
         params[i] = value;
         if (i < 3) {
             system.getWaxModel().setWaxParameter(i, params[i]);
-        } else if(i==3){
+        } else if (i == 3) {
             system.getWaxModel().setParameterWaxHeatOfFusion(i - 3, value);
-        }
-        else{
-             system.getWaxModel().setParameterWaxTriplePointTemperature(i - 4, value);
+        } else {
+            system.getWaxModel().setParameterWaxTriplePointTemperature(i - 4, value);
         }
         system.getWaxModel().removeWax();
         system.getWaxModel().addTBPWax();

@@ -26,8 +26,8 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     public ViscosityFunction() {
         params = new double[1];
     }
-    
-      /**
+
+    /**
      * Creates new Test
      */
     public ViscosityFunction(boolean includeWax) {
@@ -50,7 +50,8 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     public void setFittingParams(int i, double value) {
         params[i] = value;
 
-        ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties().getViscosityModel()).setTBPviscosityCorrection(value);
+        ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties().getViscosityModel())
+                .setTBPviscosityCorrection(value);
 
     }
 }

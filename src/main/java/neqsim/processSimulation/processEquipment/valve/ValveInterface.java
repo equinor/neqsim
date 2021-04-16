@@ -12,22 +12,35 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface ValveInterface extends ProcessEquipmentInterface {
     public void run();
+
     public void setOutletPressure(double pressure);
+
     public void setInletStream(StreamInterface inletStream);
+
     public StreamInterface getOutStream();
+
     public String getName();
+
     public boolean isIsoThermal();
+
     public void setIsoThermal(boolean isoThermal);
+
     public double getPercentValveOpening();
+
     public void setPercentValveOpening(double percentValveOpening);
+
     public double getCv();
+
     public void setCv(double Cv);
+
     public double getOutletPressure();
+
     public double getInletPressure();
+
     public SystemInterface getThermoSystem();
 }

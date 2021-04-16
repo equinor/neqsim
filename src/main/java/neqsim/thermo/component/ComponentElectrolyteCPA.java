@@ -41,9 +41,9 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         xsitedTdT = new double[numberOfAssociationSites];
         xsiteOld = new double[numberOfAssociationSites];
         if (numberOfAssociationSites != 0 && cpaon == 1) {
-            //System.out.println("ass sites: " + numberOfAssociationSites);
-            //System.out.println("aSRK " + a + " aCPA " + aCPA);
-            //System.out.println("bSRK " + b + " bCPA " + bCPA);
+            // System.out.println("ass sites: " + numberOfAssociationSites);
+            // System.out.println("aSRK " + a + " aCPA " + aCPA);
+            // System.out.println("bSRK " + b + " bCPA " + bCPA);
             for (int j = 0; j < getNumberOfAssociationSites(); j++) {
                 setXsite(j, 1.0);
                 setXsiteOld(j, 1.0);
@@ -57,8 +57,9 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
             setAtractiveTerm(0);
 
         }
-        // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700, -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
-        //   this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
+        // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
+        // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
+        // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
 
     }
 
@@ -84,8 +85,9 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
             setAtractiveTerm(0);
 
         }
-        // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700, -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
-        //  this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
+        // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
+        // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
+        // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
 
     }
 
@@ -161,37 +163,46 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         double Fcpa = 0.0;
-        //if(phase.getPhaseType()==1) cpaon=0;
+        // if(phase.getPhaseType()==1) cpaon=0;
         if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
             Fcpa = dFCPAdN(phase, numberOfComponents, temperature, pressure);
         }
-        //System.out.println("Fsup " + Fsup + "  fcpa " + Fcpa);
-        //System.out.println("i " + componentNumber + " dFCPAdn " + Fcpa);
+        // System.out.println("Fsup " + Fsup + " fcpa " + Fcpa);
+        // System.out.println("i " + componentNumber + " dFCPAdn " + Fcpa);
         return Fsup + cpaon * Fcpa;
     }
 
     public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
-            return super.dFdNdT(phase, numberOfComponents, temperature, pressure) + cpaon*dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
+            return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
+                    + cpaon * dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
         } else {
             return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
         }
     }
 
     public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-        //System.out.println("dQdndV " + dFCPAdNdV(phase, numberOfComponents, temperature, pressure) + " dFdndV " + super.dFdNdV(phase, numberOfComponents, temperature, pressure));
+        // System.out.println("dQdndV " + dFCPAdNdV(phase, numberOfComponents,
+        // temperature, pressure) + " dFdndV " + super.dFdNdV(phase, numberOfComponents,
+        // temperature, pressure));
         if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
-            return super.dFdNdV(phase, numberOfComponents, temperature, pressure) + cpaon*dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
+            return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
+                    + cpaon * dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
         } else {
             return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
         }
     }
 
     public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
-        //System.out.println("ij " + componentNumber + " " + j + " dQCPAdndn " + dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure)+ " dQsrkdndn " + super.dFdNdN(j, phase, numberOfComponents, temperature, pressure));
-        //System.out.println("dFdndn " +(super.dFdNdN(j, phase, numberOfComponents, temperature, pressure) + dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure)));
+        // System.out.println("ij " + componentNumber + " " + j + " dQCPAdndn " +
+        // dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure)+ " dQsrkdndn "
+        // + super.dFdNdN(j, phase, numberOfComponents, temperature, pressure));
+        // System.out.println("dFdndn " +(super.dFdNdN(j, phase, numberOfComponents,
+        // temperature, pressure) + dFCPAdNdN(j, phase, numberOfComponents, temperature,
+        // pressure)));
         if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
-            return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure) + cpaon*dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
+            return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure)
+                    + cpaon * dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure);
         } else {
             return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
         }
@@ -214,7 +225,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         double tot10 = 0.0;
         for (int kk = 0; kk < phase.getNumberOfComponents(); kk++) {
             for (int k = 0; k < phase.getComponent(kk).getNumberOfAssociationSites(); k++) {
-                tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase() * ((ComponentElectrolyteCPA) phase.getComponent(kk)).getXsitedni(k, j);
+                tot10 += -phase.getComponent(kk).getNumberOfMolesInPhase()
+                        * ((ComponentElectrolyteCPA) phase.getComponent(kk)).getXsitedni(k, j);
             }
         }
         double tot11 = tot10 / 2.0 * calc_lngi(phase);
@@ -228,7 +240,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         for (int i = 0; i < numberOfAssociationSites; i++) {
             xi += Math.log(xsite[i]);
         }
-        //System.out.println("dFCPAdn " + ((xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * calc_lngi(phase)))+ " " + componentNumber);
+        // System.out.println("dFCPAdn " + ((xi - ((PhaseCPAInterface)
+        // phase).getHcpatot() / 2.0 * calc_lngi(phase)))+ " " + componentNumber);
         return (xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * calc_lngi(phase));
     }
 
@@ -255,7 +268,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
             }
             tot4 += 0.5 * phase.getComponent(k).getNumberOfMolesInPhase() * tot3;
         }
-        //System.out.println("dFCPAdndV " + (xi - tot1 - tot4));
+        // System.out.println("dFCPAdndV " + (xi - tot1 - tot4));
         return xi - tot1 - tot4;
     }
 
@@ -273,8 +286,9 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
             }
             tot1 += tot2 * phase.getComponent(k).getNumberOfMolesInPhase();
         }
-        //  System.out.println("dFCPAdndT " + (xi - 1.0 / 2.0 * calc_lngi(phase) * tot1));
-        //  System.out.println("dlngdni " + calc_lngi(phase));
+        // System.out.println("dFCPAdndT " + (xi - 1.0 / 2.0 * calc_lngi(phase) *
+        // tot1));
+        // System.out.println("dlngdni " + calc_lngi(phase));
         return xi - 1.0 / 2.0 * calc_lngi(phase) * tot1;
     }
 
@@ -299,17 +313,21 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         if (sitei == sitej && compj == componentNumber) {
             fact = 1.0;
         }
-        return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase() * ((PhaseCPAInterface) phase).getCpamix().calcDelta(sitei, sitej, componentNumber, compj, phase, phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
+        return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact
+                - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
+                        * ((PhaseCPAInterface) phase).getCpamix().calcDelta(sitei, sitej, componentNumber, compj, phase,
+                                phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
     }
 
     public double dFCPAdVdXi(int site, PhaseInterface phase) {
-        return -1.0 / (2.0 * phase.getTotalVolume()) * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+        return -1.0 / (2.0 * phase.getTotalVolume())
+                * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
     }
 
     public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
 
-        //  return xi - tempp;
+        // return xi - tempp;
         return xi + getNumberOfMolesInPhase() / 2.0 * calc_lngi(phase);
     }
 
@@ -322,16 +340,22 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     }
 
     public double calc_lngi(PhaseInterface phase) {
-        return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB()) / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+                / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
     public double calc_lngidV(PhaseInterface phase) {
-        return 2.0 * getBi() * (10.0) / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
-                - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB()) * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
+        return 2.0 * getBi() * (10.0)
+                / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
+                - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
+                        * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB())
+                        / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
+                                * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
     }
 
     public double calc_lngij(int j, PhaseInterface phase) {
-        return 2.0 * getBij(j) * (10.0 * phase.getTotalVolume() - phase.getB()) / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
+        return 2.0 * getBij(j) * (10.0 * phase.getTotalVolume() - phase.getB())
+                / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
     }
 
     /**
@@ -431,8 +455,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
             double AAW2 = -1.3646E-16;
 
             return aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AAW1 + AAW2 * TR + 0.5113e-16 * TR * TR);
-        }//old
-        else if (componentName.equals("water2")) { /// THis is the old method from 
+        } // old
+        else if (componentName.equals("water2")) { /// THis is the old method from
             double TR = 1.0 - temperature / getTC();
             AA = -2.2367E-16;
             BB = 2.83732E-16;

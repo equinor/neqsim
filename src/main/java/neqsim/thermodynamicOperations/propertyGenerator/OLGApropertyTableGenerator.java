@@ -77,14 +77,14 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
             TC = thermoSystem.getTC() - 273.15;
             PC = thermoSystem.getPC() * 1e5;
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
     }
 
 //thermoOps.ge
     public void run() {
 
-        //calcPhaseEnvelope();
+        // calcPhaseEnvelope();
         ROG = new double[pressures.length][temperatures.length];
         ROL = new double[pressures.length][temperatures.length];
         CPG = new double[pressures.length][temperatures.length];
@@ -110,7 +110,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
                 try {
                     thermoOps.TPflash();
                 } catch (Exception e) {
-                    logger.error("error",e);
+                    logger.error("error", e);
                 }
                 thermoSystem.init(3);
                 thermoSystem.initPhysicalProperties();
@@ -135,7 +135,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
                     thermoSystem.init(3);
                     thermoSystem.initPhysicalProperties();
 
-                    //setGasProperties();
+                    // setGasProperties();
                     // set gas properties
                 }
 
@@ -144,7 +144,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
                     thermoSystem.init(3);
                     thermoSystem.initPhysicalProperties();
 
-                    //setOilProperties();
+                    // setOilProperties();
                     // set gas properties
                 }
 
@@ -153,11 +153,11 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
                     thermoSystem.init(3);
                     thermoSystem.initPhysicalProperties();
 
-                    //setOilProperties();
+                    // setOilProperties();
                     // set gas properties
                 }
 
-                // set extropalated oil values   
+                // set extropalated oil values
                 // set gas properties as it was liquid
                 ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
                 ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
@@ -186,7 +186,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG " + ROG[i][j]
+                        + " ROL " + ROL[i][j]);
             }
         }
         writeOLGAinpFile("");
@@ -196,8 +197,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         Writer writer = null;
 
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream("c:/temp/filename.txt"), "utf-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"));
             writer.write("PRESSURE= (");
             for (int i = 0; i < pressures.length; i++) {
                 thermoSystem.setPressure(pressures[i]);

@@ -28,7 +28,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public abstract class FlowLeg extends java.lang.Object implements FlowLegInterface, java.io.Serializable {
@@ -39,7 +39,8 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
     protected int numberOfNodes = 0;
     protected double startLongitudionalCoordinate, endLongitudionalCoordinate;
     protected double startHeightCoordinate, endHeightCoordinate;
-    protected double startOuterTemperature, endOuterTemperature, startOuterHeatTransferCoefficient, endOuterHeatTransferCoefficient, startWallHeatTransferCOefficients, endWallHeatTransferCOefficients;
+    protected double startOuterTemperature, endOuterTemperature, startOuterHeatTransferCoefficient,
+            endOuterHeatTransferCoefficient, startWallHeatTransferCOefficients, endWallHeatTransferCOefficients;
     protected SystemInterface thermoSystem;
     protected GeometryDefinitionInterface equipmentGeometry;
     protected double heightChangePerNode = 0, longitudionalChangePerNode = 0, temperatureChangePerNode = 0;
@@ -51,24 +52,33 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
     }
 
     public void createFlowNodes() {
-        temperatureChangePerNode = (endOuterTemperature-startOuterTemperature)/(1.0*getNumberOfNodes());
-        longitudionalChangePerNode = (endLongitudionalCoordinate-startLongitudionalCoordinate)/(1.0*getNumberOfNodes());
-        heightChangePerNode = (endHeightCoordinate-startHeightCoordinate)/(1.0*getNumberOfNodes());
-        
+        temperatureChangePerNode = (endOuterTemperature - startOuterTemperature) / (1.0 * getNumberOfNodes());
+        longitudionalChangePerNode = (endLongitudionalCoordinate - startLongitudionalCoordinate)
+                / (1.0 * getNumberOfNodes());
+        heightChangePerNode = (endHeightCoordinate - startHeightCoordinate) / (1.0 * getNumberOfNodes());
+
         flowNode[0].setDistanceToCenterOfNode(this.startLongitudionalCoordinate + 0.5 * longitudionalChangePerNode);
         flowNode[0].setLengthOfNode(longitudionalChangePerNode);
         flowNode[0].setVerticalPositionOfNode(startHeightCoordinate + 0.5 * heightChangePerNode);
-        flowNode[0].getGeometry().getSurroundingEnvironment().setTemperature(startOuterTemperature + 0.5 * temperatureChangePerNode);
+        flowNode[0].getGeometry().getSurroundingEnvironment()
+                .setTemperature(startOuterTemperature + 0.5 * temperatureChangePerNode);
         flowNode[0].init();
 
         for (int i = 0; i < getNumberOfNodes() - 1; i++) {
             flowNode[i + 1] = flowNode[i].getNextNode();
-            flowNode[i + 1].setDistanceToCenterOfNode(flowNode[0].getDistanceToCenterOfNode() + (i + 1) * longitudionalChangePerNode);
-            flowNode[i + 1].setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
+            flowNode[i + 1].setDistanceToCenterOfNode(
+                    flowNode[0].getDistanceToCenterOfNode() + (i + 1) * longitudionalChangePerNode);
+            flowNode[i + 1]
+                    .setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
             flowNode[i + 1].setLengthOfNode(longitudionalChangePerNode);
-            flowNode[i].getGeometry().getSurroundingEnvironment().setTemperature(startOuterTemperature + (i+1) * temperatureChangePerNode);
-            flowNode[i].getGeometry().getSurroundingEnvironment().setHeatTransferCoefficient(startOuterHeatTransferCoefficient + (i+1) * 1.0 / (getNumberOfNodes() * 1.0) * (endOuterHeatTransferCoefficient - startOuterHeatTransferCoefficient));
-            flowNode[i].getGeometry().setWallHeatTransferCoefficient(startWallHeatTransferCOefficients + (i+1) * 1.0 / (getNumberOfNodes() * 1.0) * (endWallHeatTransferCOefficients - startWallHeatTransferCOefficients));
+            flowNode[i].getGeometry().getSurroundingEnvironment()
+                    .setTemperature(startOuterTemperature + (i + 1) * temperatureChangePerNode);
+            flowNode[i].getGeometry().getSurroundingEnvironment().setHeatTransferCoefficient(
+                    startOuterHeatTransferCoefficient + (i + 1) * 1.0 / (getNumberOfNodes() * 1.0)
+                            * (endOuterHeatTransferCoefficient - startOuterHeatTransferCoefficient));
+            flowNode[i].getGeometry().setWallHeatTransferCoefficient(
+                    startWallHeatTransferCOefficients + (i + 1) * 1.0 / (getNumberOfNodes() * 1.0)
+                            * (endWallHeatTransferCOefficients - startWallHeatTransferCOefficients));
             flowNode[i + 1].init();
         }
     }
@@ -78,10 +88,12 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
         nodeSelector.getFlowNodeType(flowNode);
 
         for (int i = 0; i < getNumberOfNodes(); i++) {
-            flowNode[i].setDistanceToCenterOfNode(flowNode[0].getDistanceToCenterOfNode() + (i) * longitudionalChangePerNode);
+            flowNode[i].setDistanceToCenterOfNode(
+                    flowNode[0].getDistanceToCenterOfNode() + (i) * longitudionalChangePerNode);
             flowNode[i].setLengthOfNode(longitudionalChangePerNode);
             flowNode[i].setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i) * heightChangePerNode);
-            flowNode[i].getGeometry().getSurroundingEnvironment().setTemperature(startOuterTemperature + (i) * temperatureChangePerNode);
+            flowNode[i].getGeometry().getSurroundingEnvironment()
+                    .setTemperature(startOuterTemperature + (i) * temperatureChangePerNode);
             flowNode[i].init();
         }
     }
@@ -95,10 +107,13 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
 
         for (int i = 0; i < getNumberOfNodes() - 1; i++) {
             flowNode[i + 1] = flowNode[i].getNextNode();
-            flowNode[i + 1].setDistanceToCenterOfNode(flowNode[0].getDistanceToCenterOfNode() + (i + 1) * longitudionalChangePerNode);
-            flowNode[i + 1].setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
+            flowNode[i + 1].setDistanceToCenterOfNode(
+                    flowNode[0].getDistanceToCenterOfNode() + (i + 1) * longitudionalChangePerNode);
+            flowNode[i + 1]
+                    .setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
             flowNode[i + 1].setLengthOfNode(longitudionalChangePerNode);
-            flowNode[i].getGeometry().getSurroundingEnvironment().setTemperature(startOuterTemperature + (i) * temperatureChangePerNode);
+            flowNode[i].getGeometry().getSurroundingEnvironment()
+                    .setTemperature(startOuterTemperature + (i) * temperatureChangePerNode);
 
             flowNode[i + 1].init();
         }
@@ -125,17 +140,17 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
         this.endHeightCoordinate = endHeightCoordinate;
     }
 
-    public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient, double endHeatTransferCoefficient) {
+    public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient,
+            double endHeatTransferCoefficient) {
         this.startOuterHeatTransferCoefficient = startHeatTransferCoefficient;
         this.endOuterHeatTransferCoefficient = endHeatTransferCoefficient;
     }
 
-    public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient, double endHeatTransferCoefficient) {
+    public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient,
+            double endHeatTransferCoefficient) {
         this.startWallHeatTransferCOefficients = startHeatTransferCoefficient;
         this.endWallHeatTransferCOefficients = endHeatTransferCoefficient;
     }
-    
-    
 
     public void setLongitudionalCoordinates(double startLongitudionalCoordinate, double endLongitudionalCoordinate) {
         this.startLongitudionalCoordinate = startLongitudionalCoordinate;

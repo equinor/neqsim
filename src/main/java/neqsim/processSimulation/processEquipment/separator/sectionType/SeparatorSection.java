@@ -18,7 +18,7 @@ public class SeparatorSection {
     private double efficiency = 0.95;
     public Separator separator = null;
     private boolean calcEfficiency = false;
-    private double pressureDrop = 33 / 5.0 * 1e-3;//bar
+    private double pressureDrop = 33 / 5.0 * 1e-3;// bar
     private String name = "1";
     String type;
     public double outerDiameter = 1.0;
@@ -71,7 +71,9 @@ public class SeparatorSection {
     }
 
     public double getMinimumLiquidSealHeight() {
-        return getPresureDrop() * 1e5 / neqsim.thermo.ThermodynamicConstantsInterface.gravity / (getSeparator().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity() - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+        return getPresureDrop() * 1e5 / neqsim.thermo.ThermodynamicConstantsInterface.gravity
+                / (getSeparator().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity()
+                        - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
 
     }
 

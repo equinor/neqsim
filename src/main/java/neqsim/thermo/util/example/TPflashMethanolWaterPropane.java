@@ -32,15 +32,15 @@ public class TPflashMethanolWaterPropane {
         SystemInterface testSystem = new SystemSrkCPA(300, 10.01325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-   /*     testSystem.addComponent("methane", 150.0e-2);
-        testSystem.addComponent("propane", 150.0e-3);
-        testSystem.addComponent("methanol", 0.5);
-        testSystem.addComponent("water", 0.5);
-
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(10);
-        testSystem.setMultiPhaseCheck(true);
-*/
+        /*
+         * testSystem.addComponent("methane", 150.0e-2);
+         * testSystem.addComponent("propane", 150.0e-3);
+         * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
+         * 0.5);
+         * 
+         * testSystem.createDatabase(true); testSystem.setMixingRule(10);
+         * testSystem.setMultiPhaseCheck(true);
+         */
         testSystem = testSystem.readObject(100);
         testOps = new ThermodynamicOperations(testSystem);
         testSystem.init(0);

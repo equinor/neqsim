@@ -10,45 +10,45 @@ import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
 
 /**
  *
- * @author  even solbraa
- * @version 
+ * @author even solbraa
+ * @version
  */
-public class WettedWallColumnData extends ExperimentalEquipmentData{
+public class WettedWallColumnData extends ExperimentalEquipmentData {
 
     private static final long serialVersionUID = 1000;
 
     /** Creates new WettedWallColumnData */
-   
+
     public WettedWallColumnData() {
     }
-    
+
     public WettedWallColumnData(double diameter, double length, double volume) {
         this.diameter = diameter;
         this.length = length;
         this.volume = volume;
     }
-    
-    public void setDiameter(double diameter){
+
+    public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
-    
-    public double getDiameter(){
+
+    public double getDiameter() {
         return this.diameter;
     }
-    
-     public void setLength(double diameter){
+
+    public void setLength(double diameter) {
         this.length = length;
     }
-    
-    public double getLength(){
+
+    public double getLength() {
         return this.length;
     }
-    
-    public void setVolume(double volume){
+
+    public void setVolume(double volume) {
         this.volume = volume;
     }
-    
-    public double getVolume(){
+
+    public double getVolume() {
         return this.volume;
     }
 }

@@ -53,7 +53,9 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
                 } else {
 
                     double newC = -error / derrordC;
-                    double correction = newC * 0.5;//(newC - system.getPhase(0).getComponent(inhibitor).getNumberOfmoles()) * 0.5;
+                    double correction = newC * 0.5;// (newC -
+                                                   // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles()) *
+                                                   // 0.5;
 
                     system.addComponent(inhibitor, correction);
                 }
@@ -65,7 +67,7 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
                 logger.info("error " + error);
 
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
 
         } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
@@ -94,7 +96,12 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
 
         try {
             testOps.hydrateInhibitorConcentration("MEG", 270.9);
-            double cons = 100 * testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles() * testSystem.getPhase(0).getComponent("MEG").getMolarMass() / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles() * testSystem.getPhase(0).getComponent("MEG").getMolarMass() + testSystem.getPhase(0).getComponent("water").getNumberOfmoles() * testSystem.getPhase(0).getComponent("water").getMolarMass());
+            double cons = 100 * testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
+                    * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
+                    / (testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles()
+                            * testSystem.getPhase(0).getComponent("MEG").getMolarMass()
+                            + testSystem.getPhase(0).getComponent("water").getNumberOfmoles()
+                                    * testSystem.getPhase(0).getComponent("water").getMolarMass());
             logger.info("hydrate inhibitor concentration " + cons + " wt%");
         } catch (Exception e) {
             e.toString();

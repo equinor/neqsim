@@ -14,59 +14,59 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public interface PhysicalPropertiesInterface extends Cloneable {
 
-	public double getPureComponentViscosity(int i);
+    public double getPureComponentViscosity(int i);
 
-	public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
+    public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
 
-	public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
+    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
 
-	public double getViscosity();
+    public double getViscosity();
 
-	public void setMixingRuleNull();
+    public void setMixingRuleNull();
 
-	public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
+    public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate);
 
-	public double getDiffusionCoefficient(String comp1, String comp2);
+    public double getDiffusionCoefficient(String comp1, String comp2);
 
-	public double getConductivity();
+    public double getConductivity();
 
-	public double getKinematicViscosity();
+    public double getKinematicViscosity();
 
-	public double getEffectiveDiffusionCoefficient(String compName);
+    public double getEffectiveDiffusionCoefficient(String compName);
 
-	public void setViscosityModel(String model);
+    public void setViscosityModel(String model);
 
-	public void setConductivityModel(String model);
+    public void setConductivityModel(String model);
 
-	public double getDensity();
+    public double getDensity();
 
-	public PhaseInterface getPhase();
+    public PhaseInterface getPhase();
 
-	public void setPhase(PhaseInterface phase);
+    public void setPhase(PhaseInterface phase);
 
-	public double calcDensity();
+    public double calcDensity();
 
-	public double getEffectiveSchmidtNumber(int i);
+    public double getEffectiveSchmidtNumber(int i);
 
-	public double getDiffusionCoeffisient(int i, int j);
+    public double getDiffusionCoeffisient(int i, int j);
 
-	public double getEffectiveDiffusionCoefficient(int i);
+    public double getEffectiveDiffusionCoefficient(int i);
 
-	public void calcEffectiveDiffusionCoefficients();
+    public void calcEffectiveDiffusionCoefficients();
 
-	public double getFickDiffusionCoeffisient(int i, int j);
+    public double getFickDiffusionCoeffisient(int i, int j);
 
-	public void init(PhaseInterface phase);
+    public void init(PhaseInterface phase);
 
-	public void init(PhaseInterface phase, String type);
+    public void init(PhaseInterface phase, String type);
 
-	public Object clone();
+    public Object clone();
 
-	public void setBinaryDiffusionCoefficientMethod(int i);
+    public void setBinaryDiffusionCoefficientMethod(int i);
 
-	public void setMulticomponentDiffusionMethod(int i);
+    public void setMulticomponentDiffusionMethod(int i);
 
-	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel();
+    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel();
 
-	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel();
+    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel();
 }

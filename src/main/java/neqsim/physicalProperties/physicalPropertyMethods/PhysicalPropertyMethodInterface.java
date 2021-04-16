@@ -5,15 +5,17 @@
  */
 
 package neqsim.physicalProperties.physicalPropertyMethods;
+
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public interface PhysicalPropertyMethodInterface extends Cloneable, java.io.Serializable{
+public interface PhysicalPropertyMethodInterface extends Cloneable, java.io.Serializable {
     public Object clone();
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase);
-    public void tuneModel(double val, double temperature, double pressure);
-    
-}
 
+    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase);
+
+    public void tuneModel(double val, double temperature, double pressure);
+
+}

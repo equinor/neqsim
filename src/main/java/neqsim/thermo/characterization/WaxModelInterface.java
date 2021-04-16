@@ -12,7 +12,7 @@ import java.io.Serializable;
  * @author ESOL
  */
 public interface WaxModelInterface extends Serializable, Cloneable {
- 
+
     public void addTBPWax();
 
     public Object clone();
@@ -34,6 +34,6 @@ public interface WaxModelInterface extends Serializable, Cloneable {
     public double[] getParameterWaxTriplePointTemperature();
 
     public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature);
-    
-   public void setParameterWaxTriplePointTemperature(int i, double parameters);
+
+    public void setParameterWaxTriplePointTemperature(int i, double parameters);
 }

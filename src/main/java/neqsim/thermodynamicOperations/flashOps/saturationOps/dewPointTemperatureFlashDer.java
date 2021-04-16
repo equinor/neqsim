@@ -22,14 +22,15 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
     }
 
     public void run() {
-        if (system.getPhase(0).getNumberOfComponents() == 1 && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
+        if (system.getPhase(0).getNumberOfComponents() == 1
+                && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
             setSuperCritical(true);
         }
 
         int iterations = 0, maxNumberOfIterations = 1000;
         double xold = 0, xtotal = 1;
         double deriv = 0, funk = 0;
-        //System.out.println("starting");
+        // System.out.println("starting");
         system.init(0);
         system.setBeta(0, 1.0 - 1e-15);
         system.setBeta(1, 1e-15);
@@ -52,7 +53,8 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
                 } else if (system.getPhases()[1].hasComponent("water")) {
                     system.getPhases()[1].getComponents()[i].setx(1.0e-10);
                 } else {
-                    system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz());
+                    system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK()
+                            * system.getPhases()[1].getComponents()[i].getz());
                 }
             }
         }
@@ -74,22 +76,26 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
             xtotal = 0.0;
             double dfdT = 0.0;
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-                xtotal += 1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz();
-                dfdT -= 1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz() * (system.getPhases()[1].getComponents()[i].getdfugdt() - system.getPhases()[0].getComponents()[i].getdfugdt());
+                xtotal += 1.0 / system.getPhases()[0].getComponents()[i].getK()
+                        * system.getPhases()[1].getComponents()[i].getz();
+                dfdT -= 1.0 / system.getPhases()[0].getComponents()[i].getK()
+                        * system.getPhases()[1].getComponents()[i].getz()
+                        * (system.getPhases()[1].getComponents()[i].getdfugdt()
+                                - system.getPhases()[0].getComponents()[i].getdfugdt());
             }
             double f = xtotal - 1.0;
             fold = f;
 
-            //System.out.println("x" + xtotal);
+            // System.out.println("x" + xtotal);
             oldTemperature = system.getTemperature();
 
             if (iterations < 5) {
-                system.setTemperature(system.getTemperature() + iterations / (iterations + 100.0) * (xtotal * system.getTemperature() - system.getTemperature()));
+                system.setTemperature(system.getTemperature() + iterations / (iterations + 100.0)
+                        * (xtotal * system.getTemperature() - system.getTemperature()));
             } else {
                 system.setTemperature(system.getTemperature() - iterations / (10.0 + iterations) * f / dfdT);
             }
-            //System.out.println("temperature " + system.getTemperature());
-
+            // System.out.println("temperature " + system.getTemperature());
 
             system.init(1);
 
@@ -99,10 +105,13 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
                 if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
                     system.getPhases()[0].getComponents()[i].setK(1e-40);
                 } else {
-                    system.getPhases()[0].getComponents()[i].setK(Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient() - system.getPhases()[0].getComponents()[i].getLogFugasityCoeffisient()));
+                    system.getPhases()[0].getComponents()[i]
+                            .setK(Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
+                                    - system.getPhases()[0].getComponents()[i].getLogFugasityCoeffisient()));
                 }
                 system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
-                system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz());
+                system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK()
+                        * system.getPhases()[1].getComponents()[i].getz());
                 ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
             }
             // system.init_x_y();
@@ -111,11 +120,12 @@ public class dewPointTemperatureFlashDer extends constantDutyTemperatureFlash {
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
                 xtotal += system.getPhases()[1].getComponents()[i].getx();
             }
-            //System.out.println("xtotal " + xtotal);
+            // System.out.println("xtotal " + xtotal);
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
                 system.getPhases()[1].getComponents()[i].setx(system.getPhases()[1].getComponents()[i].getx() / xtotal);
             }
-        } while (((Math.abs(xtotal - 1.0) > 1e-6) || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-4) || iterations < 3 && (iterations < maxNumberOfIterations));
+        } while (((Math.abs(xtotal - 1.0) > 1e-6) || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-4)
+                || iterations < 3 && (iterations < maxNumberOfIterations));
         if (Math.abs(xtotal - 1.0) > 1e-5 || ktot < 1.0e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
             setSuperCritical(true);
         }

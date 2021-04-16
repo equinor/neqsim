@@ -12,20 +12,20 @@ import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDe
  *
  * @author ESOL
  */
-public class SeparatorCostEstimate extends UnitCostEstimateBaseClass{
+public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
 
     private static final long serialVersionUID = 1000;
-     
-   public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
+
+    public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
         super(mechanicalEquipment);
-    } 
-    
+    }
+
     public double getTotaltCost() {
         SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
-        
+
         sepMecDesign.getWeightTotal();
         sepMecDesign.getVolumeTotal();
-        
+
         return this.mechanicalEquipment.getWeightTotal();
     }
 }

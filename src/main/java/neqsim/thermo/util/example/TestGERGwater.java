@@ -13,7 +13,7 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public class TestGERGwater {
@@ -26,7 +26,7 @@ public class TestGERGwater {
     }
 
     public static void main(String args[]) {
-        //  SystemInterface testSystem = new SystemGERGwaterEos(273.15-20.0, 100.0);
+        // SystemInterface testSystem = new SystemGERGwaterEos(273.15-20.0, 100.0);
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 20.0, 100.0);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -36,7 +36,7 @@ public class TestGERGwater {
         testSystem.addComponent("i-butane", 100.0 - 80.6 - 9.46 - 4.6 - 2.6 - 0.6);
         testSystem.addComponent("CO2", 2.6);
         testSystem.addComponent("nitrogen", 0.6);
-        //     testSystem.addComponent("ethane", 0.08);
+        // testSystem.addComponent("ethane", 0.08);
 //        testSystem.addComponent("propane", 0.02);
         testSystem.addComponent("water", 178.3e-4);
 
@@ -44,12 +44,12 @@ public class TestGERGwater {
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
         testSystem.setMixingRule(7);
-        //testSystem.setMixingRule("HV", "UNIFAC_PSRK");
+        // testSystem.setMixingRule("HV", "UNIFAC_PSRK");
         testSystem.init(0);
 
         try {
-            //      testOps.TPflash();
-            //      testOps.dewPointTemperatureFlash();
+            // testOps.TPflash();
+            // testOps.dewPointTemperatureFlash();
             testOps.waterDewPointTemperatureFlash();
             testSystem.display();
         } catch (Exception e) {

@@ -11,15 +11,12 @@ import java.util.ArrayList;
  *
  * @author ESOL
  */
-public class PipeWall extends Wall{
+public class PipeWall extends Wall {
 
     private static final long serialVersionUID = 1000;
 
-   
     public void PipeWall() {
 
     }
-
-  
 
 }

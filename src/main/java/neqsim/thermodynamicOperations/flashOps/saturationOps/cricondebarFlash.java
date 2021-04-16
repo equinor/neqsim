@@ -25,7 +25,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
 
     public cricondebarFlash(SystemInterface system) {
         super(system);
-        Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1, system.getPhase(0).getNumberOfComponents() + 1);
+        Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1,
+                system.getPhase(0).getNumberOfComponents() + 1);
         fvec = new Matrix(system.getPhase(0).getNumberOfComponents() + 1, 1);
 
     }
@@ -34,10 +35,13 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         double ktot = 0.0, xtotal = 0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
 
-            system.getPhases()[0].getComponents()[i].setK(Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient() - system.getPhases()[0].getComponents()[i].getLogFugasityCoeffisient()));
+            system.getPhases()[0].getComponents()[i]
+                    .setK(Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
+                            - system.getPhases()[0].getComponents()[i].getLogFugasityCoeffisient()));
 
             system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
-            system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getz());
+            system.getPhases()[1].getComponents()[i].setx(1.0 / system.getPhases()[0].getComponents()[i].getK()
+                    * system.getPhases()[1].getComponents()[i].getz());
             ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
         }
         xtotal = 0.0;
@@ -51,10 +55,12 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         double[] XI = new double[system.getPhase(0).getNumberOfComponents()];
         double sumX = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            XI[i] = Math.exp(Math.log(system.getPhase(0).getComponent(i).getz()) + system.getPhase(0).getComponent(i).getLogFugasityCoeffisient() - system.getPhase(1).getComponent(i).getLogFugasityCoeffisient());
+            XI[i] = Math.exp(Math.log(system.getPhase(0).getComponent(i).getz())
+                    + system.getPhase(0).getComponent(i).getLogFugasityCoeffisient()
+                    - system.getPhase(1).getComponent(i).getLogFugasityCoeffisient());
             sumX += XI[i];
         }
-        double tempSumXI = 1.0;//sumX;
+        double tempSumXI = 1.0;// sumX;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             system.getPhase(1).getComponent(i).setx(XI[i] / tempSumXI);
         }
@@ -91,7 +97,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                 Qold = Q1;
                 Q1 = 0.0;
                 for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                    Q1 -= system.getPhase(1).getComponent(i).getx() * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
+                    Q1 -= system.getPhase(1).getComponent(i).getx() * (system.getPhase(0).getComponent(i).getdfugdt()
+                            - system.getPhase(1).getComponent(i).getdfugdt());
                 }
                 if (iterations > 1) {
                     dQ1dT = (Q1 - Qold) / (system.getTemperature() - oldTemperature);
@@ -133,8 +140,10 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                     logger.info("x" + (xlocal) + " press " + system.getPressure() + " fvec " + fvec.norm2());
                     system.getPhase(1).getComponent(i).setx(xlocal);
                 }
-                system.setPressure(system.getPressure() - damping * dx.get(system.getPhase(0).getNumberOfComponents(), 0));
-            } while (Math.abs(fvec.norm2()) > 1.0e-12 && iterations < maxNumberOfIterations && Math.abs(presOld - system.getPressure()) < 10.0);
+                system.setPressure(
+                        system.getPressure() - damping * dx.get(system.getPhase(0).getNumberOfComponents(), 0));
+            } while (Math.abs(fvec.norm2()) > 1.0e-12 && iterations < maxNumberOfIterations
+                    && Math.abs(presOld - system.getPressure()) < 10.0);
 
         } while (Math.abs(oldIterTemp - system.getTemperature()) > 1e-3);
     }
@@ -143,8 +152,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         ThermodynamicOperations localOperation = new ThermodynamicOperations(system);
 
         system.init(0);
-        //       system.setTemperature(system.getPhase(0).getPseudoCriticalTemperature() + 7);
-        //system.setPressure(system.getPhase(0).getPseudoCriticalPressure() / 2.0);
+        // system.setTemperature(system.getPhase(0).getPseudoCriticalTemperature() + 7);
+        // system.setPressure(system.getPhase(0).getPseudoCriticalPressure() / 2.0);
         system.init(3);
 
         int iterations = 0, maxNumberOfIterations = 50;
@@ -155,11 +164,11 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         for (int ii = 0; ii < 45; ii++) {
             system.setPressure(system.getPressure() + 1.0);
             try {
-                //   if(ii<2) localOperation.dewPointTemperatureFlash();
-                //    else localOperation.dewPointPressureFlash();
+                // if(ii<2) localOperation.dewPointTemperatureFlash();
+                // else localOperation.dewPointPressureFlash();
                 dewTemp = system.getTemperature();
                 dewPres = system.getPressure();
-                //  system.display();
+                // system.display();
             } catch (Exception e) {
                 logger.error("error", e);
             }
@@ -169,13 +178,14 @@ public class cricondebarFlash extends constantDutyPressureFlash {
             do {
                 iterations++;
                 system.init(3);
-                //  initMoleFraction();
+                // initMoleFraction();
                 localOperation.TPflash();
                 system.display();
                 Qold = Q1;
                 Q1 = 0.0;
                 for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                    Q1 -= system.getPhase(1).getComponent(i).getx() * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
+                    Q1 -= system.getPhase(1).getComponent(i).getx() * (system.getPhase(0).getComponent(i).getdfugdt()
+                            - system.getPhase(1).getComponent(i).getdfugdt());
                 }
                 if (iterations > 3) {
                     dQ1dT = (Q1 - Qold) / (system.getTemperature() - oldTemperature);
@@ -186,11 +196,12 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                 oldTemperature = system.getTemperature();
                 system.setTemperature(system.getTemperature() - iterations * 1.0 / (iterations + 10.0) * Q1 / dQ1dT);
 
-                logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1 + " pressure " + system.getPressure());
+                logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1 + " pressure "
+                        + system.getPressure());
 
-            } while (Math.abs(Q1) > 1e-10 && iterations < 15);//maxNumberOfIterations);
+            } while (Math.abs(Q1) > 1e-10 && iterations < 15);// maxNumberOfIterations);
             logger.info("temp " + system.getTemperature() + " Q1 " + Q1);
-            //if(ii<2) system.setTemperature(dewTemp-);
+            // if(ii<2) system.setTemperature(dewTemp-);
             logger.info("fvec " + fvec.norm2() + " pressure " + system.getPressure());
         }
     }
@@ -200,14 +211,14 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             sumxx += system.getPhases()[1].getComponents()[i].getx();
             fvec.set(i, 0,
-                    Math.log(
-                            system.getPhases()[0].getComponents()[i].getFugasityCoeffisient() * system.getPhases()[0].getComponents()[i].getz() * system.getPressure())
-                    - Math.log(
-                            system.getPhases()[1].getComponents()[i].getFugasityCoeffisient() * system.getPhases()[1].getComponents()[i].getx() * system.getPressure()));
+                    Math.log(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                            * system.getPhases()[0].getComponents()[i].getz() * system.getPressure())
+                            - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                                    * system.getPhases()[1].getComponents()[i].getx() * system.getPressure()));
 
         }
         fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
-        //   logger.info("sumx" + sumxx);//
+        // logger.info("sumx" + sumxx);//
     }
 
     public void setJac() {
@@ -218,9 +229,9 @@ public class cricondebarFlash extends constantDutyPressureFlash {
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
-                dij = i == j ? 1.0 : 0.0;//Kroneckers delta
-                tempJ
-                        = -dij * 1.0 / system.getPhases()[1].getComponents()[i].getx() - system.getPhases()[1].getComponents()[i].getdfugdx(j);
+                dij = i == j ? 1.0 : 0.0;// Kroneckers delta
+                tempJ = -dij * 1.0 / system.getPhases()[1].getComponents()[i].getx()
+                        - system.getPhases()[1].getComponents()[i].getdfugdx(j);
                 Jac.set(i, j, tempJ);
             }
         }
@@ -229,7 +240,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
             Jac.set(system.getPhase(0).getNumberOfComponents(), i, -1.0);
         }
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            Jac.set(i, system.getPhase(0).getNumberOfComponents(), system.getPhases()[0].getComponents()[i].getdfugdp() - system.getPhases()[1].getComponents()[i].getdfugdp());
+            Jac.set(i, system.getPhase(0).getNumberOfComponents(), system.getPhases()[0].getComponents()[i].getdfugdp()
+                    - system.getPhases()[1].getComponents()[i].getdfugdp());
         }
     }
 

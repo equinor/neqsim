@@ -20,7 +20,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
 
     public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
-         readMaterialDesignStandard("Carbon Steel Pipe", "A25");
+        readMaterialDesignStandard("Carbon Steel Pipe", "A25");
     }
 
     /**
@@ -95,21 +95,23 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='" + specificationNumber + "' AND grade='" + grade + "'"));
+                dataSet = database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
+                        + specificationNumber + "' AND grade='" + grade + "'"));
                 while (dataSet.next()) {
 
-                    minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength"))) * 0.00689475729;
+                    minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength")))
+                            * 0.00689475729;
 
                     // design factor table has to be developed
                     // Efactor table has to be implemented
-                    // temperatureDeratingFactor  has to be implemented
+                    // temperatureDeratingFactor has to be implemented
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            //gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
+            // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

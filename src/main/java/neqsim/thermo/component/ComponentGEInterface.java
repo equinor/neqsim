@@ -14,7 +14,8 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public interface ComponentGEInterface extends ComponentInterface {
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+            int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
 
     public double getGamma();
 
