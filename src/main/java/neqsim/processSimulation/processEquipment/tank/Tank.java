@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
@@ -31,7 +31,8 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     private double liquidCarryoverFraction = 0.0;
     private double gasCarryunderFraction = 0.0;
     private double volume = 136000.0;
-    double steelWallTemperature = 298.15, steelWallMass = 1840.0 * 1000.0, steelWallArea = 15613.0, heatTransferNumber = 5.0, steelCp = 450.0;
+    double steelWallTemperature = 298.15, steelWallMass = 1840.0 * 1000.0, steelWallArea = 15613.0,
+            heatTransferNumber = 5.0, steelCp = 450.0;
     double separatorLength = 40.0, separatorDiameter = 60.0;
     double liquidVolume = 235.0, gasVolume = 15.0;
     private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
@@ -48,8 +49,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         this.name = name;
         addStream(inletStream);
     }
-
-
 
     public void setInletStream(Stream inletStream) {
         inletStreamMixer.addStream(inletStream);
@@ -93,7 +92,8 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         SystemInterface thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
         ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
-         System.out.println("Volume " + thermoSystem2.getVolume() + " internalEnergy " + thermoSystem2.getInternalEnergy());
+        System.out.println(
+                "Volume " + thermoSystem2.getVolume() + " internalEnergy " + thermoSystem2.getInternalEnergy());
         steelWallTemperature = thermoSystem2.getTemperature();
         if (thermoSystem2.hasPhaseType("gas")) {
             gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
@@ -116,11 +116,14 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
                 relFact = liquidVolume / (thermoSystem.getPhase(j).getVolume() * 1.0e-5);
             }
             for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-                thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentName(), relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
+                thermoSystem.addComponent(thermoSystem.getPhase(j).getComponent(i).getComponentName(),
+                        relFact * thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase(), j);
             }
         }
         if (thermoSystem2.getNumberOfPhases() == 2) {
-            thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume() / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume() + liquidVolume / thermoSystem2.getPhase(1).getMolarVolume()));
+            thermoSystem.setBeta(gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
+                    / (gasVolume / thermoSystem2.getPhase(0).getMolarVolume()
+                            + liquidVolume / thermoSystem2.getPhase(1).getMolarVolume()));
         } else {
             thermoSystem.setBeta(1.0 - 1e-10);
         }
@@ -148,7 +151,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     public void runTransient(double dt) {
         inletStreamMixer.run();
 
-
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
         double inMoles = inletStreamMixer.getOutStream().getThermoSystem().getTotalNumberOfMoles();
         double gasoutMoles = gasOutStream.getThermoSystem().getNumberOfMoles();
@@ -159,9 +161,11 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         inletStreamMixer.getOutStream().getThermoSystem().init(3);
         double volume1 = thermoSystem.getVolume();
         System.out.println("volume1 " + volume1);
-        double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy() - gasOutStream.getThermoSystem().getEnthalpy() - liquidOutStream.getThermoSystem().getEnthalpy();
+        double deltaEnergy = inletStreamMixer.getOutStream().getThermoSystem().getEnthalpy()
+                - gasOutStream.getThermoSystem().getEnthalpy() - liquidOutStream.getThermoSystem().getEnthalpy();
         System.out.println("enthalph delta " + deltaEnergy);
-        double wallHeatTransfer = heatTransferNumber * steelWallArea * (steelWallTemperature - thermoSystem.getTemperature()) * dt;
+        double wallHeatTransfer = heatTransferNumber * steelWallArea
+                * (steelWallTemperature - thermoSystem.getTemperature()) * dt;
         System.out.println("delta temp " + (steelWallTemperature - thermoSystem.getTemperature()));
         steelWallTemperature -= wallHeatTransfer / (steelCp * steelWallMass);
         System.out.println("wall Temperature " + steelWallTemperature);
@@ -174,17 +178,20 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             double dn = 0.0;
             for (int k = 0; k < inletStreamMixer.getOutStream().getThermoSystem().getNumberOfPhases(); k++) {
-                dn += inletStreamMixer.getOutStream().getThermoSystem().getPhase(k).getComponent(i).getNumberOfMolesInPhase();
+                dn += inletStreamMixer.getOutStream().getThermoSystem().getPhase(k).getComponent(i)
+                        .getNumberOfMolesInPhase();
             }
             dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
                     - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
             System.out.println("dn " + dn);
-            thermoSystem.addComponent(inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(), dn * dt);
+            thermoSystem.addComponent(
+                    inletStreamMixer.getOutStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(),
+                    dn * dt);
         }
 
         System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-        thermoOps.VUflash(volume1,newEnergy);
+        thermoOps.VUflash(volume1, newEnergy);
 
         setOutComposition(thermoSystem);
         setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
@@ -198,16 +205,17 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
 
-
     }
 
     public void setOutComposition(SystemInterface thermoSystem) {
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             if (thermoSystem.hasPhaseType("gas")) {
-                getGasOutStream().getThermoSystem().getPhase(0).getComponent(i).setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
+                getGasOutStream().getThermoSystem().getPhase(0).getComponent(i)
+                        .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
             }
             if (thermoSystem.hasPhaseType("oil")) {
-                getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i).setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
+                getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i)
+                        .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
             }
         }
     }
@@ -215,7 +223,6 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     public void setTempPres(double temp, double pres) {
         gasOutStream.getThermoSystem().setTemperature(temp);
         liquidOutStream.getThermoSystem().setTemperature(temp);
-
 
         inletStreamMixer.setPressure(pres);
         gasOutStream.getThermoSystem().setPressure(pres);

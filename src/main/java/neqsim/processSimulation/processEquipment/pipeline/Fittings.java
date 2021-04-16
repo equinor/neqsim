@@ -33,7 +33,7 @@ public class Fittings {
 
     public class Fitting {
 
-    private static final long serialVersionUID = 1000;
+        private static final long serialVersionUID = 1000;
 
         private String fittingName = "";
         private double LtoD = 1.0;
@@ -52,7 +52,7 @@ public class Fittings {
                 dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"));
                 dataSet.next();
                 LtoD = (Double.parseDouble(dataSet.getString("LtoD")));
-                System.out.printf("LtoD "+ LtoD);
+                System.out.printf("LtoD " + LtoD);
             } catch (Exception e) {
                 System.out.println("error in comp");
                 e.printStackTrace();

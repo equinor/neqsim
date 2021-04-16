@@ -17,14 +17,14 @@ import neqsim.thermo.phase.PhaseSrkCPA;
 /**
  * This class defines a thermodynamic system using the CPA EoS equation of state
  */
-public  class SystemSrkCPA extends SystemSrkEos {
+public class SystemSrkCPA extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates a thermodynamic system using the SRK equation of state.
      */
-    //  SystemSrkEos clonedSystem;
+    // SystemSrkEos clonedSystem;
     public SystemSrkCPA() {
         super();
         modelName = "CPA-SRK-EOS";
@@ -58,7 +58,7 @@ public  class SystemSrkCPA extends SystemSrkEos {
         commonInitialization();
 
         if (solidPhaseCheck) {
-            //System.out.println("here first");
+            // System.out.println("here first");
             phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
             phaseArray[numberOfPhases - 1].setTemperature(T);
             phaseArray[numberOfPhases - 1].setPressure(P);
@@ -66,7 +66,7 @@ public  class SystemSrkCPA extends SystemSrkEos {
         }
 
         if (hydrateCheck) {
-            //System.out.println("here first");
+            // System.out.println("here first");
             phaseArray[numberOfPhases - 1] = new PhaseHydrate();
             phaseArray[numberOfPhases - 1].setTemperature(T);
             phaseArray[numberOfPhases - 1].setPressure(P);
@@ -82,10 +82,9 @@ public  class SystemSrkCPA extends SystemSrkEos {
             logger.error("Cloning failed.", e);
         }
 
-
-        //        for(int i = 0; i < numberOfPhases; i++) {
-        //            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-        //        }
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
         //
         return clonedSystem;
     }
@@ -97,9 +96,10 @@ public  class SystemSrkCPA extends SystemSrkEos {
     }
 
     public void addComponent(String componentName, double moles) {
-  //      if (componentName.equals("Ca++") || componentName.equals("Na+") || componentName.equals("Cl-")) {
-   //         componentName = "NaCl";
-   //     }
+        // if (componentName.equals("Ca++") || componentName.equals("Na+") ||
+        // componentName.equals("Cl-")) {
+        // componentName = "NaCl";
+        // }
         super.addComponent(componentName, moles);
     }
 }

@@ -1,23 +1,23 @@
-  /*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
+/*
+* System_SRK_EOS.java
+*
+* Created on 8. april 2000, 23:14
+*/
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ComponentGERG2004 extends ComponentEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new System_SRK_EOS
-     * Ev liten fil ja.
+    /**
+     * Creates new System_SRK_EOS Ev liten fil ja.
      */
     public ComponentGERG2004() {
     }

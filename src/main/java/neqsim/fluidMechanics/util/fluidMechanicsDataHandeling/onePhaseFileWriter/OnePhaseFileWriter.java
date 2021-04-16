@@ -10,10 +10,10 @@ import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.FileWriterBaseClas
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
-public class OnePhaseFileWriter extends FileWriterBaseClass{
+public class OnePhaseFileWriter extends FileWriterBaseClass {
 
     private static final long serialVersionUID = 1000;
 

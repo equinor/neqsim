@@ -5,17 +5,17 @@ import neqsim.processSimulation.mechanicalDesign.valve.ValveMechanicalDesign;
 
 public class ValveCostEstimate extends UnitCostEstimateBaseClass {
     private static final long serialVersionUID = 1000;
-    
-	   public ValveCostEstimate(ValveMechanicalDesign mechanicalEquipment) {
-	        super(mechanicalEquipment);
-	    }
 
-	    public double getTotaltCost() {
-	    	ValveMechanicalDesign valveMecDesign = (ValveMechanicalDesign) mechanicalEquipment;
+    public ValveCostEstimate(ValveMechanicalDesign mechanicalEquipment) {
+        super(mechanicalEquipment);
+    }
 
-	    	valveMecDesign.getWeightTotal();
-	    	valveMecDesign.getVolumeTotal();
+    public double getTotaltCost() {
+        ValveMechanicalDesign valveMecDesign = (ValveMechanicalDesign) mechanicalEquipment;
 
-	        return this.mechanicalEquipment.getWeightTotal();
-	    }
+        valveMecDesign.getWeightTotal();
+        valveMecDesign.getVolumeTotal();
+
+        return this.mechanicalEquipment.getWeightTotal();
+    }
 }

@@ -27,7 +27,7 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class PHsolidFlash extends Flash implements java.io.Serializable {
@@ -45,12 +45,12 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
 
     public PHsolidFlash(SystemInterface system, double ent) {
         this.system = system;
-        this.tpFlash = new TPflash(this.system ,true);
+        this.tpFlash = new TPflash(this.system, true);
         this.enthalpyspec = ent;
     }
 
     public void run() {
-        //logger.info("enthalpy: " + system.getEnthalpy());
+        // logger.info("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
         double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
@@ -81,12 +81,12 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
                 if (Math.abs(dt) > 2.0) {
                     dt = Math.signum(dt) * 2.0;
                 }
-                system.setTemperature(system.getTemperature() - 0.8*dt);
+                system.setTemperature(system.getTemperature() - 0.8 * dt);
             }
             tpFlash.run();
 
-           logger.info("temp " + system.getTemperature() + " err " + err);
-        } while (Math.abs(dt) > 1e-8 && iter<200);
+            logger.info("temp " + system.getTemperature() + " err " + err);
+        } while (Math.abs(dt) > 1e-8 && iter < 200);
 
     }
 

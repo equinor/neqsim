@@ -43,18 +43,18 @@ public class AmineFlash {
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50, 1.01325);
-        //SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40, 1.01325);
+        // SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40, 1.01325);
         double molMDEA = 0.1;
         double loading = 0.4;
         double density = 1088;
 
-        //     testSystem.addComponent("methane", loading*molMDEA*0.001);
+        // testSystem.addComponent("methane", loading*molMDEA*0.001);
         testSystem.addComponent("CO2", loading * molMDEA);
         testSystem.addComponent("water", 1.0 - molMDEA);
-        //testSystem.addComponent("Piperazine", 0.1*molMDEA);
+        // testSystem.addComponent("Piperazine", 0.1*molMDEA);
         testSystem.addComponent("MDEA", molMDEA);
         testSystem.chemicalReactionInit();
-        //  testSystem.createDatabase(true);
+        // testSystem.createDatabase(true);
         testSystem.setMixingRule(4);
         testSystem.init(0);
         testSystem.init(1);

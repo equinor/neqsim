@@ -8,12 +8,13 @@ package neqsim.util.unit;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public interface Unit {
     double getSIvalue();
+
     double getValue(String tounit);
+
     double getValue(double val, String fromunit, String tounit);
 }
-

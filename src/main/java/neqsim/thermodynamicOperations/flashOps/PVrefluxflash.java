@@ -25,7 +25,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class PVrefluxflash extends Flash implements java.io.Serializable {
@@ -48,7 +48,7 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
     }
 
     public void run() {
-        //System.out.println("enthalpy: " + system.getEnthalpy());
+        // System.out.println("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
         double f_func = 0.0, f_func_old = 0.0, df_func_dt = 0, t_old = 0, t_oldold = 0.0;
@@ -61,7 +61,8 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
             t_oldold = t_old;
             t_old = system.getTemperature();
 
-            f_func = refluxSpec - (1.0 / system.getBeta(refluxPhase) - 1.0);//system.getPhase(refluxPhase).getVolume() / system.getVolume();
+            f_func = refluxSpec - (1.0 / system.getBeta(refluxPhase) - 1.0);// system.getPhase(refluxPhase).getVolume()
+                                                                            // / system.getVolume();
             df_func_dt = (f_func - f_func_old) / (t_old - t_oldold);
 
             err = Math.abs(f_func);
@@ -77,13 +78,14 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
                 if (Math.abs(dt) > 2.0) {
                     dt = Math.signum(dt) * 2.0;
                 }
-                
-                system.setTemperature(system.getTemperature() - dt*(1.0*iter)/(iter+50.0));
+
+                system.setTemperature(system.getTemperature() - dt * (1.0 * iter) / (iter + 50.0));
             }
             tpFlash.run();
 
-         //System.out.println("temp " + system.getTemperature() + " err " + err + " volfor " + system.getPhase(refluxPhase).getVolume() / system.getVolume());
-        } while (Math.abs(dt) > 1e-8 && Math.abs(f_func)>1e-6 && iter<1000);
+            // System.out.println("temp " + system.getTemperature() + " err " + err + "
+            // volfor " + system.getPhase(refluxPhase).getVolume() / system.getVolume());
+        } while (Math.abs(dt) > 1e-8 && Math.abs(f_func) > 1e-6 && iter < 1000);
 
     }
 

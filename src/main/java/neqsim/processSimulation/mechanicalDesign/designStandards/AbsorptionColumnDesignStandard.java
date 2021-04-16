@@ -23,7 +23,9 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='" + standardName + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM technicalrequirements WHERE EQUIPMENTTYPE='Absorber' AND Company='"
+                                + standardName + "'"));
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("MolecularSieve3AWaterCapacity")) {

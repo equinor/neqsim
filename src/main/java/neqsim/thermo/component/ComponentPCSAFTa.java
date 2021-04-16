@@ -1,8 +1,8 @@
-  /*
- * System_SRK_EOS.java
- *
- * Created on 8. april 2000, 23:14
- */
+/*
+* System_SRK_EOS.java
+*
+* Created on 8. april 2000, 23:14
+*/
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseCPAInterface;
@@ -10,15 +10,15 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInterface {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new System_SRK_EOS
-     * Ev liten fil ja.
+    /**
+     * Creates new System_SRK_EOS Ev liten fil ja.
      */
     int cpaon = 1;
     private double[][] xsitedni = new double[0][0];
@@ -95,9 +95,9 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
     public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         double Fcpa = 0.0;
-        //if(phase.getPhaseType()==1) cpaon=0;
+        // if(phase.getPhaseType()==1) cpaon=0;
         Fcpa = dFCPAdN(phase, numberOfComponents, temperature, pressure);
-        //System.out.println("Fsup " + Fsup + "  fcpa " + Fcpa);
+        // System.out.println("Fsup " + Fsup + " fcpa " + Fcpa);
         return Fsup + cpaon * Fcpa;
     }
 
@@ -118,7 +118,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         for (int i = 0; i < numberOfAssociationSites; i++) {
             xi += Math.log(xsite[i]);
         }
-        return (xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * dlogghsSAFTdi);//calc_lngi(phase));
+        return (xi - ((PhaseCPAInterface) phase).getHcpatot() / 2.0 * dlogghsSAFTdi);// calc_lngi(phase));
     }
 
     public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
@@ -132,13 +132,14 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
     }
 
     public double dFCPAdVdXi(int site, PhaseInterface phase) {
-        return 1.0 / (2.0 * phase.getTotalVolume()) * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+        return 1.0 / (2.0 * phase.getTotalVolume())
+                * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
     }
 
     public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
 
-        //  return xi - tempp;
+        // return xi - tempp;
         return xi + getNumberOfMolesInPhase() / 2.0 * calc_lngi(phase);
     }
 
@@ -162,14 +163,18 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return temp;
     }
 
-    /** Getter for property xsite.
+    /**
+     * Getter for property xsite.
+     * 
      * @return Value of property xsite.
      */
     public double[] getXsite() {
         return this.xsite;
     }
 
-    /** Setter for property xsite.
+    /**
+     * Setter for property xsite.
+     * 
      * @param xsite New value of property xsite.
      */
     public void setXsite(double[] xsite) {
@@ -192,7 +197,9 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return this.xsiteOld;
     }
 
-    /** Setter for property xsite.
+    /**
+     * Setter for property xsite.
+     * 
      * @param xsite New value of property xsite.
      */
     public void setXsiteOld(double[] xsiteOld) {

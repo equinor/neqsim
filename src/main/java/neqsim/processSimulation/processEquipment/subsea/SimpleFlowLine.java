@@ -9,70 +9,70 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class SimpleFlowLine extends ProcessEquipmentBaseClass{
-	
-	protected StreamInterface inStream;
-	private StreamInterface outStream;
-	private double height = 100.0;
-	public double length = 520.0;
-	double outletTemperature = 313.15;
-	AdiabaticTwoPhasePipe pipeline;
-	
-	public SimpleFlowLine(StreamInterface instream) {
-		this.inStream = instream;
-		setOutStream((StreamInterface)instream.clone());
-		pipeline = new AdiabaticTwoPhasePipe(instream);
-	}
-	
-	public AdiabaticTwoPhasePipe getPipeline() {
-		return pipeline;
-	}
-	
-	 public SystemInterface getThermoSystem() {
-	        return getOutStream().getThermoSystem();
-	    }
-	 
-	public void run() {
-		pipeline.run();
-		getOutStream().setFluid(pipeline.getOutStream().getFluid());
+public class SimpleFlowLine extends ProcessEquipmentBaseClass {
 
-		/*
-		 System.out.println("stary P " );
-		 
-			SystemInterface fluidIn = (SystemInterface) (inStream.getFluid()).clone();
-			fluidIn.initProperties();
-			
-			double density = fluidIn.getDensity("kg/m3");
-			
-			double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.0e5;
-			
-			System.out.println("density " +density + " delta P " + deltaP);
+    protected StreamInterface inStream;
+    private StreamInterface outStream;
+    private double height = 100.0;
+    public double length = 520.0;
+    double outletTemperature = 313.15;
+    AdiabaticTwoPhasePipe pipeline;
 
-			fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
-			fluidIn.setTemperature(outletTemperature);
-			
-			ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn);
-			ops.TPflash();
-			
-			getOutStream().setFluid(fluidIn);
-	*/
-	}
+    public SimpleFlowLine(StreamInterface instream) {
+        this.inStream = instream;
+        setOutStream((StreamInterface) instream.clone());
+        pipeline = new AdiabaticTwoPhasePipe(instream);
+    }
 
-	public StreamInterface getOutStream() {
-		return outStream;
-	}
+    public AdiabaticTwoPhasePipe getPipeline() {
+        return pipeline;
+    }
 
-	public void setOutStream(StreamInterface outStream) {
-		this.outStream = outStream;
-	}
+    public SystemInterface getThermoSystem() {
+        return getOutStream().getThermoSystem();
+    }
 
+    public void run() {
+        pipeline.run();
+        getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
-	public double getHeight() {
-		return height;
-	}
+        /*
+         * System.out.println("stary P " );
+         * 
+         * SystemInterface fluidIn = (SystemInterface) (inStream.getFluid()).clone();
+         * fluidIn.initProperties();
+         * 
+         * double density = fluidIn.getDensity("kg/m3");
+         * 
+         * double deltaP =
+         * density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
+         * 0e5;
+         * 
+         * System.out.println("density " +density + " delta P " + deltaP);
+         * 
+         * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
+         * fluidIn.setTemperature(outletTemperature);
+         * 
+         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn);
+         * ops.TPflash();
+         * 
+         * getOutStream().setFluid(fluidIn);
+         */
+    }
 
+    public StreamInterface getOutStream() {
+        return outStream;
+    }
 
-	public void setHeight(double height) {
-		this.height = height;
-	}
+    public void setOutStream(StreamInterface outStream) {
+        this.outStream = outStream;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+
+    public void setHeight(double height) {
+        this.height = height;
+    }
 }

@@ -25,58 +25,59 @@ package neqsim.thermo.atomElement;
 import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import org.apache.logging.log4j.*;
+
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class Element extends Object implements ThermodynamicConstantsInterface, java.io.Serializable{
-    private static final long serialVersionUID = 1000;    
-    String[]  nameArray;
-    double[]  coefArray;
+public class Element extends Object implements ThermodynamicConstantsInterface, java.io.Serializable {
+    private static final long serialVersionUID = 1000;
+    String[] nameArray;
+    double[] coefArray;
     static Logger logger = LogManager.getLogger(Element.class);
+
     /** Creates new Element */
     public Element() {
     }
-    
+
     public Element(String name) {
         ArrayList names = new ArrayList();
         ArrayList stocCoef = new ArrayList();
-        
-        try{
+
+        try {
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet =  database.getResultSet(("SELECT * FROM element WHERE componentname='"+ name + "'"));
+            java.sql.ResultSet dataSet = database
+                    .getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));
             dataSet.next();
-            //System.out.println("comp name " + dataSet.getString("componentname"));
-            do{
+            // System.out.println("comp name " + dataSet.getString("componentname"));
+            do {
                 names.add(dataSet.getString("atomelement").trim());
-                //System.out.println("name " + dataSet.getString("atomelement"));
+                // System.out.println("name " + dataSet.getString("atomelement"));
                 stocCoef.add(dataSet.getString("number"));
-            }
-            while(dataSet.next());
-            
+            } while (dataSet.next());
+
             nameArray = new String[names.size()];
             coefArray = new double[nameArray.length];
-            for(int i=0;i<nameArray.length;i++){
-                coefArray[i] = Double.parseDouble((String)stocCoef.get(i));
+            for (int i = 0; i < nameArray.length; i++) {
+                coefArray[i] = Double.parseDouble((String) stocCoef.get(i));
                 nameArray[i] = (String) names.get(i);
             }
             dataSet.close();
             database.getConnection().close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             String err = e.toString();
             logger.error(err);
             // System.out.println(err);
         }
     }
-    
-    public String[] getElementNames(){
+
+    public String[] getElementNames() {
         return nameArray;
     }
-    
-    public double[] getElementCoefs(){
+
+    public double[] getElementCoefs() {
         return coefArray;
     }
-    
+
 }

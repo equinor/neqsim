@@ -27,7 +27,7 @@ public class SystemSrkEos extends SystemEos {
     public SystemSrkEos() {
         super();
         modelName = "SRK-EOS";
-        getCharacterization().setTBPModel("PedersenSRK");//(RiaziDaubert  PedersenPR  PedersenSRK
+        getCharacterization().setTBPModel("PedersenSRK");// (RiaziDaubert PedersenPR PedersenSRK
         attractiveTermNumber = 0;
 
         for (int i = 0; i < numberOfPhases; i++) {
@@ -55,12 +55,13 @@ public class SystemSrkEos extends SystemEos {
         }
     }
 
-     /**
+    /**
      * Constructor of a fluid object using the SRK-EoS
      *
-     * @param T The temperature in unit Kelvin
-     * @param P The pressure in unit bara (absolute pressure)
-     * @param solidCheck a boolean variable specifying if solid phase check and calculation should be done
+     * @param T          The temperature in unit Kelvin
+     * @param P          The pressure in unit bara (absolute pressure)
+     * @param solidCheck a boolean variable specifying if solid phase check and
+     *                   calculation should be done
      */
     public SystemSrkEos(double T, double P, boolean solidCheck) {
         this(T, P);
@@ -76,7 +77,7 @@ public class SystemSrkEos extends SystemEos {
         }
 
         if (solidPhaseCheck) {
-            //System.out.println("here first");
+            // System.out.println("here first");
             phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
             phaseArray[numberOfPhases - 1].setTemperature(T);
             phaseArray[numberOfPhases - 1].setPressure(P);
@@ -84,7 +85,7 @@ public class SystemSrkEos extends SystemEos {
         }
 
         if (hydrateCheck) {
-            //System.out.println("here first");
+            // System.out.println("here first");
             phaseArray[numberOfPhases - 1] = new PhaseHydrate();
             phaseArray[numberOfPhases - 1].setTemperature(T);
             phaseArray[numberOfPhases - 1].setPressure(P);
@@ -100,10 +101,10 @@ public class SystemSrkEos extends SystemEos {
             logger.error("Cloning failed.", e);
         }
 
-        //        clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
-        //        for(int i = 0; i < numberOfPhases; i++) {
-        //            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-        //        }
+        // clonedSystem.phaseArray = (PhaseInterface[]) phaseArray.clone();
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
         return clonedSystem;
     }
 }

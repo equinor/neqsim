@@ -12,7 +12,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public interface CompressorInterface extends ProcessEquipmentInterface, Serializable {
@@ -34,11 +34,10 @@ public interface CompressorInterface extends ProcessEquipmentInterface, Serializ
     public void setIsentropicEfficiency(double isentropicEfficientcy);
 
     public void runTransient();
-   
+
     public double getPolytropicEfficiency();
 
     public void setPolytropicEfficiency(double polytropicEfficiency);
-    
-	public AntiSurge getAntiSurge();
-}
 
+    public AntiSurge getAntiSurge();
+}

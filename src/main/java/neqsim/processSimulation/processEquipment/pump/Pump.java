@@ -29,10 +29,10 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     double pressure = 0.0;
     private double molarFlow = 10.0;
 
-	private double outTemperature = 298.15;
-	private boolean useOutTemperature = false;
-	public double isentropicEfficiency = 1.0;
-	public boolean powerSet = false;
+    private double outTemperature = 298.15;
+    private boolean useOutTemperature = false;
+    public double isentropicEfficiency = 1.0;
+    public boolean powerSet = false;
     private String pressureUnit = "bara";
 
     /**
@@ -67,7 +67,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public double getPower() {
         return dH;
     }
-    
+
     public double getDuty() {
         return dH;
     }
@@ -77,35 +77,34 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     public void run() {
-        //System.out.println("pump running..");
+        // System.out.println("pump running..");
         inletStream.getThermoSystem().init(3);
         double hinn = inletStream.getThermoSystem().getEnthalpy();
-		double entropy = inletStream.getThermoSystem().getEntropy();
-		
-        if(useOutTemperature) {
-        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-        // thermoSystem.setTotalNumberOfMoles(molarFlow);
-        thermoSystem.setTemperature(outTemperature);
-        thermoSystem.setPressure(pressure, pressureUnit);
-        thermoOps.TPflash();
-        thermoSystem.init(3);
-        }
-        else {
-        	thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        	thermoSystem.setPressure(pressure,pressureUnit);
-			// System.out.println("entropy inn.." + entropy);
-        	ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-			thermoOps.PSflash(entropy);
-			// double densOutIdeal = getThermoSystem().getDensity();
-			if (!powerSet) {
-				dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
-			}
-			double hout = hinn + dH;
-			isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
-			dH = hout - hinn;
-		    thermoOps = new ThermodynamicOperations(getThermoSystem());
-			thermoOps.PHflash(hout, 0);
+        double entropy = inletStream.getThermoSystem().getEntropy();
+
+        if (useOutTemperature) {
+            thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+            ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+            // thermoSystem.setTotalNumberOfMoles(molarFlow);
+            thermoSystem.setTemperature(outTemperature);
+            thermoSystem.setPressure(pressure, pressureUnit);
+            thermoOps.TPflash();
+            thermoSystem.init(3);
+        } else {
+            thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+            thermoSystem.setPressure(pressure, pressureUnit);
+            // System.out.println("entropy inn.." + entropy);
+            ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+            thermoOps.PSflash(entropy);
+            // double densOutIdeal = getThermoSystem().getDensity();
+            if (!powerSet) {
+                dH = (getThermoSystem().getEnthalpy() - hinn) / isentropicEfficiency;
+            }
+            double hout = hinn + dH;
+            isentropicEfficiency = (getThermoSystem().getEnthalpy() - hinn) / dH;
+            dH = hout - hinn;
+            thermoOps = new ThermodynamicOperations(getThermoSystem());
+            thermoOps.PHflash(hout, 0);
         }
 
 //        double entropy= inletStream.getThermoSystem().getEntropy();
@@ -114,7 +113,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 //        thermoOps.PSflash(entropy);
         dH = thermoSystem.getEnthalpy() - hinn;
         outStream.setThermoSystem(thermoSystem);
-      //  outStream.run();
+        // outStream.run();
     }
 
     public void displayResult() {
@@ -129,7 +128,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
         thermoSystem.initPhysicalProperties();
         String[][] table = new String[50][5];
-        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
         table[0][0] = "";
         table[0][1] = "";
         table[0][2] = "";
@@ -141,48 +140,60 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
             for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
                 table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
-                table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test).toString();
+                table[j + 1][i + 1] = nf.format(thermoSystem.getPhases()[i].getComponents()[j].getx(), buf, test)
+                        .toString();
                 table[j + 1][4] = "[-]";
             }
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf.format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
+                    .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
 
-            //  Double.longValue(thermoSystem.getPhases()[i].getBeta());
+            // Double.longValue(thermoSystem.getPhases()[i].getBeta());
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "PhaseFraction";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf.format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
+                    .format(thermoSystem.getPhases()[i].getBeta(), buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][0] = "MolarMass";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf.format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][i + 1] = nf
+                    .format(thermoSystem.getPhases()[i].getMolarMass() * 1000, buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 4][4] = "[kg/kmol]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Cp";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf.format((thermoSystem.getPhases()[i].getCp() / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0 / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
+                    .format((thermoSystem.getPhases()[i].getCp() / thermoSystem.getPhases()[i].getNumberOfMolesInPhase()
+                            * 1.0 / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test)
+                    .toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[kJ/kg*K]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf.format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
+                    .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test).toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Conductivity";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf.format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test).toString();
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf
+                    .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test)
+                    .toString();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[W/m*K]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Pressure";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double.toString(thermoSystem.getPhases()[i].getPressure());
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
+                    .toString(thermoSystem.getPhases()[i].getPressure());
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[bar]";
 
             buf = new StringBuffer();
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Temperature";
-            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double.toString(thermoSystem.getPhases()[i].getTemperature());
+            table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = Double
+                    .toString(thermoSystem.getPhases()[i].getTemperature());
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[K]";
             Double.toString(thermoSystem.getPhases()[i].getTemperature());
 
@@ -209,47 +220,47 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     public void setMolarFlow(double molarFlow) {
         this.molarFlow = molarFlow;
     }
-    
+
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
-    
-	/**
-	 * @return the isentropicEfficientcy
-	 */
-	public double getIsentropicEfficiency() {
-		return isentropicEfficiency;
-	}
 
-	/**
-	 * @param isentropicEfficientcy the isentropicEfficientcy to set
-	 */
-	public void setIsentropicEfficiency(double isentropicEfficientcy) {
-		this.isentropicEfficiency = isentropicEfficientcy;
-	}
-	
-	public double getOutTemperature() {
-		if (useOutTemperature)
-			return outTemperature;
-		else
-			return getThermoSystem().getTemperature();
-	}
-    
-	public void setOutTemperature(double outTemperature) {
-		useOutTemperature = true;
-		this.outTemperature = outTemperature;
-	}
+    /**
+     * @return the isentropicEfficientcy
+     */
+    public double getIsentropicEfficiency() {
+        return isentropicEfficiency;
+    }
 
-	public double getEntropyProduction(String unit) {
-		return outStream.getThermoSystem().getEntropy(unit)-inletStream.getThermoSystem().getEntropy(unit);
-	}
-	
-	public void setPressure(double pressure) {
-		setOutletPressure(pressure);
-	}
-	
-	public void setPressure(double pressure, String unit) {
-		setOutletPressure(pressure);
-		pressureUnit = unit;
-	}
+    /**
+     * @param isentropicEfficientcy the isentropicEfficientcy to set
+     */
+    public void setIsentropicEfficiency(double isentropicEfficientcy) {
+        this.isentropicEfficiency = isentropicEfficientcy;
+    }
+
+    public double getOutTemperature() {
+        if (useOutTemperature)
+            return outTemperature;
+        else
+            return getThermoSystem().getTemperature();
+    }
+
+    public void setOutTemperature(double outTemperature) {
+        useOutTemperature = true;
+        this.outTemperature = outTemperature;
+    }
+
+    public double getEntropyProduction(String unit) {
+        return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
+    }
+
+    public void setPressure(double pressure) {
+        setOutletPressure(pressure);
+    }
+
+    public void setPressure(double pressure, String unit) {
+        setOutletPressure(pressure);
+        pressureUnit = unit;
+    }
 }

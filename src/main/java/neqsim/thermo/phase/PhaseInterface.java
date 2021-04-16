@@ -18,59 +18,61 @@ public interface PhaseInterface extends Cloneable {
     public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
 
     public void setMoleFractions(double[] x);
-    
+
     public double getPhaseFraction();
-    
-	/**
-	 * @param unit The unit as a string - molefraction/wtfraction/molespersec/volumefraction
-	 *  @return composition array with unit 
-	 */
-	public double[] getComposition(String unit);
-	
+
+    /**
+     * @param unit The unit as a string -
+     *             molefraction/wtfraction/molespersec/volumefraction
+     * @return composition array with unit
+     */
+    public double[] getComposition(String unit);
+
     public double getCp0();
-    
+
     /**
      * method to get density of a phase using the AGA8-Detail EoS
      *
      * @return density with unit kg/m3
      */
     public double getDensity_AGA8();
-    
+
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented
-     * in phaseEos
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in
+     * phaseEos
+     * 
      * @param unit The unit as a string. Supported units are K/bar, C/bar
      *
      * @return Joule Thomson coefficient in given unit
      */
     public double getJouleThomsonCoefficient(String unit);
-    
+
     /**
-	 * Returns the mole composition vector in unit mole fraction
-	 */
-	public double[] getMolarComposition();
-    
+     * Returns the mole composition vector in unit mole fraction
+     */
+    public double[] getMolarComposition();
+
     public void resetPhysicalProperties();
 
-	/**
-	 * method to return fluid volume
-	 *
-	 * @param unit The unit as a string. Supported units are m3, litre
-	 *
-	 * @return volume in specified unit
-	 */
-	public double getVolume(String unit);
-    
-	/**
-	 * method to return heat capacity ratio calculated as Cp/(Cp-R)
-	 *
-	 * @return kappa
-	 */
-	public double getGamma2();
-	
     /**
-     * method to return heat capacity ratio/adiabatic index/Poisson constant.
-     * The method calculates it as Cp (real) /Cv (real)
+     * method to return fluid volume
+     *
+     * @param unit The unit as a string. Supported units are m3, litre
+     *
+     * @return volume in specified unit
+     */
+    public double getVolume(String unit);
+
+    /**
+     * method to return heat capacity ratio calculated as Cp/(Cp-R)
+     *
+     * @return kappa
+     */
+    public double getGamma2();
+
+    /**
+     * method to return heat capacity ratio/adiabatic index/Poisson constant. The
+     * method calculates it as Cp (real) /Cv (real)
      *
      * @return gamma
      */
@@ -119,17 +121,17 @@ public interface PhaseInterface extends Cloneable {
      * @return molar volume volume in unit m3/mol*1e5
      */
     public double getMolarVolume();
-    
+
     /**
      * method to return flow rate of a phase
      *
      * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     * m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
      *
      * @return flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
-    
+
     public void setComponentArray(ComponentInterface[] components);
 
     /**
@@ -138,7 +140,7 @@ public interface PhaseInterface extends Cloneable {
      * @return density with unit kg/m3
      */
     public double getDensity_GERG2008();
-    
+
     /**
      * method to get density of a phase note: does not use Peneloux volume
      * correction
@@ -167,8 +169,8 @@ public interface PhaseInterface extends Cloneable {
     public double getTotalVolume();
 
     /**
-     * method to return phase volume with Peneloux volume correction need to
-     * call initPhysicalProperties() before this method is called
+     * method to return phase volume with Peneloux volume correction need to call
+     * initPhysicalProperties() before this method is called
      *
      * @return volume in unit m3
      */
@@ -206,7 +208,7 @@ public interface PhaseInterface extends Cloneable {
     public double getBeta();
 
     public double getWtFrac(int component);
-    
+
     public double getWtFrac(String componentName);
 
     public void setMixingRuleGEModel(String name);
@@ -250,7 +252,8 @@ public interface PhaseInterface extends Cloneable {
 
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties();
 
-    double molarVolume(double pressure, double temperature, double A, double B, int phase) throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
+    double molarVolume(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
 
     public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
@@ -291,7 +294,7 @@ public interface PhaseInterface extends Cloneable {
      * method to return phase enthalpy in a given unit
      *
      * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
-     * kJ/kg
+     *             kJ/kg
      * @return enthalpy in specified unit
      */
     public double getEnthalpy(String unit);
@@ -304,8 +307,8 @@ public interface PhaseInterface extends Cloneable {
     /**
      * method to return entropy of the phase
      *
-     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK
-     * and kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and
+     *             kJ/kgK
      * @return entropy in specified unit
      */
     public double getEntropy(String unit);
@@ -321,7 +324,7 @@ public interface PhaseInterface extends Cloneable {
      * method to return viscosity og the phase in a given unit
      *
      * @param unit The unit as a string. Supported units are kg/msec, cP
-     * (centipoise)
+     *             (centipoise)
      * @return viscosity in specified unit
      */
     public double getViscosity(String unit);
@@ -341,7 +344,7 @@ public interface PhaseInterface extends Cloneable {
      * @return conductivity in specified unit
      */
     public double getConductivity(String unit);
-    
+
     /**
      * method to return conductivity of a phase
      *
@@ -368,8 +371,8 @@ public interface PhaseInterface extends Cloneable {
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK
-     * and kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+     *             kJ/kgK
      * @return Cp in specified unit
      */
     public double getCp(String unit);
@@ -388,15 +391,14 @@ public interface PhaseInterface extends Cloneable {
     /**
      * method to return specific heat capacity (Cv) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK
-     * and kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+     *             kJ/kgK
      * @return Cv in specified unit
      */
     public double getCv(String unit);
 
     /**
-     * method to return real gas isentropic exponent (kappa = -
-     * Cp/Cv*(v/p)*dp/dv
+     * method to return real gas isentropic exponent (kappa = - Cp/Cv*(v/p)*dp/dv
      *
      * @return kappa
      */
@@ -419,8 +421,8 @@ public interface PhaseInterface extends Cloneable {
     public void setNumberOfComponents(int k);
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented
-     * in phaseEos
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in
+     * phaseEos
      *
      * @return Joule Thomson coefficient in K/bar
      */
@@ -452,8 +454,10 @@ public interface PhaseInterface extends Cloneable {
     public int getNumberOfIonicComponents();
 
     public double getFugacity(String compName);
-    //double calcA2(PhaseInterface phase, double temperature, double pressure, int numbcomp);
-    //double calcB2(PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    // double calcA2(PhaseInterface phase, double temperature, double pressure, int
+    // numbcomp);
+    // double calcB2(PhaseInterface phase, double temperature, double pressure, int
+    // numbcomp);
 
     public double geta();
 
@@ -462,12 +466,12 @@ public interface PhaseInterface extends Cloneable {
     public double getA();
 
     public double getB();
-    //      public double getBi();
+    // public double getBi();
 
     public double getAT();
 
     public double getATT();
-    //     public double getAiT();
+    // public double getAiT();
 
     public double getGibbsEnergy();
 
@@ -490,8 +494,7 @@ public interface PhaseInterface extends Cloneable {
     /**
      * method to return pressure in a given unit
      *
-     * @param unit The unit as a string. Supported units are bara, barg, Pa and
-     * MPa
+     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
      * @return pressure in specified unit
      */
     public double getPressure(String unit);
@@ -601,7 +604,8 @@ public interface PhaseInterface extends Cloneable {
 
     public void setPhysicalPropertyType(int physicalPropertyType);
 
-    public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule, double[][] intparam);
+    public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule,
+            double[][] intparam);
 
     public java.lang.String getPhaseTypeName();
 

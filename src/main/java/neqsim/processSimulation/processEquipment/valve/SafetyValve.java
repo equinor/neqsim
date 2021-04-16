@@ -16,8 +16,9 @@ public class SafetyValve extends ThrottlingValve {
 
     private static final long serialVersionUID = 1000;
 
-   private double pressureSpec = 10.0;
-   private double fullOpenPressure = 10.0;
+    private double pressureSpec = 10.0;
+    private double fullOpenPressure = 10.0;
+
     /**
      * Creates new ThrottelValve
      */
@@ -26,11 +27,11 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     public SafetyValve(Stream inletStream) {
-         super(inletStream);
+        super(inletStream);
     }
 
     public SafetyValve(String name, Stream inletStream) {
-         super(name, inletStream);
+        super(name, inletStream);
     }
 
     /**
@@ -61,5 +62,4 @@ public class SafetyValve extends ThrottlingValve {
         this.fullOpenPressure = fullOpenPressure;
     }
 
-    
 }

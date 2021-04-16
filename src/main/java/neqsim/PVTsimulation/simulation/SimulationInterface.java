@@ -20,6 +20,6 @@ public interface SimulationInterface {
     public SystemInterface getBaseThermoSystem();
 
     public void run();
-    
-     public LevenbergMarquardt getOptimizer();
+
+    public LevenbergMarquardt getOptimizer();
 }

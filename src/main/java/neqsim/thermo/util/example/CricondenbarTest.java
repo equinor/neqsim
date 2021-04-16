@@ -34,13 +34,11 @@ public class CricondenbarTest {
         testSystem.init(1);
         testSystem.display();
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        
 
         try {
-           // testSystem.setTemperature(250.0);
+            // testSystem.setTemperature(250.0);
             testOps.calcCricondenBar();
 //8            testOps.TPflash();
-
 
         } catch (Exception e) {
             logger.error(e.toString());

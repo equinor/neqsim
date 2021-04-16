@@ -27,19 +27,19 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class FluidBoundaryNodeReactive extends FluidBoundaryNode{
+public class FluidBoundaryNodeReactive extends FluidBoundaryNode {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates new FluidBoundaryNodeReactive */
     public FluidBoundaryNodeReactive() {
     }
-    
+
     public FluidBoundaryNodeReactive(SystemInterface system) {
         super(system);
     }
-    
+
 }

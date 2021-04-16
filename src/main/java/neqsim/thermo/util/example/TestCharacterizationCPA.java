@@ -29,7 +29,8 @@ public class TestCharacterizationCPA {
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 20.0, 31.0);
-        //SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15+20.0, 31.0);
+        // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15+20.0,
+        // 31.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("nitrogen", 0.372);
         testSystem.addComponent("CO2", 3.344);
@@ -106,9 +107,9 @@ public class TestCharacterizationCPA {
         testSystem.addTBPfraction("C35", 0.017, 445 / 1000.0, 0.92);
         testSystem.addTBPfraction("C36+", 0.017, 600 / 1000.0, 0.95);
 
-        //  testSystem.addTBPfraction("water", 10.005, 303.531/1000.0, 0.8551);
+        // testSystem.addTBPfraction("water", 10.005, 303.531/1000.0, 0.8551);
         testSystem.addComponent("water", 0.303);
-        //testSystem.addComponent("MEG", 1.0e-10);
+        // testSystem.addComponent("MEG", 1.0e-10);
         testSystem.addComponent("TEG", 1.0e-10);
         testSystem.setMultiPhaseCheck(true);
         testSystem.createDatabase(true);
@@ -116,16 +117,16 @@ public class TestCharacterizationCPA {
 
         try {
             testOps.TPflash();
-            //testOps.calcPTphaseEnvelope(false);
-            //testOps.displayResult();
+            // testOps.calcPTphaseEnvelope(false);
+            // testOps.displayResult();
             // testOps.bubblePointPressureFlash(false);
             // testOps.dewPointPressureFlash();
         } catch (Exception e) {
             logger.error(e.toString());
         }
 
-      //  testSystem.saveObject(96);
-      //testSystem.saveFluid(1947);
+        // testSystem.saveObject(96);
+        // testSystem.saveFluid(1947);
 
         testSystem.display();
     }

@@ -10,43 +10,38 @@ import neqsim.thermo.component.ComponentSrk;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class PhaseSrkEos extends PhaseEos{
+public class PhaseSrkEos extends PhaseEos {
 
     private static final long serialVersionUID = 1000;
-    
-  /** Creates new PhaseSrkEos */
+
+    /** Creates new PhaseSrkEos */
     public PhaseSrkEos() {
         super();
-        //mixRule = mixSelect.getMixingRule(2);
+        // mixRule = mixSelect.getMixingRule(2);
         thermoPropertyModelName = "SRK-EoS";
-        uEOS =1;
-        wEOS =0;
+        uEOS = 1;
+        wEOS = 0;
         delta1 = 1;
         delta2 = 0;
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         PhaseSrkEos clonedPhase = null;
-        try{
+        try {
             clonedPhase = (PhaseSrkEos) super.clone();
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
+
         return clonedPhase;
     }
-    
-    public void addcomponent(String componentName, double moles,double molesInPhase, int compNumber){
+
+    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSrk(componentName, moles, molesInPhase, compNumber);
     }
-    
-    
-    
-    
+
 }

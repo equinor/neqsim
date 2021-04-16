@@ -11,38 +11,33 @@ import neqsim.thermo.component.ComponentSrkPeneloux;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class PhaseSrkPenelouxEos extends PhaseSrkEos{
+public class PhaseSrkPenelouxEos extends PhaseSrkEos {
 
     private static final long serialVersionUID = 1000;
-    
-  /** Creates new PhaseSrkEos */
+
+    /** Creates new PhaseSrkEos */
     public PhaseSrkPenelouxEos() {
         super();
-     
+
     }
-    
-    public Object clone(){
+
+    public Object clone() {
         PhaseSrkPenelouxEos clonedPhase = null;
-        try{
+        try {
             clonedPhase = (PhaseSrkPenelouxEos) super.clone();
-        }
-        catch(Exception e)
-        {
+        } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-        
+
         return clonedPhase;
     }
-    
-    public void addcomponent(String componentName, double moles,double molesInPhase, int compNumber){
+
+    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSrkPeneloux(componentName, moles, molesInPhase, compNumber);
     }
-    
-    
-    
-    
+
 }

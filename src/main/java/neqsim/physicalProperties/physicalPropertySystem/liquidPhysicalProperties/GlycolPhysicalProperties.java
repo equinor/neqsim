@@ -14,18 +14,19 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
-public class GlycolPhysicalProperties extends LiquidPhysicalProperties{
+public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
 
     private static final long serialVersionUID = 1000;
 
     /** Creates new GlycolPhysicalProperties */
     public GlycolPhysicalProperties() {
     }
-    
-    public GlycolPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+
+    public GlycolPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
+            int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         conductivityCalc = new Conductivity(this);
         viscosityCalc = new Viscosity(this);

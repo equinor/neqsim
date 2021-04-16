@@ -14,18 +14,19 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
-public class AminePhysicalProperties extends LiquidPhysicalProperties{
+public class AminePhysicalProperties extends LiquidPhysicalProperties {
 
     private static final long serialVersionUID = 1000;
 
     /** Creates new AminePhysicalProperties */
     public AminePhysicalProperties() {
     }
-  
-    public AminePhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+
+    public AminePhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
+            int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         conductivityCalc = new Conductivity(this);
         viscosityCalc = new AmineViscosity(this);

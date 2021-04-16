@@ -12,7 +12,9 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-public class Conductivity extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
+public class Conductivity
+        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
@@ -42,7 +44,7 @@ public class Conductivity extends neqsim.physicalProperties.physicalPropertyMeth
     }
 
     public double calcConductivity() {
-        //using default value of parafin wax
+        // using default value of parafin wax
         if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
             conductivity = 0.25;
         } else {

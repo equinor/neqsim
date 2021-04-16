@@ -8,15 +8,14 @@ package neqsim.util.util;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public interface FileSystemSettings {
-    String root ="c:";
-    String tempDir = root+ "/temp/";
-    String defaultFileTreeRoot = root+ "/Program Files/NeqSim/pythonScript/";
-    String defaultDatabaseRootRoot = root+ "/java/NeqSim/util/database";
+    String root = "c:";
+    String tempDir = root + "/temp/";
+    String defaultFileTreeRoot = root + "/Program Files/NeqSim/pythonScript/";
+    String defaultDatabaseRootRoot = root + "/java/NeqSim/util/database";
     String relativeFilePath = root;
     String fileExtension = ".py";
 }
-

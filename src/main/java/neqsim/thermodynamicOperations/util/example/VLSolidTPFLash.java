@@ -35,7 +35,7 @@ public class VLSolidTPFLash {
     static Logger logger = LogManager.getLogger(VLSolidTPFLash.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemPrEos(208.2 , 18.34);
+        SystemInterface testSystem = new SystemPrEos(208.2, 18.34);
         testSystem.addComponent("nitrogen", 0.379);
         testSystem.addComponent("CO2", 100);
         testSystem.addComponent("methane", 85.299);
@@ -52,7 +52,7 @@ public class VLSolidTPFLash {
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
         testSystem.setMixingRule(2);
-        //  testSystem.setMultiPhaseCheck(true);
+        // testSystem.setMultiPhaseCheck(true);
         testSystem.init(0);
         testSystem.setSolidPhaseCheck("CO2");
 //testSystem.display();
@@ -60,32 +60,31 @@ public class VLSolidTPFLash {
         double entalp = 0;
         try {
             testOps.TPflash();
-        //    testOps.dewPointTemperatureFlash();
+            // testOps.dewPointTemperatureFlash();
             testSystem.display();
 
-
-
-            //testOps.freezingPointTemperatureFlash();
-            //testSystem.display();
+            // testOps.freezingPointTemperatureFlash();
+            // testSystem.display();
             testSystem.init(3);
             entalp = testSystem.getEnthalpy();
-         //   testSystem.setNumberOfPhases(3);
-         //   testSystem.setPressure(18.0);
-            //testOps.TPflash();
-            //testSystem.display();
-            testOps.PHsolidFlash(entalp-1000.0);
-            //testOps.PHflash(entalp, 0);
-           // testSystem.display();
-           // testOps.freezingPointTemperatureFlash();
+            // testSystem.setNumberOfPhases(3);
+            // testSystem.setPressure(18.0);
+            // testOps.TPflash();
+            // testSystem.display();
+            testOps.PHsolidFlash(entalp - 1000.0);
+            // testOps.PHflash(entalp, 0);
+            // testSystem.display();
+            // testOps.freezingPointTemperatureFlash();
             testSystem.display();
         } catch (Exception e) {
             logger.error(e.toString());
         }
         testSystem.init(3);
-        //  testSystem.display();
-        //    logger.info("enthalpy CO2 solid " + testSystem.getPhase(2).getEnthalpy() + " index " + testSystem.getPhaseIndex(2));
+        // testSystem.display();
+        // logger.info("enthalpy CO2 solid " + testSystem.getPhase(2).getEnthalpy() + "
+        // index " + testSystem.getPhaseIndex(2));
         logger.info("total enthalpy " + (testSystem.getEnthalpy() - entalp));
         logger.info("out temperature " + (testSystem.getTemperature() - 273.15));
-        //    testSystem.display();
+        // testSystem.display();
     }
 }

@@ -13,8 +13,6 @@ public class MaterialLayer {
 
     private static final long serialVersionUID = 1000;
 
- 
-
     /**
      * @return the density
      */

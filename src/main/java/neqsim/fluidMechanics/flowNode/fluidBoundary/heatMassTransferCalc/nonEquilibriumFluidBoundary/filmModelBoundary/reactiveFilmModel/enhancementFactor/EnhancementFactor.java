@@ -11,95 +11,108 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class EnhancementFactor implements EnhancementFactorInterface{
+public class EnhancementFactor implements EnhancementFactorInterface {
 
     private static final long serialVersionUID = 1000;
-    
+
     protected double[] enhancementVec = null;
     protected double[] hattaNumber = null;
     protected FluidBoundaryInterface fluidBoundary;
     protected FluidBoundarySystemInterface nonReactiveInterface, reactiveInterface;
-    
+
     public EnhancementFactor() {
     }
-    
-    public EnhancementFactor(FluidBoundaryInterface fluidBoundary){
+
+    public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
         this();
         this.fluidBoundary = fluidBoundary;
         enhancementVec = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
         hattaNumber = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
     }
-    
-    public void calcEnhancementVec(int phase, int enhancementType){
-        if(phase==1) {
+
+    public void calcEnhancementVec(int phase, int enhancementType) {
+        if (phase == 1) {
             this.calcEnhancementVec(phase);
         }
-        if(phase==0) {
+        if (phase == 0) {
             this.setOnesVec(phase);
         }
     }
-    
-    public void setOnesVec(int phase){
-        for(int j=0;j<fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents();j++){
+
+    public void setOnesVec(int phase) {
+        for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
             enhancementVec[j] = 1.0;
         }
     }
-    
-    public void calcEnhancementVec(int phase){
+
+    public void calcEnhancementVec(int phase) {
     }
-    
-    /** Indexed getter for property enhancementVec.
+
+    /**
+     * Indexed getter for property enhancementVec.
+     * 
      * @param index Index of the property.
      * @return Value of the property at <CODE>index</CODE>.
      */
     public double getEnhancementVec(int index) {
         return enhancementVec[index];
     }
-    
-    /** Getter for property enhancementVec.
+
+    /**
+     * Getter for property enhancementVec.
+     * 
      * @return Value of property enhancementVec.
      */
     public double[] getEnhancementVec() {
         return enhancementVec;
     }
-    
-    /** Indexed setter for property enhancementVec.
-     * @param index Index of the property.
+
+    /**
+     * Indexed setter for property enhancementVec.
+     * 
+     * @param index          Index of the property.
      * @param enhancementVec New value of the property at <CODE>index</CODE>.
      */
     public void setEnhancementVec(int index, double enhancementVec) {
         this.enhancementVec[index] = enhancementVec;
     }
-    
-    /** Setter for property enhancementVec.
+
+    /**
+     * Setter for property enhancementVec.
+     * 
      * @param enhancementVec New value of property enhancementVec.
      */
     public void setEnhancementVec(double[] enhancementVec) {
         this.enhancementVec = enhancementVec;
     }
-    
-    /** Getter for property hattaNumber.
+
+    /**
+     * Getter for property hattaNumber.
+     * 
      * @return Value of property hattaNumber.
      */
     public double[] getHattaNumber() {
         return this.hattaNumber;
     }
-    
+
     public double getHattaNumber(int i) {
         return this.hattaNumber[i];
     }
-    
-    /** Setter for property hattaNumber.
+
+    /**
+     * Setter for property hattaNumber.
+     * 
      * @param hattaNumber New value of property hattaNumber.
      */
     public void setHattaNumber(double[] hattaNumber) {
         this.hattaNumber = hattaNumber;
     }
-    
-/*    public FluidBoundarySystemInterface getNumericInterface(){
-     return numericInterface;
-    }*/
+
+    /*
+     * public FluidBoundarySystemInterface getNumericInterface(){ return
+     * numericInterface; }
+     */
 }

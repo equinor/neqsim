@@ -19,80 +19,97 @@
 
 package neqsim.dataPresentation;
 
-/** A dummy data source for an XY plot.
+/**
+ * A dummy data source for an XY plot.
  * <P>
- * Note that the aim of this class is to create a self-contained data source for demo purposes -
- * it is NOT intended to show how you should go about writing your own data sources. */
-public class SampleXYDataSource{
+ * Note that the aim of this class is to create a self-contained data source for
+ * demo purposes - it is NOT intended to show how you should go about writing
+ * your own data sources.
+ */
+public class SampleXYDataSource {
 
     private static final long serialVersionUID = 1000;
-    //  implements XYDataSource,  java.io.Serializable {
-    
-    
+    // implements XYDataSource, java.io.Serializable {
+
     double[][] points;
     int numberOfSeries;
-    int[] items = new int [10];
-    String[]  seriesName;
-    
+    int[] items = new int[10];
+    String[] seriesName;
+
     /** Default constructor. */
     public SampleXYDataSource() {
-        //items=0;
+        // items=0;
     }
-    
+
     public SampleXYDataSource(double[][] p, String[] name, String title, String xaxis, String yaxsis) {
-        //  items = p[0].length;
-        numberOfSeries = p.length/2;
-        
-        for(int i=0;i<numberOfSeries; i++){
-            items[i] = p[i*2].length;
-            
+        // items = p[0].length;
+        numberOfSeries = p.length / 2;
+
+        for (int i = 0; i < numberOfSeries; i++) {
+            items[i] = p[i * 2].length;
+
             System.out.println("items =" + items[i]);
         }
-        
+
         System.out.println("series =" + numberOfSeries);
         seriesName = name;
         points = p;
-        
-        
+
     }
-    
-    
-    /** Returns the x-value for the specified series and item.  Series are numbered 0, 1, ...
-      @param series The index (zero-based) of the series;
-      @param item The index (zero-based) of the required item;
-      @return The x-value for the specified series and item. */
+
+    /**
+     * Returns the x-value for the specified series and item. Series are numbered 0,
+     * 1, ...
+     * 
+     * @param series The index (zero-based) of the series;
+     * @param item   The index (zero-based) of the required item;
+     * @return The x-value for the specified series and item.
+     */
     public Number getXValue(int series, int item) {
-        return (new Double(points[2*series][item]));
+        return (new Double(points[2 * series][item]));
     }
-    
-    /** Returns the y-value for the specified series and item.  Series are numbered 0, 1, ...
-      @param series The index (zero-based) of the series;
-      @param item The index (zero-based) of the required item;
-      @return The y-value for the specified series and item. */
+
+    /**
+     * Returns the y-value for the specified series and item. Series are numbered 0,
+     * 1, ...
+     * 
+     * @param series The index (zero-based) of the series;
+     * @param item   The index (zero-based) of the required item;
+     * @return The y-value for the specified series and item.
+     */
     public Number getYValue(int series, int item) {
-        return (new Double(points[(series*2+1)][item]));
+        return (new Double(points[(series * 2 + 1)][item]));
     }
-    
-    /** Returns the number of series in the data source.
-      @return The number of series in the data source. */
+
+    /**
+     * Returns the number of series in the data source.
+     * 
+     * @return The number of series in the data source.
+     */
     public int getSeriesCount() {
         return numberOfSeries;
     }
-    
-    /** Returns the name of the series.
-      @param series The index (zero-based) of the series;
-      @return The name of the series. */
+
+    /**
+     * Returns the name of the series.
+     * 
+     * @param series The index (zero-based) of the series;
+     * @return The name of the series.
+     */
     public String getSeriesName(int series) {
-        
+
         return seriesName[series];
-        
+
     }
-    
-    /** Returns the number of items in the specified series.
-      @param series The index (zero-based) of the series;
-      @return The number of items in the specified series. */
+
+    /**
+     * Returns the number of items in the specified series.
+     * 
+     * @param series The index (zero-based) of the series;
+     * @return The number of items in the specified series.
+     */
     public int getItemCount(int series) {
         return items[series];
     }
-    
+
 }

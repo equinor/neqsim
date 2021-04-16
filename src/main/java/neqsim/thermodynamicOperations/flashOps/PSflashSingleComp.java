@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
- /*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
+/*
+* PHflash.java
+*
+* Created on 8. mars 2001, 10:56
+*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -46,7 +46,8 @@ public class PSflashSingleComp extends Flash implements java.io.Serializable {
     }
 
     public void run() {
-        neqsim.thermodynamicOperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(system);
+        neqsim.thermodynamicOperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(
+                system);
         double initTemp = system.getTemperature();
 
         if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
@@ -67,8 +68,10 @@ public class PSflashSingleComp extends Flash implements java.io.Serializable {
         }
 
         system.init(3);
-        double gasEntropy = system.getPhase(0).getEntropy() / system.getPhase(0).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
-        double liqEntropy = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
+        double gasEntropy = system.getPhase(0).getEntropy() / system.getPhase(0).getNumberOfMolesInPhase()
+                * system.getTotalNumberOfMoles();
+        double liqEntropy = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                * system.getTotalNumberOfMoles();
 
         if (Sspec < liqEntropy || Sspec > gasEntropy) {
             system.setTemperature(initTemp);

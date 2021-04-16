@@ -13,11 +13,10 @@ public class WaxFlash {
     static Logger logger = LogManager.getLogger(WaxFlash.class);
 
     public static void main(String args[]) {
-    	
-    	NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
-    	NeqSimDataBase.setCreateTemporaryTables(true);
-    	
-    	
+
+        NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+        NeqSimDataBase.setCreateTemporaryTables(true);
+
         SystemInterface testSystem = new SystemSrkEos(273.0 + 30, 50.0);
         testSystem.addComponent("CO2", 0.018);
         testSystem.addComponent("nitrogen", 0.333);
@@ -29,29 +28,26 @@ public class WaxFlash {
         testSystem.addComponent("i-pentane", 0.004);
         testSystem.addComponent("n-pentane", 0.024);
         testSystem.addComponent("n-heptane", 0.324);
-       // testSystem.addComponent("ethane", 4.5);
-       // testSystem.addTBPfraction("C7", 10.0, 93.30 / 1000.0, 0.73);
-       // testSystem.addTBPfraction("C8", 10.0, 106.60 / 1000.0, 0.7533);
+        // testSystem.addComponent("ethane", 4.5);
+        // testSystem.addTBPfraction("C7", 10.0, 93.30 / 1000.0, 0.73);
+        // testSystem.addTBPfraction("C8", 10.0, 106.60 / 1000.0, 0.7533);
         testSystem.addPlusFraction("C9", 0.095, 207.0 / 1000.0, 0.8331);
-         testSystem.getCharacterization().characterisePlusFraction();
+        testSystem.getCharacterization().characterisePlusFraction();
         testSystem.getWaxModel().addTBPWax();
-        
-        
-        
-        
+
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.addSolidComplexPhase("wax");
-        //  testSystem.setSolidPhaseCheck("nC14");
+        // testSystem.setSolidPhaseCheck("nC14");
         testSystem.setMultiphaseWaxCheck(true);
-      
+
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
 
             testOps.calcWAT();
-         //   testOps.TPflash();
+            // testOps.TPflash();
             testSystem.display();
-         
+
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -59,7 +55,10 @@ public class WaxFlash {
         if (testSystem.hasPhaseType("wax")) {
             waxVOlumeFrac = testSystem.getWtFraction(testSystem.getPhaseIndexOfPhase("wax"));
         }
-        //    testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac, 1000.0);
-        //   System.out.println("viscosity wax-oil suspesion " + testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac, 1000.0));
+        // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
+        // 1000.0);
+        // System.out.println("viscosity wax-oil suspesion " +
+        // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
+        // 1000.0));
     }
 }

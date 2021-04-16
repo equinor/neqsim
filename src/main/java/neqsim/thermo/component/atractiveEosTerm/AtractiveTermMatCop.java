@@ -16,7 +16,6 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     private static final long serialVersionUID = 1000;
 
-
     double orgpar = 0.0;
 
     /**
@@ -24,7 +23,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
      */
     public AtractiveTermMatCop(ComponentEosInterface component) {
         super(component);
-        m = (0.48 + 1.574 * component.getAcentricFactor() - 0.175 * component.getAcentricFactor() * component.getAcentricFactor());
+        m = (0.48 + 1.574 * component.getAcentricFactor()
+                - 0.175 * component.getAcentricFactor() * component.getAcentricFactor());
     }
 
     /**
@@ -57,9 +57,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     public double alpha(double temperature) {
         double Tr = temperature / component.getTC();
-        return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0), 2.0);
-
-
+        return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0), 2.0);
 
     }
 
@@ -75,19 +74,33 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
     public double diffalphaT(double temperature) {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
-        return 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)) * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-                - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC);
-
-
+        return 2.0
+                * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                        + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
+                * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
+                        - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+                        - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC);
 
     }
 
     public double diffdiffalphaT(double temperature) {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
-        return 2.0 * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC, 2.0) + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0)) * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0 + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
-                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC + 3.0 / 4.0 * parameters[2] * Math.pow(
-                1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+        return 2.0
+                * Math.pow(
+                        -parameters[0] / Math.sqrt(Tr) / TC / 2.0
+                                - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+                                - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC,
+                        2.0)
+                + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
+                        + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                        + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
+                        * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
+                                + parameters[1] / temperature / TC / 2.0
+                                + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
+                                + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC
+                                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                                        / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
     public double diffaT(double temperature) {

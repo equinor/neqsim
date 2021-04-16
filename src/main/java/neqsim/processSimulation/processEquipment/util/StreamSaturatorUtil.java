@@ -37,8 +37,8 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
     }
 
     public void run() {
-       thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
+        thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.saturateWithWater();
         thermoSystem.init(3);
 

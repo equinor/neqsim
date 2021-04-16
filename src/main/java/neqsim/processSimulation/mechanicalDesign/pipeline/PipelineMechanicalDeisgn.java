@@ -51,8 +51,10 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
             ((MaterialPipeDesignStandard) getDesignStandard().get("material pipe design codes")).getDesignFactor();
         }
         if (getDesignStandard().containsKey("pipeline design codes")) {
-            System.out.println("pressure vessel code standard: " + getDesignStandard().get("pipeline design codes").getStandardName());
-            wallThickness = ((PipelineDesignStandard) getDesignStandard().get("pipeline design codes")).calcPipelineWallThickness();
+            System.out.println("pressure vessel code standard: "
+                    + getDesignStandard().get("pipeline design codes").getStandardName());
+            wallThickness = ((PipelineDesignStandard) getDesignStandard().get("pipeline design codes"))
+                    .calcPipelineWallThickness();
         } else {
             System.out.println("no pressure vessel code standard specified......");
         }
@@ -63,7 +65,7 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         super.calcDesign();
 
         Pipeline pipeline = (Pipeline) getProcessEquipment();
-        
+
         double flow = ((AdiabaticPipe) getProcessEquipment()).getOutStream().getThermoSystem().getVolume() / 1e5;
 
         double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0;
@@ -71,17 +73,34 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         double gasVelocity = flow / innerArea;
         double wallThickness = 0.0;
 
-        //ASME/ANSI Code B31.8
+        // ASME/ANSI Code B31.8
         if (designStandardCode.equals("ANSI/ASME Standard B31.8")) {
-            wallThickness = ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaxOperationPressure() * innerDiameter / (2.0 * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getDesignFactor() * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getEfactor() * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getTemperatureDeratingFactor() * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getMinimumYeildStrength());
-        }
-        else if (designStandardCode.equals("ANSI/ASME Standard B31.3")) {
+            wallThickness = ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaxOperationPressure()
+                    * innerDiameter
+                    / (2.0 * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
+                            .getMaterialPipeDesignStandard().getDesignFactor()
+                            * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
+                                    .getMaterialPipeDesignStandard().getEfactor()
+                            * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
+                                    .getMaterialPipeDesignStandard().getTemperatureDeratingFactor()
+                            * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
+                                    .getMaterialPipeDesignStandard().getMinimumYeildStrength());
+        } else if (designStandardCode.equals("ANSI/ASME Standard B31.3")) {
             wallThickness = 0.0001; // to be implemented
-              //      ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaxOperationPressure() * innerDiameter / (2.0 * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getDesignFactor() * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getEfactor() * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getTemperatureDeratingFactor() * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getMinimumYeildStrength());
+            // ((AdiabaticPipe)
+            // getProcessEquipment()).getMechanicalDesign().getMaxOperationPressure() *
+            // innerDiameter / (2.0 * ((AdiabaticPipe)
+            // getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getDesignFactor()
+            // * ((AdiabaticPipe)
+            // getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getEfactor()
+            // * ((AdiabaticPipe)
+            // getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getTemperatureDeratingFactor()
+            // * ((AdiabaticPipe)
+            // getProcessEquipment()).getMechanicalDesign().getMaterialPipeDesignStandard().getMinimumYeildStrength());
         }
-        //iterate to find correct diamter -> between 60-80 ft/sec9
+        // iterate to find correct diamter -> between 60-80 ft/sec9
 
-        //double length = pipeline.getLength();
+        // double length = pipeline.getLength();
     }
 
     public static void main(String args[]) {
@@ -109,7 +128,7 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         operations.add(stream_1);
         operations.add(pipe);
 
-        //operations.run();
+        // operations.run();
         operations.getSystemMechanicalDesign().setCompanySpecificDesignStandards("Statoil");
         operations.getSystemMechanicalDesign().runDesignCalculation();
         operations.getSystemMechanicalDesign().setDesign();

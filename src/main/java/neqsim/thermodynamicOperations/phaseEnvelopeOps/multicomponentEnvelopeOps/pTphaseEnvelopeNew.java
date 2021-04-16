@@ -34,7 +34,7 @@ import org.jfree.chart.JFreeChart;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterface, java.io.Serializable {
@@ -123,7 +123,6 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
             nonLinSolver.solve(1);
             nonLinSolver.calcInc(1);
 
-
             for (np = 1; np < 5; np++) {
 
                 if (np % 5 == 0) {
@@ -143,26 +142,29 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
                     cricondenBar[1] = system.getPressure();
                 }
 
-                if (Double.isNaN(system.getTemperature()) || Double.isNaN(system.getTemperature())){// || system.getPressure() < lowPres) {
+                if (Double.isNaN(system.getTemperature()) || Double.isNaN(system.getTemperature())) {// ||
+                                                                                                     // system.getPressure()
+                                                                                                     // < lowPres) {
                     points[0][np - 1] = points[0][np - 3];
                     points[1][np - 1] = points[1][np - 3];
                     pointsH[np - 1] = pointsH[np - 3];
                     pointsV[np - 1] = pointsV[np - 3];
                     pointsS[np - 1] = pointsS[np - 3];
 
-                    //         logger.info("avbryter" +  np);
+                    // logger.info("avbryter" + np);
                     break;
                 }
-                //    logger.info("Ideal pres: " + getPressure());
+                // logger.info("Ideal pres: " + getPressure());
                 // logger.info("temp: " + system.getTemperature());
                 points[0][np - 1] = system.getTemperature();
                 points[1][np - 1] = system.getPressure();
-                pointsH[np - 1] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
+                pointsH[np - 1] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                        / system.getPhase(1).getMolarMass() / 1e3;
                 pointsV[np - 1] = system.getPhase(1).getDensity();
-                pointsS[np - 1] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
+                pointsS[np - 1] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                        / system.getPhase(1).getMolarMass() / 1e3;
 
             }
-
 
             int ncr = nonLinSolver.getNpCrit();
             int ncr2 = np - ncr;
@@ -215,16 +217,16 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
             system.setPressure(system.getPC() + 0.001);
             system.init(3);
 
-
             points2[0][ncr] = system.getTC();
             points2[1][ncr] = system.getPC();
 
             pointsH2[1][ncr] = system.getPC();
-            pointsH2[0][ncr] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
-
+            pointsH2[0][ncr] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                    / system.getPhase(1).getMolarMass() / 1e3;
 
             pointsS2[1][ncr] = system.getPC();
-            pointsS2[0][ncr] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
+            pointsS2[0][ncr] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                    / system.getPhase(1).getMolarMass() / 1e3;
 
             pointsV2[1][ncr] = system.getPC();
             pointsV2[0][ncr] = system.getPhase(1).getDensity();
@@ -233,13 +235,13 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
                 points2[2][0] = system.getTC();
                 points2[3][0] = system.getPC();
                 pointsH2[3][0] = system.getPC();
-                pointsH2[2][0] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
+                pointsH2[2][0] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                        / system.getPhase(1).getMolarMass() / 1e3;
                 pointsS2[3][0] = system.getPC();
-                pointsS2[2][0] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase() / system.getPhase(1).getMolarMass() / 1e3;
+                pointsS2[2][0] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                        / system.getPhase(1).getMolarMass() / 1e3;
                 pointsV2[3][0] = system.getPC();
                 pointsV2[2][0] = system.getPhase(1).getDensity();
-
-
 
                 for (int i = 1; i < (ncr2 - 2); i++) {
                     points2[2][i] = points[0][i + ncr - 1];
@@ -256,7 +258,7 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
 
                 }
             }
-            //        monitor.close();
+            // monitor.close();
             mainFrame.setVisible(false);
 
             if (outputToFile) {
@@ -277,7 +279,7 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
                 file2.createFile();
             }
         } catch (Exception e) {
-            logger.error("error",e);
+            logger.error("error", e);
         }
     }
 
@@ -289,17 +291,15 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
         double TC = system.getTC();
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
-        String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
+        String[] navn = { "bubble point", "dew point", "bubble point", "dew point" };
         String title2 = "";
         String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
         String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
         String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
         String title5 = "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
 
-        //    logger.info("start flash");
-        //    logger.info("Tferdig..");
-
-
+        // logger.info("start flash");
+        // logger.info("Tferdig..");
 
         graph2b graph3 = new graph2b(pointsH2, navn, title3, "Enthalpy [kJ/kg]", "Pressure [bara]");
         graph3.setVisible(true);
@@ -318,18 +318,17 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
         graph2.saveFigure(neqsim.util.util.FileSystemSettings.tempDir + "NeqSimTempFig1.png");
 
         /*
-        JDialog dialog = new JDialog();
-        Container dialogContentPane = dialog.getContentPane();
-        dialogContentPane.setLayout(new FlowLayout());
-        JFreeChartPanel chartPanel =  graph4.getChartPanel();
-        dialogContentPane.add(chartPanel);
-        dialog.show();*/
+         * JDialog dialog = new JDialog(); Container dialogContentPane =
+         * dialog.getContentPane(); dialogContentPane.setLayout(new FlowLayout());
+         * JFreeChartPanel chartPanel = graph4.getChartPanel();
+         * dialogContentPane.add(chartPanel); dialog.show();
+         */
     }
 
     public void printToFile(String name) {
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name){
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -337,9 +336,10 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
         double TC = system.getTC();
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
-        String[] navn = {"bubble point", "dew point", "bubble point", "dew point"};
+        String[] navn = { "bubble point", "dew point", "bubble point", "dew point" };
         String title2 = "";
-        String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC=" + String.valueOf(nf.format(PC) + " bara");
+        String title = "PT-graph. TC=" + String.valueOf(nf.format(TC)) + "K, PC="
+                + String.valueOf(nf.format(PC) + " bara");
         graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
         return graph2.getChart();
     }

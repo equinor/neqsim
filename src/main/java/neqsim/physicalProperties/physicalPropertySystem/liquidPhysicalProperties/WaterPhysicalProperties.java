@@ -14,18 +14,19 @@ import neqsim.thermo.phase.PhaseInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class WaterPhysicalProperties  extends LiquidPhysicalProperties{
+public class WaterPhysicalProperties extends LiquidPhysicalProperties {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates new WaterPhysicalProperties */
     public WaterPhysicalProperties() {
     }
-    
-    public WaterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
+
+    public WaterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
+            int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         conductivityCalc = new Conductivity(this);
         viscosityCalc = new Viscosity(this);

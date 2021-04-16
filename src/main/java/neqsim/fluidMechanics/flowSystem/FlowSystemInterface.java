@@ -31,7 +31,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface FlowSystemInterface {
@@ -76,7 +76,7 @@ public interface FlowSystemInterface {
 
     public void setLegOuterHeatTransferCoefficients(double[] coefs);
 
-     public void setLegWallHeatTransferCoefficients(double[] coefs);
+    public void setLegWallHeatTransferCoefficients(double[] coefs);
 
     public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry);
 
@@ -112,4 +112,3 @@ public interface FlowSystemInterface {
 
     public void setEquilibriumHeatTransfer(boolean test);
 }
-

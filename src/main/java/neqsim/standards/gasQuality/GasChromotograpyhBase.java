@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  ESOL
+ * @author ESOL
  */
 public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
@@ -37,7 +37,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
     public double getValue(String returnParameter, java.lang.String returnUnit) {
         unit = returnUnit;
-       if (returnUnit.equals("mol%")) {
+        if (returnUnit.equals("mol%")) {
             return 100 * thermoSystem.getPhase(0).getComponent(componentName).getz();
         }
         if (returnUnit.equals("mg/m3")) {

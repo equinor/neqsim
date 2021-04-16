@@ -47,7 +47,8 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
     }
 
     public double calc_lngi(PhaseInterface phase) {
-        // System.out.println("val " +0.475/(1.0-0.475*phase.getB()/phase.getTotalVolume())*getBi()/phase.getTotalVolume());
+        // System.out.println("val "
+        // +0.475/(1.0-0.475*phase.getB()/phase.getTotalVolume())*getBi()/phase.getTotalVolume());
         return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
     }
 
@@ -58,9 +59,10 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
 
     public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
-        // System.out.println("B " + phase.getB() + " Bi " + getBi() + "  bij " + getBij(j));
-        return 0.475 * getBij(j) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB())
-                - 0.475 * getBi() * 1.0 / (temp * temp) * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
+        // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
+        // getBij(j));
+        return 0.475 * getBij(j) * 0 / (phase.getTotalVolume() - 0.475 * phase.getB()) - 0.475 * getBi() * 1.0
+                / (temp * temp) * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
     }
 
 }

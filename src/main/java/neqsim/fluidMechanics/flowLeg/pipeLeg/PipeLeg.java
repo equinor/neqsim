@@ -27,35 +27,38 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class PipeLeg extends FlowLeg {
 
     private static final long serialVersionUID = 1000;
-    
+
     // FlowNodeInterface[] node;
-    
+
     /** Creates new PipeLeg */
     public PipeLeg() {
         super();
     }
-    
-    
-    public void createFlowNodes(FlowNodeInterface initNode){
-        heightChangePerNode = (this.endHeightCoordinate-this.startHeightCoordinate)/this.getNumberOfNodes();
-        longitudionalChangePerNode = (this.endLongitudionalCoordinate-this.startLongitudionalCoordinate)/(this.getNumberOfNodes()*1.0);
-        temperatureChangePerNode = (this.endOuterTemperature-this.startOuterTemperature)/(this.getNumberOfNodes()*1.0);
-        
+
+    public void createFlowNodes(FlowNodeInterface initNode) {
+        heightChangePerNode = (this.endHeightCoordinate - this.startHeightCoordinate) / this.getNumberOfNodes();
+        longitudionalChangePerNode = (this.endLongitudionalCoordinate - this.startLongitudionalCoordinate)
+                / (this.getNumberOfNodes() * 1.0);
+        temperatureChangePerNode = (this.endOuterTemperature - this.startOuterTemperature)
+                / (this.getNumberOfNodes() * 1.0);
+
         flowNode = new FlowNodeInterface[this.getNumberOfNodes()];
         this.flowNode[0] = initNode.getNextNode();
         this.equipmentGeometry.setNodeLength(longitudionalChangePerNode);
         this.equipmentGeometry.init();
         flowNode[0].setGeometryDefinitionInterface(this.equipmentGeometry);
-        //   flowNode = new onePhasePipeFlowNode[this.getNumberOfNodes()];
-        //   flowNode[0] = new onePhasePipeFlowNode(thermoSystem, this.equipmentGeometry, inletTotalNormalVolumetricFlowRate);
-        //   flowNode[0] = new AnnularFlow(thermoSystem, this.equipmentGeometry, inletTotalNormalVolumetricFlowRate);
+        // flowNode = new onePhasePipeFlowNode[this.getNumberOfNodes()];
+        // flowNode[0] = new onePhasePipeFlowNode(thermoSystem, this.equipmentGeometry,
+        // inletTotalNormalVolumetricFlowRate);
+        // flowNode[0] = new AnnularFlow(thermoSystem, this.equipmentGeometry,
+        // inletTotalNormalVolumetricFlowRate);
         super.createFlowNodes();
     }
-    
+
 }

@@ -48,13 +48,14 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
     public void setQMixdN(double[] QMixdN) {
         this.QMixdN = QMixdN;
     }
-    private static final long serialVersionUID = 1000;    
+
+    private static final long serialVersionUID = 1000;
     double R = 0.0;
     double Q = 0.0;
     int n = 0;
     double xComp = 0.0;
     double QComp = 0.0, QMix = 0.0;
-    public double[] QMixdN = null;//, xMixdN = null;
+    public double[] QMixdN = null;// , xMixdN = null;
     double[] lnGammaMixdn = new double[MAX_NUMBER_OF_COMPONENTS];
     double lnGammaComp = 0.0, lnGammaMix = 0.0;
     double lnGammaCompdT = 0.0, lnGammaMixdT = 0.0;
@@ -100,7 +101,7 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
         } catch (Exception e) {
             String err = e.toString();
             logger.error(err);
-            //System.out.println(err);
+            // System.out.println(err);
         }
     }
 
@@ -225,43 +226,44 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
     }
 
     /**
-     * Compares this object with the specified object for order. Returns a
-     * negative integer, zero, or a positive integer as this object is less
-     * than, equal to, or greater than the specified object.<p>
+     * Compares this object with the specified object for order. Returns a negative
+     * integer, zero, or a positive integer as this object is less than, equal to,
+     * or greater than the specified object.
+     * <p>
      *
      * In the foregoing description, the notation
      * <tt>sgn(</tt><i>expression</i><tt>)</tt> designates the mathematical
      * <i>signum</i> function, which is defined to return one of <tt>-1</tt>,
-     * <tt>0</tt>, or <tt>1</tt> according to whether the value of
-     * <i>expression</i> is negative, zero or positive.
+     * <tt>0</tt>, or <tt>1</tt> according to whether the value of <i>expression</i>
+     * is negative, zero or positive.
      *
      * The implementor must ensure <tt>sgn(x.compareTo(y)) ==
-     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This
-     * implies that <tt>x.compareTo(y)</tt> must throw an exception iff
+     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This implies
+     * that <tt>x.compareTo(y)</tt> must throw an exception iff
      * <tt>y.compareTo(x)</tt> throws an exception.)
      * <p>
      *
      * The implementor must also ensure that the relation is transitive:
      * <tt>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</tt> implies
-     * <tt>x.compareTo(z)&gt;0</tt>.<p>
+     * <tt>x.compareTo(z)&gt;0</tt>.
+     * <p>
      *
-     * Finally, the implementer must ensure that <tt>x.compareTo(y)==0</tt>
-     * implies that <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for all
-     * <tt>z</tt>.<p>
+     * Finally, the implementer must ensure that <tt>x.compareTo(y)==0</tt> implies
+     * that <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for all <tt>z</tt>.
+     * <p>
      *
      * It is strongly recommended, but <i>not</i> strictly required that
-     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>. Generally speaking, any
-     * class that implements the <tt>Comparable</tt> interface and violates this
-     * condition should clearly indicate this fact. The recommended language is
-     * "Note: this class has a natural ordering that is inconsistent with
-     * equals."
+     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>. Generally speaking, any class
+     * that implements the <tt>Comparable</tt> interface and violates this condition
+     * should clearly indicate this fact. The recommended language is "Note: this
+     * class has a natural ordering that is inconsistent with equals."
      *
      * @param o the Object to be compared.
      * @return a negative integer, zero, or a positive integer as this object is
-     * less than, equal to, or greater than the specified object.
+     *         less than, equal to, or greater than the specified object.
      *
-     * @throws ClassCastException if the specified object's type prevents it
-     * from being compared to this Object.
+     * @throws ClassCastException if the specified object's type prevents it from
+     *                            being compared to this Object.
      *
      */
     public boolean equals(Object o) {
@@ -290,25 +292,20 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
             temp += component.getUnifacGroup(i).getN();
         }
         xComp = getN() / temp;
-        //System.out.println("xcomp " + xComp);
+        // System.out.println("xcomp " + xComp);
         return xComp;
     }
     /*
-     public double calcXMix(PhaseGEUnifac phase) {
-     double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
-
-     for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-     for (int i = 0; i < ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) {
-     tempVal = phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac) phase.getComponent(j)).getUnifacGroup(i).getN();
-     temp += tempVal;
-     if (((ComponentGEUnifac) phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) {
-     temp2 += tempVal;
-     }
-     }
-     }
-     xMix = temp2 / temp;
-     return xMix;
-     }
+     * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0,
+     * tempVal = 0.0;
+     * 
+     * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
+     * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) {
+     * tempVal = phase.getComponent(j).getNumberOfMolesInPhase() *
+     * ((ComponentGEUnifac) phase.getComponent(j)).getUnifacGroup(i).getN(); temp +=
+     * tempVal; if (((ComponentGEUnifac)
+     * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2
+     * += tempVal; } } } xMix = temp2 / temp; return xMix; }
      */
 
     public double calcQComp(ComponentGEUnifac component) {
@@ -342,7 +339,7 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
                 }
             }
         }
-        //System.out.println("xmix " + xMix);
+        // System.out.println("xmix " + xMix);
         QMix = temp2 / temp;
         return QMix;
     }
@@ -351,7 +348,7 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
         setQMixdN(new double[phase.getNumberOfComponents()]);
         ComponentGEUnifac component;
         UNIFACgroup unifacGroup;
-        //calcXMixdN(phase);
+        // calcXMixdN(phase);
         double temp, temp2, tempVar, tempdn, temp2dn, tempVardn = 0.0;
         for (int k = 0; k < phase.getNumberOfComponents(); k++) {
             temp = 0.0;
@@ -362,7 +359,8 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
                 component = ((ComponentGEUnifac) phase.getComponent(j));
                 for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
                     unifacGroup = component.getUnifacGroup(i);
-                    tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN() * component.getUnifacGroup(i).getQ();
+                    tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
+                            * component.getUnifacGroup(i).getQ();
                     temp += tempVar;
                     if (k == j) {
                         tempVardn = unifacGroup.getN() * unifacGroup.getQ();
@@ -385,13 +383,9 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
         return QMixdN[comp];
     }
     /*
-     public double getXMixdN(int comp) {
-     return xMixdN[comp];
-     }
-    
-     public void setXMixdN(double[] xMixdN) {
-     this.xMixdN = xMixdN;
-     }
+     * public double getXMixdN(int comp) { return xMixdN[comp]; }
+     * 
+     * public void setXMixdN(double[] xMixdN) { this.xMixdN = xMixdN; }
      */
 
     public double getXComp() {

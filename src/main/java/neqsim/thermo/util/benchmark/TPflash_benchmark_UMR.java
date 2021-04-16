@@ -30,16 +30,16 @@ public class TPflash_benchmark_UMR {
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-        
+
         double[][] points;
-        
+
         SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 - 5.0, 10.0);
-        
+
         testSystem.addComponent("CO2", 2.1);
         testSystem.addComponent("nitrogen", 1.16);
         testSystem.addComponent("methane", 26.19);
         testSystem.addComponent("propane", 8.27);
-        
+
         testSystem.addComponent("propane", 7.5);
         testSystem.addComponent("i-butane", 1.83);
         testSystem.addComponent("n-butane", 4.05);
@@ -52,24 +52,24 @@ public class TPflash_benchmark_UMR {
         long time = System.currentTimeMillis();
         testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
         logger.info("Time taken for reading parameters = " + (System.currentTimeMillis() - time));
-        
+
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         time = System.currentTimeMillis();
-        
+
         for (int i = 0; i < 1000; i++) {
             testOps.TPflash();
-           // testSystem.init(3);
+            // testSystem.init(3);
             try {
-                //    testOps.hydrateFormationTemperature();
-                //    testOps.calcTOLHydrateFormationTemperature();
+                // testOps.hydrateFormationTemperature();
+                // testOps.calcTOLHydrateFormationTemperature();
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
         }
         logger.info("Time taken for benchmark flash = " + (System.currentTimeMillis() - time));
         testSystem.display();
 
-        // base case - 31/8-2013 8:37  reading parameters 19312  flash 702  - running on AC
-        // base case - 1/9-2013 8:37  reading parameters 19298  flash 452 - running on AC
+        // base case - 31/8-2013 8:37 reading parameters 19312 flash 702 - running on AC
+        // base case - 1/9-2013 8:37 reading parameters 19298 flash 452 - running on AC
     }
 }

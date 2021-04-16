@@ -4,7 +4,7 @@
  * Created on 8. februar 2001, 09:14
  */
 
-package neqsim.statistics.experimentalSampleCreation.sampleCreator; 
+package neqsim.statistics.experimentalSampleCreation.sampleCreator;
 
 import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
 import neqsim.thermo.system.SystemInterface;
@@ -12,8 +12,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  even solbraa
- * @version 
+ * @author even solbraa
+ * @version
  */
 public class SampleCreator extends Object {
 
@@ -22,22 +22,23 @@ public class SampleCreator extends Object {
     protected SystemInterface system;
     ThermodynamicOperations thermoOps;
     ExperimentalEquipmentData equipment;
+
     /** Creates new SampleCreator */
     public SampleCreator() {
     }
-    
+
     public SampleCreator(SystemInterface system, ThermodynamicOperations thermoOps) {
         this.system = system;
         this.thermoOps = thermoOps;
     }
-    
-    public void setThermoSystem(SystemInterface system){
+
+    public void setThermoSystem(SystemInterface system) {
         this.system = system;
         this.thermoOps = thermoOps;
     }
-    
-    public void setExperimentalEquipment(ExperimentalEquipmentData equipment){
+
+    public void setExperimentalEquipment(ExperimentalEquipmentData equipment) {
         this.equipment = equipment;
     }
-        
+
 }

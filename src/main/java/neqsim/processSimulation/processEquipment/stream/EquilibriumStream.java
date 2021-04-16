@@ -11,52 +11,48 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class EquilibriumStream extends Stream{
+public class EquilibriumStream extends Stream {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates new Stream */
     public EquilibriumStream() {
     }
-    
-    
+
     public EquilibriumStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
-    
-     public EquilibriumStream(StreamInterface stream) {
+
+    public EquilibriumStream(StreamInterface stream) {
         super(stream.getThermoSystem());
     }
-    
+
     public EquilibriumStream(String name, SystemInterface thermoSystem) {
         super(name, thermoSystem);
     }
-    
-    
-    public Object clone(){
+
+    public Object clone() {
         EquilibriumStream clonedStream = null;
-        
-        try{
+
+        try {
             clonedStream = (EquilibriumStream) super.clone();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace(System.err);
         }
-        
+
         thermoSystem = (SystemInterface) thermoSystem.clone();
         return clonedStream;
     }
-    
-    
-    public void run(){
+
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());
     }
-    
+
 }

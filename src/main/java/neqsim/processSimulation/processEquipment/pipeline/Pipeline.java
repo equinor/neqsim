@@ -35,13 +35,13 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
     // default variables
     int numberOfLegs = 1, numberOfNodesInLeg = 30;
-    double[] legHeights = {0, 0};//,0,0,0};
-    double[] legPositions = {0.0, 1.0};//10.0,20.0,30.0,40.0};
-    double[] pipeDiameters = {0.1507588, 0.1507588};//, 1.207588, 1.207588, 1.207588};
-    double[] outerTemperature = {278.0, 278.0};//, 278.0, 278.0, 278.0};
-    double[] pipeWallRoughness = {1e-5, 1e-5};//, 1e-5, 1e-5, 1e-5};
-    double[] outerHeatTransferCoeffs = {1e-5, 1e-5};//, 1e-5, 1e-5, 1e-5};
-    double[] wallHeatTransferCoeffs = {1e-5, 1e-5};//, 1e-5, 1e-5, 1e-5};
+    double[] legHeights = { 0, 0 };// ,0,0,0};
+    double[] legPositions = { 0.0, 1.0 };// 10.0,20.0,30.0,40.0};
+    double[] pipeDiameters = { 0.1507588, 0.1507588 };// , 1.207588, 1.207588, 1.207588};
+    double[] outerTemperature = { 278.0, 278.0 };// , 278.0, 278.0, 278.0};
+    double[] pipeWallRoughness = { 1e-5, 1e-5 };// , 1e-5, 1e-5, 1e-5};
+    double[] outerHeatTransferCoeffs = { 1e-5, 1e-5 };// , 1e-5, 1e-5, 1e-5};
+    double[] wallHeatTransferCoeffs = { 1e-5, 1e-5 };// , 1e-5, 1e-5, 1e-5};
 
     /**
      * Creates new Pipeline
@@ -83,7 +83,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (heights.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of heights specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         legHeights = new double[heights.length];
@@ -94,7 +95,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (positions.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of legpositions specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         legPositions = new double[positions.length];
@@ -105,7 +107,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (diameter.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
             System.out.println("Number of diameters must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         pipeDiameters = new double[diameter.length];
@@ -116,7 +119,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (heatCoefs.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
             System.out.println("Number of diameters must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         outerHeatTransferCoeffs = new double[heatCoefs.length];
@@ -127,7 +131,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (heatCoefs.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
             System.out.println("Number of diameters must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         wallHeatTransferCoeffs = new double[heatCoefs.length];
@@ -138,7 +143,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (rough.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of roghuness points specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         pipeWallRoughness = new double[rough.length];
@@ -149,7 +155,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         if (outerTemp.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of outer temperature points specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
-            System.out.println("Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
+            System.out.println(
+                    "Remember to specify number of legs first (default 5) - than set the leg heights (default 6).");
             return;
         }
         outerTemperature = new double[outerTemp.length];
@@ -221,7 +228,10 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
 
     public double getSuperficialVelocity(int phase, int node) {
         try {
-            return outStream.getThermoSystem().getPhase(phase).getNumberOfMolesInPhase() * outStream.getThermoSystem().getPhase(phase).getMolarMass() / outStream.getThermoSystem().getPhase(phase).getPhysicalProperties().getDensity() / (3.14 * pipeDiameters[node] * pipeDiameters[node] / 4.0);
+            return outStream.getThermoSystem().getPhase(phase).getNumberOfMolesInPhase()
+                    * outStream.getThermoSystem().getPhase(phase).getMolarMass()
+                    / outStream.getThermoSystem().getPhase(phase).getPhysicalProperties().getDensity()
+                    / (3.14 * pipeDiameters[node] * pipeDiameters[node] / 4.0);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -240,8 +250,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         pipe.getTimeSeries().setInletThermoSystems(systems);
         pipe.getTimeSeries().setNumberOfTimeStepsInInterval(timestepininterval);
     }
-    
+
     public double getEntropyProduction(String unit) {
-		return outStream.getThermoSystem().getEntropy(unit)-inStream.getThermoSystem().getEntropy(unit);
-	}
+        return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+    }
 }

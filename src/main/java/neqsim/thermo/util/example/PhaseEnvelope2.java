@@ -14,29 +14,29 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 public class PhaseEnvelope2 {
-	private static final long serialVersionUID = 1000;
-	static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+    private static final long serialVersionUID = 1000;
+    static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		SystemInterface testSystem = new SystemSrkEos(280.0, 1.00);
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        SystemInterface testSystem = new SystemSrkEos(280.0, 1.00);
 
-		ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-		testSystem.addComponent("methane", 90.0);
-		testSystem.addComponent("propane", 3.0);
-		testSystem.addComponent("i-butane", 1.8);
-		testSystem.addComponent("n-butane", 1.433);
-		testSystem.addComponent("n-hexane", 1.433);
-		testSystem.setMixingRule(2);
-		try {
-			testOps.calcPTphaseEnvelope();
-			testOps.displayResult();
-		} catch (Exception e) {
-			logger.error("error", e);
-		}
-	}
+        testSystem.addComponent("methane", 90.0);
+        testSystem.addComponent("propane", 3.0);
+        testSystem.addComponent("i-butane", 1.8);
+        testSystem.addComponent("n-butane", 1.433);
+        testSystem.addComponent("n-hexane", 1.433);
+        testSystem.setMixingRule(2);
+        try {
+            testOps.calcPTphaseEnvelope();
+            testOps.displayResult();
+        } catch (Exception e) {
+            logger.error("error", e);
+        }
+    }
 
 }

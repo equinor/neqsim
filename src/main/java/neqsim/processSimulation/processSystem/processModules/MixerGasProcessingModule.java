@@ -43,9 +43,10 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     StreamInterface feedStream, gasExitStream, oilExitStream, glycolFeedStream, glycolExitStream;
     Separator glycolScrubber;
     Separator inletSeparator;
-    double inletSepTemperature = 50.00; //bar'
-    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0, glycolScrubberTemperature = 20.0, secondStageOutPressure = 200.0; //bar
-    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0, liquidPumpPressure = 150.0; //m^3/hr
+    double inletSepTemperature = 50.00; // bar'
+    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0, glycolScrubberTemperature = 20.0,
+            secondStageOutPressure = 200.0; // bar
+    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0, liquidPumpPressure = 150.0; // m^3/hr
     Compressor secondStageCompressor;
     Pump oilPump;
     Cooler secondStageAfterCooler;
@@ -192,7 +193,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         testSystem.setMixingRule(10);
         testSystem.setMultiPhaseCheck(true);
 
-        neqsim.thermo.system.SystemInterface glycolTestSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 15, 50);
+        neqsim.thermo.system.SystemInterface glycolTestSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(
+                273.15 + 15, 50);
         glycolTestSystem.addComponent("methane", 0);
         glycolTestSystem.addComponent("propane", 0);
         glycolTestSystem.addComponent("nC10", 0);
@@ -226,14 +228,15 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         operations.add(separationModule);
         operations.run();
         // glycolFeedStream.displayResult();
-      //  separationModule.getOutputStream("gas exit stream").displayResult();
-      //  separationModule.getOutputStream("oil exit stream").displayResult();
-       // separationModule.getOutputStream("liquid pump").displayResult();
+        // separationModule.getOutputStream("gas exit stream").displayResult();
+        // separationModule.getOutputStream("oil exit stream").displayResult();
+        // separationModule.getOutputStream("liquid pump").displayResult();
         double en = ((PumpInterface) separationModule.getOperations().getUnit("liquid pump")).getPower();
         double test = en;
-        //   separationModule.getOutputStream("glycol feed stream").displayResult();
-        //  separationModule.getOutputStream("glycol exit stream").displayResult();
+        // separationModule.getOutputStream("glycol feed stream").displayResult();
+        // separationModule.getOutputStream("glycol exit stream").displayResult();
 
-        //    ((Separator) operations.getUnit("Water dew point control scrubber")).displayResult();
+        // ((Separator) operations.getUnit("Water dew point control
+        // scrubber")).displayResult();
     }
 }

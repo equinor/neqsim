@@ -26,9 +26,9 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
     }
 
     public void run() {
-           SystemInterface system = (SystemInterface) this.system.clone();
+        SystemInterface system = (SystemInterface) this.system.clone();
         hydratePoints = new double[2][numberOfPoints];
-       ThermodynamicOperations ops = new ThermodynamicOperations(system);
+        ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
         system.setPressure(minPressure);
         double dp = (maxPressure - minPressure) / (numberOfPoints - 1.0);
@@ -38,11 +38,11 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
             try {
                 ops.waterDewPointTemperatureMultiphaseFlash();
             } catch (Exception e) {
-                logger.error("error",e);
+                logger.error("error", e);
             }
             hydratePoints[0][i] = system.getTemperature();
             hydratePoints[1][i] = system.getPressure();
-            //   system.display();
+            // system.display();
 
         }
     }

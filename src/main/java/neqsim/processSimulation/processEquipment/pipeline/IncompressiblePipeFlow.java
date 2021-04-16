@@ -49,24 +49,33 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         }
 
         double area = 3.14 / 4.0 * Math.pow(insideDiameter, 2.0);
-        double velocity = 1.0 / system.getPhase(0).getPhysicalProperties().getDensity() / (system.getPhase(0).getNumberOfMolesInPhase() * (system.getPhase(0).getMolarVolume() / 1e5)) / area;
+        double velocity = 1.0 / system.getPhase(0).getPhysicalProperties().getDensity()
+                / (system.getPhase(0).getNumberOfMolesInPhase() * (system.getPhase(0).getMolarVolume() / 1e5)) / area;
 
         momentum = system.getPhase(0).getPhysicalProperties().getDensity() * velocity * velocity;
-        double reynoldsNumber = velocity * insideDiameter / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
+        double reynoldsNumber = velocity * insideDiameter
+                / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
         double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
 
         double dp = -momentum * frictionFactor * getTotalEqLenth() / (2.0 * insideDiameter);
-        dp += (getInletElevation() - getOutletElevation()) * system.getPhase(0).getPhysicalProperties().getDensity() * neqsim.thermo.ThermodynamicConstantsInterface.gravity;
+        dp += (getInletElevation() - getOutletElevation()) * system.getPhase(0).getPhysicalProperties().getDensity()
+                * neqsim.thermo.ThermodynamicConstantsInterface.gravity;
 
-        //  double dp = Math.pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass()/thermo.ThermodynamicConstantsInterface.pi, 2.0) * frictionFactor * length * system.getPhase(0).getZ() * thermo.ThermodynamicConstantsInterface.R/system.getPhase(0).getMolarMass() * system.getTemperature() / Math.pow(insideDiameter, 5.0);
-        System.out.println("outpres " + ((system.getPressure() * 1e5 + dp) / 1.0e5) + " dp " + dp + " friction fact" + frictionFactor + " velocity " + velocity + " reynolds number " + reynoldsNumber + " equivalentLength " + getTotalEqLenth());
+        // double dp = Math.pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() *
+        // system.getPhase(0).getMolarMass()/thermo.ThermodynamicConstantsInterface.pi,
+        // 2.0) * frictionFactor * length * system.getPhase(0).getZ() *
+        // thermo.ThermodynamicConstantsInterface.R/system.getPhase(0).getMolarMass() *
+        // system.getTemperature() / Math.pow(insideDiameter, 5.0);
+        System.out.println("outpres " + ((system.getPressure() * 1e5 + dp) / 1.0e5) + " dp " + dp + " friction fact"
+                + frictionFactor + " velocity " + velocity + " reynolds number " + reynoldsNumber + " equivalentLength "
+                + getTotalEqLenth());
 
         return (system.getPressure() * 1e5 + dp) / 1.0e5;
     }
 
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
-        //  system.setMultiPhaseCheck(true);
+        // system.setMultiPhaseCheck(true);
         if (setTemperature) {
             system.setTemperature(this.temperatureOut);
         }

@@ -11,48 +11,47 @@ import org.apache.logging.log4j.*;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction{
+public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToDewPointData.class);
-    
+
     int phase = 1;
     int type = 1;
+
     /** Creates new Test */
     public BinaryHVParameterFittingToDewPointData() {
     }
-    
+
     public BinaryHVParameterFittingToDewPointData(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
-    
-    public double calcValue(double[] dependentValues){
-        try{
-            if(system.getTemperature()>3.0){
+
+    public double calcValue(double[] dependentValues) {
+        try {
+            if (system.getTemperature() > 3.0) {
                 thermoOps.dewPointTemperatureFlash();
-            }
-            else{
+            } else {
                 thermoOps.freezingPointTemperatureFlash();
             }
-            
-        }
-        catch(Exception e){
+
+        } catch (Exception e) {
             logger.error("err dew pont");
         }
         return system.getTemperature();
     }
-    
-    public double calcTrueValue(double val){
+
+    public double calcTrueValue(double val) {
         return val;
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        ((PhaseEosInterface)system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0,1, value);
-        ((PhaseEosInterface)system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0,1, value);
+        ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
+        ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
     }
 }

@@ -49,6 +49,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public HashMap<String, String> properties = new HashMap<String, String>();
     public EnergyStream energyStream = new EnergyStream();
     private boolean isSetEnergyStream = false;
+
     /**
      * Creates a new instance of ProcessEquipmentBaseClass
      */
@@ -64,7 +65,6 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public void run() {
     }
 
- 
     public void runTransient(double dt) {
         run();
     }
@@ -72,17 +72,18 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public SystemInterface getThermoSystem() {
         return null;
     }
-    
+
     public SystemInterface getFluid() {
         return getThermoSystem();
     }
-    
-    
+
     ;
+
     public void displayResult() {
     }
 
     ;
+
     public String getName() {
         return name;
     }
@@ -90,12 +91,12 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public Object getProperty(String propertyName) {
-    	//if(properties.containsKey(propertyName)) {
-    	//return properties.get(properties).getValue();
-    	//}
-     return null;
+        // if(properties.containsKey(propertyName)) {
+        // return properties.get(properties).getValue();
+        // }
+        return null;
     }
 
     public void setRegulatorOutSignal(double signal) {
@@ -145,60 +146,56 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public String[][] reportResults() {
         return report;
     }
-    
+
     public boolean solved() {
-    	return true;
+        return true;
     }
-    
-	public EnergyStream getEnergyStream() {
-		return energyStream;
-	}
 
-	public void setEnergyStream(EnergyStream energyStream) {
-		setEnergyStream(true);
-		this.energyStream = energyStream;
-	}
+    public EnergyStream getEnergyStream() {
+        return energyStream;
+    }
 
-	public boolean isSetEnergyStream() {
-		return isSetEnergyStream;
-	}
+    public void setEnergyStream(EnergyStream energyStream) {
+        setEnergyStream(true);
+        this.energyStream = energyStream;
+    }
 
-	public void setEnergyStream(boolean isSetEnergyStream) {
-		this.isSetEnergyStream = isSetEnergyStream;
-	}
-	
-	public double getPressure() {
-		return 1.0;
-	}
+    public boolean isSetEnergyStream() {
+        return isSetEnergyStream;
+    }
 
-	public void setPressure(double pressure) {
-		
-	}
-	
-	public double getEntropyProduction(String unit) {
-		return 0.0;
-	}
-	
-	public double getMassBalance(String unit) {
-		return 0.0;
-	}
-	
-	public double getExergyChange(String unit, double sourrondingTemperature) {
-		return 0.0;
-	}
-	
-	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-		
-	}
-	
+    public void setEnergyStream(boolean isSetEnergyStream) {
+        this.isSetEnergyStream = isSetEnergyStream;
+    }
+
+    public double getPressure() {
+        return 1.0;
+    }
+
+    public void setPressure(double pressure) {
+
+    }
+
+    public double getEntropyProduction(String unit) {
+        return 0.0;
+    }
+
+    public double getMassBalance(String unit) {
+        return 0.0;
+    }
+
+    public double getExergyChange(String unit, double sourrondingTemperature) {
+        return 0.0;
+    }
+
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+
+    }
 
     public String conditionAnalysisMessage = "";
-    
-	public String getConditionAnalysisMessage() {
-		return conditionAnalysisMessage;
-	}
 
-		
-		
+    public String getConditionAnalysisMessage() {
+        return conditionAnalysisMessage;
+    }
 
 }

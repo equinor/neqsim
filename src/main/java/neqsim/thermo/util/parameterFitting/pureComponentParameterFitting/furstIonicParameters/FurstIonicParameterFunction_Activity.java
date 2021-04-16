@@ -11,31 +11,30 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class FurstIonicParameterFunction_Activity extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
-    
+
     /** Creates new Test */
     public FurstIonicParameterFunction_Activity() {
         // params = new double[3];
     }
-    
-    public double calcValue(double[] dependentValues){
+
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         system.init(1);
-        //return system.getPhase(1).getOsmoticCoefficientOfWater();
-        return system.getPhase(1).getMolalMeanIonicActivity(1,2);
+        // return system.getPhase(1).getOsmoticCoefficientOfWater();
+        return system.getPhase(1).getMolalMeanIonicActivity(1, 2);
     }
-    
-    
-    public double calcTrueValue(double val){
+
+    public double calcTrueValue(double val) {
         return val;
     }
-    
-    public void setFittingParams(int i, double value){
+
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         neqsim.thermo.util.constants.FurstElectrolyteConstants.setFurstParam(i, value);
         ((PhaseModifiedFurstElectrolyteEos) system.getPhase(0)).reInitFurstParam();

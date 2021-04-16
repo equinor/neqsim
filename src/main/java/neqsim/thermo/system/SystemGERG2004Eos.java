@@ -14,13 +14,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * @author  Even Solbraa
  * @version
  */
-/** This class defines a thermodynamic system using the SRK equation of state
+/**
+ * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemGERG2004Eos extends SystemEos {
 
     private static final long serialVersionUID = 1000;
 
-    //  SystemSrkEos clonedSystem;
+    // SystemSrkEos clonedSystem;
     public SystemGERG2004Eos() {
         super();
         modelName = "GERG2004-EOS";
@@ -59,7 +60,7 @@ public class SystemGERG2004Eos extends SystemEos {
         }
 
         if (solidPhaseCheck) {
-            //System.out.println("here first");
+            // System.out.println("here first");
             phaseArray[numberOfPhases - 1] = new PhasePureComponentSolid();
             phaseArray[numberOfPhases - 1].setTemperature(T);
             phaseArray[numberOfPhases - 1].setPressure(P);
@@ -67,7 +68,7 @@ public class SystemGERG2004Eos extends SystemEos {
         }
 
         if (hydrateCheck) {
-            //System.out.println("here first");
+            // System.out.println("here first");
             phaseArray[numberOfPhases - 1] = new PhaseHydrate();
             phaseArray[numberOfPhases - 1].setTemperature(T);
             phaseArray[numberOfPhases - 1].setPressure(P);
@@ -84,7 +85,6 @@ public class SystemGERG2004Eos extends SystemEos {
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }
-
 
         return clonedSystem;
     }

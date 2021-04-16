@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package neqsim.thermo.util.example;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
@@ -17,11 +18,13 @@ import org.apache.logging.log4j.*;
 public class TVPexample {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TVPexample.class);
-    public TVPexample(){};
-    
+
+    public TVPexample() {
+    };
+
     public static void main(String[] args) {
-        
-        SystemInterface testSystem = new SystemSrkEos(275.15+37.7778, 1.0);
+
+        SystemInterface testSystem = new SystemSrkEos(275.15 + 37.7778, 1.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 0.1);
         testSystem.addComponent("ethane", 0.2);
@@ -33,24 +36,20 @@ public class TVPexample {
         testSystem.addComponent("n-hexane", 100.0);
         testSystem.addComponent("n-heptane", 100.0);
         testSystem.addComponent("n-octane", 100.0);
-        
+
         testSystem.createDatabase(true);
-      //  testSystem.setMixingRule(10);
-        
+        // testSystem.setMixingRule(10);
+
         testOps.TPflash();
         testSystem.display();
-        
-        try{
-        testOps.bubblePointPressureFlash(false);
-        }catch(Exception e){
+
+        try {
+            testOps.bubblePointPressureFlash(false);
+        } catch (Exception e) {
             logger.error("Exception thrown in bubble point flash");
-            }
+        }
         testSystem.display();
-        
-        
-        
-        
-        
+
     }
-    
+
 }

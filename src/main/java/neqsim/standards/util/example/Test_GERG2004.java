@@ -14,28 +14,28 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
 public class Test_GERG2004 {
 
     private static final long serialVersionUID = 1000;
+
     /** Creates new PhaseEnvelope */
     public Test_GERG2004() {
     }
-    
-    public static void main(String args[]){
-    
-        SystemInterface testSystem = new SystemSrkEos(273.15+20.0, 200.0);
-        
-        
+
+    public static void main(String args[]) {
+
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 20.0, 200.0);
+
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 90.9047);
         testSystem.addComponent("ethane", 10.095);
-        
+
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
-        
+
         testSystem.init(0);
         StandardInterface standard = new Draft_GERG2004(testSystem);
         standard.calculate();

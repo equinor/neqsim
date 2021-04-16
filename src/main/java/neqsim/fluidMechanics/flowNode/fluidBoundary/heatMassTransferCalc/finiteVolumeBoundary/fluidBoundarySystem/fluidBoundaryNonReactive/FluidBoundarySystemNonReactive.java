@@ -17,52 +17,51 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  *
- * @author  esol
+ * @author esol
  * @version
  */
-public class FluidBoundarySystemNonReactive extends FluidBoundarySystem{
+public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
 
     private static final long serialVersionUID = 1000;
-    
-    
+
     /** Creates new FluidBoundarySystemReactive */
     public FluidBoundarySystemNonReactive() {
     }
-    
-    public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary){
+
+    public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary) {
         super(boundary);
     }
-    
-    public void createSystem(){
+
+    public void createSystem() {
         nodes = new FluidBoundaryNodeNonReactive[numberOfNodes];
         super.createSystem();
-        
-        for(int i=0;i<numberOfNodes;i++){
+
+        for (int i = 0; i < numberOfNodes; i++) {
             nodes[i] = new FluidBoundaryNodeNonReactive(boundary.getInterphaseSystem());
         }
         System.out.println("system created...");
     }
-    
-    public static void main(String[] args){
+
+    public static void main(String[] args) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
         PipeData pipe1 = new PipeData(10.0, 0.025);
-        
+
         testSystem.addComponent("methane", 0.061152181, 0);
         testSystem.addComponent("water", 0.1862204876, 1);
         testSystem.chemicalReactionInit();
         testSystem.setMixingRule(2);
         testSystem.init_x_y();
-        
+
         FlowNodeInterface test = new StratifiedFlowNode(testSystem, pipe1);
         test.setInterphaseModelType(10);
-        
+
         test.initFlowCalc();
         test.calcFluxes();
         test.getFluidBoundary().setEnhancementType(0);
-      //  test.getFluidBoundary().getEnhancementFactor().getNumericInterface().createSystem();
-     //   test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
-    //    System.out.println("enhancement " +
-     //   test.getFluidBoundary().getEnhancementFactor().getNumericInterface().getEnhancementFactor(0));
+        // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().createSystem();
+        // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
+        // System.out.println("enhancement " +
+        // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().getEnhancementFactor(0));
     }
-    
+
 }

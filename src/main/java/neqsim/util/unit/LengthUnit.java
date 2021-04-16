@@ -8,8 +8,8 @@ package neqsim.util.unit;
 
 /**
  *
- * @author  esol
- * @version 
+ * @author esol
+ * @version
  */
 public class LengthUnit extends neqsim.util.unit.BaseUnit {
 

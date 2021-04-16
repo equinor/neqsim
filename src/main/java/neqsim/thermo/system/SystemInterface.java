@@ -14,162 +14,173 @@ import neqsim.thermo.phase.PhaseInterface;
 public interface SystemInterface extends Cloneable {
 
     public void saveFluid(int ID);
-    
+
     public String getComponentNameTag();
+
     public void setComponentNameTagOnNormalComponents(String nameTag);
-    
-    public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName, String toPhaseName);
-    
-    public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,  String fromPhaseName, String toPhaseName);
+
+    public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
+            String toPhaseName);
+
+    public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,
+            String fromPhaseName, String toPhaseName);
 
     public void renameComponent(String oldName, String newName);
-    	
+
     public void setComponentNameTag(String nameTag);
-    	
-    
+
     /**
-	 * method to return kinematic viscosity in a given unit
-	 *
-	 * @param unit The unit as a string. Supported units are m2/sec
-	 * @return kinematic viscosity in specified unit
-	 */
-	public double getKinematicViscosity(String unit);
-	
-	public int getNumberOfComponents();
-	
-	/**
-	 * method to get molar mass of a fluid phase
-	 * @param unit The unit as a string. Supported units are kg/mol, gr/mol
-	 * @return molar mass in given unit 
-	 */
-	public double getMolarMass(String unit);
-	
-	/**
-	 * This method is used to set the total molar composition of a plus fluid. The total
-	 * flow rate will be kept constant. The input mole fractions will be normalized.
-	 *
-	 * @param molefractions is a double array taking the molar fraction of the
-	 *                      components in the fluid. THe last molfraction is the mole fraction of the plus component
-	 * @return Nothing.
-	 */
-	public void setMolarCompositionPlus(double[] molefractions);
-	
+     * method to return kinematic viscosity in a given unit
+     *
+     * @param unit The unit as a string. Supported units are m2/sec
+     * @return kinematic viscosity in specified unit
+     */
+    public double getKinematicViscosity(String unit);
+
+    public int getNumberOfComponents();
+
+    /**
+     * method to get molar mass of a fluid phase
+     * 
+     * @param unit The unit as a string. Supported units are kg/mol, gr/mol
+     * @return molar mass in given unit
+     */
+    public double getMolarMass(String unit);
+
+    /**
+     * This method is used to set the total molar composition of a plus fluid. The
+     * total flow rate will be kept constant. The input mole fractions will be
+     * normalized.
+     *
+     * @param molefractions is a double array taking the molar fraction of the
+     *                      components in the fluid. THe last molfraction is the
+     *                      mole fraction of the plus component
+     * @return Nothing.
+     */
+    public void setMolarCompositionPlus(double[] molefractions);
+
     public void saveFluid(int ID, String text);
-    
+
     /**
-	 * This method is used to set the total molar composition of a characterized fluid. The total
-	 * flow rate will be kept constant. The input mole fractions will be normalized.
-	 *
-	 * @param molefractions is a double array taking the molar fraction of the
-	 *                      components in the fluid. THe last fraction in the array is the total molefraction of the characterized components.
-	 * @return Nothing.
-	 */
+     * This method is used to set the total molar composition of a characterized
+     * fluid. The total flow rate will be kept constant. The input mole fractions
+     * will be normalized.
+     *
+     * @param molefractions is a double array taking the molar fraction of the
+     *                      components in the fluid. THe last fraction in the array
+     *                      is the total molefraction of the characterized
+     *                      components.
+     * @return Nothing.
+     */
     public void setMolarCompositionOfPlusFluid(double[] molefractions);
-    
-	  /**
-     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
+
+    /**
+     * method to get the Joule Thomson Coefficient of a system. Based on a phase
+     * mole fraction basis average
      * 
      * @param unit The unit as a string. Supported units are K/bar, C/bar
      *
      * @return Joule Thomson coefficient in given unit
      */
     public double getJouleThomsonCoefficient(String unit);
-    
-	/**
-	 * method to return exergy in a given unit
-	 * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
-	 *             kJ/kg
-	 * @param temperatureOfSurroundings in Kelvin
-	 * @return exergy in specified unit
-	 */
-	public double getExergy(double temperatureOfSurroundings, String exergyUnit);
-	
-	
-	/**
-	 * method to return exergy defined as (h1-T0*s1) in a unit Joule
-	 * @param temperatureOfSurroundings in Kelvin
-	 */
-	public double getExergy(double temperatureOfSurroundings);
-	
 
     /**
-     * method to get the Joule Thomson Coefficient of a system. Based on a phase mole fraction basis average
+     * method to return exergy in a given unit
+     * 
+     * @param unit                      The unit as a string. Supported units are J,
+     *                                  J/mol, J/kg and kJ/kg
+     * @param temperatureOfSurroundings in Kelvin
+     * @return exergy in specified unit
+     */
+    public double getExergy(double temperatureOfSurroundings, String exergyUnit);
+
+    /**
+     * method to return exergy defined as (h1-T0*s1) in a unit Joule
+     * 
+     * @param temperatureOfSurroundings in Kelvin
+     */
+    public double getExergy(double temperatureOfSurroundings);
+
+    /**
+     * method to get the Joule Thomson Coefficient of a system. Based on a phase
+     * mole fraction basis average
      *
      * @return Joule Thomson coefficient in K/bar
      */
     public double getJouleThomsonCoefficient();
-    
-	/**
-	 * method to return mass of fluid
-	 *
-	 * @param unit The unit as a string. Supported units are kg, gr, tons
-	 *
-	 * @return volume in specified unit
-	 */
-	public double getMass(String unit);
-		
-    public double getMoleFractionsSum();
-
-	/**
-	 * method to get the speed of sound of a system. THe sound speed is implemented
-	 * based on a molar average over the phases
-	 * 
-	 * @param unit The unit as a string. Supported units are m/s, km/h
-	 * @return speed of sound in m/s
-	 */
-	public double getSoundSpeed(String unit);
-	
-	/**
-	 * method to get the speed of sound of a system. THe sound speed is implemented
-	 * based on a molar average over the phases
-	 *
-	 * @return speed of sound in m/s
-	 */
-	public double getSoundSpeed();
-	
-    public void removePhaseKeepTotalComposition(int specPhase);
-    
-	/**
-	 * Calculates thermodynamic and physical properties of a fluid using initThermoProperties() and initPhysicalProperties();
-	 *
-	 */
-	public void initProperties();
 
     /**
-	 * return two fluid added as a new fluid 
-	 *
-	 * @param addFluid1 first fluid to add
-	 * @param addFluid2 second fluid o add
-	 *
-	 * @return new fluid
-	 */
-	public static SystemInterface addFluids(SystemInterface addFluid1, SystemInterface addFluid2)
-		{
-			SystemInterface newFluid = (SystemInterface) addFluid1.clone();
-			newFluid.addFluid(addFluid2);
-			return newFluid;
-		}
+     * method to return mass of fluid
+     *
+     * @param unit The unit as a string. Supported units are kg, gr, tons
+     *
+     * @return volume in specified unit
+     */
+    public double getMass(String unit);
+
+    public double getMoleFractionsSum();
+
+    /**
+     * method to get the speed of sound of a system. THe sound speed is implemented
+     * based on a molar average over the phases
+     * 
+     * @param unit The unit as a string. Supported units are m/s, km/h
+     * @return speed of sound in m/s
+     */
+    public double getSoundSpeed(String unit);
+
+    /**
+     * method to get the speed of sound of a system. THe sound speed is implemented
+     * based on a molar average over the phases
+     *
+     * @return speed of sound in m/s
+     */
+    public double getSoundSpeed();
+
+    public void removePhaseKeepTotalComposition(int specPhase);
+
+    /**
+     * Calculates thermodynamic and physical properties of a fluid using
+     * initThermoProperties() and initPhysicalProperties();
+     *
+     */
+    public void initProperties();
+
+    /**
+     * return two fluid added as a new fluid
+     *
+     * @param addFluid1 first fluid to add
+     * @param addFluid2 second fluid o add
+     *
+     * @return new fluid
+     */
+    public static SystemInterface addFluids(SystemInterface addFluid1, SystemInterface addFluid2) {
+        SystemInterface newFluid = (SystemInterface) addFluid1.clone();
+        newFluid.addFluid(addFluid2);
+        return newFluid;
+    }
+
     /**
      * Calculates thermodynamic properties of a fluid using the init(2) method
      *
      */
     public void initThermoProperties();
-    
-    public double getInterfacialTension(int phase1, int phase2,String unit);
-    
+
+    public double getInterfacialTension(int phase1, int phase2, String unit);
+
     /**
      * Calculates physical properties of type propertyName
      *
      */
     public void initPhysicalProperties(String propertyName);
 
-	/**
-	 * method to return heat capacity ratio calculated as Cp/(Cp-R)
-	 *
-	 * @return kappa
-	 */
-	public double getGamma2();
-	
+    /**
+     * method to return heat capacity ratio calculated as Cp/(Cp-R)
+     *
+     * @return kappa
+     */
+    public double getGamma2();
+
     /**
      * method to return heat capacity ratio/adiabatic index/Poisson constant
      *
@@ -177,46 +188,46 @@ public interface SystemInterface extends Cloneable {
      */
     public double getGamma();
 
-	/**
-	 * method to return fluid volume
-	 *
-	 * @param unit The unit as a string. Supported units are m3, litre, m3/kg,
-	 *             m3/mol
-	 *
-	 * @return volume in specified unit
-	 */
+    /**
+     * method to return fluid volume
+     *
+     * @param unit The unit as a string. Supported units are m3, litre, m3/kg,
+     *             m3/mol
+     *
+     * @return volume in specified unit
+     */
     public double getVolume(String unit);
 
-	/**
-	 * method to return flow rate of fluid
-	 *
-	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, kg/hr
-	 *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day
-	 *
-	 * @return flow rate in specified unit
-	 */
+    /**
+     * method to return flow rate of fluid
+     *
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     *                 kg/hr m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr,
+     *                 Sm3/hr, Sm3/day
+     *
+     * @return flow rate in specified unit
+     */
     public double getFlowRate(String flowunit);
 
     /**
      * method to set the pressure of a fluid (same temperature for all phases)
      *
      * @param newPressure in specified unit
-     * @param unit unit can be bar, bara, barg or atm
+     * @param unit        unit can be bar, bara, barg or atm
      */
     public void setPressure(double newPressure, String unit);
 
     /**
-     * method to set the temperature of a fluid (same temperature for all
-     * phases)
+     * method to set the temperature of a fluid (same temperature for all phases)
      *
      * @param newTemperature in specified unit
-     * @param unit unit can be C or K (Celcius of Kelvin)
+     * @param unit           unit can be C or K (Celcius of Kelvin)
      */
     public void setTemperature(double newTemperature, String unit);
 
     /**
-     * method to return the volume fraction of a phase note: without Peneloux
-     * volume correction
+     * method to return the volume fraction of a phase note: without Peneloux volume
+     * correction
      *
      * @param phaseNumber number of the phase to get volume fraction for
      * @return volume fraction
@@ -224,8 +235,8 @@ public interface SystemInterface extends Cloneable {
     public double getVolumeFraction(int phaseNumber);
 
     /**
-     * method to return the volume fraction of a phase note: with Peneloux
-     * volume correction
+     * method to return the volume fraction of a phase note: with Peneloux volume
+     * correction
      *
      * @param phaseNumber number of the phase to get volume fraction for
      * @return volume fraction
@@ -237,8 +248,8 @@ public interface SystemInterface extends Cloneable {
     /**
      * method to return total enthalpy
      *
-     * @param unit The unit as a string. unit supported units are J, J/mol, J/kg
-     * and kJ/kg
+     * @param unit The unit as a string. unit supported units are J, J/mol, J/kg and
+     *             kJ/kg
      * @return enthalpy in specified unit
      */
     public double getEnthalpy(String unit);
@@ -246,8 +257,8 @@ public interface SystemInterface extends Cloneable {
     /**
      * method to return internal energy (U) in a given unit
      *
-     * @param unit The unit as a string. unit supported units are J, J/mol, J/kg
-     * and kJ/kg
+     * @param unit The unit as a string. unit supported units are J, J/mol, J/kg and
+     *             kJ/kg
      * @return enthalpy in unit Joule (J)
      */
     public double getInternalEnergy(String unit);
@@ -283,8 +294,7 @@ public interface SystemInterface extends Cloneable {
     public SystemInterface phaseToSystem(String phaseName);
 
     /**
-     * method to get the total molar flow rate of individual components in a
-     * fluid
+     * method to get the total molar flow rate of individual components in a fluid
      *
      * @return molar flow of individual components in unit mol/sec
      */
@@ -328,33 +338,33 @@ public interface SystemInterface extends Cloneable {
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK
-     * and kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+     *             kJ/kgK
      * @return Cp in specified unit
      */
     public double getCv(String unit);
 
     public neqsim.thermo.characterization.Characterise getCharacterization();
 
-	/**
-	 * add a component to a fluid. If component already exists, it will be added to
-	 * the component
-	 *
-	 * @param componentName Name of the component to be added. See NeqSim database
-	 *                      for available components in the database.
-	 * @param moles         number of moles (per second) of the component to be
-	 *                      added to the fluid
-	 */
-	public void addComponent(String name);
-	
     /**
-     * add a component to a fluid. If component already exists, it will be added
-     * to the component
+     * add a component to a fluid. If component already exists, it will be added to
+     * the component
      *
-     * @param componentName Name of the component to be added. See NeqSim
-     * database for available components in the database.
-     * @param moles number of moles (per second) of the component to be added to
-     * the fluid
+     * @param componentName Name of the component to be added. See NeqSim database
+     *                      for available components in the database.
+     * @param moles         number of moles (per second) of the component to be
+     *                      added to the fluid
+     */
+    public void addComponent(String name);
+
+    /**
+     * add a component to a fluid. If component already exists, it will be added to
+     * the component
+     *
+     * @param componentName Name of the component to be added. See NeqSim database
+     *                      for available components in the database.
+     * @param moles         number of moles (per second) of the component to be
+     *                      added to the fluid
      */
     public void addComponent(String componenName, double moles);
 
@@ -387,49 +397,49 @@ public interface SystemInterface extends Cloneable {
     public void setMolarComposition(double[] moles);
 
     /**
-     * return the phase of to specified type if the phase does not exist, the
-     * method will return null
+     * return the phase of to specified type if the phase does not exist, the method
+     * will return null
      *
-     * @param phaseTypeName the phase type to be returned (gas, oil, aqueous,
-     * wax, hydrate are supported)
+     * @param phaseTypeName the phase type to be returned (gas, oil, aqueous, wax,
+     *                      hydrate are supported)
      *
      */
     public PhaseInterface getPhaseOfType(String phaseTypeName);
 
     /**
-     * add a component to a fluid. I component already exists, it will be added
-     * to the component
+     * add a component to a fluid. I component already exists, it will be added to
+     * the component
      *
-     * @param componentName Name of the component to be added. See NeqSim
-     * database for component in the database.
-     * @param moles number of moles (per second) of the component to be added to
-     * the fluid
-     * @param phaseNumber the phase number of the phase to add the component to
+     * @param componentName Name of the component to be added. See NeqSim database
+     *                      for component in the database.
+     * @param moles         number of moles (per second) of the component to be
+     *                      added to the fluid
+     * @param phaseNumber   the phase number of the phase to add the component to
      */
     public void addComponent(String componentName, double moles, int phaseNumber);
 
     /**
-     * add a component to a fluid. I component already exists, it will be added
-     * to the component
+     * add a component to a fluid. I component already exists, it will be added to
+     * the component
      *
-     * @param componentName Name of the component to be added. See NeqSim
-     * database for component in the database.
-     * @param value rate of the component to be added to the fluid
-     * @param unitName the unit of the flow rate (eg. mol/sec, kg/sec, etc.)
-     * @param phaseNumber the phase number of the phase to add the component to
+     * @param componentName Name of the component to be added. See NeqSim database
+     *                      for component in the database.
+     * @param value         rate of the component to be added to the fluid
+     * @param unitName      the unit of the flow rate (eg. mol/sec, kg/sec, etc.)
+     * @param phaseNumber   the phase number of the phase to add the component to
      */
     public void addComponent(String componentName, double value, String unitName, int phaseNumber);
 
     /**
-     * add a component to a fluid. I component already exists, it will be added
-     * to the component
+     * add a component to a fluid. I component already exists, it will be added to
+     * the component
      *
-     * @param componentName Name of the component to be added. See NeqSim
-     * database for component in the database.
-     * @param moles rate of the component to be added to the fluid in the
-     * specified unit
-     * @param unitName the unit of rate (sported units are kg/sec, mol/sec,
-     * Nlitre/min, kg/hr, Sm^3/hr, Sm^3/day, MSm^3/day ..
+     * @param componentName Name of the component to be added. See NeqSim database
+     *                      for component in the database.
+     * @param moles         rate of the component to be added to the fluid in the
+     *                      specified unit
+     * @param unitName      the unit of rate (sported units are kg/sec, mol/sec,
+     *                      Nlitre/min, kg/hr, Sm^3/hr, Sm^3/day, MSm^3/day ..
      */
     public void addComponent(String componentName, double value, String unitName);
 
@@ -440,8 +450,8 @@ public interface SystemInterface extends Cloneable {
      *
      * @param componentName selected name of the component to be added
      * @param numberOfMoles number of moles to be added
-     * @param molarMass molar mass of the component in kg/mol
-     * @param density density of the component in g/cm3
+     * @param molarMass     molar mass of the component in kg/mol
+     * @param density       density of the component in g/cm3
      */
     public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density);
 
@@ -458,17 +468,18 @@ public interface SystemInterface extends Cloneable {
     public void addSolidComplexPhase(String type);
 
     /**
-     * method to calculate thermodynamic properties of the fluid. The
-     * temperature, pressure, number of phases and composition of the phases
-     * will be used as basis for calculation.
+     * method to calculate thermodynamic properties of the fluid. The temperature,
+     * pressure, number of phases and composition of the phases will be used as
+     * basis for calculation.
      *
-     * @param number - The number can be 0, 1, 2 or 3. 0: Initialization of a
-     * fluid (feed composition will be set for all phases). 1: Calculation of
-     * density and fugacities, Z-factor 2: 1 + calculation of enthalpy, entropy,
-     * Cp, Cv, and most other thermodynamic properties 3 - 1+2 + Calculation of
-     * composition derivatives of fugacity coefficients init(1) is faster than
-     * init(2). init(2) faster than init(3).Which init to use is dependent on
-     * what properties you need.
+     * @param number - The number can be 0, 1, 2 or 3. 0: Initialization of a fluid
+     *               (feed composition will be set for all phases). 1: Calculation
+     *               of density and fugacities, Z-factor 2: 1 + calculation of
+     *               enthalpy, entropy, Cp, Cv, and most other thermodynamic
+     *               properties 3 - 1+2 + Calculation of composition derivatives of
+     *               fugacity coefficients init(1) is faster than init(2). init(2)
+     *               faster than init(3).Which init to use is dependent on what
+     *               properties you need.
      */
     public void init(int number);
 
@@ -526,13 +537,15 @@ public interface SystemInterface extends Cloneable {
     public void write(String name, String filename, boolean newfile);
 
     public void useVolumeCorrection(boolean volcor);
-	
+
     /**
-	 * method to set the mixing rule for the fluid
-	 *
-	 * @param mixingRuleName the name of the mixing rule. The name can be 'no','classic', 'Huron-Vidal'/'HV', 
-	 * 'Huron-Vidal-T', 'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T', 'classic-CPA-T', 'classic-Tx'  
-	 */
+     * method to set the mixing rule for the fluid
+     *
+     * @param mixingRuleName the name of the mixing rule. The name can be
+     *                       'no','classic', 'Huron-Vidal'/'HV', 'Huron-Vidal-T',
+     *                       'WS'/'Wong-Sandler' , 'classic-CPA', 'classic-T',
+     *                       'classic-CPA-T', 'classic-Tx'
+     */
     public void setMixingRule(String typename);
 
     public boolean isNumericDerivatives();
@@ -553,16 +566,17 @@ public interface SystemInterface extends Cloneable {
      * method to read pure component and interaction parameters from the NeqSim
      * database and create temporary tables with parameters for active fluid.
      *
-     * @param reset If reset is set to true, new temporary tables with
-     * parameters for the added components will be created. When parameters are
-     * needed (eg. when adding components or when setting a mixing rule) it will
-     * try to find them in the temporary tables first eg. COMPTEMP (for pure
-     * component parameters) and INTERTEMP (for interaction parameters). If
-     * reset is set to false it will not create new temporary tables. If a fluid
-     * is created with the same components many times, performance improvements
-     * will be obtained, if temporary tables are created the first time
-     * (reset=true), and then the same tables is used when creating new fluids
-     * with the same temporary tables (reset=false)
+     * @param reset If reset is set to true, new temporary tables with parameters
+     *              for the added components will be created. When parameters are
+     *              needed (eg. when adding components or when setting a mixing
+     *              rule) it will try to find them in the temporary tables first eg.
+     *              COMPTEMP (for pure component parameters) and INTERTEMP (for
+     *              interaction parameters). If reset is set to false it will not
+     *              create new temporary tables. If a fluid is created with the same
+     *              components many times, performance improvements will be
+     *              obtained, if temporary tables are created the first time
+     *              (reset=true), and then the same tables is used when creating new
+     *              fluids with the same temporary tables (reset=false)
      */
     public void createDatabase(boolean reset);
 
@@ -578,10 +592,11 @@ public interface SystemInterface extends Cloneable {
      * method to specify if calculations should check for more than two fluid
      * phases.
      *
-     * @param doMultiPhaseCheck Specify if the calculations should check for
-     * more than two fluid phases. Default is two fluid phases (gas and liquid).
-     * If set to true the program will check for gas and multiple liquid phases
-     * (eg. gas-oil-aqueous).
+     * @param doMultiPhaseCheck Specify if the calculations should check for more
+     *                          than two fluid phases. Default is two fluid phases
+     *                          (gas and liquid). If set to true the program will
+     *                          check for gas and multiple liquid phases (eg.
+     *                          gas-oil-aqueous).
      */
     public void setMultiPhaseCheck(boolean doMultiPhaseCheck);
 
@@ -601,7 +616,8 @@ public interface SystemInterface extends Cloneable {
 
     public void setHydrateCheck(boolean hydrateCheck);
 
-    public double calcBeta() throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
+    public double calcBeta()
+            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
 
     public void setAllComponentsInPhase(int phase);
 
@@ -630,7 +646,7 @@ public interface SystemInterface extends Cloneable {
     public void setTemperature(double temp);
 
     public void setTemperature(double newTemperature, int phaseNumber);
-    //    public void setPressure(double newPressure, int phaseNumber);
+    // public void setPressure(double newPressure, int phaseNumber);
 
     /**
      * method to set the pressure
@@ -649,8 +665,7 @@ public interface SystemInterface extends Cloneable {
     /**
      * method to return pressure in a given unit
      *
-     * @param unit The unit as a string. Supported units are bara, barg, Pa and
-     * MPa
+     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
      * @return pressure in specified unit
      */
     public double getPressure(String unit);
@@ -729,8 +744,8 @@ public interface SystemInterface extends Cloneable {
     /**
      * method to return total entropy of the fluid
      *
-     * @param unit The unit as a string. unit supported units are J/K, J/molK,
-     * J/kgK and kJ/kgK
+     * @param unit The unit as a string. unit supported units are J/K, J/molK, J/kgK
+     *             and kJ/kgK
      * @return entropy in specified unit
      */
     public double getEntropy(String unit);
@@ -759,7 +774,7 @@ public interface SystemInterface extends Cloneable {
     public void initPhysicalProperties();
 
     public void setBeta(double b);
-    //    public double getdfugdt(int i, int j);
+    // public double getdfugdt(int i, int j);
 
     public void setPhaseType(int phaseToChange, int newPhaseType);
 
@@ -787,10 +802,10 @@ public interface SystemInterface extends Cloneable {
     public double getInternalEnergy();
 
     public double getHelmholtzEnergy();
-    
+
     public ComponentInterface getComponent(String name);
-    
-	public ComponentInterface getComponent(int number);
+
+    public ComponentInterface getComponent(int number);
 
     public double getNumberOfMoles();
 
@@ -800,13 +815,14 @@ public interface SystemInterface extends Cloneable {
      * method to set mixing rule used for the fluid
      *
      * @param type The type of mixing rule to be used for the fluid. 1 - classic
-     * mixing rule with all kij set to zero 2 -classic mixing rule with kij from
-     * NeqSim database 3- classic mixing rule with temperature dependent kij 4-
-     * Huron Vidal mixing rule with parameters from NeqSim database 7 -classic
-     * mixing rule with kij of CPA from NeqSim Database 9 -classicmixing rule
-     * with temperature dependent kij of CPA from NeqSim database 10-classic
-     * mixing rule with temperature and composition dependent kij of CPA from
-     * NeqSim database
+     *             mixing rule with all kij set to zero 2 -classic mixing rule with
+     *             kij from NeqSim database 3- classic mixing rule with temperature
+     *             dependent kij 4- Huron Vidal mixing rule with parameters from
+     *             NeqSim database 7 -classic mixing rule with kij of CPA from
+     *             NeqSim Database 9 -classicmixing rule with temperature dependent
+     *             kij of CPA from NeqSim database 10-classic mixing rule with
+     *             temperature and composition dependent kij of CPA from NeqSim
+     *             database
      */
     public void setMixingRule(int type);
 
@@ -826,8 +842,8 @@ public interface SystemInterface extends Cloneable {
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK
-     * and kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+     *             kJ/kgK
      * @return Cp in specified unit
      */
     public double getCp(String unit);
@@ -846,8 +862,8 @@ public interface SystemInterface extends Cloneable {
     public PhaseInterface getLiquidPhase();
 
     /**
-     * method to return compressibility factor of a fluid compressibility factor
-     * is defined in EoS from PV=ZnRT where V is total volume of fluid
+     * method to return compressibility factor of a fluid compressibility factor is
+     * defined in EoS from PV=ZnRT where V is total volume of fluid
      *
      * @return compressibility factor Z
      */
@@ -864,7 +880,7 @@ public interface SystemInterface extends Cloneable {
      * method to return viscosity in a given unit
      *
      * @param unit The unit as a string. Supported units are kg/msec, cP
-     * (centipoise)
+     *             (centipoise)
      * @return viscosity in specified unit
      */
     public double getViscosity(String unit);
@@ -874,7 +890,7 @@ public interface SystemInterface extends Cloneable {
      *
      * @return conductivity in unit W/mK
      * 
-     * @deprecated use {@link #getThermalConductivity()} instead. 
+     * @deprecated use {@link #getThermalConductivity()} instead.
      */
     public double getConductivity();
 
@@ -884,10 +900,10 @@ public interface SystemInterface extends Cloneable {
      * @param unit The unit as a string. Supported units are W/mK, W/cmK
      *
      * @return conductivity in specified unit
-     * @deprecated use {@link #getThermalConductivity(String unit)} instead. 
+     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     public double getConductivity(String unit);
-    
+
     /**
      * method to return thermal conductivity
      *
@@ -908,11 +924,11 @@ public interface SystemInterface extends Cloneable {
      * method to return interfacial tension between two phases
      *
      * @param phase1 phase type of phase1 as string (valid phases are gas, oil,
-     * aqueous)
+     *               aqueous)
      * @param phase2 phase type of phase2 as string (valid phases are gas, oil,
-     * aqueous)
+     *               aqueous)
      * @return interfacial tension with unit N/m. If one or both phases does not
-     * exist - the method will return NaN
+     *         exist - the method will return NaN
      */
     public double getInterfacialTension(String phase1, String phase2);
 
@@ -938,12 +954,12 @@ public interface SystemInterface extends Cloneable {
     public boolean allowPhaseShift();
 
     public void allowPhaseShift(boolean allowPhaseShift);
-    
+
     /**
      * method to return phase fraction of selected phase
      *
      * @param phaseTypeName: gas/oil/aqueous
-     * @param unit: mole/volume/weight
+     * @param unit:          mole/volume/weight
      * @return phase: fraction in given unit
      */
     public double getPhaseFraction(String phaseTypeName, String unit);

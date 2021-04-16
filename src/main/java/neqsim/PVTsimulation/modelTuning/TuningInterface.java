@@ -12,6 +12,8 @@ import neqsim.PVTsimulation.simulation.SimulationInterface;
  */
 public interface TuningInterface {
     public SimulationInterface getSimulation();
+
     public void setSaturationConditions(double temperature, double pressure);
-     public void run();
+
+    public void run();
 }
