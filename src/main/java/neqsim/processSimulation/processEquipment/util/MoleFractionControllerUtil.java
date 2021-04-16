@@ -6,6 +6,7 @@ package neqsim.processSimulation.processEquipment.util;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -17,26 +18,26 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
-    Stream inletStream;
-    Stream outStream;
+    StreamInterface inletStream;
+    StreamInterface outStream;
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
     String compName = null;
     double moleFrac = 1.0, molesChange = 0.0, moleFractionReductionRatio = 0.0;
     boolean moleFractionReduction = false;
 
-    public MoleFractionControllerUtil(Stream inletStream) {
+    public MoleFractionControllerUtil(StreamInterface inletStream) {
         setInletStream(inletStream);
     }
 
-    public void setInletStream(Stream inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
 
-    public Stream getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
