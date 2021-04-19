@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 public class PlusFractionModel implements Serializable {
     private static final long serialVersionUID = 1000;
     private String name = "";
-    SystemInterface system = null;
+    private SystemInterface system = null;
     double MPlus = 0.0, zPlus = 0.0, densPlus = 0.0;
     int firstPlusFractionNumber = 1;
     int lastPlusFractionNumber = 80;
@@ -26,7 +26,7 @@ public class PlusFractionModel implements Serializable {
         this.system = system;
     }
 
-    public class PedersenPlusModel implements PlusFractionModelInterface, Cloneable, java.io.Serializable {
+    class PedersenPlusModel implements PlusFractionModelInterface, Cloneable {
 
         double[] coefs = { 4.4660105006, -1.1266303727, 0.80, 0.0408709562 };
         double[] SRKcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
@@ -264,7 +264,7 @@ public class PlusFractionModel implements Serializable {
         }
     }
 
-    public class PedersenHeavyOilPlusModel extends PedersenPlusModel {
+    private class PedersenHeavyOilPlusModel extends PedersenPlusModel {
 
         public PedersenHeavyOilPlusModel() {
             lastPlusFractionNumber = 200;

@@ -17,6 +17,9 @@ public class AtractiveTermSrk extends AtractiveTermBaseClass {
 
     private static final long serialVersionUID = 1000;
 
+    public AtractiveTermSrk() {
+    	super();
+    }
     /** Creates new AtractiveTermSrk */
     public AtractiveTermSrk(ComponentEosInterface component) {
         super(component);

@@ -38,7 +38,7 @@ public class ComponentTST extends ComponentEos {
 
         delta1 = 1.0 + Math.sqrt(2.0);
         delta2 = 1.0 - Math.sqrt(2.0);
-        atractiveParameter = new AtractiveTermTwu(this);
+        setAtractiveParameter(new AtractiveTermTwu(this));
     }
 
     public ComponentTST(int number, double TC, double PC, double M, double a, double moles) {

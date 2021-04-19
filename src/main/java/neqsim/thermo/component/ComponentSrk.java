@@ -40,7 +40,7 @@ public class ComponentSrk extends ComponentEos {
         delta2 = 0.0;
         // System.out.println("a " + a);
         // atractiveParameter = new AtractiveTermSchwartzentruber(this);
-        atractiveParameter = new AtractiveTermSrk(this);
+        setAtractiveParameter(new AtractiveTermSrk(this));
 
         double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
                 -0.1611763157 };

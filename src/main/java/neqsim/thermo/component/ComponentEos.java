@@ -49,7 +49,7 @@ abstract class ComponentEos extends Component
     protected double aDern = 0, aDerT = 0, aDerTT = 0, aDerTn = 0, bDern = 0, bDerTn = 0;
     protected double dAdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
     protected double dBdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
-    protected AtractiveTermInterface atractiveParameter;
+    private AtractiveTermInterface atractiveParameter;
     static Logger logger = LogManager.getLogger(ComponentEos.class);
 
     public ComponentEos() {
@@ -73,7 +73,7 @@ abstract class ComponentEos extends Component
             logger.error("Cloning failed.", e);
         }
 
-        clonedComponent.atractiveParameter = (AtractiveTermInterface) this.atractiveParameter.clone();
+        clonedComponent.setAtractiveParameter((AtractiveTermInterface) this.getAtractiveParameter().clone());
 
         return clonedComponent;
     }
@@ -117,46 +117,46 @@ abstract class ComponentEos extends Component
 	public void setAtractiveTerm(int i) {
         atractiveTermNumber = i;
         if (i == 0) {
-            atractiveParameter = new AtractiveTermSrk(this);
+            setAtractiveParameter(new AtractiveTermSrk(this));
         } else if (i == 1) {
-            atractiveParameter = new AtractiveTermPr(this);
+            setAtractiveParameter(new AtractiveTermPr(this));
         } else if (i == 2) {
-            atractiveParameter = new AtractiveTermSchwartzentruber(this, getSchwartzentruberParams());
+            setAtractiveParameter(new AtractiveTermSchwartzentruber(this, getSchwartzentruberParams()));
         } else if (i == 3) {
-            atractiveParameter = new AtractiveTermMollerup(this, getSchwartzentruberParams());
+            setAtractiveParameter(new AtractiveTermMollerup(this, getSchwartzentruberParams()));
         } else if (i == 4) {
-            atractiveParameter = new AtractiveTermMatCop(this, getMatiascopemanParams());
+            setAtractiveParameter(new AtractiveTermMatCop(this, getMatiascopemanParams()));
         } else if (i == 5) {
-            atractiveParameter = new AtractiveTermRk(this);
+            setAtractiveParameter(new AtractiveTermRk(this));
         } else if (i == 6) {
-            atractiveParameter = new AtractiveTermPr1978(this);
+            setAtractiveParameter(new AtractiveTermPr1978(this));
         } else if (i == 7) {
-            atractiveParameter = new AtractiveTermPrDelft1998(this);
+            setAtractiveParameter(new AtractiveTermPrDelft1998(this));
         } else if (i == 8) {
-            atractiveParameter = new AtractiveTermPrGassem2001(this);
+            setAtractiveParameter(new AtractiveTermPrGassem2001(this));
         } else if (i == 9) {
-            atractiveParameter = new AtractiveTermPrDanesh(this);
+            setAtractiveParameter(new AtractiveTermPrDanesh(this));
         } else if (i == 10) {
-            atractiveParameter = new AtractiveTermGERG(this);
+            setAtractiveParameter(new AtractiveTermGERG(this));
         } else if (i == 11) {
-            atractiveParameter = new AtractiveTermTwuCoon(this);
+            setAtractiveParameter(new AtractiveTermTwuCoon(this));
         } else if (i == 12) {
-            atractiveParameter = new AtractiveTermTwuCoonParam(this, getTwuCoonParams());
+            setAtractiveParameter(new AtractiveTermTwuCoonParam(this, getTwuCoonParams()));
         } else if (i == 13) {
-            atractiveParameter = new AtractiveTermMatCopPR(this, getMatiascopemanParamsPR());
+            setAtractiveParameter(new AtractiveTermMatCopPR(this, getMatiascopemanParamsPR()));
         } else if (i == 14) {
-            atractiveParameter = new AtractiveTermTwu(this);
+            setAtractiveParameter(new AtractiveTermTwu(this));
         } else if (i == 15) {
-            atractiveParameter = new AtractiveTermCPAstatoil(this);
+            setAtractiveParameter(new AtractiveTermCPAstatoil(this));
         } else if (i == 16) {
-            atractiveParameter = new AtractiveTermUMRPRU(this);
+            setAtractiveParameter(new AtractiveTermUMRPRU(this));
         } else if (i == 17) {
-            atractiveParameter = new AtractiveTermMatCopPRUMR(this);
+            setAtractiveParameter(new AtractiveTermMatCopPRUMR(this));
         } else if (i == 18) {
             if (componentName.equals("mercury")) {
-                atractiveParameter = new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams());
+                setAtractiveParameter(new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams()));
             } else {
-                atractiveParameter = new AtractiveTermSrk(this);
+                setAtractiveParameter(new AtractiveTermSrk(this));
             }
         } else {
             logger.error("error selecting an alpha formultaion term");
@@ -166,7 +166,7 @@ abstract class ComponentEos extends Component
 
     @Override
 	public AtractiveTermInterface getAtractiveTerm() {
-        return this.atractiveParameter;
+        return this.getAtractiveParameter();
     }
 
     double reducedTemperature(double temperature) {
@@ -423,30 +423,30 @@ abstract class ComponentEos extends Component
     }
 
     public double alpha(double temperature) {
-        return atractiveParameter.alpha(temperature);
+        return getAtractiveParameter().alpha(temperature);
     }
 
     @Override
 	public double aT(double temperature) {
-        return atractiveParameter.aT(temperature);
+        return getAtractiveParameter().aT(temperature);
     }
 
     public double diffalphaT(double temperature) {
-        return atractiveParameter.diffalphaT(temperature);
+        return getAtractiveParameter().diffalphaT(temperature);
     }
 
     public double diffdiffalphaT(double temperature) {
-        return atractiveParameter.diffdiffalphaT(temperature);
+        return getAtractiveParameter().diffdiffalphaT(temperature);
     }
 
     @Override
 	public double diffaT(double temperature) {
-        return atractiveParameter.diffaT(temperature);
+        return getAtractiveParameter().diffaT(temperature);
     }
 
     @Override
 	public double diffdiffaT(double temperature) {
-        return atractiveParameter.diffdiffaT(temperature);
+        return getAtractiveParameter().diffdiffaT(temperature);
     }
 
     @Override
@@ -559,4 +559,12 @@ abstract class ComponentEos extends Component
                         / phase.FTT();// *
         // phase.getComponent(compNumb2).getF;
     }
+
+	public AtractiveTermInterface getAtractiveParameter() {
+		return atractiveParameter;
+	}
+
+	public void setAtractiveParameter(AtractiveTermInterface atractiveParameter) {
+		this.atractiveParameter = atractiveParameter;
+	}
 }

@@ -29,14 +29,13 @@ public class NewtonSolveABCD extends Object implements java.io.Serializable {
     int numberOfComponents = 0;
     TBPCharacterize characterizeClass;
     double[] calcTPBfraction = null;
-    SystemInterface system = null;
     static Logger logger = LogManager.getLogger(NewtonSolveABCD.class);
 
     public NewtonSolveABCD() {
     }
 
     public NewtonSolveABCD(SystemInterface system, TBPCharacterize characterizeClass) {
-        this.system = system;
+        //this.system = system;
         this.characterizeClass = characterizeClass;
         numberOfComponents = system.getPhase(0).getNumberOfComponents();
         Jac = new Matrix(2 * characterizeClass.getLength(), 4);
