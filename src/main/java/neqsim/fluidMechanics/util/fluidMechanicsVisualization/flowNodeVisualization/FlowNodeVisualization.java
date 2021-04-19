@@ -34,7 +34,8 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
     public FlowNodeVisualization() {
     }
 
-    public void setData(FlowNodeInterface node) {
+    @Override
+	public void setData(FlowNodeInterface node) {
         temperature[0] = node.getBulkSystem().getPhases()[0].getTemperature();
         temperature[1] = node.getBulkSystem().getPhases()[1].getTemperature();
         pressure[0] = node.getBulkSystem().getPhases()[0].getPressure();
@@ -49,63 +50,78 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
         nodeCenter = node.getDistanceToCenterOfNode();
     }
 
-    public int getNumberOfComponents() {
+    @Override
+	public int getNumberOfComponents() {
         return numberOfComponents;
     }
 
-    public double getInterphaseContactLength() {
+    @Override
+	public double getInterphaseContactLength() {
         return interphaseContactLength;
     }
 
-    public double getWallContactLength(int phase) {
+    @Override
+	public double getWallContactLength(int phase) {
         return wallContactLength[phase];
     }
 
-    public double getPressure(int i) {
+    @Override
+	public double getPressure(int i) {
         return pressure[i];
     }
 
-    public double getReynoldsNumber(int i) {
+    @Override
+	public double getReynoldsNumber(int i) {
         return reynoldsNumber[i];
     }
 
-    public double getDistanceToCenterOfNode() {
+    @Override
+	public double getDistanceToCenterOfNode() {
         return nodeCenter;
     }
 
-    public double getTemperature(int i) {
+    @Override
+	public double getTemperature(int i) {
         return temperature[i];
     }
 
-    public double getInterfaceTemperature(int i) {
+    @Override
+	public double getInterfaceTemperature(int i) {
         return interfaceTemperature[i];
     }
 
-    public double getVelocity(int i) {
+    @Override
+	public double getVelocity(int i) {
         return velocity[i];
     }
 
-    public double getBulkComposition(int i, int phase) {
+    @Override
+	public double getBulkComposition(int i, int phase) {
         return bulkComposition[phase][i];
     }
 
-    public double getInterfaceComposition(int i, int phase) {
+    @Override
+	public double getInterfaceComposition(int i, int phase) {
         return interfaceComposition[phase][i];
     }
 
-    public double getMolarFlux(int i, int phase) {
+    @Override
+	public double getMolarFlux(int i, int phase) {
         return molarFlux[phase][i];
     }
 
-    public double getEffectiveMassTransferCoefficient(int i, int phase) {
+    @Override
+	public double getEffectiveMassTransferCoefficient(int i, int phase) {
         return effectiveMassTransferCoefficient[phase][i];
     }
 
-    public double getEffectiveSchmidtNumber(int i, int phase) {
+    @Override
+	public double getEffectiveSchmidtNumber(int i, int phase) {
         return effectiveSchmidtNumber[phase][i];
     }
 
-    public double getPhaseFraction(int phase) {
+    @Override
+	public double getPhaseFraction(int phase) {
         return phaseFraction[phase];
     }
 

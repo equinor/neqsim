@@ -22,6 +22,7 @@ public class visAdBaseClass implements visAdInterface, java.io.Serializable {
     public visAdBaseClass() {
     }
 
-    public void init() throws RemoteException, VisADException {
+    @Override
+	public void init() throws RemoteException, VisADException {
     }
 }

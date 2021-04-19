@@ -10,7 +10,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -40,11 +39,13 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
         this.setInletStream(inletStream);
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -56,23 +57,28 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
         liquidOutStream = new Stream(liquidSystem);
     }
 
-    public StreamInterface getLiquidOutStream() {
+    @Override
+	public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
-    public StreamInterface getGasOutStream() {
+    @Override
+	public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
-    public StreamInterface getGas() {
+    @Override
+	public StreamInterface getGas() {
         return getGasOutStream();
     }
 
-    public StreamInterface getLiquid() {
+    @Override
+	public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasSystem.setNumberOfPhases(1);
@@ -84,10 +90,12 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
         liquidOutStream.setThermoSystem(liquidSystem);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 

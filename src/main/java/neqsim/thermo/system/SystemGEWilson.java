@@ -76,7 +76,8 @@ public class SystemGEWilson extends SystemEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemGEWilson clonedSystem = null;
         try {
             clonedSystem = (SystemGEWilson) super.clone();

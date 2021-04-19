@@ -28,7 +28,8 @@ public class Cooler extends Heater {
         super(name, inStream);
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         //
         double entrop = 0.0;
 

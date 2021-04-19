@@ -157,7 +157,8 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
         } while (ans.norm2() > 1e-6);
     }
 
-    public void stabilityAnalysis() {
+    @Override
+	public void stabilityAnalysis() {
         double[] logWi = new double[system.getPhases()[1].getNumberOfComponents()];
         double[][] Wi = new double[system.getPhases()[1].getNumberOfComponents()][system.getPhases()[0]
                 .getNumberOfComponents()];
@@ -264,7 +265,8 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);*/
     }
 
-    public void run() {
+    @Override
+	public void run() {
         logger.info("Starting multiphase-flash....");
         stabilityAnalysis();
         system.init(1);

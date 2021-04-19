@@ -25,7 +25,8 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid extends Lev
     public IonicInteractionParameterFittingFunction_Sleipnernoacid() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // System.out.println("pressure: " + system.getPressure());
@@ -36,11 +37,13 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid extends Lev
         return system.getPressure();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0, AcidnegNumb = 0;
         int j = 0;

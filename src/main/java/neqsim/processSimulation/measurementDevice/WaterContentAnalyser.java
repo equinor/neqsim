@@ -35,7 +35,8 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
         unit = "kg/day";
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         try {
             System.out.println("total water production [kg/dag]"
                     + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
@@ -46,7 +47,8 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
         }
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
                 * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
     }

@@ -40,12 +40,14 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         this.setMixingRule(2);
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGEUnifacPSRK(componentName, moles, molesInPhase, compNumber);
     }
 
-    public void setMixingRule(int type) {
+    @Override
+	public void setMixingRule(int type) {
         super.setMixingRule(type);
         if (!checkedGroups) {
             checkGroups();
@@ -54,7 +56,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         calccij();
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -62,7 +65,8 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         double GE = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {

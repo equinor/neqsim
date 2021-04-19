@@ -34,7 +34,8 @@ public class DistillationTraySection extends SepDesignSection {
         super(separatorSection);
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
 
         double vesselDiameter = separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
         if (vesselDiameter <= 616) {

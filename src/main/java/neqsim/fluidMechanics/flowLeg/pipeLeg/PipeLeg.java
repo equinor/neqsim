@@ -41,7 +41,8 @@ public class PipeLeg extends FlowLeg {
         super();
     }
 
-    public void createFlowNodes(FlowNodeInterface initNode) {
+    @Override
+	public void createFlowNodes(FlowNodeInterface initNode) {
         heightChangePerNode = (this.endHeightCoordinate - this.startHeightCoordinate) / this.getNumberOfNodes();
         longitudionalChangePerNode = (this.endLongitudionalCoordinate - this.startLongitudionalCoordinate)
                 / (this.getNumberOfNodes() * 1.0);

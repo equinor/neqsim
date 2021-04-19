@@ -25,7 +25,8 @@ public class EnhancementFactorAlg extends EnhancementFactor {
         super(fluidBoundary);
     }
 
-    public void calcEnhancementVec(int phase) {
+    @Override
+	public void calcEnhancementVec(int phase) {
         double hatta = 0.0;
         for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
             if (fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getName().equals("CO2")

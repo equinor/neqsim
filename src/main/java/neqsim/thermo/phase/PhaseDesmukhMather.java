@@ -30,12 +30,14 @@ public class PhaseDesmukhMather extends PhaseGE {
         super();
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentDesmukhMather(componentName, moles, molesInPhase, compNumber);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase, double beta) {
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase, double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
         if (initType != 0) {
             phaseTypeName = phase == 0 ? "liquid" : "gas";
@@ -44,7 +46,8 @@ public class PhaseDesmukhMather extends PhaseGE {
         Z = pressure * getMolarVolume() / (R * temperature);
     }
 
-    public void setMixingRule(int type) {
+    @Override
+	public void setMixingRule(int type) {
         super.setMixingRule(type);
         this.aij = new double[numberOfComponents][numberOfComponents];
         this.bij = new double[numberOfComponents][numberOfComponents];
@@ -115,7 +118,8 @@ public class PhaseDesmukhMather extends PhaseGE {
         return bij[i][j];
     }
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -126,21 +130,25 @@ public class PhaseDesmukhMather extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
-    public double getGibbsEnergy() {
+    @Override
+	public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
-    public double getExessGibbsEnergy() {
+    @Override
+	public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
         // pressure, phaseType);
         return GE;
     }
 
-    public double getActivityCoefficient(int k, int p) {
+    @Override
+	public double getActivityCoefficient(int k, int p) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 
-    public double getActivityCoefficient(int k) {
+    @Override
+	public double getActivityCoefficient(int k) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 

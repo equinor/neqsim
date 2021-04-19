@@ -46,13 +46,15 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     public CO2RemovalModule() {
     }
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("streamToAbsorber")) {
             this.streamToAbsorber = stream;
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -63,7 +65,8 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -77,7 +80,8 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         streamFromAbsorber.getThermoSystem().init(1);
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
         try {
             this.streamFromAbsorber = (Stream) this.streamToAbsorber.clone();
@@ -90,22 +94,26 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
         inletSeparator = new Separator(streamToAbsorber);
 
         getOperations().add(inletSeparator);
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 

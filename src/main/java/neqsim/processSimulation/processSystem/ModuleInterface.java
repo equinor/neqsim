@@ -25,7 +25,6 @@
 package neqsim.processSimulation.processSystem;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
@@ -44,7 +43,8 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
 
     public void setPreferedThermodynamicModel(String preferedThermodynamicModel);
 
-    public void run();
+    @Override
+	public void run();
 
     public void initializeStreams();
 
@@ -58,8 +58,10 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
 
     public void setProperty(String propertyName, double value);
 
-    public String getName();
+    @Override
+	public String getName();
 
-    public void setName(String name);
+    @Override
+	public void setName(String name);
 
 }

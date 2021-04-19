@@ -20,7 +20,8 @@ public class ComponentDefault extends Component {
     public ComponentDefault() {
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         return 0.0;
     }
 

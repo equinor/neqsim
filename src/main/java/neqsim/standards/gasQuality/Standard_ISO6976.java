@@ -10,7 +10,6 @@ import java.util.ArrayList;
 
 import org.apache.logging.log4j.*;
 
-import neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.shipSystem.LNGship;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -176,7 +175,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         energyRefT = energyReferenceTemperaturedegC;
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
         Zmix0 = 1.0;
         Zmix15 = 1.0;
         Zmix20 = 1.0;
@@ -225,7 +225,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         // System.out.println("molRefm3 " + molRefm3);
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("GCV")) {
             returnParameter = "SuperiorCalorificValue";
         }
@@ -339,11 +340,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         }
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         if (returnParameter.equals("CompressionFactor")) {
             return "-";
         } else {
@@ -351,11 +354,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         }
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return true;
     }
 
-    public String[][] createTable(String name) {
+    @Override
+	public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);
 
         thermoSystem.createTable(name);

@@ -10,7 +10,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -35,16 +34,19 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface {
         outStream = (Stream) inStream.clone();
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
-    public void setOutTemperature(double temperature) {
+    @Override
+	public void setOutTemperature(double temperature) {
         this.setTemperature = true;
         this.temperatureOut = temperature;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         double oldH = system.getEnthalpy();
         if (setTemperature) {
@@ -61,7 +63,8 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface {
         outStream.setThermoSystem(system);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("heater dH: " + dH);
     }
 }

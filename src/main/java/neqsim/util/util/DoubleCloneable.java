@@ -25,7 +25,8 @@ public class DoubleCloneable implements Cloneable {
         this.doubleValue = val;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         DoubleCloneable clonedSystem = null;
         try {
             clonedSystem = (DoubleCloneable) super.clone();

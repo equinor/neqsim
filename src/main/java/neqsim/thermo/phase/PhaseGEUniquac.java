@@ -46,20 +46,24 @@ public class PhaseGEUniquac extends PhaseGE {
         }
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGEUniquac(componentName, moles, molesInPhase, compNumber);
     }
 
-    public void setMixingRule(int type) {
+    @Override
+	public void setMixingRule(int type) {
         super.setMixingRule(type);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -70,11 +74,13 @@ public class PhaseGEUniquac extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;
     }
 
-    public double getGibbsEnergy() {
+    @Override
+	public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
-    public double getExessGibbsEnergy() {
+    @Override
+	public double getExessGibbsEnergy() {
         // GE = getExessGibbsEnergy(this, numberOfComponents, temperature, pressure,
         // phaseType);
         return GE;

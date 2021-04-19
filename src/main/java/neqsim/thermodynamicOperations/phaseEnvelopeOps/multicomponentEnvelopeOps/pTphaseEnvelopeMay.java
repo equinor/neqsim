@@ -31,7 +31,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
-import org.jfree.chart.JFreeChart;
 
 public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterface, java.io.Serializable {
 
@@ -108,7 +107,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         speceq = 0; // initiallization
         try {
@@ -518,7 +518,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -573,14 +574,17 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
          */
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return points2;
     }
 
-    public void addData(String name, double[][] data) {
+    @Override
+	public void addData(String name, double[][] data) {
         double[][] localPoints = new double[points2.length + data.length][];
         navn[localPoints.length / 2 - 1] = name;
         System.arraycopy(points2, 0, localPoints, 0, points2.length);
@@ -588,7 +592,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         points2 = localPoints;
     }
 
-    public double[] get(String name) {
+    @Override
+	public double[] get(String name) {
         if (name.equals("dewT")) {
             return points2[0];
         }
@@ -647,7 +652,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         }
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         fileName = name;
     }
 
@@ -673,7 +679,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         this.bubblePointFirst = bubblePointFirst;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 
@@ -767,7 +774,8 @@ public class pTphaseEnvelopeMay extends BaseOperation implements OperationInterf
         return Tstart;
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");

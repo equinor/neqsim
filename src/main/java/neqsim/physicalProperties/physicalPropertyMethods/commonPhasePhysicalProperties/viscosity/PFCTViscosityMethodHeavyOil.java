@@ -5,7 +5,6 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import static neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86.referenceSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -40,7 +39,8 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         }
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
         this.calcPureComponentViscosity();
         int phaseTypeNumb = 0;
         // if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;

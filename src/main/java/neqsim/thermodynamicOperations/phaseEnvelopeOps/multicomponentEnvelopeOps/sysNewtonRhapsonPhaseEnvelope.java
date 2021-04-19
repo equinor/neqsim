@@ -19,7 +19,6 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOp
 import Jama.*;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
-import static neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps.pTphaseEnvelope.logger;
 import org.apache.logging.log4j.*;
 
 public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Serializable {
@@ -320,7 +319,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
                 speceq = speceqOld;
             }
 
-            int intsign = (int) Math.round(Math.round(dxds.get(speceq, 0) * 100000000));
+            int intsign = Math.round(Math.round(dxds.get(speceq, 0) * 100000000));
             int sign1 = Integer.signum(intsign);
             ds = sign1 * ds;
 
@@ -372,7 +371,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
             }
 
             // Now we check wheater this ds is greater than dTmax and dPmax.
-            intsign = (int) Math.round(Math.round(ds * 100000000));
+            intsign = Math.round(Math.round(ds * 100000000));
             int sign2 = Integer.signum(intsign);
 
             if ((1 + dTmax / system.getTemperature()) < Math.exp(dxds.get(numberOfComponents, 0) * ds)) {

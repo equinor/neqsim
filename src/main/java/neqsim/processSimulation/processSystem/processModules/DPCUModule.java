@@ -37,7 +37,6 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processEquipment.valve.ValveInterface;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
-import neqsim.processSimulation.util.example.expander1;
 
 /**
  *
@@ -63,7 +62,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
     Mixer mixer;
     DistillationColumn distColumn;
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
@@ -72,7 +72,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -89,7 +90,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
         double inletPressure = feedStream.getPressure();
 
@@ -209,36 +211,42 @@ public class DPCUModule extends ProcessModuleBaseClass {
          */
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
         getOperations().run();
 
-        gasExitStream = (Stream) compressor1.getOutStream();
-        oilExitStream = (Stream) LTseparator.getLiquidOutStream();
-        gasDistColumnExit = (Stream) distColumn.getGasOutStream();
-        liquidDistColumnExit = (Stream) distColumn.getLiquidOutStream();
+        gasExitStream = compressor1.getOutStream();
+        oilExitStream = LTseparator.getLiquidOutStream();
+        gasDistColumnExit = distColumn.getGasOutStream();
+        liquidDistColumnExit = distColumn.getLiquidOutStream();
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
 
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 
-    public void setSpecification(String specificationName, double value) {
+    @Override
+	public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("pressure after reduction valve")) {
             pressureAfterRedValve = value;
         } else if (specificationName.equals("gas scrubber temperature")) {
@@ -247,7 +255,8 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("compressor power " + compressor1.getEnergy());
         System.out.println("expander power " + expander.getEnergy());
         valve1.displayResult();

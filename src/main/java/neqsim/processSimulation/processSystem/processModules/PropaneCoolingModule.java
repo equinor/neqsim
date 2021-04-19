@@ -56,13 +56,15 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     private double condenserTemperature = 273.15 + 30.0; // Kelvin
     private double vaporizerTemperature = 273.15 - 40.0; // Kelvin
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("refrigerant")) {
             this.refrigerantStream = stream;
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -75,7 +77,8 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
 
         refrigerantStream.getThermoSystem().setTemperature(condenserTemperature);
@@ -116,7 +119,8 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         System.out.println("finished adding operations....");
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -126,24 +130,29 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         // gasExitStream = secondStageAfterCooler.getOutStream();
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
 
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 
-    public void setSpecification(String specificationName, double value) {
+    @Override
+	public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("vaporizerTemperature")) {
             setVaporizerTemperature(value);
         } else if (specificationName.equals("condenserTemperature")) {

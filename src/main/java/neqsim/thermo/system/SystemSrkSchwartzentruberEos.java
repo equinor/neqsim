@@ -38,7 +38,8 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
         attractiveTermNumber = 2;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemSrkSchwartzentruberEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkSchwartzentruberEos) super.clone();

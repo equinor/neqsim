@@ -22,7 +22,8 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
                 && system.getTemperature() > system.getPhase(0).getComponent(0).getTC()) {
             setSuperCritical(true);
@@ -177,7 +178,8 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
         }
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
 }

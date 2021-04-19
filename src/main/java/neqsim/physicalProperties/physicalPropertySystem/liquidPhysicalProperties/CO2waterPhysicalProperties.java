@@ -35,7 +35,8 @@ public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physic
         densityCalc = new Density(this);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         CO2waterPhysicalProperties properties = null;
 
         try {

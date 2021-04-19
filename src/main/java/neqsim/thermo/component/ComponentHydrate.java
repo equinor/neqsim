@@ -6,6 +6,8 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.util.database.NeqSimDataBase;
+
 import org.apache.logging.log4j.*;
 
 /**
@@ -72,7 +74,7 @@ public class ComponentHydrate extends Component {
         try {
             if (!component_name.equals("default")) {
                 try {
-                    if (database.createTemporaryTables()) {
+                    if (NeqSimDataBase.createTemporaryTables()) {
                         dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     } else {
                         dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
@@ -114,7 +116,8 @@ public class ComponentHydrate extends Component {
     public void readHydrateParameters() {
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 

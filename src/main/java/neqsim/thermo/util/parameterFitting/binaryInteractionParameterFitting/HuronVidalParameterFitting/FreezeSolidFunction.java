@@ -22,7 +22,8 @@ public class FreezeSolidFunction extends HuronVidalFunction {
     public FreezeSolidFunction() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             thermoOps.freezingPointTemperatureFlash();

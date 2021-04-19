@@ -279,7 +279,8 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
         // logger.info("beta " + tempVar);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         // logger.info("starting ");
         system.setNumberOfPhases(system.getNumberOfPhases());
         double oldBeta = 0.0;

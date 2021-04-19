@@ -5,7 +5,6 @@
  */
 package neqsim.physicalProperties.mixingRule;
 
-import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
@@ -29,7 +28,8 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
     public PhysicalPropertyMixingRule() {
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhysicalPropertyMixingRule mixRule = null;
 
         try {
@@ -46,11 +46,13 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
         return mixRule;
     }
 
-    public double getViscosityGij(int i, int j) {
+    @Override
+	public double getViscosityGij(int i, int j) {
         return Gij[i][j];
     }
 
-    public void setViscosityGij(double val, int i, int j) {
+    @Override
+	public void setViscosityGij(double val, int i, int j) {
         Gij[i][j] = val;
     }
 
@@ -58,7 +60,8 @@ public class PhysicalPropertyMixingRule implements Cloneable, PhysicalPropertyMi
         return this;
     }
 
-    public void initMixingRules(PhaseInterface phase) {
+    @Override
+	public void initMixingRules(PhaseInterface phase) {
         // logger.info("reading mix Gij viscosity..");
         Gij = new double[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
         neqsim.util.database.NeqSimDataBase database = null;

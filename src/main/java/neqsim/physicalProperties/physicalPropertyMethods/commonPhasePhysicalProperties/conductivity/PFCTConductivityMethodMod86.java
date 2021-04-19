@@ -42,7 +42,8 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         }
     }
 
-    public double calcConductivity() {
+    @Override
+	public double calcConductivity() {
 
         double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC(),
                 Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC(),

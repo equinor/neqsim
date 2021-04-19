@@ -34,7 +34,8 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentElectrolyteCPAstatoil clonedComponent = null;
         try {
@@ -46,18 +47,21 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
         return clonedComponent;
     }
 
-    public double calc_lngi(PhaseInterface phase) {
+    @Override
+	public double calc_lngi(PhaseInterface phase) {
         // System.out.println("val "
         // +0.475/(1.0-0.475*phase.getB()/phase.getTotalVolume())*getBi()/phase.getTotalVolume());
         return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
     }
 
-    public double calc_lngidV(PhaseInterface phase) {
+    @Override
+	public double calc_lngidV(PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         return -0.475 * getBi() / (temp * temp);
     }
 
-    public double calc_lngij(int j, PhaseInterface phase) {
+    @Override
+	public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
         // getBij(j));

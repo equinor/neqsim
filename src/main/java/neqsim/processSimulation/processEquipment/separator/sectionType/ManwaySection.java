@@ -25,7 +25,8 @@ public class ManwaySection extends SeparatorSection {
         setName(name);
     }
 
-    public double calcEfficiency() {
+    @Override
+	public double calcEfficiency() {
         return 1.0;
     }
 }

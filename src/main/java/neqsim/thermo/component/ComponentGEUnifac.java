@@ -107,7 +107,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         return sum;
     }
 
-    public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         fugasityCoeffisient = (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
                 * this.getAntoineVaporPressure(temperature) / pressure);
@@ -143,7 +144,8 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         getUnifacGroup(k).setLnGammaMix(tempGammaMix);
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         double lngammaCombinational = 0.0, lngammaResidual = 0.0;
         dlngammadn = new double[numberOfComponents];
@@ -190,14 +192,16 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         return gamma;
     }
 
-    public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, phasetype))
                 - Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01, phasetype))) / 0.02;
         return dfugdp;
     }
 
-    public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, phasetype))
                 - Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure, phasetype))) / 0.02;
@@ -239,7 +243,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     public neqsim.thermo.atomElement.UNIFACgroup getUnifacGroup2(int i) {
-        return (neqsim.thermo.atomElement.UNIFACgroup) unifacGroups.get(i);
+        return unifacGroups.get(i);
     }
 
     public neqsim.thermo.atomElement.UNIFACgroup getUnifacGroup(int i) {

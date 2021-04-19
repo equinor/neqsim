@@ -31,7 +31,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
         super(thermoSystem);
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
         this.thermoSystem.setTemperature(273.15 + 30.7);
         this.thermoSystem.setPressure(1.01325);
 
@@ -44,19 +45,23 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
 
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return true;
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         return unit;
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         return RVP;
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         return RVP;
     }
 }

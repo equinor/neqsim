@@ -2,11 +2,8 @@ package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
 
-import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.*;
-import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
-import neqsim.processSimulation.processEquipment.stream.*;
-import neqsim.thermo.system.SystemInterface;;
+import neqsim.processSimulation.processEquipment.stream.*;;
 
 public class Calculator extends ProcessEquipmentBaseClass {
 
@@ -31,7 +28,8 @@ public class Calculator extends ProcessEquipmentBaseClass {
         return outputVariable;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         double sum = 0.0;
 

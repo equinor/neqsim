@@ -7,7 +7,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseDuanSun;
-import neqsim.thermo.system.SystemEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 import neqsim.thermo.phase.PhasePureComponentSolid;
@@ -82,7 +81,8 @@ public class SystemDuanSun extends SystemEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemDuanSun clonedSystem = null;
         try {
             clonedSystem = (SystemDuanSun) super.clone();

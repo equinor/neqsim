@@ -31,7 +31,8 @@ abstract class Viscosity
         super(gasPhase);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Viscosity properties = null;
 
         try {

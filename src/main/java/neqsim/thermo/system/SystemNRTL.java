@@ -77,7 +77,8 @@ public class SystemNRTL extends SystemEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemNRTL clonedSystem = null;
         try {
             clonedSystem = (SystemNRTL) super.clone();

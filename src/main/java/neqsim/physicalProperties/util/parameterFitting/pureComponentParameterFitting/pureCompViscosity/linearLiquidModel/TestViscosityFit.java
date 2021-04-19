@@ -6,7 +6,6 @@
 
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.linearLiquidModel;
 
-import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 import java.sql.*;

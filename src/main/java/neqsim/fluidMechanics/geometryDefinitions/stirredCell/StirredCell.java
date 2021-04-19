@@ -18,11 +18,13 @@ public class StirredCell extends GeometryDefinition implements neqsim.thermo.The
         super(diameter, roughness);
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         StirredCell clonedPipe = null;
         try {
             clonedPipe = (StirredCell) super.clone();

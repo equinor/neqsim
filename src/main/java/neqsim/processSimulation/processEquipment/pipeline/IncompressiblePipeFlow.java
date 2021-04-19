@@ -41,7 +41,8 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         fittings.add(name, LdivD);
     }
 
-    public double calcPressureOut() {
+    @Override
+	public double calcPressureOut() {
         setTotalEqLenth(length);
 
         for (int i = 0; i < fittings.fittingList.size(); i++) {
@@ -73,7 +74,8 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         return (system.getPressure() * 1e5 + dp) / 1.0e5;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {

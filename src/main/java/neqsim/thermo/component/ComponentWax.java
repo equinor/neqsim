@@ -6,7 +6,6 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.phase.PhaseSolid;
 
 /**
  *
@@ -30,7 +29,8 @@ public class ComponentWax extends ComponentSolid {
     /**
      * Uses Claperyons equation to calculate the solid fugacity
      */
-    public double fugcoef(PhaseInterface phase1) {
+    @Override
+	public double fugcoef(PhaseInterface phase1) {
         if (!isWaxFormer()) {
             fugasityCoeffisient = 1.0e50;
             logFugasityCoeffisient = Math.log(fugasityCoeffisient);
@@ -39,7 +39,8 @@ public class ComponentWax extends ComponentSolid {
         return fugcoef2(phase1);
     }
 
-    public double fugcoef2(PhaseInterface phase1) {
+    @Override
+	public double fugcoef2(PhaseInterface phase1) {
         try {
             refPhase.setTemperature(phase1.getTemperature());
         } catch (Exception e) {

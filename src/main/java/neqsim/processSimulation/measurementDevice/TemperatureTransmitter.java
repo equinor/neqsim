@@ -37,11 +37,13 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
         streamNumber = numberOfStreams;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("measured temperature " + getMeasuredValue());
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return stream.getThermoSystem().getTemperature();
     }
 

@@ -51,7 +51,8 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
         flowNode = new FlowNodeInterface[this.getNumberOfNodes()];
     }
 
-    public void createFlowNodes() {
+    @Override
+	public void createFlowNodes() {
         temperatureChangePerNode = (endOuterTemperature - startOuterTemperature) / (1.0 * getNumberOfNodes());
         longitudionalChangePerNode = (endLongitudionalCoordinate - startLongitudionalCoordinate)
                 / (1.0 * getNumberOfNodes());
@@ -98,7 +99,8 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
         }
     }
 
-    public void setFlowPattern(String flowPattern) {
+    @Override
+	public void setFlowPattern(String flowPattern) {
         nodeSelector.setFlowPattern(flowNode, flowPattern);
         flowNode[0].init();
         flowNode[0].setDistanceToCenterOfNode(this.startLongitudionalCoordinate + 0.5 * longitudionalChangePerNode);
@@ -119,54 +121,65 @@ public abstract class FlowLeg extends java.lang.Object implements FlowLegInterfa
         }
     }
 
-    public void setThermoSystem(SystemInterface thermoSystem) {
+    @Override
+	public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = (SystemInterface) thermoSystem.clone();
     }
 
-    public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry) {
+    @Override
+	public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry) {
         this.equipmentGeometry = (GeometryDefinitionInterface) equipmentGeometry.clone();
     }
 
-    public void setNumberOfNodes(int numberOfNodes) {
+    @Override
+	public void setNumberOfNodes(int numberOfNodes) {
         this.numberOfNodes = numberOfNodes;
     }
 
-    public int getNumberOfNodes() {
+    @Override
+	public int getNumberOfNodes() {
         return this.numberOfNodes;
     }
 
-    public void setHeightCoordinates(double startHeightCoordinate, double endHeightCoordinate) {
+    @Override
+	public void setHeightCoordinates(double startHeightCoordinate, double endHeightCoordinate) {
         this.startHeightCoordinate = startHeightCoordinate;
         this.endHeightCoordinate = endHeightCoordinate;
     }
 
-    public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient,
+    @Override
+	public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient) {
         this.startOuterHeatTransferCoefficient = startHeatTransferCoefficient;
         this.endOuterHeatTransferCoefficient = endHeatTransferCoefficient;
     }
 
-    public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient,
+    @Override
+	public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient) {
         this.startWallHeatTransferCOefficients = startHeatTransferCoefficient;
         this.endWallHeatTransferCOefficients = endHeatTransferCoefficient;
     }
 
-    public void setLongitudionalCoordinates(double startLongitudionalCoordinate, double endLongitudionalCoordinate) {
+    @Override
+	public void setLongitudionalCoordinates(double startLongitudionalCoordinate, double endLongitudionalCoordinate) {
         this.startLongitudionalCoordinate = startLongitudionalCoordinate;
         this.endLongitudionalCoordinate = endLongitudionalCoordinate;
     }
 
-    public void setOuterTemperatures(double startTemperature, double endTemperature) {
+    @Override
+	public void setOuterTemperatures(double startTemperature, double endTemperature) {
         this.startOuterTemperature = startTemperature;
         this.endOuterTemperature = endTemperature;
     }
 
-    public FlowNodeInterface[] getFlowNodes() {
+    @Override
+	public FlowNodeInterface[] getFlowNodes() {
         return flowNode;
     }
 
-    public FlowNodeInterface getNode(int i) {
+    @Override
+	public FlowNodeInterface getNode(int i) {
         return flowNode[i];
     }
 }

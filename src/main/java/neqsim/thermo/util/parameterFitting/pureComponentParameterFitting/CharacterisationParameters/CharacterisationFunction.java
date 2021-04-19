@@ -24,7 +24,8 @@ public class CharacterisationFunction extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(0);
         system.init(1);
@@ -36,7 +37,8 @@ public class CharacterisationFunction extends LevenbergMarquardtFunction {
         return Math.log(system.getPressure());
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
 //        system.getCharacterization().getTBPModel();

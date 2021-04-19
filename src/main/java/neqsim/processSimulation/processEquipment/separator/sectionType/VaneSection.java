@@ -25,7 +25,8 @@ public class VaneSection extends SeparatorSection {
         setName(name);
     }
 
-    public double calcEfficiency() {
+    @Override
+	public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();
         if (gasLoadF > 0.1) {
             return 0.1 / gasLoadF;

@@ -5,9 +5,6 @@
  */
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
-import neqsim.processSimulation.processEquipment.pipeline.Pipeline;
-import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 

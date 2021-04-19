@@ -41,20 +41,23 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         super(name);
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return mixedStream.getThermoSystem();
     }
 
-    public void replaceStream(int i, StreamInterface newStream) {
+    @Override
+	public void replaceStream(int i, StreamInterface newStream) {
         streams.set(i, newStream);
     }
 
-    public void addStream(StreamInterface newStream) {
+    @Override
+	public void addStream(StreamInterface newStream) {
         streams.add(newStream);
 
         try {
             if (getNumberOfInputStreams() == 0) {
-                mixedStream = (Stream) ((StreamInterface) streams.get(0)).clone(); // cloning the first stream
+                mixedStream = (Stream) streams.get(0).clone(); // cloning the first stream
 //            mixedStream.getThermoSystem().setNumberOfPhases(2);
 //            mixedStream.getThermoSystem().reInitPhaseType();
 //            mixedStream.getThermoSystem().init(0);
@@ -68,7 +71,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     }
 
     public StreamInterface getStream(int i) {
-        return (StreamInterface) streams.get(i);
+        return streams.get(i);
     }
 
     public void mixStream() {
@@ -77,29 +80,29 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         double lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
         boolean hasAddedNewComponent = false;
         for (int k = 1; k < streams.size(); k++) {
-            if (((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0).getPressure() < lowestPressure) {
-                lowestPressure = ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0).getPressure();
+            if (streams.get(k).getThermoSystem().getPhase(0).getPressure() < lowestPressure) {
+                lowestPressure = streams.get(k).getThermoSystem().getPhase(0).getPressure();
                 mixedStream.getThermoSystem().getPhase(0).setPressure(lowestPressure);
             }
-            for (int i = 0; i < ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0)
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
                     .getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0).getComponent(i)
+                String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
                         .getName();
                 // System.out.println("adding: " + componentName);
-                int numberOfPhases = ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfPhases();
+                int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-                double moles = ((StreamInterface) streams.get(k)).getThermoSystem().getPhase(0).getComponent(i)
+                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
                         .getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
                 for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); p++) {
                     if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName().equals(componentName)) {
                         gotComponent = true;
-                        index = ((StreamInterface) streams.get(0)).getThermoSystem().getPhase(0).getComponent(p)
+                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentNumber();
-                        compName = ((StreamInterface) streams.get(0)).getThermoSystem().getPhase(0).getComponent(p)
+                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentName();
 
                     }
@@ -127,8 +130,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     public double guessTemperature() {
         double gtemp = 0;
         for (int k = 0; k < streams.size(); k++) {
-            gtemp += ((StreamInterface) streams.get(k)).getThermoSystem().getTemperature()
-                    * ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfMoles()
+            gtemp += streams.get(k).getThermoSystem().getTemperature()
+                    * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
 
         }
@@ -138,8 +141,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     public double calcMixStreamEnthalpy() {
         double enthalpy = 0;
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
-            enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
+            streams.get(k).getThermoSystem().init(3);
+            enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
             // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream)
             // streams.get(k)).getThermoSystem()).getEnthalpy());
         }
@@ -147,18 +150,21 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         return enthalpy;
     }
 
-    public Stream getOutStream() {
+    @Override
+	public Stream getOutStream() {
         return mixedStream;
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
         run();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double enthalpy = 0.0;
         // ((Stream) streams.get(0)).getThermoSystem().display();
-        SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
+        SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
 
         // System.out.println("total number of moles " +
         // thermoSystem2.getTotalNumberOfMoles());
@@ -208,7 +214,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         // outStream.setThermoSystem(mixedStream.getThermoSystem());
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         SystemInterface thermoSystem = mixedStream.getThermoSystem();
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -303,20 +310,22 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         dialog.setVisible(true);
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void setPressure(double pres) {
+    @Override
+	public void setPressure(double pres) {
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().setPressure(pres);
+            streams.get(k).getThermoSystem().setPressure(pres);
         }
         mixedStream.getThermoSystem().setPressure(pres);
     }
 
     public void setTemperature(double temp) {
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().setTemperature(temp);
+            streams.get(k).getThermoSystem().setTemperature(temp);
         }
         mixedStream.getThermoSystem().setTemperature(temp);
     }
@@ -342,7 +351,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         return numberOfInputStreams;
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         getOutStream().run();
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {

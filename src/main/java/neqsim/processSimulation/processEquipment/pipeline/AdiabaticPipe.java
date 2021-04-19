@@ -53,11 +53,13 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         outStream = (Stream) inStream.clone();
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
@@ -132,7 +134,8 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         return flow;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         inletPressure = system.getPressure();
         // system.setMultiPhaseCheck(true);
@@ -165,24 +168,29 @@ public class AdiabaticPipe extends Pipeline implements ProcessEquipmentInterface
         outStream.setThermoSystem(system);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         system.display();
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
 
         run();
     }
 
-    public FlowSystemInterface getPipe() {
+    @Override
+	public FlowSystemInterface getPipe() {
         return null;
     }
 
-    public void setInitialFlowPattern(String flowPattern) {
+    @Override
+	public void setInitialFlowPattern(String flowPattern) {
     }
 
     /**

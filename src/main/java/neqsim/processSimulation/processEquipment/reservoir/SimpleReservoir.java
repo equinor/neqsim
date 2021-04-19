@@ -24,7 +24,6 @@ package neqsim.processSimulation.processEquipment.reservoir;
 import java.util.ArrayList;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.pipeline.AdiabaticPipe;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -82,7 +81,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         super(name);
     }
 
-    public SystemInterface getFluid() {
+    @Override
+	public SystemInterface getFluid() {
         return thermoSystem;
     }
 
@@ -234,7 +234,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         lowPressureLimit = 50.0;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         System.out.println("gas volume " + thermoSystem.getPhase("gas").getVolume("m3"));
         System.out.println("oil volume " + thermoSystem.getPhase("oil").getVolume("m3"));
         System.out.println("water volume " + thermoSystem.getPhase("aqueous").getVolume("m3"));
@@ -302,7 +303,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         return volume;
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         time = getTime() + dt;
         if (thermoSystem.getPressure("bara") < lowPressureLimit) {
             System.out.println("low pressure reservoir limit reached");
@@ -403,7 +405,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         thermoSystem.display();
     }
 

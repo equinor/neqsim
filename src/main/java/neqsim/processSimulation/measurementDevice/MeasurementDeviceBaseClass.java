@@ -22,7 +22,8 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
      * 
      * @return the onlineSignal
      */
-    public OnlineSignal getOnlineSignal() {
+    @Override
+	public OnlineSignal getOnlineSignal() {
         return onlineSignal;
     }
 
@@ -36,7 +37,8 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     /**
      * @return the isOnlineSignal
      */
-    public boolean isOnlineSignal() {
+    @Override
+	public boolean isOnlineSignal() {
         return isOnlineSignal;
     }
 
@@ -67,64 +69,79 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     public MeasurementDeviceBaseClass() {
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
     }
 
     ;
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public String getUnit() {
+    @Override
+	public String getUnit() {
         return unit;
     }
 
-    public void setName(String nameset) {
+    @Override
+	public void setName(String nameset) {
         name = nameset;
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return 0.0;
     }
 
-    public void setUnit(String unit) {
+    @Override
+	public void setUnit(String unit) {
         this.unit = unit;
     }
 
-    public double getMaximumValue() {
+    @Override
+	public double getMaximumValue() {
         return maximumValue;
     }
 
-    public void setMaximumValue(double maximumValue) {
+    @Override
+	public void setMaximumValue(double maximumValue) {
         this.maximumValue = maximumValue;
     }
 
-    public double getMinimumValue() {
+    @Override
+	public double getMinimumValue() {
         return minimumValue;
     }
 
-    public void setMinimumValue(double minimumValue) {
+    @Override
+	public void setMinimumValue(double minimumValue) {
         this.minimumValue = minimumValue;
     }
 
-    public double getMeasuredPercentValue() {
+    @Override
+	public double getMeasuredPercentValue() {
         return (getMeasuredValue() - minimumValue) / (maximumValue - minimumValue) * 100;
     }
 
-    public boolean isLogging() {
+    @Override
+	public boolean isLogging() {
         return logging;
     }
 
-    public void setLogging(boolean logging) {
+    @Override
+	public void setLogging(boolean logging) {
         this.logging = logging;
     }
 
-    public double getOnlineValue() {
+    @Override
+	public double getOnlineValue() {
         return getOnlineSignal().getValue();
     }
 
-    public double getMeasuredValue(String unit) {
+    @Override
+	public double getMeasuredValue(String unit) {
         return 0.0;
     }
 

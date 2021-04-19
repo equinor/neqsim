@@ -27,7 +27,8 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
         super(equipment);
     }
 
-    public void readDesignSpecifications() {
+    @Override
+	public void readDesignSpecifications() {
 
         super.readDesignSpecifications();
 
@@ -51,7 +52,8 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
 
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         super.calcDesign();
         SimpleAdsorber separator = (SimpleAdsorber) getProcessEquipment();
         double Fg = 1.0;
@@ -137,34 +139,39 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...
     }
 
-    public double getOuterDiameter() {
+    @Override
+	public double getOuterDiameter() {
         return outerDiameter;
     }
 
     /**
      * @return the wallThickness
      */
-    public double getWallThickness() {
+    @Override
+	public double getWallThickness() {
         return wallThickness;
     }
 
     /**
      * @param wallThickness the wallThickness to set
      */
-    public void setWallThickness(double wallThickness) {
+    @Override
+	public void setWallThickness(double wallThickness) {
         this.wallThickness = wallThickness;
     }
 
     /**
      * @param outerDiameter the outerDiameter to set
      */
-    public void setOuterDiameter(double outerDiameter) {
+    @Override
+	public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
 }

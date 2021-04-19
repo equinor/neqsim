@@ -45,7 +45,8 @@ public class PSflashSingleComp extends Flash implements java.io.Serializable {
         this.Sspec = Sspec;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         neqsim.thermodynamicOperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(
                 system);
         double initTemp = system.getTemperature();
@@ -83,7 +84,8 @@ public class PSflashSingleComp extends Flash implements java.io.Serializable {
         system.init(3);
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

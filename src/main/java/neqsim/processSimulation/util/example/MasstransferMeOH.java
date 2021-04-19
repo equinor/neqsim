@@ -1,28 +1,10 @@
 package neqsim.processSimulation.util.example;
 
-import java.io.ObjectInputStream.GetField;
-
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
-import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.distillation.Condenser;
-import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.distillation.Reboiler;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
-import neqsim.processSimulation.processEquipment.mixer.StaticNeqMixer;
 import neqsim.processSimulation.processEquipment.mixer.StaticPhaseMixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.stream.EnergyStream;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Calculator;
-import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processSystem.ProcessSystem;
-import neqsim.thermodynamicOperations.flashOps.SaturateWithWater;
 import neqsim.processSimulation.processEquipment.separator.GasScrubber;
-import neqsim.processSimulation.processEquipment.separator.Separator;
 
 public class MasstransferMeOH {
 

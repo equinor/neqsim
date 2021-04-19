@@ -24,7 +24,8 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
         params = new double[2];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             system.getPhase(0).getComponent(0).getSolidVaporPressure(dependentValues[0]);
@@ -34,7 +35,8 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
         return system.getPhase(0).getComponent(0).getSolidVaporPressure(dependentValues[0]);
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             system.getPhases()[0].getComponents()[0].setAntoineASolid(value);

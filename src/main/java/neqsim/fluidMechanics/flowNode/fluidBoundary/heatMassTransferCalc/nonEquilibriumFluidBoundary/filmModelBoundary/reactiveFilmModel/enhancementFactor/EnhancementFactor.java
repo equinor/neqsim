@@ -48,7 +48,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
         }
     }
 
-    public void calcEnhancementVec(int phase) {
+    @Override
+	public void calcEnhancementVec(int phase) {
     }
 
     /**
@@ -57,7 +58,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
      * @param index Index of the property.
      * @return Value of the property at <CODE>index</CODE>.
      */
-    public double getEnhancementVec(int index) {
+    @Override
+	public double getEnhancementVec(int index) {
         return enhancementVec[index];
     }
 
@@ -98,7 +100,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
         return this.hattaNumber;
     }
 
-    public double getHattaNumber(int i) {
+    @Override
+	public double getHattaNumber(int i) {
         return this.hattaNumber[i];
     }
 

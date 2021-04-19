@@ -2,12 +2,8 @@ package neqsim.processSimulation.processEquipment.subsea;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
-import neqsim.processSimulation.processEquipment.reservoir.SimpleReservoir;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class SimpleFlowLine extends ProcessEquipmentBaseClass {
 
@@ -28,11 +24,13 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
         return pipeline;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return getOutStream().getThermoSystem();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 

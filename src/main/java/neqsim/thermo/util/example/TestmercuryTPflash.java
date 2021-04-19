@@ -1,9 +1,6 @@
 package neqsim.thermo.util.example;
 
-import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemSrkTwuCoonEos;
 import neqsim.thermo.system.SystemSrkTwuCoonStatoilEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;

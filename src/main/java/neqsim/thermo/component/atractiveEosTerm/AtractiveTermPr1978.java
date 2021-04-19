@@ -31,7 +31,8 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermPr1978 atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermPr1978) super.clone();
@@ -42,7 +43,8 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         if (component.getAcentricFactor() > 0.49) {
             m = (0.379642 + 1.48503 * component.getAcentricFactor()
                     - 0.164423 * component.getAcentricFactor() * component.getAcentricFactor()

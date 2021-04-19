@@ -34,7 +34,8 @@ public class LGTSurfaceTension extends SurfaceTension {
      * Calculates the surfacetension using the Gradient Theory for mixtures Units:
      * N/m
      */
-    public double calcSurfaceTension(int interface1, int interface2) {
+    @Override
+	public double calcSurfaceTension(int interface1, int interface2) {
         double surdenstemp = 0.0;
         localSystem = (SystemInterface) system.clone();
 

@@ -23,7 +23,8 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
     public CPAFunctionStatoil() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         // system.init(0);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -37,11 +38,13 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
         return system.getPressure();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);

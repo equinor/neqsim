@@ -9,10 +9,8 @@ import org.apache.logging.log4j.*;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.util.example.PhaseEnvelope;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -81,7 +79,8 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
         run();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         oldError = error;
 
         if (adjustedVarialble.equals("mass flow")) {
@@ -132,14 +131,16 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
         oldInputValue = inputValue;
     }
 
-    public boolean solved() {
+    @Override
+	public boolean solved() {
         if (Math.abs(error) < tolerance)
             return true;
         else
             return false;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
 
     }
 

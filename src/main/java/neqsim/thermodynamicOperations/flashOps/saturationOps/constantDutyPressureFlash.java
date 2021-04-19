@@ -20,7 +20,8 @@ public class constantDutyPressureFlash extends constantDutyFlash {
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         // system.calc_x_y();
         // system.init(2);
@@ -72,14 +73,17 @@ public class constantDutyPressureFlash extends constantDutyFlash {
 
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return system;
     }
 

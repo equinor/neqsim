@@ -37,7 +37,8 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
         super(name, thermoSystem);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         IronIonSaturationStream clonedSystem = null;
         try {
             clonedSystem = (IronIonSaturationStream) super.clone();
@@ -47,7 +48,8 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
         return clonedSystem;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
@@ -73,7 +75,8 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
         System.out.println("beta: " + reactiveThermoSystem.getBeta());
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         reactiveThermoSystem.display(name);
     }
 

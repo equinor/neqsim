@@ -41,7 +41,8 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         if (component.getName().equals("water")) {
             if (temperature < 273.15) {
                 System.arraycopy(parametersSolidGERG, 0, this.parameters, 0, parametersSolidGERG.length);
@@ -59,7 +60,8 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         if (component.getName().equals("water")) {
             return component.geta() * alpha(temperature);
         } else {
@@ -113,7 +115,8 @@ public class AtractiveTermGERG extends AtractiveTermPr {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         if (component.getName().equals("water")) {
             return component.geta() * diffalphaTGERG(temperature);
         } else {
@@ -121,7 +124,8 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         if (component.getName().equals("water")) {
             return component.geta() * diffdiffalphaTGERG(temperature);
         } else {

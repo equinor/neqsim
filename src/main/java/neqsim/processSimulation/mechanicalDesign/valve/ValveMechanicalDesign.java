@@ -9,10 +9,8 @@ import javax.swing.JTable;
 
 import neqsim.processSimulation.costEstimation.valve.ValveCostEstimate;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
-import neqsim.processSimulation.mechanicalDesign.designStandards.CompressorDesignStandard;
 import neqsim.processSimulation.mechanicalDesign.designStandards.ValveDesignStandard;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;;
 
 public class ValveMechanicalDesign extends MechanicalDesign {
@@ -29,7 +27,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
         costEstimate = new ValveCostEstimate(this);
     }
 
-    public void readDesignSpecifications() {
+    @Override
+	public void readDesignSpecifications() {
 
         super.readDesignSpecifications();
 
@@ -43,7 +42,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         super.calcDesign();
         ThrottlingValve valve1 = (ThrottlingValve) getProcessEquipment();
         inletPressure = valve1.getInletPressure();
@@ -55,7 +55,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
         valveWeight = valveCvMax * 100.0;
     }
 
-    public void displayResults() {
+    @Override
+	public void displayResults() {
 
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();

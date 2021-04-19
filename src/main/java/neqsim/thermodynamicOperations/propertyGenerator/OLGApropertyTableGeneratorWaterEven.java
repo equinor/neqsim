@@ -189,7 +189,8 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
         }
     }
 
-    public void run() {
+    @Override
+	public void run() {
         calcRSWTOB();
         logger.info("RSWTOB " + RSWTOB);
         nProps = 29;
@@ -646,7 +647,8 @@ public class OLGApropertyTableGeneratorWaterEven extends neqsim.thermodynamicOpe
         logger.info("Finished creating arrays");
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);

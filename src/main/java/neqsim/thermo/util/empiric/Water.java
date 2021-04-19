@@ -19,7 +19,7 @@ public class Water {
 
     public static void main(String[] args) {
         Water testWater = new Water();
-        System.out.println("water density " + testWater.waterDensity(273.15 + 4));
+        System.out.println("water density " + Water.waterDensity(273.15 + 4));
     }
 
 }

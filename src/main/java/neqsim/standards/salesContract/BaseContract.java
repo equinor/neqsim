@@ -125,7 +125,8 @@ public class BaseContract implements ContractInterface {
 
     }
 
-    public void runCheck() {
+    @Override
+	public void runCheck() {
         int j = 0;
         resultTable = new String[specificationsNumber][12];
         for (int i = 0; i < specificationsNumber; i++) {
@@ -158,7 +159,8 @@ public class BaseContract implements ContractInterface {
         }
     }
 
-    public void display() {
+    @Override
+	public void display() {
         JFrame dialog = new JFrame("Specification check against sales specifications: " + getContractName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
@@ -173,7 +175,8 @@ public class BaseContract implements ContractInterface {
         dialog.setVisible(true);
     }
 
-    public void setContract(String name) {
+    @Override
+	public void setContract(String name) {
         waterDewPointTemperature = -12.0;
         waterDewPointSpecPressure = 70.0;
     }
@@ -184,7 +187,8 @@ public class BaseContract implements ContractInterface {
      * @return Value of property waterDewPointTemperature.
      *
      */
-    public double getWaterDewPointTemperature() {
+    @Override
+	public double getWaterDewPointTemperature() {
         return waterDewPointTemperature;
     }
 
@@ -195,7 +199,8 @@ public class BaseContract implements ContractInterface {
      *                                 waterDewPointTemperature.
      *
      */
-    public void setWaterDewPointTemperature(double waterDewPointTemperature) {
+    @Override
+	public void setWaterDewPointTemperature(double waterDewPointTemperature) {
         this.waterDewPointTemperature = waterDewPointTemperature;
     }
 
@@ -205,7 +210,8 @@ public class BaseContract implements ContractInterface {
      * @return Value of property waterDewPointSpecPressure.
      *
      */
-    public double getWaterDewPointSpecPressure() {
+    @Override
+	public double getWaterDewPointSpecPressure() {
         return waterDewPointSpecPressure;
     }
 
@@ -216,31 +222,38 @@ public class BaseContract implements ContractInterface {
      *                                  waterDewPointSpecPressure.
      *
      */
-    public void setWaterDewPointSpecPressure(double waterDewPointSpecPressure) {
+    @Override
+	public void setWaterDewPointSpecPressure(double waterDewPointSpecPressure) {
         this.waterDewPointSpecPressure = waterDewPointSpecPressure;
     }
 
-    public int getSpecificationsNumber() {
+    @Override
+	public int getSpecificationsNumber() {
         return specificationsNumber;
     }
 
-    public void setSpecificationsNumber(int specificationsNumber) {
+    @Override
+	public void setSpecificationsNumber(int specificationsNumber) {
         this.specificationsNumber = specificationsNumber;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return resultTable;
     }
 
-    public void setResultTable(String[][] resultTable) {
+    @Override
+	public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 
-    public String getContractName() {
+    @Override
+	public String getContractName() {
         return contractName;
     }
 
-    public void setContractName(String contractName) {
+    @Override
+	public void setContractName(String contractName) {
         this.contractName = contractName;
     }
 }

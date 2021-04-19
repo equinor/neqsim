@@ -62,7 +62,8 @@ public abstract class NonEquilibriumFluidBoundary
         // // interphaseOps.displayResult();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         NonEquilibriumFluidBoundary clonedSystem = null;
 
         try {
@@ -399,20 +400,24 @@ public abstract class NonEquilibriumFluidBoundary
         // System.out.println("heat corr. " + heatTransferCorrection[phase]);
     }
 
-    public void initMassTransferCalc() {
+    @Override
+	public void initMassTransferCalc() {
         super.initMassTransferCalc();
     }
 
-    public void initHeatTransferCalc() {
+    @Override
+	public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
     }
 
-    public void init() {
+    @Override
+	public void init() {
         calcMolFractionDifference();
         super.init();
     }
 
-    public void heatTransSolve() {
+    @Override
+	public void heatTransSolve() {
         double f = 0;
         double df = 0;
         double dhtot = 0.0;
@@ -454,7 +459,8 @@ public abstract class NonEquilibriumFluidBoundary
         // " + getInterphaseHeatFlux(1));
     }
 
-    public void massTransSolve() {
+    @Override
+	public void massTransSolve() {
         int iter = 1;
         double err = 1.0e10, oldErr = 0.0;
         double factor = 10.0;
@@ -469,7 +475,7 @@ public abstract class NonEquilibriumFluidBoundary
             setJacMassTrans2();
             dx = Jac.solve(fvec);
             if (!new Double(dx.norm2()).isNaN()) {
-                uMassTrans.minusEquals(dx.times((double) iter / (iter + factor)));
+                uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
                 tempMatr = dx.arrayRightDivide(uMassTrans);
                 err = Math.abs(dx.norm2() / uMassTrans.norm2());
                 updateMassTrans();
@@ -483,7 +489,8 @@ public abstract class NonEquilibriumFluidBoundary
         calcFluxes();
     }
 
-    public double[] calcFluxes() {
+    @Override
+	public double[] calcFluxes() {
         double sum = 0.0;
         // System.out.println("starter...");
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -495,7 +502,8 @@ public abstract class NonEquilibriumFluidBoundary
         return nFlux.transpose().getArray()[0];
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         // interphaseSystem = (SystemInterface) bulkSystem.clone();
         initInterphaseSystem();
         init();

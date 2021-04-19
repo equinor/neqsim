@@ -8,10 +8,8 @@ import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall.MaterialL
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.PipeSurroundingEnvironment;
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironment;
-import static neqsim.thermo.ThermodynamicConstantsInterface.pi;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
@@ -40,7 +38,8 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
                 this);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AnnularFlow clonedSystem = null;
         try {
             clonedSystem = (AnnularFlow) super.clone();
@@ -50,13 +49,15 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         inclination = 1.0;
         this.calcContactLength();
         super.init();
     }
 
-    public double calcContactLength() {
+    @Override
+	public double calcContactLength() {
         wallContactLength[1] = pi * pipe.getDiameter();
         wallContactLength[0] = 0.0;
 
@@ -65,7 +66,8 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
-    public FlowNodeInterface getNextNode() {
+    @Override
+	public FlowNodeInterface getNextNode() {
         AnnularFlow newNode = (AnnularFlow) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

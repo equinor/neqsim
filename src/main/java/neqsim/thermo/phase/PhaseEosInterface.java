@@ -14,7 +14,8 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  */
 public interface PhaseEosInterface extends PhaseInterface {
 
-    double getMolarVolume();
+    @Override
+	double getMolarVolume();
 
     public EosMixingRulesInterface getMixingRule();
 

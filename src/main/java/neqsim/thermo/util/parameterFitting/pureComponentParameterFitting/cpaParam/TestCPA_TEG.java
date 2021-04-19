@@ -5,7 +5,6 @@
  */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
-import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 import java.sql.*;

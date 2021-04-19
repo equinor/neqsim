@@ -46,12 +46,14 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
         this.component = component;
     }
 
-    public void setm(double val) {
+    @Override
+	public void setm(double val) {
         this.m = val;
         logger.info("does not solve for accentric when new m is set... in AccentricBase class");
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermBaseClass atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermBaseClass) super.clone();
@@ -66,38 +68,47 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
         return atractiveTerm;
     }
 
-    public void init() {
+    @Override
+	public void init() {
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         return 0;
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         return 0;
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         return component.geta();
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         return 1.0;
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         return 0.0;
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         return 0.0;
     }
 
-    public void setParameters(int i, double val) {
+    @Override
+	public void setParameters(int i, double val) {
         parameters[i] = val;
     }
 
-    public double getParameters(int i) {
+    @Override
+	public double getParameters(int i) {
         return parameters[i];
     }
 

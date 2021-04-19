@@ -49,7 +49,8 @@ public class ComponentPCSAFT extends ComponentSrk {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentPCSAFT clonedComponent = null;
         try {
@@ -61,12 +62,14 @@ public class ComponentPCSAFT extends ComponentSrk {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         setdSAFTi(getSigmaSAFTi() * (1.0 - 0.12 * Math.exp(-3.0 * getEpsikSAFT() / temperature)));
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
+    @Override
+	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
         super.Finit(phase, temp, pres, totMoles, beta, numberOfComponents, type);
         setDnSAFTdi(calcdnSAFTdi(phase, numberOfComponents, temp, pres));
@@ -89,7 +92,8 @@ public class ComponentPCSAFT extends ComponentSrk {
         // System.out.println("fugasity " + getFugasityCoefficient());
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
 //        System.out.println("term getF " + ((PhasePCSAFT)phase).getF()/phase.getNumberOfMolesInPhase());
 //        System.out.println("term getF21 " + dF_HC_SAFTdN(phase,numberOfComponents,temperature,pressure));
 //        System.out.println("term getF22 " + dF_DISP1_SAFTdN(phase,numberOfComponents,temperature,pressure));

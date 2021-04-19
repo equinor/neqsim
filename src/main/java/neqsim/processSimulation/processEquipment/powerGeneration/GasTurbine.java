@@ -70,7 +70,8 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         }
     }
 
-    public void run() {
+    @Override
+	public void run() {
         // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();

@@ -25,13 +25,15 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
 
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         // system.display();
         return system.getPhases()[0].getComponents()[1].getx();
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         if (i == 0) {

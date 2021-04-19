@@ -23,7 +23,8 @@ public class ClassicAcentricFunction extends LevenbergMarquardtFunction {
     public ClassicAcentricFunction() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
         // System.out.println("dep val " + dependentValues[0]);
@@ -39,11 +40,13 @@ public class ClassicAcentricFunction extends LevenbergMarquardtFunction {
         return Math.log(system.getPressure());
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return Math.exp(val);
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[i].setAcentricFactor(value);
         system.getPhases()[1].getComponents()[i].setAcentricFactor(value);

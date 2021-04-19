@@ -38,7 +38,8 @@ public class SystemSrkTwuCoonEos extends SystemSrkEos {
         attractiveTermNumber = 11;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemSrkTwuCoonEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkTwuCoonEos) super.clone();

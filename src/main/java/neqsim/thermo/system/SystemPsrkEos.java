@@ -39,7 +39,8 @@ public class SystemPsrkEos extends SystemSrkEos {
         modelName = "Predictive-SRK-EOS";
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemPsrkEos clonedSystem = null;
         try {
             clonedSystem = (SystemPsrkEos) super.clone();

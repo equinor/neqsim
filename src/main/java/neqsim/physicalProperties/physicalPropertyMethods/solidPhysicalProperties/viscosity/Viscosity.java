@@ -32,7 +32,8 @@ public class Viscosity
         super(solidPhase);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Viscosity properties = null;
 
         try {
@@ -44,7 +45,8 @@ public class Viscosity
         return properties;
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
 
         double viscosity = NaN;
         return viscosity;
@@ -54,7 +56,8 @@ public class Viscosity
 
     }
 
-    public double getPureComponentViscosity(int i) {
+    @Override
+	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 

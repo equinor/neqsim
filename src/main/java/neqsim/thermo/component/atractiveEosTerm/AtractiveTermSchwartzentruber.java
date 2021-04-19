@@ -34,7 +34,8 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         c = 1.0 - 1.0 / d;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermSchwartzentruber atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermSchwartzentruber) super.clone();
@@ -45,12 +46,14 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         m = (0.48508 + 1.55191 * component.getAcentricFactor()
                 - 0.15613 * component.getAcentricFactor() * component.getAcentricFactor());
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         // System.out.println("alpha here " + Math.pow( 1.0 +
         // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
         return Math.pow(1.0 + m * (1.0 - Math.sqrt(temperature / component.getTC()))
@@ -85,7 +88,8 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                         * Math.pow(temperature / TC, 1.0 * d) * d / (temperature * temperature);
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         if (temperature / component.getTC() > 100.0) {
             return component.geta() * alphaCrit(temperature);
         } else {
@@ -93,7 +97,8 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         }
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         return 2.0
                 * (1.0 + m * (1.0 - Math.sqrt(temperature / component.getTC())) - parameters[0]
                         * (1.0 - temperature / component.getTC())
@@ -106,7 +111,8 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                                 + 2.0 * parameters[2] * temperature / (component.getTC() * component.getTC())));
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         return 2.0
                 * Math.pow(-m / Math.sqrt(temperature / component.getTC()) / component.getTC() / 2.0
                         + parameters[0] / component.getTC()
@@ -131,7 +137,8 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                                         / (component.getTC() * component.getTC()));
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         if (temperature / component.getTC() > 100.0) {
             return component.geta() * diffalphaCritT(temperature);
         } else {
@@ -139,7 +146,8 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         }
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         if (temperature / component.getTC() > 100.0) {
             return component.geta() * diffdiffalphaCritT(temperature);
         } else {

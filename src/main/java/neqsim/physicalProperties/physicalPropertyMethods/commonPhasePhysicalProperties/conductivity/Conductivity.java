@@ -30,7 +30,8 @@ abstract class Conductivity extends
         super(phase);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Conductivity properties = null;
 
         try {

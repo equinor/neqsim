@@ -5,10 +5,8 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.stirredCell.StirredCell;
-import static neqsim.thermo.ThermodynamicConstantsInterface.pi;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
@@ -38,11 +36,13 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
                 this);
     }
 
-    public double calcHydraulicDiameter() {
+    @Override
+	public double calcHydraulicDiameter() {
         return getGeometry().getDiameter();
     }
 
-    public double calcReynoldNumber() {
+    @Override
+	public double calcReynoldNumber() {
         reynoldsNumber[1] = Math.pow(stirrerDiameter[1], 2.0) * stirrerRate[1]
                 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                 / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
@@ -54,7 +54,8 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         return reynoldsNumber[1];
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         StirredCellNode clonedSystem = null;
         try {
             clonedSystem = (StirredCellNode) super.clone();
@@ -65,16 +66,19 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         this.calcContactLength();
         super.init();
     }
 
-    public void initFlowCalc() {
+    @Override
+	public void initFlowCalc() {
         this.init();
     }
 
-    public double calcContactLength() {
+    @Override
+	public double calcContactLength() {
         wallContactLength[1] = 1.0;
         wallContactLength[0] = 1.0;
 
@@ -84,11 +88,13 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
-    public double calcGasLiquidContactArea() {
+    @Override
+	public double calcGasLiquidContactArea() {
         return pi * Math.pow(pipe.getDiameter(), 2.0) / 4.0;
     }
 
-    public void update() {
+    @Override
+	public void update() {
         for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
                 .getNumberOfComponents(); componentNumber++) {
             double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
@@ -109,7 +115,8 @@ public class StirredCellNode extends TwoPhaseFlowNode implements Cloneable {
         getBulkSystem().init(1);
     }
 
-    public FlowNodeInterface getNextNode() {
+    @Override
+	public FlowNodeInterface getNextNode() {
         StirredCellNode newNode = (StirredCellNode) this.clone();
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             // newNode.getBulkSystem().getPhases()[0].addMoles(i, -molarMassTransfer[i]);

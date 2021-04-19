@@ -45,26 +45,31 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         setInletStream(inletStream);
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         outStream = (StreamInterface) inletStream.clone();
     }
 
-    public void setOutletPressure(double pressure) {
+    @Override
+	public void setOutletPressure(double pressure) {
         this.pressure = pressure;
     }
 
-    public double getEnergy() {
+    @Override
+	public double getEnergy() {
         return dH;
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         System.out.println("expander running..");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -78,7 +83,8 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         outStream.setThermoSystem(thermoSystem);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
 
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -172,7 +178,8 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         dialog.setVisible(true);
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
     }
 
 }

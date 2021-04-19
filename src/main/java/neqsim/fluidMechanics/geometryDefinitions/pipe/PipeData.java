@@ -22,11 +22,13 @@ public class PipeData extends GeometryDefinition implements neqsim.thermo.Thermo
         wall = new PipeWall();
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PipeData clonedPipe = null;
         try {
             clonedPipe = (PipeData) super.clone();

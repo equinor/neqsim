@@ -30,7 +30,8 @@ abstract class Conductivity
         super(gasPhase);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Conductivity properties = null;
 
         try {

@@ -110,7 +110,8 @@ public class TPgradientFlash extends Flash implements java.io.Serializable {
         localSystem.getPhase(0).normalize();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tempSystem = (SystemInterface) system.clone();
         tempSystem.init(0);
         tempSystem.init(3);
@@ -138,11 +139,13 @@ public class TPgradientFlash extends Flash implements java.io.Serializable {
         }
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return localSystem;
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

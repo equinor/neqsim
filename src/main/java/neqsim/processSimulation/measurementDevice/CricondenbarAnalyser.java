@@ -37,7 +37,8 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
         setConditionAnalysisMaxDeviation(1.0);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         try {
             // System.out.println("total water production [kg/dag]" +
             // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
@@ -47,11 +48,13 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
         }
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return getMeasuredValue(unit);
     }
 
-    public double getMeasuredValue(String unit) {
+    @Override
+	public double getMeasuredValue(String unit) {
         SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
         SystemInterface tempFluid2 = tempFluid.setModel("GERG-water-EOS");
         tempFluid2.setPressure(70.0);

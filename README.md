@@ -7,11 +7,12 @@ The basis for NeqSim is a library of fundamental mathematical models related to 
 ## Releases
 [NeqSim releases](https://github.com/equinor/neqsimsource/releases) are available as java packages (jar files) and as source code. NeqSim can be used in a third party application by adding NeqSim.jar to the classpath.
 
-## Getting started as a NeqSim user
-A Java Runtime Environment (JRE) or Java Development Kit (JDK) must be installed in order to run NeqSim. NeqSim can be used in a Java application by adding the NeqSim.jar found in [NeqSim releases](https://github.com/equinor/neqsimsource/releases) to the classpath. A demonstration of downloading the library and running a TPflash  benchmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). 
+## Getting started as a NeqSim Java user
+NeqSim can be used in a Java application by adding the NeqSim.jar found in [NeqSim releases](https://github.com/equinor/neqsimsource/releases) to the classpath. A demonstration of dowloading the library and running a TPflash  bencmark is illustrated in this [NeqSim Colab demo](https://colab.research.google.com/drive/1XkQ_CrVj2gLTtJvXhFQMWALzXii522CL). 
 
 ## Getting Started as a NeqSim Java developer
-A Java Development Kit (JDK) must be installed in order to run See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim library. NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
+See the [NeqSim Java Wiki](https://github.com/equinor/neqsimsource/wiki) for how to use the NeqSim API.
+NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file.
 
 ### Initial setup
 The NeqSim source code is downloaded by cloning the library to your local computer (alternatively fork it to your private reprository). The following commands are dependent on a local installation of [GIT](https://git-scm.com/) and [Maven](https://maven.apache.org/).
@@ -33,7 +34,7 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 [Maven](https://maven.apache.org/) - Dependency Management
 
 ## Contributing
-See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests.
+See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).  
 
 ## Discussion forum
 Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).

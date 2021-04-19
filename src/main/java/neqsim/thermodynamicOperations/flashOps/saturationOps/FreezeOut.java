@@ -8,7 +8,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import java.io.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -36,7 +35,8 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         SystemInterface testSystem = system;
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -181,7 +181,8 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
         // this.printToFile("FrzOut");
     } // end Main
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
 
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
             name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();

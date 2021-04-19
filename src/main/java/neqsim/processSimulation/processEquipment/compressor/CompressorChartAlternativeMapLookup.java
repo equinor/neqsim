@@ -6,7 +6,6 @@ import java.util.*;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,13 +49,15 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
     public CompressorChartAlternativeMapLookup() {
     }
 
-    public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
+    @Override
+	public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
         CompressorCurve curve = new CompressorCurve(speed, flow, head, polytropicEfficiency);
         chartValues.add(curve);
         chartSpeeds.add(speed);
     }
 
-    public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
+    @Override
+	public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
             double[][] polyEff) {
 
         for (int i = 0; i < speed.length; i++) {
@@ -99,7 +100,8 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return closestRefSpeeds;
     }
 
-    public double getPolytropicHead(double flow, double speed) {
+    @Override
+	public double getPolytropicHead(double flow, double speed) {
         ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
         closestRefSpeeds = getClosestRefSpeeds(speed);
         double s;
@@ -121,7 +123,8 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return sum / tempHeads.size();
     }
 
-    public double getPolytropicEfficiency(double flow, double speed) {
+    @Override
+	public double getPolytropicEfficiency(double flow, double speed) {
         ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
         closestRefSpeeds = getClosestRefSpeeds(speed);
         double s;
@@ -176,7 +179,8 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return 100.0;
     }
 
-    public int getSpeed(double flow, double head) {
+    @Override
+	public int getSpeed(double flow, double head) {
 
         int iter = 1;
         double error = 1.0, derrordspeed = 1.0;
@@ -211,26 +215,31 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return false;
     }
 
-    public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ) {
+    @Override
+	public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ) {
         this.refMW = refMW;
         this.refTemperature = refTemperature;
         this.refPressure = refPressure;
         this.refZ = refZ;
     }
 
-    public SurgeCurve getSurgeCurve() {
+    @Override
+	public SurgeCurve getSurgeCurve() {
         return surgeCurve;
     }
 
-    public void setSurgeCurve(SurgeCurve surgeCurve) {
+    @Override
+	public void setSurgeCurve(SurgeCurve surgeCurve) {
         this.surgeCurve = surgeCurve;
     }
 
-    public StoneWallCurve getStoneWallCurve() {
+    @Override
+	public StoneWallCurve getStoneWallCurve() {
         return stoneWallCurve;
     }
 
-    public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
+    @Override
+	public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
         this.stoneWallCurve = stoneWallCurve;
     }
 
@@ -345,27 +354,33 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
     }
 
-    public boolean isUseCompressorChart() {
+    @Override
+	public boolean isUseCompressorChart() {
         return useCompressorChart;
     }
 
-    public void setUseCompressorChart(boolean useCompressorChart) {
+    @Override
+	public void setUseCompressorChart(boolean useCompressorChart) {
         this.useCompressorChart = useCompressorChart;
     }
 
-    public String getHeadUnit() {
+    @Override
+	public String getHeadUnit() {
         return headUnit;
     }
 
-    public void setHeadUnit(String headUnit) {
+    @Override
+	public void setHeadUnit(String headUnit) {
         this.headUnit = headUnit;
     }
 
-    public boolean useRealKappa() {
+    @Override
+	public boolean useRealKappa() {
         return useRealKappa;
     }
 
-    public void setUseRealKappa(boolean useRealKappa) {
+    @Override
+	public void setUseRealKappa(boolean useRealKappa) {
         this.useRealKappa = useRealKappa;
     }
 
@@ -397,7 +412,8 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         }
     }
 
-    public void plot() {
+    @Override
+	public void plot() {
 
     }
 

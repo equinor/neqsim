@@ -79,7 +79,8 @@ public class TVflash extends Flash implements java.io.Serializable {
         return nyPres;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
         // System.out.println("enthalpy: " + system.getEnthalpy());
         solveQ();
@@ -88,7 +89,8 @@ public class TVflash extends Flash implements java.io.Serializable {
         // System.out.println("Temperature: " + system.getTemperature());
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

@@ -50,21 +50,25 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         setInletStream(inletStream);
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         this.outStream = (StreamInterface) inletStream.clone();
     }
 
-    public void setOutletPressure(double pressure) {
+    @Override
+	public void setOutletPressure(double pressure) {
         this.pressure = pressure;
     }
 
-    public double getEnergy() {
+    @Override
+	public double getEnergy() {
         return dH;
     }
 
-    public double getPower() {
+    @Override
+	public double getPower() {
         return dH;
     }
 
@@ -72,11 +76,13 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         return dH;
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         // System.out.println("pump running..");
         inletStream.getThermoSystem().init(3);
         double hinn = inletStream.getThermoSystem().getEnthalpy();
@@ -116,7 +122,8 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         // outStream.run();
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
 
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -210,7 +217,8 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         dialog.setVisible(true);
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
     }
 
     public double getMolarFlow() {
@@ -221,7 +229,8 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         this.molarFlow = molarFlow;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
@@ -251,11 +260,13 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         this.outTemperature = outTemperature;
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
     }
 
-    public void setPressure(double pressure) {
+    @Override
+	public void setPressure(double pressure) {
         setOutletPressure(pressure);
     }
 

@@ -6,7 +6,6 @@
 
 package neqsim.thermo.phase;
 
-import neqsim.thermo.component.ComponentSrk;
 import neqsim.thermo.component.ComponentSrkPeneloux;
 
 /**
@@ -24,7 +23,8 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
 
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseSrkPenelouxEos clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkPenelouxEos) super.clone();
@@ -35,7 +35,8 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSrkPeneloux(componentName, moles, molesInPhase, compNumber);
     }

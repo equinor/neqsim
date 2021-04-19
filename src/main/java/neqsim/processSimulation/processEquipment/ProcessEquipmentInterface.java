@@ -32,7 +32,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public interface ProcessEquipmentInterface extends Runnable, java.io.Serializable {
 
-    public void run();
+    @Override
+	public void run();
 
     public String[][] reportResults();
 

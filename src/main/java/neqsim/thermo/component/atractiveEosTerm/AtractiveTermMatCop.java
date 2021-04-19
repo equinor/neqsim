@@ -39,7 +39,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermMatCop atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermMatCop) super.clone();
@@ -50,19 +51,22 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         return atractiveTerm;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
         parameters[0] = m;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         double Tr = temperature / component.getTC();
         return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                 + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0), 2.0);
 
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         if (temperature / component.getTC() > 10000.0) {
             return super.aT(temperature);
 
@@ -71,7 +75,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
         return 2.0
@@ -83,7 +88,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
         return 2.0
@@ -103,7 +109,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         if (temperature / component.getTC() > 10000.0) {
             return super.diffaT(temperature);
         } else {
@@ -111,7 +118,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         if (temperature / component.getTC() > 10000.0) {
             return super.diffdiffaT(temperature);
         } else {

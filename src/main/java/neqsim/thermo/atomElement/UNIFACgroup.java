@@ -23,7 +23,6 @@ package neqsim.thermo.atomElement;
 
 import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import org.apache.logging.log4j.*;
@@ -266,11 +265,13 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      *                            being compared to this Object.
      *
      */
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
     }
 
-    public int compareTo(java.lang.Object o) {
+    @Override
+	public int compareTo(java.lang.Object o) {
         if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
             return 1;
         } else if (((UNIFACgroup) o).getSubGroup() == getSubGroup()) {

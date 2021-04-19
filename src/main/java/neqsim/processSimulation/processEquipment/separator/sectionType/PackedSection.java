@@ -22,7 +22,8 @@ public class PackedSection extends SeparatorSection {
         super(name, type, sep);
     }
 
-    public double calcEfficiency() {
+    @Override
+	public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();
         if (gasLoadF > 0.1) {
             return 0.1 / gasLoadF;

@@ -24,14 +24,16 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
     /**
      * @return the surroundingEnvironment
      */
-    public SurroundingEnvironment getSurroundingEnvironment() {
+    @Override
+	public SurroundingEnvironment getSurroundingEnvironment() {
         return surroundingEnvironment;
     }
 
     /**
      * @param surroundingEnvironment the surroundingEnvironment to set
      */
-    public void setSurroundingEnvironment(SurroundingEnvironment surroundingEnvironment) {
+    @Override
+	public void setSurroundingEnvironment(SurroundingEnvironment surroundingEnvironment) {
         this.surroundingEnvironment = surroundingEnvironment;
     }
 
@@ -78,7 +80,8 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
         this.innerSurfaceRoughness = roughness;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         GeometryDefinitionInterface clonedGeometry = null;
         try {
             clonedGeometry = (GeometryDefinition) super.clone();
@@ -89,89 +92,109 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
         return clonedGeometry;
     }
 
-    public void setNodeLength(double nodeLength) {
+    @Override
+	public void setNodeLength(double nodeLength) {
         this.nodeLength = nodeLength;
     }
 
-    public void setInnerSurfaceRoughness(double innerSurfaceRoughness) {
+    @Override
+	public void setInnerSurfaceRoughness(double innerSurfaceRoughness) {
         this.innerSurfaceRoughness = innerSurfaceRoughness;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         this.radius = diameter / 2.0;
         this.area = pi * Math.pow(radius, 2.0);
         this.relativeRoughnes = innerSurfaceRoughness / diameter;
     }
 
-    public void setDiameter(double diameter) {
+    @Override
+	public void setDiameter(double diameter) {
         this.diameter = diameter;
         this.radius = diameter / 2.0;
         this.area = pi * Math.pow(radius, 2);
     }
 
-    public double getWallHeatTransferCoefficient() {
+    @Override
+	public double getWallHeatTransferCoefficient() {
         return wall.getHeatTransferCoefficient();
     }
 
-    public double getDiameter() {
+    @Override
+	public double getDiameter() {
         return diameter;
     }
 
-    public double getArea() {
+    @Override
+	public double getArea() {
         return area;
     }
 
-    public double getRadius() {
+    @Override
+	public double getRadius() {
         return radius;
     }
 
-    public double getInnerSurfaceRoughness() {
+    @Override
+	public double getInnerSurfaceRoughness() {
         return innerSurfaceRoughness;
     }
 
-    public double getRelativeRoughnes() {
+    @Override
+	public double getRelativeRoughnes() {
         return relativeRoughnes;
     }
 
-    public double getRelativeRoughnes(double diameter) {
+    @Override
+	public double getRelativeRoughnes(double diameter) {
         return innerSurfaceRoughness / diameter;
     }
 
-    public double getCircumference() {
+    @Override
+	public double getCircumference() {
         return 2 * pi * radius;
     }
 
-    public double getNodeLength() {
+    @Override
+	public double getNodeLength() {
         return nodeLength;
     }
 
-    public GeometryDefinitionInterface getGeometry() {
+    @Override
+	public GeometryDefinitionInterface getGeometry() {
         return this;
     }
 
-    public void setPackingType(int i) {
+    @Override
+	public void setPackingType(int i) {
     }
 
-    public void setPackingType(String name, String material, int size) {
+    @Override
+	public void setPackingType(String name, String material, int size) {
         System.out.println("error - packing set in Geometry definition class");
     }
 
-    public PackingInterface getPacking() {
+    @Override
+	public PackingInterface getPacking() {
         return packing;
     }
 
-    public double getInnerWallTemperature() {
+    @Override
+	public double getInnerWallTemperature() {
         return innerWallTemperature;
     }
 
-    public void setInnerWallTemperature(double temperature) {
+    @Override
+	public void setInnerWallTemperature(double temperature) {
         this.innerWallTemperature = temperature;
     }
 
     /**
      * @param wallHeatTransferCoefficient the wallHeatTransferCoefficient to set
      */
-    public void setWallHeatTransferCoefficient(double wallHeatTransferCoefficient) {
+    @Override
+	public void setWallHeatTransferCoefficient(double wallHeatTransferCoefficient) {
         this.wallHeatTransferCoefficient = wallHeatTransferCoefficient;
     }
 }

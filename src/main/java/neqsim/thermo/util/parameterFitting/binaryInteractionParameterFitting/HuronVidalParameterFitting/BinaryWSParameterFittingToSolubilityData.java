@@ -27,7 +27,8 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
         this.type = type;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         if (type == 1) {
             // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
@@ -37,7 +38,8 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
         }
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 }

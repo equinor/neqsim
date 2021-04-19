@@ -20,7 +20,8 @@ public class PhasePureComponentSolid extends PhaseSolid {
         super();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhasePureComponentSolid clonedPhase = null;
         try {
             clonedPhase = (PhasePureComponentSolid) super.clone();
@@ -31,7 +32,8 @@ public class PhasePureComponentSolid extends PhaseSolid {
         return clonedPhase;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye

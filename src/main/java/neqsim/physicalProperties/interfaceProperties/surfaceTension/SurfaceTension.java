@@ -32,7 +32,8 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
         return 0.0;
     }
 
-    public double calcSurfaceTension(int int1, int int2) {
+    @Override
+	public double calcSurfaceTension(int int1, int int2) {
         return 0.0;
     }
 

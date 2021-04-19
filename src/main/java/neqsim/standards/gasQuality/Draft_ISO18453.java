@@ -53,7 +53,8 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         this.thermoOps = new ThermodynamicOperations(this.thermoSystem);
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
         this.thermoSystem.setTemperature(initTemperature);
         this.thermoSystem.setPressure(specPressure);
 
@@ -65,7 +66,8 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("dewPointTemperature")) {
             return dewPointTemperature;
         } else {
@@ -73,7 +75,8 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         }
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
             return dewPointTemperature;
         }
@@ -84,7 +87,8 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         }
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
             return dewPointTemperatureUnit;
         }
@@ -95,7 +99,8 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         }
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return dewPointTemperature < getSalesContract().getWaterDewPointTemperature();
     }
 }

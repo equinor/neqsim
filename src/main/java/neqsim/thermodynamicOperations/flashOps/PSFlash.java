@@ -49,7 +49,8 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         this.type = type;
     }
 
-    public double calcdQdTT() {
+    @Override
+	public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
@@ -63,12 +64,14 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
         return dQdTT;
     }
 
-    public double calcdQdT() {
+    @Override
+	public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
-    public double solveQ() {
+    @Override
+	public double solveQ() {
         double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
@@ -117,7 +120,8 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
 
         if (type == 0) {

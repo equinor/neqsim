@@ -18,7 +18,6 @@ package neqsim.thermodynamicOperations.flashOps;
 import Jama.*;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 

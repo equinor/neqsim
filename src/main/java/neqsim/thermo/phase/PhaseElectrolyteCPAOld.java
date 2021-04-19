@@ -40,7 +40,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         super();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseElectrolyteCPAOld clonedPhase = null;
         try {
             clonedPhase = (PhaseElectrolyteCPAOld) super.clone();
@@ -52,7 +53,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         return clonedPhase;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -82,44 +84,53 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         // System.out.println("tot iter " + totiter);
     }
 
-    public void setMixingRule(int type) {
+    @Override
+	public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentElectrolyteCPA(componentName, moles, molesInPhase, compNumber);
     }
 
-    public double getF() {
+    @Override
+	public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
-    public double dFdT() {
+    @Override
+	public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
-    public double dFdTdV() {
+    @Override
+	public double dFdTdV() {
         return super.dFdTdV();
     }
 
-    public double dFdV() {
+    @Override
+	public double dFdV() {
         // double dv = super.dFdV();
         double dv2 = dFCPAdV();
         // System.out.println("dv " + dv + " dvcpa " + dv2);
         return super.dFdV() + cpaon * dv2;
     }
 
-    public double dFdVdV() {
+    @Override
+	public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
-    public double dFdVdVdV() {
+    @Override
+	public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
-    public double dFdTdT() {
+    @Override
+	public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
     }
 
@@ -347,7 +358,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
      * 
      * @return Value of property hcpatot.
      */
-    public double getHcpatot() {
+    @Override
+	public double getHcpatot() {
         return hcpatot;
     }
 
@@ -360,7 +372,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         this.hcpatot = hcpatot;
     }
 
-    public double getGcpa() {
+    @Override
+	public double getGcpa() {
         return gcpa;
     }
 
@@ -448,7 +461,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         return getMolarVolume();
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
@@ -543,7 +557,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         return getMolarVolume();
     }
 
-    public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         Z = phase == 0 ? 1.0 : 1.0e-5;
@@ -582,7 +597,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         return getMolarVolume();
     }
 
-    public double getGcpav() {
+    @Override
+	public double getGcpav() {
         return gcpav;
     }
 
@@ -590,11 +606,13 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
         this.gcpav = gcpav;
     }
 
-    public CPAMixingInterface getCpamix() {
+    @Override
+	public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
-    public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
+    @Override
+	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
             return selfAccociationScheme[comp1][site1][site2];
         }
@@ -604,14 +622,16 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
     /**
      * @return the totalNumberOfAccociationSites
      */
-    public int getTotalNumberOfAccociationSites() {
+    @Override
+	public int getTotalNumberOfAccociationSites() {
         return totalNumberOfAccociationSites;
     }
 
     /**
      * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
      */
-    public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
+    @Override
+	public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;
     }
 }

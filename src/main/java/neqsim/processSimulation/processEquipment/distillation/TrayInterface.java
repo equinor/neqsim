@@ -13,13 +13,16 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public interface TrayInterface extends ProcessEquipmentInterface {
 
-    public void run();
+    @Override
+	public void run();
 
     public void addStream(StreamInterface newStream);
 
-    public void setName(String name);
+    @Override
+	public void setName(String name);
 
-    public String getName();
+    @Override
+	public String getName();
 
     public void setHeatInput(double heatinp);
 

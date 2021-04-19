@@ -25,7 +25,8 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
         // params = new double[3];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.hydrateFormationTemperature(1);
             // System.out.println("temperature " + system.getTemperature());
@@ -35,11 +36,13 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
         return system.getTemperature();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         int structure = 1;
         params[i] = value;
 //        if(i==0) ((ComponentHydrate) system.getPhase(4).getComponent("water")).setDGfHydrate(value, structure);

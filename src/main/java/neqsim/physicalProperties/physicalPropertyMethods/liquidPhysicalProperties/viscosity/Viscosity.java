@@ -32,7 +32,8 @@ public class Viscosity
         pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Viscosity properties = null;
 
         try {
@@ -44,7 +45,8 @@ public class Viscosity
         return properties;
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
         double tempVar = 0, tempVar2 = 0;
         double viscosity = 0;
         this.calcPureComponentViscosity();
@@ -115,7 +117,8 @@ public class Viscosity
         }
     }
 
-    public double getPureComponentViscosity(int i) {
+    @Override
+	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 

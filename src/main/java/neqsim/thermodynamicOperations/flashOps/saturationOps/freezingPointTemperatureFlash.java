@@ -58,7 +58,8 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         return funk;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iterations = 0, maxNumberOfIterations = 100;
         double deriv = 0, funk = 0, funkOld = 0;

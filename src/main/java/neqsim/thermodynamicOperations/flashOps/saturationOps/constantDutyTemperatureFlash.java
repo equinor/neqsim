@@ -21,7 +21,8 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         system.init(0);
         system.init(2);
@@ -71,14 +72,17 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
                 || iterations < 3);
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return system;
     }
 }

@@ -22,7 +22,8 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         int iterations = 0, maxNumberOfIterations = 15000;
         double yold = 0, ytotal = 1;
@@ -90,7 +91,8 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
         // logger.info("max freezing temp " + maxTemperature);
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
 }

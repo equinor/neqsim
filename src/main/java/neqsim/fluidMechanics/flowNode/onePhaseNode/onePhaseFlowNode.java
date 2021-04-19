@@ -18,7 +18,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
         super(system, pipe);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         onePhaseFlowNode clonedSystem = null;
         try {
             clonedSystem = (onePhaseFlowNode) super.clone();
@@ -29,7 +30,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
         return clonedSystem;
     }
 
-    public void increaseMolarRate(double moles) {
+    @Override
+	public void increaseMolarRate(double moles) {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             double diff = (getBulkSystem().getPhases()[0].getComponents()[i].getx()
                     * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
@@ -39,7 +41,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
         initFlowCalc();
     }
 
-    public void initFlowCalc() {
+    @Override
+	public void initFlowCalc() {
         initBulkSystem();
         molarFlowRate[0] = getBulkSystem().getPhases()[0].getNumberOfMolesInPhase();
         massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhases()[0].getMolarMass();
@@ -49,7 +52,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
         this.init();
     }
 
-    public void updateMolarFlow() {
+    @Override
+	public void updateMolarFlow() {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             double diff = (getBulkSystem().getPhases()[0].getComponents()[i].getx()
                     * (molarFlowRate[0] - getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()));
@@ -77,7 +81,8 @@ public abstract class onePhaseFlowNode extends FlowNode {
         return reynoldsNumber[0];
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
         massFlowRate[0] = velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity()
                 * pipe.getArea();

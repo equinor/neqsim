@@ -28,7 +28,8 @@ public class LBCViscosityMethod extends Viscosity {
         super(phase);
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
         double viscosity = 0.0, lowPresVisc = 0.0, temp = 0.0, temp2 = 0.0, temp3 = 0.0, temp4 = 0.0;
         double eps = 0, critDens = 0.0;
         double par1 = 0.0, par2 = 0.0, par3 = 0.0, par4 = 0.0;
@@ -65,7 +66,8 @@ public class LBCViscosityMethod extends Viscosity {
         return viscosity;
     }
 
-    public double getPureComponentViscosity(int i) {
+    @Override
+	public double getPureComponentViscosity(int i) {
         return 0;
     }
 

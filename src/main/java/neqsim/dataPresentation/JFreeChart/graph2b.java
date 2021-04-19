@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.swing.*;
 import org.jfree.chart.*;
-import org.jfree.data.*;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
@@ -166,11 +165,13 @@ public class graph2b extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent evt) {
+            @Override
+			public void windowClosing(java.awt.event.WindowEvent evt) {
                 exitForm(evt);
             }
 
-            public void windowClosed(java.awt.event.WindowEvent evt) {
+            @Override
+			public void windowClosed(java.awt.event.WindowEvent evt) {
                 exit(evt);
             }
         });

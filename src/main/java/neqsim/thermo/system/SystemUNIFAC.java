@@ -77,7 +77,8 @@ public class SystemUNIFAC extends SystemEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemUNIFAC clonedSystem = null;
         try {
             clonedSystem = (SystemUNIFAC) super.clone();

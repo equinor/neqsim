@@ -103,7 +103,8 @@ public class visAd2dBaseClass extends visAdBaseClass {
      * VisADException{ System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
      */
 
-    public void init() throws RemoteException, VisADException {
+    @Override
+	public void init() throws RemoteException, VisADException {
 
         index_set = new Integer1DSet(index, xy_samples[0].length);
 
@@ -121,7 +122,7 @@ public class visAd2dBaseClass extends visAdBaseClass {
 
         display = new DisplayImplJ2D("StatPlot");
 
-        GraphicsModeControl dispGMC = (GraphicsModeControl) display.getGraphicsModeControl();
+        GraphicsModeControl dispGMC = display.getGraphicsModeControl();
         dispGMC.setScaleEnable(true);
 
         xMap = new ScalarMap(x, Display.XAxis);

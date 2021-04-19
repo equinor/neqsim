@@ -64,7 +64,8 @@ public class ComponentHydrateGF extends ComponentHydrate {
         }
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
@@ -129,7 +130,8 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
-    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
+    @Override
+	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
         int stableStructure = 0;
         if (hydrateStructure == -1) {
@@ -221,7 +223,8 @@ public class ComponentHydrateGF extends ComponentHydrate {
     // public int getHydrateStructure() {
     // return this.getHydrateStructure();
     // }
-    public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
         }
@@ -242,7 +245,8 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return yki / temp;
     }
 
-    public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
 
         // this is equation 8.8
         if (componentName.equals("water")) {

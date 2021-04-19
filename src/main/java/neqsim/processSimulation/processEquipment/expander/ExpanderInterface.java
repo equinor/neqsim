@@ -15,7 +15,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version
  */
 public interface ExpanderInterface extends ProcessEquipmentInterface {
-    public void run();
+    @Override
+	public void run();
 
     public void setOutletPressure(double pressure);
 
@@ -23,7 +24,8 @@ public interface ExpanderInterface extends ProcessEquipmentInterface {
 
     public double getEnergy();
 
-    public String getName();
+    @Override
+	public String getName();
 
     public StreamInterface getOutStream();
 

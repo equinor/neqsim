@@ -23,7 +23,8 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         int iterations = 0, maxNumberOfIterations = 10000;
         double yold = 0, ytotal = 1;
@@ -77,6 +78,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
 
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 }

@@ -25,7 +25,8 @@ public class CO2water extends Diffusivity {
     }
 
     // aqueous correlation
-    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
+    @Override
+	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         binaryDiffusionCoeffisients[i][j] = 0.03389 * Math.exp(-2213.7 / liquidPhase.getPhase().getTemperature())
                 * 1e-4; // Tammi (1994) - Pcheco
         return binaryDiffusionCoeffisients[i][j];

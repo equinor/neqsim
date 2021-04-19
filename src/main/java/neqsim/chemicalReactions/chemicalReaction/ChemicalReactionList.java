@@ -24,7 +24,6 @@ package neqsim.chemicalReactions.chemicalReaction;
 import Jama.*;
 import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;

@@ -33,7 +33,8 @@ public class SampleSet extends Object implements Cloneable {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SampleSet clonedSet = null;
         try {
             clonedSet = (SampleSet) super.clone();

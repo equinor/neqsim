@@ -25,15 +25,18 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    public double getlnGammadt() {
+    @Override
+	public double getlnGammadt() {
         return dlngammadt;
     }
 
-    public double getlnGammadn(int k) {
+    @Override
+	public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] WSalpha, double[][] WSgij, double[][] intparam, String[][] mixRule) {
         double[][] WSgijT = new double[numberOfComponents][numberOfComponents];
         return getGamma(phase, numberOfComponents, temperature, pressure, phasetype, WSalpha, WSgij, WSgijT, intparam,

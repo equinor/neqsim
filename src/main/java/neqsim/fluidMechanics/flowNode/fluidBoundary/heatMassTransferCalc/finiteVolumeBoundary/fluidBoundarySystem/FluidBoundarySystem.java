@@ -36,42 +36,52 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
         reactive = false;
     }
 
-    public void addBoundary(FluidBoundaryInterface boundary) {
+    @Override
+	public void addBoundary(FluidBoundaryInterface boundary) {
         this.boundary = boundary;
     }
 
-    public void setNumberOfNodes(int nodes) {
+    @Override
+	public void setNumberOfNodes(int nodes) {
         this.numberOfNodes = nodes;
     }
 
-    public int getNumberOfNodes() {
+    @Override
+	public int getNumberOfNodes() {
         return numberOfNodes;
     }
 
-    public FluidBoundaryNodeInterface getNode(int i) {
+    @Override
+	public FluidBoundaryNodeInterface getNode(int i) {
         return nodes[i];
     }
 
-    public void setFilmThickness(double filmThickness) {
+    @Override
+	public void setFilmThickness(double filmThickness) {
         this.filmThickness = filmThickness;
     }
 
-    public double getNodeLength() {
+    @Override
+	public double getNodeLength() {
         return this.filmThickness / this.numberOfNodes;
     }
 
-    public double getFilmThickness() {
+    @Override
+	public double getFilmThickness() {
         return filmThickness;
     }
 
-    public FluidBoundaryInterface getFluidBoundary() {
+    @Override
+	public FluidBoundaryInterface getFluidBoundary() {
         return boundary;
     }
 
-    public void createSystem() {
+    @Override
+	public void createSystem() {
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         solver = new FluidBoundarySolver(this, reactive);
         solver.solve();
     }

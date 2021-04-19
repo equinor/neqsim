@@ -115,7 +115,8 @@ public class ChemicalReactionOperations extends Object
         this.system = system;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         ChemicalReactionOperations clonedSystem = null;
         try {
             clonedSystem = (ChemicalReactionOperations) super.clone();

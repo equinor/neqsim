@@ -46,7 +46,8 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         this.setInletStream(inletStream);
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
@@ -62,23 +63,28 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         liquidOutStream = new Stream(liquidSystem);
     }
 
-    public Stream getLiquidOutStream() {
+    @Override
+	public Stream getLiquidOutStream() {
         return liquidOutStream;
     }
 
-    public Stream getGasOutStream() {
+    @Override
+	public Stream getGasOutStream() {
         return gasOutStream;
     }
 
-    public Stream getGas() {
+    @Override
+	public Stream getGas() {
         return getGasOutStream();
     }
 
-    public Stream getLiquid() {
+    @Override
+	public Stream getLiquid() {
         return getLiquidOutStream();
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -100,7 +106,8 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
         liquidOutStream.setThermoSystem(liquidSystem);
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 

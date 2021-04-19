@@ -22,7 +22,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         phaseTypeName = "solid";
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseSolid clonedPhase = null;
         try {
             clonedPhase = (PhaseSolid) super.clone();
@@ -32,7 +33,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -41,12 +43,14 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         phaseTypeName = "solid";
     }
 
-    public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSolid(componentName, moles, molesInPhase, compNumber);
     }
 
-    public double getEnthalpy() {
+    @Override
+	public double getEnthalpy() {
         double fusionHeat = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             fusionHeat += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getHeatOfFusion();

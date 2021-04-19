@@ -261,7 +261,8 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         int iter = 0;
 

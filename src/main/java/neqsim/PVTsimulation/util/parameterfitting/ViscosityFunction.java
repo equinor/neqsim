@@ -35,7 +35,8 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
         includeWaxEmulsionViscosity = includeWax;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         system.initPhysicalProperties();
         double waxFraction = 0.0;
@@ -47,7 +48,8 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getPhysicalProperties().getViscosity(); // %wax
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties().getViscosityModel())

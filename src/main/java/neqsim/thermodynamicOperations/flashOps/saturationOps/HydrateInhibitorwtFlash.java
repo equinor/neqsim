@@ -36,7 +36,8 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         system = null;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
@@ -95,7 +96,8 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         // system.display();
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
     public static void main(String args[]) {

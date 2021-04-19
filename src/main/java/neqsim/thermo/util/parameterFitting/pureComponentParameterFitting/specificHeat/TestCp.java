@@ -10,7 +10,6 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 public class TestCp {

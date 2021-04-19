@@ -44,11 +44,13 @@ public class BasePVTsimulation implements SimulationInterface {
     /**
      * @return the thermoSystem
      */
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
 
     }
@@ -56,14 +58,16 @@ public class BasePVTsimulation implements SimulationInterface {
     /**
      * @return the baseThermoSystem
      */
-    public SystemInterface getBaseThermoSystem() {
+    @Override
+	public SystemInterface getBaseThermoSystem() {
         return baseThermoSystem;
     }
 
     /**
      * @param thermoSystem the thermoSystem to set
      */
-    public void setThermoSystem(SystemInterface thermoSystem) {
+    @Override
+	public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
@@ -112,7 +116,8 @@ public class BasePVTsimulation implements SimulationInterface {
     /**
      * @return the optimizer
      */
-    public LevenbergMarquardt getOptimizer() {
+    @Override
+	public LevenbergMarquardt getOptimizer() {
         return optimizer;
     }
 

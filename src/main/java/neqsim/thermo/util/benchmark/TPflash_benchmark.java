@@ -16,8 +16,6 @@
 package neqsim.thermo.util.benchmark;
 
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemPrEos;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;

@@ -54,7 +54,8 @@ public class CVDFunction extends LevenbergMarquardtFunction {
         Zsaturation = system.getZ();
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -88,7 +89,8 @@ public class CVDFunction extends LevenbergMarquardtFunction {
         return totalVolume / saturationVolume; // %wax
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         // system.get
     }

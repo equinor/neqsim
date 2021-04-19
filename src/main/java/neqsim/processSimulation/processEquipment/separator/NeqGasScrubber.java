@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -49,7 +48,8 @@ public class NeqGasScrubber extends Separator implements ProcessEquipmentInterfa
         this.setInletStream(inletStream);
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
@@ -69,23 +69,28 @@ public class NeqGasScrubber extends Separator implements ProcessEquipmentInterfa
         scrubberSection.add(new SeparatorSection(type, this));
     }
 
-    public Stream getLiquidOutStream() {
+    @Override
+	public Stream getLiquidOutStream() {
         return liquidOutStream;
     }
 
-    public Stream getGasOutStream() {
+    @Override
+	public Stream getGasOutStream() {
         return gasOutStream;
     }
 
-    public Stream getGas() {
+    @Override
+	public Stream getGas() {
         return getGasOutStream();
     }
 
-    public Stream getLiquid() {
+    @Override
+	public Stream getLiquid() {
         return getLiquidOutStream();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasSystem.setNumberOfPhases(1);
@@ -97,10 +102,12 @@ public class NeqGasScrubber extends Separator implements ProcessEquipmentInterfa
         liquidOutStream.setThermoSystem(liquidSystem);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 

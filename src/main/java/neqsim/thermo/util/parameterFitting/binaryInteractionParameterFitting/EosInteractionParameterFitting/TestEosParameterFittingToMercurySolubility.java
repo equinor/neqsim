@@ -5,7 +5,6 @@
  */
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 import java.sql.*;

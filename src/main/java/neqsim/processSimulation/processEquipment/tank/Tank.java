@@ -87,7 +87,8 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
         return getLiquidOutStream();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         inletStreamMixer.run();
         SystemInterface thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
@@ -144,11 +145,13 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         thermoSystem.display();
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());

@@ -61,7 +61,8 @@ public class Packing implements PackingInterface {
         }
     }
 
-    public double getSurfaceAreaPrVolume() {
+    @Override
+	public double getSurfaceAreaPrVolume() {
         return surfaceAreaPrVolume;
     }
 
@@ -70,7 +71,8 @@ public class Packing implements PackingInterface {
      * 
      * @return Value of property voidFractionPacking.
      */
-    public double getVoidFractionPacking() {
+    @Override
+	public double getVoidFractionPacking() {
         return voidFractionPacking;
     }
 
@@ -79,7 +81,8 @@ public class Packing implements PackingInterface {
      * 
      * @param voidFractionPacking New value of property voidFractionPacking.
      */
-    public void setVoidFractionPacking(double voidFractionPacking) {
+    @Override
+	public void setVoidFractionPacking(double voidFractionPacking) {
         this.voidFractionPacking = voidFractionPacking;
     }
 
@@ -97,7 +100,8 @@ public class Packing implements PackingInterface {
      * 
      * @param size
      */
-    public double getSize() {
+    @Override
+	public double getSize() {
         return size;
     }
 

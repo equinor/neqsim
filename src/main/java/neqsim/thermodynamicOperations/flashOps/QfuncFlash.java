@@ -74,7 +74,8 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
         return 1.0 / nyTemp;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
         logger.info("entropy: " + system.getEntropy());
         sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
@@ -83,7 +84,8 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
         secondOrderSolver.solve(1);
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
