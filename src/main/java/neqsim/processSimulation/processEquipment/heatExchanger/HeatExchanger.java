@@ -62,7 +62,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 	}
 
 	public void addInStream(StreamInterface inStream) {
-		this.inStream[1] = (StreamInterface) inStream;
+		this.inStream[1] = inStream;
 	}
 
 	public void setFeedStream(int number, StreamInterface inStream) {
@@ -70,16 +70,19 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		outStream[number] = (StreamInterface) inStream.clone();
 	}
 
+	@Override
 	public void setName(String name) {
 		outStream[0].setName(name + "_Sout1");
 		outStream[1].setName(name + "_Sout2");
 		this.name = name;
 	}
 
+	@Override
 	public void setdT(double dT) {
 		this.dT = dT;
 	}
 
+	@Override
 	public StreamInterface getOutStream(int i) {
 		return outStream[i];
 	}
@@ -88,6 +91,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		return inStream[i];
 	}
 
+	@Override
 	public void setOutTemperature(double temperature) {
 		this.temperatureOut = temperature;
 	}
@@ -138,6 +142,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
 	}
 
+	@Override
 	public void run() {
 		if (getSpecification().equals("out stream")) {
 			runSpecifiedStream();
@@ -254,10 +259,12 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		 */
 	}
 
+	@Override
 	public double getDuty() {
 		return duty;
 	}
 
+	@Override
 	public void displayResult() {
 		outStream[0].displayResult();
 		outStream[1].displayResult();
@@ -285,6 +292,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		this.guessOutTemperature = guessOutTemperature;
 	}
 
+	@Override
 	public double getEntropyProduction(String unit) {
 		//
 		double entrop = 0.0;
@@ -310,6 +318,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		return entrop + heatTransferEntropyProd;
 	}
 
+	@Override
 	public double getMassBalance(String unit) {
 		//
 		double mass = 0.0;
@@ -324,6 +333,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		return mass;
 	}
 
+	@Override
 	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
 		double heatBalanceError = 0.0;
 		HeatExchanger refEx = (HeatExchanger) refExchanger;

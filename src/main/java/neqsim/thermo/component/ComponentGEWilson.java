@@ -39,7 +39,8 @@ public class ComponentGEWilson extends ComponentGE {
         return getWilsonActivityCoeffisient(phase);
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
 
         return 0.0;

@@ -43,16 +43,19 @@ public class EquilibriumFluidBoundary
         // interphaseOps.TPflash();
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         getInterphaseOpertions().TPflash();
         getBulkSystemOpertions().TPflash();
     }
 
-    public double[] calcFluxes() {
+    @Override
+	public double[] calcFluxes() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
             nFlux.set(i, 0, 0);
         }

@@ -54,7 +54,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
         super();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhasePCSAFT clonedPhase = null;
         try {
             clonedPhase = (PhasePCSAFT) super.clone();
@@ -65,12 +66,14 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentPCSAFT(componentName, moles, molesInPhase, compNumber);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -477,7 +480,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         * F2dispZHCdVdV));
     }
 
-    public double getF() {
+    @Override
+	public double getF() {
 //        System.out.println("F-HC " + useHS*F_HC_SAFT());
 //
 //        System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
@@ -486,7 +490,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
     }
 
-    public double dFdV() {
+    @Override
+	public double dFdV() {
 //        System.out.println("N-saft " + getNSAFT());
 //        System.out.println("F-HC " + useHS*F_HC_SAFT());
 //        System.out.println("F-DISP1 " + useDISP1*F_DISP1_SAFT());
@@ -496,7 +501,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return (useHS * dF_HC_SAFTdV() + useDISP1 * dF_DISP1_SAFTdV() + useDISP2 * dF_DISP2_SAFTdV()) * 1.0e-5;
     }
 
-    public double dFdVdV() {
+    @Override
+	public double dFdVdV() {
         return (useHS * dF_HC_SAFTdVdV() + useDISP1 * dF_DISP1_SAFTdVdV() + useDISP2 * dF_DISP2_SAFTdVdV()) * 1.0e-10;
     }
 
@@ -625,7 +631,8 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return getMolarVolume();
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())

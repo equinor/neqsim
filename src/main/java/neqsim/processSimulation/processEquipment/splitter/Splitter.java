@@ -44,7 +44,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
         splitFactor = new double[i];
     }
 
-    public void setSplitNumber(int i) {
+    @Override
+	public void setSplitNumber(int i) {
         splitNumber = i;
         this.setInletStream(inletStream);
         splitFactor = new double[splitNumber];
@@ -56,7 +57,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
         setInletStream(inletStream);
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         splitStream = new Stream[splitNumber];
         try {
@@ -69,11 +71,13 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
         }
     }
 
-    public Stream getSplitStream(int i) {
+    @Override
+	public Stream getSplitStream(int i) {
         return (Stream) splitStream[i];
     }
 
-    public void run() {
+    @Override
+	public void run() {
         for (int i = 0; i < splitNumber; i++) {
             thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
             thermoSystem.init(0);
@@ -88,10 +92,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
         }
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
     }
 
 }

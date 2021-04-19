@@ -11,7 +11,6 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.phase.PhaseGE;
@@ -20,6 +19,8 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.util.database.NeqSimDataBase;
+
 import org.apache.logging.log4j.*;
 
 /**
@@ -53,7 +54,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
     public EosMixingRules() {
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         EosMixingRules clonedSystem = null;
         try {
             clonedSystem = (EosMixingRules) super.clone();
@@ -78,26 +80,31 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
 
         private static final long serialVersionUID = 1000;
 
-        public java.lang.String getMixingRuleName() {
+        @Override
+		public java.lang.String getMixingRuleName() {
             return mixingRuleName;
         }
 
-        public PhaseInterface getGEPhase() {
+        @Override
+		public PhaseInterface getGEPhase() {
             return null;
         }
 
-        public void setMixingRuleGEModel(java.lang.String GEmodel) {
+        @Override
+		public void setMixingRuleGEModel(java.lang.String GEmodel) {
             mixingRuleGEModel = GEmodel;
         }
 
-        public double getBinaryInteractionParameter(int i, int j) {
+        @Override
+		public double getBinaryInteractionParameter(int i, int j) {
             if (i == j) {
                 return 0.0;
             }
             return intparam[i][j];
         }
 
-        public double getBinaryInteractionParameterT1(int i, int j) {
+        @Override
+		public double getBinaryInteractionParameterT1(int i, int j) {
             if (i == j) {
                 return 0.0;
             }
@@ -107,14 +114,16 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
         /**
          * @return the bmixType
          */
-        public int getBmixType() {
+        @Override
+		public int getBmixType() {
             return bmixType;
         }
 
         /**
          * @param bmixType the bmixType to set
          */
-        public void setBmixType(int bmixType2) {
+        @Override
+		public void setBmixType(int bmixType2) {
             bmixType = bmixType2;
         }
 
@@ -138,24 +147,28 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public void setBinaryInteractionParameter(int i, int j, double value) {
+        @Override
+		public void setBinaryInteractionParameter(int i, int j, double value) {
             // System.out.println("intparam: " + intparam[i][j] + " value " + value);
             intparam[i][j] = value;
             intparam[j][i] = value;
         }
 
-        public void setBinaryInteractionParameterij(int i, int j, double value) {
+        @Override
+		public void setBinaryInteractionParameterij(int i, int j, double value) {
             intparamij[i][j] = value;
             intparamji[j][i] = value;
         }
 
-        public void setBinaryInteractionParameterji(int i, int j, double value) {
+        @Override
+		public void setBinaryInteractionParameterji(int i, int j, double value) {
             // System.out.println("intparam: " + intparam[i][j] + " value " + value);
             intparamji[i][j] = value;
             intparamij[j][i] = value;
         }
 
-        public void setBinaryInteractionParameterT1(int i, int j, double value) {
+        @Override
+		public void setBinaryInteractionParameterT1(int i, int j, double value) {
             // System.out.println("intparam: " + intparam[i][j] + " value " + value);
             intparamT[i][j] = value;
             intparamT[j][i] = value;
@@ -167,11 +180,13 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
          * @param CalcEOSInteractionParameters New value of property
          *                                     CalcEOSInteractionParameters.
          */
-        public void setCalcEOSInteractionParameters(boolean CalcEOSInteractionParameters2) {
+        @Override
+		public void setCalcEOSInteractionParameters(boolean CalcEOSInteractionParameters2) {
             calcEOSInteractionParameters = CalcEOSInteractionParameters2;
         }
 
-        public void setnEOSkij(double n) {
+        @Override
+		public void setnEOSkij(double n) {
             nEOSkij = n;
         }
 
@@ -183,7 +198,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return Btot;
         }
 
-        public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double aij = 0.0, A = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -197,7 +213,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             B = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -212,7 +229,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return B;
         }
 
-        public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
 
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -226,7 +244,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * Ai;
         }
 
-        public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double Bi = 0.0;
 
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -256,7 +275,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return ans1 / (phase.getNumberOfMolesInPhase() * phase.getNumberOfMolesInPhase());
         }
 
-        public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             double bij = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -266,7 +286,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                     / phase.getNumberOfMolesInPhase();
         }
 
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -281,7 +302,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * A;
         }
 
-        public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -291,7 +313,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * aij;
         }
 
-        public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -302,7 +325,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 0.5 * A;
         }
 
-        public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
 
             double aij = 0, sqrtaij = 0, tempPow = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -323,7 +347,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public Object clone() {
+        @Override
+		public Object clone() {
             ClassicVdW clonedSystem = null;
             try {
                 clonedSystem = (ClassicVdW) super.clone();
@@ -344,7 +369,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return intparam[i][j];
         }
 
-        public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
 
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -376,7 +402,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
         // Btot = B/phase.getNumberOfMolesInPhase();
         // return Btot;
         // }
-        public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double aij = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -413,7 +440,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
         // numbcomp)-calcBi(compNumbj, phase,temperature, pressure,
         // numbcomp))/phase.getNumberOfMolesInPhase();
         // }
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -429,7 +457,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * A;
         }
 
-        public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -438,7 +467,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * aij;
         }
 
-        public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -453,7 +483,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 0.5 * A;
         }
 
-        public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double aij = 0;
             double temp1;
             double[] sqrtai = new double[numbcomp];
@@ -486,7 +517,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public Object clone() {
+        @Override
+		public Object clone() {
             ClassicSRK clonedSystem = null;
             try {
                 clonedSystem = (ClassicSRK) super.clone();
@@ -503,7 +535,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
 
         private static final long serialVersionUID = 1000;
 
-        public double getkij(double temperature, int i, int j) {
+        @Override
+		public double getkij(double temperature, int i, int j) {
             return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
 
             // impl ttype check
@@ -517,7 +550,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 0.0;
         }
 
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             double aij = 0.0, aij2 = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -553,7 +587,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * A;
         }
 
-        public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double aij = 0.0, aij2 = 0.0, aij3 = 0.0, aij4 = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             A = 0.0;
@@ -587,7 +622,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public Object clone() {
+        @Override
+		public Object clone() {
             ClassicSRKT clonedSystem = null;
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
@@ -695,7 +731,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return temp;
         }
 
-        public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
 
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -721,7 +758,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             // if(Math.abs(intparamT[compNumb][numbcomp])<1e-10 &&
             // Math.abs(intparamij[compNumb][numbcomp]-intparamij[numbcomp][compNumb])<1e-10){
             // return super.calcAi(compNumb, phase, temperature, pressure, numbcomp);
@@ -757,7 +795,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return 2.0 * A1 + A2;
         }
 
-        public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -804,7 +843,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A1 + A2 + A4;
         }
 
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             double aij = 0.0, aij2 = 0.0, aij3 = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -850,7 +890,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
 
         private static final long serialVersionUID = 1000;
 
-        public double getkij(double temperature, int i, int j) {
+        @Override
+		public double getkij(double temperature, int i, int j) {
             if (intparamTType[i][j] == 0) {
                 return intparam[i][j] + intparamT[i][j] * temperature;
             } else if (intparamTType[i][j] == 1) {
@@ -860,7 +901,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public double getkijdT(double temperature, int i, int j) {
+        @Override
+		public double getkijdT(double temperature, int i, int j) {
             if (intparamTType[i][j] == 0) {
                 return intparamT[i][j];
             } else if (intparamTType[i][j] == 1) {
@@ -870,7 +912,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public double getkijdTdT(double temperature, int i, int j) {
+        @Override
+		public double getkijdTdT(double temperature, int i, int j) {
             if (intparamTType[i][j] == 0) {
                 return 0;
             } else if (intparamTType[i][j] == 1) {
@@ -880,7 +923,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public Object clone() {
+        @Override
+		public Object clone() {
             ClassicSRKT clonedSystem = null;
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
@@ -924,47 +968,56 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             gePhase.setProperties(phase);
         }
 
-        public void setHVDijParameter(int i, int j, double value) {
+        @Override
+		public void setHVDijParameter(int i, int j, double value) {
             HVDij[i][j] = value;
             // System.out.println("hv " + value);
             // HVDij[j][i] = value;
             gePhase.setDij(HVDij);
         }
 
-        public double getHVDijParameter(int i, int j) {
+        @Override
+		public double getHVDijParameter(int i, int j) {
             return HVDij[i][j];
         }
 
-        public void setHVDijTParameter(int i, int j, double value) {
+        @Override
+		public void setHVDijTParameter(int i, int j, double value) {
             HVDijT[i][j] = value;
             // HVDijT[j][i] = value;
             gePhase.setDijT(HVDijT);
         }
 
-        public double getHVDijTParameter(int i, int j) {
+        @Override
+		public double getHVDijTParameter(int i, int j) {
             return HVDijT[i][j];
         }
 
-        public void setHValphaParameter(int i, int j, double value) {
+        @Override
+		public void setHValphaParameter(int i, int j, double value) {
             HValpha[i][j] = value;
             HValpha[j][i] = value;
             gePhase.setAlpha(HValpha);
         }
 
-        public double getHValphaParameter(int i, int j) {
+        @Override
+		public double getHValphaParameter(int i, int j) {
             return HValpha[i][j];
         }
 
-        public double getKijWongSandler(int i, int j) {
+        @Override
+		public double getKijWongSandler(int i, int j) {
             return WSintparam[i][j];
         }
 
-        public void setKijWongSandler(int i, int j, double value) {
+        @Override
+		public void setKijWongSandler(int i, int j, double value) {
             WSintparam[i][j] = value;
             WSintparam[j][i] = value;
         }
 
-        public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             double aij = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -982,7 +1035,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             double aij = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -995,7 +1049,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0;
 
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1017,7 +1072,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             for (int i = 0; i < numbcomp; i++) {
@@ -1036,7 +1092,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             double aij = compArray[compNumbj].getb()
@@ -1201,48 +1258,58 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public PhaseInterface getGEPhase() {
+        @Override
+		public PhaseInterface getGEPhase() {
             return gePhase;
         }
 
-        public void setHVDijParameter(int i, int j, double value) {
+        @Override
+		public void setHVDijParameter(int i, int j, double value) {
             HVDij[i][j] = value;
             gePhase.setDij(HVDij);
         }
 
-        public double getHVDijParameter(int i, int j) {
+        @Override
+		public double getHVDijParameter(int i, int j) {
             return HVDij[i][j];
         }
 
-        public void setHVDijTParameter(int i, int j, double value) {
+        @Override
+		public void setHVDijTParameter(int i, int j, double value) {
             HVDijT[i][j] = value;
             gePhase.setDijT(HVDijT);
         }
 
-        public double getHVDijTParameter(int i, int j) {
+        @Override
+		public double getHVDijTParameter(int i, int j) {
             return HVDijT[i][j];
         }
 
-        public void setHValphaParameter(int i, int j, double value) {
+        @Override
+		public void setHValphaParameter(int i, int j, double value) {
             HValpha[i][j] = value;
             HValpha[j][i] = value;
             gePhase.setAlpha(HValpha);
         }
 
-        public double getHValphaParameter(int i, int j) {
+        @Override
+		public double getHValphaParameter(int i, int j) {
             return HValpha[i][j];
         }
 
-        public double getKijWongSandler(int i, int j) {
+        @Override
+		public double getKijWongSandler(int i, int j) {
             return WSintparam[i][j];
         }
 
-        public void setKijWongSandler(int i, int j, double value) {
+        @Override
+		public void setKijWongSandler(int i, int j, double value) {
             WSintparam[i][j] = value;
             WSintparam[j][i] = value;
         }
 
-        public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             this.init(phase, temperature, pressure, numbcomp);
             // A = phase.getNumberOfMolesInPhase() * calcB(phase, temperature, pressure,
@@ -1254,7 +1321,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1270,7 +1338,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             double A = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1286,7 +1355,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1296,7 +1366,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0.0;
             // A = Math.pow(phase.getNumberOfMolesInPhase(), 1.0) * getB() * R * temperature
             // * d2adt2 + Math.pow(phase.getNumberOfMolesInPhase(), 1.0) * getB() * R * dadt
@@ -1306,7 +1377,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
             double A = getB() * R * compArray[compNumb].getAder()
@@ -1342,7 +1414,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             super(phase, WSalpha, WSDij, WSDijT, mixRule);
         }
 
-        public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public void init(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             gePhase.setProperties(phase);
 
@@ -1496,7 +1569,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0;
             // super.calcA(phase, temperature, pressure, numbcomp);
             this.init(phase, temperature, pressure, numbcomp);
@@ -1506,7 +1580,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1518,7 +1593,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
@@ -1530,7 +1606,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double A = 0;
 
             A = Math.pow(phase.getNumberOfMolesInPhase(), 1.0) * getB() * R * temperature * d2adt2
@@ -1546,7 +1623,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             double A = getB() * R * compArray[compNumb].getAder()
                     + getB() * R * temperature * compArray[compNumb].getdAdTdn()
@@ -1561,7 +1639,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcAij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             double A = 0;
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1581,13 +1660,15 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return A;
         }
 
-        public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             double B = b_mix * phase.getNumberOfMolesInPhase();
             Btot = B;
             return B;
         }
 
-        public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             return compArray[compNumb].getBder();
         }
@@ -1606,7 +1687,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return bit;
         }
 
-        public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcBij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             return compArray[compNumb].getdBdndn(compNumbj);
@@ -1621,7 +1703,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             calcWij(phase);
         }
 
-        public void calcWij(PhaseInterface phase) {
+        @Override
+		public void calcWij(PhaseInterface phase) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             int numbcomp = phase.getNumberOfComponents();
 
@@ -1654,51 +1737,61 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             }
         }
 
-        public void setWijParameter(int i, int j, double value) {
+        @Override
+		public void setWijParameter(int i, int j, double value) {
             // System.out.println("intparam: " + value);
             wij[0][i][j] = value;
             wij[0][j][i] = value;
         }
 
-        public double getWijParameter(int i, int j) {
+        @Override
+		public double getWijParameter(int i, int j) {
             return wij[0][i][j];
         }
 
-        public void setWijT1Parameter(int i, int j, double value) {
+        @Override
+		public void setWijT1Parameter(int i, int j, double value) {
             wij[1][i][j] = value;
             wij[1][j][i] = value;
         }
 
-        public double gettWijT1Parameter(int i, int j) {
+        @Override
+		public double gettWijT1Parameter(int i, int j) {
             return wij[1][i][j];
         }
 
-        public void setWijT2Parameter(int i, int j, double value) {
+        @Override
+		public void setWijT2Parameter(int i, int j, double value) {
             wij[2][i][j] = value;
             wij[2][j][i] = value;
         }
 
-        public double gettWijT2Parameter(int i, int j) {
+        @Override
+		public double gettWijT2Parameter(int i, int j) {
             return wij[2][i][j];
         }
 
-        public double getWij(int i, int j, double temperature) {
+        @Override
+		public double getWij(int i, int j, double temperature) {
             return wij[0][i][j] + wij[1][i][j] * (1.0 / temperature - 1.0 / 298.15)
                     + wij[2][i][j] * ((298.15 - temperature) / temperature + Math.log(temperature / 298.15));
         }
 
-        public double getWijT(int i, int j, double temperature) {
+        @Override
+		public double getWijT(int i, int j, double temperature) {
             return (-wij[1][i][j] / (temperature * temperature)
                     - wij[2][i][j] * (298.15 - temperature) / (temperature * temperature));
         }
 
-        public double getWijTT(int i, int j, double temperature) {
+        @Override
+		public double getWijTT(int i, int j, double temperature) {
             return (2.0 * wij[1][i][j] / (temperature * temperature * temperature)
                     + wij[2][i][j] / (temperature * temperature)
                     + 2.0 * wij[2][i][j] * (298.15 - temperature) / (temperature * temperature * temperature));
         }
 
-        public double calcW(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcW(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             double W = 0.0;
             for (int i = 0; i < numbcomp; i++) {
@@ -1711,7 +1804,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return -W;
         }
 
-        public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcWi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
             double Wi = 0.0;
@@ -1721,7 +1815,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return -2.0 * Wi;
         }
 
-        public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcWiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
             double WiT = 0;
             for (int j = 0; j < numbcomp; j++) {
@@ -1730,7 +1825,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return -2.0 * WiT;
         }
 
-        public double calcWT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcWT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
             double WT = 0;
@@ -1744,7 +1840,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return -WT;
         }
 
-        public double calcWTT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+        @Override
+		public double calcWTT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
 
             double WTT = 0;
@@ -1758,7 +1855,8 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
             return -WTT;
         }
 
-        public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature, double pressure,
+        @Override
+		public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature, double pressure,
                 int numbcomp) {
             return -2.0 * getWij(compNumbi, compNumj, temperature);// iwij[0][compNumbi][compNumj];
 
@@ -1817,7 +1915,7 @@ public class EosMixingRules extends Object implements Cloneable, java.io.Seriali
                             throw new Exception("no interaction coefficient for TBP fractions");
                         }
                         int templ = l, tempk = k;
-                        if (database.createTemporaryTables()) {
+                        if (NeqSimDataBase.createTemporaryTables()) {
                             dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='" + component_name
                                     + "' AND comp2='" + phase.getComponents()[l].getComponentName() + "') OR (comp1='"
                                     + phase.getComponents()[l].getComponentName() + "' AND comp2='" + component_name

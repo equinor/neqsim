@@ -30,11 +30,13 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
         this.boilp = boilp;
     }
 
-    public double getSIvalue() {
+    @Override
+	public double getSIvalue() {
         return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
     }
 
-    public double getValue(String tounit) {
+    @Override
+	public double getValue(String tounit) {
         return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
     }
 

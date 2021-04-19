@@ -32,7 +32,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         lastPlusFractionNumber = 40;
     }
 
-    public boolean groupTBPfractions() {
+    @Override
+	public boolean groupTBPfractions() {
         system.init(0);
         double old = 0;
 
@@ -104,7 +105,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         return length > 1;
     }
 
-    public void addTBPFractions() {
+    @Override
+	public void addTBPFractions() {
         for (int i = 0; i < TBPdens.length; i++) {
             // System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
             system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i], TBPdens[i]);
@@ -133,7 +135,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @param coefs New value of property coefs.
      */
-    public void setCoefs(double coef, int i) {
+    @Override
+	public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
     }
 
@@ -150,7 +153,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
         this.TBPfractions = TBPfractions;
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         NewtonSolveABCD solver = new NewtonSolveABCD(system, this);
         solver.solve();
     }
@@ -165,7 +169,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @param coefs New value of property coefs.
      */
-    public void setCoefs(double[] coefs) {
+    @Override
+	public void setCoefs(double[] coefs) {
         this.coefs = coefs;
     }
 
@@ -196,7 +201,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @return Value of property length.
      */
-    public int getLength() {
+    @Override
+	public int getLength() {
         return length;
     }
 
@@ -223,7 +229,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @return Value of property carbonNumberVector.
      */
-    public int[] getCarbonNumberVector() {
+    @Override
+	public int[] getCarbonNumberVector() {
         return this.carbonNumberVector;
     }
 
@@ -232,7 +239,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @param carbonNumberVector New value of property carbonNumberVector.
      */
-    public void setCarbonNumberVector(int[] carbonNumberVector) {
+    @Override
+	public void setCarbonNumberVector(int[] carbonNumberVector) {
         this.carbonNumberVector = carbonNumberVector;
     }
 
@@ -259,11 +267,13 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @return Value of property plusCoefs.
      */
-    public double[] getPlusCoefs() {
+    @Override
+	public double[] getPlusCoefs() {
         return this.plusCoefs;
     }
 
-    public double getPlusCoefs(int i) {
+    @Override
+	public double getPlusCoefs(int i) {
         return this.plusCoefs[i];
     }
 
@@ -272,7 +282,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * 
      * @param plusCoefs New value of property plusCoefs.
      */
-    public void setPlusCoefs(double[] plusCoefs) {
+    @Override
+	public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
@@ -282,7 +293,8 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @return Value of property densPlus.
      *
      */
-    public double getDensPlus() {
+    @Override
+	public double getDensPlus() {
         return densPlus;
     }
 
@@ -292,18 +304,21 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @param densPlus New value of property densPlus.
      *
      */
-    public void setDensPlus(double densPlus) {
+    @Override
+	public void setDensPlus(double densPlus) {
         this.densPlus = densPlus;
     }
 
-    public boolean isPseudocomponents() {
+    @Override
+	public boolean isPseudocomponents() {
         return false;
     }
 
     public void addPlusFraction() {
     }
 
-    public void addHeavyEnd() {
+    @Override
+	public void addHeavyEnd() {
         int old = getFirstPlusFractionNumber();
         setFirstPlusFractionNumber(length + 7);
         generateTBPFractions();

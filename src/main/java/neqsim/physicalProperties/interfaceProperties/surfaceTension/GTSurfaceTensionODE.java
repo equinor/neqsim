@@ -4,12 +4,6 @@
  */
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-/**
- *
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
- * @date 2014-03-26
- */
-import static neqsim.physicalProperties.interfaceProperties.surfaceTension.GTSurfaceTensionFullGT.logger;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 import org.apache.logging.log4j.*;

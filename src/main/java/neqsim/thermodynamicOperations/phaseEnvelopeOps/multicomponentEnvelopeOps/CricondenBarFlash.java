@@ -61,7 +61,8 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         // input values
         T = cricondenBar[0];

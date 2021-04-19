@@ -51,7 +51,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     Pump oilPump;
     Cooler secondStageAfterCooler;
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
@@ -60,7 +61,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -77,7 +79,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
         double inletPressure = feedStream.getPressure();
 
@@ -134,35 +137,41 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         getOperations().add(secondStageAfterCooler);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
         getOperations().run();
 
         gasExitStream = secondStageAfterCooler.getOutStream();
-        oilExitStream = (Stream) oilPump.getOutStream();
+        oilExitStream = oilPump.getOutStream();
         glycolExitStream = glycolScrubber.getLiquidOutStream();
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
 
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 
-    public void setSpecification(String specificationName, double value) {
+    @Override
+	public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("inlet separation temperature")) {
             inletSepTemperature = value;
         } else if (specificationName.equals("gas scrubber temperature")) {

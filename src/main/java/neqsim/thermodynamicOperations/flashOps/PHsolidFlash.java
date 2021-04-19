@@ -49,7 +49,8 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
         this.enthalpyspec = ent;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         // logger.info("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
@@ -90,7 +91,8 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
 
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

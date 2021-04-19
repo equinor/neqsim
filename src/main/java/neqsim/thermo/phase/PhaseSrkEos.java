@@ -28,7 +28,8 @@ public class PhaseSrkEos extends PhaseEos {
         delta2 = 0;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseSrkEos clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkEos) super.clone();
@@ -39,7 +40,8 @@ public class PhaseSrkEos extends PhaseEos {
         return clonedPhase;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSrk(componentName, moles, molesInPhase, compNumber);
     }

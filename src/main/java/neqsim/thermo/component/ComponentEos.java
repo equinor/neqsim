@@ -63,7 +63,8 @@ abstract class ComponentEos extends Component
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentEos clonedComponent = null;
         try {
@@ -77,7 +78,8 @@ abstract class ComponentEos extends Component
         return clonedComponent;
     }
 
-    public void init(double temp, double pres, double totMoles, double beta, int type) {
+    @Override
+	public void init(double temp, double pres, double totMoles, double beta, int type) {
         super.init(temp, pres, totMoles, beta, type);
         a = calca();
         b = calcb();
@@ -90,7 +92,8 @@ abstract class ComponentEos extends Component
         }
     }
 
-    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
+    @Override
+	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
         Bi = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
         Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
@@ -110,7 +113,8 @@ abstract class ComponentEos extends Component
         }
     }
 
-    public void setAtractiveTerm(int i) {
+    @Override
+	public void setAtractiveTerm(int i) {
         atractiveTermNumber = i;
         if (i == 0) {
             atractiveParameter = new AtractiveTermSrk(this);
@@ -160,7 +164,8 @@ abstract class ComponentEos extends Component
         }
     }
 
-    public AtractiveTermInterface getAtractiveTerm() {
+    @Override
+	public AtractiveTermInterface getAtractiveTerm() {
         return this.atractiveParameter;
     }
 
@@ -172,66 +177,81 @@ abstract class ComponentEos extends Component
         return pressure / criticalPressure;
     }
 
-    public double geta() {
+    @Override
+	public double geta() {
         return a;
     }
 
-    public double getb() {
+    @Override
+	public double getb() {
         return b;
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi();
     }
 
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return (phase.FBT() + phase.FBD() * phase.getAT()) * getBi() + phase.FDT() * getAi() + phase.FD() * getAiT();
     }
 
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return phase.FnV() + phase.FBV() * getBi() + phase.FDV() * getAi();
     }
 
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
         return phase.FnB() * (getBi() + comp_Array[j].getBi())
                 + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi())
                 + phase.FB() * getBij(j) + phase.FBB() * getBi() * comp_Array[j].getBi() + phase.FD() * getAij(j);
     }
 
-    public double getAi() {
+    @Override
+	public double getAi() {
         return Ai;
     }
 
-    public double getAiT() {
+    @Override
+	public double getAiT() {
         return AiT;
     }
 
-    public double getBi() {
+    @Override
+	public double getBi() {
         return Bi;
     }
 
-    public double getBij(int j) {
+    @Override
+	public double getBij(int j) {
         return Bij[j];
     }
 
-    public double getAij(int j) {
+    @Override
+	public double getAij(int j) {
         return Aij[j];
     }
 
-    public double getaDiffT() {
+    @Override
+	public double getaDiffT() {
         return aDiffT;
     }
 
-    public double getaDiffDiffT() {
+    @Override
+	public double getaDiffDiffT() {
         return aDiffDiffT;
     }
 
-    public double getaT() {
+    @Override
+	public double getaT() {
         return aT;
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         logFugasityCoeffisient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
                 - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
@@ -239,7 +259,8 @@ abstract class ComponentEos extends Component
         return fugasityCoeffisient;
     }
 
-    public double logfugcoefdP(PhaseInterface phase) {
+    @Override
+	public double logfugcoefdP(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         double vol, voli, b, a, yaij = 0, coef;
@@ -249,7 +270,8 @@ abstract class ComponentEos extends Component
         return dfugdp;
     }
 
-    public double logfugcoefdT(PhaseInterface phase) {
+    @Override
+	public double logfugcoefdT(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         double vol, voli, b, a, yaij = 0, coef;
@@ -260,7 +282,8 @@ abstract class ComponentEos extends Component
         return dfugdt;
     }
 
-    public double[] logfugcoefdN(PhaseInterface phase) {
+    @Override
+	public double[] logfugcoefdN(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getComponents();
@@ -292,7 +315,8 @@ abstract class ComponentEos extends Component
      * //return 0.0001; return dfugdnv[i]; }
      */
     // Added By Neeraj
-    public double logfugcoefdNi(PhaseInterface phase, int k) {
+    @Override
+	public double logfugcoefdNi(PhaseInterface phase, int k) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         double vol, voli, b, a, yaij = 0, coef;
@@ -310,35 +334,43 @@ abstract class ComponentEos extends Component
         return dfugdn[k];
     }
 
-    public double getAder() {
+    @Override
+	public double getAder() {
         return aDern;
     }
 
-    public void setAder(double val) {
+    @Override
+	public void setAder(double val) {
         aDern = val;
     }
 
-    public double getdAdndn(int j) {
+    @Override
+	public double getdAdndn(int j) {
         return dAdndn[j];
     }
 
-    public void setdAdndn(int jComp, double val) {
+    @Override
+	public void setdAdndn(int jComp, double val) {
         dAdndn[jComp] = val;
     }
 
-    public void setdAdT(double val) {
+    @Override
+	public void setdAdT(double val) {
         aDerT = val;
     }
 
-    public double getdAdT() {
+    @Override
+	public double getdAdT() {
         return aDerT;
     }
 
-    public void setdAdTdn(double val) {
+    @Override
+	public void setdAdTdn(double val) {
         aDerTn = val;
     }
 
-    public double getdAdTdn() {
+    @Override
+	public double getdAdTdn() {
         return aDerTn;
     }
 
@@ -346,38 +378,47 @@ abstract class ComponentEos extends Component
         return aDerT;
     }
 
-    public void setdAdTdT(double val) {
+    @Override
+	public void setdAdTdT(double val) {
         aDerTT = val;
     }
 
-    public double getBder() {
+    @Override
+	public double getBder() {
         return bDern;
     }
 
-    public void setBder(double val) {
+    @Override
+	public void setBder(double val) {
         bDern = val;
     }
 
-    public double getdBdndn(int j) {
+    @Override
+	public double getdBdndn(int j) {
         return dBdndn[j];
     }
 
-    public void setdBdndn(int jComp, double val) {
+    @Override
+	public void setdBdndn(int jComp, double val) {
         dBdndn[jComp] = val;
     }
 
-    public double getdBdT() {
+    @Override
+	public double getdBdT() {
         return 1;
     }
 
-    public void setdBdTdT(double val) {
+    @Override
+	public void setdBdTdT(double val) {
     }
 
-    public double getdBdndT() {
+    @Override
+	public double getdBdndT() {
         return bDerTn;
     }
 
-    public void setdBdndT(double val) {
+    @Override
+	public void setdBdndT(double val) {
         bDerTn = val;
     }
 
@@ -385,7 +426,8 @@ abstract class ComponentEos extends Component
         return atractiveParameter.alpha(temperature);
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         return atractiveParameter.aT(temperature);
     }
 
@@ -397,15 +439,18 @@ abstract class ComponentEos extends Component
         return atractiveParameter.diffdiffalphaT(temperature);
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         return atractiveParameter.diffaT(temperature);
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         return atractiveParameter.diffdiffaT(temperature);
     }
 
-    public double[] getDeltaEosParameters() {
+    @Override
+	public double[] getDeltaEosParameters() {
         double[] param = { delta1, delta2 };
         return param;
     }
@@ -415,7 +460,8 @@ abstract class ComponentEos extends Component
      *
      * @param a New value of property a.
      */
-    public void seta(double a) {
+    @Override
+	public void seta(double a) {
         this.a = a;
     }
 
@@ -424,15 +470,19 @@ abstract class ComponentEos extends Component
      *
      * @param b New value of property b.
      */
-    public void setb(double b) {
+    @Override
+	public void setb(double b) {
         this.b = b;
     }
 
-    public abstract double calca();
+    @Override
+	public abstract double calca();
 
-    public abstract double calcb();
+    @Override
+	public abstract double calcb();
 
-    public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    @Override
+	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double a_inf = -3.471 + 4.927 * getCriticalCompressibilityFactor()
                 + 13.085 * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 2.067 * getAcentricFactor()
                 + 1.891 * Math.pow(getAcentricFactor(), 2.0);
@@ -472,7 +522,8 @@ abstract class ComponentEos extends Component
                 * dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
-    public double getChemicalPotential(PhaseInterface phase) {
+    @Override
+	public double getChemicalPotential(PhaseInterface phase) {
         double entalp = getHID(phase.getTemperature()) * numberOfMolesInPhase;
         double entrop = numberOfMolesInPhase * getIdEntropy(phase.getTemperature());
         double chempot = ((entalp - phase.getTemperature() * entrop)

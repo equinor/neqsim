@@ -20,7 +20,8 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
         super();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         LevenbergMarquardtAbsDev clonedClass = null;
         try {
             clonedClass = (LevenbergMarquardtAbsDev) super.clone();
@@ -31,7 +32,8 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
         return clonedClass;
     }
 
-    public double calcChiSquare() {
+    @Override
+	public double calcChiSquare() {
         double chiSquare = 0;
         for (int i = 0; i < sampleSet.getLength(); i++) {
 
@@ -41,7 +43,8 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
         return chiSquare;
     }
 
-    public double[][] calcAlphaMatrix() {
+    @Override
+	public double[][] calcAlphaMatrix() {
         double[][] alpha = new double[sampleSet.getSample(0).getFunction().getFittingParams().length][sampleSet
                 .getSample(0).getFunction().getFittingParams().length];
         for (int i = 0; i < alpha.length; i++) {
@@ -58,7 +61,8 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
         return alpha;
     }
 
-    public double[] calcBetaMatrix() {
+    @Override
+	public double[] calcBetaMatrix() {
         double[] beta = new double[sampleSet.getSample(0).getFunction().getFittingParams().length];
         for (int i = 0; i < beta.length; i++) {
             beta[i] = 0.0;

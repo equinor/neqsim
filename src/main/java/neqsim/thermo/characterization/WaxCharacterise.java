@@ -23,7 +23,8 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         thermoSystem = system;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         WaxCharacterise clonedSystem = null;
         try {
             clonedSystem = (WaxCharacterise) super.clone();
@@ -40,7 +41,8 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         double[] parameterWaxHeatOfFusion = new double[1];
         double[] parameterWaxTriplePointTemperature = new double[1];
 
-        public Object clone() {
+        @Override
+		public Object clone() {
             WaxBaseModel clonedSystem = null;
             try {
                 clonedSystem = (WaxBaseModel) super.clone();
@@ -50,48 +52,57 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
             return clonedSystem;
         }
 
-        public void addTBPWax() {
+        @Override
+		public void addTBPWax() {
 
         }
 
-        public void setWaxParameters(double[] parameters) {
+        @Override
+		public void setWaxParameters(double[] parameters) {
             parameterWax = parameters;
         }
 
-        public void setWaxParameter(int i, double parameters) {
+        @Override
+		public void setWaxParameter(int i, double parameters) {
             parameterWax[i] = parameters;
         }
 
-        public void setParameterWaxHeatOfFusion(int i, double parameters) {
+        @Override
+		public void setParameterWaxHeatOfFusion(int i, double parameters) {
             parameterWaxHeatOfFusion[i] = parameters;
         }
 
-        public void setParameterWaxTriplePointTemperature(int i, double parameters) {
+        @Override
+		public void setParameterWaxTriplePointTemperature(int i, double parameters) {
             parameterWaxTriplePointTemperature[i] = parameters;
         }
 
-        public double[] getWaxParameters() {
+        @Override
+		public double[] getWaxParameters() {
             return parameterWax;
         }
 
         /**
          * @return the parameterWaxHeatOfFusion
          */
-        public double[] getParameterWaxHeatOfFusion() {
+        @Override
+		public double[] getParameterWaxHeatOfFusion() {
             return parameterWaxHeatOfFusion;
         }
 
         /**
          * @param parameterWaxHeatOfFusion the parameterWaxHeatOfFusion to set
          */
-        public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion) {
+        @Override
+		public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion) {
             this.parameterWaxHeatOfFusion = parameterWaxHeatOfFusion;
         }
 
         /**
          * @return the parameterWaxTriplePointTemperature
          */
-        public double[] getParameterWaxTriplePointTemperature() {
+        @Override
+		public double[] getParameterWaxTriplePointTemperature() {
             return parameterWaxTriplePointTemperature;
         }
 
@@ -100,7 +111,8 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          *                                           parameterWaxTriplePointTemperature
          *                                           to set
          */
-        public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature) {
+        @Override
+		public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature) {
             this.parameterWaxTriplePointTemperature = parameterWaxTriplePointTemperature;
         }
 
@@ -144,7 +156,8 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
                             3.46);
         }
 
-        public void addTBPWax() {
+        @Override
+		public void addTBPWax() {
             int numberOfCOmponents = thermoSystem.getPhase(0).getNumberOfComponents();
             boolean hasWax = false;
             for (int i = 0; i < numberOfCOmponents; i++) {
@@ -213,7 +226,8 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
             }
         }
 
-        public void removeWax() {
+        @Override
+		public void removeWax() {
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
                 if (thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
                     String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);

@@ -22,7 +22,8 @@ public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethod
     public PhysicalPropertyMethod() {
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhysicalPropertyMethod properties = null;
 
         try {
@@ -34,10 +35,12 @@ public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethod
         return properties;
     }
 
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    @Override
+	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
     }
 
-    public void tuneModel(double val, double temperature, double pressure) {
+    @Override
+	public void tuneModel(double val, double temperature, double pressure) {
         logger.error("model tuning not implemented!");
     }
     // should contain phase objects ++ get diffusivity methods .. more ?

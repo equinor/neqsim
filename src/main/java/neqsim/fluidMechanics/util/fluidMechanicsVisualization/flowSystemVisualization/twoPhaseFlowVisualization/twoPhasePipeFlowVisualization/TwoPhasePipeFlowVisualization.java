@@ -53,7 +53,8 @@ public class TwoPhasePipeFlowVisualization extends
         System.out.println("times " + time);
     }
 
-    public void setPoints() {
+    @Override
+	public void setPoints() {
         pressurePoint = new double[2][time][flowNodes[0].length];
         temperaturePoint = new double[2][time][flowNodes[0].length];
         interphaseContactLength = new double[2][time][flowNodes[0].length];
@@ -101,7 +102,8 @@ public class TwoPhasePipeFlowVisualization extends
         }
     }
 
-    public void displayResult(String name) {
+    @Override
+	public void displayResult(String name) {
         // double[][] points = new double[1][1];
         setPoints();
         //
@@ -143,7 +145,8 @@ public class TwoPhasePipeFlowVisualization extends
     // file.createFile();
     // }
     //
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         setPoints();
         neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
         file.setOutputFileName(name);

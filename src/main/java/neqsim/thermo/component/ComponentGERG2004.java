@@ -35,7 +35,8 @@ public class ComponentGERG2004 extends ComponentEos {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentGERG2004 clonedComponent = null;
         try {
@@ -47,36 +48,44 @@ public class ComponentGERG2004 extends ComponentEos {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         return 0.0;
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         return 0;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         return 0;
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
 
         return fugasityCoeffisient;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         return 1;
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         return 1;
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         return 1;
     }
 }

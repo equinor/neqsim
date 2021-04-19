@@ -31,7 +31,8 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         // flowNode = node;
     }
 
-    public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
+    @Override
+	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
             return 64.0 / node.getReynoldsNumber(phase);
         } else {
@@ -41,11 +42,13 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
 
     }
 
-    public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
+    @Override
+	public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 
-    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
             return 3.66 / node.getHydraulicDiameter(phase)
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
@@ -61,7 +64,8 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
-    public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         // System.out.println("velocity " + node.getVelocity(phase));
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 3.66 / node.getHydraulicDiameter(phase)
@@ -79,7 +83,8 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
-    public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
@@ -89,7 +94,8 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
-    public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
+    @Override
+	public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         double redMassTrans = 0;
         double massTrans = 0;
         if (phase == 1) {

@@ -39,11 +39,13 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
         deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
     }
 
-    public void setBeta(double beta) {
+    @Override
+	public void setBeta(double beta) {
         this.beta = beta;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system.init(0);
         system.init(2);
 
@@ -89,18 +91,22 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
         } while (Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7);
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return null;
     }
 
-    public double[] get(String name) {
+    @Override
+	public double[] get(String name) {
         return null;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         system.display();
     }
 
@@ -109,7 +115,8 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
      * 
      * @return Value of property superCritical.
      */
-    public boolean isSuperCritical() {
+    @Override
+	public boolean isSuperCritical() {
         return superCritical;
     }
 
@@ -122,11 +129,13 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
         this.superCritical = superCritical;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 
-    public void addData(String name, double[][] data) {
+    @Override
+	public void addData(String name, double[][] data) {
 
     }
 }

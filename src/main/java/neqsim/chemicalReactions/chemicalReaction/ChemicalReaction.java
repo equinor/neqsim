@@ -277,7 +277,7 @@ public class ChemicalReaction extends Object
 
         for (int j = 0; j < reactantNames.length; j++) {
             for (int i = 0; i < names.length; i++) {
-                if (names[i].equals((String) reactantNames[j])) {
+                if (names[i].equals(reactantNames[j])) {
                     test = true;
                     break;
                 } else {
@@ -292,7 +292,7 @@ public class ChemicalReaction extends Object
         if (test == false) {
             for (int j = 0; j < productNames.length; j++) {
                 for (int i = 0; i < names.length; i++) {
-                    if (names[i].equals((String) productNames[j])) {
+                    if (names[i].equals(productNames[j])) {
                         test = true;
                         break;
                     } else {

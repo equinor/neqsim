@@ -51,7 +51,8 @@ public class SampleValue extends Object implements Cloneable {
         this.standardDeviations = standardDeviations;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SampleValue clonedValue = null;
         try {
             clonedValue = (SampleValue) super.clone();

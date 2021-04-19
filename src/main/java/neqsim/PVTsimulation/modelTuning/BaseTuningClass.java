@@ -46,11 +46,13 @@ public class BaseTuningClass implements TuningInterface {
     /**
      * @return the simulationClass
      */
-    public SimulationInterface getSimulation() {
+    @Override
+	public SimulationInterface getSimulation() {
         return simulation;
     }
 
-    public void setSaturationConditions(double temperature, double pressure) {
+    @Override
+	public void setSaturationConditions(double temperature, double pressure) {
         saturationTemperature = temperature;
         saturationPressure = pressure;
     }
@@ -83,6 +85,7 @@ public class BaseTuningClass implements TuningInterface {
         this.tuneVolumeCorrection = tuneVolumeCorrection;
     }
 
-    public void run() {
+    @Override
+	public void run() {
     }
 }

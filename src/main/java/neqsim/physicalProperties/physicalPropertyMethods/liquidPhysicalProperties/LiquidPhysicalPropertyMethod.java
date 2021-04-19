@@ -28,7 +28,8 @@ public class LiquidPhysicalPropertyMethod
         this.liquidPhase = liquidPhase;
     }
 
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    @Override
+	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         this.liquidPhase = phase;
     }
 }

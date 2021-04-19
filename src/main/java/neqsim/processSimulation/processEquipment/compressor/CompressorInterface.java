@@ -17,7 +17,8 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public interface CompressorInterface extends ProcessEquipmentInterface, Serializable {
 
-    public void run();
+    @Override
+	public void run();
 
     public void setOutletPressure(double pressure);
 
@@ -25,7 +26,8 @@ public interface CompressorInterface extends ProcessEquipmentInterface, Serializ
 
     public double getEnergy();
 
-    public String getName();
+    @Override
+	public String getName();
 
     public StreamInterface getOutStream();
 

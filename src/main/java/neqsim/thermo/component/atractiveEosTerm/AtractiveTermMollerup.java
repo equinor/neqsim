@@ -28,7 +28,8 @@ public class AtractiveTermMollerup extends AtractiveTermBaseClass {
         System.arraycopy(params, 0, this.parameters, 0, params.length);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermMollerup atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermMollerup) super.clone();
@@ -39,32 +40,38 @@ public class AtractiveTermMollerup extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         return 1.0 + parameters[0] * (1 / temperature * component.getTC() - 1.0)
                 + parameters[1] * temperature / component.getTC() * Math.log(temperature / component.getTC())
                 + parameters[2] * (temperature / component.getTC() - 1.0);
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         return component.geta() * alpha(temperature);
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         return -parameters[0] / (temperature * temperature) * component.getTC()
                 + parameters[1] / component.getTC() * Math.log(temperature / component.getTC())
                 + parameters[1] / component.getTC() + parameters[2] / component.getTC();
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         return 2.0 * parameters[0] / (temperature * temperature * temperature) * component.getTC()
                 + parameters[1] / component.getTC() / temperature;
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         return component.geta() * diffalphaT(temperature);
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         return component.geta() * diffdiffalphaT(temperature);
     }
 

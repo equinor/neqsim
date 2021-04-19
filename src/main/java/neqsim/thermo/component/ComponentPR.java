@@ -46,7 +46,8 @@ public class ComponentPR extends ComponentEos {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentPR clonedComponent = null;
         try {
@@ -58,19 +59,23 @@ public class ComponentPR extends ComponentEos {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         return .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         return .077803333 * R * criticalTemperature / criticalPressure;
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         if (Math.abs(this.getRacketZ()) < 1e-10) {
             racketZ = 0.29056 - 0.08775 * getAcentricFactor();
         }
@@ -89,7 +94,8 @@ public class ComponentPR extends ComponentEos {
         return dqPuredTdT;
     }
 
-    public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    @Override
+	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();
         if (TR < 0) {
             TR = 0.5;

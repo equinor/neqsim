@@ -25,13 +25,15 @@ public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunctio
         this.phase = phase;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
         return system.getPhases()[phase].getComponents()[0].getx();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 }

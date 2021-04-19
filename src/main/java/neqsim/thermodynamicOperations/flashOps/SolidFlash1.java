@@ -333,7 +333,8 @@ public class SolidFlash1 extends TPflash implements java.io.Serializable {
         return tempVar;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         int iter = 0;
 

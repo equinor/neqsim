@@ -62,33 +62,40 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         this.name = name;
     }
 
-    public void run() {
+    @Override
+	public void run() {
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         run();
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return null;
     }
 
-    public SystemInterface getFluid() {
+    @Override
+	public SystemInterface getFluid() {
         return getThermoSystem();
     }
 
     ;
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
     }
 
     ;
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
@@ -99,10 +106,12 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         return null;
     }
 
-    public void setRegulatorOutSignal(double signal) {
+    @Override
+	public void setRegulatorOutSignal(double signal) {
     }
 
-    public void setController(ControllerDeviceInterface controller) {
+    @Override
+	public void setController(ControllerDeviceInterface controller) {
         this.controller = controller;
         hasController = true;
     }
@@ -111,14 +120,16 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         this.flowValveController = controller;
     }
 
-    public ControllerDeviceInterface getController() {
+    @Override
+	public ControllerDeviceInterface getController() {
         return controller;
     }
 
     /**
      * @return the mechanicalDesign
      */
-    public MechanicalDesign getMechanicalDesign() {
+    @Override
+	public MechanicalDesign getMechanicalDesign() {
         return mechanicalDesign;
     }
 
@@ -132,22 +143,26 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     /**
      * @return the specification
      */
-    public String getSpecification() {
+    @Override
+	public String getSpecification() {
         return specification;
     }
 
     /**
      * @param specification the specification to set
      */
-    public void setSpecification(String specification) {
+    @Override
+	public void setSpecification(String specification) {
         this.specification = specification;
     }
 
-    public String[][] reportResults() {
+    @Override
+	public String[][] reportResults() {
         return report;
     }
 
-    public boolean solved() {
+    @Override
+	public boolean solved() {
         return true;
     }
 
@@ -168,33 +183,40 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
         this.isSetEnergyStream = isSetEnergyStream;
     }
 
-    public double getPressure() {
+    @Override
+	public double getPressure() {
         return 1.0;
     }
 
-    public void setPressure(double pressure) {
+    @Override
+	public void setPressure(double pressure) {
 
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         return 0.0;
     }
 
-    public double getMassBalance(String unit) {
+    @Override
+	public double getMassBalance(String unit) {
         return 0.0;
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
         return 0.0;
     }
 
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+    @Override
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
 
     }
 
     public String conditionAnalysisMessage = "";
 
-    public String getConditionAnalysisMessage() {
+    @Override
+	public String getConditionAnalysisMessage() {
         return conditionAnalysisMessage;
     }
 

@@ -7,12 +7,10 @@
 package neqsim.thermo.util.example;
 
 
-import static org.junit.jupiter.api.Assertions.*;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 /**
  *
  * @author ESOL

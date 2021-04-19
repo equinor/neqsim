@@ -26,7 +26,8 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.addComponent("methane", -system.getPhase(0).getComponent("methane").getNumberOfmoles());
         system.addComponent("methane", params[0]);
         system.init_x_y();
@@ -38,7 +39,8 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
         return satPres;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }

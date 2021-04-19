@@ -25,7 +25,8 @@ public class DensityFunction extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         thermoOps.TPflash();
         system.initPhysicalProperties();
@@ -34,7 +35,8 @@ public class DensityFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getPhysicalProperties().getDensity();
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
     }

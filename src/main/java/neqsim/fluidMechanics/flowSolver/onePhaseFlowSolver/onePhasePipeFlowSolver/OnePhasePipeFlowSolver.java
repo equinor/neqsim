@@ -52,7 +52,8 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
         r = new double[nodes];
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         OnePhasePipeFlowSolver clonedSystem = null;
         try {
             clonedSystem = (OnePhasePipeFlowSolver) super.clone();

@@ -28,7 +28,8 @@ public class ClassicAcentricDens extends ClassicAcentricFunction {
         phasetype = phase;
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
@@ -40,7 +41,8 @@ public class ClassicAcentricDens extends ClassicAcentricFunction {
 //        return system.getPhase(phasetype).getPhysicalProperties().getDensity();
 //    }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
         // System.out.println("pres from antoine: " + system.getPressure());

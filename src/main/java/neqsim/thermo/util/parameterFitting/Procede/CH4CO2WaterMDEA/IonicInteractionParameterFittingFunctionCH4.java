@@ -33,7 +33,8 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         this.type = type;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -48,11 +49,13 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         }
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return (val);
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, CO3numb = 0, OHnumb = 0,
                 CH4Numb = 0;
@@ -114,7 +117,7 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                 .setWijParameter(MDEAplusNumb, Waternumb, 0.0004092282);
 
-        if ((ElectrolyteMixingRulesInterface) ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]
+        if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]
                 .getRefPhase(MDEAplusNumb)).getElectrolyteMixingRule() != null) {
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0].getRefPhase(MDEAplusNumb))
                     .getElectrolyteMixingRule().setWijParameter(0, 1, 0.0004092282);

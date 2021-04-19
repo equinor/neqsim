@@ -37,7 +37,8 @@ public class PhaseHydrate extends Phase {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseHydrate clonedPhase = null;
         try {
             clonedPhase = (PhaseHydrate) super.clone();
@@ -48,7 +49,8 @@ public class PhaseHydrate extends Phase {
         return clonedPhase;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
         double sum = 1.0;
         int hydrateStructure = ((ComponentHydrate) getComponent(0)).getHydrateStructure();
@@ -62,7 +64,8 @@ public class PhaseHydrate extends Phase {
         // return 1.0;
     }
 
-    public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
         // componentArray[compNumber] = new ComponentHydrateStatoil(componentName,
         // moles, molesInPhase, compNumber);
@@ -79,7 +82,8 @@ public class PhaseHydrate extends Phase {
         // molesInPhase, compNumber);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -87,7 +91,8 @@ public class PhaseHydrate extends Phase {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    public void resetMixingRule(int type) {
+    @Override
+	public void resetMixingRule(int type) {
     }
 
     public void setSolidRefFluidPhase(PhaseInterface refPhase) {

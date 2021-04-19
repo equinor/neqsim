@@ -85,7 +85,8 @@ public class ComponentBWRS extends ComponentSrk {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentBWRS clonedComponent = null;
         try {
@@ -97,7 +98,8 @@ public class ComponentBWRS extends ComponentSrk {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
 
         BP[0] = R * temperature;
@@ -157,7 +159,8 @@ public class ComponentBWRS extends ComponentSrk {
         BEdTdT[5] = 0.0;
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
         // System.out.println("Fref " +
         // refPhaseBWRS.getF()/phase.getNumberOfMolesInPhase());
         // System.out.println("Fref2 " + 1e3*(getFpoldn(phase, numberOfComponentphases,

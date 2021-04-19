@@ -48,7 +48,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermCPAstatoil atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermCPAstatoil) super.clone();
@@ -61,14 +62,16 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         return atractiveTerm;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
         if (!component.getName().equals("TEG")) {
             parameters[0] = m;
         }
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         double Tr = temperature / component.getTC();
         double temp1 = 1.0 - Math.sqrt(Tr);
         double var = 1.0 + parameters[0] * temp1 + parameters[1] * temp1 * temp1
@@ -76,7 +79,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         return var * var;// Math.pow(1.0+parameters[0]*(1.0-Math.sqrt(Tr))+parameters[1]*temp1*temp1+parameters[2]*temp1*temp1*temp1,2.0);
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         if (temperature / component.getTC() > 1.0) {
             return super.aT(temperature);
 
@@ -85,7 +89,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
         return 2.0
@@ -97,7 +102,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
 
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         double Tr = temperature / component.getTC();
         double TC = component.getTC();
         return 2.0
@@ -117,7 +123,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         if (temperature / component.getTC() > 1.0) {
             return super.diffaT(temperature);
         } else {
@@ -125,7 +132,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         if (temperature / component.getTC() > 1.0) {
             return super.diffdiffaT(temperature);
         } else {

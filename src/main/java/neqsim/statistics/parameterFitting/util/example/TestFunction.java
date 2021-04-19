@@ -21,11 +21,13 @@ public class TestFunction extends LevenbergMarquardtFunction {
     public TestFunction() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         return 3.0 * params[0] * params[1] - 2.0 * params[0] * dependentValues[0] - dependentValues[0];
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }

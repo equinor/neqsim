@@ -909,6 +909,7 @@ public interface SystemInterface extends Cloneable {
 	 * 
 	 * @deprecated use {@link #getThermalConductivity()} instead.
 	 */
+	@Deprecated
 	public double getConductivity();
 
 	/**
@@ -919,6 +920,7 @@ public interface SystemInterface extends Cloneable {
 	 * @return conductivity in specified unit
 	 * @deprecated use {@link #getThermalConductivity(String unit)} instead.
 	 */
+	@Deprecated
 	public double getConductivity(String unit);
 
 	/**

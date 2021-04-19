@@ -25,7 +25,8 @@ public class WaxFunction extends LevenbergMarquardtFunction {
         params = new double[3];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         thermoOps.TPflash();
         double waxFraction = 0.0;
@@ -36,7 +37,8 @@ public class WaxFunction extends LevenbergMarquardtFunction {
         return waxFraction * 100.0; // %wax
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i < 3) {
             system.getWaxModel().setWaxParameter(i, params[i]);

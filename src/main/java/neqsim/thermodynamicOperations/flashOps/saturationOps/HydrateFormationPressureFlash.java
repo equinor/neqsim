@@ -24,7 +24,8 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double olfFug = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -61,7 +62,8 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
         system.getPhase(4).getComponent("water").setx(1.0);
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
 }

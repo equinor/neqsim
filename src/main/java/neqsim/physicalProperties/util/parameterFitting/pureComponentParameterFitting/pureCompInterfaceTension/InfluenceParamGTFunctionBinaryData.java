@@ -22,7 +22,8 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(3);
         try {
             thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(), "dewPointTemperature",
@@ -34,7 +35,8 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         for (int kk = 0; kk < system.getPhase(0).getNumberOfComponents(); kk++) {
             system.getPhases()[0].getComponent(kk).setSurfTensInfluenceParam(i, value);

@@ -5,7 +5,6 @@
  */
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.measurementDevice.PressureTransmitter;
 import neqsim.processSimulation.measurementDevice.TemperatureTransmitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;

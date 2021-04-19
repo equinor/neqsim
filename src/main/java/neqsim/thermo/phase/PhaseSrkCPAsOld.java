@@ -23,12 +23,14 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         super();
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentSrkCPAs(componentName, moles, molesInPhase, compNumber);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseSrkCPAsOld clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkCPAsOld) super.clone();
@@ -38,20 +40,23 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         return clonedPhase;
     }
 
-    public double calc_g() {
+    @Override
+	public double calc_g() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
         double g = 1.0 / (1.0 - x);
         // System.out.println("g " + g);
         return g;
     }
 
-    public double calc_lngV() {
+    @Override
+	public double calc_lngV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
         double gv = (x / getTotalVolume()) / (1.0 - x);
         return -gv;
     }
 
-    public double calc_lngVV() {
+    @Override
+	public double calc_lngVV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
         double xV = -1.9 / 4.0 * getB() / (getTotalVolume() * getTotalVolume());
         double u = 1.0 - x;
@@ -65,7 +70,8 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
 //        return gvv;
     }
 
-    public double calc_lngVVV() {
+    @Override
+	public double calc_lngVVV() {
         double totVol = getTotalVolume();
         double totVol4 = totVol * totVol * totVol * totVol;
         double totVol5 = totVol4 * totVol;

@@ -46,11 +46,13 @@ public class pHProbe extends MeasurementDeviceBaseClass {
         thermoOps.TPflash();
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("measured temperature " + stream.getTemperature());
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return reactiveThermoSystem.getPhase(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous")).getpH();
     }
 }

@@ -28,7 +28,8 @@ public class SolidPhysicalPropertyMethod
         this.solidPhase = solidPhase;
     }
 
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    @Override
+	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         this.solidPhase = solidPhase;
     }
 }

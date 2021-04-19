@@ -35,7 +35,8 @@ public class Diffusivity
 
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -52,25 +53,30 @@ public class Diffusivity
         return properties;
     }
 
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    @Override
+	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
 
         return binaryDiffusionCoeffisients;
     }
 
-    public void calcEffectiveDiffusionCoeffisients() {
+    @Override
+	public void calcEffectiveDiffusionCoeffisients() {
 
     }
 
-    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    @Override
+	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
-    public double getEffectiveDiffusionCoefficient(int i) {
+    @Override
+	public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
-    public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    @Override
+	public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double nonIdealCorrection = 1.0;
         return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non ideality factor
     }

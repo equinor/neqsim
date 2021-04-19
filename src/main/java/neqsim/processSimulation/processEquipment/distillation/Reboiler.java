@@ -44,11 +44,12 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
 //		return calcMixStreamEnthalpy();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem()
+            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem()
                     .clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());

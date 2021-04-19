@@ -38,7 +38,8 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemFurstElectrolyteEos clonedSystem = null;
         try {
             clonedSystem = (SystemFurstElectrolyteEos) super.clone();

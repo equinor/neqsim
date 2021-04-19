@@ -32,7 +32,8 @@ public class Hydrocyclone extends Separator {
         addStream(inletStream);
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -48,7 +49,8 @@ public class Hydrocyclone extends Separator {
         return liquidOutStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         inletStreamMixer.run();
         thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
 
@@ -91,12 +93,14 @@ public class Hydrocyclone extends Separator {
         liquidOutStream.run();
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         thermoSystem.display("from here " + getName());
 
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 

@@ -136,7 +136,7 @@ public class lineFitPlot extends java.lang.Object {
 
         display = new DisplayImplJ2D("StatPlot");
 
-        GraphicsModeControl dispGMC = (GraphicsModeControl) display.getGraphicsModeControl();
+        GraphicsModeControl dispGMC = display.getGraphicsModeControl();
         dispGMC.setScaleEnable(true);
 
         xMap = new ScalarMap(x, Display.XAxis);

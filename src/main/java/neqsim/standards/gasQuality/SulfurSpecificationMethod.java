@@ -30,11 +30,13 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
         this.thermoSystem = thermoSystem;
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
         thermoSystem.init(0);
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         thermoSystem.init(0);
         if (thermoSystem.getPhase(0).hasComponent("H2S")) {
             if (returnParameter.equals("H2S content")) {
@@ -45,15 +47,18 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
         return 0.0;
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         return unit;
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return true;
     }
 }

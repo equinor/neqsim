@@ -1423,7 +1423,7 @@ public class DETAIL {
         // TODO Auto-generated method stub
 
         DETAIL test = new DETAIL();
-        test.SetupDetail();
+        DETAIL.SetupDetail();
 
         double T = 400;
         doubleW D = new doubleW(0.0);
@@ -1437,13 +1437,13 @@ public class DETAIL {
         double x[] = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
                 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
-        test.MolarMassDetail(x, Mm);
+        DETAIL.MolarMassDetail(x, Mm);
 
         System.out.println("mol mass " + Mm.val);
 
-        test.DensityDetail(T, P.val, x, D, ierr, herr);
+        DETAIL.DensityDetail(T, P.val, x, D, ierr, herr);
         System.out.println("density " + D.val);
-        test.PressureDetail(T, D.val, x, P, Z);
+        DETAIL.PressureDetail(T, D.val, x, P, Z);
         System.out.println("pressure " + P.val);
         System.out.println("Z " + Z.val);
 
@@ -1453,7 +1453,7 @@ public class DETAIL {
         doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
                 JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
 
-        test.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa);
+        DETAIL.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa);
 
         System.out.println("JT " + JT.val);
         System.out.println("Kappa " + Kappa.val);

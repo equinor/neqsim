@@ -22,7 +22,8 @@ public class InfluenceParamGTFunction extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(3);
         try {
             thermoOps.bubblePointPressureFlash(false);
@@ -33,7 +34,8 @@ public class InfluenceParamGTFunction extends LevenbergMarquardtFunction {
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponent(0).setSurfTensInfluenceParam(i, value);
         system.getPhases()[1].getComponent(0).setSurfTensInfluenceParam(i, value);

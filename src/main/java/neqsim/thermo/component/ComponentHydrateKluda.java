@@ -62,7 +62,8 @@ public class ComponentHydrateKluda extends Component {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 

@@ -21,12 +21,14 @@ public class PhaseKentEisenberg extends PhaseGENRTL {
         super();
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentKentEisenberg(componentName, moles, molesInPhase, compNumber);
     }
 
-    public double getActivityCoefficient(int k, int p) {
+    @Override
+	public double getActivityCoefficient(int k, int p) {
         return 1.0;
     }
 }

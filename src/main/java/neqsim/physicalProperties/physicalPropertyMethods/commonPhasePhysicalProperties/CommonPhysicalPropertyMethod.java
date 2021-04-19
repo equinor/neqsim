@@ -29,7 +29,8 @@ public class CommonPhysicalPropertyMethod
 
     }
 
-    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    @Override
+	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         this.phase = phase;
     }
 }

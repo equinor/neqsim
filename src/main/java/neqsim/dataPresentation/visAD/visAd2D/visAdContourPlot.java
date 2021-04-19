@@ -76,7 +76,7 @@ public class visAdContourPlot extends java.lang.Object {
         vals_ff = new FlatField(func_domain_range, domain_set);
         vals_ff.setSamples(flat_samples, false);
         display = new DisplayImplJ2D("display1");
-        GraphicsModeControl dispGMC = (GraphicsModeControl) display.getGraphicsModeControl();
+        GraphicsModeControl dispGMC = display.getGraphicsModeControl();
         dispGMC.setScaleEnable(true);
 
         latMap = new ScalarMap(latitude, Display.YAxis);

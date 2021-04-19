@@ -70,7 +70,8 @@ public class ComponentGEUniquac extends ComponentGE {
         return fugasityCoeffisient;
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
 
         return 0.0;
@@ -173,11 +174,13 @@ public class ComponentGEUniquac extends ComponentGE {
         return q;
     }
 
-    public double getlnGammadt() {
+    @Override
+	public double getlnGammadt() {
         return dlngammadt;
     }
 
-    public double getlnGammadn(int k) {
+    @Override
+	public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 }

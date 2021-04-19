@@ -70,6 +70,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
 		this.compName = compName;
 	}
 
+	@Override
 	public void run() {
 		System.out.println("MoleFractionContollerUtil running..");
 		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -87,6 +88,7 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
 		outStream.setThermoSystem(thermoSystem);
 	}
 
+	@Override
 	public void displayResult() {
 		thermoSystem.display(getName());
 	}

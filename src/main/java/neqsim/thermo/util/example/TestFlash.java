@@ -232,7 +232,7 @@ public class TestFlash {
             }
 
             int k = 0;
-            fluidProperties[t][k++] = (double) fluid.getNumberOfPhases(); // Mix Number of Phases
+            fluidProperties[t][k++] = fluid.getNumberOfPhases(); // Mix Number of Phases
             fluidProperties[t][k++] = fluid.getPressure("Pa"); // Mix Pressure [Pa]
             fluidProperties[t][k++] = fluid.getTemperature("K"); // Mix Temperature [K]
             fluidProperties[t][k++] = fluid.getMoleFractionsSum() * 100; // Mix Mole Percent

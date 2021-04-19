@@ -26,7 +26,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
         double[][] HVgijT = new double[numberOfComponents][numberOfComponents];
         return getGamma(phase, numberOfComponents, temperature, pressure, phasetype, HValpha, HVgij, HVgijT, intparam,

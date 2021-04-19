@@ -43,7 +43,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
 
     public void setCompanySpecificDesignStandards(String name) {
         for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-            ((ProcessEquipmentInterface) processSystem.getUnitOperations().get(i)).getMechanicalDesign()
+            processSystem.getUnitOperations().get(i).getMechanicalDesign()
                     .setCompanySpecificDesignStandards(name);
         }
 
@@ -75,7 +75,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
 
     public void setDesign() {
         for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-            ((ProcessEquipmentInterface) processSystem.getUnitOperations().get(i)).getMechanicalDesign().setDesign();
+            processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
         }
     }
 

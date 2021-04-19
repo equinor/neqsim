@@ -53,30 +53,36 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         setInletStream(inletStream);
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         outStream = new Stream(thermoSystem);
     }
 
-    public double getOutletPressure() {
+    @Override
+	public double getOutletPressure() {
         return this.pressure;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-    public double getInletPressure() {
+    @Override
+	public double getInletPressure() {
         return inletStream.getThermoSystem().getPressure();
     }
 
-    public void setPressure(double pressure) {
+    @Override
+	public void setPressure(double pressure) {
         setOutletPressure(pressure);
     }
 
@@ -84,7 +90,8 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         setOutletPressure(pressure, unit);
     }
 
-    public void setOutletPressure(double pressure) {
+    @Override
+	public void setOutletPressure(double pressure) {
         this.pressure = pressure;
         getOutStream().getThermoSystem().setPressure(pressure, pressureUnit);
     }
@@ -95,11 +102,13 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         getOutStream().getThermoSystem().setPressure(pressure, pressureUnit);
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         // System.out.println("valve running..");
         // outStream.setSpecification(inletStream.getSpecification());
@@ -156,15 +165,18 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 //        molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         thermoSystem.display(getName());
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         runController(dt);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -222,20 +234,24 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         }
     }
 
-    public double getCv() {
+    @Override
+	public double getCv() {
         return Cv;
     }
 
-    public void setCv(double Cv) {
+    @Override
+	public void setCv(double Cv) {
         this.Cv = Cv;
         valveCvSet = true;
     }
 
-    public double getPercentValveOpening() {
+    @Override
+	public double getPercentValveOpening() {
         return percentValveOpening;
     }
 
-    public void setPercentValveOpening(double percentValveOpening) {
+    @Override
+	public void setPercentValveOpening(double percentValveOpening) {
         this.percentValveOpening = percentValveOpening;
     }
 
@@ -247,21 +263,25 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         this.valveCvSet = valveCvSet;
     }
 
-    public boolean isIsoThermal() {
+    @Override
+	public boolean isIsoThermal() {
         return isoThermal;
     }
 
-    public void setIsoThermal(boolean isoThermal) {
+    @Override
+	public void setIsoThermal(boolean isoThermal) {
         this.isoThermal = isoThermal;
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         outStream.getThermoSystem().init(3);
         inletStream.getThermoSystem().init(3);
         return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
         outStream.getThermoSystem().init(3);
         inletStream.getThermoSystem().init(3);
         return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)

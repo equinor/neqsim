@@ -47,7 +47,8 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(false);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemElectrolyteCPA clonedSystem = null;
         try {
             clonedSystem = (SystemElectrolyteCPA) super.clone();

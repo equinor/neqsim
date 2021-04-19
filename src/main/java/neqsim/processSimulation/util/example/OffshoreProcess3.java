@@ -6,23 +6,16 @@ package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
-import neqsim.processSimulation.processEquipment.pump.Pump;
-import neqsim.processSimulation.processEquipment.separator.Hydrocyclone;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.separator.TwoPhaseSeparator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.MoleFractionControllerUtil;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**

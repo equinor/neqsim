@@ -77,7 +77,8 @@ public class visAd3DPlot extends visAdBaseClass {
         z_samples = vals;
     }
 
-    public void init() throws RemoteException, VisADException {
+    @Override
+	public void init() throws RemoteException, VisADException {
 
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
@@ -93,7 +94,7 @@ public class visAd3DPlot extends visAdBaseClass {
         vals_ff.setSamples(flat_samples, false);
         iso_vals_ff = new FlatField(func_domain_iso_range, domain_set);
         display = new DisplayImplJ3D("display1");
-        GraphicsModeControl dispGMC = (GraphicsModeControl) display.getGraphicsModeControl();
+        GraphicsModeControl dispGMC = display.getGraphicsModeControl();
         dispGMC.setScaleEnable(true);
 
         float[][] flat_isoVals = vals_ff.getFloats(false);

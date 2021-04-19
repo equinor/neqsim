@@ -24,7 +24,8 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
         params = new double[2];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             thermoOps.freezingPointTemperatureFlash();
@@ -34,7 +35,8 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
         return system.getTemperature();
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             system.getPhases()[0].getComponents()[0].setAntoineASolid(value);

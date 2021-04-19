@@ -5,7 +5,6 @@
  */
 package neqsim.thermo.component;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
 
 /**
@@ -50,7 +49,8 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentSrkPeneloux clonedComponent = null;
         try {
@@ -62,11 +62,13 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         if (ionicCharge != 0) {
             return 0.0;
         }
@@ -78,7 +80,8 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         double volCorr = getVolumeCorrection();
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure - volCorr;
     }

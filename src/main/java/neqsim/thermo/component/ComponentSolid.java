@@ -37,7 +37,8 @@ public class ComponentSolid extends ComponentSrk {
     /**
      * Uses Claperyons equation to calculate the solid fugacity
      */
-    public double fugcoef(PhaseInterface phase1) {
+    @Override
+	public double fugcoef(PhaseInterface phase1) {
         // dfugdt(phase, phase.getNumberOfComponents(), phase.getTemperature(),
         // phase.getPressure());
 //        return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());

@@ -30,7 +30,8 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
         this.type = type;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
 
         if (type == 1) {
             thermoOps.TPflash();
@@ -51,7 +52,8 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
         }
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 }

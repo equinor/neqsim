@@ -23,7 +23,8 @@ public class FurstIonicParameterFunction extends LevenbergMarquardtFunction {
         // params = new double[3];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         // system.init(0);
         system.init(1);
         return system.getPhase(1).getOsmoticCoefficient(system.getPhase(1).getComponent("water").getComponentNumber());
@@ -31,11 +32,13 @@ public class FurstIonicParameterFunction extends LevenbergMarquardtFunction {
         // return system.getPhase(1).getMeanIonicActivity(1,2);
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         neqsim.thermo.util.constants.FurstElectrolyteConstants.setFurstParam(i, value);
         ((PhaseModifiedFurstElectrolyteEos) system.getPhase(0)).reInitFurstParam();

@@ -74,7 +74,8 @@ public class SystemSrkCPA extends SystemSrkEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemSrkCPA clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPA) super.clone();
@@ -95,7 +96,8 @@ public class SystemSrkCPA extends SystemSrkEos {
         setImplementedTemperatureDeriativesofFugacity(true);
     }
 
-    public void addComponent(String componentName, double moles) {
+    @Override
+	public void addComponent(String componentName, double moles) {
         // if (componentName.equals("Ca++") || componentName.equals("Na+") ||
         // componentName.equals("Cl-")) {
         // componentName = "NaCl";

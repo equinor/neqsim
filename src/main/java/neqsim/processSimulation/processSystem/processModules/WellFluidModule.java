@@ -21,17 +21,13 @@
 */
 package neqsim.processSimulation.processSystem.processModules;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
-import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
@@ -54,13 +50,15 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -68,7 +66,8 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -104,7 +103,8 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
         inletPressure = feedStream.getPressure();
         Separator inletSeparator = new Separator("Inlet separator", feedStream);
@@ -165,24 +165,29 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         // oilExitStream = thirdStageSeparator.getOilOutStream();
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
 
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 
-    public void setSpecification(String specificationName, double value) {
+    @Override
+	public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("Second stage pressure")) {
             secondstagePressure = value;
         }

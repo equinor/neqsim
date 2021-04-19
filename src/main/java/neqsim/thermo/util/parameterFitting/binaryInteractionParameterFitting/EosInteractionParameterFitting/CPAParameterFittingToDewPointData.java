@@ -26,7 +26,8 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.waterPrecipitationTemperature();
         } catch (Exception e) {
@@ -42,7 +43,8 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
 //        return val;
 //    }
 //    
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
 //        ((PhaseEosInterface)system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0,1, value);

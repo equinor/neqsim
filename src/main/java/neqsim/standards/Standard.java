@@ -38,25 +38,30 @@ public abstract class Standard implements StandardInterface {
         thermoSystem = thermoSyst;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-    public void setThermoSystem(SystemInterface thermoSystem) {
+    @Override
+	public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
-    public void setSalesContract(String name) {
+    @Override
+	public void setSalesContract(String name) {
         if (name.equals("baseContract")) {
             salesContract = new BaseContract();
         }
     }
 
-    public void setSalesContract(ContractInterface salesContract) {
+    @Override
+	public void setSalesContract(ContractInterface salesContract) {
         this.salesContract = salesContract;
     }
 
-    public ContractInterface getSalesContract() {
+    @Override
+	public ContractInterface getSalesContract() {
         return salesContract;
     }
 
@@ -66,7 +71,8 @@ public abstract class Standard implements StandardInterface {
      * @return Value of property name.
      *
      */
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
@@ -86,7 +92,8 @@ public abstract class Standard implements StandardInterface {
      * @return Value of property standardDescription.
      *
      */
-    public String getStandardDescription() {
+    @Override
+	public String getStandardDescription() {
         return standardDescription;
     }
 
@@ -100,7 +107,8 @@ public abstract class Standard implements StandardInterface {
         this.standardDescription = standardDescription;
     }
 
-    public String[][] createTable(String name) {
+    @Override
+	public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);
 
         thermoSystem.createTable(name);
@@ -139,7 +147,8 @@ public abstract class Standard implements StandardInterface {
         return table;
     }
 
-    public void display(String name) {
+    @Override
+	public void display(String name) {
         JDialog dialog = new JDialog(new JFrame(), "Standard-Report");
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
@@ -153,11 +162,13 @@ public abstract class Standard implements StandardInterface {
         dialog.setVisible(true);
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return resultTable;
     }
 
-    public void setResultTable(String[][] resultTable) {
+    @Override
+	public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 

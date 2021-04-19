@@ -31,7 +31,8 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
         // flowNode = node;
     }
 
-    public double calcWallFrictionFactor(FlowNodeInterface node) {
+    @Override
+	public double calcWallFrictionFactor(FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 64.0 / node.getReynoldsNumber();
         } else {
@@ -41,7 +42,8 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
         }
     }
 
-    public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
+    @Override
+	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 64.0 / node.getReynoldsNumber(phase);
         } else {
@@ -51,7 +53,8 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
 
     }
 
-    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 3.66 / node.getGeometry().getDiameter()
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
@@ -66,7 +69,8 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
         }
     }
 
-    public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 3.66 / node.getGeometry().getDiameter() / schmidtNumber
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();

@@ -21,12 +21,14 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
         super(value, name);
     }
 
-    public double getValue(double val, String fromunit, String tounit) {
+    @Override
+	public double getValue(double val, String fromunit, String tounit) {
         invalue = val;
         return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
     }
 
-    public double getValue(String tounit) {
+    @Override
+	public double getValue(String tounit) {
         if (tounit.equals("C")) {
             return getConversionFactor(inunit) / getConversionFactor("K") * invalue - 273.15;
         }

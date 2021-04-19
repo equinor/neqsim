@@ -12,7 +12,6 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -50,7 +49,8 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         return outStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         if (equipment.equals("pipeline") && flowPattern.equals("stratified")) {
             runStratified();

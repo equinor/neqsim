@@ -43,7 +43,8 @@ public class LiquidPhysicalProperties extends neqsim.physicalProperties.physical
         densityCalc = new Density(this);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         LiquidPhysicalProperties properties = null;
 
         try {

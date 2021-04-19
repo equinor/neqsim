@@ -23,7 +23,8 @@ public class BinaryHVParameterFittingToEquilibriumData extends HuronVidalFunctio
         params = new double[2];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         double calcK = 0;
         double expK = 0;
         expK = dependentValues[1] / dependentValues[0];
@@ -44,7 +45,8 @@ public class BinaryHVParameterFittingToEquilibriumData extends HuronVidalFunctio
         return diff;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         if (i == 0) {

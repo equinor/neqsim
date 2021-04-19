@@ -34,7 +34,8 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
                 this);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         TwoPhasePackedBedFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhasePackedBedFlowNode) super.clone();
@@ -45,24 +46,28 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
         return clonedSystem;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         inclination = 0.0;
         this.calcContactLength();
         super.init();
     }
 
-    public void initFlowCalc() {
+    @Override
+	public void initFlowCalc() {
         phaseFraction[0] = 1.0;
         phaseFraction[1] = 1.0;
         initVelocity();
         this.init();
     }
 
-    public double calcHydraulicDiameter() {
+    @Override
+	public double calcHydraulicDiameter() {
         return getGeometry().getDiameter();
     }
 
-    public double calcReynoldNumber() {
+    @Override
+	public double calcReynoldNumber() {
         reynoldsNumber[1] = getSuperficialVelocity(1) / getGeometry().getPacking().getSurfaceAreaPrVolume()
                 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                 / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
@@ -74,16 +79,19 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
         return reynoldsNumber[1];
     }
 
-    public double calcContactLength() {
+    @Override
+	public double calcContactLength() {
         interphaseContactArea = pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea();
         return wallContactLength[0];
     }
 
-    public double calcGasLiquidContactArea() {
+    @Override
+	public double calcGasLiquidContactArea() {
         return pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea() * 5.0;
     }
 
-    public FlowNodeInterface getNextNode() {
+    @Override
+	public FlowNodeInterface getNextNode() {
         TwoPhasePackedBedFlowNode newNode = (TwoPhasePackedBedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -94,7 +102,8 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
         return newNode;
     }
 
-    public void update() {
+    @Override
+	public void update() {
         for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
                 .getNumberOfComponents(); componentNumber++) {
             if (componentNumber == 1) {

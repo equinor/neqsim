@@ -3074,7 +3074,7 @@ public class GERG2008 {
         // TODO Auto-generated method stub
 
         GERG2008 test = new GERG2008();
-        test.SetupGERG();
+        GERG2008.SetupGERG();
 
         double T = 400;
         doubleW D = new doubleW(12.79828626082062);
@@ -3088,16 +3088,16 @@ public class GERG2008 {
         double x[] = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
                 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
-        test.MolarMassGERG(x, Mm);
+        GERG2008.MolarMassGERG(x, Mm);
 
         System.out.println("mol mass " + Mm.val);
 
-        test.PressureGERG(T, D.val, x, P, Z);
+        GERG2008.PressureGERG(T, D.val, x, P, Z);
 
         System.out.println("pressure " + P.val);
         System.out.println("Z " + Z.val);
 
-        test.DensityGERG(iFlag, T, P.val, x, D, ierr, herr);
+        GERG2008.DensityGERG(iFlag, T, P.val, x, D, ierr, herr);
         System.out.println("density " + D.val);
 
         doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d),
@@ -3106,7 +3106,7 @@ public class GERG2008 {
         doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
                 JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
 
-        test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+        GERG2008.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
         /*
          * // test.PressureGERG(400, 12.798286, x); String herr = "";

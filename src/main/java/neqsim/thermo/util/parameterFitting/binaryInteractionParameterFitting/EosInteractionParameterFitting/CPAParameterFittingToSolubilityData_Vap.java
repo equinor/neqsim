@@ -24,7 +24,8 @@ public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtF
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
         return system.getPhase(0).getComponent("water").getx() * 1.0e6; // lucia data
@@ -35,7 +36,8 @@ public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtF
 //        return val;
 //    }
 //    
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);

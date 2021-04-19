@@ -31,10 +31,7 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.derby.iapi.services.io.ArrayUtil;
 import org.apache.logging.log4j.*;
-import org.jfree.chart.JFreeChart;
 
 public class pTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
 
@@ -122,7 +119,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         speceq = 0; // initiallization
         try {
@@ -548,7 +546,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -603,10 +602,12 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
          */
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -633,11 +634,13 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         return graph2.getChart();
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return points2;
     }
 
-    public void addData(String name, double[][] data) {
+    @Override
+	public void addData(String name, double[][] data) {
         double[][] localPoints = new double[points2.length + data.length][];
         navn[localPoints.length / 2 - 1] = name;
         System.arraycopy(points2, 0, localPoints, 0, points2.length);
@@ -645,7 +648,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         points2 = localPoints;
     }
 
-    public double[] get(String name) {
+    @Override
+	public double[] get(String name) {
         if (name.equals("dewT")) {
             return points2[0];
         }
@@ -717,7 +721,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         }
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         fileName = name;
     }
 
@@ -743,7 +748,8 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         this.bubblePointFirst = bubblePointFirst;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 

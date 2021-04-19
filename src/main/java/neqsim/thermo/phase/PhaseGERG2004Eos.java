@@ -32,7 +32,8 @@ public class PhaseGERG2004Eos extends PhaseEos {
         thermoPropertyModelName = "GERG-EoS 2008";
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseGERG2004Eos clonedPhase = null;
         try {
             clonedPhase = (PhaseGERG2004Eos) super.clone();
@@ -43,7 +44,8 @@ public class PhaseGERG2004Eos extends PhaseEos {
         return clonedPhase;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGERG2004(componentName, moles, molesInPhase, compNumber);
     }
@@ -60,7 +62,8 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
         IPHASE = phase == 0 ? -1 : -2;
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         setxFracGERG();
@@ -119,35 +122,43 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
     }
 
-    public double getGibbsEnergy() {
+    @Override
+	public double getGibbsEnergy() {
         return gibbsEnergy;
     }
 
-    public double getJouleThomsonCoefficient() {
+    @Override
+	public double getJouleThomsonCoefficient() {
         return JTcoef;
     }
 
-    public double getEnthalpy() {
+    @Override
+	public double getEnthalpy() {
         return enthalpy;
     }
 
-    public double getEntropy() {
+    @Override
+	public double getEntropy() {
         return entropy;
     }
 
-    public double getInternalEnergy() {
+    @Override
+	public double getInternalEnergy() {
         return internalEnery;
     }
 
-    public double getCp() {
+    @Override
+	public double getCp() {
         return CpGERG;
     }
 
-    public double getCv() {
+    @Override
+	public double getCv() {
         return CvGERG;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
         double temp = GERG2004EOS.ZOTPX(temperature, pressure / 10.0, xFracGERG[0], xFracGERG[1], xFracGERG[2],
                 xFracGERG[3], xFracGERG[4], xFracGERG[5], xFracGERG[6], xFracGERG[7], xFracGERG[8], xFracGERG[9],

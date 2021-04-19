@@ -31,7 +31,8 @@ public class dTPflash extends TPflash implements java.io.Serializable {
         this.flashComp = comps;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         iterations = 0;
         double diff = 0.0;

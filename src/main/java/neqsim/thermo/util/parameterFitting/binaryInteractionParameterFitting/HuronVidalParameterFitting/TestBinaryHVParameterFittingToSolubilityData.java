@@ -6,7 +6,6 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 import java.sql.*;

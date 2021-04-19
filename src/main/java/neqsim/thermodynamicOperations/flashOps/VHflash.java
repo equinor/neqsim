@@ -50,7 +50,8 @@ public class VHflash extends Flash implements java.io.Serializable {
 //        System.out.println("volume " + Vspec);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double oldVol = system.getVolume(), newVol = system.getVolume();
         double pNew = system.getPressure(), pOld = system.getPressure(), pOldOld = 0.0;
         double err = 0.0;
@@ -92,7 +93,8 @@ public class VHflash extends Flash implements java.io.Serializable {
         // System.out.println("iterations " + iterations);
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

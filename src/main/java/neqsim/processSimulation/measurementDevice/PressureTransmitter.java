@@ -36,11 +36,13 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
         streamNumber = numberOfStreams;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("measured temperature " + stream.getPressure());
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return stream.getThermoSystem().getPressure();
     }
 

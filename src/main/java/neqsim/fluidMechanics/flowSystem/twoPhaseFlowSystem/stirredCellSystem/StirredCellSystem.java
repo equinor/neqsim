@@ -10,7 +10,8 @@ public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhase
     public StirredCellSystem() {
     }
 
-    public void createSystem() {
+    @Override
+	public void createSystem() {
         flowLeg = new neqsim.fluidMechanics.flowLeg.pipeLeg.PipeLeg[this.getNumberOfLegs()];
 
         for (int i = 0; i < getNumberOfLegs(); i++) {
@@ -27,7 +28,8 @@ public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhase
         this.setNodes();
     }
 
-    public void init() {
+    @Override
+	public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
             flowNode[j].init();
         }
@@ -45,12 +47,14 @@ public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhase
         }
     }
 
-    public void solveSteadyState(int solverType) {
+    @Override
+	public void solveSteadyState(int solverType) {
         flowSolver = new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.stirredCellSolver.StirredCellSolver(this,
                 getSystemLength(), getTotalNumberOfNodes(), false);
     }
 
-    public void solveTransient(int solverType) {
+    @Override
+	public void solveTransient(int solverType) {
         getTimeSeries().init(this);
         display = new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization(
                 this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);

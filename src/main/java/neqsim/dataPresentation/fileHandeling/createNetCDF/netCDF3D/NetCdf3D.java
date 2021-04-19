@@ -92,10 +92,10 @@ public class NetCdf3D {
 
         try {
             for (int i = 0; i < zLength; i++) {
-                ncfile.write(zName2[i], ArrayDouble.factory(zvalues2[i]));
+                ncfile.write(zName2[i], Array.factory(zvalues2[i]));
             }
-            ncfile.write(latD.getName(), ArrayDouble.factory(xvalues));
-            ncfile.write(lonD.getName(), ArrayDouble.factory(yvalues));
+            ncfile.write(latD.getName(), Array.factory(xvalues));
+            ncfile.write(lonD.getName(), Array.factory(yvalues));
 
         } catch (Exception e) {
 

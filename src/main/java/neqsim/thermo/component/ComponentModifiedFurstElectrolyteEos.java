@@ -69,7 +69,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk
                 : lennardJonesMolecularDiameter;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         ComponentModifiedFurstElectrolyteEos clonedComponent = null;
         try {
             clonedComponent = (ComponentModifiedFurstElectrolyteEos) super.clone();
@@ -80,7 +81,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk
         return clonedComponent;
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         if (ionicCharge != 0) {
             return a;
         } else {
@@ -88,7 +90,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk
         }
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         if (ionicCharge != 0) {
             return b;
         } else {
@@ -96,11 +99,13 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk
         }
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
+    @Override
+	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
         Wi = ((PhaseModifiedFurstElectrolyteEos) phase).calcWi(componentNumber, phase, temp, pres, numberOfComponents);
         WiT = ((PhaseModifiedFurstElectrolyteEos) phase).calcWiT(componentNumber, phase, temp, pres,
@@ -159,7 +164,8 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk
         return temp;
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = 0, FSR2 = 0, FLR = 0, FBorn = 0;
         Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
@@ -178,20 +184,23 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk
         return Fsup + sr2On * FSR2 + lrOn * FLR + bornOn * FBorn;
     }
 
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
                 + sr2On * dFSR2dNdT(phase, numberOfComponents, temperature, pressure)
                 + lrOn * dFLRdNdT(phase, numberOfComponents, temperature, pressure)
                 + bornOn * dFBorndNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
                 + sr2On * dFSR2dNdV(phase, numberOfComponents, temperature, pressure)
                 + lrOn * dFLRdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure)
                 + sr2On * dFSR2dNdN(j, phase, numberOfComponents, temperature, pressure)
                 + lrOn * dFLRdNdN(j, phase, numberOfComponents, temperature, pressure)

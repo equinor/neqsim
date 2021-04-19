@@ -138,7 +138,8 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         return dtpddsss;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system.init(0);
         system.setTotalNumberOfMoles(1.0);
         system.init(3);

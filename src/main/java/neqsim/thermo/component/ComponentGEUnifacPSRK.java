@@ -41,7 +41,8 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
                 + 2.0 * ((PhaseGEUnifac) phase).getCij(i, j) * phase.getTemperature();
     }
 
-    public void calclnGammak(int k, PhaseInterface phase) {
+    @Override
+	public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
         double sum3Comp = 0.0, sum3Mix = 0.0;
 
@@ -103,7 +104,8 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         getUnifacGroup(k).setLnGammaMixdT(tempGammaMix);
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         int initType = phase.getInitType();
         double lngammaCombinational = 0.0, lngammaResidual = 0.0;

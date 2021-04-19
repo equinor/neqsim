@@ -40,7 +40,8 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
         return outStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
@@ -62,7 +63,8 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
 //        outStream.setThermoSystem(system);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("out Temperature " + reboilerDuty);
     }
 

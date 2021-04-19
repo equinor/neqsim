@@ -38,7 +38,7 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
             double ztemp = Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
-            double M = PlusCharacterize.PVTsimMolarMass[i - 6] / 1000.0;
+            double M = CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0;
             double dens = characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i);
             zSum += ztemp;
             mSum += ztemp * M;
@@ -87,9 +87,9 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
             double mTot1 = 0.0, mTot2 = 0.0, mSum = 0.0, zSum2 = 0.0, zSum = 0.0, zSum3 = 0.0;
             for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                     .getLastPlusFractionNumber(); i++) {
-                mTot1 += (PlusCharacterize.PVTsimMolarMass[i - 6] / 1000.0)
+                mTot1 += (CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0)
                         * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                mTot2 += i * (PlusCharacterize.PVTsimMolarMass[i - 6] / 1000.0)
+                mTot2 += i * (CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0)
                         * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
                 zSum2 += Math.pow(Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i), 2.0);
                 zSum += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
@@ -110,7 +110,7 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
                     Bder4 = 0.0;
             for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                     .getLastPlusFractionNumber(); i++) {
-                double M = PlusCharacterize.PVTsimMolarMass[i - 6] / 1000.0;
+                double M = CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0;
                 double dens = characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i);
                 A += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
                 B += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens;

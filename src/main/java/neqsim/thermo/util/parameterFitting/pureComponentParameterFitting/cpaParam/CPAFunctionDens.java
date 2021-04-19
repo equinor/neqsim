@@ -28,7 +28,8 @@ public class CPAFunctionDens extends CPAFunction {
         phasetype = phase;
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
@@ -52,7 +53,8 @@ public class CPAFunctionDens extends CPAFunction {
         return system.getPhase(phasetype).getPhysicalProperties().getDensity();
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
 

@@ -77,7 +77,8 @@ public class SystemPrGassemEos extends SystemPrEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemPrGassemEos clonedSystem = null;
         try {
             clonedSystem = (SystemPrGassemEos) super.clone();

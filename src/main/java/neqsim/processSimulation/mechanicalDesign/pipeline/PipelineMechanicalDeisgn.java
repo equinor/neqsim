@@ -43,7 +43,8 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         super(equipment);
     }
 
-    public void readDesignSpecifications() {
+    @Override
+	public void readDesignSpecifications() {
 
         super.readDesignSpecifications();
 
@@ -61,7 +62,8 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
 
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         super.calcDesign();
 
         Pipeline pipeline = (Pipeline) getProcessEquipment();

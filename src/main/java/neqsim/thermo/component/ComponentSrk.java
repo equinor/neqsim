@@ -52,7 +52,8 @@ public class ComponentSrk extends ComponentEos {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentSrk clonedComponent = null;
         try {
@@ -64,11 +65,13 @@ public class ComponentSrk extends ComponentEos {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         if (ionicCharge != 0) {
             return 0.0;
         }
@@ -80,11 +83,13 @@ public class ComponentSrk extends ComponentEos {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     }
 
@@ -100,7 +105,8 @@ public class ComponentSrk extends ComponentEos {
         return dqPuredTdT;
     }
 
-    public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    @Override
+	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();
         if (TR < 0) {
             if (componentName.equals("CO2")) {

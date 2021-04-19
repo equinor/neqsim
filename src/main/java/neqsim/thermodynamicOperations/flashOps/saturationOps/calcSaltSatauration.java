@@ -25,7 +25,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
         logger.info("ok ");
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM compsalt WHERE SaltName='" + saltName + "'");
@@ -107,7 +108,8 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
 
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
 }

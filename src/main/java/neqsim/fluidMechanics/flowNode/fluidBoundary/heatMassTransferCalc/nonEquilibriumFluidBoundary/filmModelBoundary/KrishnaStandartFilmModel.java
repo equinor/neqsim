@@ -50,7 +50,8 @@ public class KrishnaStandartFilmModel extends
         redCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         KrishnaStandartFilmModel clonedSystem = null;
 
         try {
@@ -200,7 +201,8 @@ public class KrishnaStandartFilmModel extends
         // rateCorrectionMatrix[phase].print(10,10);
     }
 
-    public void initMassTransferCalc() {
+    @Override
+	public void initMassTransferCalc() {
         super.initMassTransferCalc();
         for (int phase = 0; phase < 2; phase++) {
             this.calcBinarySchmidtNumbers(phase);
@@ -213,7 +215,8 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
-    public void initHeatTransferCalc() {
+    @Override
+	public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
         for (int phase = 0; phase < 2; phase++) {
             this.calcHeatTransferCoeffisients(phase);
@@ -221,7 +224,8 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
         if (massTransferCalc) {
             this.initMassTransferCalc();
@@ -231,7 +235,8 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         super.solve();
     }
 

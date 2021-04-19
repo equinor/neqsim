@@ -24,7 +24,8 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
     public IonicInteractionParameterFittingFunctionPiperazine() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // System.out.println("pres " +
@@ -35,11 +36,13 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         int PiperazineplusNumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, PiperazineNumb = 0;
         int j = 0;

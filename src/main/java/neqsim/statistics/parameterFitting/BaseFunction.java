@@ -27,7 +27,8 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
     public BaseFunction() {
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         BaseFunction clonedClass = null;
         try {
             clonedClass = (BaseFunction) super.clone();
@@ -41,42 +42,52 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
         return clonedClass;
     }
 
-    public void setThermodynamicSystem(SystemInterface system) {
+    @Override
+	public void setThermodynamicSystem(SystemInterface system) {
         this.system = system;
         thermoOps = new ThermodynamicOperations(system);
     }
 
-    public double getFittingParams(int i) {
+    @Override
+	public double getFittingParams(int i) {
         return params[i];
     }
 
-    public SystemInterface getSystem() {
+    @Override
+	public SystemInterface getSystem() {
         return system;
     }
 
-    public double[] getFittingParams() {
+    @Override
+	public double[] getFittingParams() {
         return params;
     }
 
-    public int getNumberOfFittingParams() {
+    @Override
+	public int getNumberOfFittingParams() {
         return params.length;
     }
 
-    public void setInitialGuess(double[] guess) {
+    @Override
+	public void setInitialGuess(double[] guess) {
         System.out.println("start fitting " + guess.length + " parameter(s)...");
         params = new double[guess.length];
         System.arraycopy(guess, 0, params, 0, guess.length);
     }
 
-    public abstract double calcValue(double[] dependentValues);
+    @Override
+	public abstract double calcValue(double[] dependentValues);
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public abstract void setFittingParams(int i, double value);
+    @Override
+	public abstract void setFittingParams(int i, double value);
 
-    public void setDatabaseParameters() {
+    @Override
+	public void setDatabaseParameters() {
     }
 
     /**
@@ -84,15 +95,18 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
      * 
      * @return Value of property bounds.
      */
-    public double getLowerBound(int i) {
+    @Override
+	public double getLowerBound(int i) {
         return this.bounds[i][0];
     }
 
-    public double getUpperBound(int i) {
+    @Override
+	public double getUpperBound(int i) {
         return this.bounds[i][1];
     }
 
-    public double[][] getBounds() {
+    @Override
+	public double[][] getBounds() {
         return this.bounds;
     }
 
@@ -101,7 +115,8 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
      * 
      * @param bounds New value of property bounds.
      */
-    public void setBounds(double[][] bounds) {
+    @Override
+	public void setBounds(double[][] bounds) {
         this.bounds = bounds;
     }
 

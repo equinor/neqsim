@@ -34,7 +34,8 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentSrkCPAs clonedComponent = null;
         try {
@@ -51,7 +52,8 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * }
      */
 
-    public double calc_lngi(PhaseInterface phase) {
+    @Override
+	public double calc_lngi(PhaseInterface phase) {
         return 0.475 * getBi() / (phase.getTotalVolume() - 0.475 * phase.getB());
     }
     /*
@@ -60,12 +62,14 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * nbeti = nbet / phase.getB() * getBi(); return dlngdb * nbeti; }
      */
 
-    public double calc_lngidV(PhaseInterface phase) {
+    @Override
+	public double calc_lngidV(PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         return -0.475 * getBi() / (temp * temp);
     }
 
-    public double calc_lngij(int j, PhaseInterface phase) {
+    @Override
+	public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
         // getBij(j));

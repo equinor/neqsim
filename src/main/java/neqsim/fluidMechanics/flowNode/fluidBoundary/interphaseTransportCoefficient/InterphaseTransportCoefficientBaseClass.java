@@ -30,7 +30,8 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
         // flowNode = node;
     }
 
-    public double calcWallFrictionFactor(FlowNodeInterface node) {
+    @Override
+	public double calcWallFrictionFactor(FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 64.0 / node.getReynoldsNumber();
         } else {
@@ -40,7 +41,8 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
         }
     }
 
-    public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
+    @Override
+	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 64.0 / node.getReynoldsNumber(phase);
         } else {
@@ -50,27 +52,33 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
 
     }
 
-    public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
+    @Override
+	public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 
-    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         return 0;
     }
 
-    public double calcWallHeatTransferCoefficient(int phase, FlowNodeInterface node) {
+    @Override
+	public double calcWallHeatTransferCoefficient(int phase, FlowNodeInterface node) {
         return this.calcWallHeatTransferCoefficient(phase, node.getPrandtlNumber(phase), node);
     }
 
-    public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         return 0;
     }
 
-    public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         return 0;
     }
 
-    public double calcInterphaseMassTransferCoefficient(int phase, double schmidt, FlowNodeInterface node) {
+    @Override
+	public double calcInterphaseMassTransferCoefficient(int phase, double schmidt, FlowNodeInterface node) {
         return 0;
     }
 

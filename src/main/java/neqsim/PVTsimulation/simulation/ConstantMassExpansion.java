@@ -67,7 +67,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         saturationConditionFound = true;
     }
 
-    public double getSaturationPressure() {
+    @Override
+	public double getSaturationPressure() {
         return saturationPressure;
     }
 

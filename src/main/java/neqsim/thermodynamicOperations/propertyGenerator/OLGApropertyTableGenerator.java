@@ -82,7 +82,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
     }
 
 //thermoOps.ge
-    public void run() {
+    @Override
+	public void run() {
 
         // calcPhaseEnvelope();
         ROG = new double[pressures.length][temperatures.length];
@@ -181,7 +182,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);

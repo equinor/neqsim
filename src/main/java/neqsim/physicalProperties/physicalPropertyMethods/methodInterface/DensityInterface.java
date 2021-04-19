@@ -17,5 +17,6 @@ public interface DensityInterface extends ThermodynamicConstantsInterface,
         neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
     public double calcDensity();
 
-    public Object clone();
+    @Override
+	public Object clone();
 }

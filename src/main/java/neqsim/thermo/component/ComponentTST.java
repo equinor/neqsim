@@ -45,7 +45,8 @@ public class ComponentTST extends ComponentEos {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentTST clonedComponent = null;
         try {
@@ -57,19 +58,23 @@ public class ComponentTST extends ComponentEos {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         return .427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         return .086641 * R * criticalTemperature / criticalPressure;
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         if (this.getRacketZ() < 1e-10) {
             return 0.0;
         } else {

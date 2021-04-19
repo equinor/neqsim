@@ -33,7 +33,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 //       // d = 1-1.0/d;
 //    }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermTwuCoon atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermTwuCoon) super.clone();
@@ -44,12 +45,14 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
         // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         double Tr = (temperature / component.getTC());
         // System.out.println("alpha here " + Math.pow( 1.0 +
         // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
@@ -85,7 +88,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         if (temperature / component.getTC() > 100.0) {
             return component.geta() * alphaCrit(temperature);
         } else {
@@ -93,7 +97,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         }
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         double t = temperature;
         double TC = component.getTC();
         double Tr = (t / TC);
@@ -106,7 +111,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         + Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / t * Math.exp(b * (1 - Math.pow(Tr, c))));
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         double t = temperature;
         double TC = component.getTC();
         double Tr = (t / TC);
@@ -142,7 +148,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         if (temperature / component.getTC() > 100.0) {
             return component.geta() * diffalphaCritT(temperature);
         } else {
@@ -150,7 +157,8 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         }
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         if (temperature / component.getTC() > 100.0) {
             return component.geta() * diffdiffalphaCritT(temperature);
         } else {

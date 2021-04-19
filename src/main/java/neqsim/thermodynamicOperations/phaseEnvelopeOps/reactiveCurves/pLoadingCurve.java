@@ -72,7 +72,8 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
         mainFrame.setVisible(true);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         int numbPoints = 50;
         double inscr = 0.2275;
         points[0] = new double[numbPoints];
@@ -107,7 +108,8 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
         mainFrame.setVisible(false);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -123,16 +125,19 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
         graph2.setVisible(true);
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
         neqsim.dataPresentation.dataHandeling printDat = new neqsim.dataPresentation.dataHandeling();
         printDat.printToFile(points, name);
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return points;
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         NetCdf2D file = new NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(points[0], "loading", "");
@@ -146,23 +151,28 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
         file.createFile();
     }
 
-    public double[] get(String name) {
+    @Override
+	public double[] get(String name) {
         return null;
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return system;
     }
 
-    public void addData(String name, double[][] data) {
+    @Override
+	public void addData(String name, double[][] data) {
 
     }
 }

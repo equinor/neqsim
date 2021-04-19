@@ -5,7 +5,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
-import static neqsim.thermo.ThermodynamicConstantsInterface.pi;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -35,12 +34,14 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
                 this);
     }
 
-    public double calcGasLiquidContactArea() {
+    @Override
+	public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
         return interphaseContactArea;
     }
 
-    public void initFlowCalc() {
+    @Override
+	public void initFlowCalc() {
 
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
@@ -51,7 +52,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         initVelocity();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         DropletFlowNode clonedSystem = null;
         try {
             clonedSystem = (DropletFlowNode) super.clone();
@@ -62,14 +64,16 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
         super.init();
     }
 
-    public double calcContactLength() {
+    @Override
+	public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
@@ -87,7 +91,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
-    public FlowNodeInterface getNextNode() {
+    @Override
+	public FlowNodeInterface getNextNode() {
         DropletFlowNode newNode = (DropletFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

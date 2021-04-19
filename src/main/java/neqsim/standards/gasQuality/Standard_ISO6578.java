@@ -115,7 +115,8 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         }
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
 
         double Vmix = 0.0;
         Vi = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -216,19 +217,23 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         // System.out.println("LNG density " + LNGdensity);
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         return LNGdensity;
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         return LNGdensity;
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         return densityUnit;
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return true;
     }
 

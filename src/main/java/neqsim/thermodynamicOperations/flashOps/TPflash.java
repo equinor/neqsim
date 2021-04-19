@@ -163,7 +163,8 @@ public class TPflash extends Flash implements java.io.Serializable {
         }
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
             system.setNumberOfPhases(1);
             return;
@@ -458,7 +459,8 @@ public class TPflash extends Flash implements java.io.Serializable {
         system.init(1);
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

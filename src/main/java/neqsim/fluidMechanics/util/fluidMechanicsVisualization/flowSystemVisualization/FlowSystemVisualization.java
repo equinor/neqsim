@@ -41,7 +41,8 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         System.out.println("times " + time);
     }
 
-    public void setNextData(FlowSystemInterface system) {
+    @Override
+	public void setNextData(FlowSystemInterface system) {
         flowSystem[time] = system;
         absTime[time] = 0;
         for (int i = 0; i < flowNodes[time].length; i++) {
@@ -51,7 +52,8 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         // System.out.println("time " + time);
     }
 
-    public void setNextData(FlowSystemInterface system, double abstime) {
+    @Override
+	public void setNextData(FlowSystemInterface system, double abstime) {
         flowSystem[time] = system;
         absTime[time] = abstime;
         for (int i = 0; i < flowNodes[time].length; i++) {
@@ -60,7 +62,8 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         time++;
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         System.out.println("ok...");
         for (int j = 0; j < time; j++) {
             for (int i = 0; i < flowNodes[j].length; i++) {
@@ -69,10 +72,12 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         }
     }
 
-    public void setPoints() {
+    @Override
+	public void setPoints() {
     }
 
-    public void displayResult(String name) {
+    @Override
+	public void displayResult(String name) {
     }
 
 }

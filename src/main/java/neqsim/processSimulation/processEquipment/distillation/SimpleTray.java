@@ -29,12 +29,13 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
             pp = 1;
         }
         for (int k = pp; k < streams.size(); k++) {
-            (((StreamInterface) streams.get(k)).getThermoSystem()).setTemperature(temperature);
+            (streams.get(k).getThermoSystem()).setTemperature(temperature);
         }
 
     }
 
-    public void setHeatInput(double heatinp) {
+    @Override
+	public void setHeatInput(double heatinp) {
         this.heatInput = heatinp;
     }
 
@@ -42,8 +43,8 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         double enthalpy = 0;
 
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
-            enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
+            streams.get(k).getThermoSystem().init(3);
+            enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
             // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream)
             // streams.get(k)).getThermoSystem()).getEnthalpy());
         }
@@ -51,15 +52,16 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         return enthalpy;
     }
 
-    public double calcMixStreamEnthalpy() {
+    @Override
+	public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
         if (isSetEnergyStream()) {
             enthalpy -= energyStream.getDuty();
         }
 
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
-            enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
+            streams.get(k).getThermoSystem().init(3);
+            enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
             // System.out.println("total enthalpy k : " + ((SystemInterface) ((Stream)
             // streams.get(k)).getThermoSystem()).getEnthalpy());
         }
@@ -72,11 +74,12 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         temperature = mixedStream.getTemperature();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double enthalpy = 0.0;
         double flowRate = ((Stream) streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
         // ((Stream) streams.get(0)).getThermoSystem().display();
-        SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone();
+        SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
 
         // System.out.println("total number of moles " +
         // thermoSystem2.getTotalNumberOfMoles());
@@ -121,7 +124,8 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
 
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
     }
 
     public Stream getGasOutStream() {
@@ -139,23 +143,26 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         return temperature;
     }
 
-    public void setPressure(double pres) {
+    @Override
+	public void setPressure(double pres) {
         trayPressure = pres;
     }
 
     /**
      * @param temperature the temperature to set
      */
-    public void setTemperature(double temperature) {
+    @Override
+	public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 
-    public double guessTemperature() {
+    @Override
+	public double guessTemperature() {
         if (Double.isNaN(temperature)) {
             double gtemp = 0;
             for (int k = 0; k < streams.size(); k++) {
-                gtemp += ((StreamInterface) streams.get(k)).getThermoSystem().getTemperature()
-                        * ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfMoles()
+                gtemp += streams.get(k).getThermoSystem().getTemperature()
+                        * streams.get(k).getThermoSystem().getNumberOfMoles()
                         / mixedStream.getThermoSystem().getNumberOfMoles();
 
             }

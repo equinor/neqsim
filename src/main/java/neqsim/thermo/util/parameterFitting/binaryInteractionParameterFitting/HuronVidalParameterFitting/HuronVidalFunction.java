@@ -24,7 +24,8 @@ abstract class HuronVidalFunction extends LevenbergMarquardtFunction {
 
     }
 
-    public void setDatabaseParameters() {
+    @Override
+	public void setDatabaseParameters() {
         params = new double[4];
         params[0] = ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule())
                 .getHVDijParameter(0, 1);
@@ -36,7 +37,8 @@ abstract class HuronVidalFunction extends LevenbergMarquardtFunction {
                 .getHVDijTParameter(1, 0);
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         if (i == 0) {

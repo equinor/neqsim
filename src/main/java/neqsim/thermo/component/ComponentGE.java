@@ -31,7 +31,8 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
         if (referenceStateType.equals("solvent")) {
             fugasityCoeffisient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
@@ -77,27 +78,33 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         return dfugdt;
     }
 
-    public double getGamma() {
+    @Override
+	public double getGamma() {
         return gamma;
     }
 
-    public double getlnGamma() {
+    @Override
+	public double getlnGamma() {
         return lngamma;
     }
 
-    public double getlnGammadt() {
+    @Override
+	public double getlnGammadt() {
         return dlngammadt;
     }
 
-    public double getlnGammadtdt() {
+    @Override
+	public double getlnGammadtdt() {
         return dlngammadtdt;
     }
 
-    public double getlnGammadn(int k) {
+    @Override
+	public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
-    public void setlnGammadn(int k, double val) {
+    @Override
+	public void setlnGammadn(int k, double val) {
         dlngammadn[k] = val;
     }
 
@@ -107,7 +114,8 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
      * @return Value of property gammaRefCor.
      *
      */
-    public double getGammaRefCor() {
+    @Override
+	public double getGammaRefCor() {
         return gammaRefCor;
     }
 

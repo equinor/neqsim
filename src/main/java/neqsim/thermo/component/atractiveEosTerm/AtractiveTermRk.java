@@ -22,7 +22,8 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
         super(component);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermRk atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermRk) super.clone();
@@ -33,30 +34,36 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         return Math.sqrt(component.getTC() / temperature);
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         return component.geta() * alpha(temperature);
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         return -0.5 * component.getTC() / (Math.sqrt(component.getTC() / temperature) * Math.pow(temperature, 2.0));
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         return -0.25 * component.getTC() * component.getTC()
                 / (Math.pow(component.getTC() / temperature, 3.0 / 2.0) * Math.pow(temperature, 4.0))
                 + component.getTC() / (Math.sqrt(component.getTC() / temperature) * Math.pow(temperature, 3.0));
 
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         return component.geta() * diffalphaT(temperature);
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         return component.geta() * diffdiffalphaT(temperature);
     }
 

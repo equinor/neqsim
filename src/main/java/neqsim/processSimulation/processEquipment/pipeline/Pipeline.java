@@ -14,7 +14,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -63,7 +62,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         outStream = (Stream) inStream.clone();
     }
 
-    public void setOutputFileName(String name) {
+    @Override
+	public void setOutputFileName(String name) {
         this.fileName = name;
     }
 
@@ -71,15 +71,18 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         return outStream;
     }
 
-    public void setNumberOfLegs(int number) {
+    @Override
+	public void setNumberOfLegs(int number) {
         this.numberOfLegs = number;
     }
 
-    public void setNumberOfNodesInLeg(int number) {
+    @Override
+	public void setNumberOfNodesInLeg(int number) {
         this.numberOfNodesInLeg = number;
     }
 
-    public void setHeightProfile(double[] heights) {
+    @Override
+	public void setHeightProfile(double[] heights) {
         if (heights.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of heights specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -91,7 +94,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         System.arraycopy(heights, 0, legHeights, 0, legHeights.length);
     }
 
-    public void setLegPositions(double[] positions) {
+    @Override
+	public void setLegPositions(double[] positions) {
         if (positions.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of legpositions specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -103,7 +107,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         System.arraycopy(positions, 0, legPositions, 0, legPositions.length);
     }
 
-    public void setPipeDiameters(double[] diameter) {
+    @Override
+	public void setPipeDiameters(double[] diameter) {
         if (diameter.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
             System.out.println("Number of diameters must be number of legs + 1 ");
@@ -139,7 +144,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         System.arraycopy(heatCoefs, 0, wallHeatTransferCoeffs, 0, wallHeatTransferCoeffs.length);
     }
 
-    public void setPipeWallRoughness(double[] rough) {
+    @Override
+	public void setPipeWallRoughness(double[] rough) {
         if (rough.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of roghuness points specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -151,7 +157,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         System.arraycopy(rough, 0, pipeWallRoughness, 0, pipeWallRoughness.length);
     }
 
-    public void setOuterTemperatures(double[] outerTemp) {
+    @Override
+	public void setOuterTemperatures(double[] outerTemp) {
         if (outerTemp.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of outer temperature points specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -171,7 +178,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         equilibriumHeatTransfer = test;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = inStream.getThermoSystem();
         GeometryDefinitionInterface[] pipeGemometry = new PipeData[numberOfLegs + 1];
         for (int i = 0; i < pipeDiameters.length; i++) {
@@ -198,22 +206,27 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         pipe.getDisplay().createNetCdfFile(fileName);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
     }
 
-    public FlowSystemInterface getPipe() {
+    @Override
+	public FlowSystemInterface getPipe() {
         return pipe;
     }
 
-    public void setInitialFlowPattern(String flowPattern) {
+    @Override
+	public void setInitialFlowPattern(String flowPattern) {
         this.flowPattern = flowPattern;
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
@@ -251,7 +264,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
         pipe.getTimeSeries().setNumberOfTimeStepsInInterval(timestepininterval);
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
     }
 }

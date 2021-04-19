@@ -23,7 +23,8 @@ public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFu
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         double calcK = 0;
         double expK = 0;
         expK = dependentValues[1] / dependentValues[0];
@@ -47,7 +48,8 @@ public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFu
         return diff;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
         ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);

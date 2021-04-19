@@ -27,7 +27,8 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermPr atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermPr) super.clone();
@@ -38,7 +39,8 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
         return atractiveTerm;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         if (isMethane) {
             return 0.969617 + 0.20089 * temperature / component.getTC()
                     - 0.3256987 * Math.pow(temperature / component.getTC(), 2.0)
@@ -48,11 +50,13 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
         }
     }
 
-    public double aT(double temperature) {
+    @Override
+	public double aT(double temperature) {
         return component.geta() * alpha(temperature);
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         if (isMethane) {
             return 0.20089 / component.getTC() - 2.0 * 0.3256987 * temperature / Math.pow(component.getTC(), 2.0)
                     + 3.0 * 0.06653 * Math.pow(temperature, 2.0) / Math.pow(component.getTC(), 3.0);
@@ -62,7 +66,8 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
         }
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         if (isMethane) {
             return -2.0 * 0.3256987 / Math.pow(component.getTC(), 2.0)
                     + 6.0 * 0.06653 * temperature / Math.pow(component.getTC(), 3.0);
@@ -75,11 +80,13 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
 
     }
 
-    public double diffaT(double temperature) {
+    @Override
+	public double diffaT(double temperature) {
         return component.geta() * diffalphaT(temperature);
     }
 
-    public double diffdiffaT(double temperature) {
+    @Override
+	public double diffdiffaT(double temperature) {
         return component.geta() * diffdiffalphaT(temperature);
     }
 

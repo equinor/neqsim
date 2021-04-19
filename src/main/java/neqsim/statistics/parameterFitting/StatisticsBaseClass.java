@@ -42,7 +42,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     public StatisticsBaseClass() {
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         StatisticsBaseClass clonedClass = null;
         try {
             clonedClass = (StatisticsBaseClass) super.clone();
@@ -63,7 +64,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         this.sampleSet.addSampleSet(sampleSet);
     }
 
-    public StatisticsBaseClass createNewRandomClass() {
+    @Override
+	public StatisticsBaseClass createNewRandomClass() {
         StatisticsBaseClass newClass = (StatisticsBaseClass) this.clone();
         newClass.setSampleSet(this.sampleSet.createNewNormalDistributedSet());
         return newClass;
@@ -120,7 +122,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         return sampleSet.getSample(i);
     }
 
-    public SampleSet getSampleSet() {
+    @Override
+	public SampleSet getSampleSet() {
         return sampleSet;
     }
 
@@ -227,9 +230,11 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         }
     }
 
-    public abstract void init();
+    @Override
+	public abstract void init();
 
-    public abstract void solve();
+    @Override
+	public abstract void solve();
 
     public void runMonteCarloSimulation() {
         neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
@@ -237,7 +242,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         montCarlSim.runSimulation();
     }
 
-    public void runMonteCarloSimulation(int numerOfRuns) {
+    @Override
+	public void runMonteCarloSimulation(int numerOfRuns) {
         neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
                 this, numerOfRuns);
         montCarlSim.runSimulation();
@@ -331,7 +337,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         dialog.setVisible(true);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.###E0");
@@ -527,7 +534,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         }
     }
 
-    public void writeToCdfFile(String name) {
+    @Override
+	public void writeToCdfFile(String name) {
         neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(xVal[0], "x", "sec");
@@ -536,7 +544,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         file.createFile();
     }
 
-    public void writeToTextFile(String name) {
+    @Override
+	public void writeToTextFile(String name) {
         neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempfile = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         tempfile.setOutputFileName(name);
         tempfile.setValues(valTable);
@@ -566,7 +575,8 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
         }
     }
 
-    public void displayCurveFit() {
+    @Override
+	public void displayCurveFit() {
         calcAbsDev();
         try {
             displayGraph();
@@ -598,14 +608,16 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     /**
      * @return the numberOfTuningParameters
      */
-    public int getNumberOfTuningParameters() {
+    @Override
+	public int getNumberOfTuningParameters() {
         return numberOfTuningParameters;
     }
 
     /**
      * @param numberOfTuningParameters the numberOfTuningParameters to set
      */
-    public void setNumberOfTuningParameters(int numberOfTuningParameters) {
+    @Override
+	public void setNumberOfTuningParameters(int numberOfTuningParameters) {
         this.numberOfTuningParameters = numberOfTuningParameters;
     }
 }

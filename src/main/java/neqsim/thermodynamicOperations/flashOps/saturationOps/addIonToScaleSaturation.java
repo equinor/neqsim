@@ -32,7 +32,8 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         logger.info("ok ");
     }
 
-    public void run() {
+    @Override
+	public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -148,10 +149,12 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         }
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         logger.info("checking table...scale " + resultTable[0][0]);
         logger.info("checking table...scale " + resultTable[0][1]);
         logger.info("checking table...scale " + resultTable[0][2]);

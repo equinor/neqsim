@@ -2,8 +2,6 @@ package neqsim.processSimulation.processEquipment.stream;
 
 import java.io.Serializable;
 
-import neqsim.thermo.system.SystemInterface;
-
 public class EnergyStream implements Serializable, Cloneable {
 
     private double duty = 0.0;
@@ -13,7 +11,8 @@ public class EnergyStream implements Serializable, Cloneable {
 
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         EnergyStream clonedStream = null;
         try {
             clonedStream = (EnergyStream) super.clone();

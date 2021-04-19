@@ -4,7 +4,6 @@ import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNode;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.gravity;
 import neqsim.thermo.system.SystemInterface;
 
 public abstract class TwoPhaseFlowNode extends FlowNode {
@@ -31,7 +30,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         getBulkSystem().init_x_y();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         TwoPhaseFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFlowNode) super.clone();
@@ -62,7 +62,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return velocity[1];
     }
 
-    public void initFlowCalc() {
+    @Override
+	public void initFlowCalc() {
         this.init();
         initVelocity();
 
@@ -148,7 +149,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return wallFrictionFactor[0];
     }
 
-    public void setFluxes(double dn[]) {
+    @Override
+	public void setFluxes(double dn[]) {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
             getBulkSystem().getPhases()[0].addMoles(i, -dn[i]);
             getBulkSystem().getPhases()[1].addMoles(i, +dn[i]);
@@ -158,7 +160,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         }
     }
 
-    public void updateMolarFlow() {
+    @Override
+	public void updateMolarFlow() {
         for (int phase = 0; phase < 2; phase++) {
             for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
                 getBulkSystem().getPhases()[phase].addMoles(i, (getBulkSystem().getPhases()[phase].getComponents()[i]
@@ -173,7 +176,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return 0;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
         massFlowRate[0] = velocity[0] * getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity()
                 * pipe.getArea() * phaseFraction[0];
@@ -203,7 +207,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return interphaseContactArea;
     }
 
-    public void calcFluxes() {
+    @Override
+	public void calcFluxes() {
         if (bulkSystem.isChemicalSystem()) {
             // getBulkSystem().getChemicalReactionOperations().setSystem(getBulkSystem());
             // getOperations().chemicalEquilibrium();
@@ -212,7 +217,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         fluidBoundary.calcFluxes();
     }
 
-    public void update() {
+    @Override
+	public void update() {
 
         // System.out.println("reac heat " +
         // getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());

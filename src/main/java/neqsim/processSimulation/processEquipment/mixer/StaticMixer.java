@@ -28,19 +28,20 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
         super(name);
     }
 
-    public void mixStream() {
+    @Override
+	public void mixStream() {
         int index = 0;
         String compName = new String();
         for (int k = 1; k < streams.size(); k++) {
 
-            for (int i = 0; i < ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem()).getPhases()[0]
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
                     .getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem())
+                String componentName = streams.get(k).getThermoSystem()
                         .getPhases()[0].getComponents()[i].getName();
                 // System.out.println("adding: " + componentName);
-                double moles = ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem()).getPhases()[0]
+                double moles = streams.get(k).getThermoSystem().getPhases()[0]
                         .getComponents()[i].getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
@@ -48,9 +49,9 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
                     if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
                             .equals(componentName)) {
                         gotComponent = true;
-                        index = ((SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem()).getPhases()[0]
+                        index = streams.get(0).getThermoSystem().getPhases()[0]
                                 .getComponents()[p].getComponentNumber();
-                        compName = ((SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem())
+                        compName = streams.get(0).getThermoSystem()
                                 .getPhases()[0].getComponents()[p].getComponentName();
                     }
                 }
@@ -68,36 +69,39 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
         }
     }
 
-    public double guessTemperature() {
+    @Override
+	public double guessTemperature() {
         double gtemp = 0;
         for (int k = 0; k < streams.size(); k++) {
-            gtemp += ((StreamInterface) streams.get(k)).getThermoSystem().getTemperature()
-                    * ((StreamInterface) streams.get(k)).getThermoSystem().getNumberOfMoles()
+            gtemp += streams.get(k).getThermoSystem().getTemperature()
+                    * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
 
         }
         return gtemp;
     }
 
-    public double calcMixStreamEnthalpy() {
+    @Override
+	public double calcMixStreamEnthalpy() {
         double enthalpy = 0;
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
-            enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
+            streams.get(k).getThermoSystem().init(3);
+            enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
             System.out.println("total enthalpy k : "
-                    + ((SystemInterface) ((StreamInterface) streams.get(k)).getThermoSystem()).getEnthalpy());
+                    + streams.get(k).getThermoSystem().getEnthalpy());
         }
         System.out.println("total enthalpy of streams: " + enthalpy);
         return enthalpy;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double enthalpy = 0.0;
         for (int k = 0; k < streams.size(); k++) {
-            ((StreamInterface) streams.get(k)).getThermoSystem().init(3);
-            enthalpy += ((StreamInterface) streams.get(k)).getThermoSystem().getEnthalpy();
+            streams.get(k).getThermoSystem().init(3);
+            enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
         }
-        mixedStream.setThermoSystem(((SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem().clone()));
+        mixedStream.setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
         mixedStream.getThermoSystem().setNumberOfPhases(2);
         mixedStream.getThermoSystem().reInitPhaseType();
         mixStream();
@@ -107,7 +111,8 @@ public class StaticMixer extends Mixer implements ProcessEquipmentInterface, Mix
         mixedStream.getThermoSystem().init(3);
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
     }
 
 }

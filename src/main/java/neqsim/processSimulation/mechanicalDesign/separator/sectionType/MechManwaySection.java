@@ -19,7 +19,8 @@ public class MechManwaySection extends SepDesignSection {
         nominalSize = "DN 500";
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
 
         if (nominalSize.equals("DN 500")) {
             if (getANSIclass() == 150) {

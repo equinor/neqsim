@@ -59,7 +59,7 @@ public class TimeSeries implements java.io.Serializable {
         System.out.println("times " + inletThermoSystem.length);
         double temp = 0;
         for (int k = 0; k < timeSeries.length - 1; k++) {
-            double stepLength = (timeSeries[k + 1] - timeSeries[k]) / (double) numberOfTimeStepsInInterval;
+            double stepLength = (timeSeries[k + 1] - timeSeries[k]) / numberOfTimeStepsInInterval;
             for (int i = 0; i < numberOfTimeStepsInInterval; i++) {
                 timeSteps[p] = stepLength;
                 temp += stepLength;
