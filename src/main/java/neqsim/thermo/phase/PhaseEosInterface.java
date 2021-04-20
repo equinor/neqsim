@@ -5,6 +5,8 @@
  */
 package neqsim.thermo.phase;
 
+import java.io.Serializable;
+
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**

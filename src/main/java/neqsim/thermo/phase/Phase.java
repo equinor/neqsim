@@ -34,7 +34,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 abstract class Phase extends Object
-        implements PhaseInterface, ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
+        implements PhaseInterface{
 
     private static final long serialVersionUID = 1000;
 
@@ -54,7 +54,7 @@ abstract class Phase extends Object
     private int initType = 0;
     int mixingRuleNumber = 0;
     double temperature = 0, pressure = 0;
-    PhaseInterface[] refPhase = null;
+    protected PhaseInterface[] refPhase = null;
     int phaseType = 0;
     protected String phaseTypeName = "gas";
     static Logger logger = LogManager.getLogger(Phase.class);
@@ -467,11 +467,6 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getf() {
-        return 1;
-    }
-
-    @Override
 	public double getg() {
         return 1;
     }
@@ -535,15 +530,6 @@ abstract class Phase extends Object
         return numberOfComponents;
     }
 
-    @Override
-	public double geta() {
-        return 0;
-    }
-
-    @Override
-	public double getb() {
-        return 0;
-    }
 
     @Override
 	public double getA() {

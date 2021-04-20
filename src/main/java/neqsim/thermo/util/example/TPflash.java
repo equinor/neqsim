@@ -33,7 +33,7 @@ public class TPflash {
         testSystem.addComponent("ethane", 14);
         testSystem.addComponent("n-pentane", 14);
         testSystem.addComponent("i-pentane", 14);
-
+/*
         testSystem.addTBPfraction("C6", 1.0, 85.0253 / 1000.0, 0.667229);
         testSystem.addTBPfraction("C7", 1.0, 90.3717 / 1000.0, 746.3681 / 1000.0);
         testSystem.addTBPfraction("C8", 1.0, 102.4695 / 1000.0, 770.9114 / 1000.0);
@@ -44,7 +44,7 @@ public class TPflash {
 
         testSystem.setHeavyTBPfractionAsPlusFraction();
         testSystem.getCharacterization().characterisePlusFraction();
-
+*/
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
 
@@ -55,9 +55,19 @@ public class TPflash {
         } catch (Exception e) {
 
         }
+        
+       // ObjectMapper om = new ObjectMapper(new YAMLFactory());
+       // om.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+
+     try {
+ //    om.writeValue(new File("c:/temp/person2.yaml"), testSystem.getPhase(0).getComponent(0));
+     }
+     catch(Exception e) {
+    	 e.printStackTrace();
+     }
 
         testSystem.display();
-        testSystem.displayPDF();
+     //   testSystem.displayPDF();
 
     }
 }

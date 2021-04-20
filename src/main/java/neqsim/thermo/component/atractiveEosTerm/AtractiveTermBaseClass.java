@@ -34,7 +34,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
     private static final long serialVersionUID = 1000;
 
-    ComponentEosInterface component = null;
+    private ComponentEosInterface component = null;
     protected double m;
     protected double parameters[] = new double[3];
     protected double parametersSolid[] = new double[3];
@@ -46,7 +46,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
     }
     /** Creates new AtractiveTermBaseClass */
     public AtractiveTermBaseClass(ComponentEosInterface component) {
-        this.component = component;
+        this.setComponent(component);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
     @Override
 	public double aT(double temperature) {
-        return component.geta();
+        return getComponent().geta();
     }
 
     @Override
@@ -114,5 +114,11 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
 	public double getParameters(int i) {
         return parameters[i];
     }
+	ComponentEosInterface getComponent() {
+		return component;
+	}
+	void setComponent(ComponentEosInterface component) {
+		this.component = component;
+	}
 
 }

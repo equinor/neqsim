@@ -47,7 +47,7 @@ import org.apache.logging.log4j.*;
  * Constructor 7/3-00	addcomponent(String, double)	addding components from
  * text-file: "Component_Data.txt" 7/3-00	init()	initializing
  */
-abstract class SystemThermo extends java.lang.Object implements SystemInterface, Cloneable, java.io.Serializable {
+abstract class SystemThermo extends java.lang.Object implements SystemInterface{
 
     private static final long serialVersionUID = 1000;// implements System_Interface{
     // Class variables
@@ -93,7 +93,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface,
     protected int onePhaseType = 1; // 0 - liquid 1 - gas
     protected int[] phaseType = { 1, 0, 0, 0, 0, 0 };
     protected int[] phaseIndex = { 0, 1, 2, 3, 4, 5 };
-    protected ChemicalReactionOperations chemicalReactionOperations;
+    protected ChemicalReactionOperations chemicalReactionOperations = null;
     private int mixingRule = 1;
     protected boolean chemicalSystem = false, solidPhaseCheck = false, multiPhaseCheck = false, hydrateCheck = false;
     protected boolean checkStability = true;

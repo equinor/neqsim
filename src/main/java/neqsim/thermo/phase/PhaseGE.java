@@ -21,8 +21,8 @@ public class PhaseGE extends Phase implements PhaseGEInterface, neqsim.thermo.Th
 
     private static final long serialVersionUID = 1000;
 
-    public EosMixingRules mixSelect = new EosMixingRules();
-    public EosMixingRulesInterface mixRuleEos;
+    EosMixingRules mixSelect = new EosMixingRules();
+    EosMixingRulesInterface mixRuleEos;
 
     static Logger logger = LogManager.getLogger(PhaseGE.class);
 

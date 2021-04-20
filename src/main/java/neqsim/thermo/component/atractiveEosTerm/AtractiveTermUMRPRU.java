@@ -39,9 +39,9 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
 
     @Override
 	public void init() {
-        m = (0.384401 + 1.52276 * component.getAcentricFactor()
-                - 0.213808 * component.getAcentricFactor() * component.getAcentricFactor()
-                + 0.034616 * Math.pow(component.getAcentricFactor(), 3.0)
-                - 0.001976 * Math.pow(component.getAcentricFactor(), 4.0));
+        m = (0.384401 + 1.52276 * getComponent().getAcentricFactor()
+                - 0.213808 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
+                + 0.034616 * Math.pow(getComponent().getAcentricFactor(), 3.0)
+                - 0.001976 * Math.pow(getComponent().getAcentricFactor(), 4.0));
     }
 }

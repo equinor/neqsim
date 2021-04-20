@@ -5,6 +5,9 @@
  */
 package neqsim.thermo.phase;
 
+import java.io.Serializable;
+
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -13,7 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version
  */
-public interface PhaseInterface extends Cloneable {
+public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneable, Serializable {
 
     public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
 
@@ -279,7 +282,7 @@ public interface PhaseInterface extends Cloneable {
 
     double calcR();
 
-    double getf();
+    //double getf();
 
     double getg();
 
@@ -459,9 +462,6 @@ public interface PhaseInterface extends Cloneable {
     // double calcB2(PhaseInterface phase, double temperature, double pressure, int
     // numbcomp);
 
-    public double geta();
-
-    public double getb();
 
     public double getA();
 
