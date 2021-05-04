@@ -3444,13 +3444,17 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
 	public void setMultiPhaseCheck(boolean multiPhaseCheck) {
 
         if (getMaxNumberOfPhases() < 3) {
-            setMaxNumberOfPhases(3);
+           
 
             if (multiPhaseCheck) {
+            	setMaxNumberOfPhases(3);
                 phaseArray[2] = (PhaseInterface) phaseArray[1].clone();
                 phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
                 phaseArray[2].resetPhysicalProperties();
                 phaseArray[2].initPhysicalProperties();
+            }
+            else {
+            	setMaxNumberOfPhases(2);
             }
         }
         this.multiPhaseCheck = multiPhaseCheck;

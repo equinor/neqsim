@@ -91,6 +91,7 @@ public class TEGdehydrationProcessDistillationAaHa {
          */
         HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
                 dehydratedGas);
+        waterDewPointAnalyser.setReferencePressure(70.0);
         waterDewPointAnalyser.setName("water dew point analyser");
 
         ThrottlingValve glycol_flash_valve = new ThrottlingValve(richTEG);
