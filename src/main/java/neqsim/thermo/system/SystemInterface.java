@@ -1,5 +1,7 @@
 package neqsim.thermo.system;
 
+import java.io.Serializable;
+
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -11,7 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
  *
  * Created on 8. april 2000, 21:35
  */
-public interface SystemInterface extends Cloneable {
+public interface SystemInterface extends Cloneable, Serializable {
 
 	public void saveFluid(int ID);
 

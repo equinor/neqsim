@@ -31,7 +31,7 @@ import neqsim.util.database.NeqSimDataBase;
 import org.apache.logging.log4j.*;
 
 abstract class Component extends Object
-        implements ComponentInterface, ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
+        implements ComponentInterface{
 
     private static final long serialVersionUID = 1000;
 
@@ -42,7 +42,7 @@ abstract class Component extends Object
     protected String componentName = "default", referenceStateType = "solvent", associationScheme = "0",
             antoineLiqVapPresType = null;
     private String formulae = "", CASnumber = "";
-    protected Element elements;
+    protected Element elements = null;
     protected boolean isTBPfraction = false, isPlusFraction = false, isNormalComponent = true, isIon = false;
     private boolean isHydrateFormer = false;
     private boolean waxFormer = false;

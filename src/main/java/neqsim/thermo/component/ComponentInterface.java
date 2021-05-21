@@ -5,6 +5,7 @@
  */
 package neqsim.thermo.component;
 
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.atomElement.Element;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
@@ -15,7 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  *
  */
-public interface ComponentInterface {
+public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
 
     public boolean isInert();
 

@@ -54,7 +54,7 @@ public class ComponentCSPsrk extends ComponentSrk {
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-        h_scale_mix_i = Bi / refPhaseBWRS.getRefBWRSPhase().getb();
+        h_scale_mix_i = Bi / (refPhaseBWRS.getRefBWRSPhase().getB()/refPhaseBWRS.getRefBWRSPhase().getNumberOfMolesInPhase());
 
         double termfi1 = Ai / refPhaseBWRS.getA();
         double termfi2 = h_scale_mix_i / refPhaseBWRS.getH_scale_mix();

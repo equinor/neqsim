@@ -36,7 +36,7 @@ public class ComponentRK extends ComponentEos {
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         delta1 = 1.0;
         delta2 = 0.0;
-        atractiveParameter = new AtractiveTermRk(this);
+        setAtractiveParameter(new AtractiveTermRk(this));
     }
 
     public ComponentRK(int number, double TC, double PC, double M, double a, double moles) {

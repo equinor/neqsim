@@ -276,7 +276,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         double err = .0;
         int iter = 0;
         try {
-            molarVolume(pressure, temperature, A, B, phaseType);
+            molarVolume(pressure, temperature, getA(), getB(), phaseType);
         } catch (Exception e) {
             logger.error("error", e);
         }

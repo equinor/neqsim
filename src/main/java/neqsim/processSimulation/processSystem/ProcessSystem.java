@@ -107,6 +107,16 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         }
         return null;
     }
+    
+    public boolean hasUnitName(String name) {
+    	if(getUnit(name)==null) {
+    		return false;
+    	}
+    	else 
+    	{
+    		return true;
+    	}
+    }
 
     public Object getMeasurementDevice(String name) {
         for (int i = 0; i < measurementDevices.size(); i++) {

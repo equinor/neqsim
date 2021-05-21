@@ -78,10 +78,10 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     @Override
 	public double alpha(double temperature) {
-        if (useStandardAlphaForSupercritical && temperature / component.getTC() > 1.0 || parameters[0] < 1e-20) {
+        if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
             return super.alpha(temperature);
         } else {
-            double Tr = temperature / component.getTC();
+            double Tr = temperature / getComponent().getTC();
             return Math.pow(
                     1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                             + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0),
@@ -91,21 +91,21 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     @Override
 	public double aT(double temperature) {
-        if (useStandardAlphaForSupercritical && temperature / component.getTC() > 1.0 || parameters[0] < 1e-20) {
+        if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
             return super.aT(temperature);
         } else {
-            return component.geta() * alpha(temperature);
+            return getComponent().geta() * alpha(temperature);
         }
     }
 
     @Override
 	public double diffalphaT(double temperature) {
-        if (useStandardAlphaForSupercritical && temperature / component.getTC() > 1.0 || parameters[0] < 1e-20) {
+        if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
             return super.diffalphaT(temperature);
         }
 
-        double Tr = temperature / component.getTC();
-        double TC = component.getTC();
+        double Tr = temperature / getComponent().getTC();
+        double TC = getComponent().getTC();
         return 2.0
                 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                         + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
@@ -117,12 +117,12 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     @Override
 	public double diffdiffalphaT(double temperature) {
-        if (useStandardAlphaForSupercritical && temperature / component.getTC() > 1.0 || parameters[0] < 1e-20) {
+        if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
             return super.diffdiffalphaT(temperature);
         }
 
-        double Tr = temperature / component.getTC();
-        double TC = component.getTC();
+        double Tr = temperature / getComponent().getTC();
+        double TC = getComponent().getTC();
         return 2.0
                 * Math.pow(
                         -parameters[0] / Math.sqrt(Tr) / TC / 2.0
@@ -142,19 +142,19 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     @Override
 	public double diffaT(double temperature) {
-        if (useStandardAlphaForSupercritical && temperature / component.getTC() > 1.0 || parameters[0] < 1e-20) {
+        if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
             return super.diffaT(temperature);
         } else {
-            return component.geta() * diffalphaT(temperature);
+            return getComponent().geta() * diffalphaT(temperature);
         }
     }
 
     @Override
 	public double diffdiffaT(double temperature) {
-        if (useStandardAlphaForSupercritical && temperature / component.getTC() > 1.0 || parameters[0] < 1e-20) {
+        if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
             return super.diffdiffaT(temperature);
         } else {
-            return component.geta() * diffdiffalphaT(temperature);
+            return getComponent().geta() * diffdiffalphaT(temperature);
         }
     }
 }

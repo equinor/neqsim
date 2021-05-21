@@ -30,20 +30,23 @@ import org.apache.logging.log4j.*;
  * @author esol
  * @version
  */
-public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable, java.io.Serializable {
+public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
     private static final long serialVersionUID = 1000;
 
-    ComponentEosInterface component;
+    private ComponentEosInterface component = null;
     protected double m;
     protected double parameters[] = new double[3];
     protected double parametersSolid[] = new double[3];
 
     static Logger logger = LogManager.getLogger(AtractiveTermBaseClass.class);
 
+    public AtractiveTermBaseClass(){
+    	
+    }
     /** Creates new AtractiveTermBaseClass */
     public AtractiveTermBaseClass(ComponentEosInterface component) {
-        this.component = component;
+        this.setComponent(component);
     }
 
     @Override
@@ -84,7 +87,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
 
     @Override
 	public double aT(double temperature) {
-        return component.geta();
+        return getComponent().geta();
     }
 
     @Override
@@ -111,5 +114,11 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface, Cloneable
 	public double getParameters(int i) {
         return parameters[i];
     }
+	ComponentEosInterface getComponent() {
+		return component;
+	}
+	void setComponent(ComponentEosInterface component) {
+		this.component = component;
+	}
 
 }

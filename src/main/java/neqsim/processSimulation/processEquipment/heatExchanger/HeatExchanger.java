@@ -34,6 +34,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 	public double guessOutTemperature = 273.15 + 130.0;
 	int outStreamSpecificationNumber = 0;
 	public double thermalEffectiveness = 0.0;
+	private String flowArrangement = "concentric tube counterflow";
 
 	/**
 	 * Creates new Heater
@@ -216,9 +217,8 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		double dEntalphy = outStream[streamToSet].getThermoSystem().getEnthalpy()
 				- inStream[streamToSet].getThermoSystem().getEnthalpy();
 		NTU = UAvalue / Cmin;
-		double eeff = (1.0 - Math.exp(-NTU * (1 + Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 + Cr)));
-		// System.out.println("effeciency " + eeff);
-		thermalEffectiveness = eeff;
+
+		thermalEffectiveness = calcThermalEffectivenes(NTU, Cr);
 		// double corrected_Entalphy = dEntalphy;// *
 		// inStream[1].getThermoSystem().getNumberOfMoles() /
 		// inStream[0].getThermoSystem().getNumberOfMoles();
@@ -338,12 +338,10 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 		double heatBalanceError = 0.0;
 		HeatExchanger refEx = (HeatExchanger) refExchanger;
 		for (int i = 0; i < 2; i++) {
-			inStream[i].run();
 			inStream[i].getFluid().initProperties();
-			outStream[i].run();
 			outStream[i].getFluid().initProperties();
-			heatBalanceError += outStream[i].getThermoSystem().getEnthalpy("kJ/kg")
-					- inStream[i].getThermoSystem().getEnthalpy("kJ/kg");
+			heatBalanceError += outStream[i].getThermoSystem().getEnthalpy()
+					- inStream[i].getThermoSystem().getEnthalpy();
 
 			if (Math.abs(refEx.getInStream(i).getTemperature("C")
 					- getInStream(i).getTemperature("C")) > ConditionMonitorSpecifications.HXmaxDeltaT) {
@@ -365,7 +363,8 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 				.abs(outStream[0].getThermoSystem().getEnthalpy() - inStream[0].getThermoSystem().getEnthalpy());
 		double duty2 = Math
 				.abs(outStream[1].getThermoSystem().getEnthalpy() - inStream[1].getThermoSystem().getEnthalpy());
-		thermalEffectiveness = ((HeatExchanger)refExchanger).getThermalEffectiveness() * (duty1 + duty2) / 2.0 / Math.abs(((HeatExchanger)refExchanger).getDuty());
+		thermalEffectiveness = ((HeatExchanger) refExchanger).getThermalEffectiveness() * (duty1 + duty2) / 2.0
+				/ Math.abs(((HeatExchanger) refExchanger).getDuty());
 	}
 
 	public void runConditionAnalysis() {
@@ -378,6 +377,32 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 
 	public void setThermalEffectiveness(double thermalEffectiveness) {
 		this.thermalEffectiveness = thermalEffectiveness;
+	}
+
+	String getFlowArrangement() {
+		return flowArrangement;
+	}
+
+	void setFlowArrangement(String flowArrangement) {
+		this.flowArrangement = flowArrangement;
+	}
+
+	public double calcThermalEffectivenes(double NTU, double Cr) {
+		if(Cr==0.0){
+			return 1.0 - Math.exp(-NTU);
+		}
+		if (flowArrangement.equals("concentric tube counterflow")) {
+			if(Cr==1.0) return NTU/(1.0 + NTU);
+			else return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
+		} 
+		else if (flowArrangement.equals("concentric tube paralellflow")) {
+			return (1.0 - Math.exp(-NTU * (1 + Cr))) / ( (1 + Cr));
+		} 
+		else if (flowArrangement.equals("shell and tube")) {
+			return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
+		}
+		else
+			return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
 	}
 
 }

@@ -21,7 +21,6 @@
  */
 package neqsim.thermo.atomElement;
 
-import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
@@ -74,11 +73,8 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
 
     public UNIFACgroup(int groupNumber, int temp) {
 
-        StringTokenizer tokenizer;
-        String token;
-
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         try {
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
                 dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
@@ -98,6 +94,11 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
             dataSet.close();
             database.getConnection().close();
         } catch (Exception e) {
+        	try {
+				database.getConnection().close();
+			} catch (Exception ex) {
+				logger.error(ex);
+			}
             String err = e.toString();
             logger.error(err);
             // System.out.println(err);
