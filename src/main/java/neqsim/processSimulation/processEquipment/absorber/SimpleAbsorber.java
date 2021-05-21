@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version
  */
-public class SimpleAbsorber extends Separator implements ProcessEquipmentInterface, AbsorberInterface {
+public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
     private static final long serialVersionUID = 1000;
 

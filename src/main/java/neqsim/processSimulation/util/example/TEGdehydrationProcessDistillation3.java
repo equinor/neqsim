@@ -38,7 +38,7 @@ public class TEGdehydrationProcessDistillation3 {
         feedGas.addComponent("TEG", 0);
         feedGas.createDatabase(true);
         feedGas.setMixingRule(10);
-        feedGas.setMultiPhaseCheck(true);
+        feedGas.setMultiPhaseCheck(false);
 
         Stream dryFeedGas = new Stream("dry feed gas", feedGas);
         dryFeedGas.setFlowRate(11.23, "MSm3/day");

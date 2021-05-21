@@ -6,12 +6,14 @@
 
 package neqsim.processSimulation.processEquipment.absorber;
 
+import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
+
 /**
  *
  * @author esol
  * @version
  */
-public interface AbsorberInterface {
+public interface AbsorberInterface extends ProcessEquipmentInterface{
     public void setName(String name);
 
     public String getName();

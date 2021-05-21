@@ -354,7 +354,29 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                         double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) / polytropicEfficiency;
                         thermoOps.PHflash(hout, 0);
                     }
-                } else {
+                }
+                else if(polytropicMethod.equals("schultz")) {
+                	double schultzX = thermoSystem.getTemperature()/thermoSystem.getVolume()*thermoSystem.getdVdTpn()-1.0;   
+                    double schultzY = -thermoSystem.getPressure()/thermoSystem.getVolume()*thermoSystem.getdVdPtn();
+                	thermoSystem.setPressure(getOutletPressure(), pressureUnit);
+                    thermoOps.PSflash(entropy);
+                    thermoSystem.initProperties();
+                    double densOutIsentropic = thermoSystem.getDensity("kg/m3");
+                    double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
+                    double isenthalpicvolumeexponent = Math.log(getOutletPressure() / presinn)
+                            / Math.log(densOutIsentropic / densInn);
+                    double nV = (1.0+schultzX)/(1.0/isenthalpicvolumeexponent*(1.0/polytropicEfficiency+schultzX)-schultzY*(1.0/polytropicEfficiency-1.0));
+                    double term = nV / (nV - 1.0);
+                    double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
+                    double term3 = isenthalpicvolumeexponent/(isenthalpicvolumeexponent-1.0);
+                    double CF = (enthalpyOutIsentropic - inletEnthalpy) / (term2*term3);
+                    dH = term * CF * 1e5 * presinn / densInn
+                            * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0)/polytropicEfficiency;
+                    double hout = hinn + dH;
+                    thermoOps = new ThermodynamicOperations(getThermoSystem());
+                    thermoOps.PHflash(hout, 0);
+                }
+                else {
                     thermoSystem.setPressure(getOutletPressure(), pressureUnit);
                     thermoOps.PSflash(entropy);
                     thermoSystem.initProperties();

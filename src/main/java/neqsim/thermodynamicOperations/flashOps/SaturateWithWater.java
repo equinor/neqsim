@@ -95,8 +95,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (i == 50) {
             logger.error("could not find solution - in water sturate : dn  " + dn);
         }
-         logger.info("i " + i + " dn " + dn);
-         System.out.println("i " + i + " dn " + dn) ;       // system.display();
+         //logger.info("i " + i + " dn " + dn);
+         //System.out.println("i " + i + " dn " + dn) ;       // system.display();
         system.removePhase(system.getNumberOfPhases() - 1);
         tpFlash.run();
     }

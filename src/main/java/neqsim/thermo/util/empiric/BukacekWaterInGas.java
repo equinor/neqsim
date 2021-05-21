@@ -45,7 +45,7 @@ public class BukacekWaterInGas {
 		
 		System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15-18.0, 70.0));
 		
-		System.out.println("water dew point temperature " + (BukacekWaterInGas.waterDewPointTemperature(10.0e-6, 70.0)-273.15));
+		System.out.println("water dew point temperature " + (BukacekWaterInGas.waterDewPointTemperature(20.0e-6, 70.0)-273.15));
 
 
 	}
