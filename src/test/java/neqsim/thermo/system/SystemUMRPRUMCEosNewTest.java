@@ -58,9 +58,17 @@ class SystemUMRPRUMCEosNewTest {
 		assertTrue(testModel.checkFugasityCoeffisientsDn());
 	}
 
+	@Test
 	@DisplayName("test derivative of fugacity coeficients with respect to composition (2nd method)")
     public void checkFugasityCoeffisientsDn2() {
 		assertTrue(testModel.checkFugasityCoeffisientsDn2());
+	}
+
+	@Test
+	@DisplayName("calculate compressibility of gas phase")
+    public void checkCompressibility(){
+		System.out.println("gas compressibility " + testSystem.getPhase("gas").getZ());
+		assertTrue(testSystem.getPhase("gas").getZ()==0.9711401538454589);
 	}
 
 }
