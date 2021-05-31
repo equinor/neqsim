@@ -1,3 +1,6 @@
+/*
+Implementation of a reactive absorber
+*/
 package neqsim.processSimulation.processEquipment.absorber;
 
 import java.util.ArrayList;
