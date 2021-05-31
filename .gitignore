@@ -8,6 +8,7 @@
 
 ###eclipse settings
 .settings/
+.project
 
 # BAckup of java files
 *.java~
