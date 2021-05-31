@@ -2,6 +2,7 @@ package processSimulation.processEquipment.absorber;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +49,8 @@ class WaterStripperColumnTest {
 
 	@Test
 	@DisplayName("Test water stripping columns")
-	public void testCompressorSchultzMethod() {
+	@Disabled
+	public void testWaterStripperMethod() {
 		processOps.run();
 		double wtFracWaterIn = ((WaterStripperColumn)processOps.getUnit("water stripper")).getSolventInStream().getFluid().getPhase(0).getWtFrac("water");
 		System.out.println("water wt% in " + wtFracWaterIn*100);
