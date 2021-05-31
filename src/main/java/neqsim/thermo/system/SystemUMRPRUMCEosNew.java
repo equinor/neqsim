@@ -20,14 +20,14 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
     public SystemUMRPRUMCEosNew() {
         super();
-        setBmixType(1);
         modelName = "UMR-PRU-MC-EoS-New";
+        attractiveTermNumber = 19;
     }
 
     public SystemUMRPRUMCEosNew(double T, double P) {
         super(T, P);
         modelName = "UMR-PRU-MC-EoS_new";
-        attractiveTermNumber = 13;
+        attractiveTermNumber = 19;
     }
 
 
