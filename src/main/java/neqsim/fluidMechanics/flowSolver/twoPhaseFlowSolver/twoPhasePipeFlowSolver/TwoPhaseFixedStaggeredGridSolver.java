@@ -57,7 +57,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         numberOfVelocityNodes = nodes;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();
@@ -817,7 +818,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
-    public void solveTDMA() {
+    @Override
+	public void solveTDMA() {
         double d[];
         int iter = 0, iterTop = 0;
         double maxDiff = 1e10, maxDiffOld = 1e10;

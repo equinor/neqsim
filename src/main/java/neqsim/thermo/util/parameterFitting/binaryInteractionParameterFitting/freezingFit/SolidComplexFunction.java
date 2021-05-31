@@ -20,7 +20,8 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
     public SolidComplexFunction() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.calcSolidComlexTemperature("TEG", "water");
         } catch (Exception e) {
@@ -31,7 +32,8 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
         // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             SolidComplexTemperatureCalc.HrefComplex = value;

@@ -35,7 +35,8 @@ public class ChungViscosityMethod extends Viscosity {
         omegaVisc = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
         // Wilkes method p. 407 TPoLG
         initChungPureComponentViscosity();
         double tempVar = 0, tempVar2 = 0;
@@ -61,7 +62,8 @@ public class ChungViscosityMethod extends Viscosity {
         return viscosity;
     }
 
-    public double getPureComponentViscosity(int i) {
+    @Override
+	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 

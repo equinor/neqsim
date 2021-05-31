@@ -20,13 +20,15 @@ public class DiffusivityFunction extends LevenbergMarquardtFunction {
     public DiffusivityFunction() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(1);
         system.initPhysicalProperties();
         return system.getPhase(1).getPhysicalProperties().getDiffusionCoeffisient(0, 1) * 1e9;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 //        system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 0, 1);
 //        system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 1, 0);

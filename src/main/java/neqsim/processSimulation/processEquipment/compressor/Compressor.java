@@ -73,7 +73,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         }
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         try {
             this.outStream = (StreamInterface) inletStream.clone();
@@ -88,7 +89,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         }
     }
 
-    public void setOutletPressure(double pressure) {
+    @Override
+	public void setOutletPressure(double pressure) {
         this.pressure = pressure;
     }
 
@@ -101,7 +103,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return pressure;
     }
 
-    public double getEnergy() {
+    @Override
+	public double getEnergy() {
         return getTotalWork();
     }
 
@@ -124,7 +127,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         dH = p;
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
@@ -181,7 +185,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return getThermoSystem().getPressure();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
         thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -349,7 +354,29 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                         double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) / polytropicEfficiency;
                         thermoOps.PHflash(hout, 0);
                     }
-                } else {
+                }
+                else if(polytropicMethod.equals("schultz")) {
+                	double schultzX = thermoSystem.getTemperature()/thermoSystem.getVolume()*thermoSystem.getdVdTpn()-1.0;   
+                    double schultzY = -thermoSystem.getPressure()/thermoSystem.getVolume()*thermoSystem.getdVdPtn();
+                	thermoSystem.setPressure(getOutletPressure(), pressureUnit);
+                    thermoOps.PSflash(entropy);
+                    thermoSystem.initProperties();
+                    double densOutIsentropic = thermoSystem.getDensity("kg/m3");
+                    double enthalpyOutIsentropic = thermoSystem.getEnthalpy();
+                    double isenthalpicvolumeexponent = Math.log(getOutletPressure() / presinn)
+                            / Math.log(densOutIsentropic / densInn);
+                    double nV = (1.0+schultzX)/(1.0/isenthalpicvolumeexponent*(1.0/polytropicEfficiency+schultzX)-schultzY*(1.0/polytropicEfficiency-1.0));
+                    double term = nV / (nV - 1.0);
+                    double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
+                    double term3 = isenthalpicvolumeexponent/(isenthalpicvolumeexponent-1.0);
+                    double CF = (enthalpyOutIsentropic - inletEnthalpy) / (term2*term3);
+                    dH = term * CF * 1e5 * presinn / densInn
+                            * (Math.pow(getOutletPressure() / presinn, 1.0 / term) - 1.0)/polytropicEfficiency;
+                    double hout = hinn + dH;
+                    thermoOps = new ThermodynamicOperations(getThermoSystem());
+                    thermoOps.PHflash(hout, 0);
+                }
+                else {
                     thermoSystem.setPressure(getOutletPressure(), pressureUnit);
                     thermoOps.PSflash(entropy);
                     thermoSystem.initProperties();
@@ -454,7 +481,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         getCompressorChart().setHeadUnit("kJ/kg");
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
 
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -551,7 +579,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         dialog.setVisible(true);
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
@@ -559,20 +588,23 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return getThermoSystem().getEnthalpy() - inletEnthalpy;
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
     }
 
     /**
      * @return the isentropicEfficientcy
      */
-    public double getIsentropicEfficiency() {
+    @Override
+	public double getIsentropicEfficiency() {
         return isentropicEfficiency;
     }
 
     /**
      * @param isentropicEfficientcy the isentropicEfficientcy to set
      */
-    public void setIsentropicEfficiency(double isentropicEfficientcy) {
+    @Override
+	public void setIsentropicEfficiency(double isentropicEfficientcy) {
         this.isentropicEfficiency = isentropicEfficientcy;
     }
 
@@ -593,21 +625,24 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     /**
      * @return the polytropicEfficiency
      */
-    public double getPolytropicEfficiency() {
+    @Override
+	public double getPolytropicEfficiency() {
         return polytropicEfficiency;
     }
 
     /**
      * @param polytropicEfficiency the polytropicEfficiency to set
      */
-    public void setPolytropicEfficiency(double polytropicEfficiency) {
+    @Override
+	public void setPolytropicEfficiency(double polytropicEfficiency) {
         this.polytropicEfficiency = polytropicEfficiency;
     }
 
     /**
      * @return the thermoSystem
      */
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
@@ -619,7 +654,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.compressorChart = compressorChart;
     }
 
-    public AntiSurge getAntiSurge() {
+    @Override
+	public AntiSurge getAntiSurge() {
         return antiSurge;
     }
 
@@ -705,7 +741,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         this.useRigorousPolytropicMethod = useRigorousPolytropicMethod;
     }
 
-    public void setPressure(double pressure) {
+    @Override
+	public void setPressure(double pressure) {
         setOutletPressure(pressure);
     }
 
@@ -714,11 +751,13 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         pressureUnit = unit;
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
         return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
                 - inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
     }

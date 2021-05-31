@@ -68,7 +68,8 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentPCSAFTa clonedComponent = null;
         try {
@@ -88,11 +89,13 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         double Fcpa = 0.0;
         // if(phase.getPhaseType()==1) cpaon=0;
@@ -101,15 +104,18 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return Fsup + cpaon * Fcpa;
     }
 
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
 
@@ -131,23 +137,27 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return 0;
     }
 
-    public double dFCPAdVdXi(int site, PhaseInterface phase) {
+    @Override
+	public double dFCPAdVdXi(int site, PhaseInterface phase) {
         return 1.0 / (2.0 * phase.getTotalVolume())
                 * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
     }
 
-    public double dFCPAdNdXi(int site, PhaseInterface phase) {
+    @Override
+	public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
 
         // return xi - tempp;
         return xi + getNumberOfMolesInPhase() / 2.0 * calc_lngi(phase);
     }
 
-    public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
+    @Override
+	public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
         return 0.0;
     }
 
-    public double dFCPAdXi(int site, PhaseInterface phase) {
+    @Override
+	public double dFCPAdXi(int site, PhaseInterface phase) {
         return 0.0;
     }
 
@@ -168,7 +178,8 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
      * 
      * @return Value of property xsite.
      */
-    public double[] getXsite() {
+    @Override
+	public double[] getXsite() {
         return this.xsite;
     }
 
@@ -181,19 +192,23 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         this.xsite = xsite;
     }
 
-    public void setXsite(int i, double xsite) {
+    @Override
+	public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;
     }
 
-    public double[] getXsitedV() {
+    @Override
+	public double[] getXsitedV() {
         return this.xsitedV;
     }
 
-    public void setXsitedV(int i, double xsitedV) {
+    @Override
+	public void setXsitedV(int i, double xsitedV) {
         this.xsitedV[i] = xsitedV;
     }
 
-    public double[] getXsiteOld() {
+    @Override
+	public double[] getXsiteOld() {
         return this.xsiteOld;
     }
 
@@ -206,26 +221,32 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         this.xsiteOld = xsiteOld;
     }
 
-    public void setXsiteOld(int i, double xsiteOld) {
+    @Override
+	public void setXsiteOld(int i, double xsiteOld) {
         this.xsiteOld[i] = xsiteOld;
     }
 
-    public double[] getXsitedT() {
+    @Override
+	public double[] getXsitedT() {
         return this.xsitedT;
     }
 
-    public void setXsitedT(int i, double xsitedT) {
+    @Override
+	public void setXsitedT(int i, double xsitedT) {
         this.xsitedT[i] = xsitedT;
     }
 
-    public double[] getXsitedTdT() {
+    @Override
+	public double[] getXsitedTdT() {
         return null;
     }
 
-    public void setXsitedTdT(int i, double xsitedT) {
+    @Override
+	public void setXsitedTdT(int i, double xsitedT) {
     }
 
-    public void setXsitedni(int xnumb, int compnumb, double val) {
+    @Override
+	public void setXsitedni(int xnumb, int compnumb, double val) {
         xsitedni[xnumb][compnumb] = val;
     }
 }

@@ -108,7 +108,8 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
         return nyPres;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
         // logger.info("internaleng: " + system.getInternalEnergy());
         // logger.info("volume: " + system.getVolume());
@@ -116,7 +117,8 @@ public class VUflashQfunc extends Flash implements java.io.Serializable {
 
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

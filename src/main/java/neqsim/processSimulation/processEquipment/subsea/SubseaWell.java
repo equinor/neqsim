@@ -9,8 +9,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class SubseaWell extends ProcessEquipmentBaseClass {
 
@@ -29,7 +27,8 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         return pipeline;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());

@@ -84,9 +84,9 @@ public class NetCdf implements java.io.Serializable {
 
         try {
 
-            ncfile.write("T", ArrayDouble.factory(zvalues));
-            ncfile.write(latD.getName(), ArrayDouble.factory(xvalues));
-            ncfile.write(lonD.getName(), ArrayDouble.factory(yvalues));
+            ncfile.write("T", Array.factory(zvalues));
+            ncfile.write(latD.getName(), Array.factory(xvalues));
+            ncfile.write(lonD.getName(), Array.factory(yvalues));
 
         } catch (Exception e) {
 

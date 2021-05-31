@@ -57,35 +57,43 @@ public class LumpingModel implements Serializable {
         public StandardLumpingModel() {
         }
 
-        public void setNumberOfLumpedComponents(int lumpedNumb) {
+        @Override
+		public void setNumberOfLumpedComponents(int lumpedNumb) {
             numberOfLumpedComponents = lumpedNumb;
         }
 
-        public int getNumberOfLumpedComponents() {
+        @Override
+		public int getNumberOfLumpedComponents() {
             return numberOfLumpedComponents;
         }
 
-        public void setNumberOfPseudoComponents(int lumpedNumb) {
+        @Override
+		public void setNumberOfPseudoComponents(int lumpedNumb) {
             numberOfPseudocomponents = lumpedNumb;
         }
 
-        public int getNumberOfPseudoComponents() {
+        @Override
+		public int getNumberOfPseudoComponents() {
             return numberOfPseudocomponents;
         }
 
-        public String getName() {
+        @Override
+		public String getName() {
             return name;
         }
 
-        public String getLumpedComponentName(int i) {
+        @Override
+		public String getLumpedComponentName(int i) {
             return lumpedComponentNames[i];
         }
 
-        public String[] getLumpedComponentNames() {
+        @Override
+		public String[] getLumpedComponentNames() {
             return lumpedComponentNames;
         }
 
-        public void generateLumpedComposition(Characterise charac) {
+        @Override
+		public void generateLumpedComposition(Characterise charac) {
             numberOfLumpedComponents = numberOfPseudocomponents;
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfPseudocomponents];
@@ -194,7 +202,8 @@ public class LumpingModel implements Serializable {
             }
         }
 
-        public double getFractionOfHeavyEnd(int i) {
+        @Override
+		public double getFractionOfHeavyEnd(int i) {
             return fractionOfHeavyEnd[i];
         }
     }
@@ -216,7 +225,8 @@ public class LumpingModel implements Serializable {
         public PVTLumpingModel() {
         }
 
-        public void generateLumpedComposition(Characterise charac) {
+        @Override
+		public void generateLumpedComposition(Characterise charac) {
 
             double weightFrac = 0.0;
             double weightTot = 0.0;
@@ -300,7 +310,8 @@ public class LumpingModel implements Serializable {
             }
         }
 
-        public double getFractionOfHeavyEnd(int i) {
+        @Override
+		public double getFractionOfHeavyEnd(int i) {
             return fractionOfHeavyEnd[i];
         }
     }

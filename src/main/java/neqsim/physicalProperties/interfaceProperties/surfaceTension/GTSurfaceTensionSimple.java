@@ -51,7 +51,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
      * Calculates the surfacetension using the Gradient Theory for mixtures Units:
      * N/m
      */
-    public double calcSurfaceTension(int interface1, int interface2) {
+    @Override
+	public double calcSurfaceTension(int interface1, int interface2) {
         localSystem = (SystemInterface) system.clone();
 
         double surdenstemp = 0.0;

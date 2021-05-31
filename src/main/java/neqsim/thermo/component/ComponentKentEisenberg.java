@@ -26,7 +26,8 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         double gamma = 1.0;
         if (referenceStateType.equals("solvent")) {
             fugasityCoeffisient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();

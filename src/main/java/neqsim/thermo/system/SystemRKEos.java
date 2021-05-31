@@ -70,7 +70,8 @@ public class SystemRKEos extends SystemEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemRKEos clonedSystem = null;
         try {
             clonedSystem = (SystemRKEos) super.clone();

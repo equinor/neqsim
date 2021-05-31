@@ -128,7 +128,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
             for (int j = 0; j < unifacGroups.size(); j++) {
                 if (!((ComponentGEUnifac) getComponent(i)).getUnifacGroups2().contains(unifacGroups.get(j))) {
                     ((ComponentGEUnifac) getComponent(i)).addUNIFACgroup(
-                            ((neqsim.thermo.atomElement.UNIFACgroup) unifacGroups.get(j)).getSubGroup(), 0);
+                            unifacGroups.get(j).getSubGroup(), 0);
                 }
             }
         }
@@ -151,7 +151,8 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         checkedGroups = true;
     }
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         double GE = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -161,11 +162,13 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
     }
 
-    public double getExessGibbsEnergy() {
+    @Override
+	public double getExessGibbsEnergy() {
         return getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
     }
 
-    public double getGibbsEnergy() {
+    @Override
+	public double getGibbsEnergy() {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugasityCoeffisient());

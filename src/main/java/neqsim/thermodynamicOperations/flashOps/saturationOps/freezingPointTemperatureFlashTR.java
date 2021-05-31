@@ -9,7 +9,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import java.io.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -45,7 +44,8 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         noFreezeFlash = Freeze;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
@@ -192,7 +192,8 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         // logger.info("max freezing temp " + maxTemperature);
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
 
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
             name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();

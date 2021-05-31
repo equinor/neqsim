@@ -44,13 +44,14 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         return duty;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double oldTemp = getTemperature();
         // System.out.println("guess temperature " + getTemperature());
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) ((StreamInterface) streams.get(0)).getThermoSystem()
+            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem()
                     .clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());

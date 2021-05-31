@@ -38,7 +38,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
 
     public void calcMmatrixHeidemann() {
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-        Vc0 = 4 * system.getPhase(0).getb();
+        Vc0 = 4 * system.getPhase(0).getB()/system.getPhase(0).getNumberOfMolesInPhase();
 
         system.setUseTVasIndependentVariables(true);
         system.setNumberOfPhases(1);
@@ -138,7 +138,8 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         return dtpddsss;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system.init(0);
         system.setTotalNumberOfMoles(1.0);
         system.init(3);
@@ -147,7 +148,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         system.setNumberOfPhases(1);
 
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-        Vc0 = 4 * system.getPhase(0).getb();
+        Vc0 = 4 * system.getPhase(0).getB()/system.getPhase(0).getNumberOfMolesInPhase();
 
         system.setUseTVasIndependentVariables(true);
         system.setNumberOfPhases(1);

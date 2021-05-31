@@ -47,7 +47,8 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(true);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemElectrolyteCPAstatoil clonedSystem = null;
         try {
             clonedSystem = (SystemElectrolyteCPAstatoil) super.clone();

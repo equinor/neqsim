@@ -192,7 +192,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         logger.info("Start creating arrays");
         calcRSWTOB();
@@ -424,7 +425,8 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat extends neqsim.thermod
         initCalc();
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);

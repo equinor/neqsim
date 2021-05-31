@@ -87,7 +87,8 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 
     }
 
-    public void setInletStream(StreamInterface inletStream) {
+    @Override
+	public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -103,7 +104,8 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
         return liquidOutStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         inletStreamMixer.run();
         thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
 
@@ -156,7 +158,8 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 //        //waterOutStream.run();
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         thermoSystem.display("from here " + getName());
 //        gasOutStream.getThermoSystem().initPhysicalProperties();
 //        waterOutStream.getThermoSystem().initPhysicalProperties();
@@ -173,14 +176,16 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
 //        }
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
     public void runTransient() {
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);
@@ -195,7 +200,8 @@ public class ThreePhaseSeparator extends Separator implements ProcessEquipmentIn
                 + getGasOutStream().getThermoSystem().getEntropy(unit) - entrop;
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);

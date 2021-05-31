@@ -1,10 +1,7 @@
 package neqsim.thermo.util.empiric;
 
-import neqsim.thermo.system.SystemDuanSun;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class DuanSun {

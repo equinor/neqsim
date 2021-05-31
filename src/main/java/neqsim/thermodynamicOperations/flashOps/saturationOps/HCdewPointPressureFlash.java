@@ -21,7 +21,8 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
                 && system.getPressure() > system.getPhase(0).getComponent(0).getPC()) {
             setSuperCritical(true);
@@ -108,6 +109,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         }
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 }

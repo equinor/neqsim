@@ -27,7 +27,8 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         super(liquidPhase);
     }
 
-    public void calcEffectiveDiffusionCoeffisients() {
+    @Override
+	public void calcEffectiveDiffusionCoeffisients() {
         super.calcEffectiveDiffusionCoeffisients();
         double co2waterdiff = 0.03389 * Math.exp(-2213.7 / liquidPhase.getPhase().getTemperature()) * 1e-4; // Tammi
                                                                                                             // (1994) -
@@ -49,7 +50,8 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
     }
 
-    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
+    @Override
+	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         calcEffectiveDiffusionCoeffisients();
         if (liquidPhase.getPhase().getComponent(i).getComponentName().equals("MDEA")) {
             return effectiveDiffusionCoefficient[liquidPhase.getPhase().getComponent("MDEA").getComponentNumber()];
@@ -58,7 +60,8 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
     }
 
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    @Override
+	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         calcEffectiveDiffusionCoeffisients();
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {

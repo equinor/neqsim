@@ -24,7 +24,8 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         super(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         ThermodynamicOperations TPflashOps = new ThermodynamicOperations(system);
         system.setMultiPhaseCheck(true);
@@ -54,6 +55,7 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
 
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 }

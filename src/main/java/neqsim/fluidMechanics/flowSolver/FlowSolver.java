@@ -25,27 +25,33 @@ public abstract class FlowSolver extends java.lang.Object implements FlowSolverI
     public FlowSolver() {
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
     }
 
-    public void setDynamic(boolean ans) {
+    @Override
+	public void setDynamic(boolean ans) {
         dynamic = ans;
     }
 
-    public void setSolverType(int type) {
+    @Override
+	public void setSolverType(int type) {
         solverType = type;
     }
 
-    public void setTimeStep(double timeStep) {
+    @Override
+	public void setTimeStep(double timeStep) {
         this.timeStep = timeStep;
     }
 
-    public void setBoundarySpecificationType(int type) {
+    @Override
+	public void setBoundarySpecificationType(int type) {
         if (type == 0) {
             numberOfVelocityNodes = numberOfNodes - 2;
         }
     }
 
-    public void solveTDMA() {
+    @Override
+	public void solveTDMA() {
     }
 }

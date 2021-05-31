@@ -50,7 +50,8 @@ public class SaturationPressure extends BasePVTsimulation {
         return getThermoSystem().getPressure();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         super.run();
         saturationPressure = calcSaturationPressure();
     }
@@ -95,7 +96,8 @@ public class SaturationPressure extends BasePVTsimulation {
 
     }
 
-    public double getSaturationPressure() {
+    @Override
+	public double getSaturationPressure() {
         return saturationPressure;
     }
 

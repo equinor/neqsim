@@ -36,14 +36,15 @@ public class ComponentRK extends ComponentEos {
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         delta1 = 1.0;
         delta2 = 0.0;
-        atractiveParameter = new AtractiveTermRk(this);
+        setAtractiveParameter(new AtractiveTermRk(this));
     }
 
     public ComponentRK(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentRK clonedComponent = null;
         try {
@@ -55,20 +56,24 @@ public class ComponentRK extends ComponentEos {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         return 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
                 / criticalPressure;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         return (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         return 0.0;
     }
 

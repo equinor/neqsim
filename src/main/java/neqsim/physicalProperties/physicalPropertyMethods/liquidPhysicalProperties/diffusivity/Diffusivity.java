@@ -6,7 +6,6 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
 
-import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.conductivity.Conductivity;
 import org.apache.logging.log4j.*;
 
 /**
@@ -37,7 +36,8 @@ abstract class Diffusivity
 
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -54,7 +54,8 @@ abstract class Diffusivity
         return properties;
     }
 
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    @Override
+	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         double tempVar = 0, tempVar2 = 0;
 
@@ -80,7 +81,8 @@ abstract class Diffusivity
         return binaryDiffusionCoeffisients;
     }
 
-    public void calcEffectiveDiffusionCoeffisients() {
+    @Override
+	public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
 
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -95,15 +97,18 @@ abstract class Diffusivity
         }
     }
 
-    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    @Override
+	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
-    public double getEffectiveDiffusionCoefficient(int i) {
+    @Override
+	public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
-    public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    @Override
+	public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double temp = (i == j) ? 1.0 : 0.0;
         double nonIdealCorrection = temp + liquidPhase.getPhase().getComponents()[i].getx()
                 * liquidPhase.getPhase().getComponents()[i].getdfugdn(j)

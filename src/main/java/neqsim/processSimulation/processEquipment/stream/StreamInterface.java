@@ -15,7 +15,8 @@ import neqsim.thermo.system.SystemInterface;
  */
 public interface StreamInterface extends ProcessEquipmentInterface {
 
-    public SystemInterface getThermoSystem();
+    @Override
+	public SystemInterface getThermoSystem();
 
     public void setThermoSystem(SystemInterface thermoSystem);
 
@@ -27,7 +28,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
     public double getTemperature(String unit);
 
-    public void setName(String name);
+    @Override
+	public void setName(String name);
 
     public double CCT(String unit);
 
@@ -43,7 +45,8 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
     public double getMolarRate();
 
-    public double getPressure();
+    @Override
+	public double getPressure();
 
     public Object clone();
 

@@ -41,15 +41,16 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    public double alpha(double temperature) {
-        if (component.getName().equals("water")) {
+    @Override
+	public double alpha(double temperature) {
+        if (getComponent().getName().equals("water")) {
             if (temperature < 273.15) {
                 System.arraycopy(parametersSolidGERG, 0, this.parameters, 0, parametersSolidGERG.length);
             } else {
                 System.arraycopy(parametersGERG, 0, this.parameters, 0, parametersGERG.length);
             }
             // System.out.println("alpha GERG");
-            double Tr = temperature / component.getTC();
+            double Tr = temperature / getComponent().getTC();
             return Math.pow(
                     1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                             + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 4.0),
@@ -59,9 +60,10 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
-    public double aT(double temperature) {
-        if (component.getName().equals("water")) {
-            return component.geta() * alpha(temperature);
+    @Override
+	public double aT(double temperature) {
+        if (getComponent().getName().equals("water")) {
+            return getComponent().geta() * alpha(temperature);
         } else {
             return super.aT(temperature);
         }
@@ -75,8 +77,8 @@ public class AtractiveTermGERG extends AtractiveTermPr {
             System.arraycopy(parametersGERG, 0, this.parameters, 0, parametersGERG.length);
         }
 
-        double Tr = temperature / component.getTC();
-        double TC = component.getTC();
+        double Tr = temperature / getComponent().getTC();
+        double TC = getComponent().getTC();
         return 2.0
                 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                         + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
@@ -94,8 +96,8 @@ public class AtractiveTermGERG extends AtractiveTermPr {
             System.arraycopy(parametersGERG, 0, this.parameters, 0, parametersGERG.length);
         }
 
-        double Tr = temperature / component.getTC();
-        double TC = component.getTC();
+        double Tr = temperature / getComponent().getTC();
+        double TC = getComponent().getTC();
         return 2.0
                 * Math.pow(
                         -parameters[0] / Math.sqrt(Tr) / TC / 2.0
@@ -113,17 +115,19 @@ public class AtractiveTermGERG extends AtractiveTermPr {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    public double diffaT(double temperature) {
-        if (component.getName().equals("water")) {
-            return component.geta() * diffalphaTGERG(temperature);
+    @Override
+	public double diffaT(double temperature) {
+        if (getComponent().getName().equals("water")) {
+            return getComponent().geta() * diffalphaTGERG(temperature);
         } else {
             return super.diffaT(temperature);
         }
     }
 
-    public double diffdiffaT(double temperature) {
-        if (component.getName().equals("water")) {
-            return component.geta() * diffdiffalphaTGERG(temperature);
+    @Override
+	public double diffdiffaT(double temperature) {
+        if (getComponent().getName().equals("water")) {
+            return getComponent().geta() * diffdiffalphaTGERG(temperature);
         } else {
             return super.diffdiffaT(temperature);
         }

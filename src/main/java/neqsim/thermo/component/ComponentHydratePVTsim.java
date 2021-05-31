@@ -6,6 +6,8 @@
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.util.database.NeqSimDataBase;
+
 import org.apache.logging.log4j.*;
 
 /**
@@ -34,7 +36,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             try {
                 logger.info("reading hydrate parameters ..............");
                 try {
-                    if (database.createTemporaryTables()) {
+                    if (NeqSimDataBase.createTemporaryTables()) {
 
                         dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     } else {
@@ -74,12 +76,14 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
 
     }
 
-    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
+    @Override
+	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
 
         int stableStructure = 0;
@@ -175,7 +179,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     }
 
-    public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
 
@@ -200,7 +205,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     }
 
-    public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         // this is equation 8.8
         if (componentName.equals("water")) {
             return 0.0;

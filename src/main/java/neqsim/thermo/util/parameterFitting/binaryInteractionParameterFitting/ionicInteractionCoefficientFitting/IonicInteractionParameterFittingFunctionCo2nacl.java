@@ -24,7 +24,8 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
     public IonicInteractionParameterFittingFunctionCo2nacl() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.TPflash();
         } catch (Exception e) {
@@ -34,11 +35,13 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
                 / (1.0 - system.getPhase(1).getComponent(2).getx() - system.getPhase(1).getComponent(3).getx());
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         int CO2Numb = 0, Naplusnumb = 0;
         int j = 0;

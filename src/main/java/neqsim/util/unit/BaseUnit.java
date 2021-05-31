@@ -27,15 +27,18 @@ public class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConstantsInter
         this.inunit = name;
     }
 
-    public double getSIvalue() {
+    @Override
+	public double getSIvalue() {
         return SIvalue;
     }
 
-    public double getValue(String fromunit) {
+    @Override
+	public double getValue(String fromunit) {
         return 0.0;
     }
 
-    public double getValue(double val, String fromunit, String tounit) {
+    @Override
+	public double getValue(double val, String fromunit, String tounit) {
         return 0.0;
     }
 

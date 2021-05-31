@@ -31,7 +31,8 @@ public class Conductivity
         super(solidPhase);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Conductivity properties = null;
 
         try {
@@ -43,7 +44,8 @@ public class Conductivity
         return properties;
     }
 
-    public double calcConductivity() {
+    @Override
+	public double calcConductivity() {
         // using default value of parafin wax
         if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
             conductivity = 0.25;

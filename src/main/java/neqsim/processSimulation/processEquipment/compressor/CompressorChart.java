@@ -8,7 +8,6 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.*;
 
-import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -50,12 +49,14 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
     public CompressorChart() {
     }
 
-    public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
+    @Override
+	public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
         CompressorCurve curve = new CompressorCurve(speed, flow, head, polytropicEfficiency);
         chartValues.add(curve);
     }
 
-    public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
+    @Override
+	public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
             double[][] polyEff) {
 
         this.speed = speed;
@@ -101,7 +102,8 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 
     }
 
-    public double getPolytropicHead(double flow, double speed) {
+    @Override
+	public double getPolytropicHead(double flow, double speed) {
         // double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
         // System.out.println("flow correction " + flowCorrection);
         return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
@@ -109,14 +111,16 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
         // speed;
     }
 
-    public double getPolytropicEfficiency(double flow, double speed) {
+    @Override
+	public double getPolytropicEfficiency(double flow, double speed) {
         // double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
         return reducedPolytropicEfficiencyFunc.value(flow / speed);
         // return reducedPolytropicEfficiencyFunc.value(reducedHeadFitterFunc*flow /
         // speed);
     }
 
-    public int getSpeed(double flow, double head) {
+    @Override
+	public int getSpeed(double flow, double head) {
 
         int iter = 1;
         double error = 1.0, derrordspeed = 1.0;
@@ -164,26 +168,31 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
         return false;
     }
 
-    public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ) {
+    @Override
+	public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ) {
         this.refMW = refMW;
         this.refTemperature = refTemperature;
         this.refPressure = refPressure;
         this.refZ = refZ;
     }
 
-    public SurgeCurve getSurgeCurve() {
+    @Override
+	public SurgeCurve getSurgeCurve() {
         return surgeCurve;
     }
 
-    public void setSurgeCurve(SurgeCurve surgeCurve) {
+    @Override
+	public void setSurgeCurve(SurgeCurve surgeCurve) {
         this.surgeCurve = surgeCurve;
     }
 
-    public StoneWallCurve getStoneWallCurve() {
+    @Override
+	public StoneWallCurve getStoneWallCurve() {
         return stoneWallCurve;
     }
 
-    public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
+    @Override
+	public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
         this.stoneWallCurve = stoneWallCurve;
     }
 
@@ -316,31 +325,38 @@ public class CompressorChart implements CompressorChartInterface, Serializable {
 
     }
 
-    public boolean isUseCompressorChart() {
+    @Override
+	public boolean isUseCompressorChart() {
         return useCompressorChart;
     }
 
-    public void setUseCompressorChart(boolean useCompressorChart) {
+    @Override
+	public void setUseCompressorChart(boolean useCompressorChart) {
         this.useCompressorChart = useCompressorChart;
     }
 
-    public String getHeadUnit() {
+    @Override
+	public String getHeadUnit() {
         return headUnit;
     }
 
-    public void setHeadUnit(String headUnit) {
+    @Override
+	public void setHeadUnit(String headUnit) {
         this.headUnit = headUnit;
     }
 
-    public boolean useRealKappa() {
+    @Override
+	public boolean useRealKappa() {
         return useRealKappa;
     }
 
-    public void setUseRealKappa(boolean useRealKappa) {
+    @Override
+	public void setUseRealKappa(boolean useRealKappa) {
         this.useRealKappa = useRealKappa;
     }
 
-    public void plot() {
+    @Override
+	public void plot() {
         neqsim.dataPresentation.JFreeChart.graph2b graph = new neqsim.dataPresentation.JFreeChart.graph2b(flow, head,
                 Arrays.stream(speed).mapToObj(String::valueOf).toArray(String[]::new), "head vs flow", "flow", "head");
         graph.setVisible(true);

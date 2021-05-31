@@ -32,7 +32,8 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
         this.type = type;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -42,11 +43,13 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
 
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         if (i == 0) {

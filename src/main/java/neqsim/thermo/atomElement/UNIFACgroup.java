@@ -21,9 +21,7 @@
  */
 package neqsim.thermo.atomElement;
 
-import java.util.*;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.MAX_NUMBER_OF_COMPONENTS;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import org.apache.logging.log4j.*;
@@ -75,11 +73,8 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
 
     public UNIFACgroup(int groupNumber, int temp) {
 
-        StringTokenizer tokenizer;
-        String token;
-
+        neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         try {
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
                 dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
@@ -99,6 +94,11 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
             dataSet.close();
             database.getConnection().close();
         } catch (Exception e) {
+        	try {
+				database.getConnection().close();
+			} catch (Exception ex) {
+				logger.error(ex);
+			}
             String err = e.toString();
             logger.error(err);
             // System.out.println(err);
@@ -266,11 +266,13 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      *                            being compared to this Object.
      *
      */
-    public boolean equals(Object o) {
+    @Override
+	public boolean equals(Object o) {
         return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
     }
 
-    public int compareTo(java.lang.Object o) {
+    @Override
+	public int compareTo(java.lang.Object o) {
         if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
             return 1;
         } else if (((UNIFACgroup) o).getSubGroup() == getSubGroup()) {

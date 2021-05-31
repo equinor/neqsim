@@ -8,7 +8,6 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -55,7 +54,8 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
         this.testOps2 = new ThermodynamicOperations(testSystem2);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0, dfugdt = 0.0;
         double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
         boolean CCequation = true;

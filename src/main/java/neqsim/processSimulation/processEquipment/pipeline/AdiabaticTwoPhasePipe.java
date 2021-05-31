@@ -56,15 +56,18 @@ public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentI
         outStream = (Stream) inStream.clone();
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return outStream.getThermoSystem();
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
@@ -138,7 +141,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentI
         return flow;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         inletPressure = system.getPressure();
         // system.setMultiPhaseCheck(true);
@@ -232,24 +236,29 @@ public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentI
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         system.display();
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
 
         run();
     }
 
-    public FlowSystemInterface getPipe() {
+    @Override
+	public FlowSystemInterface getPipe() {
         return null;
     }
 
-    public void setInitialFlowPattern(String flowPattern) {
+    @Override
+	public void setInitialFlowPattern(String flowPattern) {
     }
 
     /**

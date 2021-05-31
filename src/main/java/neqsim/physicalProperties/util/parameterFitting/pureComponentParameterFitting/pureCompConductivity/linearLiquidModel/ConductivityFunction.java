@@ -23,14 +23,16 @@ public class ConductivityFunction extends LevenbergMarquardtFunction {
         params = new double[3];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(1);
         system.initPhysicalProperties();
         return system.getPhases()[1].getPhysicalProperties().getConductivity();
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[0].setLiquidConductivityParameter(value, i);
         system.getPhases()[1].getComponents()[0].setLiquidConductivityParameter(value, i);

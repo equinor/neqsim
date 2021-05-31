@@ -21,7 +21,6 @@
 package neqsim.thermodynamicOperations.util.example;
 
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;

@@ -36,7 +36,8 @@ public class PFCTViscosityMethod extends Viscosity {
         referenceSystem.init(0);
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
 
         int phaseTypeNumb = 0;
         // if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;
@@ -102,7 +103,8 @@ public class PFCTViscosityMethod extends Viscosity {
         return viscosity;
     }
 
-    public double getPureComponentViscosity(int i) {
+    @Override
+	public double getPureComponentViscosity(int i) {
         return 0;
     }
 

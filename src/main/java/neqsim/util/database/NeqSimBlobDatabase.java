@@ -21,8 +21,6 @@ package neqsim.util.database;
  * Created on 1. november 2001, 08:56
  */
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 import org.apache.logging.log4j.*;
 
 /**
@@ -43,7 +41,7 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
      * @param createTemporaryTables the createTemporaryTables to set
      */
     public void setCreateTemporaryTables(boolean createTemporaryTables) {
-        this.createTemporaryTables = createTemporaryTables;
+        NeqSimBlobDatabase.createTemporaryTables = createTemporaryTables;
     }
 
     private static final long serialVersionUID = 1000;

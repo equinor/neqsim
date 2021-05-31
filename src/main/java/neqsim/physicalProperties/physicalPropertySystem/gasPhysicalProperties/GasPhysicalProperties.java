@@ -46,7 +46,8 @@ public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPro
         // this.init(phase);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         GasPhysicalProperties properties = null;
 
         try {

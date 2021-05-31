@@ -10,14 +10,13 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class SimpleAbsorber extends Separator implements ProcessEquipmentInterface, AbsorberInterface {
+public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -66,7 +65,8 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
         outStream[1].run();
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         // outStream[0].setName(name + "_Sout1");
         // outStream[1].setName(name + "_Sout2");
         super.setName(name);
@@ -104,7 +104,8 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
         inStream[i].getThermoSystem().getTemperature();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         SystemInterface systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
         outStream[0].run();
@@ -139,7 +140,8 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
 
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         outStream[0].displayResult();
         outStream[1].displayResult();
     }
@@ -147,7 +149,8 @@ public class SimpleAbsorber extends Separator implements ProcessEquipmentInterfa
     public void runTransient() {
     }
 
-    public void setAproachToEquilibrium(double eff) {
+    @Override
+	public void setAproachToEquilibrium(double eff) {
         this.absorptionEfficiency = eff;
     }
 

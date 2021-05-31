@@ -1,16 +1,7 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
-import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.util.Recycle;
-import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.thermodynamicOperations.flashOps.SaturateWithWater;
-import neqsim.processSimulation.processEquipment.separator.Separator;
 
 public class TEGstripperProcess {
 

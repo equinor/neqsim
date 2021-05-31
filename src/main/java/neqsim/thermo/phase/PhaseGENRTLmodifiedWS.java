@@ -47,7 +47,8 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         }
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -55,7 +56,8 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    public void setMixingRule(int type) {
+    @Override
+	public void setMixingRule(int type) {
         super.setMixingRule(type);
         this.intparam = mixSelect.getWSintparam();
         this.alpha = mixSelect.getNRTLalpha();
@@ -63,12 +65,14 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         this.Dij = mixSelect.getNRTLDij();
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGENRTLmodifiedWS(componentName, moles, molesInPhase, compNumber);
     }
 
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         double GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {

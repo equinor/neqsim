@@ -28,7 +28,8 @@ public class Density
         this.solidPhase = liquidPhase;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Density properties = null;
 
         try {
@@ -43,7 +44,8 @@ public class Density
     /**
      * Returns the density of the phase. Unit: kg/m^3
      */
-    public double calcDensity() {
+    @Override
+	public double calcDensity() {
 
         double tempVar = 0.0;
         if (solidPhase.getPhase().useVolumeCorrection()) {

@@ -70,7 +70,8 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
         mainFrame.setVisible(true);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         int np = 0;
 
@@ -91,7 +92,8 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
         }
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         try {
             mainFrame.setVisible(false);
             visAd3DPlot plot = new visAd3DPlot("pressure[bar]", "temperature[K]", "enthalpy[J/mol]");
@@ -103,21 +105,26 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
         }
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return points;
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 }

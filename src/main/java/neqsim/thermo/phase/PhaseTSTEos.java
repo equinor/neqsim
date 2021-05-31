@@ -26,7 +26,8 @@ public class PhaseTSTEos extends PhaseEos {
         delta2 = 1.0 - Math.sqrt(2.0);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseTSTEos clonedPhase = null;
         try {
             clonedPhase = (PhaseTSTEos) super.clone();
@@ -37,7 +38,8 @@ public class PhaseTSTEos extends PhaseEos {
         return clonedPhase;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentTST(componentName, moles, molesInPhase, compNumber);
     }

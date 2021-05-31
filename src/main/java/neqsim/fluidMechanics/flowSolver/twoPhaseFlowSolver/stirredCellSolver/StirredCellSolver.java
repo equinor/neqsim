@@ -59,7 +59,8 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         numberOfVelocityNodes = nodes;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();
@@ -267,7 +268,8 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         }
     }
 
-    public void solveTDMA() {
+    @Override
+	public void solveTDMA() {
         initProfiles();
     }
 

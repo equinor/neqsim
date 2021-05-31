@@ -36,7 +36,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         super();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhasePCSAFTa clonedPhase = null;
         try {
             clonedPhase = (PhasePCSAFTa) super.clone();
@@ -48,12 +49,14 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return clonedPhase;
     }
 
-    public void setMixingRule(int type) {
+    @Override
+	public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(3, this);
     }
 
-    public void volInit() {
+    @Override
+	public void volInit() {
         super.volInit();
         gcpa = getGhsSAFT();
         lngcpa = Math.log(getGhsSAFT());
@@ -64,7 +67,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         gcpavvv = 0.0;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -85,38 +89,46 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentPCSAFTa(componentName, moles, molesInPhase, compNumber);
     }
 
-    public double getF() {
+    @Override
+	public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
-    public double dFdT() {
+    @Override
+	public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
-    public double dFdTdV() {
+    @Override
+	public double dFdTdV() {
         return super.dFdTdV();
     }
 
-    public double dFdV() {
+    @Override
+	public double dFdV() {
         double dv2 = dFCPAdV();
         // System.out.println("dv " + dv + " dvcpa " + dv2);
         return super.dFdV() + cpaon * dv2;
     }
 
-    public double dFdVdV() {
+    @Override
+	public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
-    public double dFdVdVdV() {
+    @Override
+	public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
-    public double dFdTdT() {
+    @Override
+	public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
     }
 
@@ -244,7 +256,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
      * 
      * @return Value of property hcpatot.
      */
-    public double getHcpatot() {
+    @Override
+	public double getHcpatot() {
         return hcpatot;
     }
 
@@ -257,7 +270,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         this.hcpatot = hcpatot;
     }
 
-    public double getGcpa() {
+    @Override
+	public double getGcpa() {
         return gcpa;
     }
 
@@ -265,7 +279,8 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return 0;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
@@ -349,15 +364,18 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return getMolarVolume();
     }
 
-    public double getGcpav() {
+    @Override
+	public double getGcpav() {
         return gcpav;
     }
 
-    public CPAMixingInterface getCpamix() {
+    @Override
+	public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
-    public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
+    @Override
+	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
             return selfAccociationScheme[comp1][site1][site2];
         }
@@ -367,14 +385,16 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     /**
      * @return the totalNumberOfAccociationSites
      */
-    public int getTotalNumberOfAccociationSites() {
+    @Override
+	public int getTotalNumberOfAccociationSites() {
         return totalNumberOfAccociationSites;
     }
 
     /**
      * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
      */
-    public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
+    @Override
+	public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;
     }
 }

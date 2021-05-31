@@ -5,9 +5,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.TwoPhaseFlowNode;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
-import static neqsim.thermo.ThermodynamicConstantsInterface.pi;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
@@ -35,7 +33,8 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
                 this);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();
@@ -46,14 +45,16 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return clonedSystem;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
         super.init();
     }
 
-    public double calcContactLength() {
+    @Override
+	public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
@@ -63,7 +64,8 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
         return wallContactLength[0];
     }
 
-    public FlowNodeInterface getNextNode() {
+    @Override
+	public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

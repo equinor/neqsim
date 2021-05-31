@@ -53,13 +53,15 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -72,7 +74,8 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -82,7 +85,8 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         oilExitStream = oilCooler.getOutStream();
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
         double inletPressure = feedStream.getPressure();
         Separator inletSeparator = new Separator("Inlet separator", feedStream);
@@ -165,24 +169,29 @@ public class SeparationTrainModule extends ProcessModuleBaseClass {
         // oilExitStream = thirdStageSeparator.getOilOutStream();
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
 
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 
-    public void setSpecification(String specificationName, double value) {
+    @Override
+	public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("Second stage pressure")) {
             secondstagePressure = value;
         }

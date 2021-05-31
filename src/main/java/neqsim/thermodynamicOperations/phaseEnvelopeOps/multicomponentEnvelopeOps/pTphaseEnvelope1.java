@@ -30,7 +30,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
-import org.jfree.chart.JFreeChart;
 
 /**
  *
@@ -112,7 +111,8 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
         mainFrame.setVisible(true);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         try {
 
@@ -333,7 +333,8 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
         }
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -375,10 +376,12 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
          */
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -394,11 +397,13 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
         return graph2.getChart();
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return points2;
     }
 
-    public double[] get(String name) {
+    @Override
+	public double[] get(String name) {
         if (name.equals("bubT")) {
             return points2[0];
         }
@@ -439,7 +444,8 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
         }
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         fileName = name;
     }
 
@@ -463,7 +469,8 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
         this.bubblePointFirst = bubblePointFirst;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 

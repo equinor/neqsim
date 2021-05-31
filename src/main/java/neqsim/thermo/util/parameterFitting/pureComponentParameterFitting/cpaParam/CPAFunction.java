@@ -24,7 +24,8 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     public CPAFunction() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         // system.setTemperature(dependentValues[0]);
         system.init(0);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -38,11 +39,13 @@ public class CPAFunction extends LevenbergMarquardtFunction {
         return system.getPressure();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         // i += 5;

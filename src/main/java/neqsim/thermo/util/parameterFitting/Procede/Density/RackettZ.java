@@ -22,16 +22,19 @@ public class RackettZ extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.initPhysicalProperties();
         return system.getPhase(1).getPhysicalProperties().getDensity();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             system.getPhases()[0].getComponents()[0].setRacketZ(value);

@@ -87,7 +87,7 @@ public class surfaceFitPlot extends java.lang.Object {
         vals_ff.setSamples(flat_samples, false);
         iso_vals_ff = new FlatField(func_domain_iso_range, domain_set);
         display = new DisplayImplJ3D("display1");
-        GraphicsModeControl dispGMC = (GraphicsModeControl) display.getGraphicsModeControl();
+        GraphicsModeControl dispGMC = display.getGraphicsModeControl();
         dispGMC.setScaleEnable(true);
 
         float[][] flat_isoVals = vals_ff.getFloats(false);

@@ -34,7 +34,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         cpamix = cpaSelect.getMixingRule(1);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhasePrCPA clonedPhase = null;
         try {
             clonedPhase = (PhasePrCPA) super.clone();
@@ -44,7 +45,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         return clonedPhase;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -84,39 +86,47 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         }
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentSrkCPA(componentName, moles, molesInPhase, compNumber);
     }
 
-    public double getF() {
+    @Override
+	public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
-    public double dFdT() {
+    @Override
+	public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
-    public double dFdTdV() {
+    @Override
+	public double dFdTdV() {
         return super.dFdTdV();
     }
 
-    public double dFdV() {
+    @Override
+	public double dFdV() {
         // double dv = super.dFdV();
         double dv2 = dFCPAdV();
         // System.out.println("dv " + dv + " dvcpa " + dv2);
         return super.dFdV() + cpaon * dv2;
     }
 
-    public double dFdVdV() {
+    @Override
+	public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
-    public double dFdVdVdV() {
+    @Override
+	public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
-    public double dFdTdT() {
+    @Override
+	public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
     }
 
@@ -266,7 +276,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         double err = .0;
         int iter = 0;
         try {
-            molarVolume(pressure, temperature, A, B, phaseType);
+            molarVolume(pressure, temperature, getA(), getB(), phaseType);
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -294,7 +304,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
      * 
      * @return Value of property hcpatot.
      */
-    public double getHcpatot() {
+    @Override
+	public double getHcpatot() {
         return hcpatot;
     }
 
@@ -307,19 +318,23 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         this.hcpatot = hcpatot;
     }
 
-    public double getGcpa() {
+    @Override
+	public double getGcpa() {
         return gcpa;
     }
 
-    public double getGcpav() {
+    @Override
+	public double getGcpav() {
         return gcpav;
     }
 
-    public CPAMixingInterface getCpamix() {
+    @Override
+	public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
-    public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
+    @Override
+	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
             return selfAccociationScheme[comp1][site1][site2];
         }
@@ -329,14 +344,16 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     /**
      * @return the totalNumberOfAccociationSites
      */
-    public int getTotalNumberOfAccociationSites() {
+    @Override
+	public int getTotalNumberOfAccociationSites() {
         return totalNumberOfAccociationSites;
     }
 
     /**
      * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
      */
-    public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
+    @Override
+	public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;
     }
 

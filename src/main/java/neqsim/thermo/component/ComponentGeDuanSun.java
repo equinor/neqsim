@@ -23,7 +23,8 @@ public class ComponentGeDuanSun extends ComponentGE {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
         return getGamma(phase, numberOfComponents, temperature, pressure, phasetype, HValpha, HVgij);
     }
@@ -233,7 +234,8 @@ public class ComponentGeDuanSun extends ComponentGE {
      * 
      * }
      */
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
         if (referenceStateType.equals("solvent")) {
             fugasityCoeffisient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();

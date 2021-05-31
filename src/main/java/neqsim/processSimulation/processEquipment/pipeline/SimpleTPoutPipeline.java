@@ -35,11 +35,13 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
         outStream = (Stream) inStream.clone();
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public StreamInterface getOutStream() {
+    @Override
+	public StreamInterface getOutStream() {
         return outStream;
     }
 
@@ -51,7 +53,8 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
         this.pressureOut = pressure;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         system.setTemperature(this.temperatureOut);
@@ -62,7 +65,8 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
         outStream.setThermoSystem(system);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         outStream.getThermoSystem().display(name);
         outStream.getThermoSystem().initPhysicalProperties();
         System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
@@ -71,18 +75,22 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
 
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
     }
 
-    public FlowSystemInterface getPipe() {
+    @Override
+	public FlowSystemInterface getPipe() {
         return null;
     }
 
-    public void setInitialFlowPattern(String flowPattern) {
+    @Override
+	public void setInitialFlowPattern(String flowPattern) {
 
     }
 

@@ -33,7 +33,8 @@ public class PhaseDefault extends Phase {
         defComponent = comp;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(moles);
         try {
             componentArray[compNumber] = defComponent.getClass().newInstance();
@@ -43,7 +44,8 @@ public class PhaseDefault extends Phase {
         componentArray[compNumber].createComponent(componentName, moles, molesInPhase, compNumber);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -51,19 +53,23 @@ public class PhaseDefault extends Phase {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
         return 1.0;
     }
 
-    public void resetMixingRule(int type) {
+    @Override
+	public void resetMixingRule(int type) {
     }
 
-    public double getMolarVolume() {
+    @Override
+	public double getMolarVolume() {
         return 1.0;
     }
 
-    public double getGibbsEnergy() {
+    @Override
+	public double getGibbsEnergy() {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugasityCoeffisient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));

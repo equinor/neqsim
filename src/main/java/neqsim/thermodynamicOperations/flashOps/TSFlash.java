@@ -49,7 +49,8 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
         this.Sspec = Sspec;
     }
 
-    public double calcdQdTT() {
+    @Override
+	public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
@@ -63,12 +64,14 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
         return dQdTT;
     }
 
-    public double calcdQdT() {
+    @Override
+	public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
-    public double solveQ() {
+    @Override
+	public double solveQ() {
         // this method is not yet implemented
         double oldTemp = system.getPressure(), nyTemp = system.getPressure();
         int iterations = 1;
@@ -96,7 +99,8 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
         solveQ();
     }

@@ -47,7 +47,8 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
         this.refluxPhase = refluxPhase;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         // System.out.println("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
@@ -89,7 +90,8 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
 
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

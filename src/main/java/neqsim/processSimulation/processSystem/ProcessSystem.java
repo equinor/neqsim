@@ -32,9 +32,7 @@ import org.apache.logging.log4j.*;
 import java.util.*;
 
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
-import neqsim.processSimulation.conditionMonitor.ConditionMonitorSpecifications;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
-import neqsim.processSimulation.measurementDevice.MeasurementDeviceBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.SystemMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
@@ -96,24 +94,34 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
                 for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
                         .size(); j++) {
 
-                    if (((ProcessEquipmentInterface) ((ModuleInterface) getUnitOperations().get(i)).getOperations()
-                            .getUnitOperations().get(j)).getName().equals(name)) {
+                    if (((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                            .getUnitOperations().get(j).getName().equals(name)) {
                         return ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
                                 .get(j);
                     }
                 }
-            } else if (((ProcessEquipmentInterface) getUnitOperations().get(i)).getName().equals(name)) {
+            } else if (getUnitOperations().get(i).getName().equals(name)) {
                 return getUnitOperations().get(i);
             }
 
         }
         return null;
     }
+    
+    public boolean hasUnitName(String name) {
+    	if(getUnit(name)==null) {
+    		return false;
+    	}
+    	else 
+    	{
+    		return true;
+    	}
+    }
 
     public Object getMeasurementDevice(String name) {
         for (int i = 0; i < measurementDevices.size(); i++) {
-            if (((MeasurementDeviceInterface) measurementDevices.get(i)).getName().equals(name)) {
-                return (MeasurementDeviceInterface) measurementDevices.get(i);
+            if (measurementDevices.get(i).getName().equals(name)) {
+                return measurementDevices.get(i);
             }
         }
         return null;
@@ -125,12 +133,12 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
                 for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
                         .size(); j++) {
 
-                    if (((ProcessEquipmentInterface) ((ModuleInterface) getUnitOperations().get(i)).getOperations()
-                            .getUnitOperations().get(j)).getName().equals(name)) {
+                    if (((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                            .getUnitOperations().get(j).getName().equals(name)) {
                         return j;
                     }
                 }
-            } else if (((ProcessEquipmentInterface) getUnitOperations().get(i)).getName().equals(name)) {
+            } else if (getUnitOperations().get(i).getName().equals(name)) {
                 return i;
             }
 
@@ -148,11 +156,11 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
                 for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
                         .size(); j++) {
-                    unitNames.add(((ProcessEquipmentInterface) ((ModuleInterface) getUnitOperations().get(i))
-                            .getOperations().getUnitOperations().get(j)).getName());
+                    unitNames.add(((ModuleInterface) getUnitOperations().get(i))
+                            .getOperations().getUnitOperations().get(j).getName());
                 }
             }
-            unitNames.add(((ProcessEquipmentInterface) unitOperations.get(i)).getName());
+            unitNames.add(unitOperations.get(i).getName());
         }
         return unitNames;
     }
@@ -166,7 +174,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
     public void removeUnit(String name) {
         for (int i = 0; i < unitOperations.size(); i++) {
-            if (((ProcessEquipmentInterface) unitOperations.get(i)).getName().equals(name)) {
+            if (unitOperations.get(i).getName().equals(name)) {
                 unitOperations.remove(i);
             }
         }
@@ -238,7 +246,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         return processThread;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         boolean isConverged = true;
         boolean hasResycle = false;
         boolean hasAdjuster = false;
@@ -345,16 +354,16 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         time += getTimeStep();
 
         for (int i = 0; i < unitOperations.size(); i++) {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).runTransient(getTimeStep());
+            unitOperations.get(i).runTransient(getTimeStep());
         }
         timeStepNumber++;
         signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()];
         for (int i = 0; i < measurementDevices.size(); i++) {
             signalDB[timeStepNumber][0] = Double.toString(time);
-            signalDB[timeStepNumber][3 * i + 1] = ((MeasurementDeviceInterface) measurementDevices.get(i)).getName();
+            signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
             signalDB[timeStepNumber][3 * i + 2] = Double
-                    .toString(((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue());
-            signalDB[timeStepNumber][3 * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i)).getUnit();
+                    .toString(measurementDevices.get(i).getMeasuredValue());
+            signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
 
         }
 
@@ -376,7 +385,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
             System.out.println("Thread did not finish");
         }
         for (int i = 0; i < unitOperations.size(); i++) {
-            ((ProcessEquipmentInterface) unitOperations.get(i)).displayResult();
+            unitOperations.get(i).displayResult();
         }
 
         /*
@@ -396,13 +405,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         }
         for (int i = 0; i < measurementDevices.size(); i++) {
             System.out.println(
-                    "Measurements Device Name: " + ((MeasurementDeviceInterface) measurementDevices.get(i)).getName());
-            System.out.println("Value: " + ((MeasurementDeviceInterface) measurementDevices.get(i)).getMeasuredValue()
-                    + " " + ((MeasurementDeviceInterface) measurementDevices.get(i)).getUnit());
-            if (((MeasurementDeviceInterface) measurementDevices.get(i)).isOnlineSignal())
+                    "Measurements Device Name: " + measurementDevices.get(i).getName());
+            System.out.println("Value: " + measurementDevices.get(i).getMeasuredValue()
+                    + " " + measurementDevices.get(i).getUnit());
+            if (measurementDevices.get(i).isOnlineSignal())
                 System.out.println("Online value: "
-                        + ((MeasurementDeviceInterface) measurementDevices.get(i)).getOnlineSignal().getValue() + " "
-                        + ((MeasurementDeviceInterface) measurementDevices.get(i)).getOnlineSignal().getUnit());
+                        + measurementDevices.get(i).getOnlineSignal().getValue() + " "
+                        + measurementDevices.get(i).getOnlineSignal().getUnit());
 
         }
     }
@@ -445,8 +454,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
         int numb = 0;
         for (int i = 0; i < unitOperations.size(); i++) {
-            for (int k = 0; k < ((ProcessEquipmentInterface) unitOperations.get(i)).reportResults().length; k++) {
-                text[numb++] = ((ProcessEquipmentInterface) unitOperations.get(i)).reportResults()[k];
+            for (int k = 0; k < unitOperations.get(i).reportResults().length; k++) {
+                text[numb++] = unitOperations.get(i).reportResults()[k];
             }
         }
         return text;

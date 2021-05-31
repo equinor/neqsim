@@ -36,11 +36,13 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
         unit = "m^3/hr";
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("measured volume " + Double.toString(getMeasuredValue()) + " " + unit);
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         stream.getThermoSystem().initPhysicalProperties();
         if (unit.equals("m^3/hr")) {
             return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()

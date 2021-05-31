@@ -62,7 +62,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
-    public void createSystem() {
+    @Override
+	public void createSystem() {
         getThermoSystem().init(0);
         thermoOperations = new ThermodynamicOperations(getThermoSystem());
         try {
@@ -94,10 +95,12 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
-    public void init() {
+    @Override
+	public void init() {
     }
 
-    public void solveSteadyState(int solverType) {
+    @Override
+	public void solveSteadyState(int solverType) {
         try {
             if (!isSetInitialTemperature()) {
                 thermoOperations.bubblePointTemperatureFlash();
@@ -108,7 +111,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         logger.info("temperature start " + getThermoSystem().getTemperature());
     }
 
-    public void solveTransient(int type) {
+    @Override
+	public void solveTransient(int type) {
         SystemInterface tempThermoSystem = (SystemInterface) getThermoSystem().clone();
         WI = new double[numberOffTimeSteps];
         GCV = new double[numberOffTimeSteps];

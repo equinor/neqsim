@@ -32,7 +32,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         costEstimate = new CompressorCostEstimate(this);
     }
 
-    public void readDesignSpecifications() {
+    @Override
+	public void readDesignSpecifications() {
 
         super.readDesignSpecifications();
 
@@ -47,7 +48,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     }
 
-    public void displayResults() {
+    @Override
+	public void displayResults() {
 
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
@@ -103,7 +105,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         dialog.setVisible(true);
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         super.calcDesign();
         Compressor compressor = (Compressor) getProcessEquipment();
         double Fg = 1.0;
@@ -200,34 +203,39 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...
     }
 
-    public double getOuterDiameter() {
+    @Override
+	public double getOuterDiameter() {
         return outerDiameter;
     }
 
     /**
      * @return the wallThickness
      */
-    public double getWallThickness() {
+    @Override
+	public double getWallThickness() {
         return wallThickness;
     }
 
     /**
      * @param wallThickness the wallThickness to set
      */
-    public void setWallThickness(double wallThickness) {
+    @Override
+	public void setWallThickness(double wallThickness) {
         this.wallThickness = wallThickness;
     }
 
     /**
      * @param outerDiameter the outerDiameter to set
      */
-    public void setOuterDiameter(double outerDiameter) {
+    @Override
+	public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
 

@@ -53,13 +53,15 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     public AdsorptionDehydrationlModule() {
     }
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("gasStreamToAdsorber")) {
             this.gasStreamToAdsorber = stream;
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -70,7 +72,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
-    public ProcessEquipmentInterface getUnit(String unitName) {
+    @Override
+	public ProcessEquipmentInterface getUnit(String unitName) {
         if (unitName.equals("adorber_0")) {
             return adsorber[0];
         } else if (unitName.equals("adorber_1")) {
@@ -82,7 +85,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -98,7 +102,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         // gasStreamFromAdsorber.getThermoSystem().init(1);
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
         try {
             adsorber = new SimpleAdsorber[numberOfAdorptionBeds];
@@ -112,17 +117,20 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
 
         getOperations().add(gasStreamToAdsorber);
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
-    public void setSpecification(String specificationName, double value) {
+    @Override
+	public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("water dew point temperature")) {
             waterDewPontTemperature = value;
         }
@@ -145,7 +153,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
 
         Stream tempStream = (Stream) gasStreamToAdsorber.clone();
         tempStream.getThermoSystem().setPressure(designAdsorptionPressure);
@@ -175,7 +184,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         for (int i = 0; i < numberOfAdorptionBeds; i++) {
             adsorber[i].getMechanicalDesign().setInnerDiameter(adsorberInternalDiameter);
             adsorber[i].getMechanicalDesign().setTantanLength(adsorbentFillingHeight * 1.5);

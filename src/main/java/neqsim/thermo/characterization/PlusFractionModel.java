@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
 public class PlusFractionModel implements Serializable {
     private static final long serialVersionUID = 1000;
     private String name = "";
-    SystemInterface system = null;
+    private SystemInterface system = null;
     double MPlus = 0.0, zPlus = 0.0, densPlus = 0.0;
     int firstPlusFractionNumber = 1;
     int lastPlusFractionNumber = 80;
@@ -26,7 +26,7 @@ public class PlusFractionModel implements Serializable {
         this.system = system;
     }
 
-    public class PedersenPlusModel implements PlusFractionModelInterface, Cloneable, java.io.Serializable {
+    class PedersenPlusModel implements PlusFractionModelInterface, Cloneable {
 
         double[] coefs = { 4.4660105006, -1.1266303727, 0.80, 0.0408709562 };
         double[] SRKcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
@@ -71,50 +71,61 @@ public class PlusFractionModel implements Serializable {
         /**
          * @return the name
          */
-        public String getName() {
+        @Override
+		public String getName() {
             return name;
         }
 
-        public double getMPlus() {
+        @Override
+		public double getMPlus() {
             return MPlus;
         }
 
-        public double getZPlus() {
+        @Override
+		public double getZPlus() {
             return zPlus;
         }
 
         /**
          * @return the maxPlusMolarMass
          */
-        public double getMaxPlusMolarMass() {
+        @Override
+		public double getMaxPlusMolarMass() {
             return maxPlusMolarMass;
         }
 
-        public double getNumberOfPlusPseudocomponents() {
+        @Override
+		public double getNumberOfPlusPseudocomponents() {
             return numberOfPlusPseudocomponents;
         }
 
-        public double[] getZ() {
+        @Override
+		public double[] getZ() {
             return z;
         }
 
-        public double[] getM() {
+        @Override
+		public double[] getM() {
             return M;
         }
 
-        public double[] getDens() {
+        @Override
+		public double[] getDens() {
             return dens;
         }
 
-        public double getDensPlus() {
+        @Override
+		public double getDensPlus() {
             return densPlus;
         }
 
-        public int getFirstPlusFractionNumber() {
+        @Override
+		public int getFirstPlusFractionNumber() {
             return firstPlusFractionNumber;
         }
 
-        public int getFirstTBPFractionNumber() {
+        @Override
+		public int getFirstTBPFractionNumber() {
             int firstTBPNumber = 0;
             double M = 1e10, Mmin = 1e10;
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -137,15 +148,18 @@ public class PlusFractionModel implements Serializable {
             return firstTBPNumber;
         }
 
-        public int getPlusComponentNumber() {
+        @Override
+		public int getPlusComponentNumber() {
             return plusComponentNumber;
         }
 
-        public int getLastPlusFractionNumber() {
+        @Override
+		public int getLastPlusFractionNumber() {
             return lastPlusFractionNumber;
         }
 
-        public boolean hasPlusFraction() {
+        @Override
+		public boolean hasPlusFraction() {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
                     MPlus = system.getPhase(0).getComponent(i).getMolarMass();
@@ -158,7 +172,8 @@ public class PlusFractionModel implements Serializable {
             return false;
         }
 
-        public void characterizePlusFraction(TBPModelInterface TBPModel) {
+        @Override
+		public void characterizePlusFraction(TBPModelInterface TBPModel) {
             system.init(0);
             Integer firstPlusNumber = new Integer(0);
             if (system.getPhase(0).getComponent(plusComponentNumber).getComponentName().substring(3, 4).equals("_")) {
@@ -249,7 +264,7 @@ public class PlusFractionModel implements Serializable {
         }
     }
 
-    public class PedersenHeavyOilPlusModel extends PedersenPlusModel {
+    private class PedersenHeavyOilPlusModel extends PedersenPlusModel {
 
         public PedersenHeavyOilPlusModel() {
             lastPlusFractionNumber = 200;

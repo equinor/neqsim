@@ -34,7 +34,8 @@ public class EquilibriumStream extends Stream {
         super(name, thermoSystem);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         EquilibriumStream clonedStream = null;
 
         try {
@@ -47,7 +48,8 @@ public class EquilibriumStream extends Stream {
         return clonedStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();

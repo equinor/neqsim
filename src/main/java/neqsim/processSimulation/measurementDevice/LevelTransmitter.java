@@ -29,11 +29,13 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
         this.separator = separator;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("measured temperature " + separator.getLiquidLevel());
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return separator.getLiquidLevel();
     }
 

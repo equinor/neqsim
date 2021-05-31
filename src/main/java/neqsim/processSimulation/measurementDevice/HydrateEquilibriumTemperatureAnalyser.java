@@ -24,6 +24,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     protected int streamNumber = 0;
     protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
+    private double referencePressure = 0;
 
     /** Creates a new instance of TemperatureTransmitter */
     public HydrateEquilibriumTemperatureAnalyser() {
@@ -37,7 +38,8 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
         setConditionAnalysisMaxDeviation(1.0);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         try {
             // System.out.println("total water production [kg/dag]" +
             // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
@@ -47,14 +49,21 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
         }
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return getMeasuredValue(unit);
     }
 
-    public double getMeasuredValue(String unit) {
+    @Override
+	public double getMeasuredValue(String unit) {
         SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
-        tempFluid.setHydrateCheck(true);
+        if(!tempFluid.doHydrateCheck()) {
+        	tempFluid.setHydrateCheck(true);
+        }
         tempFluid.setTemperature(10.0, "C");
+        if(referencePressure>1e-10) {
+        	tempFluid.setPressure(referencePressure);
+        }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
             thermoOps.hydrateFormationTemperature();
@@ -63,5 +72,13 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
         }
         return tempFluid.getTemperature(unit);
     }
+    
+    public double getReferencePressure() {
+        return referencePressure;
+    }
+
+    public void setReferencePressure(double referencePressure) {
+		this.referencePressure = referencePressure;
+	}
 
 }

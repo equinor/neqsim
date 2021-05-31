@@ -21,7 +21,8 @@ public class MassTransferFunction
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(0);
         system.init(1);
@@ -33,7 +34,8 @@ public class MassTransferFunction
         return Math.log(system.getPressure());
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[i].setAcentricFactor(value);
         system.getPhases()[1].getComponents()[i].setAcentricFactor(value);

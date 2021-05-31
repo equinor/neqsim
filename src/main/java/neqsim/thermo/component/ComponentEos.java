@@ -49,7 +49,7 @@ abstract class ComponentEos extends Component
     protected double aDern = 0, aDerT = 0, aDerTT = 0, aDerTn = 0, bDern = 0, bDerTn = 0;
     protected double dAdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
     protected double dBdndn[] = new double[MAX_NUMBER_OF_COMPONENTS];
-    protected AtractiveTermInterface atractiveParameter;
+    private AtractiveTermInterface atractiveParameter;
     static Logger logger = LogManager.getLogger(ComponentEos.class);
 
     public ComponentEos() {
@@ -63,7 +63,8 @@ abstract class ComponentEos extends Component
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentEos clonedComponent = null;
         try {
@@ -72,12 +73,13 @@ abstract class ComponentEos extends Component
             logger.error("Cloning failed.", e);
         }
 
-        clonedComponent.atractiveParameter = (AtractiveTermInterface) this.atractiveParameter.clone();
+        clonedComponent.setAtractiveParameter((AtractiveTermInterface) this.getAtractiveParameter().clone());
 
         return clonedComponent;
     }
 
-    public void init(double temp, double pres, double totMoles, double beta, int type) {
+    @Override
+	public void init(double temp, double pres, double totMoles, double beta, int type) {
         super.init(temp, pres, totMoles, beta, type);
         a = calca();
         b = calcb();
@@ -90,7 +92,8 @@ abstract class ComponentEos extends Component
         }
     }
 
-    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
+    @Override
+	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
         Bi = phase.calcBi(componentNumber, phase, temp, pres, numberOfComponents);
         Ai = phase.calcAi(componentNumber, phase, temp, pres, numberOfComponents);
@@ -110,49 +113,50 @@ abstract class ComponentEos extends Component
         }
     }
 
-    public void setAtractiveTerm(int i) {
+    @Override
+	public void setAtractiveTerm(int i) {
         atractiveTermNumber = i;
         if (i == 0) {
-            atractiveParameter = new AtractiveTermSrk(this);
+            setAtractiveParameter(new AtractiveTermSrk(this));
         } else if (i == 1) {
-            atractiveParameter = new AtractiveTermPr(this);
+            setAtractiveParameter(new AtractiveTermPr(this));
         } else if (i == 2) {
-            atractiveParameter = new AtractiveTermSchwartzentruber(this, getSchwartzentruberParams());
+            setAtractiveParameter(new AtractiveTermSchwartzentruber(this, getSchwartzentruberParams()));
         } else if (i == 3) {
-            atractiveParameter = new AtractiveTermMollerup(this, getSchwartzentruberParams());
+            setAtractiveParameter(new AtractiveTermMollerup(this, getSchwartzentruberParams()));
         } else if (i == 4) {
-            atractiveParameter = new AtractiveTermMatCop(this, getMatiascopemanParams());
+            setAtractiveParameter(new AtractiveTermMatCop(this, getMatiascopemanParams()));
         } else if (i == 5) {
-            atractiveParameter = new AtractiveTermRk(this);
+            setAtractiveParameter(new AtractiveTermRk(this));
         } else if (i == 6) {
-            atractiveParameter = new AtractiveTermPr1978(this);
+            setAtractiveParameter(new AtractiveTermPr1978(this));
         } else if (i == 7) {
-            atractiveParameter = new AtractiveTermPrDelft1998(this);
+            setAtractiveParameter(new AtractiveTermPrDelft1998(this));
         } else if (i == 8) {
-            atractiveParameter = new AtractiveTermPrGassem2001(this);
+            setAtractiveParameter(new AtractiveTermPrGassem2001(this));
         } else if (i == 9) {
-            atractiveParameter = new AtractiveTermPrDanesh(this);
+            setAtractiveParameter(new AtractiveTermPrDanesh(this));
         } else if (i == 10) {
-            atractiveParameter = new AtractiveTermGERG(this);
+            setAtractiveParameter(new AtractiveTermGERG(this));
         } else if (i == 11) {
-            atractiveParameter = new AtractiveTermTwuCoon(this);
+            setAtractiveParameter(new AtractiveTermTwuCoon(this));
         } else if (i == 12) {
-            atractiveParameter = new AtractiveTermTwuCoonParam(this, getTwuCoonParams());
+            setAtractiveParameter(new AtractiveTermTwuCoonParam(this, getTwuCoonParams()));
         } else if (i == 13) {
-            atractiveParameter = new AtractiveTermMatCopPR(this, getMatiascopemanParamsPR());
+            setAtractiveParameter(new AtractiveTermMatCopPR(this, getMatiascopemanParamsPR()));
         } else if (i == 14) {
-            atractiveParameter = new AtractiveTermTwu(this);
+            setAtractiveParameter(new AtractiveTermTwu(this));
         } else if (i == 15) {
-            atractiveParameter = new AtractiveTermCPAstatoil(this);
+            setAtractiveParameter(new AtractiveTermCPAstatoil(this));
         } else if (i == 16) {
-            atractiveParameter = new AtractiveTermUMRPRU(this);
+            setAtractiveParameter(new AtractiveTermUMRPRU(this));
         } else if (i == 17) {
-            atractiveParameter = new AtractiveTermMatCopPRUMR(this);
+            setAtractiveParameter(new AtractiveTermMatCopPRUMR(this));
         } else if (i == 18) {
             if (componentName.equals("mercury")) {
-                atractiveParameter = new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams());
+                setAtractiveParameter(new AttractiveTermTwuCoonStatoil(this, getTwuCoonParams()));
             } else {
-                atractiveParameter = new AtractiveTermSrk(this);
+                setAtractiveParameter(new AtractiveTermSrk(this));
             }
         } else {
             logger.error("error selecting an alpha formultaion term");
@@ -160,8 +164,9 @@ abstract class ComponentEos extends Component
         }
     }
 
-    public AtractiveTermInterface getAtractiveTerm() {
-        return this.atractiveParameter;
+    @Override
+	public AtractiveTermInterface getAtractiveTerm() {
+        return this.getAtractiveParameter();
     }
 
     double reducedTemperature(double temperature) {
@@ -172,66 +177,81 @@ abstract class ComponentEos extends Component
         return pressure / criticalPressure;
     }
 
-    public double geta() {
+    @Override
+	public double geta() {
         return a;
     }
 
-    public double getb() {
+    @Override
+	public double getb() {
         return b;
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi();
     }
 
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return (phase.FBT() + phase.FBD() * phase.getAT()) * getBi() + phase.FDT() * getAi() + phase.FD() * getAiT();
     }
 
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return phase.FnV() + phase.FBV() * getBi() + phase.FDV() * getAi();
     }
 
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
         return phase.FnB() * (getBi() + comp_Array[j].getBi())
                 + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi())
                 + phase.FB() * getBij(j) + phase.FBB() * getBi() * comp_Array[j].getBi() + phase.FD() * getAij(j);
     }
 
-    public double getAi() {
+    @Override
+	public double getAi() {
         return Ai;
     }
 
-    public double getAiT() {
+    @Override
+	public double getAiT() {
         return AiT;
     }
 
-    public double getBi() {
+    @Override
+	public double getBi() {
         return Bi;
     }
 
-    public double getBij(int j) {
+    @Override
+	public double getBij(int j) {
         return Bij[j];
     }
 
-    public double getAij(int j) {
+    @Override
+	public double getAij(int j) {
         return Aij[j];
     }
 
-    public double getaDiffT() {
+    @Override
+	public double getaDiffT() {
         return aDiffT;
     }
 
-    public double getaDiffDiffT() {
+    @Override
+	public double getaDiffDiffT() {
         return aDiffDiffT;
     }
 
-    public double getaT() {
+    @Override
+	public double getaT() {
         return aT;
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         logFugasityCoeffisient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
                 - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
@@ -239,7 +259,8 @@ abstract class ComponentEos extends Component
         return fugasityCoeffisient;
     }
 
-    public double logfugcoefdP(PhaseInterface phase) {
+    @Override
+	public double logfugcoefdP(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         double vol, voli, b, a, yaij = 0, coef;
@@ -249,7 +270,8 @@ abstract class ComponentEos extends Component
         return dfugdp;
     }
 
-    public double logfugcoefdT(PhaseInterface phase) {
+    @Override
+	public double logfugcoefdT(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         double vol, voli, b, a, yaij = 0, coef;
@@ -260,7 +282,8 @@ abstract class ComponentEos extends Component
         return dfugdt;
     }
 
-    public double[] logfugcoefdN(PhaseInterface phase) {
+    @Override
+	public double[] logfugcoefdN(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getComponents();
@@ -292,7 +315,8 @@ abstract class ComponentEos extends Component
      * //return 0.0001; return dfugdnv[i]; }
      */
     // Added By Neeraj
-    public double logfugcoefdNi(PhaseInterface phase, int k) {
+    @Override
+	public double logfugcoefdNi(PhaseInterface phase, int k) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
         double vol, voli, b, a, yaij = 0, coef;
@@ -310,35 +334,43 @@ abstract class ComponentEos extends Component
         return dfugdn[k];
     }
 
-    public double getAder() {
+    @Override
+	public double getAder() {
         return aDern;
     }
 
-    public void setAder(double val) {
+    @Override
+	public void setAder(double val) {
         aDern = val;
     }
 
-    public double getdAdndn(int j) {
+    @Override
+	public double getdAdndn(int j) {
         return dAdndn[j];
     }
 
-    public void setdAdndn(int jComp, double val) {
+    @Override
+	public void setdAdndn(int jComp, double val) {
         dAdndn[jComp] = val;
     }
 
-    public void setdAdT(double val) {
+    @Override
+	public void setdAdT(double val) {
         aDerT = val;
     }
 
-    public double getdAdT() {
+    @Override
+	public double getdAdT() {
         return aDerT;
     }
 
-    public void setdAdTdn(double val) {
+    @Override
+	public void setdAdTdn(double val) {
         aDerTn = val;
     }
 
-    public double getdAdTdn() {
+    @Override
+	public double getdAdTdn() {
         return aDerTn;
     }
 
@@ -346,66 +378,79 @@ abstract class ComponentEos extends Component
         return aDerT;
     }
 
-    public void setdAdTdT(double val) {
+    @Override
+	public void setdAdTdT(double val) {
         aDerTT = val;
     }
 
-    public double getBder() {
+    @Override
+	public double getBder() {
         return bDern;
     }
 
-    public void setBder(double val) {
+    @Override
+	public void setBder(double val) {
         bDern = val;
     }
 
-    public double getdBdndn(int j) {
+    @Override
+	public double getdBdndn(int j) {
         return dBdndn[j];
     }
 
-    public void setdBdndn(int jComp, double val) {
+    @Override
+	public void setdBdndn(int jComp, double val) {
         dBdndn[jComp] = val;
     }
 
-    public double getdBdT() {
+    @Override
+	public double getdBdT() {
         return 1;
     }
 
-    public void setdBdTdT(double val) {
+    @Override
+	public void setdBdTdT(double val) {
     }
 
-    public double getdBdndT() {
+    @Override
+	public double getdBdndT() {
         return bDerTn;
     }
 
-    public void setdBdndT(double val) {
+    @Override
+	public void setdBdndT(double val) {
         bDerTn = val;
     }
 
     public double alpha(double temperature) {
-        return atractiveParameter.alpha(temperature);
+        return getAtractiveParameter().alpha(temperature);
     }
 
-    public double aT(double temperature) {
-        return atractiveParameter.aT(temperature);
+    @Override
+	public double aT(double temperature) {
+        return getAtractiveParameter().aT(temperature);
     }
 
     public double diffalphaT(double temperature) {
-        return atractiveParameter.diffalphaT(temperature);
+        return getAtractiveParameter().diffalphaT(temperature);
     }
 
     public double diffdiffalphaT(double temperature) {
-        return atractiveParameter.diffdiffalphaT(temperature);
+        return getAtractiveParameter().diffdiffalphaT(temperature);
     }
 
-    public double diffaT(double temperature) {
-        return atractiveParameter.diffaT(temperature);
+    @Override
+	public double diffaT(double temperature) {
+        return getAtractiveParameter().diffaT(temperature);
     }
 
-    public double diffdiffaT(double temperature) {
-        return atractiveParameter.diffdiffaT(temperature);
+    @Override
+	public double diffdiffaT(double temperature) {
+        return getAtractiveParameter().diffdiffaT(temperature);
     }
 
-    public double[] getDeltaEosParameters() {
+    @Override
+	public double[] getDeltaEosParameters() {
         double[] param = { delta1, delta2 };
         return param;
     }
@@ -415,7 +460,8 @@ abstract class ComponentEos extends Component
      *
      * @param a New value of property a.
      */
-    public void seta(double a) {
+    @Override
+	public void seta(double a) {
         this.a = a;
     }
 
@@ -424,15 +470,19 @@ abstract class ComponentEos extends Component
      *
      * @param b New value of property b.
      */
-    public void setb(double b) {
+    @Override
+	public void setb(double b) {
         this.b = b;
     }
 
-    public abstract double calca();
+    @Override
+	public abstract double calca();
 
-    public abstract double calcb();
+    @Override
+	public abstract double calcb();
 
-    public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    @Override
+	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double a_inf = -3.471 + 4.927 * getCriticalCompressibilityFactor()
                 + 13.085 * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 2.067 * getAcentricFactor()
                 + 1.891 * Math.pow(getAcentricFactor(), 2.0);
@@ -472,7 +522,8 @@ abstract class ComponentEos extends Component
                 * dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
-    public double getChemicalPotential(PhaseInterface phase) {
+    @Override
+	public double getChemicalPotential(PhaseInterface phase) {
         double entalp = getHID(phase.getTemperature()) * numberOfMolesInPhase;
         double entrop = numberOfMolesInPhase * getIdEntropy(phase.getTemperature());
         double chempot = ((entalp - phase.getTemperature() * entrop)
@@ -508,4 +559,12 @@ abstract class ComponentEos extends Component
                         / phase.FTT();// *
         // phase.getComponent(compNumb2).getF;
     }
+
+	public AtractiveTermInterface getAtractiveParameter() {
+		return atractiveParameter;
+	}
+
+	public void setAtractiveParameter(AtractiveTermInterface atractiveParameter) {
+		this.atractiveParameter = atractiveParameter;
+	}
 }

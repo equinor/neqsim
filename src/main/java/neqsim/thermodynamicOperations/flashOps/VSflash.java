@@ -113,13 +113,15 @@ public class VSflash extends Flash implements java.io.Serializable {
         return nyPres;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
         solveQ();
 
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

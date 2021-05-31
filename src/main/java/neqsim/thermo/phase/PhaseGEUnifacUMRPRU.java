@@ -88,10 +88,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         Qmix = new double[numberOfGroups];
         gropuNames = new String[numberOfGroups];
         for (int i = 0; i < numberOfGroups; i++) {
-            gropuNames[i] = ((neqsim.thermo.atomElement.UNIFACgroup) ((ComponentGEUnifac) componentArray[0])
-                    .getUnifacGroup(i)).getGroupName();
-            Qmix[i] = ((neqsim.thermo.atomElement.UNIFACgroup) ((ComponentGEUnifac) componentArray[0])
-                    .getUnifacGroup(i)).calcQMix(this);
+            gropuNames[i] = ((ComponentGEUnifac) componentArray[0])
+                    .getUnifacGroup(i).getGroupName();
+            Qmix[i] = ((ComponentGEUnifac) componentArray[0])
+                    .getUnifacGroup(i).calcQMix(this);
         }
     }
 
@@ -100,10 +100,10 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         QmixdN = new double[numberOfGroups][componentArray.length];
         gropuNames = new String[numberOfGroups];
         for (int i = 0; i < numberOfGroups; i++) {
-            gropuNames[i] = ((neqsim.thermo.atomElement.UNIFACgroup) ((ComponentGEUnifac) componentArray[0])
-                    .getUnifacGroup(i)).getGroupName();
-            QmixdN[i] = ((neqsim.thermo.atomElement.UNIFACgroup) ((ComponentGEUnifac) componentArray[0])
-                    .getUnifacGroup(i)).calcQMixdN(this);
+            gropuNames[i] = ((ComponentGEUnifac) componentArray[0])
+                    .getUnifacGroup(i).getGroupName();
+            QmixdN[i] = ((ComponentGEUnifac) componentArray[0])
+                    .getUnifacGroup(i).calcQMixdN(this);
         }
     }
 
@@ -125,7 +125,8 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         return QmixdN[0];
     }
 
-    public void calcaij() {
+    @Override
+	public void calcaij() {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
 

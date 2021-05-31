@@ -36,7 +36,8 @@ public class Diffusivity
         effectiveDiffusionCoefficient = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -53,7 +54,8 @@ public class Diffusivity
         return properties;
     }
 
-    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
+    @Override
+	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         // method - estimation method
         // if(method==? then)
         double A2 = 1.06036, B2 = 0.15610, C2 = 0.19300, D2 = 0.47635, E2 = 1.03587, F2 = 1.52996, G2 = 1.76474,
@@ -67,7 +69,8 @@ public class Diffusivity
         return binaryDiffusionCoeffisients[i][j] *= 1e-4;
     }
 
-    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    @Override
+	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
 
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
@@ -86,7 +89,8 @@ public class Diffusivity
         return binaryDiffusionCoeffisients;
     }
 
-    public void calcEffectiveDiffusionCoeffisients() {
+    @Override
+	public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
 
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
@@ -101,15 +105,18 @@ public class Diffusivity
         }
     }
 
-    public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    @Override
+	public double getFickBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
-    public double getEffectiveDiffusionCoefficient(int i) {
+    @Override
+	public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
-    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    @Override
+	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         /*
          * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
          * gasPhase.getPhase().getComponents()[i].getx() *

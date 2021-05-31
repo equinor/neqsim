@@ -11,7 +11,8 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidMechanics.flowSystem.
     public TwoPhaseReactorFlowSystem() {
     }
 
-    public void createSystem() {
+    @Override
+	public void createSystem() {
         // thermoSystem.init(1);
         flowLeg = new neqsim.fluidMechanics.flowLeg.pipeLeg.PipeLeg[this.getNumberOfLegs()];
 
@@ -28,7 +29,8 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidMechanics.flowSystem.
         this.setNodes();
     }
 
-    public void init() {
+    @Override
+	public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
             flowNode[j].setInterphaseModelType(1);
             flowNode[j].getGeometry();// setPackingType()
@@ -49,7 +51,8 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidMechanics.flowSystem.
         }
     }
 
-    public void solveSteadyState(int solverType) {
+    @Override
+	public void solveSteadyState(int solverType) {
         double[] times = { 0.0 };
         display = new TwoPhasePipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
         getTimeSeries().setTimes(times);
@@ -68,7 +71,8 @@ public class TwoPhaseReactorFlowSystem extends neqsim.fluidMechanics.flowSystem.
 
     }
 
-    public void solveTransient(int type) {
+    @Override
+	public void solveTransient(int type) {
         // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
         // getTotalNumberOfNodes());
         // pipeSolve.solveTDMA();

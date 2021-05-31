@@ -10,7 +10,8 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
     public PipeFlowSystem() {
     }
 
-    public void createSystem() {
+    @Override
+	public void createSystem() {
         thermoSystem.init(0);
         thermoSystem.init(1);
         flowLeg = new neqsim.fluidMechanics.flowLeg.pipeLeg.PipeLeg[this.getNumberOfLegs()];
@@ -28,7 +29,8 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         this.setNodes();
     }
 
-    public void init() {
+    @Override
+	public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
             flowNode[j].initFlowCalc();
             flowNode[j].setVelocityIn(this.flowNode[j].getVelocity());
@@ -39,7 +41,8 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         }
     }
 
-    public void solveSteadyState(int solverType) { // should set solve-type: int 1-bare masse og impuls 2 energi og
+    @Override
+	public void solveSteadyState(int solverType) { // should set solve-type: int 1-bare masse og impuls 2 energi og
                                                    // impuls 3 energi impuls og komponenter
         double[] times = { 0.0 };
         display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), 1);
@@ -60,7 +63,8 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         display.setNextData(this);
     }
 
-    public void solveTransient(int solverType) {
+    @Override
+	public void solveTransient(int solverType) {
         getTimeSeries().init(this);
         display = new PipeFlowVisualization(this.getTotalNumberOfNodes(), getTimeSeries().getTime().length);
         flowSolver.setDynamic(true);

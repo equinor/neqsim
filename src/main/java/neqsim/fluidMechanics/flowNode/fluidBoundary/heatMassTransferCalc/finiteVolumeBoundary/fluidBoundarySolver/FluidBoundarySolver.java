@@ -155,7 +155,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         c[i] = -c[i];
     }
 
-    public double getMolarFlux(int componentNumber) {
+    @Override
+	public double getMolarFlux(int componentNumber) {
         double temp = 1.0;
         if (reactive) {
             temp = 2.1;
@@ -168,7 +169,8 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
                 / boundary.getNodeLength();
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         double d[];
         int iter = 0, iterTop = 0;
         double maxDiff = 0, maxDiffOld = 0;

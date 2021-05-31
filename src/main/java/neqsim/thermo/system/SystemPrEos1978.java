@@ -82,7 +82,8 @@ public class SystemPrEos1978 extends SystemEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemPrEos1978 clonedSystem = null;
         try {
             clonedSystem = (SystemPrEos1978) super.clone();

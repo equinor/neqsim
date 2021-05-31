@@ -27,7 +27,8 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -56,7 +57,8 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
         return satPres;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }

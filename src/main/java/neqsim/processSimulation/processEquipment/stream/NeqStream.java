@@ -32,7 +32,8 @@ public class NeqStream extends Stream {
         super(stream);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         NeqStream clonedStream = null;
 
@@ -47,7 +48,8 @@ public class NeqStream extends Stream {
         return clonedStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();

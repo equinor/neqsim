@@ -16,7 +16,8 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public interface ValveInterface extends ProcessEquipmentInterface {
-    public void run();
+    @Override
+	public void run();
 
     public void setOutletPressure(double pressure);
 
@@ -24,7 +25,8 @@ public interface ValveInterface extends ProcessEquipmentInterface {
 
     public StreamInterface getOutStream();
 
-    public String getName();
+    @Override
+	public String getName();
 
     public boolean isIsoThermal();
 
@@ -42,5 +44,6 @@ public interface ValveInterface extends ProcessEquipmentInterface {
 
     public double getInletPressure();
 
-    public SystemInterface getThermoSystem();
+    @Override
+	public SystemInterface getThermoSystem();
 }

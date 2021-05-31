@@ -111,7 +111,8 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
         system.init(3);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double sumx = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -171,7 +172,8 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
     /**

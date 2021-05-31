@@ -26,7 +26,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     public IonicInteractionParameterFittingFunction_CO2() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -35,11 +36,13 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
         int j = 0;

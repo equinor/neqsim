@@ -39,34 +39,42 @@ public abstract class BaseOperation extends java.lang.Object implements Operatio
     public BaseOperation() {
     }
 
-    public double[] get(String name) {
+    @Override
+	public double[] get(String name) {
         return new double[3];
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return new String[10][3];
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return null;
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
 
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return null;
     }
 
-    public void addData(String name, double[][] data) {
+    @Override
+	public void addData(String name, double[][] data) {
 
     }
 }

@@ -20,6 +20,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
     Stream inletStream;
     Stream outStream;
     SystemInterface thermoSystem;
+    private boolean multiPhase = true;
 
     public StreamSaturatorUtil(Stream inletStream) {
         setInletStream(inletStream);
@@ -36,12 +37,28 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
         return outStream;
     }
 
-    public void run() {
+    @Override
+	public void run() {
+    	boolean changeBack = false;
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+        if(multiPhase && !thermoSystem.doMultiPhaseCheck()) {
+        	thermoSystem.setMultiPhaseCheck(true);  
+        	changeBack = true;
+        }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.saturateWithWater();
         thermoSystem.init(3);
-
+        if(changeBack) {
+        	thermoSystem.setMultiPhaseCheck(false);        
+        }
         outStream.setThermoSystem(thermoSystem);
     }
+
+	public boolean isMultiPhase() {
+		return multiPhase;
+	}
+
+	public void setMultiPhase(boolean multiPhase) {
+		this.multiPhase = multiPhase;
+	}
 }

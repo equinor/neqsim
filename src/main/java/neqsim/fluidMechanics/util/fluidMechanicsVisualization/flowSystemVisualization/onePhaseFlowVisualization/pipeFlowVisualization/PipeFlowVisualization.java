@@ -41,7 +41,8 @@ public class PipeFlowVisualization extends
         System.out.println("times " + time);
     }
 
-    public void setPoints() {
+    @Override
+	public void setPoints() {
         pressurePoint = new double[time][flowNodes[0].length];
         temperaturePoint = new double[time][flowNodes[0].length];
         velocityPoint = new double[time][flowNodes[0].length];
@@ -101,7 +102,8 @@ public class PipeFlowVisualization extends
         }
     }
 
-    public void displayResult(String name) {
+    @Override
+	public void displayResult(String name) {
         double[][] points = new double[1][1];
         setPoints();
 
@@ -140,7 +142,8 @@ public class PipeFlowVisualization extends
         }
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
         calcPoints(name);
         neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D();
         file.setOutputFileName(name);

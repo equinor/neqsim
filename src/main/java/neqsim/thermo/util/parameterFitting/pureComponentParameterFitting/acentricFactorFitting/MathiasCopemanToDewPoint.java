@@ -24,7 +24,8 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         params = new double[3];
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         // System.out.println("dep " + dependentValues[0]);
         system.setPressure(dependentValues[0]);
 
@@ -40,11 +41,13 @@ public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
         return system.getTemperature();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         if (system.getPhases()[0].getNumberOfComponents() == 1) {

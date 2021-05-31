@@ -8,7 +8,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.ThermodynamicConstantsInterface;
-import static neqsim.thermo.ThermodynamicConstantsInterface.R;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
@@ -30,7 +29,8 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
     public IonicInteractionParameterFittingFunction_Sleipner() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // logger.info("pres " +
@@ -43,11 +43,13 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
         return system.getPressure();
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0, AcidNumb = 0, AcidnegNumb = 0;
         int j = 0;

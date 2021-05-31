@@ -22,7 +22,8 @@ public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
     public TwoPhaseFlowNodeVisualization() {
     }
 
-    public void setData(FlowNodeInterface node) {
+    @Override
+	public void setData(FlowNodeInterface node) {
         super.setData(node);
         bulkComposition = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];
         effectiveMassTransferCoefficient = new double[2][node.getBulkSystem().getPhases()[0].getNumberOfComponents()];

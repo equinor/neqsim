@@ -26,7 +26,8 @@ public class SiddiqiLucasMethod extends Diffusivity {
     }
 
     // aqueous correlation
-    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
+    @Override
+	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         // method - estimation method
         // if(method==? then)
         // remember this is the Maxwell-Stefan diffusion coefficients

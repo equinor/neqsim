@@ -11,7 +11,7 @@ package neqsim.thermo.component.atractiveEosTerm;
  * @author esol
  * @version
  */
-public interface AtractiveTermInterface extends Cloneable {
+public interface AtractiveTermInterface extends Cloneable, java.io.Serializable {
     public void init();
 
     public double alpha(double temperature);

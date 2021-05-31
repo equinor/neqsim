@@ -30,7 +30,8 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         // flowNode = node;
     }
 
-    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
             return 3.66 / node.getHydraulicDiameter(phase)
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
@@ -46,7 +47,8 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
-    public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
+    @Override
+	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 3.66 / node.getHydraulicDiameter(phase)
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
@@ -62,7 +64,8 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
-    public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
+    @Override
+	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
             return 3.66 / node.getHydraulicDiameter(phase) / schmidtNumber
                     * node.getBulkSystem().getPhases()[phase].getPhysicalProperties().getKinematicViscosity();
@@ -72,7 +75,8 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
-    public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
+    @Override
+	public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         double redMassTrans = 0.0, massTrans = 0.0;
         if (phase == 0) {
             double c2 = 0.46, c3 = 0.68, c4 = 0.5;

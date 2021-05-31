@@ -31,7 +31,8 @@ public class OnePhasePipeLine extends Pipeline {
 
     }
 
-    public void run() {
+    @Override
+	public void run() {
         super.run();
         pipe.solveSteadyState(10);
         pipe.print();
@@ -39,7 +40,8 @@ public class OnePhasePipeLine extends Pipeline {
         outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     }
 
-    public void runTransient() {
+    @Override
+	public void runTransient() {
         super.runTransient();
     }
 }

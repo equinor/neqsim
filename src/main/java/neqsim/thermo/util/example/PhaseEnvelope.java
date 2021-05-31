@@ -1,17 +1,12 @@
 package neqsim.thermo.util.example;
 
-import neqsim.thermo.system.SystemDefault;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.PVTsimulation.simulation.SaturationPressure;
 import neqsim.PVTsimulation.simulation.SimulationInterface;
 import neqsim.thermo.system.*;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import java.awt.image.BufferedImage;
-
 import org.apache.logging.log4j.*;
-import org.jfree.chart.JFreeChart;
 
 /*
  * PhaseEnvelope.java

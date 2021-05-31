@@ -1,7 +1,6 @@
 package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
-import neqsim.thermo.system.SystemFurstElectrolyteEosMod2004;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;

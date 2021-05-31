@@ -59,13 +59,15 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
     public MEGReclaimerModule() {
     }
 
-    public void addInputStream(String streamName, StreamInterface stream) {
+    @Override
+	public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("streamToReclaimer")) {
             this.streamToReclaimer = stream;
         }
     }
 
-    public StreamInterface getOutputStream(String streamName) {
+    @Override
+	public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -76,7 +78,8 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeStreams() {
+    @Override
+	public void initializeStreams() {
         isInitializedStreams = true;
         try {
             this.streamToWaterRemoval = (Stream) this.streamToReclaimer.clone();
@@ -92,7 +95,8 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
-    public void initializeModule() {
+    @Override
+	public void initializeModule() {
         isInitializedModule = true;
 
         inletValve = new ThrottlingValve(streamToReclaimer);
@@ -129,7 +133,8 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         getOperations().add(recircValve);
     }
 
-    public void run() {
+    @Override
+	public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -144,7 +149,8 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
@@ -175,11 +181,13 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         // design is done here //
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         // set design is done here //
     }
 

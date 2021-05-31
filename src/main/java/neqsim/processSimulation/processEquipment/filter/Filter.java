@@ -19,7 +19,8 @@ public class Filter extends ProcessEquipmentBaseClass {
         outStream = (Stream) inStream.clone();
     }
 
-    public void run() {
+    @Override
+	public void run() {
         SystemInterface system = (SystemInterface) inStream.getThermoSystem().clone();
         if (Math.abs(getDeltaP()) > 1e-10) {
             system.setPressure(inStream.getPressure() - getDeltaP());
@@ -49,7 +50,8 @@ public class Filter extends ProcessEquipmentBaseClass {
         return outStream;
     }
 
-    public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
+    @Override
+	public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
         double deltaP = inStream.getPressure("bara") - outStream.getPressure("bara");
         Cv = Math.sqrt(deltaP) / inStream.getFlowRate("kg/hr");
     }

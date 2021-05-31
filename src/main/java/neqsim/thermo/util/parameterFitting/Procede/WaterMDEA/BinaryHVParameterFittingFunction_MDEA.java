@@ -32,7 +32,8 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
         this.type = type;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         double aMDEAold, aWaterold, aMDEAnew, aWaternew, daMDEAdT, daWaterdT, H;
 
         if (type == 0) {
@@ -84,11 +85,13 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
         return (0);
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return (val);
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
 
         /*

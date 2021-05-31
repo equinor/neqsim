@@ -7,7 +7,6 @@ package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import neqsim.thermo.phase.PhaseSrkEos;
 import neqsim.thermo.phase.PhaseSrkPenelouxEos;
 
 /**
@@ -94,7 +93,8 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemSrkPenelouxEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkPenelouxEos) super.clone();

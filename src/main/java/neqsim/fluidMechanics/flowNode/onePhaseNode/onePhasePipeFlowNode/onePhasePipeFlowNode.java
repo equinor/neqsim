@@ -24,7 +24,8 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
         initBulkSystem();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         onePhasePipeFlowNode clonedSystem = null;
         try {
             clonedSystem = (onePhasePipeFlowNode) super.clone();
@@ -34,11 +35,13 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
         return clonedSystem;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
     }
 
-    public double calcReynoldsNumber() {
+    @Override
+	public double calcReynoldsNumber() {
         reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
                 / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
         return reynoldsNumber[0];

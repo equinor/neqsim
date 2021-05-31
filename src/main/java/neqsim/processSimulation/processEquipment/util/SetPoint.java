@@ -9,10 +9,7 @@ import org.apache.logging.log4j.*;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.separator.GasScrubberSimple;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.thermo.util.example.PhaseEnvelope;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
  *
@@ -94,7 +91,8 @@ public class SetPoint extends ProcessEquipmentBaseClass implements ProcessEquipm
         run();
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         if (targetVariable.equals("pressure")) {
             targetEquipment.setPressure(sourceEquipment.getPressure());
@@ -111,7 +109,8 @@ public class SetPoint extends ProcessEquipmentBaseClass implements ProcessEquipm
         }
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
 
     }
 

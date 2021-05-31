@@ -30,7 +30,8 @@ public class ChemicalEquilibrium extends BaseOperation implements OperationInter
         this.system = system;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         double chemdev = 0;
         int iter = 1;
         if (system.isChemicalSystem()) {
@@ -63,25 +64,31 @@ public class ChemicalEquilibrium extends BaseOperation implements OperationInter
         }
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         system.display();
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return null;
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 }

@@ -25,7 +25,8 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
         maxPressure = maxPres;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         SystemInterface system = (SystemInterface) this.system.clone();
         hydratePoints = new double[2][numberOfPoints];
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -47,7 +48,8 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
         }
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return hydratePoints;
     }
 }

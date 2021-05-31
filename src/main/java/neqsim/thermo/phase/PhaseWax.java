@@ -22,7 +22,8 @@ public class PhaseWax extends PhaseSolid {
         phaseTypeName = "wax";
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseWax clonedPhase = null;
         try {
             clonedPhase = (PhaseWax) super.clone();
@@ -33,7 +34,8 @@ public class PhaseWax extends PhaseSolid {
         return clonedPhase;
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -43,7 +45,8 @@ public class PhaseWax extends PhaseSolid {
 
     }
 
-    public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentWax(componentName, moles, molesInPhase, compNumber);
         // componentArray[compNumber] = new ComponentWaxWilson(componentName, moles,

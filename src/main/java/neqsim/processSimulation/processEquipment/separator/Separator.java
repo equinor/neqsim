@@ -94,7 +94,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 
     public void addStream(StreamInterface newStream) {
         if (numberOfInputStreams == 0) {
-            setInletStream((Stream) newStream);
+            setInletStream(newStream);
         } else {
             inletStreamMixer.addStream(newStream);
         }
@@ -117,11 +117,13 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
         return getLiquidOutStream();
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         inletStreamMixer.run();
         thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
@@ -184,11 +186,13 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
         thermoSystem = thermoSystem2;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         thermoSystem.display();
     }
 
-    public void runTransient(double dt) {
+    @Override
+	public void runTransient(double dt) {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
@@ -295,7 +299,8 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
     /**
      * @param diameter the diameter to set
      */
-    public void setInternalDiameter(double diameter) {
+    @Override
+	public void setInternalDiameter(double diameter) {
         this.internalDiameter = diameter;
     }
 
@@ -430,11 +435,13 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
         this.designLiquidLevelFraction = designLiquidLevelFraction;
     }
 
-    public double getPressure() {
+    @Override
+	public double getPressure() {
         return getThermoSystem().getPressure();
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         //
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
@@ -456,7 +463,8 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
                 + getGasOutStream().getThermoSystem().getEntropy(unit) - entrop;
     }
 
-    public double getMassBalance(String unit) {
+    @Override
+	public double getMassBalance(String unit) {
         //
         double flow = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
@@ -469,7 +477,8 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
                 + getGasOutStream().getThermoSystem().getFlowRate(unit) - flow;
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
 
         //
         double exergy = 0.0;

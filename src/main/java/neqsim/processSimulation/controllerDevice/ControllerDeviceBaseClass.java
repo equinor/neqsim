@@ -35,23 +35,28 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     public ControllerDeviceBaseClass() {
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         this.name = name;
     }
 
-    public void setTransmitter(MeasurementDeviceInterface device) {
+    @Override
+	public void setTransmitter(MeasurementDeviceInterface device) {
         this.transmitter = device;
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return this.transmitter.getMeasuredValue();
     }
 
-    public void run(double percentSignal, double dt) {
+    @Override
+	public void run(double percentSignal, double dt) {
         if (reverseActing) {
             propConstant = -1;
         }
@@ -68,27 +73,33 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
 //        double regulatorSignal = error*1.0;
     }
 
-    public void setControllerSetPoint(double signal) {
+    @Override
+	public void setControllerSetPoint(double signal) {
         this.controllerSetPoint = signal;
     }
 
-    public String getUnit() {
+    @Override
+	public String getUnit() {
         return unit;
     }
 
-    public void setUnit(String unit) {
+    @Override
+	public void setUnit(String unit) {
         this.unit = unit;
     }
 
-    public double getResponse() {
+    @Override
+	public double getResponse() {
         return response;
     }
 
-    public boolean isReverseActing() {
+    @Override
+	public boolean isReverseActing() {
         return reverseActing;
     }
 
-    public void setReverseActing(boolean reverseActing) {
+    @Override
+	public void setReverseActing(boolean reverseActing) {
         this.reverseActing = reverseActing;
     }
 
@@ -100,7 +111,8 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
         this.Ksp = Ksp;
     }
 
-    public void setControllerParameters(double Ksp, double Ti, double Td) {
+    @Override
+	public void setControllerParameters(double Ksp, double Ti, double Td) {
         this.setKsp(Ksp);
         this.setTint(Ti);
         this.setTderiv(Td);

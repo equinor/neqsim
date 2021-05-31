@@ -49,7 +49,8 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         this.thermoOps = new ThermodynamicOperations(this.thermoSystem);
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
         this.thermoSystem.setTemperature(initTemperature);
         this.thermoSystem.setPressure(specPressure);
         try {
@@ -60,7 +61,8 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperature;
         } else {
@@ -68,7 +70,8 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         }
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperature;
         }
@@ -79,7 +82,8 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         }
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperatureUnit;
         }
@@ -90,7 +94,8 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         }
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return dewPointTemperature < getSalesContract().getWaterDewPointTemperature();
     }
 }

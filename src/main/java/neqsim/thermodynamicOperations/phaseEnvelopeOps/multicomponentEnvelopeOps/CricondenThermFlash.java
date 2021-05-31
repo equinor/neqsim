@@ -60,7 +60,8 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         bubblePointFirst = false;
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         // input values
         T = cricondenTherm[0];

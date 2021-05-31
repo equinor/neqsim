@@ -5,8 +5,6 @@
  */
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall;
 
-import java.util.ArrayList;
-
 /**
  *
  * @author ESOL

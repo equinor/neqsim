@@ -7,7 +7,6 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.EnergyStream;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -57,7 +56,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         return inStream;
     }
 
-    public void setdT(double dT) {
+    @Override
+	public void setdT(double dT) {
         this.dT = dT;
     }
 
@@ -70,7 +70,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         this.pressureOut = pressure;
     }
 
-    public void setOutPressure(double pressure, String unit) {
+    @Override
+	public void setOutPressure(double pressure, String unit) {
         setOutPressure = true;
         this.pressureOut = pressure;
         this.pressureUnit = unit;
@@ -82,14 +83,16 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         this.temperatureOut = temperature;
     }
 
-    public void setOutTemperature(double temperature, String unit) {
+    @Override
+	public void setOutTemperature(double temperature, String unit) {
         setTemperature = true;
         setEnergyInput = false;
         this.temperatureUnit = unit;
         this.temperatureOut = temperature;
     }
 
-    public void setOutTP(double temperature, double pressure) {
+    @Override
+	public void setOutTP(double temperature, double pressure) {
         setTemperature = true;
         setEnergyInput = false;
         this.temperatureOut = temperature;
@@ -97,7 +100,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         this.pressureOut = pressure;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         system.init(3);
         double oldH = system.getEnthalpy();
@@ -139,12 +143,14 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         getOutStream().setThermoSystem(system);
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         // System.out.println("heater dH: " + energyInput);
         getOutStream().displayResult();
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return name;
     }
 
@@ -199,7 +205,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         this.outStream = outStream;
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         //
         double entrop = 0.0;
 
@@ -213,7 +220,8 @@ public class Heater extends ProcessEquipmentBaseClass implements ProcessEquipmen
         return entrop;
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
         double entrop = 0.0;
 
         inStream.run();

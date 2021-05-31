@@ -38,7 +38,8 @@ public class ComponentCSPsrk extends ComponentSrk {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentCSPsrk clonedComponent = null;
         try {
@@ -50,9 +51,10 @@ public class ComponentCSPsrk extends ComponentSrk {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
-        h_scale_mix_i = Bi / refPhaseBWRS.getRefBWRSPhase().getb();
+        h_scale_mix_i = Bi / (refPhaseBWRS.getRefBWRSPhase().getB()/refPhaseBWRS.getRefBWRSPhase().getNumberOfMolesInPhase());
 
         double termfi1 = Ai / refPhaseBWRS.getA();
         double termfi2 = h_scale_mix_i / refPhaseBWRS.getH_scale_mix();
@@ -66,7 +68,8 @@ public class ComponentCSPsrk extends ComponentSrk {
         f_scale_mix_i = (termfi1 - termfi2 - termfi3) / termfi4 * refPhaseBWRS.getF_scale_mix();
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
         // System.out.println("dFdN super " + super.dFdN(phase,
         // numberOfComponentphases,temperature,pressure));
         double term1 = f_scale_mix_i * refPhaseBWRS.getRefBWRSPhase().getF()

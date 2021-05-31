@@ -33,7 +33,8 @@ public class Conductivity
         pureComponentConductivity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Conductivity properties = null;
 
         try {
@@ -45,7 +46,8 @@ public class Conductivity
         return properties;
     }
 
-    public double calcConductivity() {
+    @Override
+	public double calcConductivity() {
         double tempVar = 0, tempVar2 = 0;
 
         calcPureComponentConductivity();

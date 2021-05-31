@@ -48,7 +48,8 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
         modelName = "UMR-PRU-MC-EoS";
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemUMRPRUMCEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUMCEos) super.clone();

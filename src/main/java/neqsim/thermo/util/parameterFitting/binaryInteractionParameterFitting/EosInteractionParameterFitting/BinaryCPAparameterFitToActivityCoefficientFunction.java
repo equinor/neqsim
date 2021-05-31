@@ -22,7 +22,8 @@ public class BinaryCPAparameterFitToActivityCoefficientFunction extends EosInter
 
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(0);
         system.init(1);
 
@@ -34,11 +35,13 @@ public class BinaryCPAparameterFitToActivityCoefficientFunction extends EosInter
         return val;
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 10) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);

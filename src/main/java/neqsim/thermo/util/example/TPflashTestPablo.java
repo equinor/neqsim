@@ -2,15 +2,7 @@ package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemSrkPenelouxEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import java.util.Map;
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
 *

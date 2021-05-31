@@ -18,14 +18,16 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
     /**
      * @return the temperature
      */
-    public double getTemperature() {
+    @Override
+	public double getTemperature() {
         return temperature;
     }
 
     /**
      * @param temperature the temperature to set
      */
-    public void setTemperature(double temperature) {
+    @Override
+	public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 
@@ -36,14 +38,16 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
 
     }
 
-    public double getHeatTransferCoefficient() {
+    @Override
+	public double getHeatTransferCoefficient() {
         return heatTransferCoefficient;
     }
 
     /**
      * @param heatTransferCoefficient the heatTransferCoefficient to set
      */
-    public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    @Override
+	public void setHeatTransferCoefficient(double heatTransferCoefficient) {
         this.heatTransferCoefficient = heatTransferCoefficient;
     }
 

@@ -19,7 +19,8 @@ public class IonicInteractionParameterFittingFunctionCH4_1 extends IonicInteract
     public IonicInteractionParameterFittingFunctionCH4_1() {
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // System.out.println("pres " +

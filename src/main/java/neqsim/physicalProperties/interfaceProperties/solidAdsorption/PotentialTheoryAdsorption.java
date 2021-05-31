@@ -41,11 +41,13 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
     }
 
-    public void setSolidMaterial(String solidM) {
+    @Override
+	public void setSolidMaterial(String solidM) {
         solidMaterial = solidM;
     }
 
-    public void calcAdorption(int phase) {
+    @Override
+	public void calcAdorption(int phase) {
         SystemInterface tempSystem = (SystemInterface) system.clone();
         tempSystem.init(3);
         double[] bulkFug = new double[system.getPhase(phase).getNumberOfComponents()];
@@ -118,7 +120,8 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
-    public double getSurfaceExcess(String componentName) {
+    @Override
+	public double getSurfaceExcess(String componentName) {
         int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
         return surfaceExcess[componentNumber];
     }
@@ -160,7 +163,8 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
-    public double getSurfaceExess(int component) {
+    @Override
+	public double getSurfaceExess(int component) {
         return 1.0;
     }
 }

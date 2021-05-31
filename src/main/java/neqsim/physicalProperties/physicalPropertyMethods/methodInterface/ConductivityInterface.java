@@ -17,5 +17,6 @@ public interface ConductivityInterface extends ThermodynamicConstantsInterface,
         neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {
     public double calcConductivity();
 
-    public Object clone();
+    @Override
+	public Object clone();
 }

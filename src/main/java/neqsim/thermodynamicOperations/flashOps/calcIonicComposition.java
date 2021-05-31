@@ -47,7 +47,8 @@ public class calcIonicComposition extends Flash implements java.io.Serializable 
         phaseNumber = phase;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         resultTable = new String[system.getPhase(0).getNumberOfComponents() + 2][4];
         resultTable[0][0] = "Component";
         resultTable[0][1] = "mmol/kgSolvent";
@@ -85,11 +86,13 @@ public class calcIonicComposition extends Flash implements java.io.Serializable 
 
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return resultTable;
     }
 }

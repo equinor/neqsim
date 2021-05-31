@@ -57,7 +57,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         numberOfVelocityNodes = nodes;
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         OnePhaseFixedStaggeredGrid clonedSystem = null;
         try {
             clonedSystem = (OnePhaseFixedStaggeredGrid) super.clone();
@@ -586,7 +587,8 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
-    public void solveTDMA() {
+    @Override
+	public void solveTDMA() {
         double d[];
         int iter = 0, iterTop = 0;
         double maxDiff = 1.0, maxDiffOld = 0;

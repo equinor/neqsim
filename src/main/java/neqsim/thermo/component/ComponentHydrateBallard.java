@@ -43,11 +43,13 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
-    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
+    @Override
+	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
             refPhase.setTemperature(temp);
             refPhase.setPressure(pres);
@@ -92,7 +94,8 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
-    public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
         }
@@ -114,7 +117,8 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         // else return 0.0;
     }
 
-    public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
         }
@@ -124,7 +128,8 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return cki / 1.0e30;
     }
 
-    public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
         double val = 0.0;
         double endval = cavRadius[stucture][cavityType] - getSphericalCoreRadius();
         double x = 0.0, step = endval / 100.0;
@@ -147,7 +152,8 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return val;
     }
 
-    public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
+    @Override
+	public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
         double pot = 2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameter()
                 * ((Math.pow(this.getLennardJonesMolecularDiameter(), 12.0)
                         / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)

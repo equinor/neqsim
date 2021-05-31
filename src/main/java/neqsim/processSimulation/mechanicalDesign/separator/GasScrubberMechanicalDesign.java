@@ -38,7 +38,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         super(equipment);
     }
 
-    public void readDesignSpecifications() {
+    @Override
+	public void readDesignSpecifications() {
 
         super.readDesignSpecifications();
 
@@ -55,7 +56,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
         super.calcDesign();
         Separator separator = (Separator) getProcessEquipment();
         double Fg = 1.0;
@@ -141,7 +143,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         setModuleLength(moduleLength);
     }
 
-    public void setDesign() {
+    @Override
+	public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...

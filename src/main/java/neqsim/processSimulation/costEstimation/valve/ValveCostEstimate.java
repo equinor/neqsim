@@ -10,7 +10,8 @@ public class ValveCostEstimate extends UnitCostEstimateBaseClass {
         super(mechanicalEquipment);
     }
 
-    public double getTotaltCost() {
+    @Override
+	public double getTotaltCost() {
         ValveMechanicalDesign valveMecDesign = (ValveMechanicalDesign) mechanicalEquipment;
 
         valveMecDesign.getWeightTotal();

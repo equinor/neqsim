@@ -48,7 +48,8 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         this.thermoOps = new ThermodynamicOperations(this.thermoSystem);
     }
 
-    public void calculate() {
+    @Override
+	public void calculate() {
 
         try {
             this.thermoOps.TPflash();
@@ -58,11 +59,13 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         }
     }
 
-    public double getValue(String returnParameter, java.lang.String returnUnit) {
+    @Override
+	public double getValue(String returnParameter, java.lang.String returnUnit) {
         return 0.0;
     }
 
-    public double getValue(String returnParameter) {
+    @Override
+	public double getValue(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
             return 0.0;
         }
@@ -73,7 +76,8 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         }
     }
 
-    public String getUnit(String returnParameter) {
+    @Override
+	public String getUnit(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
             return "";
         }
@@ -84,11 +88,13 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         }
     }
 
-    public boolean isOnSpec() {
+    @Override
+	public boolean isOnSpec() {
         return false;
     }
 
-    public String[][] createTable(String name) {
+    @Override
+	public String[][] createTable(String name) {
         // thermoSystem.setNumberOfPhases(1);
 
         thermoSystem.createTable(name);

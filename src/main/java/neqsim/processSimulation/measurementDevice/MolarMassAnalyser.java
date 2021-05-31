@@ -37,11 +37,13 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
         unit = "gr/mol";
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         System.out.println("measured temperature " + stream.getThermoSystem().getMolarMass() * 1000.0);
     }
 
-    public double getMeasuredValue() {
+    @Override
+	public double getMeasuredValue() {
         return stream.getThermoSystem().getMolarMass() * 1000.0;
     }
 }

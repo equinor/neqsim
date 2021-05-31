@@ -7,8 +7,6 @@
 package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
 
 import Jama.*;
-import static cern.jet.stat.Gamma.beta;
-import static cern.jet.stat.Probability.chiSquare;
 import neqsim.statistics.parameterFitting.StatisticsBaseClass;
 
 /**
@@ -32,7 +30,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         thisThread = new Thread();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         LevenbergMarquardt clonedClass = null;
         try {
             clonedClass = (LevenbergMarquardt) super.clone();
@@ -43,7 +42,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         return clonedClass;
     }
 
-    public void init() {
+    @Override
+	public void init() {
         chiSquare = calcChiSquare();
         System.out.println("Chi square: " + chiSquare);
         dyda = calcDerivatives();
@@ -51,7 +51,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         alpha = calcAlphaMatrix();
     }
 
-    public void solve() {
+    @Override
+	public void solve() {
         setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
         Matrix betaMatrix;
         Matrix newParameters;

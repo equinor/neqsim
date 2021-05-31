@@ -32,52 +32,57 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class Element extends Object implements ThermodynamicConstantsInterface, java.io.Serializable {
-    private static final long serialVersionUID = 1000;
-    String[] nameArray;
-    double[] coefArray;
-    static Logger logger = LogManager.getLogger(Element.class);
+	private static final long serialVersionUID = 1000;
+	String[] nameArray;
+	double[] coefArray;
+	static Logger logger = LogManager.getLogger(Element.class);
 
-    /** Creates new Element */
-    public Element() {
-    }
+	/** Creates new Element */
+	public Element() {
+	}
 
-    public Element(String name) {
-        ArrayList names = new ArrayList();
-        ArrayList stocCoef = new ArrayList();
+	public Element(String name) {
 
-        try {
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-            java.sql.ResultSet dataSet = database
-                    .getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));
-            dataSet.next();
-            // System.out.println("comp name " + dataSet.getString("componentname"));
-            do {
-                names.add(dataSet.getString("atomelement").trim());
-                // System.out.println("name " + dataSet.getString("atomelement"));
-                stocCoef.add(dataSet.getString("number"));
-            } while (dataSet.next());
+		ArrayList<String> names = new ArrayList<String>();
+		ArrayList<String> stocCoef = new ArrayList<String>();
+		neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+		try {
+			java.sql.ResultSet dataSet = database
+					.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"));
+			dataSet.next();
+			// System.out.println("comp name " + dataSet.getString("componentname"));
+			do {
+				names.add(dataSet.getString("atomelement").trim());
+				// System.out.println("name " + dataSet.getString("atomelement"));
+				stocCoef.add(dataSet.getString("number"));
+			} while (dataSet.next());
 
-            nameArray = new String[names.size()];
-            coefArray = new double[nameArray.length];
-            for (int i = 0; i < nameArray.length; i++) {
-                coefArray[i] = Double.parseDouble((String) stocCoef.get(i));
-                nameArray[i] = (String) names.get(i);
-            }
-            dataSet.close();
-            database.getConnection().close();
-        } catch (Exception e) {
-            String err = e.toString();
-            logger.error(err);
-            // System.out.println(err);
-        }
-    }
+			nameArray = new String[names.size()];
+			coefArray = new double[nameArray.length];
+			for (int i = 0; i < nameArray.length; i++) {
+				coefArray[i] = Double.parseDouble((String) stocCoef.get(i));
+				nameArray[i] = (String) names.get(i);
+			}
+			dataSet.close();
+			database.getConnection().close();
+		} catch (Exception e) {
+			try {
+				database.getConnection().close();
+			} catch (Exception ex) {
+				logger.error(ex);
+			}
+			String err = e.toString();
+			logger.error(err);
+			// System.out.println(err);
+		}
+	}
 
-    public String[] getElementNames() {
-        return nameArray;
-    }
+	public String[] getElementNames() {
+		return nameArray;
+	}
 
-    public double[] getElementCoefs() {
-        return coefArray;
-    }
+	public double[] getElementCoefs() {
+		return coefArray;
+	}
 
 }

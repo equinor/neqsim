@@ -23,7 +23,8 @@ public class ReactorData extends GeometryDefinition implements neqsim.thermo.The
         setPackingType(packingType);
     }
 
-    public void setPackingType(int i) {
+    @Override
+	public void setPackingType(int i) {
         // if(i!=100){
         packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
         // }
@@ -43,7 +44,8 @@ public class ReactorData extends GeometryDefinition implements neqsim.thermo.The
         }
     }
 
-    public void setPackingType(String name, String material, int size) {
+    @Override
+	public void setPackingType(String name, String material, int size) {
         if (name.equals("pallring")) {
             packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
                     "pallring", material, size);
@@ -57,11 +59,13 @@ public class ReactorData extends GeometryDefinition implements neqsim.thermo.The
         }
     }
 
-    public void init() {
+    @Override
+	public void init() {
         super.init();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         ReactorData clonedPipe = null;
         try {
             clonedPipe = (ReactorData) super.clone();

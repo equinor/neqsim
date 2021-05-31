@@ -87,7 +87,8 @@ public class PUflash extends Flash implements java.io.Serializable {
         return 1.0 / nyTemp;
     }
 
-    public void run() {
+    @Override
+	public void run() {
         tpFlash.run();
         // System.out.println("enthalpy start: " + system.getEnthalpy());
         solveQ();
@@ -96,7 +97,8 @@ public class PUflash extends Flash implements java.io.Serializable {
 //        System.out.println("Temperature: " + system.getTemperature());
     }
 
-    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    @Override
+	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

@@ -52,7 +52,8 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 //        return 1;
 //    }
 
-    public void calcTotalMassTransferCoefficientMatrix(int phase) {
+    @Override
+	public void calcTotalMassTransferCoefficientMatrix(int phase) {
         super.calcTotalMassTransferCoefficientMatrix(phase);
         enhancementFactor.calcEnhancementVec(phase);
         Matrix enhancementvec = new Matrix(enhancementFactor.getEnhancementVec(), 1);
@@ -60,7 +61,8 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
                 .times(enhancementvec.get(0, getBulkSystem().getPhase(0).getNumberOfComponents() - 1));
     }
 
-    public void setEnhancementType(int type) {
+    @Override
+	public void setEnhancementType(int type) {
         enhancementType = type;
         if (enhancementType == 1) {
             enhancementFactor = new EnhancementFactorAlg(this);

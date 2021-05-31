@@ -20,7 +20,8 @@ public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVida
 
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         system.init(0);
         system.init(1);
 
@@ -31,7 +32,8 @@ public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVida
         return val;
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 }

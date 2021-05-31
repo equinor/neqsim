@@ -4,9 +4,7 @@ import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*

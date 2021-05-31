@@ -64,7 +64,8 @@ public class ComponentDesmukhMather extends ComponentGE {
         }
     }
 
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+    @Override
+	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
         return getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
     }
@@ -98,7 +99,8 @@ public class ComponentDesmukhMather extends ComponentGE {
         return gamma;
     }
 
-    public double fugcoef(PhaseInterface phase) {
+    @Override
+	public double fugcoef(PhaseInterface phase) {
         // System.out.println("fug coef " +
         // gamma*getAntoineVaporPressure(phase.getTemperature())/phase.getPressure());
         if (componentName.equals("water")) {
@@ -130,7 +132,8 @@ public class ComponentDesmukhMather extends ComponentGE {
         return lngamma;
     }
 
-    public double getMolality(PhaseInterface phase) {
+    @Override
+	public double getMolality(PhaseInterface phase) {
         return getNumberOfMolesInPhase() / ((PhaseDesmukhMather) phase).getSolventWeight();
     }
 }

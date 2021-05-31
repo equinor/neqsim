@@ -340,7 +340,8 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
         return stable;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         system.display();
     }
 
@@ -430,21 +431,26 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
 
     }
 
-    public void printToFile(String name) {
+    @Override
+	public void printToFile(String name) {
     }
 
-    public void createNetCdfFile(String name) {
+    @Override
+	public void createNetCdfFile(String name) {
     }
 
-    public double[][] getPoints(int i) {
+    @Override
+	public double[][] getPoints(int i) {
         return null;
     }
 
-    public String[][] getResultTable() {
+    @Override
+	public String[][] getResultTable() {
         return null;
     }
 
-    public void addData(String name, double[][] data) {
+    @Override
+	public void addData(String name, double[][] data) {
 
     }
 }

@@ -1,28 +1,22 @@
 package neqsim.processSimulation.util.example;
 
-import java.io.ObjectInputStream.GetField;
-
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.distillation.Condenser;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
 import neqsim.processSimulation.processEquipment.distillation.Reboiler;
-import neqsim.processSimulation.processEquipment.expander.Expander;
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
-import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 import neqsim.processSimulation.processEquipment.splitter.Splitter;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processSystem.ProcessSystem;
 
 public class OnshoreMEGprocess {
 

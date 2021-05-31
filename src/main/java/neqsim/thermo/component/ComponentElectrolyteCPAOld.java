@@ -79,7 +79,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentElectrolyteCPAOld clonedComponent = null;
         try {
@@ -98,11 +99,13 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         if ((aCPA > 1.0e-10) && cpaon == 1) {
             return 0.0;
         } else {
@@ -110,22 +113,26 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-    public void setAtractiveTerm(int i) {
+    @Override
+	public void setAtractiveTerm(int i) {
         super.setAtractiveTerm(i);
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
             getAtractiveTerm().setm(mCPA);
         }
     }
 
-    public void seta(double a) {
+    @Override
+	public void seta(double a) {
         aCPA = a;
     }
 
-    public void setb(double a) {
+    @Override
+	public void setb(double a) {
         bCPA = a;
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
             return aCPA;
         } else {
@@ -133,7 +140,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
             return bCPA;
         } else {
@@ -141,7 +149,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         double Fcpa = 0.0;
         // if(phase.getPhaseType()==1) cpaon=0;
@@ -150,17 +159,20 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         return Fsup + cpaon * Fcpa;
     }
 
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
                 + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
                 + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    @Override
+	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
 
@@ -197,23 +209,27 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
 
     }
 
-    public double dFCPAdVdXi(int site, PhaseInterface phase) {
+    @Override
+	public double dFCPAdVdXi(int site, PhaseInterface phase) {
         return 1.0 / (2.0 * phase.getTotalVolume())
                 * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
     }
 
-    public double dFCPAdNdXi(int site, PhaseInterface phase) {
+    @Override
+	public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
 
         // return xi - tempp;
         return xi + getNumberOfMolesInPhase() / 2.0 * calc_lngi(phase);
     }
 
-    public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
+    @Override
+	public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
         return 0.0;
     }
 
-    public double dFCPAdXi(int site, PhaseInterface phase) {
+    @Override
+	public double dFCPAdXi(int site, PhaseInterface phase) {
         return 0.0;
     }
 
@@ -234,7 +250,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * 
      * @return Value of property xsite.
      */
-    public double[] getXsite() {
+    @Override
+	public double[] getXsite() {
         return this.xsite;
     }
 
@@ -247,19 +264,23 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         this.xsite = xsite;
     }
 
-    public void setXsite(int i, double xsite) {
+    @Override
+	public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;
     }
 
-    public double[] getXsitedV() {
+    @Override
+	public double[] getXsitedV() {
         return this.xsitedV;
     }
 
-    public void setXsitedV(int i, double xsitedV) {
+    @Override
+	public void setXsitedV(int i, double xsitedV) {
         this.xsitedV[i] = xsitedV;
     }
 
-    public double[] getXsiteOld() {
+    @Override
+	public double[] getXsiteOld() {
         return this.xsiteOld;
     }
 
@@ -272,24 +293,30 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         this.xsiteOld = xsiteOld;
     }
 
-    public void setXsiteOld(int i, double xsiteOld) {
+    @Override
+	public void setXsiteOld(int i, double xsiteOld) {
     }
 
-    public double[] getXsitedT() {
+    @Override
+	public double[] getXsitedT() {
         return null;
     }
 
-    public double[] getXsitedTdT() {
+    @Override
+	public double[] getXsitedTdT() {
         return null;
     }
 
-    public void setXsitedT(int i, double xsitedT) {
+    @Override
+	public void setXsitedT(int i, double xsitedT) {
     }
 
-    public void setXsitedTdT(int i, double xsitedT) {
+    @Override
+	public void setXsitedTdT(int i, double xsitedT) {
     }
 
-    public void setXsitedni(int xnumb, int compnumb, double val) {
+    @Override
+	public void setXsitedni(int xnumb, int compnumb, double val) {
         xsitedni[xnumb][compnumb] = val;
     }
 }

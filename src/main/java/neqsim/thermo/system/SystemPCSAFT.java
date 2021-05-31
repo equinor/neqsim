@@ -82,7 +82,8 @@ public class SystemPCSAFT extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         SystemPCSAFT clonedSystem = null;
         try {
             clonedSystem = (SystemPCSAFT) super.clone();
@@ -98,7 +99,8 @@ public class SystemPCSAFT extends SystemSrkEos {
         return clonedSystem;
     }
 
-    public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass, double density) {
+    @Override
+	public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass, double density) {
 
         // componentName = (componentName + "_" + getFluidName());
         super.addTBPfraction(componentName2, numberOfMoles, molarMass, density);

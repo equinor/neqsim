@@ -3,7 +3,6 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;

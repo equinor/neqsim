@@ -35,7 +35,8 @@ public class TwoPhasePipeLine extends Pipeline {
     public void createSystem() {
     }
 
-    public void run() {
+    @Override
+	public void run() {
         super.run();
         pipe.solveSteadyState(2);
         pipe.print();

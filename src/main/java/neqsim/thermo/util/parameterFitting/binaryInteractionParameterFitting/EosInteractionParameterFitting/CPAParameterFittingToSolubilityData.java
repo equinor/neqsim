@@ -33,7 +33,8 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         this.component = component;
     }
 
-    public double calcValue(double[] dependentValues) {
+    @Override
+	public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         // system.display();
 
@@ -42,11 +43,13 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
-    public double calcTrueValue(double val) {
+    @Override
+	public double calcTrueValue(double val) {
         return val;
     }
 
-    public void setFittingParams(int i, double value) {
+    @Override
+	public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);

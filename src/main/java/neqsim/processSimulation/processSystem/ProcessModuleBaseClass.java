@@ -48,37 +48,46 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     public ProcessModuleBaseClass() {
     }
 
-    public String getPreferedThermodynamicModel() {
+    @Override
+	public String getPreferedThermodynamicModel() {
         return preferedThermodynamicModel;
     }
 
-    public void setPreferedThermodynamicModel(String preferedThermodynamicModel) {
+    @Override
+	public void setPreferedThermodynamicModel(String preferedThermodynamicModel) {
         this.preferedThermodynamicModel = preferedThermodynamicModel;
     }
 
-    public void displayResult() {
+    @Override
+	public void displayResult() {
         getOperations().displayResult();
     }
 
-    public String getName() {
+    @Override
+	public String getName() {
         return moduleName;
     }
 
-    public void setName(String name) {
+    @Override
+	public void setName(String name) {
         moduleName = name;
     }
 
-    public void setRegulatorOutSignal(double signal) {
+    @Override
+	public void setRegulatorOutSignal(double signal) {
     }
 
-    public void setController(ControllerDeviceInterface controller) {
+    @Override
+	public void setController(ControllerDeviceInterface controller) {
     }
 
-    public ControllerDeviceInterface getController() {
+    @Override
+	public ControllerDeviceInterface getController() {
         return null;
     }
 
-    public MechanicalDesign getMechanicalDesign() {
+    @Override
+	public MechanicalDesign getMechanicalDesign() {
         return null;
     }
 
@@ -86,42 +95,49 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
 
     public abstract void setDesign();
 
-    public String[][] reportResults() {
+    @Override
+	public String[][] reportResults() {
         return null;
     }
 
     /**
      * @return the isCalcDesign
      */
-    public boolean isCalcDesign() {
+    @Override
+	public boolean isCalcDesign() {
         return isCalcDesign;
     }
 
     /**
      * @param isCalcDesign the isCalcDesign to set
      */
-    public void setIsCalcDesign(boolean isCalcDesign) {
+    @Override
+	public void setIsCalcDesign(boolean isCalcDesign) {
         this.isCalcDesign = isCalcDesign;
     }
 
     /**
      * @return the operations
      */
-    public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
+    @Override
+	public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
         return operations;
     }
 
     // this method needs to be updated...need to chec if all equipment are solved
     // correctly
-    public boolean solved() {
+    @Override
+	public boolean solved() {
         return true;
     }
 
-    public SystemInterface getThermoSystem() {
+    @Override
+	public SystemInterface getThermoSystem() {
         return null;
     }
 
-    public SystemInterface getFluid() {
+    @Override
+	public SystemInterface getFluid() {
         return getThermoSystem();
     }
 
@@ -132,52 +148,63 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     /**
      * @return the specification
      */
-    public String getSpecification() {
+    @Override
+	public String getSpecification() {
         return null;
     }
 
     /**
      * @param specification the specification to set
      */
-    public void setSpecification(String specification) {
+    @Override
+	public void setSpecification(String specification) {
     }
 
-    public Object getUnit(String name) {
+    @Override
+	public Object getUnit(String name) {
         return operations.getUnit("name");
     }
 
-    public void setProperty(String propertyName, double value) {
+    @Override
+	public void setProperty(String propertyName, double value) {
         setSpecification(propertyName, value);
     }
 
     public void setProperty(String propertyName, double value, String unit) {
     }
 
-    public double getPressure() {
+    @Override
+	public double getPressure() {
         return 1.0;
     }
 
-    public void setPressure(double pressure) {
+    @Override
+	public void setPressure(double pressure) {
 
     }
 
-    public double getEntropyProduction(String unit) {
+    @Override
+	public double getEntropyProduction(String unit) {
         return 0.0;
     }
 
-    public double getMassBalance(String unit) {
+    @Override
+	public double getMassBalance(String unit) {
         return 0.0;
     }
 
-    public double getExergyChange(String unit, double sourrondingTemperature) {
+    @Override
+	public double getExergyChange(String unit, double sourrondingTemperature) {
         return 0.0;
     }
 
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+    @Override
+	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
 
     }
 
-    public String getConditionAnalysisMessage() {
+    @Override
+	public String getConditionAnalysisMessage() {
         return null;
     }
 }

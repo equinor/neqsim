@@ -38,14 +38,15 @@ public class ComponentTST extends ComponentEos {
 
         delta1 = 1.0 + Math.sqrt(2.0);
         delta2 = 1.0 - Math.sqrt(2.0);
-        atractiveParameter = new AtractiveTermTwu(this);
+        setAtractiveParameter(new AtractiveTermTwu(this));
     }
 
     public ComponentTST(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
 
         ComponentTST clonedComponent = null;
         try {
@@ -57,19 +58,23 @@ public class ComponentTST extends ComponentEos {
         return clonedComponent;
     }
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    @Override
+	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    public double calca() {
+    @Override
+	public double calca() {
         return .427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    public double calcb() {
+    @Override
+	public double calcb() {
         return .086641 * R * criticalTemperature / criticalPressure;
     }
 
-    public double getVolumeCorrection() {
+    @Override
+	public double getVolumeCorrection() {
         if (this.getRacketZ() < 1e-10) {
             return 0.0;
         } else {

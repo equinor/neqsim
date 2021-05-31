@@ -81,11 +81,13 @@ abstract class Viscosity extends
                 / (1.0 + C * phase.getPhase().getComponent(i).getAcentricFactor() * deltaPr);
     }
 
-    public double getPureComponentViscosity(int i) {
+    @Override
+	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         Viscosity properties = null;
 
         try {

@@ -30,7 +30,8 @@ public class DataReader extends Object implements DataReaderInterface {
         readData();
     }
 
-    public void readData() {
+    @Override
+	public void readData() {
         StringTokenizer tokenizer;
         String token;
 

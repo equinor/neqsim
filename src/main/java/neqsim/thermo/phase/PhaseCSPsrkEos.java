@@ -40,7 +40,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
                 * refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         PhaseCSPsrkEos clonedPhase = null;
         try {
             clonedPhase = (PhaseCSPsrkEos) super.clone();
@@ -51,13 +52,15 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    @Override
+	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentCSPsrk(componentName, moles, molesInPhase, compNumber);
         ((ComponentCSPsrk) componentArray[compNumber]).setRefPhaseBWRS(this);
     }
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    @Override
+	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -83,22 +86,26 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         } while (Math.abs((oldtemp - refBWRSPhase.getTemperature()) / oldtemp) > 1e-8);
     }
 
-    public double getF() {
+    @Override
+	public double getF() {
         return f_scale_mix * refBWRSPhase.getF() / refBWRSPhase.getNumberOfMolesInPhase()
                 * refBWRSPhase.getTemperature() / getTemperature();
     }
 
-    public double dFdV() {
+    @Override
+	public double dFdV() {
         return (f_scale_mix * refBWRSPhase.dFdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix)
                 * refBWRSPhase.getTemperature() / getTemperature();
     }
 
-    public double dFdVdV() {
+    @Override
+	public double dFdVdV() {
         return (f_scale_mix * refBWRSPhase.dFdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix
                 / h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
     }
 
-    public double dFdVdVdV() {
+    @Override
+	public double dFdVdVdV() {
         return (f_scale_mix * refBWRSPhase.dFdVdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix
                 / h_scale_mix / h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
     }
@@ -205,7 +212,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         this.refBWRSPhase = refBWRSPhase;
     }
 
-    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    @Override
+	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())

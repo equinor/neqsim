@@ -89,10 +89,10 @@ public class NetCdf2D {
 
         try {
             Variable v = ncfile.findVariable(latD.getName());
-            ncfile.write(v, ArrayDouble.factory(xvalues));
+            ncfile.write(v, Array.factory(xvalues));
             for (int i = 0; i < yLength; i++) {
                 v = ncfile.findVariable(lonD.get(i).getName());
-                ncfile.write(v, ArrayDouble.factory(yvalues2[i]));
+                ncfile.write(v, Array.factory(yvalues2[i]));
             }
 
         } catch (Exception e) {

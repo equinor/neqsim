@@ -42,7 +42,8 @@ public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
         this.system = (SystemInterface) system.clone();
     }
 
-    public SystemInterface getBulkSystem() {
+    @Override
+	public SystemInterface getBulkSystem() {
         return system;
     }
 }

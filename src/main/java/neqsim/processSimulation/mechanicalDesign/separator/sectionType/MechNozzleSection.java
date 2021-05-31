@@ -19,7 +19,8 @@ public class MechNozzleSection extends SepDesignSection {
         nominalSize = "DN 150";
     }
 
-    public void calcDesign() {
+    @Override
+	public void calcDesign() {
 
         if (nominalSize.equals("DN 50")) {
             if (getANSIclass() == 150) {

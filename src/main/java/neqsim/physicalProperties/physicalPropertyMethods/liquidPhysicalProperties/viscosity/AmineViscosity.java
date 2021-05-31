@@ -23,7 +23,8 @@ public class AmineViscosity extends Viscosity {
         super(liquidPhase);
     }
 
-    public double calcViscosity() {
+    @Override
+	public double calcViscosity() {
         super.calcViscosity();
         double wtFracA = liquidPhase.getPhase().getComponent("MDEA").getx()
                 * liquidPhase.getPhase().getComponent("MDEA").getMolarMass() / liquidPhase.getPhase().getMolarMass();

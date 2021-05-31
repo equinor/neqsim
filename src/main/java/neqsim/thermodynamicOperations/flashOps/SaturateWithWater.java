@@ -49,7 +49,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         this.tpFlash = new TPflash(system);
     }
 
-    public void run() {
+    @Override
+	public void run() {
 
         if (!system.getPhase(0).hasComponent("water")) {
             system.addComponent("water", system.getTotalNumberOfMoles());
@@ -73,7 +74,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (system.hasPhaseType("aqueous")) {
             lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
         } else {
-            lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 10.0;
+            lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 100.0;
         }
 
         do {
@@ -82,11 +83,9 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
             if (!hasAq) {
                 system.addComponent("water", lastdn * 0.5);
                 lastdn *= 0.8;
-
             } else {
-                dn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase()
-                        / system.getNumberOfMoles();
-                lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+            	lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+                dn = lastdn / system.getNumberOfMoles();
                 system.addComponent("water", -lastdn);
             }
             tpFlash.run();
@@ -96,8 +95,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (i == 50) {
             logger.error("could not find solution - in water sturate : dn  " + dn);
         }
-        // logger.info("i " + i + " dn " + dn);
-        // system.display();
+         //logger.info("i " + i + " dn " + dn);
+         //System.out.println("i " + i + " dn " + dn) ;       // system.display();
         system.removePhase(system.getNumberOfPhases() - 1);
         tpFlash.run();
     }

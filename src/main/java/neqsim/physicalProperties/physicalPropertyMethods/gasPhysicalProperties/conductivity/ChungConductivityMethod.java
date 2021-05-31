@@ -28,7 +28,8 @@ public class ChungConductivityMethod extends Conductivity {
         pureComponentConductivity = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
-    public double calcConductivity() {
+    @Override
+	public double calcConductivity() {
         calcPureComponentConductivity();
         double tempVar = 0, tempVar2 = 0;
         conductivity = 0;

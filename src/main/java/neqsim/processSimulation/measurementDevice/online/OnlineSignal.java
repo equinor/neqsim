@@ -7,7 +7,6 @@ package neqsim.processSimulation.measurementDevice.online;
 
 import java.io.Serializable;
 import java.util.Date;
-import neqsim.util.database.AspenIP21Database;
 
 /**
  *

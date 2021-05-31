@@ -158,7 +158,8 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
-    public void calclnGammak(int k, PhaseInterface phase) {
+    @Override
+	public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
         double sum3Comp = 0.0, sum3Mix = 0.0;
         UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();

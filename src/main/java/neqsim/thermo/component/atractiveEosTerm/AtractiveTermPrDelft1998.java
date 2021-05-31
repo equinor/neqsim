@@ -27,7 +27,8 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
         }
     }
 
-    public Object clone() {
+    @Override
+	public Object clone() {
         AtractiveTermPr atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermPr) super.clone();
@@ -38,49 +39,55 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
         return atractiveTerm;
     }
 
-    public double alpha(double temperature) {
+    @Override
+	public double alpha(double temperature) {
         if (isMethane) {
-            return 0.969617 + 0.20089 * temperature / component.getTC()
-                    - 0.3256987 * Math.pow(temperature / component.getTC(), 2.0)
-                    + 0.06653 * Math.pow(temperature / component.getTC(), 3.0);
+            return 0.969617 + 0.20089 * temperature / getComponent().getTC()
+                    - 0.3256987 * Math.pow(temperature / getComponent().getTC(), 2.0)
+                    + 0.06653 * Math.pow(temperature / getComponent().getTC(), 3.0);
         } else {
-            return Math.pow(1.0 + m * (1.0 - Math.sqrt(temperature / component.getTC())), 2.0);
+            return Math.pow(1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC())), 2.0);
         }
     }
 
-    public double aT(double temperature) {
-        return component.geta() * alpha(temperature);
+    @Override
+	public double aT(double temperature) {
+        return getComponent().geta() * alpha(temperature);
     }
 
-    public double diffalphaT(double temperature) {
+    @Override
+	public double diffalphaT(double temperature) {
         if (isMethane) {
-            return 0.20089 / component.getTC() - 2.0 * 0.3256987 * temperature / Math.pow(component.getTC(), 2.0)
-                    + 3.0 * 0.06653 * Math.pow(temperature, 2.0) / Math.pow(component.getTC(), 3.0);
+            return 0.20089 / getComponent().getTC() - 2.0 * 0.3256987 * temperature / Math.pow(getComponent().getTC(), 2.0)
+                    + 3.0 * 0.06653 * Math.pow(temperature, 2.0) / Math.pow(getComponent().getTC(), 3.0);
         } else {
-            return -(1.0 + m * (1.0 - Math.sqrt(temperature / component.getTC()))) * m
-                    / Math.sqrt(temperature / component.getTC()) / component.getTC();
+            return -(1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
+                    / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC();
         }
     }
 
-    public double diffdiffalphaT(double temperature) {
+    @Override
+	public double diffdiffalphaT(double temperature) {
         if (isMethane) {
-            return -2.0 * 0.3256987 / Math.pow(component.getTC(), 2.0)
-                    + 6.0 * 0.06653 * temperature / Math.pow(component.getTC(), 3.0);
+            return -2.0 * 0.3256987 / Math.pow(getComponent().getTC(), 2.0)
+                    + 6.0 * 0.06653 * temperature / Math.pow(getComponent().getTC(), 3.0);
         } else {
-            return m * m / temperature / component.getTC() / 2.0
-                    + (1.0 + m * (1.0 - Math.sqrt(temperature / component.getTC()))) * m
-                            / Math.sqrt(temperature * temperature * temperature / (Math.pow(component.getTC(), 3.0)))
-                            / (component.getTC() * component.getTC()) / 2.0;
+            return m * m / temperature / getComponent().getTC() / 2.0
+                    + (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
+                            / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
+                            / (getComponent().getTC() * getComponent().getTC()) / 2.0;
         }
 
     }
 
-    public double diffaT(double temperature) {
-        return component.geta() * diffalphaT(temperature);
+    @Override
+	public double diffaT(double temperature) {
+        return getComponent().geta() * diffalphaT(temperature);
     }
 
-    public double diffdiffaT(double temperature) {
-        return component.geta() * diffdiffalphaT(temperature);
+    @Override
+	public double diffdiffaT(double temperature) {
+        return getComponent().geta() * diffdiffalphaT(temperature);
     }
 
 }

@@ -2,7 +2,6 @@ package neqsim.thermo.util.example;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
