@@ -26,7 +26,11 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
     public SystemUMRPRUMCEosNew(double T, double P) {
         super(T, P);
+        modelName = "UMR-PRU-MC-EoS_new";
+        attractiveTermNumber = 13;
     }
+
+
 
     public SystemUMRPRUMCEosNew(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
