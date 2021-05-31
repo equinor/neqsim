@@ -597,17 +597,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
         density = getPhase(0).getDensity("kg/m3");
         neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(flowRate, flowunit, getMolarMass(), density, 0);
         double SIval = unit.getSIvalue();
-        double totalNumberOfMolesLocal = totalNumberOfMoles;
+        double[] moleFracs = getMolarComposition();
+        double[] moleFlows = new double[numberOfComponents];
         for (int i = 0; i < numberOfComponents; i++) {
-            if (flowRate < 1e-100) {
-                setEmptyFluid();
-            } else if (totalNumberOfMolesLocal > 1e-100) {
-                addComponent(i, SIval / totalNumberOfMolesLocal * getPhase(0).getComponent(i).getNumberOfmoles()
-                        - getPhase(0).getComponent(i).getNumberOfmoles());
-            } else {
-                addComponent(i, SIval);
-            }
+            moleFlows[i] = moleFracs[i]*SIval;
         }
+        setMolarFlowRates(moleFlows);
     }
 
     /**

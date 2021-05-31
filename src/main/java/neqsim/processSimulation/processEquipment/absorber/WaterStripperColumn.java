@@ -247,7 +247,6 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
                 }
                 return;
             }
-
             kwater = mixedStream.getThermoSystem().getPhase(0).getComponent("water").getx()
                     / mixedStream.getThermoSystem().getPhase(1).getComponent("water").getx();
 
@@ -278,12 +277,12 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
             // stream.getThermoSystem().display();
 
             SystemInterface tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
-            SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[0]);
+            SystemInterface gasTemp = tempSystem.phaseToSystem(tempSystem.getPhase(0));
             gasTemp.init(2);
             gasOutStream.setThermoSystem(gasTemp);
 
             tempSystem = (SystemInterface) mixedStream.getThermoSystem().clone();
-            SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhases()[1]);
+            SystemInterface liqTemp = tempSystem.phaseToSystem(tempSystem.getPhase(1));
             liqTemp.init(2);
             solventOutStream.setThermoSystem(liqTemp);
             solventOutStream.run();
