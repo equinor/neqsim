@@ -9,6 +9,8 @@
 ###eclipse settings
 .settings/
 .project
+.classpath
+.factorypath
 
 # BAckup of java files
 *.java~
