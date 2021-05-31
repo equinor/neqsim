@@ -29,6 +29,12 @@ class SystemUMRPRUMCEosNewTest {
 	}
 
 	@Test
+	@DisplayName("test a TPflash2")
+    public void testTPflash2() {
+        assertEquals(testSystem.getNumberOfPhases(), 2);
+	}
+
+	@Test
 	@DisplayName("test a TPflash of the fluid (should return two phases)")
     public void testTPflash() {
         assertEquals(testSystem.getNumberOfPhases(), 2);
