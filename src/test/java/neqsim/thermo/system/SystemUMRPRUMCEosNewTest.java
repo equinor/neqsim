@@ -2,6 +2,7 @@ package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -69,7 +70,8 @@ class SystemUMRPRUMCEosNewTest {
     public void checkFugasityCoeffisientsDn2() {
 		assertTrue(testModel.checkFugasityCoeffisientsDn2());
 	}
-
+	
+	@Disabled
 	@Test
 	@DisplayName("calculate compressibility of gas phase")
     public void checkCompressibility(){

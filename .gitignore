@@ -66,3 +66,4 @@ nbdist/
 src/main/java/neqsim/util/database/NeqSimDataBase2.java
 
 neqsim.iml
+.classpath
