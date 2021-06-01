@@ -1,4 +1,8 @@
-package processSimulation.processEquipment.compressor;
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package neqsim.processSimulation.processEquipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeAll;
@@ -9,9 +13,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
-class Compressor {
-
+import neqsim.processSimulation.processEquipment.compressor.Compressor;
+/**
+ *
+ * @author ESOL
+ */
+public class DistillationColumnTest {
 	static neqsim.thermo.system.SystemInterface testSystem = null;
 
 	double pressure_inlet = 85.0;
@@ -37,34 +44,4 @@ class Compressor {
 		processOps.add(compressor1);
 
 	}
-
-	@Test
-	public void testCompressorSchultzMethod() {
-		compressor1.setPolytropicEfficiency(polytropicEff);
-		compressor1.setUsePolytropicCalc(true);
-		compressor1.setPolytropicMethod("schultz");
-		processOps.run();
-		System.out.println("schultz compressor power " + compressor1.getPower() / 1e6 + " MW");
-		assertEquals(compressor1.getPower() / 1e6, 4.668373797540108, "Test case for compressor Schultz method polytropic calculation should return approximate 4.67 MW");
-	}
-	
-	@Test
-	public void testCompressorRigorousMethod() {
-		compressor1.setPolytropicEfficiency(polytropicEff);
-		compressor1.setUsePolytropicCalc(true);
-		compressor1.setPolytropicMethod("detailed");
-		processOps.run();
-		System.out.println("rigorous compressor power " + compressor1.getPower() / 1e6 + " MW");
-		assertEquals(compressor1.getPower() / 1e6, 4.655081035416562,"Test case for rigorous polytropic compressor calculation should return approximate 4.66 MW");
-	}
-
-	@Test
-	public void testIsentropicCalcMethod() {
-		compressor1.setIsentropicEfficiency(polytropicEff);
-		compressor1.setUsePolytropicCalc(false);
-		processOps.run();
-		System.out.println("compressor power " + compressor1.getPower() / 1e6 + " MW");
-		assertEquals(compressor1.getPower() / 1e6, 4.5621157449685);
-	}
-
 }
