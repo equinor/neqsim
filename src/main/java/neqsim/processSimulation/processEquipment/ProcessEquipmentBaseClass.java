@@ -219,5 +219,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 	public String getConditionAnalysisMessage() {
         return conditionAnalysisMessage;
     }
+    
+    public String[][] getResultTable(){
+    	return null;
+    }
 
 }

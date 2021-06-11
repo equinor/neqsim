@@ -57,6 +57,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     private boolean implementedCompositionDeriativesofFugacity = true;
     protected double criticalTemperature = 0;
     protected String[][] resultTable = null;
+    boolean isInitialized = false;
     protected String fluidInfo = "No Information Available";
     protected String fluidName = "DefaultName", modelName = "Default";
     protected boolean numericDerivatives = false, allowPhaseShift = true;
@@ -1469,6 +1470,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
 
     @Override
 	public void init(int type) { // type = 0 start init type =1 gi nye betingelser
+    	isInitialized = true;
         if (numericDerivatives) {
             initNumeric(type);
         } else {
@@ -1481,7 +1483,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *
      */
     @Override
-	public void initThermoProperties() {
+    public void initThermoProperties() {
         init(2);
     }
 
@@ -1492,13 +1494,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      */
     @Override
 	public void initProperties() {
+    	if(!isInitialized) {
+    		init(0);
+    		setNumberOfPhases(1);
+    	}
         initThermoProperties();
         initPhysicalProperties();
     }
 
     @Override
 	public void init(int type, int phase) { // type = 0 start init type =1 gi nye betingelser
-        if (numericDerivatives) {
+        isInitialized = true;
+    	if (numericDerivatives) {
             initNumeric(type, phase);
         } else {
             initAnalytic(type, phase);
@@ -1510,8 +1517,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
         this.init(initType);
     }
 
-    public void initAnalytic(int type) { // type = 0 start init type =1O gi nye betingelser
-        if (type == 0) {
+    public void initAnalytic(int type) { // type = 0 start init type =1O give new conditions
+    	if (type == 0) {
             numberOfPhases = getMaxNumberOfPhases();
             for (int i = 0; i < getMaxNumberOfPhases(); i++) {
                 phaseType[i] = 0;
@@ -3036,7 +3043,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
         // phases " + numberOfPhases);
         String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
 
-        initProperties();
+        if(isInitialized) {
+        	initProperties();
+        }
+    	else{
+        	init(0);
+        	setNumberOfPhases(1);
+        	initProperties();
+        }
 
         java.text.DecimalFormat nf = new java.text.DecimalFormat();
 
@@ -4103,6 +4117,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
 	public String[][] getResultTable() {
         return resultTable;
     }
+    
     //
     // public String[] getResultArray1(){
     // java.util.ArrayList list = new java.util.ArrayList();

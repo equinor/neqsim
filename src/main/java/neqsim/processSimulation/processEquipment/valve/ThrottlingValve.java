@@ -169,7 +169,12 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 	public void displayResult() {
         thermoSystem.display(getName());
     }
-
+    
+    @Override
+    public String[][] getResultTable(){
+    	return thermoSystem.getResultTable();
+    }
+    
     @Override
 	public String getName() {
         return name;

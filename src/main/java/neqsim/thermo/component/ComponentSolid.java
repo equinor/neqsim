@@ -177,7 +177,7 @@ public class ComponentSolid extends ComponentSrk {
 
     public void setSolidRefFluidPhase(PhaseInterface phase) {
         try {
-            // if((!isTBPfraction && !isPlusFraction)){
+             if((!isTBPfraction && !isPlusFraction)){
             refPhase = phase.getClass().newInstance();
             refPhase.setTemperature(273.0);
             refPhase.setPressure(1.0);
@@ -191,7 +191,7 @@ public class ComponentSolid extends ComponentSrk {
             refPhase.getComponent(componentName)
                     .setAtractiveTerm(phase.getComponent(componentName).getAtractiveTermNumber());
             refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
-            // }
+             }
         } catch (Exception e) {
             logger.error("error occured", e);
         }

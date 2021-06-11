@@ -190,7 +190,12 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
 	public void displayResult() {
         thermoSystem.display();
     }
-
+    
+    @Override
+    public String[][] getResultTable(){
+    	return thermoSystem.getResultTable();
+    }
+    
     @Override
 	public void runTransient(double dt) {
         inletStreamMixer.run();
