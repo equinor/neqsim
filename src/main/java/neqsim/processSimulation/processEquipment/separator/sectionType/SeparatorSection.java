@@ -4,7 +4,6 @@ import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesign
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
- *
  * @author esol
  */
 public class SeparatorSection {
@@ -15,7 +14,7 @@ public class SeparatorSection {
     public Separator separator = null;
     private boolean calcEfficiency = false;
     private double pressureDrop = 33 / 5.0 * 1e-3;// bar
-    private String name = "1";
+    protected String name = "1";
     String type;
     public double outerDiameter = 1.0;
     public SepDesignSection mechanicalDesign = null;

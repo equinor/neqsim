@@ -3,7 +3,6 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- *
  * @author esol
  */
 public class MaterialPipeDesignStandard extends DesignStandard {
@@ -83,7 +82,7 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     private double temperatureDeratingFactor = 1.0;
 
     public void readMaterialDesignStandard(String specNo, String grade) {
-        grade = grade;
+        this.grade = grade;
         specificationNumber = specNo;
 
         neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();

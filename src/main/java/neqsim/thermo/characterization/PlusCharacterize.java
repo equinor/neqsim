@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
 /**
- *
  * @author ESOL
  */
 public class PlusCharacterize extends Object implements java.io.Serializable, CharacteriseInterface {
@@ -41,7 +40,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     }
 
     @Override
-	public boolean hasPlusFraction() {
+    public boolean hasPlusFraction() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
                 return true;
@@ -86,7 +85,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     }
 
     @Override
-	public void solve() {
+    public void solve() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             try {
                 if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
@@ -124,12 +123,12 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @return Value of property coefs.
      */
     @Override
-	public double[] getCoefs() {
+    public double[] getCoefs() {
         return this.coefs;
     }
 
     @Override
-	public double getCoef(int i) {
+    public double getCoef(int i) {
         return this.coefs[i];
     }
 
@@ -139,7 +138,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @param coefs New value of property coefs.
      */
     @Override
-	public void setCoefs(double[] coefs) {
+    public void setCoefs(double[] coefs) {
         System.arraycopy(coefs, 0, this.coefs, 0, coefs.length);
 
         if (firsttime) {
@@ -185,7 +184,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @param coefs New value of property coefs.
      */
     @Override
-	public void setCoefs(double coef, int i) {
+    public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
     }
 
@@ -199,19 +198,19 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     }
 
     @Override
-	public void generatePlusFractions(int start, int end, double zplus, double Mplus) {
+    public void generatePlusFractions(int start, int end, double zplus, double Mplus) {
     }
 
     @Override
-	public void addHeavyEnd() {
+    public void addHeavyEnd() {
     }
 
     @Override
-	public void generateTBPFractions() {
+    public void generateTBPFractions() {
     }
 
     @Override
-	public void addCharacterizedPlusFraction() {
+    public void addCharacterizedPlusFraction() {
         if (!pseudocomponents) {
             numberOfPseudocomponents = getLastPlusFractionNumber() - getFirstPlusFractionNumber() + 1;
         }
@@ -290,12 +289,12 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     }
 
     @Override
-	public int getFirstPlusFractionNumber() {
+    public int getFirstPlusFractionNumber() {
         return firstPlusFractionNumber;
     }
 
     @Override
-	public int getLastPlusFractionNumber() {
+    public int getLastPlusFractionNumber() {
         return lastPlusFractionNumber;
     }
 
@@ -318,12 +317,13 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     }
 
     /**
-     * Setter for property startPlus.
+     * Setter for property startPlus. NB! Deprecated and replaced by
+     * firstPlusFractionNumber?
      * 
      * @param startPlus New value of property startPlus.
      */
     public void setStartPlus(int startPlus) {
-        this.firstPlusFractionNumber = firstPlusFractionNumber;
+        setFirstPlusFractionNumber(startPlus);
     }
 
     /**
@@ -332,7 +332,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @return Value of property MPlus.
      */
     @Override
-	public double getMPlus() {
+    public double getMPlus() {
         return MPlus;
     }
 
@@ -342,7 +342,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @param MPlus New value of property MPlus.
      */
     @Override
-	public void setMPlus(double MPlus) {
+    public void setMPlus(double MPlus) {
         this.MPlus = MPlus;
     }
 
@@ -352,7 +352,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @return Value of property zPlus.
      */
     @Override
-	public double getZPlus() {
+    public double getZPlus() {
         return zPlus;
     }
 
@@ -362,7 +362,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @param zPlus New value of property zPlus.
      */
     @Override
-	public void setZPlus(double zPlus) {
+    public void setZPlus(double zPlus) {
         this.zPlus = zPlus;
     }
 
@@ -372,12 +372,12 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @return Value of property plusCoefs.
      */
     @Override
-	public double[] getPlusCoefs() {
+    public double[] getPlusCoefs() {
         return this.plusCoefs;
     }
 
     @Override
-	public double getPlusCoefs(int i) {
+    public double getPlusCoefs(int i) {
         return this.plusCoefs[i];
     }
 
@@ -387,7 +387,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @param plusCoefs New value of property plusCoefs.
      */
     @Override
-	public void setPlusCoefs(double[] plusCoefs) {
+    public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
@@ -395,10 +395,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * Getter for property densPlus.
      * 
      * @return Value of property densPlus.
-     *
      */
     @Override
-	public double getDensPlus() {
+    public double getDensPlus() {
         return densPlus;
     }
 
@@ -406,14 +405,13 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * Setter for property densPlus.
      * 
      * @param densPlus New value of property densPlus.
-     *
      */
     public void setDensPlus(double densPlus) {
         this.densPlus = densPlus;
     }
 
     @Override
-	public boolean groupTBPfractions() {
+    public boolean groupTBPfractions() {
         return true;
     }
 
@@ -421,7 +419,6 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * Getter for property numberOfPseudocomponents.
      * 
      * @return Value of property numberOfPseudocomponents.
-     *
      */
     public int getNumberOfPseudocomponents() {
         return numberOfPseudocomponents;
@@ -432,10 +429,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * 
      * @param numberOfPseudocomponents New value of property
      *                                 numberOfPseudocomponents.
-     *
      */
     @Override
-	public void setNumberOfPseudocomponents(int numberOfPseudocomponents) {
+    public void setNumberOfPseudocomponents(int numberOfPseudocomponents) {
         this.numberOfPseudocomponents = numberOfPseudocomponents;
     }
 
@@ -443,10 +439,9 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * Getter for property pseudocomponents.
      * 
      * @return Value of property pseudocomponents.
-     *
      */
     @Override
-	public boolean isPseudocomponents() {
+    public boolean isPseudocomponents() {
         return pseudocomponents;
     }
 
@@ -454,15 +449,14 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * Setter for property pseudocomponents.
      * 
      * @param pseudocomponents New value of property pseudocomponents.
-     *
      */
     @Override
-	public void setPseudocomponents(boolean pseudocomponents) {
+    public void setPseudocomponents(boolean pseudocomponents) {
         this.pseudocomponents = pseudocomponents;
     }
 
     @Override
-	public void removeTBPfraction() {
+    public void removeTBPfraction() {
         java.util.ArrayList list = new java.util.ArrayList();
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             double boilpoint = system.getPhase(0).getComponent(i).getNormalBoilingPoint();
@@ -483,14 +477,14 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
     }
 
     @Override
-	public void addTBPFractions() {
+    public void addTBPFractions() {
     }
 
     /**
      * @return the densLastTBP
      */
     @Override
-	public double getDensLastTBP() {
+    public double getDensLastTBP() {
         return densLastTBP;
     }
 
@@ -498,7 +492,7 @@ public class PlusCharacterize extends Object implements java.io.Serializable, Ch
      * @param densLastTBP the densLastTBP to set
      */
     @Override
-	public void setDensLastTBP(double densLastTBP) {
+    public void setDensLastTBP(double densLastTBP) {
         this.densLastTBP = densLastTBP;
     }
 

@@ -47,7 +47,7 @@ import org.apache.logging.log4j.*;
  * Constructor 7/3-00	addcomponent(String, double)	addding components from
  * text-file: "Component_Data.txt" 7/3-00	init()	initializing
  */
-abstract class SystemThermo extends java.lang.Object implements SystemInterface{
+abstract class SystemThermo extends java.lang.Object implements SystemInterface {
 
     private static final long serialVersionUID = 1000;// implements System_Interface{
     // Class variables
@@ -129,12 +129,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public int getNumberOfComponents() {
+    public int getNumberOfComponents() {
         return getComponentNames().length;
     }
 
     @Override
-	public void clearAll() {
+    public void clearAll() {
         setTotalNumberOfMoles(0);
         phaseType[0] = 1;
         phaseType[1] = 0;
@@ -165,14 +165,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void resetCharacterisation() {
+    public void resetCharacterisation() {
         int numerOfLumpedComps = characterization.getLumpingModel().getNumberOfLumpedComponents();
         characterization = new Characterise(this);
         characterization.getLumpingModel().setNumberOfLumpedComponents(numerOfLumpedComps);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemThermo clonedSystem = null;
         try {
             clonedSystem = (SystemThermo) super.clone();
@@ -211,13 +211,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * add fluid to an existing fluid
      *
-     * @param addSystem1 first fluid to add
-     * @param addSystem2 second fluid o add
-     *
-     * @return new fluid
+     * @param  addSystem1 first fluid to add
+     * @param  addSystem2 second fluid o add
+     * @return            new fluid
      */
     @Override
-	public void addFluid(SystemInterface addSystem) {
+    public void addFluid(SystemInterface addSystem) {
         boolean addedNewComponent = false;
         int index = -1;
         for (int i = 0; i < addSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -244,7 +243,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addPhase() {
+    public void addPhase() {
         /*
          * if (maxNumberOfPhases < 6 && !hydrateCheck) { ArrayList phaseList = new
          * ArrayList(0); for (int i = 0; i < numberOfPhases; i++) {
@@ -315,7 +314,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addSolidComplexPhase(String type) {
+    public void addSolidComplexPhase(String type) {
         if (!multiPhaseCheck) {
             setMultiPhaseCheck(true);
         }
@@ -396,7 +395,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setAllComponentsInPhase(int phase) {
+    public void setAllComponentsInPhase(int phase) {
         // init(0);
         double molesInPhase = 0;
         for (int k = 0; k < numberOfPhases; k++) {
@@ -420,7 +419,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void removePhase(int specPhase) {
+    public void removePhase(int specPhase) {
 
         setTotalNumberOfMoles(getTotalNumberOfMoles() - getPhase(specPhase).getNumberOfMolesInPhase());
 
@@ -450,7 +449,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void removePhaseKeepTotalComposition(int specPhase) {
+    public void removePhaseKeepTotalComposition(int specPhase) {
 
         ArrayList phaseList = new ArrayList(0);
         for (int i = 0; i < numberOfPhases; i++) {
@@ -471,7 +470,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void replacePhase(int repPhase, PhaseInterface newPhase) {
+    public void replacePhase(int repPhase, PhaseInterface newPhase) {
         for (int i = 0; i < 2; i++) {
             phaseArray[i] = (PhaseInterface) newPhase.clone();
         }
@@ -479,7 +478,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface phaseToSystem(PhaseInterface newPhase) {
+    public SystemInterface phaseToSystem(PhaseInterface newPhase) {
 
         for (int i = 0; i < newPhase.getNumberOfComponents(); i++) {
             newPhase.getComponents()[i].setNumberOfmoles(newPhase.getComponents()[i].getNumberOfMolesInPhase());
@@ -500,7 +499,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface getEmptySystemClone() {
+    public SystemInterface getEmptySystemClone() {
         int phaseNumber = 0;
 
         SystemInterface newSystem = (SystemInterface) this.clone();
@@ -523,7 +522,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface phaseToSystem(String phaseName) {
+    public SystemInterface phaseToSystem(String phaseName) {
         try {
             for (int j = 0; j < getMaxNumberOfPhases(); j++) {
                 if (this.getPhase(j).getPhaseTypeName().equals(phaseName)) {
@@ -539,7 +538,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface phaseToSystem(int phaseNumber) {
+    public SystemInterface phaseToSystem(int phaseNumber) {
         SystemInterface newSystem = (SystemInterface) this.clone();
 
         for (int j = 0; j < getMaxNumberOfPhases(); j++) {
@@ -561,7 +560,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface phaseToSystem(int phaseNumber1, int phaseNumber2) {
+    public SystemInterface phaseToSystem(int phaseNumber1, int phaseNumber2) {
         SystemInterface newSystem = (SystemInterface) this.clone();
 
         for (int j = 0; j < getMaxNumberOfPhases(); j++) {
@@ -588,7 +587,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setTotalFlowRate(double flowRate, String flowunit) {
+    public void setTotalFlowRate(double flowRate, String flowunit) {
         init(0);
         init(1);
         double density = 0.0;
@@ -614,14 +613,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return flow rate of fluid
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                 kg/hr m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr,
-     *                 Sm3/hr, Sm3/day
-     *
-     * @return flow rate in specified unit
+     * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     *                  kg/hr m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr,
+     *                  Sm3/hr, Sm3/day
+     * @return          flow rate in specified unit
      */
     @Override
-	public double getFlowRate(String flowunit) {
+    public double getFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {
             return totalNumberOfMoles * getMolarMass();
         } else if (flowunit.equals("kg/min")) {
@@ -661,7 +659,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void changeComponentName(String name, String newName) {
+    public void changeComponentName(String name, String newName) {
 
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentNames.get(i).equals(name)) {
@@ -675,7 +673,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addComponent(String componentName, double value, String name, int phase) {
+    public void addComponent(String componentName, double value, String name, int phase) {
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
@@ -712,7 +710,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addSalt(String componentName, double value) {
+    public void addSalt(String componentName, double value) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = database
                 .getResultSet("SELECT * FROM compsalt WHERE SaltName='" + componentName + "'");
@@ -740,7 +738,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param density       density of the component in g/cm3
      */
     @Override
-	public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density) {
+    public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density) {
         if (density < 0.0 || molarMass < 0.0) {
             logger.error("Negative input molar mass or density.");
             neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
@@ -873,7 +871,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addPlusFraction(String componentName, double numberOfMoles, double molarMass, double density) {
+    public void addPlusFraction(String componentName, double numberOfMoles, double molarMass, double density) {
         addTBPfraction(componentName, numberOfMoles, molarMass, density);
         componentName = (componentName + "_" + "PC");// getFluidName());
         for (int i = 0; i < numberOfPhases; i++) {
@@ -887,7 +885,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addComponent(String componentName, double value, String name) {
+    public void addComponent(String componentName, double value, String name) {
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
@@ -917,14 +915,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addComponent(String componentName, double moles, double TC, double PC, double acs) {
+    public void addComponent(String componentName, double moles, double TC, double PC, double acs) {
         String comNam = componentName;
         if (getPhase(0).hasComponent(componentName)) {
             addComponent(componentName, moles);
         } else {
             addComponent("default", moles);
             comNam = "default";
-//            componentNames.set(componentNames.indexOf("default"), componentName);
+            // componentNames.set(componentNames.indexOf("default"), componentName);
         }
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhase(i).getComponent(comNam).setComponentName(componentName);
@@ -939,7 +937,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addComponent(int componentIndex, double moles) {
+    public void addComponent(int componentIndex, double moles) {
         if (componentIndex >= getPhase(0).getNumberOfComponents()) {
             logger.error("componentIndex higher than number of components in database");
             return;
@@ -958,7 +956,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                      for available components in the database.
      */
     @Override
-	public void addComponent(String name) {
+    public void addComponent(String name) {
         addComponent(name, 0.0);
     }
 
@@ -972,7 +970,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                      added to the fluid
      */
     @Override
-	public void addComponent(String componentName, double moles) {
+    public void addComponent(String componentName, double moles) {
         int index = 0;
 
         boolean addForFirstTime = true;
@@ -1019,7 +1017,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addComponent(String componentName, double moles, int phaseNumber) {
+    public void addComponent(String componentName, double moles, int phaseNumber) {
         if (!neqsim.util.database.NeqSimDataBase.hasComponent(componentName)) {
             logger.error("No component with name: " + componentName + " in database");
             return;
@@ -1061,7 +1059,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addComponent(int index, double moles, int phaseNumber) {
+    public void addComponent(int index, double moles, int phaseNumber) {
         if (index >= getPhase(0).getNumberOfComponents()) {
             logger.error("componentIndex higher than number of components in database");
             return;
@@ -1080,7 +1078,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void removeComponent(String name) {
+    public void removeComponent(String name) {
         setTotalNumberOfMoles(getTotalNumberOfMoles() - phaseArray[0].getComponent(name).getNumberOfmoles());
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhase(i).removeComponent(name, getTotalNumberOfMoles(),
@@ -1097,7 +1095,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * This method set the flow rate of all components to zero.
      */
     @Override
-	public void setEmptyFluid() {
+    public void setEmptyFluid() {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhase(i).setEmptyFluid();
         }
@@ -1109,7 +1107,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * depreciated - and the setEmptyFluid method should be used.
      */
     @Override
-	@Deprecated
+    @Deprecated
     public void removeMoles() {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhase(i).setEmptyFluid();
@@ -1118,7 +1116,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final double calcBeta()
+    public final double calcBeta()
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
         ComponentInterface[] compArray = getPhase(0).getComponents();
 
@@ -1284,7 +1282,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final double initBeta() {
+    public final double initBeta() {
         for (int i = 0; i < numberOfPhases; i++) {
             beta[phaseIndex[i]] = getPhase(i).getNumberOfMolesInPhase() / getTotalNumberOfMoles();
             // System.out.println("beta " + beta[i]);
@@ -1296,12 +1294,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * method to get the Joule Thomson Coefficient of a system. Based on a phase
      * mole fraction basis average
      * 
-     * @param unit The unit as a string. Supported units are K/bar, C/bar
-     *
-     * @return Joule Thomson coefficient in given unit
+     * @param  unit The unit as a string. Supported units are K/bar, C/bar
+     * @return      Joule Thomson coefficient in given unit
      */
     @Override
-	public double getJouleThomsonCoefficient(String unit) {
+    public double getJouleThomsonCoefficient(String unit) {
         double JTcoef = getJouleThomsonCoefficient();
         double conversionFactor = 1.0;
         switch (unit) {
@@ -1322,7 +1319,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Joule Thomson coefficient in K/bar
      */
     @Override
-	public double getJouleThomsonCoefficient() {
+    public double getJouleThomsonCoefficient() {
         double JTcoef = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             JTcoef += getBeta(i) * getPhase(i).getJouleThomsonCoefficient();
@@ -1334,11 +1331,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * method to get the speed of sound of a system. THe sound speed is implemented
      * based on a molar average over the phases
      * 
-     * @param unit The unit as a string. Supported units are m/s, km/h
-     * @return speed of sound in m/s
+     * @param  unit The unit as a string. Supported units are m/s, km/h
+     * @return      speed of sound in m/s
      */
     @Override
-	public double getSoundSpeed(String unit) {
+    public double getSoundSpeed(String unit) {
         double refVel = getSoundSpeed();
         double conversionFactor = 1.0;
         switch (unit) {
@@ -1359,7 +1356,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return speed of sound in m/s
      */
     @Override
-	public double getSoundSpeed() {
+    public double getSoundSpeed() {
         double soundspeed = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             soundspeed += getBeta(i) * getPhase(i).getSoundSpeed();
@@ -1368,7 +1365,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final void initTotalNumberOfMoles(double change) {
+    public final void initTotalNumberOfMoles(double change) {
         setTotalNumberOfMoles(getTotalNumberOfMoles() + change);
         // System.out.println("total moles: " + totalNumberOfMoles);
         for (int j = 0; j < numberOfPhases; j++) {
@@ -1380,7 +1377,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final void init_x_y() {
+    public final void init_x_y() {
         double x = 0.0, z = 0;
         for (int j = 0; j < numberOfPhases; j++) {
             x = 0;
@@ -1398,7 +1395,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final void calc_x_y() {
+    public final void calc_x_y() {
 
         for (int j = 0; j < numberOfPhases; j++) {
             for (int i = 0; i < numberOfComponents; i++) {
@@ -1419,7 +1416,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final void calc_x_y_nonorm() {
+    public final void calc_x_y_nonorm() {
 
         for (int j = 0; j < numberOfPhases; j++) {
             for (int i = 0; i < numberOfComponents; i++) {
@@ -1441,7 +1438,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void reset_x_y() {
+    public void reset_x_y() {
 
         for (int j = 0; j < numberOfPhases; j++) {
             for (int i = 0; i < numberOfComponents; i++) {
@@ -1451,7 +1448,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void reset() {
+    public void reset() {
         for (int i = 0; i < numberOfComponents; i++) {
             addComponent(getPhase(0).getComponent(i).getComponentName(),
                     -getPhase(0).getComponent(i).getNumberOfmoles());
@@ -1459,7 +1456,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public boolean hasSolidPhase() {
+    public boolean hasSolidPhase() {
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals("solid")) {
                 return true;
@@ -1480,7 +1477,6 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
 
     /**
      * Calculates thermodynamic properties of a fluid using the init(2) method
-     *
      */
     @Override
     public void initThermoProperties() {
@@ -1490,7 +1486,6 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * Calculates thermodynamic and physical properties of a fluid using
      * initThermoProperties() and initPhysicalProperties();
-     *
      */
     @Override
 	public void initProperties() {
@@ -1513,7 +1508,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void init() {
+    public void init() {
         this.init(initType);
     }
 
@@ -1750,7 +1745,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void initNumeric() {
+    public void initNumeric() {
         double[][] gasfug = new double[2][getPhases()[0].getNumberOfComponents()];
         double[][] liqfug = new double[2][getPhases()[0].getNumberOfComponents()];
         double[][] gasnumericDfugdt = new double[2][getPhases()[0].getNumberOfComponents()];
@@ -1861,7 +1856,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void initPhysicalProperties() {
+    public void initPhysicalProperties() {
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).initPhysicalProperties();
         }
@@ -1869,21 +1864,21 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void initPhysicalProperties(String propertyName) {
+    public void initPhysicalProperties(String propertyName) {
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).initPhysicalProperties(propertyName);
         }
     }
 
     @Override
-	public void resetPhysicalProperties() {
+    public void resetPhysicalProperties() {
         for (int i = 0; i < maxNumberOfPhases; i++) {
             getPhase(i).resetPhysicalProperties();
         }
     }
 
     @Override
-	public void initRefPhases() {
+    public void initRefPhases() {
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).initRefPhases(false);
         }
@@ -1894,26 +1889,26 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Type: Model * 0 Orginal/default * 1 Water * 2 Glycol * 3 Amine
      */
     @Override
-	public void setPhysicalPropertyModel(int type) {
+    public void setPhysicalPropertyModel(int type) {
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).setPhysicalProperties(type);
         }
     }
 
     @Override
-	public void chemicalReactionInit() { // type = 0 start init type =1 gi nye betingelser
+    public void chemicalReactionInit() { // type = 0 start init type =1 gi nye betingelser
         chemicalReactionOperations = new ChemicalReactionOperations(this);
         chemicalSystem = chemicalReactionOperations.hasRections();
     }
 
     @Override
-	public ChemicalReactionOperations getChemicalReactionOperations() { // type = 0 start init type =1 gi nye
+    public ChemicalReactionOperations getChemicalReactionOperations() { // type = 0 start init type =1 gi nye
                                                                         // betingelser
         return chemicalReactionOperations;
     }
 
     @Override
-	public final PhaseInterface getGasPhase() {
+    public final PhaseInterface getGasPhase() {
         for (int phase = 0; phase < numberOfPhases; phase++) {
             if (phaseArray[phaseIndex[phase]].getPhaseType() == 1) {
                 return phaseArray[phase];
@@ -1924,7 +1919,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final PhaseInterface getLiquidPhase() {
+    public final PhaseInterface getLiquidPhase() {
         for (int phase = 0; phase < numberOfPhases; phase++) {
             if (phaseArray[phaseIndex[phase]].getPhaseType() == 0) {
                 return phaseArray[phase];
@@ -1935,7 +1930,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final PhaseInterface getPhase(int i) {
+    public final PhaseInterface getPhase(int i) {
         if (i >= getNumberOfPhases()) {
             // throw new RuntimeException();
         }
@@ -1943,12 +1938,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final boolean isChemicalSystem() {
+    public final boolean isChemicalSystem() {
         return chemicalSystem;
     }
 
     @Override
-	public final void isChemicalSystem(boolean temp) {
+    public final void isChemicalSystem(boolean temp) {
         chemicalSystem = temp;
     }
 
@@ -1957,27 +1952,27 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final double getTC() {
+    public final double getTC() {
         return criticalTemperature;
     }
 
     @Override
-	public final double getPC() {
+    public final double getPC() {
         return criticalPressure;
     }
 
     @Override
-	public final void setTC(double TC) {
+    public final void setTC(double TC) {
         criticalTemperature = TC;
     }
 
     @Override
-	public final void setPC(double PC) {
+    public final void setPC(double PC) {
         criticalPressure = PC;
     }
 
     @Override
-	public final void setMixingRule(int type) {
+    public final void setMixingRule(int type) {
         mixingRule = type;
         if (numberOfPhases < 4) {
             resetPhysicalProperties();// initPhysicalProperties();
@@ -1996,7 +1991,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setMixingRule(String typename, String GEmodel) {
+    public void setMixingRule(String typename, String GEmodel) {
         setMixingRuleGEmodel(GEmodel);
         setMixingRule(typename);
     }
@@ -2010,7 +2005,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                       'classic-CPA-T', 'classic-Tx'
      */
     @Override
-	public void setMixingRule(String typename) {
+    public void setMixingRule(String typename) {
         int var = 0;
         if (typename.equals("no")) {
             var = 1;
@@ -2035,7 +2030,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String[] getComponentNames() {
+    public String[] getComponentNames() {
         ArrayList components = new ArrayList();
 
         for (int j = 0; j < numberOfComponents; j++) {
@@ -2049,24 +2044,24 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setNumberOfPhases(int number) {
+    public void setNumberOfPhases(int number) {
         this.numberOfPhases = number;
     }
 
     @Override
-	public void useVolumeCorrection(boolean volcor) {
+    public void useVolumeCorrection(boolean volcor) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhase(i).useVolumeCorrection(volcor);
         }
     }
 
     @Override
-	public final PhaseInterface[] getPhases() {
+    public final PhaseInterface[] getPhases() {
         return phaseArray;
     }
 
     @Override
-	public double getGibbsEnergy() {
+    public double getGibbsEnergy() {
         double gibbsEnergy = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             gibbsEnergy += getPhase(i).getGibbsEnergy();
@@ -2077,13 +2072,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return exergy in a given unit
      * 
-     * @param temperatureOfSurroundings in Kelvin
-     * @param unit                      The unit as a string. Supported units are J,
-     *                                  J/mol, J/kg and kJ/kg
-     * @return exergy in specified unit
+     * @param  temperatureOfSurroundings in Kelvin
+     * @param  unit                      The unit as a string. Supported units are
+     *                                   J, J/mol, J/kg and kJ/kg
+     * @return                           exergy in specified unit
      */
     @Override
-	public double getExergy(double temperatureOfSurroundings, String exergyUnit) {
+    public double getExergy(double temperatureOfSurroundings, String exergyUnit) {
         double refExergy = getExergy(temperatureOfSurroundings); // exergy in J
         double conversionFactor = 1.0;
         switch (exergyUnit) {
@@ -2109,7 +2104,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param temperatureOfSurroundings in Kelvin
      */
     @Override
-	public double getExergy(double temperatureOfSurroundings) {
+    public double getExergy(double temperatureOfSurroundings) {
         double getExergy = getEnthalpy() - temperatureOfSurroundings * getEntropy();
         return getExergy;
     }
@@ -2118,7 +2113,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * method to return enthalpy in a unit Joule
      */
     @Override
-	public double getEnthalpy() {
+    public double getEnthalpy() {
         double enthalpy = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             enthalpy += getPhase(i).getEnthalpy();
@@ -2129,12 +2124,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return enthalpy in a given unit
      *
-     * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
-     *             kJ/kg
-     * @return enthalpy in specified unit
+     * @param  unit The unit as a string. Supported units are J, J/mol, J/kg and
+     *              kJ/kg
+     * @return      enthalpy in specified unit
      */
     @Override
-	public double getEnthalpy(String unit) {
+    public double getEnthalpy(String unit) {
         double refEnthalpy = getEnthalpy(); // enthalpy in J
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2160,7 +2155,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return viscosity in unit kg/msec
      */
     @Override
-	public double getViscosity() {
+    public double getViscosity() {
         double visc = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             visc += beta[phaseIndex[i]] * getPhase(i).getPhysicalProperties().getViscosity();
@@ -2171,12 +2166,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return viscosity in a given unit
      *
-     * @param unit The unit as a string. Supported units are kg/msec, cP
-     *             (centipoise)
-     * @return viscosity in specified unit
+     * @param  unit The unit as a string. Supported units are kg/msec, cP
+     *              (centipoise)
+     * @return      viscosity in specified unit
      */
     @Override
-	public double getViscosity(String unit) {
+    public double getViscosity(String unit) {
         double refViscosity = getViscosity(); // viscosity in kg/msec
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2195,11 +2190,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return kinematic viscosity in a given unit
      *
-     * @param unit The unit as a string. Supported units are m2/sec
-     * @return kinematic viscosity in specified unit
+     * @param  unit The unit as a string. Supported units are m2/sec
+     * @return      kinematic viscosity in specified unit
      */
     @Override
-	public double getKinematicViscosity(String unit) {
+    public double getKinematicViscosity(String unit) {
         double refViscosity = getViscosity("kg/msec") / getDensity("kg/m3"); // viscosity in kg/msec
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2213,20 +2208,19 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getKinematicViscosity() {
+    public double getKinematicViscosity() {
         return getViscosity() / getDensity();
     }
 
     /**
      * method to return conductivity of a fluid
      *
-     * @return conductivity in unit W/m*K
-     * 
+     * @return     conductivity in unit W/m*K
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Deprecated
-	@Override
-	public double getConductivity() {
+    @Override
+    public double getConductivity() {
         double cond = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             cond += beta[phaseIndex[i]] * getPhase(i).getPhysicalProperties().getConductivity();
@@ -2237,15 +2231,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return conductivity in a given unit
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     *
-     * @return conductivity in specified unit
-     * 
-     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
+     * @param      unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return          conductivity in specified unit
+     * @deprecated      use {@link #getThermalConductivity(String unit)} instead.
      */
     @Deprecated
-	@Override
-	public double getConductivity(String unit) {
+    @Override
+    public double getConductivity(String unit) {
         double refConductivity = getConductivity(); // conductivity in W/m*K
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2267,7 +2259,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return conductivity in unit W/m*K
      */
     @Override
-	public double getThermalConductivity() {
+    public double getThermalConductivity() {
         double cond = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             cond += beta[phaseIndex[i]] * getPhase(i).getPhysicalProperties().getConductivity();
@@ -2278,12 +2270,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return conductivity in a given unit
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     *
-     * @return conductivity in specified unit
+     * @param  unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return      conductivity in specified unit
      */
     @Override
-	public double getThermalConductivity(String unit) {
+    public double getThermalConductivity(String unit) {
         double refConductivity = getConductivity(); // conductivity in W/m*K
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2303,7 +2294,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * method to return internal energy (U) in unit J
      */
     @Override
-	public double getInternalEnergy() {
+    public double getInternalEnergy() {
         double internalEnergy = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             internalEnergy += getPhase(i).getInternalEnergy();
@@ -2314,12 +2305,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return internal energy (U) in a given unit
      *
-     * @param unit The unit as a string. unit supported units are J, J/mole, J/kg
-     *             and kJ/kg
-     * @return internal energy in given unit
+     * @param  unit The unit as a string. unit supported units are J, J/mole, J/kg
+     *              and kJ/kg
+     * @return      internal energy in given unit
      */
     @Override
-	public double getInternalEnergy(String unit) {
+    public double getInternalEnergy(String unit) {
         double refEnthalpy = getInternalEnergy(); // enthalpy in J
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2336,7 +2327,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getHelmholtzEnergy() {
+    public double getHelmholtzEnergy() {
         double helmholtzEnergy = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             helmholtzEnergy += getPhase(i).getHelmholtzEnergy();
@@ -2345,7 +2336,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getEntropy() {
+    public double getEntropy() {
         double entropy = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             entropy += getPhase(i).getEntropy();
@@ -2356,12 +2347,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return total entropy of the fluid
      *
-     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and
-     *             kJ/kgK
-     * @return entropy in specified unit
+     * @param  unit The unit as a string. Supported units are J/K, J/moleK, J/kgK
+     *              and kJ/kgK
+     * @return      entropy in specified unit
      */
     @Override
-	public double getEntropy(String unit) {
+    public double getEntropy(String unit) {
         double refEntropy = getEntropy(); // entropy in J/K
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2388,7 +2379,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return molar volume volume in unit m3/mol*1e5
      */
     @Override
-	public double getMolarVolume() {
+    public double getMolarVolume() {
         double volume = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             volume += beta[phaseIndex[i]] * getPhase(i).getMolarVolume();
@@ -2402,7 +2393,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return density with unit kg/m3
      */
     @Override
-	public double getDensity() {
+    public double getDensity() {
         double density = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             density += 1.0e5 * (getPhase(i).getMolarMass() * beta[phaseIndex[i]] / getPhase(i).getMolarVolume());
@@ -2413,11 +2404,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to get density of a fluid note: with Peneloux volume correction
      *
-     * @param unit The unit as a string. Supported units are kg/m3, mol/m3
-     * @return density in specified unit
+     * @param  unit The unit as a string. Supported units are kg/m3, mol/m3
+     * @return      density in specified unit
      */
     @Override
-	public double getDensity(String unit) {
+    public double getDensity(String unit) {
         double density = 0;
         for (int i = 0; i < getNumberOfPhases(); i++) {
             density += getPhase(i).getVolume() / getVolume() * getPhase(i).getPhysicalProperties().getDensity();
@@ -2441,7 +2432,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getZ() {
+    public double getZ() {
         double Z = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             Z += beta[phaseIndex[i]] * getPhase(i).getZ();
@@ -2450,7 +2441,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getMoleFractionsSum() {
+    public double getMoleFractionsSum() {
         double sumz = 0.0;
         for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
             sumz += phaseArray[0].getComponent(i).getz();
@@ -2464,7 +2455,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return molar mass in unit kg/mol
      */
     @Override
-	public double getMolarMass() {
+    public double getMolarMass() {
         double tempVar = 0;
         for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
             tempVar += phaseArray[0].getComponents()[i].getz() * phaseArray[0].getComponents()[i].getMolarMass();
@@ -2475,11 +2466,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to get molar mass of a fluid phase
      * 
-     * @param unit The unit as a string. Supported units are kg/mol, gr/mol
-     * @return molar mass in given unit
+     * @param  unit The unit as a string. Supported units are kg/mol, gr/mol
+     * @return      molar mass in given unit
      */
     @Override
-	public double getMolarMass(String unit) {
+    public double getMolarMass(String unit) {
         double refMolarMass = getMolarMass();
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2501,7 +2492,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param newTemperature in unit Kelvin
      */
     @Override
-	public void setTemperature(double newTemperature) {
+    public void setTemperature(double newTemperature) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             getPhases()[i].setTemperature(newTemperature);
         }
@@ -2514,7 +2505,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param unit           unit can be C or K (Celcius of Kelvin)
      */
     @Override
-	public void setTemperature(double newTemperature, String unit) {
+    public void setTemperature(double newTemperature, String unit) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             if (unit.equals("K")) {
                 getPhases()[i].setTemperature(newTemperature);
@@ -2527,7 +2518,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getNumberOfMoles() {
+    public double getNumberOfMoles() {
         return getTotalNumberOfMoles();
     }
 
@@ -2539,7 +2530,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                      0 (liquid)
      */
     @Override
-	public void setPhaseType(int phaseToChange, int newPhaseType) {
+    public void setPhaseType(int phaseToChange, int newPhaseType) {
         // System.out.println("new phase type: cha " + newPhaseType);
         if (allowPhaseShift) {
             phaseType[phaseIndex[phaseToChange]] = newPhaseType;
@@ -2553,7 +2544,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param phaseTypeName the phase type name (valid names are gas or liquid)
      */
     @Override
-	public void setPhaseType(int phaseToChange, String phaseTypeName) {
+    public void setPhaseType(int phaseToChange, String phaseTypeName) {
         // System.out.println("new phase type: cha " + newPhaseType);
         int newPhaseType = 1;
         if (allowPhaseShift) {
@@ -2570,7 +2561,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setPhaseType(String phases, int newPhaseType) {
+    public void setPhaseType(String phases, int newPhaseType) {
         // System.out.println("new phase type: cha " + newPhaseType);
         if (allowPhaseShift) {
             if (phases.equals("all")) {
@@ -2582,7 +2573,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void invertPhaseTypes() {
+    public void invertPhaseTypes() {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             if (phaseType[i] == 0) {
                 phaseType[i] = 1;
@@ -2593,7 +2584,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setPhase(PhaseInterface phase, int numb) {
+    public void setPhase(PhaseInterface phase, int numb) {
         double temp = phaseArray[numb].getTemperature();
         double pres = phaseArray[numb].getPressure();
         this.phaseArray[numb] = phase;
@@ -2602,7 +2593,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void reInitPhaseType() {
+    public void reInitPhaseType() {
         phaseType[0] = 1;
         phaseType[1] = 0;
         phaseType[2] = 0;
@@ -2610,7 +2601,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final boolean doSolidPhaseCheck() {
+    public final boolean doSolidPhaseCheck() {
         return solidPhaseCheck;
     }
 
@@ -2621,7 +2612,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param unit        unit can be C or K (Celcius of Kelvin)
      */
     @Override
-	public final void setPressure(double newPressure) {
+    public final void setPressure(double newPressure) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             phaseArray[i].setPressure(newPressure);
         }
@@ -2634,7 +2625,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param unit        unit can be bar/bara/barg or atm
      */
     @Override
-	public final void setPressure(double newPressure, String unit) {
+    public final void setPressure(double newPressure, String unit) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             if (unit.equals("bar") || unit.equals("bara")) {
                 phaseArray[i].setPressure(newPressure);
@@ -2650,7 +2641,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final void setTemperature(double newPressure, int phase) {
+    public final void setTemperature(double newPressure, int phase) {
         getPhase(phaseIndex[phase]).setTemperature(newPressure);
     }
 
@@ -2660,24 +2651,24 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return temperature in unit Kelvin
      */
     @Override
-	public final double getTemperature() {
+    public final double getTemperature() {
         return phaseArray[0].getTemperature();
     }
 
     /**
      * method to return temperature in a given unit
      *
-     * @param unit The unit as a string. Supported units are K, C, R
-     * @return temperature in specified unit
+     * @param  unit The unit as a string. Supported units are K, C, R
+     * @return      temperature in specified unit
      */
     @Override
-	public final double getTemperature(String unit) {
+    public final double getTemperature(String unit) {
         neqsim.util.unit.TemperatureUnit presConversion = new neqsim.util.unit.TemperatureUnit(getTemperature(), "K");
         return presConversion.getValue(unit);
     }
 
     @Override
-	public double getTemperature(int phaseNumber) {
+    public double getTemperature(int phaseNumber) {
         return getPhase(phaseIndex[phaseNumber]).getTemperature();
     }
 
@@ -2687,18 +2678,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return pressure in unit bara
      */
     @Override
-	public final double getPressure() {
+    public final double getPressure() {
         return phaseArray[0].getPressure();//
     }
 
     /**
      * method to return pressure in a given unit
      *
-     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
-     * @return pressure in specified unit
+     * @param  unit The unit as a string. Supported units are bara, barg, Pa and MPa
+     * @return      pressure in specified unit
      */
     @Override
-	public final double getPressure(String unit) {
+    public final double getPressure(String unit) {
         neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
         return presConversion.getValue(unit);
     }
@@ -2709,34 +2700,34 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return pressure of phase in unit bara
      */
     @Override
-	public final double getPressure(int phaseNumber) {
+    public final double getPressure(int phaseNumber) {
         return getPhase(phaseIndex[phaseNumber]).getPressure();
     }
 
     @Override
-	public final double getBeta() {
+    public final double getBeta() {
         return beta[0];
     }
 
     @Override
-	public final double getBeta(int phase) {
+    public final double getBeta(int phase) {
         return beta[phaseIndex[phase]];
     }
 
     @Override
-	public void setAtractiveTerm(int i) {
+    public void setAtractiveTerm(int i) {
         for (int k = 0; k < getMaxNumberOfPhases(); k++) {
             phaseArray[k].setAtractiveTerm(i);
         }
     }
 
     @Override
-	public final int getNumberOfPhases() {
+    public final int getNumberOfPhases() {
         return numberOfPhases;
     }
 
     @Override
-	public final void setBeta(double b) {
+    public final void setBeta(double b) {
         if (b < 0)
             b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
         if (b > 1)
@@ -2746,7 +2737,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public final void setBeta(int phase, double b) {
+    public final void setBeta(int phase, double b) {
         if (b < 0)
             b = neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit;
         if (b > 1)
@@ -2760,7 +2751,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return volume in unit m3*1e5
      */
     @Override
-	public final double getVolume() {
+    public final double getVolume() {
         double volume = 0.0;
         for (int i = 0; i < numberOfPhases; i++) {
             volume += getPhase(i).getMolarVolume() * getPhase(i).getNumberOfMolesInPhase();
@@ -2771,13 +2762,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return fluid volume
      *
-     * @param unit The unit as a string. Supported units are m3, litre, m3/kg,
-     *             m3/mol
-     *
-     * @return volume in specified unit
+     * @param  unit The unit as a string. Supported units are m3, litre, m3/kg,
+     *              m3/mol
+     * @return      volume in specified unit
      */
     @Override
-	public double getVolume(String unit) {
+    public double getVolume(String unit) {
         double conversionFactor = 1.0;
         switch (unit) {
         case "m3":
@@ -2799,12 +2789,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return mass of fluid
      *
-     * @param unit The unit as a string. Supported units are kg, gr, tons
-     *
-     * @return volume in specified unit
+     * @param  unit The unit as a string. Supported units are kg, gr, tons
+     * @return      volume in specified unit
      */
     @Override
-	public double getMass(String unit) {
+    public double getMass(String unit) {
         double conversionFactor = 1.0;
         switch (unit) {
         case "kg":
@@ -2828,7 +2817,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return volume in specified unit
      */
     @Override
-	public double getCorrectedVolume() {
+    public double getCorrectedVolume() {
         double volume = 0;
         for (int i = 0; i < numberOfPhases; i++) {
             volume += getPhase(i).getMolarMass() / getPhase(i).getPhysicalProperties().getDensity()
@@ -2838,7 +2827,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getdVdPtn() {
+    public double getdVdPtn() {
         double dVdP = 0.0;
         for (int i = 0; i < numberOfPhases; i++) {
             dVdP += 1.0 / getPhase(i).getdPdVTn();
@@ -2847,7 +2836,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getdVdTpn() {
+    public double getdVdTpn() {
         double dVdT = 0.0;
         for (int i = 0; i < numberOfPhases; i++) {
             dVdT += -getPhase(i).getdPdTVn() / getPhase(i).getdPdVTn();
@@ -2861,7 +2850,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Cp in unit J/K
      */
     @Override
-	public double getCp() {
+    public double getCp() {
         double cP = 0.0;
         for (int i = 0; i < numberOfPhases; i++) {
             cP += getPhase(i).getCp();
@@ -2872,12 +2861,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-     *             kJ/kgK
-     * @return Cp in specified unit
+     * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+     *              kJ/kgK
+     * @return      Cp in specified unit
      */
     @Override
-	public double getCp(String unit) {
+    public double getCp(String unit) {
         double refCp = getCp(); // Cp in J/K
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2903,7 +2892,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Cv in unit J/K
      */
     @Override
-	public double getCv() {
+    public double getCv() {
         double cv = 0.0;
         for (int i = 0; i < numberOfPhases; i++) {
             cv += getPhase(i).getCv();
@@ -2914,12 +2903,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * method to return specific heat capacity (Cv) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-     *             kJ/kgK
-     * @return Cv in specified unit
+     * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+     *              kJ/kgK
+     * @return      Cv in specified unit
      */
     @Override
-	public double getCv(String unit) {
+    public double getCv(String unit) {
         double refCv = getCv(); // enthalpy in J
         double conversionFactor = 1.0;
         switch (unit) {
@@ -2945,7 +2934,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return kappa
      */
     @Override
-	public double getKappa() {
+    public double getKappa() {
         return getCp() / getCv();
     }
 
@@ -2955,7 +2944,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return kappa
      */
     @Override
-	public double getGamma() {
+    public double getGamma() {
         return getCp() / getCv();
     }
 
@@ -2965,50 +2954,50 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return kappa
      */
     @Override
-	public double getGamma2() {
+    public double getGamma2() {
         double cp0 = getCp();
         return cp0 / (cp0 - ThermodynamicConstantsInterface.R * totalNumberOfMoles);
     }
 
     @Override
-	public void calcInterfaceProperties() {
+    public void calcInterfaceProperties() {
         interfaceProp.init();
     }
 
     @Override
-	public InterphasePropertiesInterface getInterphaseProperties() {
+    public InterphasePropertiesInterface getInterphaseProperties() {
         return interfaceProp;
     }
 
     /**
      * method to return interfacial tension between two phases
      *
-     * @param phase1 phase number of phase1
-     * @param phase2 phase number of phase2
-     * @return interfacial tension with unit N/m
+     * @param  phase1 phase number of phase1
+     * @param  phase2 phase number of phase2
+     * @return        interfacial tension with unit N/m
      */
     @Override
-	public double getInterfacialTension(int phase1, int phase2) {
+    public double getInterfacialTension(int phase1, int phase2) {
         return interfaceProp.getSurfaceTension(phase1, phase2);
     }
 
     @Override
-	public double getInterfacialTension(int phase1, int phase2, String unit) {
+    public double getInterfacialTension(int phase1, int phase2, String unit) {
         return interfaceProp.getSurfaceTension(phase1, phase2, unit);
     }
 
     /**
      * method to return interfacial tension between two phases
      *
-     * @param phase1 phase type of phase1 as string (valid phases are gas, oil,
-     *               aqueous)
-     * @param phase2 phase type of phase2 as string (valid phases are gas, oil,
-     *               aqueous)
-     * @return interfacial tension with unit N/m. If one or both phases does not
-     *         exist - the method will return NaN
+     * @param  phase1 phase type of phase1 as string (valid phases are gas, oil,
+     *                aqueous)
+     * @param  phase2 phase type of phase2 as string (valid phases are gas, oil,
+     *                aqueous)
+     * @return        interfacial tension with unit N/m. If one or both phases does
+     *                not exist - the method will return NaN
      */
     @Override
-	public double getInterfacialTension(String phase1, String phase2) {
+    public double getInterfacialTension(String phase1, String phase2) {
         if (hasPhaseType(phase1) && hasPhaseType(phase2)) {
             return interfaceProp.getSurfaceTension(getPhaseNumberOfPhase(phase1), getPhaseNumberOfPhase(phase2));
         } else {
@@ -3022,7 +3011,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void normalizeBeta() {
+    public void normalizeBeta() {
         double tot = 0.0;
         for (int i = 0; i < numberOfPhases; i++) {
             tot += beta[phaseIndex[i]];
@@ -3033,12 +3022,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void display() {
+    public void display() {
         display(this.getFluidName());
     }
 
     @Override
-	public String[][] createTable(String name) {
+    public String[][] createTable(String name) {
         // System.out.println("number of comps : " + numberOfComponents + " number of
         // phases " + numberOfPhases);
         String[][] table = new String[getPhases()[0].getNumberOfComponents() + 30][7];
@@ -3251,7 +3240,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void display(String name) {
+    public void display(String name) {
         JFrame dialog = new JFrame("System-Report");
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         Container dialogContentPane = dialog.getContentPane();
@@ -3274,7 +3263,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void write(String name, String filename, boolean newfile) {
+    public void write(String name, String filename, boolean newfile) {
         String[][] table = createTable(name);
         neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         if (newfile) {
@@ -3286,7 +3275,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void resetDatabase() {
+    public void resetDatabase() {
         neqsim.util.database.NeqSimDataBase database = null;
         try {
             database = new neqsim.util.database.NeqSimDataBase();
@@ -3313,7 +3302,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void createDatabase(boolean reset) {
+    public void createDatabase(boolean reset) {
         neqsim.util.database.NeqSimDataBase database = null;
         try {
             if (reset) {
@@ -3365,11 +3354,11 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     /**
      * Indexed getter for property phaseIndex.
      *
-     * @param index Index of the property.
-     * @return Value of the property at <CODE>index</CODE>.
+     * @param  index Index of the property.
+     * @return       Value of the property at <CODE>index</CODE>.
      */
     @Override
-	public final int getPhaseIndex(int index) {
+    public final int getPhaseIndex(int index) {
         return phaseIndex[index];
     }
 
@@ -3380,7 +3369,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param phaseIndex New value of the property at <CODE>index</CODE>.
      */
     @Override
-	public final void setPhaseIndex(int index, int phaseIndex) {
+    public final void setPhaseIndex(int index, int phaseIndex) {
         this.phaseIndex[index] = phaseIndex;
     }
 
@@ -3390,7 +3379,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param solidPhaseCheck New value of property solidPhaseCheck.
      */
     @Override
-	public void setSolidPhaseCheck(boolean solidPhaseCheck) {
+    public void setSolidPhaseCheck(boolean solidPhaseCheck) {
         // init(0);
         int oldphase = numberOfPhases;
         if (!this.solidPhaseCheck) {
@@ -3409,7 +3398,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setSolidPhaseCheck(String solidComponent) {
+    public void setSolidPhaseCheck(String solidComponent) {
         init(0);
         int oldphase = numberOfPhases;
         if (!solidPhaseCheck) {
@@ -3430,7 +3419,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setHydrateCheck(boolean hydrateCheck) {
+    public void setHydrateCheck(boolean hydrateCheck) {
         init(0);
         if (hydrateCheck) {
             addHydratePhase();
@@ -3445,7 +3434,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property multiPhaseCheck.
      */
     @Override
-	public boolean doMultiPhaseCheck() {
+    public boolean doMultiPhaseCheck() {
         return multiPhaseCheck;
     }
 
@@ -3455,20 +3444,18 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param multiPhaseCheck New value of property multiPhaseCheck.
      */
     @Override
-	public void setMultiPhaseCheck(boolean multiPhaseCheck) {
+    public void setMultiPhaseCheck(boolean multiPhaseCheck) {
 
         if (getMaxNumberOfPhases() < 3) {
-           
 
             if (multiPhaseCheck) {
-            	setMaxNumberOfPhases(3);
+                setMaxNumberOfPhases(3);
                 phaseArray[2] = (PhaseInterface) phaseArray[1].clone();
                 phaseArray[2].resetMixingRule(phaseArray[0].getMixingRuleNumber());
                 phaseArray[2].resetPhysicalProperties();
                 phaseArray[2].initPhysicalProperties();
-            }
-            else {
-            	setMaxNumberOfPhases(2);
+            } else {
+                setMaxNumberOfPhases(2);
             }
         }
         this.multiPhaseCheck = multiPhaseCheck;
@@ -3480,7 +3467,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property initType.
      */
     @Override
-	public int getInitType() {
+    public int getInitType() {
         return initType;
     }
 
@@ -3490,7 +3477,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param initType New value of property initType.
      */
     @Override
-	public void setInitType(int initType) {
+    public void setInitType(int initType) {
         this.initType = initType;
     }
 
@@ -3500,7 +3487,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property numericDerivatives.
      */
     @Override
-	public boolean isNumericDerivatives() {
+    public boolean isNumericDerivatives() {
         return numericDerivatives;
     }
 
@@ -3510,17 +3497,17 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param numericDerivatives New value of property numericDerivatives.
      */
     @Override
-	public void setNumericDerivatives(boolean numericDerivatives) {
+    public void setNumericDerivatives(boolean numericDerivatives) {
         this.numericDerivatives = numericDerivatives;
     }
 
     @Override
-	public void checkStability(boolean val) {
+    public void checkStability(boolean val) {
         checkStability = val;
     }
 
     @Override
-	public boolean checkStability() {
+    public boolean checkStability() {
         return checkStability;
     }
 
@@ -3530,12 +3517,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property hydrateCheck.
      */
     @Override
-	public boolean doHydrateCheck() {
+    public boolean doHydrateCheck() {
         return hydrateCheck;
     }
 
     @Override
-	public void save(String name) {
+    public void save(String name) {
         FileOutputStream fout = null;
         ObjectOutputStream out = null;
         try {
@@ -3550,7 +3537,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface readObject(int ID) {
+    public SystemInterface readObject(int ID) {
         ResultSet rs = null;
         SystemThermo tempSystem = null;
         neqsim.util.database.NeqSimBlobDatabase database = new neqsim.util.database.NeqSimBlobDatabase();
@@ -3589,17 +3576,17 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void saveFluid(int ID) {
+    public void saveFluid(int ID) {
         saveObject(ID, "");
     }
 
     @Override
-	public void saveFluid(int ID, String text) {
+    public void saveFluid(int ID, String text) {
         saveObject(ID, text);
     }
 
     @Override
-	public void saveObject(int ID, String text) {
+    public void saveObject(int ID, String text) {
         ByteArrayOutputStream fout = new ByteArrayOutputStream();
         ObjectOutputStream out = null;
         InputStream in = null;
@@ -3650,7 +3637,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void saveObjectToFile(String filePath, String fluidName) {
+    public void saveObjectToFile(String filePath, String fluidName) {
 
         ObjectOutputStream out = null;
         InputStream in = null;
@@ -3667,7 +3654,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface readObjectFromFile(String filePath, String fluidName) {
+    public SystemInterface readObjectFromFile(String filePath, String fluidName) {
 
         FileInputStream streamIn = null;
         InputStream in = null;
@@ -3684,7 +3671,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public java.lang.String getMixingRuleName() {
+    public java.lang.String getMixingRuleName() {
         return ((PhaseEosInterface) getPhase(0)).getMixingRule().getMixingRuleName();
     }
 
@@ -3694,7 +3681,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property info.
      */
     @Override
-	public java.lang.String getFluidInfo() {
+    public java.lang.String getFluidInfo() {
         return fluidInfo;
     }
 
@@ -3704,8 +3691,8 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param info New value of property info.
      */
     @Override
-	public void setFluidInfo(java.lang.String info) {
-        this.fluidInfo = fluidInfo;
+    public void setFluidInfo(String info) {
+        this.fluidInfo = info;
     }
 
     /**
@@ -3714,7 +3701,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property fluidName.
      */
     @Override
-	public java.lang.String getFluidName() {
+    public java.lang.String getFluidName() {
         return fluidName;
     }
 
@@ -3724,7 +3711,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param fluidName New value of property fluidName.
      */
     @Override
-	public void setFluidName(java.lang.String fluidName) {
+    public void setFluidName(java.lang.String fluidName) {
         this.fluidName = fluidName;
     }
 
@@ -3745,12 +3732,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property characterization.
      */
     @Override
-	public neqsim.thermo.characterization.Characterise getCharacterization() {
+    public neqsim.thermo.characterization.Characterise getCharacterization() {
         return characterization;
     }
 
     @Override
-	public void calcKIJ(boolean ok) {
+    public void calcKIJ(boolean ok) {
         neqsim.thermo.mixingRule.EosMixingRules.calcEOSInteractionParameters = ok;
         for (int i = 0; i < numberOfPhases; i++) {
             ((PhaseEosInterface) getPhase(i)).getMixingRule().setCalcEOSInteractionParameters(ok);
@@ -3763,7 +3750,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return Value of property modelName.
      */
     @Override
-	public java.lang.String getModelName() {
+    public java.lang.String getModelName() {
         return modelName;
     }
 
@@ -3780,10 +3767,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Getter for property allowPhaseShift.
      *
      * @return Value of property allowPhaseShift.
-     *
      */
     @Override
-	public boolean allowPhaseShift() {
+    public boolean allowPhaseShift() {
         return allowPhaseShift;
     }
 
@@ -3791,15 +3777,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Setter for property allowPhaseShift.
      *
      * @param allowPhaseShift New value of property allowPhaseShift.
-     *
      */
     @Override
-	public void allowPhaseShift(boolean allowPhaseShift) {
+    public void allowPhaseShift(boolean allowPhaseShift) {
         this.allowPhaseShift = allowPhaseShift;
     }
 
     @Override
-	public double getProperty(String prop, String compName, int phase) {
+    public double getProperty(String prop, String compName, int phase) {
         if (prop.equals("molefraction")) {
             return getPhase(phase).getComponent(compName).getx();
         } else if (prop.equals("fugacitycoefficient")) {
@@ -3814,7 +3799,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getProperty(String prop, int phase) {
+    public double getProperty(String prop, int phase) {
         initPhysicalProperties();
         if (prop.equals("temperature")) {
             return getPhase(phase).getTemperature();
@@ -3840,7 +3825,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getProperty(String prop) {
+    public double getProperty(String prop) {
         if (prop.equals("numberOfPhases")) {
             return numberOfPhases;
         } else if (prop.equals("numberOfComponents")) {
@@ -3859,7 +3844,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void saveToDataBase() {
+    public void saveToDataBase() {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         // java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM
         // SYSTEMREPORT"));
@@ -3952,21 +3937,20 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Getter for property standard.
      *
      * @return Value of property standard.
-     *
      */
     @Override
-	public neqsim.standards.StandardInterface getStandard() {
+    public neqsim.standards.StandardInterface getStandard() {
         return standard;
     }
 
     @Override
-	public neqsim.standards.StandardInterface getStandard(String standardName) {
+    public neqsim.standards.StandardInterface getStandard(String standardName) {
         this.setStandard(standardName);
         return standard;
     }
 
     @Override
-	public void generatePDF() {
+    public void generatePDF() {
         neqsim.dataPresentation.iTextPDF.PdfCreator pdfDocument = null;
         pdfDocument = new neqsim.dataPresentation.iTextPDF.PdfCreator();
         pdfDocument.getDocument().addTitle("NeqSim Thermo Simulation Report");
@@ -4009,7 +3993,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void displayPDF() {
+    public void displayPDF() {
         generatePDF();
         ((neqsim.dataPresentation.iTextPDF.PdfCreator) pdfDocument).openPDF();
     }
@@ -4018,10 +4002,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Setter for property standard.
      *
      * @param standard New value of property standard.
-     *
      */
     @Override
-	public void setStandard(String standardName) {
+    public void setStandard(String standardName) {
         if (standardName.equals("ISO1992")) {
             this.standard = new neqsim.standards.gasQuality.Standard_ISO6976();
         } else if (standardName.equals("Draft_ISO18453")) {
@@ -4035,10 +4018,9 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Getter for property hasPlusFraction.
      *
      * @return Value of property hasPlusFraction.
-     *
      */
     @Override
-	public boolean hasPlusFraction() {
+    public boolean hasPlusFraction() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (getPhase(0).getComponent(i).isIsPlusFraction()) {
                 return true;
@@ -4057,7 +4039,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void tuneModel(String model, double val, int phase) {
+    public void tuneModel(String model, double val, int phase) {
         if (model.equals("viscosity")) {
             getPhase(phase).getPhysicalProperties().getViscosityModel().tuneModel(val, getPhase(phase).getTemperature(),
                     getPhase(phase).getPressure());
@@ -4073,7 +4055,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getHeatOfVaporization() {
+    public double getHeatOfVaporization() {
         if (numberOfPhases < 2) {
             return 0;
         } else {
@@ -4083,7 +4065,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void readFluid(String fluidName) {
+    public void readFluid(String fluidName) {
         this.fluidName = fluidName;
         try {
             neqsim.util.database.NeqSimFluidDataBase database = new neqsim.util.database.NeqSimFluidDataBase();
@@ -4114,7 +4096,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return resultTable;
     }
     
@@ -4132,7 +4114,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     // }
 
     @Override
-	@SuppressWarnings("empty-statement")
+    @SuppressWarnings("empty-statement")
     public SystemInterface setModel(String model) {
         SystemInterface tempModel = null;
         try {
@@ -4215,7 +4197,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public SystemInterface autoSelectModel() {
+    public SystemInterface autoSelectModel() {
         if (this.getPhase(0).hasComponent("MDEA") && this.getPhase(0).hasComponent("water")
                 && this.getPhase(0).hasComponent("CO2")) {
             return setModel("Electrolyte-ScRK-EOS");
@@ -4243,7 +4225,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void autoSelectMixingRule() {
+    public void autoSelectMixingRule() {
         logger.info("setting mixing rule");
         if (modelName.equals("CPAs-SRK-EOS") || modelName.equals("CPA-SRK-EOS")
                 || modelName.equals("Electrolyte-CPA-EOS-statoil") || modelName.equals("CPAs-SRK-EOS-statoil")
@@ -4271,22 +4253,22 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public int getMixingRule() {
+    public int getMixingRule() {
         return mixingRule;
     }
 
     @Override
-	public ComponentInterface getComponent(String name) {
+    public ComponentInterface getComponent(String name) {
         return getPhase(0).getComponent(name);
     }
 
     @Override
-	public ComponentInterface getComponent(int number) {
+    public ComponentInterface getComponent(int number) {
         return getPhase(0).getComponent(number);
     }
 
     @Override
-	public void orderByDensity() {
+    public void orderByDensity() {
         boolean change = false;
         int count = 0;
 
@@ -4326,7 +4308,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addLiquidToGas(double fraction) {
+    public void addLiquidToGas(double fraction) {
         for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
             double change = getPhase(1).getComponent(i).getNumberOfMolesInPhase() * fraction;
             addComponent(i, change, 0);
@@ -4335,7 +4317,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
+    public void addPhaseFractionToPhase(double fraction, String specification, String fromPhaseName,
             String toPhaseName) {
         if (!(hasPhaseType(fromPhaseName) && hasPhaseType(toPhaseName) || fraction < 1e-30)) {
             return;
@@ -4351,7 +4333,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,
+    public void addPhaseFractionToPhase(double fraction, String specification, String specifiedStream,
             String fromPhaseName, String toPhaseName) {
         double moleFraction = fraction;
         if (!hasPhaseType(fromPhaseName) || !hasPhaseType(toPhaseName) || fraction < 1e-30) {
@@ -4395,7 +4377,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void renameComponent(String oldName, String newName) {
+    public void renameComponent(String oldName, String newName) {
         componentNames.set(getPhase(0).getComponent(oldName).getComponentNumber(), newName);
         for (int i = 0; i < maxNumberOfPhases; i++) {
             getPhase(i).getComponent(oldName).setComponentName(newName);
@@ -4403,7 +4385,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setComponentNameTag(String nameTag) {
+    public void setComponentNameTag(String nameTag) {
         componentNameTag = nameTag;
         for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
             renameComponent(componentNames.get(i), componentNames.get(i) + nameTag);
@@ -4411,7 +4393,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setComponentNameTagOnNormalComponents(String nameTag) {
+    public void setComponentNameTagOnNormalComponents(String nameTag) {
         componentNameTag = nameTag;
         for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
             if (!getPhase(0).getComponent(i).isIsTBPfraction() && !getPhase(0).getComponent(i).isIsPlusFraction()) {
@@ -4421,12 +4403,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String getComponentNameTag() {
+    public String getComponentNameTag() {
         return componentNameTag;
     }
 
     @Override
-	public void addGasToLiquid(double fraction) {
+    public void addGasToLiquid(double fraction) {
         for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
             double change = getPhase(0).getComponent(i).getNumberOfMolesInPhase() * fraction;
             addComponent(i, -change, 0);
@@ -4436,17 +4418,17 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getTotalNumberOfMoles() {
+    public double getTotalNumberOfMoles() {
         return this.totalNumberOfMoles;
     }
 
     @Override
-	public void setTotalNumberOfMoles(double totalNumberOfMoles) {
+    public void setTotalNumberOfMoles(double totalNumberOfMoles) {
         this.totalNumberOfMoles = totalNumberOfMoles;
     }
 
     @Override
-	public boolean hasPhaseType(String phaseTypeName) {
+    public boolean hasPhaseType(String phaseTypeName) {
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return true;
@@ -4456,7 +4438,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public PhaseInterface getPhase(String phaseTypeName) {
+    public PhaseInterface getPhase(String phaseTypeName) {
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return getPhase(i);
@@ -4466,13 +4448,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public int getPhaseNumberOfPhase(String phaseTypeName) {
-//        if(phaseTypeName.equals("gas")) return 0;
-//        else if(phaseTypeName.equals("oil")) return 1;
-//        else if(phaseTypeName.equals("water")) return 2;
-//        else if(phaseTypeName.equals("liquid")) return 1;
-//        else return 0;
-//
+    public int getPhaseNumberOfPhase(String phaseTypeName) {
+        // if(phaseTypeName.equals("gas")) return 0;
+        // else if(phaseTypeName.equals("oil")) return 1;
+        // else if(phaseTypeName.equals("water")) return 2;
+        // else if(phaseTypeName.equals("liquid")) return 1;
+        // else return 0;
+        //
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return i;
@@ -4482,13 +4464,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public int getPhaseIndexOfPhase(String phaseTypeName) {
-//        if(phaseTypeName.equals("gas")) return 0;
-//        else if(phaseTypeName.equals("oil")) return 1;
-//        else if(phaseTypeName.equals("water")) return 2;
-//        else if(phaseTypeName.equals("liquid")) return 1;
-//        else return 0;
-//
+    public int getPhaseIndexOfPhase(String phaseTypeName) {
+        // if(phaseTypeName.equals("gas")) return 0;
+        // else if(phaseTypeName.equals("oil")) return 1;
+        // else if(phaseTypeName.equals("water")) return 2;
+        // else if(phaseTypeName.equals("liquid")) return 1;
+        // else return 0;
+        //
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseTypeName)) {
                 return phaseIndex[i];
@@ -4498,7 +4480,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public PhaseInterface getPhaseOfType(String phaseName) {
+    public PhaseInterface getPhaseOfType(String phaseName) {
         for (int i = 0; i < numberOfPhases; i++) {
             if (getPhase(i).getPhaseTypeName().equals(phaseName)) {
                 return getPhase(i);
@@ -4508,7 +4490,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double calcHenrysConstant(String component) {
+    public double calcHenrysConstant(String component) {
         if (numberOfPhases != 2) {
             logger.error("cant calculated Henrys constant - two phases must be present.");
             return 0;
@@ -4525,7 +4507,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setUseTVasIndependentVariables(boolean useTVasIndependentVariables) {
+    public void setUseTVasIndependentVariables(boolean useTVasIndependentVariables) {
         for (int i = 0; i < numberOfPhases; i++) {
             getPhase(i).setTotalVolume(getPhase(i).getVolume());
             getPhase(i).setConstantPhaseVolume(useTVasIndependentVariables);
@@ -4535,7 +4517,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public void setBmixType(int bmixType) {
+    public void setBmixType(int bmixType) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             ((PhaseEosInterface) getPhase(i)).getMixingRule().setBmixType(bmixType);
         }
@@ -4545,7 +4527,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the implementedTemperatureDeriativesofFugacity
      */
     @Override
-	public boolean isImplementedTemperatureDeriativesofFugacity() {
+    public boolean isImplementedTemperatureDeriativesofFugacity() {
         return implementedTemperatureDeriativesofFugacity;
     }
 
@@ -4555,7 +4537,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                                                   to set
      */
     @Override
-	public void setImplementedTemperatureDeriativesofFugacity(boolean implementedTemperatureDeriativesofFugacity) {
+    public void setImplementedTemperatureDeriativesofFugacity(boolean implementedTemperatureDeriativesofFugacity) {
         this.implementedTemperatureDeriativesofFugacity = implementedTemperatureDeriativesofFugacity;
     }
 
@@ -4563,7 +4545,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the implementedPressureDeriativesofFugacity
      */
     @Override
-	public boolean isImplementedPressureDeriativesofFugacity() {
+    public boolean isImplementedPressureDeriativesofFugacity() {
         return implementedPressureDeriativesofFugacity;
     }
 
@@ -4573,7 +4555,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                                                to set
      */
     @Override
-	public void setImplementedPressureDeriativesofFugacity(boolean implementedPressureDeriativesofFugacity) {
+    public void setImplementedPressureDeriativesofFugacity(boolean implementedPressureDeriativesofFugacity) {
         this.implementedPressureDeriativesofFugacity = implementedPressureDeriativesofFugacity;
     }
 
@@ -4581,7 +4563,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the implementedCompositionDeriativesofFugacity
      */
     @Override
-	public boolean isImplementedCompositionDeriativesofFugacity() {
+    public boolean isImplementedCompositionDeriativesofFugacity() {
         return implementedCompositionDeriativesofFugacity;
     }
 
@@ -4591,12 +4573,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      *                                                   to set
      */
     @Override
-	public void setImplementedCompositionDeriativesofFugacity(boolean implementedCompositionDeriativesofFugacity) {
+    public void setImplementedCompositionDeriativesofFugacity(boolean implementedCompositionDeriativesofFugacity) {
         this.implementedCompositionDeriativesofFugacity = implementedCompositionDeriativesofFugacity;
     }
 
     @Override
-	public void deleteFluidPhase(int phase) {
+    public void deleteFluidPhase(int phase) {
         for (int i = phase; i < numberOfPhases; i++) {
             phaseIndex[i] = phaseIndex[i + 1];
         }
@@ -4607,7 +4589,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the maxNumberOfPhases
      */
     @Override
-	public int getMaxNumberOfPhases() {
+    public int getMaxNumberOfPhases() {
         return maxNumberOfPhases;
     }
 
@@ -4615,7 +4597,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param maxNumberOfPhases the maxNumberOfPhases to set
      */
     @Override
-	public void setMaxNumberOfPhases(int maxNumberOfPhases) {
+    public void setMaxNumberOfPhases(int maxNumberOfPhases) {
         this.maxNumberOfPhases = maxNumberOfPhases;
     }
 
@@ -4623,12 +4605,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * This method is used to set the total molar composition of a fluid. The total
      * flow rate will be kept constant. The input mole fractions will be normalized.
      *
-     * @param molefractions is a double array taking the molar fraction of the
-     *                      components in the fluid
-     * @return Nothing.
+     * @param  molefractions is a double array taking the molar fraction of the
+     *                       components in the fluid
+     * @return               Nothing.
      */
     @Override
-	public void setMolarComposition(double[] molefractions) {
+    public void setMolarComposition(double[] molefractions) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
             logger.error("Total flow can not be 0 when setting molar composition ");
@@ -4653,13 +4635,13 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * total flow rate will be kept constant. The input mole fractions will be
      * normalized.
      *
-     * @param molefractions is a double array taking the molar fraction of the
-     *                      components in the fluid. THe last molfraction is the
-     *                      mole fraction of the plus component
-     * @return Nothing.
+     * @param  molefractions is a double array taking the molar fraction of the
+     *                       components in the fluid. THe last molfraction is the
+     *                       mole fraction of the plus component
+     * @return               Nothing.
      */
     @Override
-	public void setMolarCompositionPlus(double[] molefractions) {
+    public void setMolarCompositionPlus(double[] molefractions) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
             logger.error("Total flow can not be 0 when setting molar composition ");
@@ -4694,14 +4676,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * fluid. The total flow rate will be kept constant. The input mole fractions
      * will be normalized.
      *
-     * @param molefractions is a double array taking the molar fraction of the
-     *                      components in the fluid. THe last fraction in the array
-     *                      is the total molefraction of the characterized
-     *                      components.
-     * @return Nothing.
+     * @param  molefractions is a double array taking the molar fraction of the
+     *                       components in the fluid. THe last fraction in the array
+     *                       is the total molefraction of the characterized
+     *                       components.
+     * @return               Nothing.
      */
     @Override
-	public void setMolarCompositionOfPlusFluid(double[] molefractions) {
+    public void setMolarCompositionOfPlusFluid(double[] molefractions) {
         double totalFlow = getTotalNumberOfMoles();
         if (totalFlow < 1e-100) {
             logger.error("Total flow can not be 0 when setting molar composition ");
@@ -4731,12 +4713,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * This method is used to set the total molar composition of a fluid. The total
      * flow rate will be kept constant. The input mole fractions will be normalized.
      *
-     * @param moles is a double array taking the molar flow rate (mole/sec) of the
-     *              components in the fluid
-     * @return Nothing.
+     * @param  moles is a double array taking the molar flow rate (mole/sec) of the
+     *               components in the fluid
+     * @return       Nothing.
      */
     @Override
-	public void setMolarFlowRates(double[] moles) {
+    public void setMolarFlowRates(double[] moles) {
         setEmptyFluid();
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
             addComponent(compNumb, moles[compNumb]);
@@ -4750,7 +4732,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Returns the molar rate vector in unit mole/sec
      */
     @Override
-	public double[] getMolarRate() {
+    public double[] getMolarRate() {
         double[] comp = new double[getPhase(0).getNumberOfComponents()];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4763,7 +4745,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * Returns the overall mole composition vector in unit mole fraction
      */
     @Override
-	public double[] getMolarComposition() {
+    public double[] getMolarComposition() {
         double[] comp = new double[getPhase(0).getNumberOfComponents()];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4776,7 +4758,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the multiphaseWaxCheck
      */
     @Override
-	public boolean isMultiphaseWaxCheck() {
+    public boolean isMultiphaseWaxCheck() {
         return multiphaseWaxCheck;
     }
 
@@ -4784,12 +4766,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param multiphaseWaxCheck the multiphaseWaxCheck to set
      */
     @Override
-	public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck) {
+    public void setMultiphaseWaxCheck(boolean multiphaseWaxCheck) {
         this.multiphaseWaxCheck = multiphaseWaxCheck;
     }
 
     @Override
-	public String[] getCompIDs() {
+    public String[] getCompIDs() {
         String[] ids = new String[numberOfComponents];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4799,7 +4781,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String[] getCompFormulaes() {
+    public String[] getCompFormulaes() {
         String[] formula = new String[numberOfComponents];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4809,7 +4791,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String[] getCompNames() {
+    public String[] getCompNames() {
         String[] names = new String[numberOfComponents];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4819,7 +4801,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double[] getNormalBoilingPointTemperatures() {
+    public double[] getNormalBoilingPointTemperatures() {
         double[] bt = new double[numberOfComponents];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4829,17 +4811,17 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String[] getCapeOpenProperties11() {
+    public String[] getCapeOpenProperties11() {
         return CapeOpenProperties11;
     }
 
     @Override
-	public String[] getCapeOpenProperties10() {
+    public String[] getCapeOpenProperties10() {
         return CapeOpenProperties10;
     }
 
     @Override
-	public double[] getMolecularWeights() {
+    public double[] getMolecularWeights() {
         double[] mm = new double[numberOfComponents];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4849,7 +4831,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public String[] getCASNumbers() {
+    public String[] getCASNumbers() {
         String[] names = new String[numberOfComponents];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -4859,7 +4841,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public int getNumberOfOilFractionComponents() {
+    public int getNumberOfOilFractionComponents() {
         int number = 0;
         for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
             if (getPhase(0).getComponent(i).isIsTBPfraction() || getPhase(0).getComponent(i).isIsPlusFraction()) {
@@ -4870,7 +4852,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public int[] getOilFractionIDs() {
+    public int[] getOilFractionIDs() {
         int numb = getNumberOfOilFractionComponents();
         int[] IDs = new int[numb];
         int number = 0;
@@ -4884,7 +4866,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public boolean setHeavyTBPfractionAsPlusFraction() {
+    public boolean setHeavyTBPfractionAsPlusFraction() {
         int compNumber = 0;
         double molarMass = 0;
         boolean foundTBP = false;
@@ -4907,7 +4889,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double[] getOilFractionNormalBoilingPoints() {
+    public double[] getOilFractionNormalBoilingPoints() {
         int numb = getNumberOfOilFractionComponents();
         int[] indexes = getOilFractionIDs();
         double[] temp = new double[numb];
@@ -4918,7 +4900,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double[] getOilFractionLiquidDensityAt25C() {
+    public double[] getOilFractionLiquidDensityAt25C() {
         int numb = getNumberOfOilFractionComponents();
         int[] indexes = getOilFractionIDs();
         double[] temp = new double[numb];
@@ -4929,7 +4911,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double[] getOilFractionMolecularMass() {
+    public double[] getOilFractionMolecularMass() {
         int numb = getNumberOfOilFractionComponents();
         int[] indexes = getOilFractionIDs();
         double[] temp = new double[numb];
@@ -4940,7 +4922,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public PhaseInterface getLowestGibbsEnergyPhase() {
+    public PhaseInterface getLowestGibbsEnergyPhase() {
         if (getPhase(0).getGibbsEnergy() < getPhase(1).getGibbsEnergy()) {
             return getPhase(0);
         } else {
@@ -4949,7 +4931,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
     }
 
     @Override
-	public double getWtFraction(int phaseNumber) {
+    public double getWtFraction(int phaseNumber) {
         return getPhase(phaseNumber).getWtFraction(this);
     }
 
@@ -4957,16 +4939,16 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * method to return the volume fraction of a phase note: without Peneloux volume
      * correction
      *
-     * @param phaseNumber number of the phase to get volume fraction for
-     * @return volume fraction
+     * @param  phaseNumber number of the phase to get volume fraction for
+     * @return             volume fraction
      */
     @Override
-	public double getVolumeFraction(int phaseNumber) {
+    public double getVolumeFraction(int phaseNumber) {
         return getPhase(phaseNumber).getVolume() / getVolume();
     }
 
     @Override
-	public final double getPhaseFraction(String phaseTypeName, String unit) {
+    public final double getPhaseFraction(String phaseTypeName, String unit) {
         int phaseNumber = getPhaseNumberOfPhase(phaseTypeName);
         switch (unit) {
         case "mole":
@@ -4985,26 +4967,26 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * method to return the volume fraction of a phase note: with Peneloux volume
      * correction
      *
-     * @param phaseNumber number of the phase to get volume fraction for
-     * @return volume fraction
+     * @param  phaseNumber number of the phase to get volume fraction for
+     * @return             volume fraction
      */
     @Override
-	public double getCorrectedVolumeFraction(int phaseNumber) {
+    public double getCorrectedVolumeFraction(int phaseNumber) {
         return getPhase(phaseNumber).getCorrectedVolume() / getCorrectedVolume();
     }
 
     @Override
-	public double getMoleFraction(int phaseNumber) {
+    public double getMoleFraction(int phaseNumber) {
         return getPhase(phaseNumber).getBeta();
     }
 
     @Override
-	public void isImplementedCompositionDeriativesofFugacity(boolean isImpl) {
+    public void isImplementedCompositionDeriativesofFugacity(boolean isImpl) {
         implementedCompositionDeriativesofFugacity = isImpl;
     }
 
     @Override
-	public void addCapeOpenProperty(String propertyName) {
+    public void addCapeOpenProperty(String propertyName) {
         String[] tempString = new String[CapeOpenProperties11.length + 1];
         System.arraycopy(CapeOpenProperties11, 0, tempString, 0, CapeOpenProperties11.length);
         tempString[CapeOpenProperties11.length] = propertyName;
@@ -5020,12 +5002,12 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the waxCharacterisation
      */
     @Override
-	public neqsim.thermo.characterization.WaxCharacterise getWaxCharacterisation() {
+    public neqsim.thermo.characterization.WaxCharacterise getWaxCharacterisation() {
         return waxCharacterisation;
     }
 
     @Override
-	public WaxModelInterface getWaxModel() {
+    public WaxModelInterface getWaxModel() {
         if (waxCharacterisation == null) {
             waxCharacterisation = new WaxCharacterise(this);
         }
@@ -5036,14 +5018,14 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param componentNames the componentNames to set
      */
     @Override
-	public void setComponentNames(String[] componentNames) {
+    public void setComponentNames(String[] componentNames) {
         for (int i = 0; i < componentNames.length; i++) {
             this.componentNames.set(i, componentNames[i]);
         }
     }
 
     @Override
-	public double getLiquidVolume() {
+    public double getLiquidVolume() {
         double totFlow = 0;
 
         for (int kj = 0; kj < numberOfPhases; kj++) {
@@ -5058,7 +5040,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @return the forcePhaseTypes
      */
     @Override
-	public boolean isForcePhaseTypes() {
+    public boolean isForcePhaseTypes() {
         return forcePhaseTypes;
     }
 
@@ -5066,7 +5048,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface{
      * @param forcePhaseTypes the forcePhaseTypes to set
      */
     @Override
-	public void setForcePhaseTypes(boolean forcePhaseTypes) {
+    public void setForcePhaseTypes(boolean forcePhaseTypes) {
         this.forcePhaseTypes = forcePhaseTypes;
     }
 }

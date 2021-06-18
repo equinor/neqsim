@@ -116,13 +116,11 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
         this.lowPres = lowPres;
         oldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
         deltalnK = new double[system.getPhase(0).getNumberOfComponents()];
-
     }
 
     @Override
-	public void run() {
-
-        speceq = 0; // initiallization
+    public void run() {
+        speceq = 0; // initialization
         try {
 
             points[0] = new double[10000]; // declarations for points
@@ -547,7 +545,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -603,11 +601,11 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -635,12 +633,12 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points2;
     }
 
     @Override
-	public void addData(String name, double[][] data) {
+    public void addData(String name, double[][] data) {
         double[][] localPoints = new double[points2.length + data.length][];
         navn[localPoints.length / 2 - 1] = name;
         System.arraycopy(points2, 0, localPoints, 0, points2.length);
@@ -649,7 +647,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         if (name.equals("dewT")) {
             return points2[0];
         }
@@ -722,7 +720,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         fileName = name;
     }
 
@@ -730,7 +728,6 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
      * Getter for property bubblePointFirst.
      *
      * @return Value of property bubblePointFirst.
-     *
      */
 
     public boolean isBubblePointFirst() {
@@ -741,7 +738,6 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
      * Setter for property bubblePointFirst.
      *
      * @param bubblePointFirst New value of property bubblePointFirst.
-     *
      */
 
     public void setBubblePointFirst(boolean bubblePointFirst) {
@@ -749,7 +745,7 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
@@ -798,10 +794,9 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 initPc = system.getPhase(0).getComponents()[hc].getPC();
                 initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
             }
-            Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc)); // initial T based
-                                                                                                    // on the
-                                                                                                    // lighterst/heaviest
-                                                                                                    // component
+
+            // initial T based on the lightest/heaviest component
+            Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
 
             // solve for Tstart with Newton
             for (int i = 0; i < 1000; i++) {
@@ -841,10 +836,10 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
                 Tstartold = Tstart;
             }
         } catch (Exception e) {
-            Tstart = Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+            Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
         }
         if (Double.isNaN(Tstart) || Double.isInfinite(Tstart)) {
-            Tstart = Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
+            Tstart = initTc * 5.373 * (1 + initAc) / (5.373 * (1 + initAc) - Math.log(P / initPc));
         }
         return Tstart;
     }

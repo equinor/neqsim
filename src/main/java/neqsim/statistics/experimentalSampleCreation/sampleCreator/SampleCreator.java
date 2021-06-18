@@ -11,8 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
 public class SampleCreator extends Object {
@@ -34,11 +33,9 @@ public class SampleCreator extends Object {
 
     public void setThermoSystem(SystemInterface system) {
         this.system = system;
-        this.thermoOps = thermoOps;
     }
 
     public void setExperimentalEquipment(ExperimentalEquipmentData equipment) {
         this.equipment = equipment;
     }
-
 }
