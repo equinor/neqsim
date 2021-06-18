@@ -26,14 +26,13 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
             String nameOfIonToBeAdded) {
         super(system);
         this.phaseNumber = phaseNumber;
-        this.saltName = saltName;
         this.scaleSaltName = scaleSaltName;
         this.nameOfIonToBeAdded = nameOfIonToBeAdded;
         logger.info("ok ");
     }
 
     @Override
-	public void run() {
+    public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -150,11 +149,11 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         logger.info("checking table...scale " + resultTable[0][0]);
         logger.info("checking table...scale " + resultTable[0][1]);
         logger.info("checking table...scale " + resultTable[0][2]);

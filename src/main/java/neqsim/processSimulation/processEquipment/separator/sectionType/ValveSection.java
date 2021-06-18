@@ -8,7 +8,6 @@ import neqsim.processSimulation.mechanicalDesign.separator.sectionType.Distillat
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
- *
  * @author esol
  */
 public class ValveSection extends SeparatorSection {
@@ -22,11 +21,11 @@ public class ValveSection extends SeparatorSection {
 
     public ValveSection(String name, String type, Separator sep) {
         this(type, sep);
-        name = name;
+        this.name = name;
     }
 
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();
         if (gasLoadF > 0.1) {
             return 0.1 / gasLoadF;

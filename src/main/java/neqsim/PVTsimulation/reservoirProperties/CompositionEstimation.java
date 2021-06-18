@@ -5,21 +5,21 @@
 package neqsim.PVTsimulation.reservoirProperties;
 
 /**
- *
  * @author esol
  */
 public class CompositionEstimation {
 
     private static final long serialVersionUID = 1000;
 
-    double reservoirTemperature, reservoirPressure;
+    double reservoirTemperature;
+    double reservoirPressure;
 
     public CompositionEstimation(double reservoirTemperature, double reservoirPressure) {
-        reservoirTemperature = reservoirTemperature;
-        reservoirPressure = reservoirPressure;
+        this.reservoirTemperature = reservoirTemperature;
+        this.reservoirPressure = reservoirPressure;
     }
 
-// correltaion from Haaland et. al. 1999
+    // correltaion from Haaland et. al. 1999
     public double estimateH2Sconcentration() {
         return 5.0e7 * Math.exp(-6543.0 / reservoirTemperature);
     }

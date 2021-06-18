@@ -7,7 +7,6 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import java.util.*;
 
 /**
- *
  * @author ESOL
  */
 public class Fittings {
@@ -39,12 +38,12 @@ public class Fittings {
         private double LtoD = 1.0;
 
         public Fitting(String name, double LdivD) {
-            name = name;
+            this.fittingName = name;
             LtoD = LdivD;
         }
 
         public Fitting(String name) {
-            name = name;
+            this.fittingName = name;
 
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
