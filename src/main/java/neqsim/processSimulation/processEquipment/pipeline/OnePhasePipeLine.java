@@ -35,7 +35,7 @@ public class OnePhasePipeLine extends Pipeline {
 	public void run() {
         super.run();
         pipe.solveSteadyState(10);
-        pipe.print();
+        //pipe.print();
         // pipe.getDisplay().createNetCdfFile(fileName);
         outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     }

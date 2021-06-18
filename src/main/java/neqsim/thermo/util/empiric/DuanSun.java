@@ -577,7 +577,7 @@ public class DuanSun {
         double mCO2 = 0.0;
         mCO2 = (yCO2 * P) / Math
                 .exp((-Math.log(fCO2) + chempotliqCO2RT + (2.0) * lamdaCO2Na * S + zetaCO2NaCl * Math.pow(S, 2.0)));
-        // System.out.println("mCO2 = " + mCO2 + " mol/kg solvent ");
+        // System.out.println("mCO2 = " + mCO2 + "b mol/kg solvent ");
 
         double xCO2 = 0.0;
         xCO2 = mCO2 / (1000. / 18. + mCO2);

@@ -580,6 +580,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     @Override
+    public String[][] getResultTable(){
+    	return thermoSystem.getResultTable();
+    }
+    
+    @Override
 	public String getName() {
         return name;
     }

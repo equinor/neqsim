@@ -13,15 +13,17 @@ public class LNGFlash {
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(20, 5.0);
 
-        testSystem.addComponent("methane", 0.02);
+        testSystem.addComponent("methane", 110.02);
         // testSystem.addComponent("n-pentane", 1e-10);
-        testSystem.addComponent("n-hexane", 0.98);
+        testSystem.addComponent("n-hexane", 1.00001);
 //testSystem.addTBPfraction("C7", 0.1, 86.0/1000.0, 0.7);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
+        testSystem.initProperties();
         // testSystem.setSolidPhaseCheck("n-hexane");
         // testSystem.addSolidComplexPhase("wax");
+        testSystem.display();
         testSystem.init(0);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

@@ -89,5 +89,7 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
      * @return change in exergy in specified unit
      */
     public double getExergyChange(String unit, double sourrondingTemperature);
+    
+    public String[][] getResultTable();
 
 }

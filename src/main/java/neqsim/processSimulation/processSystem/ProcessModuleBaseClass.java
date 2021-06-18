@@ -207,4 +207,8 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
 	public String getConditionAnalysisMessage() {
         return null;
     }
+    
+    public String[][] getResultTable(){
+    	return null;
+    }
 }

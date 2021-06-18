@@ -47,13 +47,13 @@ public class gasPipeline {
 
         neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
-        // operations.add(pipeline);
-        operations.add(simplePipeline);
+        operations.add(pipeline);
+        //operations.add(simplePipeline);
         // operations.add(simplePipeline2phase);
 
         operations.run();
-        // pipeline.getOutStream().displayResult();
-        simplePipeline.getOutStream().displayResult();
+         pipeline.getOutStream().displayResult();
+        //simplePipeline.getOutStream().displayResult();
         // simplePipeline2phase.getOutStream().displayResult();
 
         // .displayResult();

@@ -300,6 +300,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 	public void displayResult() {
         thermoSystem.display(name);
     }
+    
+    public String[][] getResultTable(){
+    	return thermoSystem.getResultTable();
+    }
 
     @Override
 	public void runTransient(double dt) {
