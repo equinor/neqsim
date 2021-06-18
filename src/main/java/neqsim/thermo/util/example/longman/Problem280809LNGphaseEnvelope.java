@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package neqsim.thermo.util.example.longman;
 
 import neqsim.thermo.system.SystemGERG2004Eos;
