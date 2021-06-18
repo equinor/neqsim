@@ -15,3 +15,20 @@ Please note we have a code of conduct, please follow it in all your interactions
    Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
 4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you 
    do not have permission to do that, you may request the second reviewer to merge it for you.
+
+## Style guideline
+
+This project uses Google Java style formatting rules. 
+
+For Visual Studio Code:
+
+Install Language Support for Java(TM) by Red Hat and add following settings to settings.json
+ ```   
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java",
+        "editor.formatOnSave": true,
+    },
+    "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+//     "java.format.settings.url": "./eclipse-formatter.xml",
+    "java.saveActions.organizeImports": true
+```
