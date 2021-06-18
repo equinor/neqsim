@@ -12,8 +12,7 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironmentBaseClass;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public abstract class GeometryDefinition extends Object implements GeometryDefinitionInterface, Cloneable,
@@ -25,7 +24,7 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
      * @return the surroundingEnvironment
      */
     @Override
-	public SurroundingEnvironment getSurroundingEnvironment() {
+    public SurroundingEnvironment getSurroundingEnvironment() {
         return surroundingEnvironment;
     }
 
@@ -33,7 +32,7 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
      * @param surroundingEnvironment the surroundingEnvironment to set
      */
     @Override
-	public void setSurroundingEnvironment(SurroundingEnvironment surroundingEnvironment) {
+    public void setSurroundingEnvironment(SurroundingEnvironment surroundingEnvironment) {
         this.surroundingEnvironment = surroundingEnvironment;
     }
 
@@ -70,7 +69,6 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
     public GeometryDefinition(double diameter) {
         this.diameter = diameter;
         this.radius = diameter / 2.0;
-        this.nodeLength = nodeLength;
         this.area = pi * Math.pow(radius, 2);
     }
 
@@ -81,7 +79,7 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         GeometryDefinitionInterface clonedGeometry = null;
         try {
             clonedGeometry = (GeometryDefinition) super.clone();
@@ -93,100 +91,100 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
     }
 
     @Override
-	public void setNodeLength(double nodeLength) {
+    public void setNodeLength(double nodeLength) {
         this.nodeLength = nodeLength;
     }
 
     @Override
-	public void setInnerSurfaceRoughness(double innerSurfaceRoughness) {
+    public void setInnerSurfaceRoughness(double innerSurfaceRoughness) {
         this.innerSurfaceRoughness = innerSurfaceRoughness;
     }
 
     @Override
-	public void init() {
+    public void init() {
         this.radius = diameter / 2.0;
         this.area = pi * Math.pow(radius, 2.0);
         this.relativeRoughnes = innerSurfaceRoughness / diameter;
     }
 
     @Override
-	public void setDiameter(double diameter) {
+    public void setDiameter(double diameter) {
         this.diameter = diameter;
         this.radius = diameter / 2.0;
         this.area = pi * Math.pow(radius, 2);
     }
 
     @Override
-	public double getWallHeatTransferCoefficient() {
+    public double getWallHeatTransferCoefficient() {
         return wall.getHeatTransferCoefficient();
     }
 
     @Override
-	public double getDiameter() {
+    public double getDiameter() {
         return diameter;
     }
 
     @Override
-	public double getArea() {
+    public double getArea() {
         return area;
     }
 
     @Override
-	public double getRadius() {
+    public double getRadius() {
         return radius;
     }
 
     @Override
-	public double getInnerSurfaceRoughness() {
+    public double getInnerSurfaceRoughness() {
         return innerSurfaceRoughness;
     }
 
     @Override
-	public double getRelativeRoughnes() {
+    public double getRelativeRoughnes() {
         return relativeRoughnes;
     }
 
     @Override
-	public double getRelativeRoughnes(double diameter) {
+    public double getRelativeRoughnes(double diameter) {
         return innerSurfaceRoughness / diameter;
     }
 
     @Override
-	public double getCircumference() {
+    public double getCircumference() {
         return 2 * pi * radius;
     }
 
     @Override
-	public double getNodeLength() {
+    public double getNodeLength() {
         return nodeLength;
     }
 
     @Override
-	public GeometryDefinitionInterface getGeometry() {
+    public GeometryDefinitionInterface getGeometry() {
         return this;
     }
 
     @Override
-	public void setPackingType(int i) {
+    public void setPackingType(int i) {
     }
 
     @Override
-	public void setPackingType(String name, String material, int size) {
+    public void setPackingType(String name, String material, int size) {
         System.out.println("error - packing set in Geometry definition class");
     }
 
     @Override
-	public PackingInterface getPacking() {
+    public PackingInterface getPacking() {
         return packing;
     }
 
     @Override
-	public double getInnerWallTemperature() {
+    public double getInnerWallTemperature() {
         return innerWallTemperature;
     }
 
     @Override
-	public void setInnerWallTemperature(double temperature) {
+    public void setInnerWallTemperature(double temperature) {
         this.innerWallTemperature = temperature;
     }
 
@@ -194,7 +192,7 @@ public abstract class GeometryDefinition extends Object implements GeometryDefin
      * @param wallHeatTransferCoefficient the wallHeatTransferCoefficient to set
      */
     @Override
-	public void setWallHeatTransferCoefficient(double wallHeatTransferCoefficient) {
+    public void setWallHeatTransferCoefficient(double wallHeatTransferCoefficient) {
         this.wallHeatTransferCoefficient = wallHeatTransferCoefficient;
     }
 }

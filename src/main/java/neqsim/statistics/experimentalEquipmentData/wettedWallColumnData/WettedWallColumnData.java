@@ -9,8 +9,7 @@ package neqsim.statistics.experimentalEquipmentData.wettedWallColumnData;
 import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
 public class WettedWallColumnData extends ExperimentalEquipmentData {
@@ -37,7 +36,7 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
     }
 
     public void setLength(double diameter) {
-        this.length = length;
+        this.diameter = diameter;
     }
 
     public double getLength() {

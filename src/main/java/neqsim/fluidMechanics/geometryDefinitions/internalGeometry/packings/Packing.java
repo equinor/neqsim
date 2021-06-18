@@ -7,8 +7,7 @@
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public class Packing implements PackingInterface {
@@ -23,7 +22,7 @@ public class Packing implements PackingInterface {
     }
 
     public Packing(String name) {
-        name = name;
+        this.name = name;
         try {
             System.out.println("init packing");
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -42,7 +41,7 @@ public class Packing implements PackingInterface {
     }
 
     public Packing(String name, String material, int size) {
-        name = name;
+        this.name = name;
         try {
             System.out.println("init packing");
             neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -62,7 +61,7 @@ public class Packing implements PackingInterface {
     }
 
     @Override
-	public double getSurfaceAreaPrVolume() {
+    public double getSurfaceAreaPrVolume() {
         return surfaceAreaPrVolume;
     }
 
@@ -72,7 +71,7 @@ public class Packing implements PackingInterface {
      * @return Value of property voidFractionPacking.
      */
     @Override
-	public double getVoidFractionPacking() {
+    public double getVoidFractionPacking() {
         return voidFractionPacking;
     }
 
@@ -82,7 +81,7 @@ public class Packing implements PackingInterface {
      * @param voidFractionPacking New value of property voidFractionPacking.
      */
     @Override
-	public void setVoidFractionPacking(double voidFractionPacking) {
+    public void setVoidFractionPacking(double voidFractionPacking) {
         this.voidFractionPacking = voidFractionPacking;
     }
 
@@ -101,7 +100,7 @@ public class Packing implements PackingInterface {
      * @param size
      */
     @Override
-	public double getSize() {
+    public double getSize() {
         return size;
     }
 

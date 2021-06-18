@@ -73,7 +73,7 @@ public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializa
 
     public sysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases, int numberOfComponents, int type) {
         this(system, numberOfPhases, numberOfComponents);
-        type = type;
+        this.type = type;
     }
 
     public void setSpec(double spec) {
