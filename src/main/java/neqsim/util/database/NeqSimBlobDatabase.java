@@ -24,8 +24,7 @@ import java.sql.*;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
@@ -169,7 +168,7 @@ public class NeqSimBlobDatabase implements neqsim.util.util.FileSystemSettings, 
 
         try {
             if (dataBaseType.equals("mySQL")) {
-                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }
