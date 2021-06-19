@@ -10,18 +10,16 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public abstract class PhysicalProperties extends java.lang.Object
-        implements PhysicalPropertiesInterface, java.io.Serializable, ThermodynamicConstantsInterface, Cloneable {
+public abstract class PhysicalProperties implements PhysicalPropertiesInterface, ThermodynamicConstantsInterface {
 
     /**
      * @param mixingRule the mixingRule to set
      */
     @Override
-	public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule) {
+    public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule) {
         this.mixingRule = mixingRule;
     }
 
@@ -57,7 +55,7 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         PhysicalProperties properties = null;
 
         try {
@@ -80,27 +78,27 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public PhaseInterface getPhase() {
+    public PhaseInterface getPhase() {
         return phase;
     }
 
     @Override
-	public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule() {
+    public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule() {
         return mixingRule;
     }
 
     @Override
-	public void setMixingRuleNull() {
+    public void setMixingRuleNull() {
         setMixingRule(null);
     }
 
     @Override
-	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel() {
+    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface getViscosityModel() {
         return viscosityCalc;
     }
 
     @Override
-	public void setConductivityModel(String model) {
+    public void setConductivityModel(String model) {
         if ("PFCT".equals(model)) {
             conductivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
                     this);
@@ -118,7 +116,7 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public void setViscosityModel(String model) {
+    public void setViscosityModel(String model) {
         if ("polynom".equals(model)) {
             viscosityCalc = new neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity.Viscosity(
                     this);
@@ -154,17 +152,17 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel() {
+    public neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface getConductivityModel() {
         return conductivityCalc;
     }
 
     @Override
-	public void setBinaryDiffusionCoefficientMethod(int i) {
+    public void setBinaryDiffusionCoefficientMethod(int i) {
         binaryDiffusionCoefficientMethod = i;
     }
 
     @Override
-	public void setMulticomponentDiffusionMethod(int i) {
+    public void setMulticomponentDiffusionMethod(int i) {
         multicomponentDiffusionMethod = i;
     }
 
@@ -181,7 +179,7 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public void init(PhaseInterface phase) {
+    public void init(PhaseInterface phase) {
         this.phase = phase;
         this.setPhases();
         try {
@@ -199,13 +197,13 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public void setPhase(PhaseInterface phase) {
+    public void setPhase(PhaseInterface phase) {
         this.phase = phase;
         this.setPhases();
     }
 
     @Override
-	public void init(PhaseInterface phase, String type) {
+    public void init(PhaseInterface phase, String type) {
         if (type.equals("density")) {
             density = densityCalc.calcDensity();
         } else if (type.equals("viscosity")) {
@@ -218,7 +216,7 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
+    public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
 
         return viscosity * (Math.exp(waxViscosityParameter[0] * waxVolumeFraction)
                 + waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
@@ -226,7 +224,7 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public double getViscosity() {
+    public double getViscosity() {
         if (viscosity < 0) {
             return 1e-5;
         }
@@ -234,12 +232,12 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public double getPureComponentViscosity(int i) {
+    public double getPureComponentViscosity(int i) {
         return viscosityCalc.getPureComponentViscosity(i);
     }
 
     @Override
-	public double getConductivity() {
+    public double getConductivity() {
         if (conductivity < 0) {
             return 1e-5;
         }
@@ -247,17 +245,17 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public double getDensity() {
+    public double getDensity() {
         return density;
     }
 
     @Override
-	public double calcDensity() {
+    public double calcDensity() {
         return densityCalc.calcDensity();
     }
 
     @Override
-	public double getKinematicViscosity() {
+    public double getKinematicViscosity() {
         if (kinematicViscosity < 0) {
             return 1e-5;
         }
@@ -265,7 +263,7 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public double getDiffusionCoeffisient(int i, int j) {
+    public double getDiffusionCoeffisient(int i, int j) {
         return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(i, j);
     }
 
@@ -274,34 +272,34 @@ public abstract class PhysicalProperties extends java.lang.Object
     }
 
     @Override
-	public double getDiffusionCoefficient(String comp1, String comp2) {
+    public double getDiffusionCoefficient(String comp1, String comp2) {
         return diffusivityCalc.getMaxwellStefanBinaryDiffusionCoefficient(
                 phase.getComponent(comp1).getComponentNumber(), phase.getComponent(comp2).getComponentNumber());
     }
 
     @Override
-	public double getFickDiffusionCoeffisient(int i, int j) {
+    public double getFickDiffusionCoeffisient(int i, int j) {
         return diffusivityCalc.getFickBinaryDiffusionCoefficient(i, j);
     }
 
     @Override
-	public void calcEffectiveDiffusionCoefficients() {
+    public void calcEffectiveDiffusionCoefficients() {
         this.init(phase);
         diffusivityCalc.calcEffectiveDiffusionCoeffisients();
     }
 
     @Override
-	public double getEffectiveDiffusionCoefficient(int i) {
+    public double getEffectiveDiffusionCoefficient(int i) {
         return diffusivityCalc.getEffectiveDiffusionCoefficient(i);
     }
 
     @Override
-	public double getEffectiveDiffusionCoefficient(String compName) {
+    public double getEffectiveDiffusionCoefficient(String compName) {
         return diffusivityCalc.getEffectiveDiffusionCoefficient(phase.getComponent(compName).getComponentNumber());
     }
 
     @Override
-	public double getEffectiveSchmidtNumber(int i) {
+    public double getEffectiveSchmidtNumber(int i) {
         return getKinematicViscosity() / diffusivityCalc.getEffectiveDiffusionCoefficient(i);
     }
 

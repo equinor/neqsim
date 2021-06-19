@@ -25,7 +25,7 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public abstract class FluidBoundary extends Object implements FluidBoundaryInterface, java.io.Serializable {
+public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -108,7 +108,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         FluidBoundary clonedSystem = null;
 
         try {
@@ -150,7 +150,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public SystemInterface getBulkSystem() {
+    public SystemInterface getBulkSystem() {
         return bulkSystem;
     }
 
@@ -159,12 +159,12 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public SystemInterface getInterphaseSystem() {
+    public SystemInterface getInterphaseSystem() {
         return interphaseSystem;
     }
 
     @Override
-	public void setInterphaseSystem(SystemInterface interphaseSystem) {
+    public void setInterphaseSystem(SystemInterface interphaseSystem) {
         this.interphaseSystem = interphaseSystem;
     }
 
@@ -173,7 +173,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public ThermodynamicOperations getBulkSystemOpertions() {
+    public ThermodynamicOperations getBulkSystemOpertions() {
         return bulkSystemOps;
     }
 
@@ -218,35 +218,35 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public double getInterphaseMolarFlux(int component) {
+    public double getInterphaseMolarFlux(int component) {
         return nFlux.get(component, 0);
     }
 
     @Override
-	public double getInterphaseHeatFlux(int phase) {
+    public double getInterphaseHeatFlux(int phase) {
         return interphaseHeatFlux[phase];
     }
 
     @Override
-	public void massTransSolve() {
+    public void massTransSolve() {
     }
 
     @Override
-	public void heatTransSolve() {
+    public void heatTransSolve() {
     }
 
     @Override
-	public Matrix[] getMassTransferCoefficientMatrix() {
+    public Matrix[] getMassTransferCoefficientMatrix() {
         return massTransferCoefficientMatrix;
     }
 
     @Override
-	public double getBinaryMassTransferCoefficient(int phase, int i, int j) {
+    public double getBinaryMassTransferCoefficient(int phase, int i, int j) {
         return binaryMassTransferCoefficient[phase][i][j];
     }
 
     @Override
-	public double getEffectiveMassTransferCoefficient(int phase, int i) {
+    public double getEffectiveMassTransferCoefficient(int phase, int i) {
         double temp = 0.0;
         for (int j = 0; j < bulkSystem.getPhase(phase).getNumberOfComponents(); j++) {
             try {
@@ -259,12 +259,12 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public EnhancementFactor getEnhancementFactor() {
+    public EnhancementFactor getEnhancementFactor() {
         return enhancementFactor;
     }
 
     @Override
-	public void setEnhancementType(int type) {
+    public void setEnhancementType(int type) {
     }
 
     /**
@@ -273,7 +273,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
      * @return Value of property heatTransferCalc.
      */
     @Override
-	public boolean isHeatTransferCalc() {
+    public boolean isHeatTransferCalc() {
         return heatTransferCalc;
     }
 
@@ -283,12 +283,12 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
      * @param heatTransferCalc New value of property heatTransferCalc.
      */
     @Override
-	public void setHeatTransferCalc(boolean heatTransferCalc) {
+    public void setHeatTransferCalc(boolean heatTransferCalc) {
         this.heatTransferCalc = heatTransferCalc;
     }
 
     @Override
-	public void setMassTransferCalc(boolean massTransferCalc) {
+    public void setMassTransferCalc(boolean massTransferCalc) {
         this.massTransferCalc = massTransferCalc;
     }
 
@@ -298,7 +298,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
      * @return Value of property thermodynamicCorrections.
      */
     @Override
-	public boolean useThermodynamicCorrections(int phase) {
+    public boolean useThermodynamicCorrections(int phase) {
         return thermodynamicCorrections[phase];
     }
 
@@ -309,13 +309,13 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
      *                                 thermodynamicCorrections.
      */
     @Override
-	public void useThermodynamicCorrections(boolean thermodynamicCorrections) {
+    public void useThermodynamicCorrections(boolean thermodynamicCorrections) {
         this.thermodynamicCorrections[0] = thermodynamicCorrections;
         this.thermodynamicCorrections[1] = thermodynamicCorrections;
     }
 
     @Override
-	public void useThermodynamicCorrections(boolean thermodynamicCorrections, int phase) {
+    public void useThermodynamicCorrections(boolean thermodynamicCorrections, int phase) {
         this.thermodynamicCorrections[phase] = thermodynamicCorrections;
     }
 
@@ -325,7 +325,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
      * @return Value of property finiteFluxCorrection.
      */
     @Override
-	public boolean useFiniteFluxCorrection(int phase) {
+    public boolean useFiniteFluxCorrection(int phase) {
         return finiteFluxCorrection[phase];
     }
 
@@ -335,13 +335,13 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
      * @param finiteFluxCorrection New value of property finiteFluxCorrection.
      */
     @Override
-	public void useFiniteFluxCorrection(boolean finiteFluxCorrection) {
+    public void useFiniteFluxCorrection(boolean finiteFluxCorrection) {
         this.finiteFluxCorrection[0] = finiteFluxCorrection;
         this.finiteFluxCorrection[1] = finiteFluxCorrection;
     }
 
     @Override
-	public void useFiniteFluxCorrection(boolean finiteFluxCorrection, int phase) {
+    public void useFiniteFluxCorrection(boolean finiteFluxCorrection, int phase) {
         this.finiteFluxCorrection[phase] = finiteFluxCorrection;
     }
 
@@ -397,7 +397,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public void display(String name) {
+    public void display(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
@@ -420,7 +420,7 @@ public abstract class FluidBoundary extends Object implements FluidBoundaryInter
     }
 
     @Override
-	public void write(String name, String filename, boolean newfile) {
+    public void write(String name, String filename, boolean newfile) {
         String[][] table = createTable(name);
         neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         if (newfile) {

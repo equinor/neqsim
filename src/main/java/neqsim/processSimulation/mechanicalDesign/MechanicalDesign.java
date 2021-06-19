@@ -18,7 +18,6 @@ package neqsim.processSimulation.mechanicalDesign;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
-import java.io.Serializable;
 import java.util.Hashtable;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -37,10 +36,9 @@ import neqsim.processSimulation.mechanicalDesign.designStandards.SeparatorDesign
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 
 /**
- *
  * @author esol
  */
-public class MechanicalDesign implements Serializable {
+public class MechanicalDesign implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -315,7 +313,7 @@ public class MechanicalDesign implements Serializable {
             getDesignStandard().put("material pipe design codes",
                     new MaterialPipeDesignStandard("Statoil_TR1414", this));
 
-//pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
+            // pressureVesselDesignStandard = "ASME - Pressure Vessel Code";
             // setPipingDesignStandard("TR1945_Statoil");
             // setValveDesignStandard("TR1903_Statoil");
         } else {

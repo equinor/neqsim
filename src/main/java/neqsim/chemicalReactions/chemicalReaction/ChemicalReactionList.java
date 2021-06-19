@@ -29,11 +29,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ChemicalReactionList extends Object implements ThermodynamicConstantsInterface, java.io.Serializable {
+public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 

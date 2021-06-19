@@ -6,15 +6,13 @@
 
 package neqsim.thermo.mixingRule;
 
-import java.io.Serializable;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public interface ElectrolyteMixingRulesInterface extends Serializable {
+public interface ElectrolyteMixingRulesInterface extends java.io.Serializable {
 
     public void calcWij(PhaseInterface phase);
 
@@ -48,5 +46,4 @@ public interface ElectrolyteMixingRulesInterface extends Serializable {
 
     public double calcWij(int compNumbi, int compNumj, PhaseInterface phase, double temperature, double pressure,
             int numbcomp);
-
 }

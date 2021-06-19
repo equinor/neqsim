@@ -15,8 +15,8 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
  * @author  Even Solbraa
  * @version
  */
-public abstract class GeometryDefinition extends Object implements GeometryDefinitionInterface, Cloneable,
-        java.io.Serializable, neqsim.thermo.ThermodynamicConstantsInterface {
+public abstract class GeometryDefinition
+        implements GeometryDefinitionInterface, neqsim.thermo.ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 

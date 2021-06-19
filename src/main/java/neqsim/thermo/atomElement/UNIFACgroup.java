@@ -27,11 +27,10 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class UNIFACgroup extends Object implements ThermodynamicConstantsInterface, Comparable {
+public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
 
     /**
      * @return the QMixdN
@@ -94,11 +93,11 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
             dataSet.close();
             database.getConnection().close();
         } catch (Exception e) {
-        	try {
-				database.getConnection().close();
-			} catch (Exception ex) {
-				logger.error(ex);
-			}
+            try {
+                database.getConnection().close();
+            } catch (Exception ex) {
+                logger.error(ex);
+            }
             String err = e.toString();
             logger.error(err);
             // System.out.println(err);
@@ -109,7 +108,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property R.
      *
      * @return Value of property R.
-     *
      */
     public double getR() {
         return R;
@@ -119,7 +117,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property R.
      *
      * @param R New value of property R.
-     *
      */
     public void setR(double R) {
         this.R = R;
@@ -129,7 +126,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property Q.
      *
      * @return Value of property Q.
-     *
      */
     public double getQ() {
         return Q;
@@ -139,7 +135,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property Q.
      *
      * @param Q New value of property Q.
-     *
      */
     public void setQ(double Q) {
         this.Q = Q;
@@ -149,7 +144,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property n.
      *
      * @return Value of property n.
-     *
      */
     public int getN() {
         return n;
@@ -159,7 +153,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property n.
      *
      * @param n New value of property n.
-     *
      */
     public void setN(int n) {
         this.n = n;
@@ -169,7 +162,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property mainGroup.
      *
      * @return Value of property mainGroup.
-     *
      */
     public int getMainGroup() {
         return mainGroup;
@@ -179,7 +171,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property mainGroup.
      *
      * @param mainGroup New value of property mainGroup.
-     *
      */
     public void setMainGroup(int mainGroup) {
         this.mainGroup = mainGroup;
@@ -189,7 +180,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property subGroup.
      *
      * @return Value of property subGroup.
-     *
      */
     public int getSubGroup() {
         return subGroup;
@@ -199,7 +189,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property subGroup.
      *
      * @param subGroup New value of property subGroup.
-     *
      */
     public void setSubGroup(int subGroup) {
         this.subGroup = subGroup;
@@ -209,7 +198,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property groupName.
      *
      * @return Value of property groupName.
-     *
      */
     public java.lang.String getGroupName() {
         return groupName;
@@ -219,7 +207,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property groupName.
      *
      * @param groupName New value of property groupName.
-     *
      */
     public void setGroupName(java.lang.String groupName) {
         this.groupName = groupName;
@@ -236,7 +223,7 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * <i>signum</i> function, which is defined to return one of <tt>-1</tt>,
      * <tt>0</tt>, or <tt>1</tt> according to whether the value of <i>expression</i>
      * is negative, zero or positive.
-     *
+     * 
      * The implementor must ensure <tt>sgn(x.compareTo(y)) ==
      * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This implies
      * that <tt>x.compareTo(y)</tt> must throw an exception iff
@@ -258,21 +245,20 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * should clearly indicate this fact. The recommended language is "Note: this
      * class has a natural ordering that is inconsistent with equals."
      *
-     * @param o the Object to be compared.
-     * @return a negative integer, zero, or a positive integer as this object is
-     *         less than, equal to, or greater than the specified object.
-     *
+     * @param  o                  the Object to be compared.
+     * @return                    a negative integer, zero, or a positive integer as
+     *                            this object is less than, equal to, or greater
+     *                            than the specified object.
      * @throws ClassCastException if the specified object's type prevents it from
      *                            being compared to this Object.
-     *
      */
     @Override
-	public boolean equals(Object o) {
+    public boolean equals(Object o) {
         return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
     }
 
     @Override
-	public int compareTo(java.lang.Object o) {
+    public int compareTo(java.lang.Object o) {
         if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
             return 1;
         } else if (((UNIFACgroup) o).getSubGroup() == getSubGroup()) {
@@ -286,7 +272,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property xComp.
      *
      * @return Value of property xComp.
-     *
      */
     public double calcXComp(ComponentGEUnifac component) {
         double temp = 0.0;
@@ -398,7 +383,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property xComp.
      *
      * @param xComp New value of property xComp.
-     *
      */
     public void setXComp(double xComp) {
         this.xComp = xComp;
@@ -408,13 +392,11 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property xMix.
      *
      * @return Value of property xMix.
-     *
      */
     /**
      * Getter for property QComp.
      *
      * @return Value of property QComp.
-     *
      */
     public double getQComp() {
         return QComp;
@@ -424,7 +406,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property QComp.
      *
      * @param QComp New value of property QComp.
-     *
      */
     public void setQComp(double QComp) {
         this.QComp = QComp;
@@ -434,7 +415,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property QMix.
      *
      * @return Value of property QMix.
-     *
      */
     public double getQMix() {
         return QMix;
@@ -444,7 +424,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property QMix.
      *
      * @param QMix New value of property QMix.
-     *
      */
     public void setQMix(double QMix) {
         this.QMix = QMix;
@@ -454,7 +433,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property groupIndex.
      *
      * @return Value of property groupIndex.
-     *
      */
     public int getGroupIndex() {
         return groupIndex;
@@ -464,7 +442,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property groupIndex.
      *
      * @param groupIndex New value of property groupIndex.
-     *
      */
     public void setGroupIndex(int groupIndex) {
         this.groupIndex = groupIndex;
@@ -474,7 +451,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property lnGammaComp.
      *
      * @return Value of property lnGammaComp.
-     *
      */
     public double getLnGammaComp() {
         return lnGammaComp;
@@ -484,7 +460,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property lnGammaComp.
      *
      * @param lnGammaComp New value of property lnGammaComp.
-     *
      */
     public void setLnGammaComp(double lnGammaComp) {
         this.lnGammaComp = lnGammaComp;
@@ -494,7 +469,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property lnGammaMix.
      *
      * @return Value of property lnGammaMix.
-     *
      */
     public double getLnGammaMix() {
         return lnGammaMix;
@@ -512,7 +486,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property lnGammaMix.
      *
      * @param lnGammaMix New value of property lnGammaMix.
-     *
      */
     public void setLnGammaMix(double lnGammaMix) {
         this.lnGammaMix = lnGammaMix;
@@ -522,7 +495,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property lnGammaCompdT.
      *
      * @return Value of property lnGammaCompdT.
-     *
      */
     public double getLnGammaCompdT() {
         return lnGammaCompdT;
@@ -532,7 +504,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property lnGammaCompdT.
      *
      * @param lnGammaCompdT New value of property lnGammaCompdT.
-     *
      */
     public void setLnGammaCompdT(double lnGammaCompdT) {
         this.lnGammaCompdT = lnGammaCompdT;
@@ -542,7 +513,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Getter for property lnGammaMixdT.
      *
      * @return Value of property lnGammaMixdT.
-     *
      */
     public double getLnGammaMixdT() {
         return lnGammaMixdT;
@@ -552,7 +522,6 @@ public class UNIFACgroup extends Object implements ThermodynamicConstantsInterfa
      * Setter for property lnGammaMixdT.
      *
      * @param lnGammaMixdT New value of property lnGammaMixdT.
-     *
      */
     public void setLnGammaMixdT(double lnGammaMixdT) {
         this.lnGammaMixdT = lnGammaMixdT;

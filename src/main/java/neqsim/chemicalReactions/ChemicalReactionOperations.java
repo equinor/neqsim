@@ -33,12 +33,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ChemicalReactionOperations extends Object
-        implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
+public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -116,7 +114,7 @@ public class ChemicalReactionOperations extends Object
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         ChemicalReactionOperations clonedSystem = null;
         try {
             clonedSystem = (ChemicalReactionOperations) super.clone();

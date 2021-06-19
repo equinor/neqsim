@@ -1,7 +1,5 @@
 package neqsim.thermo.system;
 
-import java.io.Serializable;
-
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
 import neqsim.thermo.characterization.WaxModelInterface;
@@ -13,7 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  *
  * Created on 8. april 2000, 21:35
  */
-public interface SystemInterface extends Cloneable, Serializable {
+public interface SystemInterface extends Cloneable, java.io.Serializable {
 
 	public void saveFluid(int ID);
 
@@ -51,8 +49,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return kinematic viscosity in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are m2/sec
-	 * @return kinematic viscosity in specified unit
+	 * @param  unit The unit as a string. Supported units are m2/sec
+	 * @return      kinematic viscosity in specified unit
 	 */
 	public double getKinematicViscosity(String unit);
 
@@ -61,8 +59,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to get molar mass of a fluid phase
 	 * 
-	 * @param unit The unit as a string. Supported units are kg/mol, gr/mol
-	 * @return molar mass in given unit
+	 * @param  unit The unit as a string. Supported units are kg/mol, gr/mol
+	 * @return      molar mass in given unit
 	 */
 	public double getMolarMass(String unit);
 
@@ -71,10 +69,10 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 * total flow rate will be kept constant. The input mole fractions will be
 	 * normalized.
 	 *
-	 * @param molefractions is a double array taking the molar fraction of the
-	 *                      components in the fluid. THe last molfraction is the
-	 *                      mole fraction of the plus component
-	 * @return Nothing.
+	 * @param  molefractions is a double array taking the molar fraction of the
+	 *                       components in the fluid. THe last molfraction is the
+	 *                       mole fraction of the plus component
+	 * @return               Nothing.
 	 */
 	public void setMolarCompositionPlus(double[] molefractions);
 
@@ -85,11 +83,11 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 * fluid. The total flow rate will be kept constant. The input mole fractions
 	 * will be normalized.
 	 *
-	 * @param molefractions is a double array taking the molar fraction of the
-	 *                      components in the fluid. THe last fraction in the array
-	 *                      is the total molefraction of the characterized
-	 *                      components.
-	 * @return Nothing.
+	 * @param  molefractions is a double array taking the molar fraction of the
+	 *                       components in the fluid. THe last fraction in the array
+	 *                       is the total molefraction of the characterized
+	 *                       components.
+	 * @return               Nothing.
 	 */
 	public void setMolarCompositionOfPlusFluid(double[] molefractions);
 
@@ -97,19 +95,18 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 * method to get the Joule Thomson Coefficient of a system. Based on a phase
 	 * mole fraction basis average
 	 * 
-	 * @param unit The unit as a string. Supported units are K/bar, C/bar
-	 *
-	 * @return Joule Thomson coefficient in given unit
+	 * @param  unit The unit as a string. Supported units are K/bar, C/bar
+	 * @return      Joule Thomson coefficient in given unit
 	 */
 	public double getJouleThomsonCoefficient(String unit);
 
 	/**
 	 * method to return exergy in a given unit
 	 * 
-	 * @param unit                      The unit as a string. Supported units are J,
-	 *                                  J/mol, J/kg and kJ/kg
-	 * @param temperatureOfSurroundings in Kelvin
-	 * @return exergy in specified unit
+	 * @param  unit                      The unit as a string. Supported units are
+	 *                                   J, J/mol, J/kg and kJ/kg
+	 * @param  temperatureOfSurroundings in Kelvin
+	 * @return                           exergy in specified unit
 	 */
 	public double getExergy(double temperatureOfSurroundings, String exergyUnit);
 
@@ -131,9 +128,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return mass of fluid
 	 *
-	 * @param unit The unit as a string. Supported units are kg, gr, tons
-	 *
-	 * @return volume in specified unit
+	 * @param  unit The unit as a string. Supported units are kg, gr, tons
+	 * @return      volume in specified unit
 	 */
 	public double getMass(String unit);
 
@@ -143,8 +139,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 * method to get the speed of sound of a system. THe sound speed is implemented
 	 * based on a molar average over the phases
 	 * 
-	 * @param unit The unit as a string. Supported units are m/s, km/h
-	 * @return speed of sound in m/s
+	 * @param  unit The unit as a string. Supported units are m/s, km/h
+	 * @return      speed of sound in m/s
 	 */
 	public double getSoundSpeed(String unit);
 
@@ -161,17 +157,15 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * Calculates thermodynamic and physical properties of a fluid using
 	 * initThermoProperties() and initPhysicalProperties();
-	 *
 	 */
 	public void initProperties();
 
 	/**
 	 * return two fluid added as a new fluid
 	 *
-	 * @param addFluid1 first fluid to add
-	 * @param addFluid2 second fluid o add
-	 *
-	 * @return new fluid
+	 * @param  addFluid1 first fluid to add
+	 * @param  addFluid2 second fluid o add
+	 * @return           new fluid
 	 */
 	public static SystemInterface addFluids(SystemInterface addFluid1, SystemInterface addFluid2) {
 		SystemInterface newFluid = (SystemInterface) addFluid1.clone();
@@ -181,7 +175,6 @@ public interface SystemInterface extends Cloneable, Serializable {
 
 	/**
 	 * Calculates thermodynamic properties of a fluid using the init(2) method
-	 *
 	 */
 	public void initThermoProperties();
 
@@ -189,7 +182,6 @@ public interface SystemInterface extends Cloneable, Serializable {
 
 	/**
 	 * Calculates physical properties of type propertyName
-	 *
 	 */
 	public void initPhysicalProperties(String propertyName);
 
@@ -210,21 +202,19 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return fluid volume
 	 *
-	 * @param unit The unit as a string. Supported units are m3, litre, m3/kg,
-	 *             m3/mol
-	 *
-	 * @return volume in specified unit
+	 * @param  unit The unit as a string. Supported units are m3, litre, m3/kg,
+	 *              m3/mol
+	 * @return      volume in specified unit
 	 */
 	public double getVolume(String unit);
 
 	/**
 	 * method to return flow rate of fluid
 	 *
-	 * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-	 *                 kg/hr m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr,
-	 *                 Sm3/hr, Sm3/day
-	 *
-	 * @return flow rate in specified unit
+	 * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
+	 *                  kg/hr m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr,
+	 *                  Sm3/hr, Sm3/day
+	 * @return          flow rate in specified unit
 	 */
 	public double getFlowRate(String flowunit);
 
@@ -248,8 +238,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 * method to return the volume fraction of a phase note: without Peneloux volume
 	 * correction
 	 *
-	 * @param phaseNumber number of the phase to get volume fraction for
-	 * @return volume fraction
+	 * @param  phaseNumber number of the phase to get volume fraction for
+	 * @return             volume fraction
 	 */
 	public double getVolumeFraction(int phaseNumber);
 
@@ -257,8 +247,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 * method to return the volume fraction of a phase note: with Peneloux volume
 	 * correction
 	 *
-	 * @param phaseNumber number of the phase to get volume fraction for
-	 * @return volume fraction
+	 * @param  phaseNumber number of the phase to get volume fraction for
+	 * @return             volume fraction
 	 */
 	public double getCorrectedVolumeFraction(int phaseNumber);
 
@@ -267,18 +257,18 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return total enthalpy
 	 *
-	 * @param unit The unit as a string. unit supported units are J, J/mol, J/kg and
-	 *             kJ/kg
-	 * @return enthalpy in specified unit
+	 * @param  unit The unit as a string. unit supported units are J, J/mol, J/kg
+	 *              and kJ/kg
+	 * @return      enthalpy in specified unit
 	 */
 	public double getEnthalpy(String unit);
 
 	/**
 	 * method to return internal energy (U) in a given unit
 	 *
-	 * @param unit The unit as a string. unit supported units are J, J/mol, J/kg and
-	 *             kJ/kg
-	 * @return enthalpy in unit Joule (J)
+	 * @param  unit The unit as a string. unit supported units are J, J/mol, J/kg
+	 *              and kJ/kg
+	 * @return      enthalpy in unit Joule (J)
 	 */
 	public double getInternalEnergy(String unit);
 
@@ -357,9 +347,9 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return specific heat capacity (Cp) in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-	 *             kJ/kgK
-	 * @return Cp in specified unit
+	 * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+	 *              kJ/kgK
+	 * @return      Cp in specified unit
 	 */
 	public double getCv(String unit);
 
@@ -421,7 +411,6 @@ public interface SystemInterface extends Cloneable, Serializable {
 	 *
 	 * @param phaseTypeName the phase type to be returned (gas, oil, aqueous, wax,
 	 *                      hydrate are supported)
-	 *
 	 */
 	public PhaseInterface getPhaseOfType(String phaseTypeName);
 
@@ -684,8 +673,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return pressure in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
-	 * @return pressure in specified unit
+	 * @param  unit The unit as a string. Supported units are bara, barg, Pa and MPa
+	 * @return      pressure in specified unit
 	 */
 	public double getPressure(String unit);
 
@@ -707,8 +696,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to get density of a fluid note: with Peneloux volume correction
 	 *
-	 * @param unit The unit as a string. Supported units are kg/m3, mol/m3
-	 * @return density in specified unit
+	 * @param  unit The unit as a string. Supported units are kg/m3, mol/m3
+	 * @return      density in specified unit
 	 */
 	public double getDensity(String unit);
 
@@ -763,9 +752,9 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return total entropy of the fluid
 	 *
-	 * @param unit The unit as a string. unit supported units are J/K, J/molK, J/kgK
-	 *             and kJ/kgK
-	 * @return entropy in specified unit
+	 * @param  unit The unit as a string. unit supported units are J/K, J/molK,
+	 *              J/kgK and kJ/kgK
+	 * @return      entropy in specified unit
 	 */
 	public double getEntropy(String unit);
 
@@ -779,8 +768,8 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return temperature in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are K, C, R
-	 * @return temperature in specified unit
+	 * @param  unit The unit as a string. Supported units are K, C, R
+	 * @return      temperature in specified unit
 	 */
 	public double getTemperature(String unit);
 
@@ -861,9 +850,9 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return specific heat capacity (Cp) in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-	 *             kJ/kgK
-	 * @return Cp in specified unit
+	 * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+	 *              kJ/kgK
+	 * @return      Cp in specified unit
 	 */
 	public double getCp(String unit);
 
@@ -898,17 +887,16 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return viscosity in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are kg/msec, cP
-	 *             (centipoise)
-	 * @return viscosity in specified unit
+	 * @param  unit The unit as a string. Supported units are kg/msec, cP
+	 *              (centipoise)
+	 * @return      viscosity in specified unit
 	 */
 	public double getViscosity(String unit);
 
 	/**
 	 * method to return thermal conductivity
 	 *
-	 * @return conductivity in unit W/mK
-	 * 
+	 * @return     conductivity in unit W/mK
 	 * @deprecated use {@link #getThermalConductivity()} instead.
 	 */
 	@Deprecated
@@ -917,10 +905,9 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return thermal conductivity in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are W/mK, W/cmK
-	 *
-	 * @return conductivity in specified unit
-	 * @deprecated use {@link #getThermalConductivity(String unit)} instead.
+	 * @param      unit The unit as a string. Supported units are W/mK, W/cmK
+	 * @return          conductivity in specified unit
+	 * @deprecated      use {@link #getThermalConductivity(String unit)} instead.
 	 */
 	@Deprecated
 	public double getConductivity(String unit);
@@ -935,30 +922,29 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return thermal conductivity in a given unit
 	 *
-	 * @param unit The unit as a string. Supported units are W/mK, W/cmK
-	 *
-	 * @return conductivity in specified unit
+	 * @param  unit The unit as a string. Supported units are W/mK, W/cmK
+	 * @return      conductivity in specified unit
 	 */
 	public double getThermalConductivity(String unit);
 
 	/**
 	 * method to return interfacial tension between two phases
 	 *
-	 * @param phase1 phase type of phase1 as string (valid phases are gas, oil,
-	 *               aqueous)
-	 * @param phase2 phase type of phase2 as string (valid phases are gas, oil,
-	 *               aqueous)
-	 * @return interfacial tension with unit N/m. If one or both phases does not
-	 *         exist - the method will return NaN
+	 * @param  phase1 phase type of phase1 as string (valid phases are gas, oil,
+	 *                aqueous)
+	 * @param  phase2 phase type of phase2 as string (valid phases are gas, oil,
+	 *                aqueous)
+	 * @return        interfacial tension with unit N/m. If one or both phases does
+	 *                not exist - the method will return NaN
 	 */
 	public double getInterfacialTension(String phase1, String phase2);
 
 	/**
 	 * method to return interfacial tension between two phases
 	 *
-	 * @param phase1 phase number of phase1
-	 * @param phase2 phase number of phase2
-	 * @return interfacial tension with unit N/m
+	 * @param  phase1 phase number of phase1
+	 * @param  phase2 phase number of phase2
+	 * @return        interfacial tension with unit N/m
 	 */
 	public double getInterfacialTension(int phase1, int phase2);
 
@@ -979,9 +965,9 @@ public interface SystemInterface extends Cloneable, Serializable {
 	/**
 	 * method to return phase fraction of selected phase
 	 *
-	 * @param phaseTypeName: gas/oil/aqueous
-	 * @param unit:          mole/volume/weight
-	 * @return phase: fraction in given unit
+	 * @param  phaseTypeName: gas/oil/aqueous
+	 * @param  unit:          mole/volume/weight
+	 * @return                phase: fraction in given unit
 	 */
 	public double getPhaseFraction(String phaseTypeName, String unit);
 

@@ -29,7 +29,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public abstract class FlowNode
-        implements FlowNodeInterface, ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
+        implements FlowNodeInterface, ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 

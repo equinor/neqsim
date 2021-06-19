@@ -3,7 +3,7 @@ package neqsim.MathLib.nonLinearSolver;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 
-public class sysNewtonRhapson extends Object implements java.io.Serializable {
+public class sysNewtonRhapson implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
@@ -158,7 +158,7 @@ public class sysNewtonRhapson extends Object implements java.io.Serializable {
         // fvec.print(0,10);
         // Jac.print(0,10);
 
-// First we need the sensitivity vector dX/dS
+        // First we need the sensitivity vector dX/dS
 
         findSpecEq();
         int nofc = numberOfComponents;
@@ -173,7 +173,7 @@ public class sysNewtonRhapson extends Object implements java.io.Serializable {
             // dxds.print(0,10);
             u.plusEquals(dxds);
             // Xgij.print(0,10);
-//                 u.print(0,10);
+            // u.print(0,10);
         } else {
             // System.out.println("iter " +iter + " np " + np);
             if (iter > 6) {
@@ -195,7 +195,7 @@ public class sysNewtonRhapson extends Object implements java.io.Serializable {
                     ds *= 0.5;
                 }
 
-// Now we check wheater this ds is greater than dTmax and dPmax.
+                // Now we check wheater this ds is greater than dTmax and dPmax.
                 if (Math.abs(system.getTemperature() * dxds.get(nofc, 0) * ds) > dTmax) {
                     // System.out.println("true T");
                     ds = sign(dTmax / system.getTemperature() / Math.abs(dxds.get(nofc, 0)), ds);
@@ -218,7 +218,7 @@ public class sysNewtonRhapson extends Object implements java.io.Serializable {
                 calcInc2(np);
                 // System.out.println("ds2 : " + ds);
 
-// Here we find the next point from the polynomial.
+                // Here we find the next point from the polynomial.
 
             }
         }
@@ -371,7 +371,7 @@ public class sysNewtonRhapson extends Object implements java.io.Serializable {
                 solve(np);
                 break;
             }
-//                System.out.println("feilen: "+dx.norm2());
+            // System.out.println("feilen: "+dx.norm2());
         } while (dx.norm2() / u.norm2() > 1.e-8 && Double.isNaN(dx.norm2()));
         // System.out.println("iter: "+iter);
         init();

@@ -12,11 +12,10 @@ import javax.swing.*;
 import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public abstract class StatisticsBaseClass extends Object implements Cloneable, StatisticsInterface {
+public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -43,7 +42,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         StatisticsBaseClass clonedClass = null;
         try {
             clonedClass = (StatisticsBaseClass) super.clone();
@@ -65,7 +64,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public StatisticsBaseClass createNewRandomClass() {
+    public StatisticsBaseClass createNewRandomClass() {
         StatisticsBaseClass newClass = (StatisticsBaseClass) this.clone();
         newClass.setSampleSet(this.sampleSet.createNewNormalDistributedSet());
         return newClass;
@@ -123,7 +122,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public SampleSet getSampleSet() {
+    public SampleSet getSampleSet() {
         return sampleSet;
     }
 
@@ -231,10 +230,10 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public abstract void init();
+    public abstract void init();
 
     @Override
-	public abstract void solve();
+    public abstract void solve();
 
     public void runMonteCarloSimulation() {
         neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
@@ -243,7 +242,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public void runMonteCarloSimulation(int numerOfRuns) {
+    public void runMonteCarloSimulation(int numerOfRuns) {
         neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
                 this, numerOfRuns);
         montCarlSim.runSimulation();
@@ -338,7 +337,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.###E0");
@@ -535,7 +534,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public void writeToCdfFile(String name) {
+    public void writeToCdfFile(String name) {
         neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(xVal[0], "x", "sec");
@@ -545,7 +544,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public void writeToTextFile(String name) {
+    public void writeToTextFile(String name) {
         neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempfile = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         tempfile.setOutputFileName(name);
         tempfile.setValues(valTable);
@@ -576,7 +575,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
     }
 
     @Override
-	public void displayCurveFit() {
+    public void displayCurveFit() {
         calcAbsDev();
         try {
             displayGraph();
@@ -609,7 +608,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
      * @return the numberOfTuningParameters
      */
     @Override
-	public int getNumberOfTuningParameters() {
+    public int getNumberOfTuningParameters() {
         return numberOfTuningParameters;
     }
 
@@ -617,7 +616,7 @@ public abstract class StatisticsBaseClass extends Object implements Cloneable, S
      * @param numberOfTuningParameters the numberOfTuningParameters to set
      */
     @Override
-	public void setNumberOfTuningParameters(int numberOfTuningParameters) {
+    public void setNumberOfTuningParameters(int numberOfTuningParameters) {
         this.numberOfTuningParameters = numberOfTuningParameters;
     }
 }

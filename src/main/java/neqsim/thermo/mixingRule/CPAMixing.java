@@ -18,7 +18,7 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-public class CPAMixing extends Object implements Cloneable, java.io.Serializable, ThermodynamicConstantsInterface {
+public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAMixing.class);

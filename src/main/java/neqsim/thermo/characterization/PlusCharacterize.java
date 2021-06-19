@@ -11,7 +11,7 @@ import org.apache.logging.log4j.*;
 /**
  * @author ESOL
  */
-public class PlusCharacterize extends Object implements java.io.Serializable, CharacteriseInterface {
+public class PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
     private static final long serialVersionUID = 1000;
     double TBPfractions[] = null;
     boolean firsttime = true;
