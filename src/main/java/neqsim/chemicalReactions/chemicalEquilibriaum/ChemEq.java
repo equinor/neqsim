@@ -101,10 +101,7 @@ public class ChemEq implements java.io.Serializable {
         this.T = T;
         this.P = P;
         this.A_matrix = A_matrix;
-
     }
-
-    // public void
 
     public void chemSolve() {
         n_t = 0;
@@ -122,7 +119,6 @@ public class ChemEq implements java.io.Serializable {
         for (i = 0; i < NSPEC; i++) {
             chem_pot[i] = chem_ref[i] + Math.log(Math.abs(n_mol[i] / n_t));
             System.out.println("chempot: " + i + "  = " + chem_pot[i]);
-
         }
 
         sum = 0;
@@ -275,7 +271,6 @@ public class ChemEq implements java.io.Serializable {
         }
 
         // beregner b
-
         double[][] nAr = new double[n_mol.length][1];
 
         for (i = 0; i < n_mol.length; i++) {
@@ -358,12 +353,10 @@ public class ChemEq implements java.io.Serializable {
 
             System.out.println(" SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
         }
-
     }
 
     public static void main(String args[]) {
         ChemEq testSystem = new ChemEq();
         testSystem.solve();
-
     }
 }
