@@ -13,8 +13,7 @@ import visad.*;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public class visAd2dBaseClass extends visAdBaseClass {
@@ -47,15 +46,13 @@ public class visAd2dBaseClass extends visAdBaseClass {
 
     /** Creates new visAdContourPlot */
     public visAd2dBaseClass(String firstax, String yax) throws RemoteException, VisADException {
-
-        x = new RealType("test1");
-        y = new RealType("test");
+        x = RealType.getRealType("test1");
+        y = RealType.getRealType("test");
 
         x_y_tuple = new RealTupleType(x, y);
-        index = new RealType("index");
+        index = RealType.getRealType("index");
 
         func_i_tuple = new FunctionType(index, x_y_tuple);
-
     }
 
     // public void setXYals(double[][] vals)throws RemoteException, VisADException{
@@ -104,7 +101,7 @@ public class visAd2dBaseClass extends visAdBaseClass {
      */
 
     @Override
-	public void init() throws RemoteException, VisADException {
+    public void init() throws RemoteException, VisADException {
 
         index_set = new Integer1DSet(index, xy_samples[0].length);
 
@@ -156,14 +153,11 @@ public class visAd2dBaseClass extends visAdBaseClass {
         jframe.getContentPane().add(display.getComponent());
 
         // Set window size and make it visible
-
         jframe.setSize(700, 700);
         jframe.setVisible(true);
-
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
-
         visAd2dBaseClass plot = new visAd2dBaseClass("long", "alt");
 
         double[][] z = { { 0, 0.5, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };

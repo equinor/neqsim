@@ -12,11 +12,10 @@ import visad.*;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class lineFitPlot extends java.lang.Object {
+public class lineFitPlot {
 
     private static final long serialVersionUID = 1000;
 
@@ -45,15 +44,14 @@ public class lineFitPlot extends java.lang.Object {
     /** Creates new visAdContourPlot */
     public lineFitPlot(String firstax, String yax) throws RemoteException, VisADException {
 
-        x = new RealType("test1");
-        y = new RealType("test");
+        x = RealType.getRealType("test1");
+        y = RealType.getRealType("test");
 
         x_y_tuple = new RealTupleType(x, y);
-        index = new RealType("index");
+        index = RealType.getRealType("index");
 
         func_i_tuple = new FunctionType(index, x_y_tuple);
         func_i_tuple2 = new FunctionType(index, x_y_tuple);
-
     }
 
     // public void setXYals(double[][] vals)throws RemoteException, VisADException{
@@ -170,10 +168,8 @@ public class lineFitPlot extends java.lang.Object {
         jframe.getContentPane().add(display.getComponent());
 
         // Set window size and make it visible
-
         jframe.setSize(700, 700);
         jframe.setVisible(true);
-
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
@@ -187,5 +183,4 @@ public class lineFitPlot extends java.lang.Object {
         plot.setLineXYVals(z[0], z[3]);
         plot.init();
     }
-
 }
