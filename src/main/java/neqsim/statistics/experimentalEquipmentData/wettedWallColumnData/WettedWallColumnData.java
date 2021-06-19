@@ -13,11 +13,9 @@ import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
  * @version
  */
 public class WettedWallColumnData extends ExperimentalEquipmentData {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new WettedWallColumnData */
-
     public WettedWallColumnData() {
     }
 
@@ -35,8 +33,8 @@ public class WettedWallColumnData extends ExperimentalEquipmentData {
         return this.diameter;
     }
 
-    public void setLength(double diameter) {
-        this.diameter = diameter;
+    public void setLength(double length) {
+        this.length = length;
     }
 
     public double getLength() {
