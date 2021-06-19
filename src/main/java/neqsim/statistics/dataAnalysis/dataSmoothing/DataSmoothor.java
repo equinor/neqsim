@@ -9,11 +9,10 @@ package neqsim.statistics.dataAnalysis.dataSmoothing;
 import Jama.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class DataSmoothor extends Object {
+public class DataSmoothor {
 
     private static final long serialVersionUID = 1000;
 

@@ -3,7 +3,7 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 
-public class cricondenBarTemp extends Object implements java.io.Serializable {
+public class cricondenBarTemp implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
@@ -69,14 +69,12 @@ public class cricondenBarTemp extends Object implements java.io.Serializable {
                 Jac.set(i, j, tempJ);
             }
         }
-
     }
 
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, system.getBeta() * system.getPhases()[0].getComponents()[i].getx());
         }
-
     }
 
     public void init() {
@@ -97,7 +95,6 @@ public class cricondenBarTemp extends Object implements java.io.Serializable {
         }
 
         system.init(3);
-
     }
 
     public double solve() {
@@ -110,5 +107,4 @@ public class cricondenBarTemp extends Object implements java.io.Serializable {
         u.minusEquals(dx);
         return (dx.norm2() / u.norm2());
     }
-
 }

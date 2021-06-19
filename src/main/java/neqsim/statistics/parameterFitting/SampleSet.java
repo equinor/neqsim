@@ -9,11 +9,10 @@ package neqsim.statistics.parameterFitting;
 import java.util.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SampleSet extends Object implements Cloneable {
+public class SampleSet implements Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -34,7 +33,7 @@ public class SampleSet extends Object implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SampleSet clonedSet = null;
         try {
             clonedSet = (SampleSet) super.clone();
@@ -64,13 +63,13 @@ public class SampleSet extends Object implements Cloneable {
         return (SampleValue) this.samples.get(i);
     }
 
-//    public SampleValue[] getSamples() {
-//        SampleValue[] samplesOut = new SampleValue[samples.size()];
-//        for(int i=0;i<samples.size();i++){
-//            samplesOut[i] = (SampleValue) this.samples.get(i);
-//        }
-//        return samplesOut;
-//    }
+    // public SampleValue[] getSamples() {
+    // SampleValue[] samplesOut = new SampleValue[samples.size()];
+    // for(int i=0;i<samples.size();i++){
+    // samplesOut[i] = (SampleValue) this.samples.get(i);
+    // }
+    // return samplesOut;
+    // }
 
     public int getLength() {
         return samples.size();

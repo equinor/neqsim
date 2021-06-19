@@ -1,20 +1,19 @@
 /*
- * ElectrolyteMixingRulesInterface.java
+ * CPAMixingInterface.java
  *
  * Created on 26. februar 2001, 19:38
  */
 package neqsim.thermo.mixingRule;
 
-import java.io.Serializable;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public interface CPAMixingInterface extends Serializable {
-//    public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+public interface CPAMixingInterface extends java.io.Serializable {
+    // public double calcXi(int siteNumber, int compnumb, PhaseInterface phase,
+    // double temperature, double pressure, int numbcomp);
 
     public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
             double temperature, double pressure, int numbcomp);

@@ -32,12 +32,10 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class LinearProgrammingChemicalEquilibrium extends Object
-        implements neqsim.thermo.ThermodynamicConstantsInterface, java.io.Serializable {
+public class LinearProgrammingChemicalEquilibrium implements neqsim.thermo.ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -291,7 +289,7 @@ public class LinearProgrammingChemicalEquilibrium extends Object
          * i=0;i<Amatrix.length;i++) { xEts[i] = 1.0; }
          */
     }
-//Method added by Neeraj
+    // Method added by Neeraj
     /*
      * public double[] generateInitialEstimates(SystemInterface system, double[]
      * bVector, double inertMoles, int phase){ int i,j; double[] n = new

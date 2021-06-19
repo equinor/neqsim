@@ -28,12 +28,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ChemicalReaction extends Object
-        implements neqsim.thermo.ThermodynamicConstantsInterface, java.io.Serializable {
+public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -374,7 +372,6 @@ public class ChemicalReaction extends Object
      * Getter for property name.
      * 
      * @return Value of property name.
-     *
      */
     public java.lang.String getName() {
         return name;
@@ -384,7 +381,6 @@ public class ChemicalReaction extends Object
      * Setter for property name.
      * 
      * @param name New value of property name.
-     *
      */
     public void setName(java.lang.String name) {
         this.name = name;

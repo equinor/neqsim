@@ -1,13 +1,12 @@
 package neqsim.thermo.characterization;
 
-import java.io.Serializable;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
 /**
  * @author ESOL
  */
-public class TBPfractionModel implements Serializable {
+public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     String name = "";
     static Logger logger = LogManager.getLogger(TBPfractionModel.class);

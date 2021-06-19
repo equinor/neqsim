@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SampleValue extends Object implements Cloneable {
+public class SampleValue implements Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -52,7 +51,7 @@ public class SampleValue extends Object implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SampleValue clonedValue = null;
         try {
             clonedValue = (SampleValue) super.clone();

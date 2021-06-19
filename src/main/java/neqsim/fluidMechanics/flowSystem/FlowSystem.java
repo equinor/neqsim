@@ -26,7 +26,7 @@ import neqsim.fluidMechanics.util.timeSeries.TimeSeries;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public abstract class FlowSystem extends Object implements FlowSystemInterface, java.io.Serializable {
+public abstract class FlowSystem implements FlowSystemInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -56,22 +56,22 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public void init() {
+    public void init() {
     }
 
     @Override
-	public void createSystem() {
+    public void createSystem() {
         thermoOperations = new ThermodynamicOperations(thermoSystem);
         this.flowLegInit();
     }
 
     @Override
-	public FlowSolverInterface getSolver() {
+    public FlowSolverInterface getSolver() {
         return flowSolver;
     }
 
     @Override
-	public TimeSeries getTimeSeries() {
+    public TimeSeries getTimeSeries() {
         return timeSeries;
     }
 
@@ -98,7 +98,7 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public void setNodes() {
+    public void setNodes() {
         flowNode[0].setDistanceToCenterOfNode(0.0);
         flowNode[0].setVerticalPositionOfNode(legHeights[0]);
         flowNode[0].setLengthOfNode(systemLength / 1000.0);
@@ -122,14 +122,14 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public void setInletThermoSystem(SystemInterface thermoSystem) {
+    public void setInletThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
         this.inletPressure = thermoSystem.getPressure();
         this.inletTemperature = thermoSystem.getTemperature();
     }
 
     @Override
-	public double getSystemLength() {
+    public double getSystemLength() {
         return systemLength;
     }
 
@@ -143,62 +143,62 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public int getTotalNumberOfNodes() {
+    public int getTotalNumberOfNodes() {
         return this.totalNumberOfNodes;
     }
 
     @Override
-	public double getInletTemperature() {
+    public double getInletTemperature() {
         return this.inletTemperature;
     }
 
     @Override
-	public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry) {
+    public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry) {
         this.equipmentGeometry = equipmentGeometry;
     }
 
     @Override
-	public void setEndPressure(double endPressure) {
+    public void setEndPressure(double endPressure) {
         this.endPressure = endPressure;
     }
 
     @Override
-	public double getInletPressure() {
+    public double getInletPressure() {
         return this.inletPressure;
     }
 
     @Override
-	public void setNumberOfLegs(int numberOfFlowLegs) {
+    public void setNumberOfLegs(int numberOfFlowLegs) {
         this.numberOfFlowLegs = numberOfFlowLegs;
     }
 
     @Override
-	public FlowNodeInterface getNode(int i) {
+    public FlowNodeInterface getNode(int i) {
         return this.flowNode[i];
     }
 
     @Override
-	public FlowNodeInterface[] getFlowNodes() {
+    public FlowNodeInterface[] getFlowNodes() {
         return this.flowNode;
     }
 
     @Override
-	public int getNumberOfLegs() {
+    public int getNumberOfLegs() {
         return this.numberOfFlowLegs;
     }
 
     @Override
-	public FlowSystemVisualizationInterface getDisplay() {
+    public FlowSystemVisualizationInterface getDisplay() {
         return display;
     }
 
     @Override
-	public FileWriterInterface getFileWriter(int i) {
+    public FileWriterInterface getFileWriter(int i) {
         return fileWriter[i];
     }
 
     @Override
-	public void setNumberOfNodesInLeg(int numberOfNodesInLeg) {
+    public void setNumberOfNodesInLeg(int numberOfNodesInLeg) {
         this.numberOfNodesInLeg = new int[this.getNumberOfLegs()];
         for (int i = 0; i < this.getNumberOfLegs(); i++) {
             this.numberOfNodesInLeg[i] = numberOfNodesInLeg;
@@ -207,43 +207,43 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public int getNumberOfNodesInLeg(int i) {
+    public int getNumberOfNodesInLeg(int i) {
         return this.numberOfNodesInLeg[i];
     }
 
     @Override
-	public void setLegHeights(double[] legHeights) {
+    public void setLegHeights(double[] legHeights) {
         this.legHeights = legHeights;
     }
 
     @Override
-	public void setLegPositions(double[] legPositions) {
+    public void setLegPositions(double[] legPositions) {
         this.legPositions = legPositions;
         this.systemLength = legPositions[legPositions.length - 1];
     }
 
     @Override
-	public void setLegOuterTemperatures(double[] temps) {
+    public void setLegOuterTemperatures(double[] temps) {
         this.legOuterTemperatures = temps;
     }
 
     @Override
-	public void setLegOuterHeatTransferCoefficients(double[] coefs) {
+    public void setLegOuterHeatTransferCoefficients(double[] coefs) {
         this.legOuterHeatTransferCoefficients = coefs;
     }
 
     @Override
-	public void setLegWallHeatTransferCoefficients(double[] coefs) {
+    public void setLegWallHeatTransferCoefficients(double[] coefs) {
         this.legWallHeatTransferCoefficients = coefs;
     }
 
     @Override
-	public double[] getLegHeights() {
+    public double[] getLegHeights() {
         return this.legHeights;
     }
 
     @Override
-	public void print() {
+    public void print() {
         for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
             System.out.println("node " + flowNode[i].getDistanceToCenterOfNode() + " pressure: "
                     + flowNode[i].getBulkSystem().getPhases()[0].getPressure() + " temperature: "
@@ -255,7 +255,7 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public void calcFluxes() {
+    public void calcFluxes() {
     }
 
     public static void main(String[] args) {
@@ -266,7 +266,7 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public double getTotalMolarMassTransferRate(int component) {
+    public double getTotalMolarMassTransferRate(int component) {
         double tot = 0.0;
         for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
             tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component)
@@ -276,7 +276,7 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public double getTotalMolarMassTransferRate(int component, int lastNode) {
+    public double getTotalMolarMassTransferRate(int component, int lastNode) {
         double tot = 0.0;
         for (int i = 0; i < lastNode; i++) {
             tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component)
@@ -286,23 +286,23 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public double getTotalPressureDrop() {
+    public double getTotalPressureDrop() {
         return flowNode[0].getBulkSystem().getPressure()
                 - flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();
     }
 
     @Override
-	public double getTotalPressureDrop(int lastNode) {
+    public double getTotalPressureDrop(int lastNode) {
         return flowNode[0].getBulkSystem().getPressure() - flowNode[lastNode].getBulkSystem().getPressure();
     }
 
     @Override
-	public void setInitialFlowPattern(String flowPattern) {
+    public void setInitialFlowPattern(String flowPattern) {
         this.initFlowPattern = flowPattern;
     }
 
     @Override
-	public void setFlowPattern(String flowPattern) {
+    public void setFlowPattern(String flowPattern) {
         this.initFlowPattern = flowPattern;
         for (int i = 0; i < this.getNumberOfLegs(); i++) {
             flowLeg[i].setFlowPattern(flowPattern);
@@ -345,7 +345,7 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public void setEquilibriumMassTransfer(boolean test) {
+    public void setEquilibriumMassTransfer(boolean test) {
         equilibriumMassTransfer = test;
         if (equilibriumMassTransfer) {
             setEquilibriumMassTransferModel(0, getTotalNumberOfNodes());
@@ -355,7 +355,7 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
     }
 
     @Override
-	public void setEquilibriumHeatTransfer(boolean test) {
+    public void setEquilibriumHeatTransfer(boolean test) {
         equilibriumHeatTransfer = test;
         if (equilibriumHeatTransfer) {
             setEquilibriumHeatTransferModel(0, getTotalNumberOfNodes());
@@ -363,5 +363,4 @@ public abstract class FlowSystem extends Object implements FlowSystemInterface, 
             setNonEquilibriumHeatTransferModel(0, getTotalNumberOfNodes());
         }
     }
-
 }

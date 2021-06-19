@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author  even solbraa
  * @version
  */
-public class SampleCreator extends Object {
+public class SampleCreator {
 
     private static final long serialVersionUID = 1000;
 

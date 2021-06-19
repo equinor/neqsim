@@ -16,15 +16,13 @@
 
 package neqsim.thermo.characterization;
 
-import java.io.Serializable;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
 /**
- *
  * @author ESOL
  */
-public class LumpingModel implements Serializable {
+public class LumpingModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int numberOfLumpedComponents = 7, numberOfPseudocomponents = 7;
     private String[] lumpedComponentNames = null;
@@ -38,14 +36,10 @@ public class LumpingModel implements Serializable {
     }
 
     /**
-     * StandardLumpingModel Model Object.
-     * 
-     * <P>
      * StandardLumpingModel distributes the pseudo components into equal wwight
      * frations starting with the first TBP fraction in the fluid
      * 
-     * 
-     * @author Even Solbraa
+     * @author  Even Solbraa
      * @version 1.0
      */
     public class StandardLumpingModel implements LumpingModelInterface, Cloneable, java.io.Serializable {
@@ -54,42 +48,42 @@ public class LumpingModel implements Serializable {
         }
 
         @Override
-		public void setNumberOfLumpedComponents(int lumpedNumb) {
+        public void setNumberOfLumpedComponents(int lumpedNumb) {
             numberOfLumpedComponents = lumpedNumb;
         }
 
         @Override
-		public int getNumberOfLumpedComponents() {
+        public int getNumberOfLumpedComponents() {
             return numberOfLumpedComponents;
         }
 
         @Override
-		public void setNumberOfPseudoComponents(int lumpedNumb) {
+        public void setNumberOfPseudoComponents(int lumpedNumb) {
             numberOfPseudocomponents = lumpedNumb;
         }
 
         @Override
-		public int getNumberOfPseudoComponents() {
+        public int getNumberOfPseudoComponents() {
             return numberOfPseudocomponents;
         }
 
         @Override
-		public String getName() {
+        public String getName() {
             return name;
         }
 
         @Override
-		public String getLumpedComponentName(int i) {
+        public String getLumpedComponentName(int i) {
             return lumpedComponentNames[i];
         }
 
         @Override
-		public String[] getLumpedComponentNames() {
+        public String[] getLumpedComponentNames() {
             return lumpedComponentNames;
         }
 
         @Override
-		public void generateLumpedComposition(Characterise charac) {
+        public void generateLumpedComposition(Characterise charac) {
             numberOfLumpedComponents = numberOfPseudocomponents;
             lumpedComponentNames = new String[numberOfLumpedComponents];
             fractionOfHeavyEnd = new double[numberOfPseudocomponents];
@@ -199,21 +193,20 @@ public class LumpingModel implements Serializable {
         }
 
         @Override
-		public double getFractionOfHeavyEnd(int i) {
+        public double getFractionOfHeavyEnd(int i) {
             return fractionOfHeavyEnd[i];
         }
     }
 
     /**
      * PVTLumpingModel Model Object.
-     * 
      * <P>
      * PVTLumpingModel
      * <P>
      * PVTLumpingModel distributes the pseudo components into equal wwight frations
      * starting with the plus fra
      * 
-     * @author Even Solbraa
+     * @author  Even Solbraa
      * @version 1.0
      */
     public class PVTLumpingModel extends StandardLumpingModel {
@@ -222,7 +215,7 @@ public class LumpingModel implements Serializable {
         }
 
         @Override
-		public void generateLumpedComposition(Characterise charac) {
+        public void generateLumpedComposition(Characterise charac) {
 
             double weightFrac = 0.0;
             double weightTot = 0.0;
@@ -307,7 +300,7 @@ public class LumpingModel implements Serializable {
         }
 
         @Override
-		public double getFractionOfHeavyEnd(int i) {
+        public double getFractionOfHeavyEnd(int i) {
             return fractionOfHeavyEnd[i];
         }
     }

@@ -7,11 +7,10 @@
 package neqsim.MathLib.nonLinearSolver;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class newtonRhapson extends Object implements java.io.Serializable {
+public class newtonRhapson implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,7 +34,6 @@ public class newtonRhapson extends Object implements java.io.Serializable {
     }
 
     public double funkValue(double x) {
-
         funkVal = 0;
 
         for (int i = 0; i < polyConstants.length; i++) {
@@ -45,7 +43,6 @@ public class newtonRhapson extends Object implements java.io.Serializable {
     }
 
     public double derivValue(double x) {
-
         derivVal = 0;
 
         for (int i = 0; i < polyConstants.length - 1; i++) {
@@ -56,7 +53,6 @@ public class newtonRhapson extends Object implements java.io.Serializable {
     }
 
     public double dubDerivValue(double x) {
-
         dubDerivVal = 0;
 
         for (int i = 0; i < polyConstants.length - 2; i++) {
@@ -67,7 +63,6 @@ public class newtonRhapson extends Object implements java.io.Serializable {
     }
 
     public double solve(double xin) {
-
         int iterations = 0;
 
         times++;
@@ -115,11 +110,9 @@ public class newtonRhapson extends Object implements java.io.Serializable {
         // System.out.println("iterations in newton-rhapson = " + iterations );
 
         return xNew;
-
     }
 
     public double solve1order(double xin) {
-
         int iterations = 0;
 
         times++;
@@ -142,11 +135,9 @@ public class newtonRhapson extends Object implements java.io.Serializable {
         // System.out.println("iterations in newton-rhapson = " + iterations );
 
         return xNew;
-
     }
 
     public static void main(String args[]) {
-
         newtonRhapson test = new newtonRhapson();
         test.setOrder(3);
 
@@ -157,6 +148,5 @@ public class newtonRhapson extends Object implements java.io.Serializable {
         System.out.println("val : " + test.dubDerivValue(-0.3));
         System.out.println("val : " + test.derivValue(-0.3));
         // System.out.println("val : " + test.solve(-0.3));
-
     }
 }

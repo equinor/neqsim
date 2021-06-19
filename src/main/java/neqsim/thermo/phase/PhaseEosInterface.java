@@ -5,19 +5,16 @@
  */
 package neqsim.thermo.phase;
 
-import java.io.Serializable;
-
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public interface PhaseEosInterface extends PhaseInterface {
 
     @Override
-	double getMolarVolume();
+    double getMolarVolume();
 
     public EosMixingRulesInterface getMixingRule();
 

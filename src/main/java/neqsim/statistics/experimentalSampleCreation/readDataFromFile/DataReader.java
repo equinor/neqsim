@@ -10,11 +10,10 @@ import java.io.*;
 import java.util.*;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class DataReader extends Object implements DataReaderInterface {
+public class DataReader implements DataReaderInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -31,7 +30,7 @@ public class DataReader extends Object implements DataReaderInterface {
     }
 
     @Override
-	public void readData() {
+    public void readData() {
         StringTokenizer tokenizer;
         String token;
 

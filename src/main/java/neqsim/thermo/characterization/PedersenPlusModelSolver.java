@@ -4,7 +4,7 @@ import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
-public class PedersenPlusModelSolver extends Object implements java.io.Serializable {
+public class PedersenPlusModelSolver implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
     Matrix JacAB, JacCD;

@@ -7,11 +7,10 @@
 package neqsim.statistics.parameterFitting;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class NumericalDerivative extends Object implements java.io.Serializable {
+public class NumericalDerivative implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -93,5 +92,4 @@ public class NumericalDerivative extends Object implements java.io.Serializable 
         // System.out.println("err " + err);
         return ans;
     }
-
 }

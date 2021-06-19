@@ -16,11 +16,10 @@ import neqsim.thermodynamicOperations.OperationInterface;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class pLoadingCurve extends Object implements OperationInterface, java.io.Serializable {
+public class pLoadingCurve implements OperationInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pLoadingCurve.class);
@@ -73,7 +72,7 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
     }
 
     @Override
-	public void run() {
+    public void run() {
         int numbPoints = 50;
         double inscr = 0.2275;
         points[0] = new double[numbPoints];
@@ -109,7 +108,7 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -126,18 +125,18 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
         neqsim.dataPresentation.dataHandeling printDat = new neqsim.dataPresentation.dataHandeling();
         printDat.printToFile(points, name);
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points;
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         NetCdf2D file = new NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(points[0], "loading", "");
@@ -152,27 +151,27 @@ public class pLoadingCurve extends Object implements OperationInterface, java.io
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         return null;
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return system;
     }
 
     @Override
-	public void addData(String name, double[][] data) {
+    public void addData(String name, double[][] data) {
 
     }
 }

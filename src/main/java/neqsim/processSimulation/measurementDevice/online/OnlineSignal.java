@@ -1,13 +1,11 @@
 package neqsim.processSimulation.measurementDevice.online;
 
-import java.io.Serializable;
 import java.util.Date;
 
 /**
- *
  * @author esol
  */
-public class OnlineSignal implements Serializable {
+public class OnlineSignal implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 

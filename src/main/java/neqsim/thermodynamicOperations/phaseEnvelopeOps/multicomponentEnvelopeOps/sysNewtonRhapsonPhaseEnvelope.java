@@ -21,7 +21,7 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
-public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Serializable {
+public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope.class);
@@ -95,7 +95,6 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
         fvec.set(numberOfComponents, 0, fsum);
         fvec.set(numberOfComponents, 0, sumy - sumx);
         fvec.set(numberOfComponents + 1, 0, u.get(speceq, 0) - specVal);
-
     }
 
     public void setfvec() {
@@ -125,9 +124,7 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
                 speceqmin = system.getPhase(0).getComponents()[i].getComponentNumber();
                 lc = i;
             }
-
         }
-
     }
 
     public void findSpecEq() {
@@ -163,14 +160,12 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
         if (speceq != speceq2) {
             speceq = speceq2;
         }
-
     }
 
     public void useAsSpecEq(int i) {
         speceq = i;
         specVal = u.get(i, 0);
         System.out.println("Enforced Scec Variable" + speceq + "  " + specVal);
-
     }
 
     public final void calc_x_y() {
@@ -284,7 +279,6 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
         calc_x_y();
         system.calc_x_y();
         system.init(3);
-
     }
 
     public void calcInc(int np) {
@@ -475,7 +469,6 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
         s = ss.copy();
         Xgij = xx.copy();
         u = uu.copy();
-
     }
 
     public int getNpCrit() {
@@ -565,7 +558,6 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
         } catch (Exception e0) {
             double nef = 0.;
         }
-
     }
 
     public static void main(String args[]) {
@@ -576,5 +568,4 @@ public class sysNewtonRhapsonPhaseEnvelope extends Object implements java.io.Ser
          * test.nonsol(); constants=test.getf(); logger.info(constants[0]+"
          * "+constants[1]); System.exit(0);
          */ }
-
 }

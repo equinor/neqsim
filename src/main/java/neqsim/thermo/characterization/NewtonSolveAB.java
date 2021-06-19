@@ -20,7 +20,7 @@ import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
-public class NewtonSolveAB extends Object implements java.io.Serializable {
+public class NewtonSolveAB implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
     Matrix Jac;

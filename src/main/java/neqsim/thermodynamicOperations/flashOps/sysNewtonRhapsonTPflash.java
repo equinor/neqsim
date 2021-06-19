@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package neqsim.thermodynamicOperations.flashOps;
 
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 
-public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializable {
+public class sysNewtonRhapsonTPflash implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
@@ -87,14 +88,12 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
                 Jac.set(i, j, tempJ);
             }
         }
-
     }
 
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, system.getBeta() * system.getPhase(0).getComponents()[i].getx());
         }
-
     }
 
     public void init() {
@@ -116,7 +115,6 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
         }
 
         system.init(3);
-
     }
 
     public double solve() throws Exception {
@@ -133,5 +131,4 @@ public class sysNewtonRhapsonTPflash extends Object implements java.io.Serializa
             throw e;
         }
     }
-
 }
