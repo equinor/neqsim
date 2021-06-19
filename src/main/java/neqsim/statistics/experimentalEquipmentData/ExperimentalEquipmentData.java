@@ -7,8 +7,7 @@
 package neqsim.statistics.experimentalEquipmentData;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
 public class ExperimentalEquipmentData extends Object {
@@ -22,5 +21,4 @@ public class ExperimentalEquipmentData extends Object {
     /** Creates new ExperimentalEquipmentData */
     public ExperimentalEquipmentData() {
     }
-
 }
