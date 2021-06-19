@@ -61,6 +61,9 @@ nbdist/
 .vs/
 .vscode/
 
+# git merge orig files
+*.orig
+
 # End of https://www.gitignore.io/api/java,maven,netbeans
 /bin/
 src/main/java/neqsim/util/database/NeqSimDataBase2.java
