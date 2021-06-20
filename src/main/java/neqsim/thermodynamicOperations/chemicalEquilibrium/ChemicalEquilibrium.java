@@ -6,16 +6,16 @@
 
 package neqsim.thermodynamicOperations.chemicalEquilibrium;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
  * @author ESOL
  */
-public class ChemicalEquilibrium extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class ChemicalEquilibrium extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ChemicalEquilibrium.class);
@@ -31,7 +31,7 @@ public class ChemicalEquilibrium extends BaseOperation implements OperationInter
     }
 
     @Override
-	public void run() {
+    public void run() {
         double chemdev = 0;
         int iter = 1;
         if (system.isChemicalSystem()) {
@@ -65,30 +65,30 @@ public class ChemicalEquilibrium extends BaseOperation implements OperationInter
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         system.display();
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return null;
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 }

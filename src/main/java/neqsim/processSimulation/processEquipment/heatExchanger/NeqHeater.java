@@ -6,17 +6,15 @@
 
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class NeqHeater extends Heater implements ProcessEquipmentInterface {
+public class NeqHeater extends Heater {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,18 +33,18 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface {
     }
 
     @Override
-	public StreamInterface getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
     @Override
-	public void setOutTemperature(double temperature) {
+    public void setOutTemperature(double temperature) {
         this.setTemperature = true;
         this.temperatureOut = temperature;
     }
 
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         double oldH = system.getEnthalpy();
         if (setTemperature) {
@@ -64,7 +62,7 @@ public class NeqHeater extends Heater implements ProcessEquipmentInterface {
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         System.out.println("heater dH: " + dH);
     }
 }

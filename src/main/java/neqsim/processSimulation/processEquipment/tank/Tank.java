@@ -6,7 +6,6 @@
 package neqsim.processSimulation.processEquipment.tank;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -14,11 +13,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public class Tank extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -88,7 +86,7 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     }
 
     @Override
-	public void run() {
+    public void run() {
         inletStreamMixer.run();
         SystemInterface thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
@@ -146,12 +144,12 @@ public class Tank extends ProcessEquipmentBaseClass implements ProcessEquipmentI
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display();
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());

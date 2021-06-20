@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ScalePotentialCheckStream extends Stream implements StreamInterface, Cloneable {
+public class ScalePotentialCheckStream extends Stream {
 
     private static final long serialVersionUID = 1000;
 
@@ -38,7 +37,7 @@ public class ScalePotentialCheckStream extends Stream implements StreamInterface
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         ScalePotentialCheckStream clonedSystem = null;
         try {
             clonedSystem = (ScalePotentialCheckStream) super.clone();
@@ -49,7 +48,7 @@ public class ScalePotentialCheckStream extends Stream implements StreamInterface
     }
 
     @Override
-	public void run() {
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
@@ -67,7 +66,7 @@ public class ScalePotentialCheckStream extends Stream implements StreamInterface
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         reactiveThermoSystem.display(name);
     }
 

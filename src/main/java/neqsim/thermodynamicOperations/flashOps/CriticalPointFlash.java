@@ -1,14 +1,15 @@
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ejml.simple.SimpleMatrix;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
  * @author esol
  */
-public class CriticalPointFlash extends Flash implements java.io.Serializable {
+public class CriticalPointFlash extends Flash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
@@ -33,7 +34,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
 
     public void calcMmatrixHeidemann() {
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-        Vc0 = 4 * system.getPhase(0).getB()/system.getPhase(0).getNumberOfMolesInPhase();
+        Vc0 = 4 * system.getPhase(0).getB() / system.getPhase(0).getNumberOfMolesInPhase();
 
         system.setUseTVasIndependentVariables(true);
         system.setNumberOfPhases(1);
@@ -134,7 +135,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         system.init(0);
         system.setTotalNumberOfMoles(1.0);
         system.init(3);
@@ -143,7 +144,7 @@ public class CriticalPointFlash extends Flash implements java.io.Serializable {
         system.setNumberOfPhases(1);
 
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-        Vc0 = 4 * system.getPhase(0).getB()/system.getPhase(0).getNumberOfMolesInPhase();
+        Vc0 = 4 * system.getPhase(0).getB() / system.getPhase(0).getNumberOfMolesInPhase();
 
         system.setUseTVasIndependentVariables(true);
         system.setNumberOfPhases(1);

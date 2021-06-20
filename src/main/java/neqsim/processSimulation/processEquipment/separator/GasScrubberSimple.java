@@ -1,22 +1,20 @@
 /*
- * Separator.java
+ * GasScrubberSimple.java
  *
  * Created on 12. mars 2001, 19:48
  */
 package neqsim.processSimulation.processEquipment.separator;
 
 import neqsim.processSimulation.mechanicalDesign.separator.GasScrubberMechanicalDesign;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class GasScrubberSimple extends Separator implements ProcessEquipmentInterface, SeparatorInterface {
+public class GasScrubberSimple extends Separator {
 
     private static final long serialVersionUID = 1000;
 
@@ -27,7 +25,7 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     String name = new String();
 
     /**
-     * Creates new Separator
+     * Creates new GasScrubberSimple
      */
     public GasScrubberSimple() {
         super();
@@ -47,7 +45,7 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -64,27 +62,27 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     }
 
     @Override
-	public Stream getLiquidOutStream() {
+    public Stream getLiquidOutStream() {
         return liquidOutStream;
     }
 
     @Override
-	public Stream getGasOutStream() {
+    public Stream getGasOutStream() {
         return gasOutStream;
     }
 
     @Override
-	public Stream getGas() {
+    public Stream getGas() {
         return getGasOutStream();
     }
 
     @Override
-	public Stream getLiquid() {
+    public Stream getLiquid() {
         return getLiquidOutStream();
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -107,7 +105,7 @@ public class GasScrubberSimple extends Separator implements ProcessEquipmentInte
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 

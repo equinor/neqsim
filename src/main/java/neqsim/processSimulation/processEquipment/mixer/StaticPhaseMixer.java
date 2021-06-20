@@ -6,8 +6,6 @@
 
 package neqsim.processSimulation.processEquipment.mixer;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -15,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version
  */
-public class StaticPhaseMixer extends StaticMixer implements ProcessEquipmentInterface, MixerInterface {
+public class StaticPhaseMixer extends StaticMixer {
 
     private static final long serialVersionUID = 1000;
 

@@ -15,7 +15,7 @@
  */
 
 /*
- * PHflash.java
+ * TVflash.java
  *
  * Created on 8. mars 2001, 10:56
  */
@@ -25,18 +25,17 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class TVflash extends Flash implements java.io.Serializable {
+public class TVflash extends Flash {
 
     private static final long serialVersionUID = 1000;
 
     double Vspec = 0;
     Flash tpFlash;
 
-    /** Creates new PHflash */
+    /** Creates new TVflash */
     public TVflash() {
     }
 
@@ -80,7 +79,7 @@ public class TVflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         // System.out.println("enthalpy: " + system.getEnthalpy());
         solveQ();
@@ -90,7 +89,7 @@ public class TVflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

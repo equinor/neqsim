@@ -23,17 +23,21 @@
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.text.*;
-import javax.swing.*;
+import java.text.DecimalFormat;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import org.apache.logging.log4j.*;
-
-public class pTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class pTphaseEnvelope extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelope.class);

@@ -15,28 +15,32 @@
  */
 
 /*
- * pTphaseEnvelope.java
+ * HPTphaseEnvelope.java
  *
  * Created on 14. oktober 2000, 21:59
  */
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class HPTphaseEnvelope extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class HPTphaseEnvelope extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
 
@@ -49,7 +53,7 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
     double startPressure = 1, endPressure = 0, startTemperature = 160, endTemperature = 0;
     static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
 
-    /** Creates new bubblePointFlash */
+    /** Creates new HPTphaseEnvelope */
     public HPTphaseEnvelope() {
     }
 
@@ -71,7 +75,7 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         int np = 0;
 
@@ -93,7 +97,7 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         try {
             mainFrame.setVisible(false);
             visAd3DPlot plot = new visAd3DPlot("pressure[bar]", "temperature[K]", "enthalpy[J/mol]");
@@ -106,25 +110,25 @@ public class HPTphaseEnvelope extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points;
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 }

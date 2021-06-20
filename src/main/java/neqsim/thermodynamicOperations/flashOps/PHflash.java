@@ -24,11 +24,10 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class PHflash extends Flash implements java.io.Serializable {
+public class PHflash extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -178,7 +177,7 @@ public class PHflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         // System.out.println("enthalpy start: " + system.getEnthalpy());
         if (type == 0) {
@@ -191,11 +190,11 @@ public class PHflash extends Flash implements java.io.Serializable {
 
         }
         // System.out.println("enthalpy: " + system.getEnthalpy());
-//        System.out.println("Temperature: " + system.getTemperature());
+        // System.out.println("Temperature: " + system.getTemperature());
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

@@ -22,9 +22,9 @@
 package neqsim.processSimulation.processEquipment.separator;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.separator.sectionType.ManwaySection;
 import neqsim.processSimulation.processEquipment.separator.sectionType.MeshSection;
@@ -37,11 +37,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Separator extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface, SeparatorInterface {
+public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -118,12 +117,12 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
     @Override
-	public void run() {
+    public void run() {
         inletStreamMixer.run();
         thermoSystem2 = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
         thermoSystem2.setPressure(thermoSystem2.getPressure() - pressureDrop);
@@ -187,17 +186,17 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display();
     }
-    
+
     @Override
-    public String[][] getResultTable(){
-    	return thermoSystem.getResultTable();
+    public String[][] getResultTable() {
+        return thermoSystem.getResultTable();
     }
-    
+
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         inletStreamMixer.run();
 
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
@@ -305,7 +304,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
      * @param diameter the diameter to set
      */
     @Override
-	public void setInternalDiameter(double diameter) {
+    public void setInternalDiameter(double diameter) {
         this.internalDiameter = diameter;
     }
 
@@ -441,12 +440,12 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
     }
 
     @Override
-	public double getPressure() {
+    public double getPressure() {
         return getThermoSystem().getPressure();
     }
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         //
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
@@ -469,7 +468,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
     }
 
     @Override
-	public double getMassBalance(String unit) {
+    public double getMassBalance(String unit) {
         //
         double flow = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
@@ -483,7 +482,7 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
     }
 
     @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double sourrondingTemperature) {
 
         //
         double exergy = 0.0;

@@ -6,23 +6,27 @@
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class pLoadingCurve2 extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class pLoadingCurve2 extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pLoadingCurve2.class);
@@ -75,7 +79,7 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
     }
 
     @Override
-	public void run() {
+    public void run() {
         int numbPoints = 50;
         double inscr = 0.2103842275;
         points[0] = new double[numbPoints];
@@ -118,7 +122,7 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -135,18 +139,18 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
         neqsim.dataPresentation.dataHandeling printDat = new neqsim.dataPresentation.dataHandeling();
         printDat.printToFile(points, name);
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points;
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         NetCdf2D file = new NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(points[0], "loading", "");
@@ -162,22 +166,22 @@ public class pLoadingCurve2 extends BaseOperation implements OperationInterface,
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         return null;
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return system;
     }
 }

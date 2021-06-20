@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Cloneable {
+public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,7 +35,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         TwoPhasePackedBedFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhasePackedBedFlowNode) super.clone();
@@ -47,14 +47,14 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         super.init();
     }
 
     @Override
-	public void initFlowCalc() {
+    public void initFlowCalc() {
         phaseFraction[0] = 1.0;
         phaseFraction[1] = 1.0;
         initVelocity();
@@ -62,12 +62,12 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public double calcHydraulicDiameter() {
+    public double calcHydraulicDiameter() {
         return getGeometry().getDiameter();
     }
 
     @Override
-	public double calcReynoldNumber() {
+    public double calcReynoldNumber() {
         reynoldsNumber[1] = getSuperficialVelocity(1) / getGeometry().getPacking().getSurfaceAreaPrVolume()
                 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                 / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
@@ -80,18 +80,18 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         interphaseContactArea = pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea();
         return wallContactLength[0];
     }
 
     @Override
-	public double calcGasLiquidContactArea() {
+    public double calcGasLiquidContactArea() {
         return pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea() * 5.0;
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         TwoPhasePackedBedFlowNode newNode = (TwoPhasePackedBedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -103,7 +103,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public void update() {
+    public void update() {
         for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
                 .getNumberOfComponents(); componentNumber++) {
             if (componentNumber == 1) {

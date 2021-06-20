@@ -5,9 +5,9 @@
  */
 package neqsim.processSimulation.processEquipment.util;
 
-import java.util.*;
+import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -15,11 +15,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface, MixerInterface {
+public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -45,7 +44,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return mixedStream.getThermoSystem();
     }
 
@@ -54,20 +53,20 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     @Override
-	public void replaceStream(int i, StreamInterface newStream) {
+    public void replaceStream(int i, StreamInterface newStream) {
         streams.set(i, newStream);
     }
 
     @Override
-	public void addStream(StreamInterface newStream) {
+    public void addStream(StreamInterface newStream) {
         streams.add(newStream);
 
         if (numberOfInputStreams == 0) {
             mixedStream = (StreamInterface) streams.get(0).clone();
-//            mixedStream.getThermoSystem().setNumberOfPhases(2);
-//            mixedStream.getThermoSystem().reInitPhaseType();
-//            mixedStream.getThermoSystem().init(0);
-//            mixedStream.getThermoSystem().init(3);
+            // mixedStream.getThermoSystem().setNumberOfPhases(2);
+            // mixedStream.getThermoSystem().reInitPhaseType();
+            // mixedStream.getThermoSystem().init(0);
+            // mixedStream.getThermoSystem().init(3);
         }
         mixedStream.setEmptyThermoSystem(streams.get(0).getThermoSystem());
         numberOfInputStreams++;
@@ -84,26 +83,21 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
 
         for (int k = 1; k < streams.size(); k++) {
 
-            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
-                    .getNumberOfComponents(); i++) {
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
-                        .getName();
+                String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
                 // System.out.println("adding: " + componentName);
                 int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
-                        .getNumberOfmoles();
+                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
                 for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); p++) {
                     if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName().equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-                                .getComponentNumber();
-                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-                                .getComponentName();
+                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentName();
 
                     }
                 }
@@ -119,9 +113,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
                 }
             }
         }
-//        mixedStream.getThermoSystem().init_x_y();
-//        mixedStream.getThermoSystem().initBeta();
-//        mixedStream.getThermoSystem().init(2);
+        // mixedStream.getThermoSystem().init_x_y();
+        // mixedStream.getThermoSystem().initBeta();
+        // mixedStream.getThermoSystem().init(2);
     }
 
     public double guessTemperature() {
@@ -148,12 +142,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     @Override
-	public Stream getOutStream() {
+    public Stream getOutStream() {
         return (Stream) mixedStream;
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
         run();
     }
 
@@ -171,7 +165,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     @Override
-	public void run() {
+    public void run() {
         iterations++;
         /*
          * if(firstTime || iterations>maxIterations) { firstTime=false; return;
@@ -181,7 +175,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
         double enthalpy = 0.0;
         // System.out.println("flow rate old in recycle " +
         // outletStream.getFlowRate("kg/hr"));
-//        ((Stream) streams.get(0)).getThermoSystem().display();
+        // ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
         // System.out.println("total number of moles " +
         // thermoSystem2.getTotalNumberOfMoles());
@@ -249,12 +243,12 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
 
     }
 
     @Override
-	public void setPressure(double pres) {
+    public void setPressure(double pres) {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().setPressure(pres);
         }
@@ -305,7 +299,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements ProcessEquipme
     }
 
     @Override
-	public boolean solved() {
+    public boolean solved() {
         if (error < tolerance)
             return true;
         else

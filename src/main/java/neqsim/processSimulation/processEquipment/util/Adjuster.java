@@ -5,7 +5,8 @@
  */
 package neqsim.processSimulation.processEquipment.util;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
@@ -13,13 +14,10 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.util.example.PhaseEnvelope;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
- * 
- * 
  */
-public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public class Adjuster extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -80,7 +78,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void run() {
+    public void run() {
         oldError = error;
 
         if (adjustedVarialble.equals("mass flow")) {
@@ -132,7 +130,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public boolean solved() {
+    public boolean solved() {
         if (Math.abs(error) < tolerance)
             return true;
         else
@@ -140,7 +138,7 @@ public class Adjuster extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
 
     }
 

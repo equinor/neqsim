@@ -21,18 +21,18 @@
 */
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-abstract class Flash extends BaseOperation implements OperationInterface, java.io.Serializable {
+abstract class Flash extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Flash.class);
@@ -341,7 +341,7 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         system.display();
     }
 
@@ -432,25 +432,25 @@ abstract class Flash extends BaseOperation implements OperationInterface, java.i
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return null;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
     @Override
-	public void addData(String name, double[][] data) {
+    public void addData(String name, double[][] data) {
 
     }
 }

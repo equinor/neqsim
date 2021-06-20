@@ -5,20 +5,18 @@
  */
 package neqsim.processSimulation.processEquipment.util;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
- * 
- * 
  */
-public class SetPoint extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public class SetPoint extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -92,7 +90,7 @@ public class SetPoint extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         if (targetVariable.equals("pressure")) {
             targetEquipment.setPressure(sourceEquipment.getPressure());
@@ -110,7 +108,7 @@ public class SetPoint extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
 
     }
 

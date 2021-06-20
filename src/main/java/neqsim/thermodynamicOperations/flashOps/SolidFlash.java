@@ -21,16 +21,17 @@
  */
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SolidFlash extends TPflash implements java.io.Serializable {
+public class SolidFlash extends TPflash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash.class);
@@ -280,7 +281,7 @@ public class SolidFlash extends TPflash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         // logger.info("starting ");
         system.setNumberOfPhases(system.getNumberOfPhases());
         double oldBeta = 0.0;

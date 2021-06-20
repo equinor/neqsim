@@ -15,23 +15,24 @@
  */
 
 /*
- * TPflash.java
+ * SolidFlash12.java
  *
  * Created on 2. oktober 2000, 22:26
  */
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SolidFlash12 extends TPflash implements java.io.Serializable {
+public class SolidFlash12 extends TPflash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash12.class);
@@ -45,7 +46,7 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
     int solidsNumber = 0;
     int solidIndex = 0;
 
-    /** Creates new TPflash */
+    /** Creates new SolidFlash12 */
     public SolidFlash12() {
     }
 
@@ -177,7 +178,7 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
             }
 
             Matrix betaMatrix = new Matrix(oldBeta, 1).transpose();
-//            Matrix betaMatrixTemp = new Matrix(oldBeta, 1).transpose();
+            // Matrix betaMatrixTemp = new Matrix(oldBeta, 1).transpose();
             Matrix dQM = new Matrix(dQdbeta, 1);
             Matrix dQdBM = new Matrix(Qmatrix);
 
@@ -190,10 +191,10 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
             dQdBM.print(10, 10);
             ans.print(30, 30);
             double betaReductionFactor = 1.0;
-//            betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
+            // betaMatrixTemp = betaMatrix.minus(ans.times(betaReductionFactor));
             // betaMatrixTemp.print(10, 2);
 
-//            double minBetaTem = 1000000;
+            // double minBetaTem = 1000000;
             // int minBetaIndex = 0;
 
             /*
@@ -262,7 +263,7 @@ public class SolidFlash12 extends TPflash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         int iter = 0;
 

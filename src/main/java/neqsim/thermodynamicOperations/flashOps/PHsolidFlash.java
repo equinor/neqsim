@@ -15,22 +15,23 @@
  */
 
 /*
- * PHflash.java
+ * PHsolidFlash.java
  *
  * Created on 8. mars 2001, 10:56
  */
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class PHsolidFlash extends Flash implements java.io.Serializable {
+public class PHsolidFlash extends Flash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PHsolidFlash.class);
@@ -39,7 +40,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
     int refluxPhase = 0;
     double enthalpyspec = 0.5;
 
-    /** Creates new PHflash */
+    /** Creates new PHsolidFlash */
     public PHsolidFlash() {
     }
 
@@ -50,7 +51,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         // logger.info("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
@@ -92,7 +93,7 @@ public class PHsolidFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

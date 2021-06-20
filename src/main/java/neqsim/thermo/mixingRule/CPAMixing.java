@@ -5,6 +5,9 @@
  */
 package neqsim.thermo.mixingRule;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -12,10 +15,8 @@ import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
-import org.apache.logging.log4j.*;
-
 /**
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
@@ -35,7 +36,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         CPAMixing clonedSystem = null;
         try {
             clonedSystem = (CPAMixing) super.clone();
@@ -63,55 +64,55 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcXi(int[][][] assosScheme, int[][][][] assosScheme2, int siteNumber, int compnumb,
+        public double calcXi(int[][][] assosScheme, int[][][][] assosScheme2, int siteNumber, int compnumb,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
 
         @Override
-		public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             return 1.0;
         }
     }
 
-    public class CPA_Radoch extends CPA_Radoch_base implements CPAMixingInterface {
+    public class CPA_Radoch extends CPA_Radoch_base {
 
         private static final long serialVersionUID = 1000;
 
@@ -143,7 +144,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             if (assosSchemeType[compnumb1][compnumb2] == 0) {
                 double temp2 = 0;
@@ -181,7 +182,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             if (assosSchemeType[compnumb1][compnumb2] == 0) {
                 double temp2 = 0;
@@ -251,7 +252,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
                     * calcDelta(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
@@ -259,7 +260,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             if (assosSchemeType[compnumb1][compnumb2] == 0) {
                 double derivative1 = -getCrossAssociationEnergy(compnumb2, compnumb2, phase, temperature, pressure,
@@ -320,7 +321,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
             return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1, siteNumber2)
                     * calcDelta(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
@@ -328,7 +329,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
             if (assosSchemeType[compnumb1][compnumb2] == 0) {
                 if (((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1,
@@ -357,7 +358,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+        public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
                 PhaseInterface phase, double temperature, double pressure, int numbcomp) {
 
             if (assosSchemeType[compnumb1][compnumb2] == 0) {
@@ -460,52 +461,59 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                             * getCrossAssociationVolume(compnumb1, compnumb2, phase, temperature, pressure, numbcomp)
                             * ((PhaseCPAInterface) phase).getGcpa();
         }
-//        public double calcXi(int siteNumber, int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-//            //System.out.println("scheme " + phase.getComponent(compnumb).getAssociationScheme());
-//
-//            double Xi=0.0;
-//            double temp=0.0, temp2=0.0;
-//
-//            try{
-//                for(int i=0;i<phase.getNumberOfComponents();i++){
-//                    temp2=0.0;
-//                    assosScheme = setAssociationScheme(i,phase);
-//
-//                    for(int j=0;j<phase.getComponent(i).getNumberOfAssociationSites();j++){
-//                        double delatSite = 0.0;
-//                        // if(assosScheme[siteNumber][j]==0 && compnumb==i && compnumb==i){}
-//                        if(compnumb==i){
-//                            delatSite = assosScheme[siteNumber][j]*calcDelta(siteNumber,j, compnumb,i,phase,temperature,pressure,numbcomp);
-//                        } else{
-//                            assosScheme2= setCrossAssociationScheme(compnumb,i,phase);
-//
-//                            //                         elloit rule
-//                            if(crossAccociationScheme==0){
-//                                double sum1 =1.0,sum2=1.0;
-//                                sum1 = assosScheme2[siteNumber][j]*calcDelta(siteNumber,j, i,i,phase,temperature,pressure,numbcomp);
-//                                sum2 = assosScheme2[siteNumber][j]*calcDelta(siteNumber,j, compnumb,compnumb,phase,temperature,pressure,numbcomp);
-//                                delatSite = Math.sqrt(sum1*sum2);
-//                            }
-//                            // CR-1
-//                            else if(crossAccociationScheme==1){
-//                                delatSite =  assosScheme2[siteNumber][j]*calcDelta(siteNumber,j, compnumb,i,phase,temperature,pressure,numbcomp);
-//                            } else{
-//                                System.out.println("invalid crossassociation scheme..");
-//                            }
-//                        }
-//                        temp2 +=((ComponentCPAInterface)phase.getComponent(i)).getXsite()[j]*delatSite;
-//                    }
-//                    temp +=phase.getComponent(i).getNumberOfMolesInPhase()*temp2;
-//                }
-//                Xi = 1.0/(1.0+1.0/phase.getTotalVolume()*temp);
-//            } catch(Exception e){
-//                e.printStackTrace();
-//            }
-//            return Xi;
-//        }
+        // public double calcXi(int siteNumber, int compnumb, PhaseInterface phase,
+        // double temperature, double pressure, int numbcomp) {
+        // //System.out.println("scheme " +
+        // phase.getComponent(compnumb).getAssociationScheme());
+        //
+        // double Xi=0.0;
+        // double temp=0.0, temp2=0.0;
+        //
+        // try{
+        // for(int i=0;i<phase.getNumberOfComponents();i++){
+        // temp2=0.0;
+        // assosScheme = setAssociationScheme(i,phase);
+        //
+        // for(int j=0;j<phase.getComponent(i).getNumberOfAssociationSites();j++){
+        // double delatSite = 0.0;
+        // // if(assosScheme[siteNumber][j]==0 && compnumb==i && compnumb==i){}
+        // if(compnumb==i){
+        // delatSite = assosScheme[siteNumber][j]*calcDelta(siteNumber,j,
+        // compnumb,i,phase,temperature,pressure,numbcomp);
+        // } else{
+        // assosScheme2= setCrossAssociationScheme(compnumb,i,phase);
+        //
+        // // elloit rule
+        // if(crossAccociationScheme==0){
+        // double sum1 =1.0,sum2=1.0;
+        // sum1 = assosScheme2[siteNumber][j]*calcDelta(siteNumber,j,
+        // i,i,phase,temperature,pressure,numbcomp);
+        // sum2 = assosScheme2[siteNumber][j]*calcDelta(siteNumber,j,
+        // compnumb,compnumb,phase,temperature,pressure,numbcomp);
+        // delatSite = Math.sqrt(sum1*sum2);
+        // }
+        // // CR-1
+        // else if(crossAccociationScheme==1){
+        // delatSite = assosScheme2[siteNumber][j]*calcDelta(siteNumber,j,
+        // compnumb,i,phase,temperature,pressure,numbcomp);
+        // } else{
+        // System.out.println("invalid crossassociation scheme..");
+        // }
+        // }
+        // temp2
+        // +=((ComponentCPAInterface)phase.getComponent(i)).getXsite()[j]*delatSite;
+        // }
+        // temp +=phase.getComponent(i).getNumberOfMolesInPhase()*temp2;
+        // }
+        // Xi = 1.0/(1.0+1.0/phase.getTotalVolume()*temp);
+        // } catch(Exception e){
+        // e.printStackTrace();
+        // }
+        // return Xi;
+        // }
     }
 
-    public class PCSAFTa_Radoch extends CPA_Radoch implements CPAMixingInterface {
+    public class PCSAFTa_Radoch extends CPA_Radoch {
 
         private static final long serialVersionUID = 1000;
 
@@ -529,10 +537,12 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
 
         @Override
-		public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+        public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
                 double temperature, double pressure, int numbcomp) {
-//            System.out.println("bsaft " + Math.pow((((ComponentEosInterface)phase.getComponent(compnumb1)).getSigmaSAFTi()+((ComponentEosInterface)phase.getComponent(compnumb2)).getSigmaSAFTi())/2.0,3.0));
-//            System.out.println("bcpa " + (((ComponentEosInterface)phase.getComponent(compnumb1)).getb()+((ComponentEosInterface)phase.getComponent(compnumb2)).getb())/2.0);
+            // System.out.println("bsaft " +
+            // Math.pow((((ComponentEosInterface)phase.getComponent(compnumb1)).getSigmaSAFTi()+((ComponentEosInterface)phase.getComponent(compnumb2)).getSigmaSAFTi())/2.0,3.0));
+            // System.out.println("bcpa " +
+            // (((ComponentEosInterface)phase.getComponent(compnumb1)).getb()+((ComponentEosInterface)phase.getComponent(compnumb2)).getb())/2.0);
 
             return (Math.exp(getCrossAssociationEnergy(siteNumber1, siteNumber2, compnumb1, compnumb2, phase,
                     temperature, pressure, numbcomp) / (R * phase.getTemperature())) - 1.0)

@@ -1,15 +1,13 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
  * @author ESOL
  */
-public class VLSolidTray extends SimpleTray implements TrayInterface {
+public class VLSolidTray extends SimpleTray {
 
     private static final long serialVersionUID = 1000;
 
@@ -20,7 +18,7 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
     }
 
     @Override
-	public void init() {
+    public void init() {
         int pp = 0;
         if (streams.size() == 3) {
             pp = 1;
@@ -32,29 +30,28 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
     }
 
     @Override
-	public void setHeatInput(double heatinp) {
+    public void setHeatInput(double heatinp) {
         this.heatInput = heatinp;
     }
 
     @Override
-	public double calcMixStreamEnthalpy() {
+    public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
 
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            System.out.println("total enthalpy k : "
-                    + streams.get(k).getThermoSystem().getEnthalpy());
+            System.out.println("total enthalpy k : " + streams.get(k).getThermoSystem().getEnthalpy());
         }
         System.out.println("total enthalpy of streams: " + enthalpy);
         return enthalpy;
     }
 
     @Override
-	public void run() {
+    public void run() {
         double enthalpy = 0.0;
 
-//        ((Stream) streams.get(0)).getThermoSystem().display();
+        // ((Stream) streams.get(0)).getThermoSystem().display();
 
         SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
         // System.out.println("total number of moles " +
@@ -93,16 +90,16 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
     }
 
     @Override
-	public Stream getGasOutStream() {
+    public Stream getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
     @Override
-	public Stream getLiquidOutStream() {
+    public Stream getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 
@@ -110,7 +107,7 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
      * @return the temperature
      */
     @Override
-	public double getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
@@ -118,7 +115,7 @@ public class VLSolidTray extends SimpleTray implements TrayInterface {
      * @param temperature the temperature to set
      */
     @Override
-	public void setTemperature(double temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 }

@@ -21,22 +21,26 @@
  */
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class pTphaseEnvelopeNew extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelopeNew.class);
@@ -100,7 +104,7 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         try {
 
@@ -284,7 +288,7 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -327,11 +331,11 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -348,12 +352,12 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points2;
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         if (name.equals("bubT")) {
             return points2[0];
         }
@@ -395,12 +399,12 @@ public class pTphaseEnvelopeNew extends BaseOperation implements OperationInterf
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         fileName = name;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 }

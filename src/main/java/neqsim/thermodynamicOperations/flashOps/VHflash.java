@@ -25,11 +25,10 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class VHflash extends Flash implements java.io.Serializable {
+public class VHflash extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -46,17 +45,17 @@ public class VHflash extends Flash implements java.io.Serializable {
         this.pHFlash = new PHflash(system, Hspec, 0);
         this.Hspec = Hspec;
         this.Vspec = Vspec;
-//        System.out.println("entalpy " + Hspec);
-//        System.out.println("volume " + Vspec);
+        // System.out.println("entalpy " + Hspec);
+        // System.out.println("volume " + Vspec);
     }
 
     @Override
-	public void run() {
+    public void run() {
         double oldVol = system.getVolume(), newVol = system.getVolume();
         double pNew = system.getPressure(), pOld = system.getPressure(), pOldOld = 0.0;
         double err = 0.0;
         int iterations = 0;
-//        System.out.println("entalpy start " + system.getEnthalpy());
+        // System.out.println("entalpy start " + system.getEnthalpy());
         double dPdV = 0.0;
         double wallHeat = 0.0;
         for (int i = 0; i < 1; i++) {
@@ -67,7 +66,7 @@ public class VHflash extends Flash implements java.io.Serializable {
                 iterations++;
 
                 this.pHFlash = new PHflash(system, Hspec + wallHeat, 0);
-//            System.out.println("Hspec " + Hspec);
+                // System.out.println("Hspec " + Hspec);
                 this.pHFlash.run();
                 pOldOld = pOld;
                 pOld = system.getPressure();
@@ -89,12 +88,12 @@ public class VHflash extends Flash implements java.io.Serializable {
                 // System.out.println("pressure " + system.getPressure());
             } while ((Math.abs(err) > 1e-10 && iterations < 1000) || iterations < 7);
         }
-//        System.out.println("entalpy end " + system.getEnthalpy());
+        // System.out.println("entalpy end " + system.getEnthalpy());
         // System.out.println("iterations " + iterations);
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

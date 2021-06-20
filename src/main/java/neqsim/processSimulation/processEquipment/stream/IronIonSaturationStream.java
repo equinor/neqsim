@@ -1,5 +1,5 @@
 /*
- * Stream.java
+ * IronIonSaturationStream.java
  *
  * Created on 12. mars 2001, 13:11
  */
@@ -10,17 +10,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class IronIonSaturationStream extends Stream implements StreamInterface, Cloneable {
+public class IronIonSaturationStream extends Stream {
 
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
 
-    /** Creates new Stream */
+    /** Creates new IronIonSaturationStream */
     public IronIonSaturationStream() {
         super();
     }
@@ -38,7 +37,7 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         IronIonSaturationStream clonedSystem = null;
         try {
             clonedSystem = (IronIonSaturationStream) super.clone();
@@ -49,7 +48,7 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
     }
 
     @Override
-	public void run() {
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
@@ -60,7 +59,8 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
         reactiveThermoSystem.addComponent("Fe++", 1e-6);
         // reactiveThermoSystem.chemicalReactionInit();
         // reactiveThermoSystem.createDatabase(true);
-//        reactiveThermoSystem.addComponent("water", reactiveThermoSystem.getPhase(0).getComponent("MEG").getNumberOfmoles());
+        // reactiveThermoSystem.addComponent("water",
+        // reactiveThermoSystem.getPhase(0).getComponent("MEG").getNumberOfmoles());
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
         thermoOps.TPflash();
         reactiveThermoSystem.display();
@@ -76,7 +76,7 @@ public class IronIonSaturationStream extends Stream implements StreamInterface, 
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         reactiveThermoSystem.display(name);
     }
 

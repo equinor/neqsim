@@ -11,12 +11,10 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
- *
  */
-public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
+public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable {
 
     public boolean isInert();
 
@@ -41,10 +39,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     /**
      * method to return flow rate of a component
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
-     *
-     * @return flow rate in specified unit
+     * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
+     *                  m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     * @return          flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
 
@@ -244,14 +241,16 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     public double getSolidVaporPressure(double temperature);
 
     /**
-     * @param temperature
-     * @return ideal gas Cp for the component in the specific phase [J/molK]
+     * @param  temperature
+     * @return             ideal gas Cp for the component in the specific phase
+     *                     [J/molK]
      */
     public double getCp0(double temperature);
 
     /**
-     * @param temperature
-     * @return ideal gas Cv for the component in the specific phase [J/molK]
+     * @param  temperature
+     * @return             ideal gas Cv for the component in the specific phase
+     *                     [J/molK]
      */
     public double getCv0(double temperature);
 
