@@ -99,7 +99,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
 	}
 
 	@Override
-	public double getPolytropicHead(double flow, double speed) {
+	public double getHead(double flow, double speed) {
 		return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
 	}
 
@@ -116,11 +116,11 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
 		double newspeed = referenceSpeed;
 		double newhead = 0.0;
 		double oldspeed = newspeed + 1.0;
-		double oldhead = getPolytropicHead(flow, oldspeed);
+		double oldhead = getHead(flow, oldspeed);
 		double olderror = oldhead - head;
 		do {
 			iter++;
-			newhead = getPolytropicHead(flow, newspeed);
+			newhead = getHead(flow, newspeed);
 			error = newhead - head;
 			derrordspeed = (error - olderror) / (newspeed - oldspeed);
 			newspeed -= error / derrordspeed;
@@ -132,12 +132,12 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
 		return (int) Math.round(newspeed);
 	}
 
-	// public double getPolytropicHead(double flow, double speed) {
+	// public double getHead(double flow, double speed) {
 	// checkSurge1(flow, speed);
 	// return 100.0;
 	// }
 
-	public double polytropicEfficiency(double flow, double speed) {
+	public double efficiency(double flow, double speed) {
 		return 100.0;
 	}
 

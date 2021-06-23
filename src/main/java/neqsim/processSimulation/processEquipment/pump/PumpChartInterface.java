@@ -8,7 +8,7 @@ public interface PumpChartInterface extends Cloneable {
      * @param the speed that the curves are valid for, array with flow values,
      *            arrays with head and efficiency values at the given flow values
      */
-    public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency);
+    public void addCurve(double speed, double[] flow, double[] head, double[] efficiency);
 
     /**
      * This method is used add a set of curves to the CompressorChart object
@@ -26,13 +26,13 @@ public interface PumpChartInterface extends Cloneable {
      * @param flow [m3/h], speed in [rpm].
      * @return polytropic head in unit [getHeadUnit]
      */
-    public double getPolytropicHead(double flow, double speed);
+    public double getHead(double flow, double speed);
 
     /**
-     * Get method for polytropic efficiency from reference curves.
+     * Get method for efficiency from reference curves.
      *
      * @param flow [m3/h], speed in [rpm].
-     * @return polytropic efficiency [%].
+     * @return efficiency [%].
      */
     public double getEfficiency(double flow, double speed);
 
