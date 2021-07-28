@@ -9,6 +9,7 @@ import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesi
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -31,6 +32,9 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     private double HTU = 0.85;
     private double NTU = 2.0;
     private double stageEfficiency = 0.25;
+    private double fsFactor = 0.0;
+
+   
 
     /**
      * Creates new Heater
@@ -193,4 +197,11 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     public void setNTU(double NTU) {
         this.NTU = NTU;
     }
+
+    public double getFsFactor(){
+         double intArea = 3.14*getInternalDiameter()*getInternalDiameter()/4.0;
+         return getGasOutStream().getThermoSystem().getFlowRate("m3/sec")/intArea*Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3")*ThermodynamicConstantsInterface.gravity);
+    }
+
+   
 }
