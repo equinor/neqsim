@@ -57,6 +57,7 @@ import neqsim.util.database.NeqSimDataBase;
  * Purpose 7/3-00 System_Thermo(double, double) Constructor 7/3-00 addcomponent(String, double)
  * addding components from text-file: "Component_Data.txt" 7/3-00 init() initializing
  */
+
 abstract class SystemThermo implements SystemInterface {
 
     private static final long serialVersionUID = 1000;// implements System_Interface{
@@ -80,7 +81,6 @@ abstract class SystemThermo implements SystemInterface {
     protected double[] beta = new double[6];
     protected int a, initType = 3;
     private ArrayList<String> componentNames = new ArrayList<String>();
-    protected ArrayList resultArray1 = new ArrayList();
     protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound",
             "jouleThomsonCoefficient", "internalEnergy", "internalEnergy.Dtemperature",
             "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient", "logFugacityCoefficient",

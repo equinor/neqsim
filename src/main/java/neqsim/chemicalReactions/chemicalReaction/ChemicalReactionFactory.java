@@ -36,7 +36,6 @@ public class ChemicalReactionFactory {
     public static ChemicalReaction getChemicalReaction(String name) {
         ArrayList<String> names = new ArrayList<String>();
         ArrayList<String> stocCoef = new ArrayList<String>();
-        ArrayList<?> referenceType = new ArrayList<Object>();
         double[] K = new double[4];
         double refT = 0;
         double rateFactor = 0;
@@ -90,5 +89,4 @@ public class ChemicalReactionFactory {
         return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy,
                 refT);
     }
-
 }
