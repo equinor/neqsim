@@ -5,22 +5,23 @@
  */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestAcentricSchwartzentruber extends java.lang.Object {
+public class TestAcentricSchwartzentruber {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestAcentricSchwartzentruber.class);
@@ -28,13 +29,12 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
     /**
      * Creates new TestAcentric
      */
-    public TestAcentricSchwartzentruber() {
-    }
+    public TestAcentricSchwartzentruber() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -70,8 +70,8 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
                 // double guess[] ={0.0685841688, 0.9851816962, 4.2394590417} ; //mercury HYSYS
                 // - Pc=1608bara
 
-                double guess[] = { 0.09245, 0.9784, 2.244 };
-//    double guess[] ={0.1208932305, 0.9580163852, 0.9875864928} ; //mercury PROII -
+                double guess[] = {0.09245, 0.9784, 2.244};
+                // double guess[] ={0.1208932305, 0.9580163852, 0.9875864928} ; //mercury PROII -
                 // double guess[] = {0.4563609446};//, -140.87783836,44.122}; // nitrogen
                 function.setInitialGuess(guess);
 
@@ -81,8 +81,9 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
                 // testSystem.setAtractiveTerm(13);
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
-                double standardDeviation1[] = { 0.1, 0.1, 0.1 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
+                                                               // std.dev pressure
                 double val = Math.log(Double.parseDouble(dataSet.getString("VapourPressure")));
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
@@ -101,7 +102,7 @@ public class TestAcentricSchwartzentruber extends java.lang.Object {
         // optim.solve();
         optim.runMonteCarloSimulation();
         optim.displayCurveFit();
-//        optim.writeToCdfFile("c:/testFit.nc");
-//        optim.writeToTextFile("c:/testFit.txt");
+        // optim.writeToCdfFile("c:/testFit.nc");
+        // optim.writeToTextFile("c:/testFit.txt");
     }
 }

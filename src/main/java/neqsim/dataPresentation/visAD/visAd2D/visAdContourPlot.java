@@ -7,8 +7,19 @@
 package neqsim.dataPresentation.visAD.visAd2D;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
-import visad.*;
+import javax.swing.JFrame;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
@@ -16,7 +27,7 @@ import visad.java2d.DisplayImplJ2D;
  * @author Even Solbraa
  * @version
  */
-public class visAdContourPlot extends java.lang.Object {
+public class visAdContourPlot {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,7 +46,8 @@ public class visAdContourPlot extends java.lang.Object {
     double[][] z_samples;
 
     /** Creates new visAdContourPlot */
-    public visAdContourPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
+    public visAdContourPlot(String firstax, String secax, String zax)
+            throws RemoteException, VisADException {
 
         latitude = new RealType(firstax);
         longitude = new RealType(secax);
@@ -125,7 +137,7 @@ public class visAdContourPlot extends java.lang.Object {
         visAdContourPlot test = new visAdContourPlot("long", "alt", "height");
         test.setXYvals(0, 10, 4, 0, 10, 4);
 
-        double[][] z = { { 3, 2, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{3, 2, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         test.setZvals(z);
         test.init();

@@ -6,34 +6,33 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
-import neqsim.util.database.NeqSimExperimentDatabase;
-
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestClassicAcentric extends java.lang.Object {
+public class TestClassicAcentric {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestClassicAcentric.class);
 
     /** Creates new TestAcentric */
-    public TestClassicAcentric() {
-    }
+    public TestClassicAcentric() {}
 
     public static void main(String[] args) {
 
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimExperimentDatabase database = new NeqSimExperimentDatabase();
@@ -51,18 +50,21 @@ public class TestClassicAcentric extends java.lang.Object {
         try {
             while (dataSet.next()) {
                 ClassicAcentricFunction function = new ClassicAcentricFunction();
-                double guess[] = { 0.3311 };
-                double bound[][] = { { 0, 1.0 }, };
+                double guess[] = {0.3311};
+                double bound[][] = {{0, 1.0},};
                 function.setInitialGuess(guess);
 
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til komponenter til
-                                                                                    // systemet
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger
+                                                                                    // komponenter
+                                                                                    // til systemet
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
-                double standardDeviation1[] = { 0.15 }; // std.dev temperature // presure std.dev pressure
+                double standardDeviation1[] = {0.15}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 SampleValue sample = new SampleValue(Math.log(vappres),
-                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1, standardDeviation1);
+                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
                 function.setInitialGuess(guess);
                 // testSystem.createDatabase(true);

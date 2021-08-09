@@ -7,17 +7,28 @@
 package neqsim.dataPresentation.visAD.visAd3D.statistical3DPlot;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
-import visad.*;
+import javax.swing.JFrame;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java3d.DisplayImplJ3D;
-import visad.util.*;
+import visad.util.ContourWidget;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class surfaceFitPlot extends java.lang.Object {
+public class surfaceFitPlot {
 
     private static final long serialVersionUID = 1000;
 

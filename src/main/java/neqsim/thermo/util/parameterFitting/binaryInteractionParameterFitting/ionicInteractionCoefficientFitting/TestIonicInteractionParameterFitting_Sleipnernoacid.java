@@ -6,33 +6,34 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.lang.Object {
+public class TestIonicInteractionParameterFitting_Sleipnernoacid {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFitting_Sleipnernoacid.class);
+    static Logger logger =
+            LogManager.getLogger(TestIonicInteractionParameterFitting_Sleipnernoacid.class);
 
     /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFitting_Sleipnernoacid() {
-    }
+    public TestIonicInteractionParameterFitting_Sleipnernoacid() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         NeqSimDataBase database = new NeqSimDataBase();
         // ResultSet dataSet = database.getResultSet( "SELECT * FROM CO2KurCor WHERE
@@ -43,10 +44,11 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.la
             while (dataSet.next()) {
                 i++;
 
-                IonicInteractionParameterFittingFunction_Sleipnernoacid function = new IonicInteractionParameterFittingFunction_Sleipnernoacid();
+                IonicInteractionParameterFittingFunction_Sleipnernoacid function =
+                        new IonicInteractionParameterFittingFunction_Sleipnernoacid();
 
                 // double guess[] = {1.046762e-4,0.231069e-4,1.09254e-4,-1.190554e-4};
-                double guess[] = { -2.2e-5 };
+                double guess[] = {-2.2e-5};
                 // double guess[] = {-2.181442e-4};
                 // double guess[] = {1.04e-4,0.23e-4,1.0e-4,-1.1e-4};
                 double ID = Double.parseDouble(dataSet.getString("ID"));
@@ -70,8 +72,8 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid extends java.la
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { temperature, x1 / (x4 - x3) };
-                double standardDeviation1[] = { 0.01 };
+                double sample1[] = {temperature, x1 / (x4 - x3)};
+                double standardDeviation1[] = {0.01};
                 double stddev = 0.01;
                 SampleValue sample = new SampleValue(pressure, stddev, sample1, standardDeviation1);
                 function.setInitialGuess(guess);

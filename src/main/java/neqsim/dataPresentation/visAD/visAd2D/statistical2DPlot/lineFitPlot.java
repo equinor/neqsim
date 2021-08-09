@@ -7,8 +7,21 @@
 package neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
-import visad.*;
+import javax.swing.JFrame;
+import visad.ConstantMap;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Integer1DSet;
+import visad.Irregular1DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
@@ -16,7 +29,7 @@ import visad.java2d.DisplayImplJ2D;
  * @author Even Solbraa
  * @version
  */
-public class lineFitPlot extends java.lang.Object {
+public class lineFitPlot {
 
     private static final long serialVersionUID = 1000;
 
@@ -94,7 +107,8 @@ public class lineFitPlot extends java.lang.Object {
         }
     }
 
-    public void setLineXYVals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
+    public void setLineXYVals(double[] xvals, double[] yvals)
+            throws RemoteException, VisADException {
         y_line_samples = new float[1][yvals.length];
         x_line_samples = new float[1][xvals.length];
 
@@ -110,11 +124,11 @@ public class lineFitPlot extends java.lang.Object {
     }
 
     /*
-     * public void setContinousXVals(double[] vals)throws RemoteException,
-     * VisADException{ System.arraycopy(vals,0,xy_samples[0],0,vals.length); }
+     * public void setContinousXVals(double[] vals)throws RemoteException, VisADException{
+     * System.arraycopy(vals,0,xy_samples[0],0,vals.length); }
      * 
-     * public void setContinousYVals(double[] vals)throws RemoteException,
-     * VisADException{ System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
+     * public void setContinousYVals(double[] vals)throws RemoteException, VisADException{
+     * System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
      */
 
     public void init() throws RemoteException, VisADException {
@@ -157,11 +171,13 @@ public class lineFitPlot extends java.lang.Object {
         points_ref.setData(points_ff);
         line_ref.setData(line_ff);
 
-        ConstantMap[] pointsMap = { new ConstantMap(1.0f, Display.Red), new ConstantMap(0.0f, Display.Green),
-                new ConstantMap(0.0f, Display.Blue), new ConstantMap(4.5f, Display.PointSize) };
+        ConstantMap[] pointsMap = {new ConstantMap(1.0f, Display.Red),
+                new ConstantMap(0.0f, Display.Green), new ConstantMap(0.0f, Display.Blue),
+                new ConstantMap(4.5f, Display.PointSize)};
 
-        ConstantMap[] lineMap = { new ConstantMap(0.0f, Display.Red), new ConstantMap(0.0f, Display.Green),
-                new ConstantMap(1.0f, Display.Blue), new ConstantMap(1.5f, Display.LineWidth) };
+        ConstantMap[] lineMap = {new ConstantMap(0.0f, Display.Red),
+                new ConstantMap(0.0f, Display.Green), new ConstantMap(1.0f, Display.Blue),
+                new ConstantMap(1.5f, Display.LineWidth)};
 
         display.addReference(points_ref, pointsMap);
         display.addReference(line_ref, lineMap);
@@ -180,8 +196,8 @@ public class lineFitPlot extends java.lang.Object {
 
         lineFitPlot plot = new lineFitPlot("long", "alt");
 
-        double[][] z = { { 0, 0.5, 1, 3, 1 }, { 2, 6, 4, 1, 3 }, { 1, 3, 2, 1, 1 }, { 3, 2, 1, 3, 2 },
-                { 1, 3, 2, 1, 1 } };
+        double[][] z = {{0, 0.5, 1, 3, 1}, {2, 6, 4, 1, 3}, {1, 3, 2, 1, 1}, {3, 2, 1, 3, 2},
+                {1, 3, 2, 1, 1}};
 
         plot.setXYVals(z[0], z[1]);
         plot.setLineXYVals(z[0], z[3]);
