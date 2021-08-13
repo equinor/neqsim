@@ -38,7 +38,7 @@ public class SystemDefault extends SystemThermo {
     public void setPhase(PhaseInterface phaseType) {
         for (int i = 0; i < getMaxNumberOfPhases(); i++) {
             try {
-                phaseArray[i] = phaseType.getClass().newInstance();
+                phaseArray[i] = phaseType.getClass().getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 logger.error("err " + e.toString());
             }

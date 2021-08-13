@@ -24,8 +24,7 @@ import java.sql.*;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
@@ -155,7 +154,7 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
 
         try {
             if (dataBaseType.equals("MSAccess")) {
-                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
+                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("H2")) {
                 Class.forName("org.h2.Driver");
             } else if (dataBaseType.equals("H2RT")) {
@@ -163,15 +162,15 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
                 Class.forName("net.ucanaccess.jdbc.UcanaccessDriver");
             } else if (dataBaseType.equals("mySQL")) {
-                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("mySQLNTNU")) {
-                Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
+                Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("Derby")) {
-                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
+                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("oracle")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("oracleST")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
             } else {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }

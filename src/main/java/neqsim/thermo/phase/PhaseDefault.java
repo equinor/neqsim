@@ -9,8 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class PhaseDefault extends Phase {
@@ -34,10 +33,10 @@ public class PhaseDefault extends Phase {
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(moles);
         try {
-            componentArray[compNumber] = defComponent.getClass().newInstance();
+            componentArray[compNumber] = defComponent.getClass().getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             logger.error("err " + e.toString());
         }
@@ -45,7 +44,7 @@ public class PhaseDefault extends Phase {
     }
 
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
                                                                                                             // init type
                                                                                                             // =1 gi nye
@@ -54,22 +53,22 @@ public class PhaseDefault extends Phase {
     }
 
     @Override
-	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
+    public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
         return 1.0;
     }
 
     @Override
-	public void resetMixingRule(int type) {
+    public void resetMixingRule(int type) {
     }
 
     @Override
-	public double getMolarVolume() {
+    public double getMolarVolume() {
         return 1.0;
     }
 
     @Override
-	public double getGibbsEnergy() {
+    public double getGibbsEnergy() {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             val += getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugasityCoeffisient());// +Math.log(getComponent(i).getx()*getComponent(i).getAntoineVaporPressure(temperature)));

@@ -28,11 +28,11 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-abstract class Phase extends Object implements PhaseInterface {
+
+abstract class Phase implements PhaseInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -101,6 +101,7 @@ abstract class Phase extends Object implements PhaseInterface {
     public void removeComponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
         ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
+
 
         try {
             for (int i = 0; i < numberOfComponents; i++) {
@@ -256,15 +257,13 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to return pressure in a given unit
      *
-     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
-     * @return pressure in specified unit
+     * @param  unit The unit as a string. Supported units are bara, barg, Pa and MPa
+     * @return      pressure in specified unit
      */
     @Override
     public final double getPressure(String unit) {
         neqsim.util.unit.PressureUnit presConversion =
                 new neqsim.util.unit.PressureUnit(getPressure(), "bara");
-        return presConversion.getValue(unit);
-    }
 
     @Override
     public int getInitType() {
@@ -494,6 +493,7 @@ abstract class Phase extends Object implements PhaseInterface {
     @Override
     public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
+
         return 1;
     }
 
@@ -536,7 +536,6 @@ abstract class Phase extends Object implements PhaseInterface {
     public int getNumberOfComponents() {
         return numberOfComponents;
     }
-
 
     @Override
     public double getA() {
@@ -1009,6 +1008,7 @@ abstract class Phase extends Object implements PhaseInterface {
      *
      * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
      * @return entropy in specified unit
+
      */
     @Override
     public double getEntropy(String unit) {
@@ -1056,6 +1056,7 @@ abstract class Phase extends Object implements PhaseInterface {
      *
      * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
      * @return viscosity in specified unit
+
      */
     @Override
     public double getViscosity(String unit) {
@@ -1087,7 +1088,7 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to return conductivity of a phase
      *
-     * @return conductivity in unit W/m*K
+     * @return     conductivity in unit W/m*K
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
@@ -1099,9 +1100,8 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to return conductivity in a given unit
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     *
-     * @return conductivity in specified unit
+     * @param  unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return      conductivity in specified unit
      */
     @Override
     public double getThermalConductivity(String unit) {
@@ -1123,10 +1123,9 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to return conductivity in a given unit
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     *
-     * @return conductivity in specified unit
-     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
+     * @param      unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return          conductivity in specified unit
+     * @deprecated      use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override
     @Deprecated
@@ -1157,7 +1156,7 @@ abstract class Phase extends Object implements PhaseInterface {
         refPhase = new PhaseInterface[numberOfComponents];
         for (int i = 0; i < numberOfComponents; i++) {
             try {
-                refPhase[i] = this.getClass().newInstance();
+                refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 logger.error("err " + e.toString());
             }
@@ -1449,9 +1448,8 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      * 
-     * @param unit The unit as a string. Supported units are K/bar, C/bar
-     *
-     * @return Joule Thomson coefficient in given unit
+     * @param  unit The unit as a string. Supported units are K/bar, C/bar
+     * @return      Joule Thomson coefficient in given unit
      */
     @Override
     public double getJouleThomsonCoefficient(String unit) {
@@ -1491,8 +1489,8 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to get density of a fluid note: with Peneloux volume correction
      *
-     * @param unit The unit as a string. Supported units are kg/m3, mol/m3
-     * @return density in specified unit
+     * @param  unit The unit as a string. Supported units are kg/m3, mol/m3
+     * @return      density in specified unit
      */
     @Override
     public double getDensity(String unit) {
@@ -1661,8 +1659,8 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * Indexed getter for property refPhase.
      *
-     * @param index Index of the property.
-     * @return Value of the property at <CODE>index</CODE>.
+     * @param  index Index of the property.
+     * @return       Value of the property at <CODE>index</CODE>.
      */
     @Override
     public neqsim.thermo.phase.PhaseInterface getRefPhase(int index) {
@@ -1801,7 +1799,6 @@ abstract class Phase extends Object implements PhaseInterface {
      * Setter for property beta.
      *
      * @param beta New value of property beta.
-     *
      */
     @Override
     public final void setBeta(double beta) {
@@ -1811,11 +1808,11 @@ abstract class Phase extends Object implements PhaseInterface {
     @Override
     public void setMixingRuleGEModel(String name) {}
 
+
     /**
      * Getter for property phaseTypeName.
      *
      * @return Value of property phaseTypeName.
-     *
      */
     @Override
     public java.lang.String getPhaseTypeName() {
@@ -1826,7 +1823,6 @@ abstract class Phase extends Object implements PhaseInterface {
      * Setter for property phaseTypeName.
      *
      * @param phaseTypeName New value of property phaseTypeName.
-     *
      */
     @Override
     public void setPhaseTypeName(java.lang.String phaseTypeName) {
@@ -1837,7 +1833,6 @@ abstract class Phase extends Object implements PhaseInterface {
      * Getter for property mixingRuleDefined.
      *
      * @return Value of property mixingRuleDefined.
-     *
      */
     @Override
     public boolean isMixingRuleDefined() {
@@ -1848,7 +1843,6 @@ abstract class Phase extends Object implements PhaseInterface {
      * Setter for property mixingRuleDefined.
      *
      * @param mixingRuleDefined New value of property mixingRuleDefined.
-     *
      */
     @Override
     public void setMixingRuleDefined(boolean mixingRuleDefined) {
@@ -1859,7 +1853,6 @@ abstract class Phase extends Object implements PhaseInterface {
      * Setter for property phaseType.
      *
      * @param phaseType New value of property phaseType.
-     *
      */
     @Override
     public final void setPhaseType(int phaseType) {
@@ -1907,9 +1900,8 @@ abstract class Phase extends Object implements PhaseInterface {
     /**
      * method to return fluid volume
      *
-     * @param unit The unit as a string. Supported units are m3, litre
-     *
-     * @return volume in specified unit
+     * @param  unit The unit as a string. Supported units are m3, litre
+     * @return      volume in specified unit
      */
     @Override
     public double getVolume(String unit) {
