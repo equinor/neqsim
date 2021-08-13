@@ -264,6 +264,8 @@ abstract class Phase implements PhaseInterface {
     public final double getPressure(String unit) {
         neqsim.util.unit.PressureUnit presConversion =
                 new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+                return presConversion.getValue(unit);
+    }
 
     @Override
     public int getInitType() {
