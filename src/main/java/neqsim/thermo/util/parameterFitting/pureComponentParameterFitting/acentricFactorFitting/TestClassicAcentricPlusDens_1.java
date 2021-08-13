@@ -6,33 +6,33 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
+public class TestClassicAcentricPlusDens_1 {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestClassicAcentricPlusDens_1.class);
 
     /** Creates new TestAcentric */
-    public TestClassicAcentricPlusDens_1() {
-    }
+    public TestClassicAcentricPlusDens_1() {}
 
     public static void main(String[] args) {
 
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -48,7 +48,7 @@ public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
         // ORDER BY Temperature ASC");
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' ORDER BY Reference,Temperature");
-        double guess[] = { 1.242 };//
+        double guess[] = {1.242};//
         try {
             logger.info("adding....");
             while (dataSet.next()) {
@@ -61,8 +61,9 @@ public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
                 // testSystem.createDatabase(true);
                 // legger til komponenter til systemet
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
-                double standardDeviation1[] = { 0.1 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
                 double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 double stddev = val / 100.0;
                 double logVal = Math.log(val);
@@ -86,8 +87,8 @@ public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
         // WHERE ComponentName='CO2' AND VapourPressure>5");
         // dataSet = database.getResultSet( "SELECT * FROM PureComponentVapourPressures
         // WHERE ComponentName='water' AND VapourPressure>0 ORDER BY Temperature ASC");
-        dataSet = database
-                .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' ORDER BY Temperature ASC");
+        dataSet = database.getResultSet(
+                "SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA' ORDER BY Temperature ASC");
         try {
             logger.info("adding....");
             while (!dataSet.next()) {
@@ -103,9 +104,11 @@ public class TestClassicAcentricPlusDens_1 extends java.lang.Object {
                 testSystem.setMixingRule(1);
                 logger.info("adding2....");
                 double dens = Double.parseDouble(dataSet.getString("Density"));
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
-                double standardDeviation1[] = { 0.1 }; // std.dev temperature // presure std.dev pressure
-                SampleValue sample = new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
+                SampleValue sample =
+                        new SampleValue(dens, dens / 100.0, sample1, standardDeviation1);
                 function.setInitialGuess(guess);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);

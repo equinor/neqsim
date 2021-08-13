@@ -6,34 +6,35 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH extends java.lang.Object {
+public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityDataCO2AcOH.class);
+    static Logger logger =
+            LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityDataCO2AcOH.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToSolubilityDataCO2AcOH() {
-    }
+    public TestBinaryHVParameterFittingToSolubilityDataCO2AcOH() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -43,8 +44,9 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH extends java.la
 
             logger.info("adding....");
             while (dataSet.next()) {
-                BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData();
-                double parameterGuess[] = { 2500, -1500, -0.1, -0.1, 0.03 };
+                BinaryHVParameterFittingToSolubilityData function =
+                        new BinaryHVParameterFittingToSolubilityData();
+                double parameterGuess[] = {2500, -1500, -0.1, -0.1, 0.03};
                 function.setInitialGuess(parameterGuess);
 
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(280, 1);
@@ -67,8 +69,8 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH extends java.la
                 testSystem.setPressure(pressure);
                 testSystem.init(0);
 
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() };
-                double standardDeviation1[] = { 0.01, 0.01 };
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()};
+                double standardDeviation1[] = {0.01, 0.01};
 
                 SampleValue sample = new SampleValue(x, x / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);

@@ -23,7 +23,6 @@ package neqsim.util.database;
 import java.sql.*;
 
 /**
- *
  * @author esol
  */
 public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
@@ -38,7 +37,7 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
 
         try {
             if (dataBaseType.equals("Karsto")) {
-                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").newInstance();
+                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
             }
         } catch (Exception ex) {
             System.out.println("error in Online Karsto " + ex.toString());

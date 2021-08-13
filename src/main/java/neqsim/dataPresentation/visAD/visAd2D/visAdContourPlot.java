@@ -7,16 +7,26 @@
 package neqsim.dataPresentation.visAD.visAd2D;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
-import visad.*;
+import javax.swing.JFrame;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class visAdContourPlot extends java.lang.Object {
+public class visAdContourPlot {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,14 +45,14 @@ public class visAdContourPlot extends java.lang.Object {
     double[][] z_samples;
 
     /** Creates new visAdContourPlot */
-    public visAdContourPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
+    public visAdContourPlot(String firstax, String secax, String zax)
+            throws RemoteException, VisADException {
 
-        latitude = new RealType(firstax);
-        longitude = new RealType(secax);
+        latitude = RealType.getRealType(firstax);
+        longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
-        temperature = new RealType(zax);
+        temperature = RealType.getRealType(zax);
         func_domain_range = new FunctionType(domain_tuple, temperature);
-
     }
 
     public void setXYvals(double xMin, double xMax, int Nrows, double yMin, double yMax, int NCols)
@@ -53,16 +63,13 @@ public class visAdContourPlot extends java.lang.Object {
         domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS);
 
         set_samples = domain_set.getSamples(true);
-
     }
 
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
-
         z_samples = vals;
     }
 
     public void init() throws RemoteException, VisADException {
-
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
@@ -83,16 +90,13 @@ public class visAdContourPlot extends java.lang.Object {
         lonMap = new ScalarMap(longitude, Display.XAxis);
 
         // This is new!
-
         tempIsoMap = new ScalarMap(temperature, Display.IsoContour);
 
         // this ScalarMap will color the isolines
         // don't foget to add it to the display
-
         tempRGBMap = new ScalarMap(temperature, Display.RGB);
 
         // Add maps to display
-
         display.addMap(latMap);
         display.addMap(lonMap);
 
@@ -100,36 +104,29 @@ public class visAdContourPlot extends java.lang.Object {
         // display.addMap( tempRGBMap );
 
         // Create a data reference and set the FlatField as our data
-
         data_ref = new DataReferenceImpl("data_ref");
 
         data_ref.setData(vals_ff);
 
         // Add reference to display
-
         display.addReference(data_ref);
 
         // Create application window and add display to window
-
         JFrame jframe = new JFrame("VisAD Tutorial example 3_05");
         jframe.getContentPane().add(display.getComponent());
 
         // Set window size and make it visible
-
         jframe.setSize(500, 500);
         jframe.setVisible(true);
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
-
         visAdContourPlot test = new visAdContourPlot("long", "alt", "height");
         test.setXYvals(0, 10, 4, 0, 10, 4);
 
-        double[][] z = { { 3, 2, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{3, 2, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         test.setZvals(z);
         test.init();
-
     }
-
 }

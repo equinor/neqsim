@@ -6,34 +6,34 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object implements Cloneable {
+public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestBinaryHVfitToActivityCoefficientDB.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryHVfitToActivityCoefficientDB() {
-    }
+    public TestBinaryHVfitToActivityCoefficientDB() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -42,13 +42,16 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
 
         try {
             while (dataSet.next()) {
-                BinaryHVparameterFitToActivityCoefficientFunction function = new BinaryHVparameterFitToActivityCoefficientFunction();
+                BinaryHVparameterFitToActivityCoefficientFunction function =
+                        new BinaryHVparameterFitToActivityCoefficientFunction();
 
                 double x1 = Double.parseDouble(dataSet.getString("x1")) * 100;
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(
                         Double.parseDouble(dataSet.getString("Temperature")),
                         Double.parseDouble(dataSet.getString("Pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til komponenter til systemet
+                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til
+                                                                              // komponenter til
+                                                                              // systemet
                 testSystem.addComponent(dataSet.getString("Component2"),
                         Double.parseDouble(dataSet.getString("x2")) * 100);
                 // testSystem.chemicalReactionInit();
@@ -56,8 +59,8 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { x1, testSystem.getTemperature() };
-                double standardDeviation1[] = { x1 / 100.0 };
+                double sample1[] = {x1, testSystem.getTemperature()};
+                double standardDeviation1[] = {x1 / 100.0};
                 double val = Double.parseDouble(dataSet.getString("gamma1"));
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
@@ -66,7 +69,8 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
                 // function.setDatabaseParameters();
                 // double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398,
                 // -7.2410712156, 0.2127650110};
-                double guess[] = { -1460.6790723030, 1200.6447170870, 5.8929954883, -7.2400706727, 0.2131035181 };
+                double guess[] = {-1460.6790723030, 1200.6447170870, 5.8929954883, -7.2400706727,
+                        0.2131035181};
 
                 function.setInitialGuess(guess);
                 sampleList.add(sample);
@@ -83,7 +87,8 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
                 FreezeSolidFunction function = new FreezeSolidFunction();
                 // double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398,
                 // -7.2410712156, 0.2127650110};
-                double guess[] = { -1460.6790723030, 1200.6447170870, 5.8929954883, -7.2400706727, 0.2131035181 };
+                double guess[] = {-1460.6790723030, 1200.6447170870, 5.8929954883, -7.2400706727,
+                        0.2131035181};
 
                 function.setInitialGuess(guess);
 
@@ -96,8 +101,9 @@ public class TestBinaryHVfitToActivityCoefficientDB extends java.lang.Object imp
                 testSystem.setSolidPhaseCheck(true);
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPhase(0).getComponent(0).getz() }; // temperature
-                double standardDeviation1[] = { 0.1, 0.1, 0.1 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPhase(0).getComponent(0).getz()}; // temperature
+                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
+                                                               // std.dev pressure
                 double val = Double.parseDouble(dataSet.getString("FreezingTemperature"));
                 testSystem.setTemperature(val);
                 SampleValue sample = new SampleValue(val, val / 700, sample1, standardDeviation1);

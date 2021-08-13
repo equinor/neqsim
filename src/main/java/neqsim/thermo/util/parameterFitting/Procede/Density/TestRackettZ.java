@@ -6,44 +6,45 @@
 
 package neqsim.thermo.util.parameterFitting.Procede.Density;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestRackettZ extends java.lang.Object {
+public class TestRackettZ {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestRackettZ.class);
 
-    public TestRackettZ() {
-    }
+    public TestRackettZ() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
-        ResultSet dataSet = database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'");
+        ResultSet dataSet = database
+                .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName = 'Water'");
 
         try {
             logger.info("adding....");
             while (dataSet.next()) {
                 RackettZ function = new RackettZ();
                 // double guess[] = {0.2603556815}; //MDEA
-                double guess[] = { 0.2356623744 }; // Water
+                double guess[] = {0.2356623744}; // Water
                 function.setInitialGuess(guess);
 
                 double T = Double.parseDouble(dataSet.getString("Temperature"));
@@ -59,10 +60,12 @@ public class TestRackettZ extends java.lang.Object {
                 testSystem.init(0);
                 testSystem.init(1);
 
-                double sample1[] = { T }; // temperature
-                double standardDeviation1[] = { T / 100 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {T}; // temperature
+                double standardDeviation1[] = {T / 100}; // std.dev temperature // presure std.dev
+                                                         // pressure
 
-                SampleValue sample = new SampleValue(density, density / 100.0, sample1, standardDeviation1);
+                SampleValue sample =
+                        new SampleValue(density, density / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);

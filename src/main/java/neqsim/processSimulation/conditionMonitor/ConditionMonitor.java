@@ -1,10 +1,9 @@
 package neqsim.processSimulation.conditionMonitor;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
-public class ConditionMonitor extends java.lang.Object implements java.io.Serializable, Runnable {
+public class ConditionMonitor implements java.io.Serializable, Runnable {
     private static final long serialVersionUID = 1000;
     ProcessSystem refprocess = null;
     ProcessSystem process = null;
@@ -44,7 +43,7 @@ public class ConditionMonitor extends java.lang.Object implements java.io.Serial
     }
 
     @Override
-	public void run() {
+    public void run() {
         process = refprocess.copy();
     }
 

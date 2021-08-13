@@ -13,12 +13,27 @@
  */
 package neqsim.thermo.system;
 
-import java.awt.*;
-import java.io.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Toolkit;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
-import java.text.*;
-import java.util.*;
-import javax.swing.*;
+import java.text.FieldPosition;
+import java.util.ArrayList;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -36,15 +51,14 @@ import neqsim.thermo.phase.PhaseSolidComplex;
 import neqsim.thermo.phase.PhaseWax;
 import neqsim.util.database.NeqSimDataBase;
 
-import org.apache.logging.log4j.*;
-
 /*
  * This is the base class of the System classes. The purpose of this class is to give common
  * variables and methods to sub classes. The methods and variables in this class are: Date Method
  * Purpose 7/3-00 System_Thermo(double, double) Constructor 7/3-00 addcomponent(String, double)
  * addding components from text-file: "Component_Data.txt" 7/3-00 init() initializing
  */
-abstract class SystemThermo extends java.lang.Object implements SystemInterface {
+
+abstract class SystemThermo implements SystemInterface {
 
     private static final long serialVersionUID = 1000;// implements System_Interface{
     // Class variables
@@ -448,7 +462,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface 
             }
         }
 
-        ArrayList phaseList = new ArrayList(0);
+        ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
         for (int i = 0; i < numberOfPhases; i++) {
             if (specPhase != i) {
                 phaseList.add(phaseArray[phaseIndex[i]]);
@@ -469,10 +483,10 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface 
     @Override
     public void removePhaseKeepTotalComposition(int specPhase) {
 
-        ArrayList phaseList = new ArrayList(0);
+        ArrayList<PhaseInterface> phaseList = new ArrayList<PhaseInterface>(0);
         for (int i = 0; i < numberOfPhases; i++) {
             if (specPhase != i) {
-                phaseList.add(phaseArray[phaseIndex[i]]);
+                phaseList.add((PhaseInterface) phaseArray[phaseIndex[i]]);
             }
         }
 
@@ -2086,7 +2100,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface 
 
     @Override
     public String[] getComponentNames() {
-        ArrayList components = new ArrayList();
+        ArrayList<String> components = new ArrayList<String>();
 
         for (int j = 0; j < numberOfComponents; j++) {
             components.add(phaseArray[0].getComponents()[j].getName());
@@ -4187,7 +4201,7 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface 
 
     //
     // public String[] getResultArray1(){
-    // java.util.ArrayList list = new java.util.ArrayList();
+    // ArrayList list = new ArrayList();
     // for(int i=0;i<resultTable[0].length;i++){
     // list.add(getResultTable()[0][i].toString());
     // }
@@ -4199,7 +4213,6 @@ abstract class SystemThermo extends java.lang.Object implements SystemInterface 
     // }
 
     @Override
-    @SuppressWarnings("empty-statement")
     public SystemInterface setModel(String model) {
         SystemInterface tempModel = null;
         try {

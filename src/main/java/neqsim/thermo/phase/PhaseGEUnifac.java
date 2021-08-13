@@ -5,10 +5,13 @@
  */
 package neqsim.thermo.phase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -39,15 +42,18 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         componentArray = new ComponentGEUnifac[alpha[0].length];
         for (int i = 0; i < alpha[0].length; i++) {
             componentArray[i] = new ComponentGEUnifac(phase.getComponents()[i].getName(),
-                    phase.getComponents()[i].getNumberOfmoles(), phase.getComponents()[i].getNumberOfMolesInPhase(),
+                    phase.getComponents()[i].getNumberOfmoles(),
+                    phase.getComponents()[i].getNumberOfMolesInPhase(),
                     phase.getComponents()[i].getComponentNumber());
         }
     }
 
     @Override
-    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentGEUnifac(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentGEUnifac(componentName, moles, molesInPhase, compNumber);
     }
 
     @Override
@@ -61,11 +67,12 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     @Override
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         // if(type==0) calcaij();
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         if (type == 0) {
@@ -75,29 +82,42 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
     public void calcaij() {
         aij = new double[((ComponentGEUnifac) getComponent(0))
-                .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups()];
+                .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
+                        .getNumberOfUNIFACgroups()];
         for (int i = 0; i < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); i++) {
-            for (int j = 0; j < ((ComponentGEUnifac) getComponent(0)).getNumberOfUNIFACgroups(); j++) {
+            for (int j = 0; j < ((ComponentGEUnifac) getComponent(0))
+                    .getNumberOfUNIFACgroups(); j++) {
                 try {
-                    neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+                    neqsim.util.database.NeqSimDataBase database =
+                            new neqsim.util.database.NeqSimDataBase();
                     java.sql.ResultSet dataSet = null;
                     try {
-                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup="
-                                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database
+                                .getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup="
+                                        + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i)
+                                                .getMainGroup()
+                                        + ""));
                         dataSet.next();
                         dataSet.getClob("MainGroup");
                     } catch (Exception e) {
                         dataSet.close();
-                        dataSet = database.getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup="
-                                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup() + ""));
+                        dataSet = database
+                                .getResultSet(("SELECT * FROM unifacinterparam WHERE MainGroup="
+                                        + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i)
+                                                .getMainGroup()
+                                        + ""));
                         dataSet.next();
                     }
 
-                    aij[i][j] = Double.parseDouble(dataSet.getString(
-                            "n" + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup() + ""));
+                    aij[i][j] = Double.parseDouble(dataSet.getString("n"
+                            + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup()
+                            + ""));
                     if (Math.abs(aij[i][j]) < 1e-6) {
-                        logger.info(" i " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i).getMainGroup()
-                                + " j " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j).getMainGroup()
+                        logger.info(" i "
+                                + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(i)
+                                        .getMainGroup()
+                                + " j " + ((ComponentGEUnifac) getComponent(0)).getUnifacGroup(j)
+                                        .getMainGroup()
                                 + "  aij " + aij[i][j]);
                     }
                     dataSet.close();
@@ -113,11 +133,14 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     public void checkGroups() {
-        java.util.ArrayList<neqsim.thermo.atomElement.UNIFACgroup> unifacGroups = new java.util.ArrayList();
+        ArrayList<neqsim.thermo.atomElement.UNIFACgroup> unifacGroups =
+                new ArrayList<UNIFACgroup>();
 
         for (int i = 0; i < numberOfComponents; i++) {
-            for (int j = 0; j < ((ComponentGEUnifac) getComponent(i)).getNumberOfUNIFACgroups(); j++) {
-                if (!unifacGroups.contains(((ComponentGEUnifac) getComponent(i)).getUnifacGroup(j))) {
+            for (int j = 0; j < ((ComponentGEUnifac) getComponent(i))
+                    .getNumberOfUNIFACgroups(); j++) {
+                if (!unifacGroups
+                        .contains(((ComponentGEUnifac) getComponent(i)).getUnifacGroup(j))) {
                     unifacGroups.add(((ComponentGEUnifac) getComponent(i)).getUnifacGroup(j));
                 } else
                     ;// System.out.println("no");
@@ -126,23 +149,26 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < unifacGroups.size(); j++) {
-                if (!((ComponentGEUnifac) getComponent(i)).getUnifacGroups2().contains(unifacGroups.get(j))) {
-                    ((ComponentGEUnifac) getComponent(i)).addUNIFACgroup(
-                            unifacGroups.get(j).getSubGroup(), 0);
+                if (!((ComponentGEUnifac) getComponent(i)).getUnifacGroups2()
+                        .contains(unifacGroups.get(j))) {
+                    ((ComponentGEUnifac) getComponent(i))
+                            .addUNIFACgroup(unifacGroups.get(j).getSubGroup(), 0);
                 }
             }
         }
 
         for (int i = 0; i < numberOfComponents; i++) {
-            neqsim.thermo.atomElement.UNIFACgroup[] array = ((ComponentGEUnifac) getComponent(i)).getUnifacGroups();
+            neqsim.thermo.atomElement.UNIFACgroup[] array =
+                    ((ComponentGEUnifac) getComponent(i)).getUnifacGroups();
             java.util.Arrays.sort(array);
-            java.util.ArrayList phaseList = new java.util.ArrayList(0);
+            ArrayList<UNIFACgroup> phaseList = new ArrayList<UNIFACgroup>(0);
             phaseList.addAll(Arrays.asList(array));
             ((ComponentGEUnifac) getComponent(i)).setUnifacGroups(phaseList);
         }
 
         for (int i = 0; i < numberOfComponents; i++) {
-            for (int j = 0; j < ((ComponentGEUnifac) getComponent(i)).getNumberOfUNIFACgroups(); j++) {
+            for (int j = 0; j < ((ComponentGEUnifac) getComponent(i))
+                    .getNumberOfUNIFACgroups(); j++) {
                 ((ComponentGEUnifac) getComponent(i)).getUnifacGroup(j).setGroupIndex(j);
                 // System.out.println("i " + i + " " +
                 // ((ComponentGEUnifac)getComponent(i)).getUnifacGroup(j).getSubGroup());
@@ -152,26 +178,28 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     @Override
-	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure, int phasetype) {
         double GE = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
-            GE += phase.getComponents()[i].getx() * Math.log(((ComponentGEUniquac) componentArray[i]).getGamma(phase,
-                    numberOfComponents, temperature, pressure, phasetype));
+            GE += phase.getComponents()[i].getx()
+                    * Math.log(((ComponentGEUniquac) componentArray[i]).getGamma(phase,
+                            numberOfComponents, temperature, pressure, phasetype));
         }
         return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
     }
 
     @Override
-	public double getExessGibbsEnergy() {
+    public double getExessGibbsEnergy() {
         return getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
     }
 
     @Override
-	public double getGibbsEnergy() {
+    public double getGibbsEnergy() {
         double val = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
-            val += getComponent(i).getNumberOfMolesInPhase() * (getComponent(i).getLogFugasityCoeffisient());
+            val += getComponent(i).getNumberOfMolesInPhase()
+                    * (getComponent(i).getLogFugasityCoeffisient());
         }
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }

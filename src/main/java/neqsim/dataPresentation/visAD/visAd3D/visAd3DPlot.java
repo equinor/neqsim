@@ -14,8 +14,7 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class visAd3DPlot extends visAdBaseClass {
@@ -40,11 +39,11 @@ public class visAd3DPlot extends visAdBaseClass {
 
     /** Creates new visAdContourPlot */
     public visAd3DPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
-        latitude = new RealType(firstax);
-        longitude = new RealType(secax);
+        latitude = RealType.getRealType(firstax);
+        longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
-        temperature = new RealType(zax);
-        isotemperature = new RealType("isoTemperature");
+        temperature = RealType.getRealType(zax);
+        isotemperature = RealType.getRealType("isoTemperature");
         func_domain_range = new FunctionType(domain_tuple, temperature);
         func_domain_iso_range = new FunctionType(domain_tuple, isotemperature);
     }
@@ -78,7 +77,7 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     @Override
-	public void init() throws RemoteException, VisADException {
+    public void init() throws RemoteException, VisADException {
 
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 

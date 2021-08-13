@@ -11,8 +11,7 @@ import neqsim.util.database.NeqSimDataBase;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public class ComponentHydrate extends Component {
@@ -117,7 +116,7 @@ public class ComponentHydrate extends Component {
     }
 
     @Override
-	public double fugcoef(PhaseInterface phase) {
+    public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
@@ -386,7 +385,7 @@ public class ComponentHydrate extends Component {
 
     public void setSolidRefFluidPhase(PhaseInterface phase) {
         try {
-            refPhase = phase.getClass().newInstance();
+            refPhase = phase.getClass().getDeclaredConstructor().newInstance();
             refPhase.setTemperature(273.0);
             refPhase.setPressure(1.0);
             refPhase.addcomponent("water", 10.0, 10.0, 0);
@@ -395,46 +394,55 @@ public class ComponentHydrate extends Component {
             logger.error("error occured", e);
         }
     }
-//    public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres){
-//        if(componentName.equals("water")){
-//            double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
-//            dfugdt = Math.log((getEmptyHydrateStructureVapourPressuredT(hydrateStructure,temp))/pres);
-//        } else dfugdt=0;
-//        return dfugdt;
-//    }
-//
-//    public double getEmptyHydrateStructureVapourPressure2(int type, double temperature){
-//        double par1_struc1=4.6477;
-//        double par2_struc1=-5242.979;
-//        double par3_struc1=2.7789;
-//        double par4_struc1=-8.7156e-3;
-//        if(type==0){
-//            return Math.exp(par1_struc1*Math.log(temperature)+par2_struc1/temperature+par3_struc1+par4_struc1*temperature)/1.0e5;
-//        }
-//        if(type==1){
-//            return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
-//        } else return 0.0;
-//    }
-//
-//    public double getEmptyHydrateStructureVapourPressure(int type, double temperature){
-//
-//        if(type==0){
-//            return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
-//        }
-//        if(type==1){
-//            return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
-//        } else return 0.0;
-//    }
-//
-//    public double getEmptyHydrateStructureVapourPressuredT(int type, double temperature){
-//
-//        if(type==0){
-//            return -par2_struc1/(temperature*temperature)*Math.exp(par1_struc1+par2_struc1/temperature);
-//        }
-//        if(type==1){
-//            return -par2_struc2/(temperature*temperature)*Math.exp(par1_struc2+par2_struc2/temperature);
-//        } else return 0.0;
-//    }
+    // public double dfugdt(PhaseInterface phase, int numberOfComps, double temp,
+    // double pres){
+    // if(componentName.equals("water")){
+    // double solvol =
+    // 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
+    // dfugdt =
+    // Math.log((getEmptyHydrateStructureVapourPressuredT(hydrateStructure,temp))/pres);
+    // } else dfugdt=0;
+    // return dfugdt;
+    // }
+    //
+    // public double getEmptyHydrateStructureVapourPressure2(int type, double
+    // temperature){
+    // double par1_struc1=4.6477;
+    // double par2_struc1=-5242.979;
+    // double par3_struc1=2.7789;
+    // double par4_struc1=-8.7156e-3;
+    // if(type==0){
+    // return
+    // Math.exp(par1_struc1*Math.log(temperature)+par2_struc1/temperature+par3_struc1+par4_struc1*temperature)/1.0e5;
+    // }
+    // if(type==1){
+    // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
+    // } else return 0.0;
+    // }
+    //
+    // public double getEmptyHydrateStructureVapourPressure(int type, double
+    // temperature){
+    //
+    // if(type==0){
+    // return Math.exp(par1_struc1+par2_struc1/temperature)*1.01325;
+    // }
+    // if(type==1){
+    // return Math.exp(par1_struc2+par2_struc2/temperature)*1.01325;
+    // } else return 0.0;
+    // }
+    //
+    // public double getEmptyHydrateStructureVapourPressuredT(int type, double
+    // temperature){
+    //
+    // if(type==0){
+    // return
+    // -par2_struc1/(temperature*temperature)*Math.exp(par1_struc1+par2_struc1/temperature);
+    // }
+    // if(type==1){
+    // return
+    // -par2_struc2/(temperature*temperature)*Math.exp(par1_struc2+par2_struc2/temperature);
+    // } else return 0.0;
+    // }
 
     /**
      * @return the cavprwat
@@ -449,5 +457,4 @@ public class ComponentHydrate extends Component {
     public double[][] getCavprwat() {
         return cavprwat;
     }
-
 }

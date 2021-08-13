@@ -6,8 +6,8 @@
 
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile.wettedWallColumnReader;
 
-import java.io.*;
-import java.util.*;
+import java.io.RandomAccessFile;
+import java.util.StringTokenizer;
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 
 /**
@@ -20,15 +20,14 @@ public class WettedWallDataReader extends DataReader {
     private static final long serialVersionUID = 1000;
 
     /** Creates new WettedWallDataReader */
-    public WettedWallDataReader() {
-    }
+    public WettedWallDataReader() {}
 
     public WettedWallDataReader(String fileName) {
         super(fileName);
     }
 
     @Override
-	public void readData() {
+    public void readData() {
         StringTokenizer tokenizer;
         String token;
         int k = 0;
@@ -85,15 +84,18 @@ public class WettedWallDataReader extends DataReader {
         WettedWallDataReader reader = new WettedWallDataReader("31011222");
         int i = 0;
         do {
-            System.out.println("svar: " + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime());
+            System.out.println("svar: "
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime());
             System.out.println("total gas flow: "
-                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getInletTotalGasFlow());
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletTotalGasFlow());
             System.out.println("co2 flow: "
-                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getCo2SupplyFlow());
-            System.out.println(
-                    "pressure: " + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getPressure());
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getCo2SupplyFlow());
+            System.out.println("pressure: "
+                    + ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getPressure());
             i++;
         } while (i < reader.getSampleObjectList().size() - 1);
     }
-
 }
