@@ -135,6 +135,9 @@ public class pTphaseEnvelope extends BaseOperation implements OperationInterface
             // afterwards it uses them to define the speceq of the first point
             // based on the desired first point, dew/bubble
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+				if(system.getComponent(i).getz()<1e-10) {
+					continue;
+				}
                 if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
                     if (bubblePointFirst == true && system.getPhase(0).getComponents()[speceq]
                             .getTC() > system.getPhase(0).getComponents()[i].getTC()) {

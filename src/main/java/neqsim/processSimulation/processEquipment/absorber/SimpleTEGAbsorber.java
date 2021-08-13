@@ -18,6 +18,7 @@ import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesi
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -326,6 +327,15 @@ public class SimpleTEGAbsorber extends SimpleAbsorber implements AbsorberInterfa
         // getSolventOutStream().getFlowRate("kg/hr"));
 
     }
+
+    public double getGasLoadFactor() {
+            double intArea = 3.14*getInternalDiameter()*getInternalDiameter()/4.0;
+            double vs = getGasOutStream().getThermoSystem().getFlowRate("m3/sec")/intArea;
+            return vs/ Math.sqrt((getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity()
+                                - getGasOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity())
+                                / getSolventOutStream().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+    }
+
 
     @Override
     public void displayResult() {

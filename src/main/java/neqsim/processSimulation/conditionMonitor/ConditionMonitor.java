@@ -7,6 +7,7 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     private static final long serialVersionUID = 1000;
     ProcessSystem refprocess = null;
     ProcessSystem process = null;
+    String report;
 
     public ConditionMonitor() {
 
@@ -18,11 +19,12 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     }
 
     public void conditionAnalysis(String unitName) {
-        neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass refUn =
-                (neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass) refprocess
-                        .getUnit(unitName);
-        ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process
-                .getUnit(unitName)).runConditionAnalysis(refUn);
+        neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass refUn = (neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass) refprocess
+                .getUnit(unitName);
+        ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
+                .runConditionAnalysis(refUn);
+        report += ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
+                .getConditionAnalysisMessage();
     }
 
     public void conditionAnalysis() {
@@ -30,6 +32,10 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
         for (int i = 0; i < names.size(); i++) {
             conditionAnalysis(names.get(i));
         }
+    }
+    
+    public String getReport() {
+    	return report;
     }
 
     public ProcessSystem getProcess() {
