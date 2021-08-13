@@ -170,13 +170,13 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
                 .getNumberOfComponents()];
 
         SystemInterface minimumGibbsEnergySystem;
-        ArrayList clonedSystem = new ArrayList(1);
+        ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
 
         minimumGibbsEnergySystem = (SystemInterface) system.clone();
 
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
             double numb = 0;
-            clonedSystem.add(system.clone());
+            clonedSystem.add((SystemInterface) system.clone());
             ((SystemInterface) clonedSystem.get(i)).init(0);
             for (int j = 0; j < system.getPhases()[1].getNumberOfComponents(); j++) {
                 numb = i == j ? 1.0 : 1.0e-3;

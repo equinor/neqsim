@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.processSimulation.processSystem;
@@ -21,16 +19,16 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
-import org.apache.commons.lang.SerializationUtils;
-import org.apache.logging.log4j.*;
 /*
  * thermoOps.java
  *
  * Created on 2. oktober 2000, 20:27
  */
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import org.apache.commons.lang.SerializationUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -46,7 +44,7 @@ import neqsim.thermo.system.SystemInterface;
  * @author Even Solbraa
  * @version
  */
-public class ProcessSystem extends java.lang.Object implements java.io.Serializable, Runnable {
+public class ProcessSystem implements java.io.Serializable, Runnable {
 
     private static final long serialVersionUID = 1000;
 
@@ -56,8 +54,10 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     private double time = 0;
     private double surroundingTemperature = 288.15;
     private int timeStepNumber = 0;
-    private ArrayList<ProcessEquipmentInterface> unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
-    ArrayList<MeasurementDeviceInterface> measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
+    private ArrayList<ProcessEquipmentInterface> unitOperations =
+            new ArrayList<ProcessEquipmentInterface>(0);
+    ArrayList<MeasurementDeviceInterface> measurementDevices =
+            new ArrayList<MeasurementDeviceInterface>(0);
     RecycleController recycleController = new RecycleController();
     private double timeStep = 1.0;
     private String name = "process name";
@@ -91,13 +91,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     public Object getUnit(String name) {
         for (int i = 0; i < getUnitOperations().size(); i++) {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
-                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
-                        .size(); j++) {
+                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                        .getUnitOperations().size(); j++) {
 
                     if (((ModuleInterface) getUnitOperations().get(i)).getOperations()
                             .getUnitOperations().get(j).getName().equals(name)) {
-                        return ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
-                                .get(j);
+                        return ((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                                .getUnitOperations().get(j);
                     }
                 }
             } else if (getUnitOperations().get(i).getName().equals(name)) {
@@ -107,15 +107,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         }
         return null;
     }
-    
+
     public boolean hasUnitName(String name) {
-    	if(getUnit(name)==null) {
-    		return false;
-    	}
-    	else 
-    	{
-    		return true;
-    	}
+        if (getUnit(name) == null) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public Object getMeasurementDevice(String name) {
@@ -130,8 +128,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     public int getUnitNumber(String name) {
         for (int i = 0; i < getUnitOperations().size(); i++) {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
-                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
-                        .size(); j++) {
+                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                        .getUnitOperations().size(); j++) {
 
                     if (((ModuleInterface) getUnitOperations().get(i)).getOperations()
                             .getUnitOperations().get(j).getName().equals(name)) {
@@ -154,10 +152,10 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         ArrayList<String> unitNames = new ArrayList<String>();
         for (int i = 0; i < getUnitOperations().size(); i++) {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
-                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations().getUnitOperations()
-                        .size(); j++) {
-                    unitNames.add(((ModuleInterface) getUnitOperations().get(i))
-                            .getOperations().getUnitOperations().get(j).getName());
+                for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                        .getUnitOperations().size(); j++) {
+                    unitNames.add(((ModuleInterface) getUnitOperations().get(i)).getOperations()
+                            .getUnitOperations().get(j).getName());
                 }
             }
             unitNames.add(unitOperations.get(i).getName());
@@ -181,11 +179,11 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     }
 
     public void clearAll() {
-        unitOperations = new ArrayList(0);
+        unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     }
 
     public void clear() {
-        unitOperations = new ArrayList(0);
+        unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     }
 
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
@@ -193,13 +191,16 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         boolean addedComps = false;
         for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
             if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
-                fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+                fluid1.addComponent(fluid2.getComponent(i).getName(),
+                        fluid2.getComponent(i).getNumberOfmoles());
             } else {
                 if (addNewComponents) {
                     addedComps = true;
-                    if (fluid2.getComponent(i).isIsTBPfraction() || fluid2.getComponent(i).isIsPlusFraction()) {
+                    if (fluid2.getComponent(i).isIsTBPfraction()
+                            || fluid2.getComponent(i).isIsPlusFraction()) {
                         fluid1.addTBPfraction(fluid2.getComponent(i).getName(),
-                                fluid2.getComponent(i).getNumberOfmoles(), fluid2.getComponent(i).getMolarMass(),
+                                fluid2.getComponent(i).getNumberOfmoles(),
+                                fluid2.getComponent(i).getMolarMass(),
                                 fluid2.getComponent(i).getNormalLiquidDensity());
                     } else {
                         fluid1.addComponent(fluid2.getComponent(i).getName(),
@@ -221,14 +222,19 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         boolean addedComps = false;
         for (int i = 0; i < fluid2.getNumberOfComponents(); i++) {
             if (fluid1.getPhase(0).hasComponent(fluid2.getComponent(i).getName())) {
-                fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+                fluid1.addComponent(fluid2.getComponent(i).getName(),
+                        fluid2.getComponent(i).getNumberOfmoles());
             } else {
                 addedComps = true;
-                if (fluid2.getComponent(i).isIsTBPfraction() || fluid2.getComponent(i).isIsPlusFraction()) {
-                    fluid1.addTBPfraction(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles(),
-                            fluid2.getComponent(i).getMolarMass(), fluid2.getComponent(i).getNormalLiquidDensity());
+                if (fluid2.getComponent(i).isIsTBPfraction()
+                        || fluid2.getComponent(i).isIsPlusFraction()) {
+                    fluid1.addTBPfraction(fluid2.getComponent(i).getName(),
+                            fluid2.getComponent(i).getNumberOfmoles(),
+                            fluid2.getComponent(i).getMolarMass(),
+                            fluid2.getComponent(i).getNormalLiquidDensity());
                 } else {
-                    fluid1.addComponent(fluid2.getComponent(i).getName(), fluid2.getComponent(i).getNumberOfmoles());
+                    fluid1.addComponent(fluid2.getComponent(i).getName(),
+                            fluid2.getComponent(i).getNumberOfmoles());
                 }
             }
         }
@@ -247,7 +253,7 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     }
 
     @Override
-	public void run() {
+    public void run() {
         boolean isConverged = true;
         boolean hasResycle = false;
         boolean hasAdjuster = false;
@@ -290,14 +296,16 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
             }
             if (recycleController.solvedCurrentPriorityLevel()) {
                 recycleController.nextPriorityLevel();
-            } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
+            } else if (recycleController.hasLoverPriorityLevel()
+                    && !recycleController.solvedAll()) {
                 recycleController.resetPriorityLevel();
                 // isConverged=true;
             }
 
             for (int i = 0; i < unitOperations.size(); i++) {
                 if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-                    if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations.get(i)).solved()) {
+                    if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations
+                            .get(i)).solved()) {
                         isConverged = false;
                     }
                 }
@@ -306,14 +314,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
             /*
              * signalDB = new String[1000][1 + 3 * measurementDevices.size()];
              * 
-             * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for
-             * (int i = 0; i < measurementDevices.size(); i++) { signalDB[timeStepNumber][0]
-             * = Double.toString(time); signalDB[timeStepNumber][3 * i + 1] =
+             * signalDB[timeStepNumber] = new String[1 + 3 * measurementDevices.size()]; for (int i
+             * = 0; i < measurementDevices.size(); i++) { signalDB[timeStepNumber][0] =
+             * Double.toString(time); signalDB[timeStepNumber][3 * i + 1] =
              * ((MeasurementDeviceInterface) measurementDevices.get(i)) .getName();
-             * signalDB[timeStepNumber][3 * i + 2] = Double
-             * .toString(((MeasurementDeviceInterface)
-             * measurementDevices.get(i)).getMeasuredValue()); signalDB[timeStepNumber][3 *
-             * i + 3] = ((MeasurementDeviceInterface) measurementDevices.get(i)) .getUnit();
+             * signalDB[timeStepNumber][3 * i + 2] = Double .toString(((MeasurementDeviceInterface)
+             * measurementDevices.get(i)).getMeasuredValue()); signalDB[timeStepNumber][3 * i + 3] =
+             * ((MeasurementDeviceInterface) measurementDevices.get(i)) .getUnit();
              * 
              * }
              */
@@ -321,7 +328,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
 
         for (int i = 0; i < unitOperations.size(); i++) {
             if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-                if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations.get(i)).solved()) {
+                if (!((neqsim.processSimulation.processEquipment.util.Adjuster) unitOperations
+                        .get(i)).solved()) {
                     isConverged = false;
                 }
             }
@@ -361,8 +369,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         for (int i = 0; i < measurementDevices.size(); i++) {
             signalDB[timeStepNumber][0] = Double.toString(time);
             signalDB[timeStepNumber][3 * i + 1] = measurementDevices.get(i).getName();
-            signalDB[timeStepNumber][3 * i + 2] = Double
-                    .toString(measurementDevices.get(i).getMeasuredValue());
+            signalDB[timeStepNumber][3 * i + 2] =
+                    Double.toString(measurementDevices.get(i).getMeasuredValue());
             signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
 
         }
@@ -389,10 +397,9 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         }
 
         /*
-         * JFrame frame = new JFrame();
-         * frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); frame.setLayout(new
-         * GridLayout(1, 0, 5, 5)); JTextArea area1 = new JTextArea(10, 10); JTable Jtab
-         * = new JTable(reportResults(), reportResults()[0]); frame.add(area1);
+         * JFrame frame = new JFrame(); frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+         * frame.setLayout(new GridLayout(1, 0, 5, 5)); JTextArea area1 = new JTextArea(10, 10);
+         * JTable Jtab = new JTable(reportResults(), reportResults()[0]); frame.add(area1);
          * frame.pack(); frame.setLocationRelativeTo(null); frame.setVisible(true);
          */
     }
@@ -404,14 +411,13 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
             System.out.println("Thread did not finish");
         }
         for (int i = 0; i < measurementDevices.size(); i++) {
-            System.out.println(
-                    "Measurements Device Name: " + measurementDevices.get(i).getName());
-            System.out.println("Value: " + measurementDevices.get(i).getMeasuredValue()
-                    + " " + measurementDevices.get(i).getUnit());
+            System.out.println("Measurements Device Name: " + measurementDevices.get(i).getName());
+            System.out.println("Value: " + measurementDevices.get(i).getMeasuredValue() + " "
+                    + measurementDevices.get(i).getUnit());
             if (measurementDevices.get(i).isOnlineSignal())
-                System.out.println("Online value: "
-                        + measurementDevices.get(i).getOnlineSignal().getValue() + " "
-                        + measurementDevices.get(i).getOnlineSignal().getUnit());
+                System.out.println(
+                        "Online value: " + measurementDevices.get(i).getOnlineSignal().getValue()
+                                + " " + measurementDevices.get(i).getOnlineSignal().getUnit());
 
         }
     }
@@ -462,7 +468,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     }
 
     public void printLogFile(String filename) {
-        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempFile = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
+        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempFile =
+                new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         tempFile.setOutputFileName(filename);
         tempFile.setValues(signalDB);
         tempFile.createFile();
@@ -535,10 +542,11 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         double power = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
             if (unitOperations.get(i).getClass().getSimpleName().equals("Compressor")) {
-                power += ((neqsim.processSimulation.processEquipment.compressor.Compressor) unitOperations.get(i))
-                        .getPower();
+                power += ((neqsim.processSimulation.processEquipment.compressor.Compressor) unitOperations
+                        .get(i)).getPower();
             } else if (unitOperations.get(i).getClass().getSimpleName().equals("Pump")) {
-                power += ((neqsim.processSimulation.processEquipment.pump.Pump) unitOperations.get(i)).getPower();
+                power += ((neqsim.processSimulation.processEquipment.pump.Pump) unitOperations
+                        .get(i)).getPower();
             }
         }
         if (unit.equals("MW")) {
@@ -553,8 +561,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         double heat = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
             if (unitOperations.get(i).getClass().getSimpleName().equals("Cooler")) {
-                heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Cooler) unitOperations.get(i))
-                        .getDuty();
+                heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Cooler) unitOperations
+                        .get(i)).getDuty();
             }
         }
         return heat;
@@ -564,8 +572,8 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
         double heat = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
             if (unitOperations.get(i).getClass().getSimpleName().equals("Heater")) {
-                heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Heater) unitOperations.get(i))
-                        .getDuty();
+                heat += ((neqsim.processSimulation.processEquipment.heatExchanger.Heater) unitOperations
+                        .get(i)).getDuty();
             }
         }
         return heat;

@@ -1,7 +1,7 @@
 package neqsim.PVTsimulation.simulation;
 
-import neqsim.PVTsimulation.util.parameterfitting.WaxFunction;
 import java.util.ArrayList;
+import neqsim.PVTsimulation.util.parameterfitting.WaxFunction;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.thermo.system.SystemInterface;
@@ -42,7 +42,7 @@ public class WaxFractionSim extends BasePVTsimulation {
     }
 
     public void runTuning() {
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
             System.out.println("adding....");
@@ -51,12 +51,13 @@ public class WaxFractionSim extends BasePVTsimulation {
                 WaxFunction function = new WaxFunction();
                 double guess[] = new double[optimizer.getNumberOfTuningParameters()];// getThermoSystem().getWaxModel().getWaxParameters();
 
-                ArrayList<Double> guessArray = new ArrayList();
+                ArrayList<Double> guessArray = new ArrayList<Double>();
                 for (int p = 0; p < 3; p++) {
                     guessArray.add(getThermoSystem().getWaxModel().getWaxParameters()[p]);
                 }
                 guessArray.add(getThermoSystem().getWaxModel().getParameterWaxHeatOfFusion()[0]);
-                guessArray.add(getThermoSystem().getWaxModel().getParameterWaxTriplePointTemperature()[0]);
+                guessArray.add(
+                        getThermoSystem().getWaxModel().getParameterWaxTriplePointTemperature()[0]);
 
                 for (int o = 0; o < guess.length; o++) {
                     guess[o] = guessArray.get(o);
@@ -65,20 +66,21 @@ public class WaxFractionSim extends BasePVTsimulation {
 
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface) getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
+                                                               // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature[i]);
                 tempSystem.setPressure(pressure[i]);
                 thermoOps.TPflash();
                 // tempSystem.display();
-                double sample1[] = { temperature[i] };
+                double sample1[] = {temperature[i]};
                 double waxContent = experimentalData[0][i];
-                double standardDeviation1[] = { 1.5 };
-                SampleValue sample = new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1, standardDeviation1);
+                double standardDeviation1[] = {1.5};
+                SampleValue sample = new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -105,7 +107,8 @@ public class WaxFractionSim extends BasePVTsimulation {
             thermoOps.TPflash();
             waxFraction[i] = 0.0;
             if (getThermoSystem().hasPhaseType("wax")) {
-                waxFraction[i] = getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
+                waxFraction[i] = getThermoSystem()
+                        .getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
             }
             // System.out.println("wax fraction " + waxFraction[i]);
         }
@@ -113,7 +116,8 @@ public class WaxFractionSim extends BasePVTsimulation {
 
     public static void main(String[] args) {
 
-        NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+        NeqSimDataBase.setConnectionString(
+                "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
         NeqSimDataBase.setCreateTemporaryTables(true);
 
         SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
@@ -133,13 +137,13 @@ public class WaxFractionSim extends BasePVTsimulation {
         tempSystem.init(1);
 
         WaxFractionSim sepSim = new WaxFractionSim(tempSystem);
-        double[] temps = { 293.15, 283.15, 273.15, 264.15, 263, 262, 261 };
-        double[] pres = { 5, 5, 5.0, 5.0, 5.0, 5.0, 5.0 };
+        double[] temps = {293.15, 283.15, 273.15, 264.15, 263, 262, 261};
+        double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
         sepSim.setTemperaturesAndPressures(temps, pres);
 
         sepSim.runCalc();
         sepSim.getThermoSystem().display();
-        double[][] expData = { { 4, 7, 9, 10, 11, 12, 13 } };
+        double[][] expData = {{4, 7, 9, 10, 11, 12, 13}};
         sepSim.setExperimentalData(expData);
         // String[] params = {"Mplus", "waxParam1", "waxParam2"};
         // sepSim.getOptimizer().setTuningParameters("")

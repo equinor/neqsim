@@ -6,27 +6,27 @@
 
 package neqsim.statistics.parameterFitting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class SampleSet implements Cloneable {
 
     private static final long serialVersionUID = 1000;
 
-    private ArrayList samples = new ArrayList(1);
+    private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
 
     /** Creates new DataSet */
-    public SampleSet() {
-    }
+    public SampleSet() {}
 
     public SampleSet(SampleValue[] samplesIn) {
         samples.addAll(Arrays.asList(samplesIn));
     }
 
-    public SampleSet(ArrayList samplesIn) {
+    public SampleSet(ArrayList<SampleValue> samplesIn) {
         for (int i = 0; i < samplesIn.size(); i++) {
             samples.add(samplesIn.get(i));
         }
@@ -41,9 +41,9 @@ public class SampleSet implements Cloneable {
             e.printStackTrace(System.err);
         }
 
-        clonedSet.samples = (ArrayList) samples.clone();
+        clonedSet.samples = (ArrayList<SampleValue>) samples.clone();
         for (int i = 0; i < samples.size(); i++) {
-            clonedSet.samples.set(i, ((SampleValue) samples.get(i)).clone());
+            clonedSet.samples.set(i, (SampleValue) samples.get(i).clone());
         }
 
         return clonedSet;
@@ -81,9 +81,11 @@ public class SampleSet implements Cloneable {
         for (int i = 0; i < samples.size(); i++) {
             for (int j = 0; j < newSet.getSample(i).getDependentValues().length; j++) {
                 System.out.println("old Var: " + newSet.getSample(i).getDependentValue(j));
-                double newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
+                double newVar = cern.jet.random.Normal.staticNextDouble(
+                        newSet.getSample(i).getDependentValue(j),
                         newSet.getSample(i).getStandardDeviation(j));
-                newVar = cern.jet.random.Normal.staticNextDouble(newSet.getSample(i).getDependentValue(j),
+                newVar = cern.jet.random.Normal.staticNextDouble(
+                        newSet.getSample(i).getDependentValue(j),
                         newSet.getSample(i).getStandardDeviation(j));
                 newSet.getSample(i).setDependentValue(j, newVar);
                 System.out.println("new var: " + newVar);

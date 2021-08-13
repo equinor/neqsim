@@ -6,33 +6,33 @@
 
 package neqsim.thermo.util.parameterFitting.Statoil.Acids;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestIonicInteractionParameterFittingAcid extends java.lang.Object {
+public class TestIonicInteractionParameterFittingAcid {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingAcid.class);
 
     /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFittingAcid() {
-    }
+    public TestIonicInteractionParameterFittingAcid() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -40,14 +40,15 @@ public class TestIonicInteractionParameterFittingAcid extends java.lang.Object {
         int error = 1;
         double ID, x1, x2, x3, x4, temperature, pressure;
 
-        double guess[] = { 0.0000708122 };
+        double guess[] = {0.0000708122};
 
         try {
             int i = 0;
             logger.info("adding....");
             while (dataSet.next()) {
                 i++;
-                IonicInteractionParameterFittingFunctionAcid function = new IonicInteractionParameterFittingFunctionAcid();
+                IonicInteractionParameterFittingFunctionAcid function =
+                        new IonicInteractionParameterFittingFunctionAcid();
 
                 ID = Integer.parseInt(dataSet.getString("ID"));
                 pressure = Double.parseDouble(dataSet.getString("Pressure"));
@@ -68,8 +69,8 @@ public class TestIonicInteractionParameterFittingAcid extends java.lang.Object {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { x1 / x4 };
-                double standardDeviation1[] = { 0.01 };
+                double sample1[] = {x1 / x4};
+                double standardDeviation1[] = {0.01};
 
                 if (ID == 162) {
                     error = 5;
@@ -77,7 +78,8 @@ public class TestIonicInteractionParameterFittingAcid extends java.lang.Object {
                     error = 1;
                 }
 
-                SampleValue sample = new SampleValue(pressure, error * pressure / 100.0, sample1, standardDeviation1);
+                SampleValue sample = new SampleValue(pressure, error * pressure / 100.0, sample1,
+                        standardDeviation1);
 
                 function.setInitialGuess(guess);
                 sample.setFunction(function);

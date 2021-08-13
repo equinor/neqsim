@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -22,8 +20,9 @@
 
 package neqsim.chemicalReactions;
 
-import Jama.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import Jama.Matrix;
 import neqsim.chemicalReactions.chemicalEquilibriaum.ChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalEquilibriaum.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList;
@@ -33,10 +32,11 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
+public class ChemicalReactionOperations
+        implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -61,8 +61,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     LinearProgrammingChemicalEquilibrium initCalc;
 
     /** Creates new ChemicalReactionOperations */
-    public ChemicalReactionOperations() {
-    }
+    public ChemicalReactionOperations() {}
 
     public ChemicalReactionOperations(SystemInterface system) {
         initCalc = new LinearProgrammingChemicalEquilibrium();
@@ -95,7 +94,8 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
             elements = getAllElements();
 
             try {
-                initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
+                initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components,
+                        elements, this, 1);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -126,13 +126,15 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
 
     public void setComponents() {
         for (int j = 0; j < components.length; j++) {
-            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
+            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] =
+                    components[j];
         }
     }
 
     public void setComponents(int phase) {
         for (int j = 0; j < components.length; j++) {
-            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
+            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] =
+                    components[j];
         }
     }
 
@@ -175,7 +177,8 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
         ComponentInterface tempComp;
         for (int i = 0; i < components.length; i++) {
             for (int j = i + 1; j < components.length; j++) {
-                if (components[j].getGibbsEnergyOfFormation() < components[i].getGibbsEnergyOfFormation()) {
+                if (components[j].getGibbsEnergyOfFormation() < components[i]
+                        .getGibbsEnergyOfFormation()) {
                     tempComp = components[i];
                     components[i] = components[j];
                     components[j] = tempComp;
@@ -207,7 +210,7 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     }
 
     public String[] getAllElements() {
-        HashSet elementsLocal = new HashSet();
+        HashSet<String> elementsLocal = new HashSet<String>();
         for (int j = 0; j < components.length; j++) {
             for (int i = 0; i < components[j].getElements().getElementNames().length; i++) {
                 // System.out.println("elements: " +
@@ -218,13 +221,13 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
 
         String[] elementList = new String[elementsLocal.size()];
         int k = 0;
-        Iterator newe = elementsLocal.iterator();
+        Iterator<String> newe = elementsLocal.iterator();
         while (newe.hasNext()) {
             elementList[k++] = (String) newe.next();
         }
         /*
-         * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: "
-         * +elementList[j]); }
+         * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: " +elementList[j]);
+         * }
          */
         return elementList;
     }
@@ -256,7 +259,8 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
     public double[] calcChemRefPot(int phase) {
         double[] referencePotentials = new double[components.length];
         reactionList.createReactionMatrix(system.getPhase(phase), components);
-        double[] newreferencePotentials = reactionList.updateReferencePotentials(system.getPhase(phase), components);
+        double[] newreferencePotentials =
+                reactionList.updateReferencePotentials(system.getPhase(phase), components);
         if (newreferencePotentials != null) {
             for (int i = 0; i < newreferencePotentials.length; i++) {
                 referencePotentials[i] = newreferencePotentials[i];
@@ -272,13 +276,14 @@ public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicCo
         double changeMoles = 0.0;
         for (int i = 0; i < components.length; i++) {
             if (Math.abs(newMoles[i]) > 1e-45) {
-                changeMoles += (newMoles[i] - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
-                        .getNumberOfMolesInPhase());
+                changeMoles += (newMoles[i]
+                        - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
+                                .getNumberOfMolesInPhase());
                 // System.out.println("update moles first " + (components[i].getComponentName()
                 // + " moles " + components[i].getNumberOfMolesInPhase()));
                 system.getPhase(phase).addMolesChemReac(components[i].getComponentNumber(),
-                        (newMoles[i] - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
-                                .getNumberOfMolesInPhase()));
+                        (newMoles[i] - system.getPhase(phase).getComponents()[components[i]
+                                .getComponentNumber()].getNumberOfMolesInPhase()));
                 // System.out.println("update moles after " + (components[i].getComponentName()
                 // + " moles " + components[i].getNumberOfMolesInPhase()));
             }

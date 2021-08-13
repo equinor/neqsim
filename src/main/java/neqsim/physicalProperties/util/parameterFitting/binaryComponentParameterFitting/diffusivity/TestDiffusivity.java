@@ -6,33 +6,33 @@
 
 package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameterFitting.diffusivity;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestDiffusivity extends java.lang.Object {
+public class TestDiffusivity {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestDiffusivity.class);
 
     /** Creates new TestAcentric */
-    public TestDiffusivity() {
-    }
+    public TestDiffusivity() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -43,7 +43,7 @@ public class TestDiffusivity extends java.lang.Object {
             logger.info("adding....");
             while (dataSet.next()) {
                 DiffusivityFunction function = new DiffusivityFunction();
-                double guess[] = { 0.001 };
+                double guess[] = {0.001};
                 function.setInitialGuess(guess);
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
                 testSystem.addComponent(dataSet.getString("ComponentSolute"), 1.0e-10);
@@ -54,10 +54,12 @@ public class TestDiffusivity extends java.lang.Object {
                 testSystem.init(0);
                 testSystem.setPhysicalPropertyModel(4);
                 testSystem.initPhysicalProperties();
-                double sample1[] = { testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.1 }; // std.dev temperature // presure std.dev pressure
-                SampleValue sample = new SampleValue(Double.parseDouble(dataSet.getString("DiffusionCoefficient")),
-                        0.01, sample1, standardDeviation1);
+                double sample1[] = {testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
+                SampleValue sample = new SampleValue(
+                        Double.parseDouble(dataSet.getString("DiffusionCoefficient")), 0.01,
+                        sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
@@ -65,11 +67,11 @@ public class TestDiffusivity extends java.lang.Object {
         } catch (Exception e) {
             logger.error("database error" + e);
         }
-//        
-//        double sample1[] = {0.1};
-//        for(int i=0;i<sampleList.size();i++){
-//            logger.info"ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
-//        }
+        //
+        // double sample1[] = {0.1};
+        // for(int i=0;i<sampleList.size();i++){
+        // logger.info"ans: " + ((SampleValue)sampleList.get(i)).getFunction().calcValue(sample1));
+        // }
 
         SampleSet sampleSet = new SampleSet(sampleList);
         optim.setSampleSet(sampleSet);
