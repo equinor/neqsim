@@ -496,4 +496,16 @@ public class Separator extends ProcessEquipmentBaseClass implements ProcessEquip
         return getLiquidOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
                 + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit) - exergy;
     }
+    
+    /*
+    private class SeparatorReport extends Object{
+    	public Double gasLoadFactor;
+    	SeparatorReport(){
+    		gasLoadFactor = getGasLoadFactor();
+        }
+    }
+    
+    public SeparatorReport getReport(){
+        return this.new SeparatorReport();
+    }*/
 }

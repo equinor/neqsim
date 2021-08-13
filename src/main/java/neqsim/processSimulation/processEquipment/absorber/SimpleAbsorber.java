@@ -200,7 +200,12 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
 
     public double getFsFactor(){
          double intArea = 3.14*getInternalDiameter()*getInternalDiameter()/4.0;
-         return getGasOutStream().getThermoSystem().getFlowRate("m3/sec")/intArea*Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3")*ThermodynamicConstantsInterface.gravity);
+         return getGasOutStream().getThermoSystem().getFlowRate("m3/sec")/intArea*Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
+    }
+    
+    public double getWettingRate() {
+    	double intArea = 3.14*getInternalDiameter()*getInternalDiameter()/4.0;
+    	return getLiquidOutStream().getThermoSystem().getFlowRate("m3/hr")/intArea;
     }
 
    

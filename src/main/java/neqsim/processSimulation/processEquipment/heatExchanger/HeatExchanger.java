@@ -336,6 +336,7 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 	@Override
 	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
 		double heatBalanceError = 0.0;
+		conditionAnalysisMessage += name + " condition analysis started/";
 		HeatExchanger refEx = (HeatExchanger) refExchanger;
 		for (int i = 0; i < 2; i++) {
 			inStream[i].getFluid().initProperties();
@@ -351,12 +352,18 @@ public class HeatExchanger extends Heater implements ProcessEquipmentInterface, 
 				conditionAnalysisMessage += ConditionMonitorSpecifications.HXmaxDeltaT_ErrorMsg;
 			}
 		}
-		if (Math.abs(heatBalanceError) > 1.0) {
+		heatBalanceError = heatBalanceError/(outStream[0].getThermoSystem().getEnthalpy()
+		- inStream[0].getThermoSystem().getEnthalpy())*100.0;
+		if (Math.abs(heatBalanceError) > 10.0) {
 			String error = "Heat balance not fulfilled. Error: " + heatBalanceError + " ";
 			conditionAnalysisMessage += error;
 		}
+		else {
+			String error = "Heat balance ok. Enthalpy balance deviation: " + heatBalanceError + " %";
+			conditionAnalysisMessage += error;
+		}
 
-		conditionAnalysisMessage += "/analysis ended/";
+		conditionAnalysisMessage += name + "/analysis ended/";
 
 		// this.run();
 		double duty1 = Math

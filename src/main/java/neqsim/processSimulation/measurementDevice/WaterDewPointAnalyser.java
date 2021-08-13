@@ -63,7 +63,19 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
 			tempFluid.setTemperature(BukacekWaterInGas.waterDewPointTemperature(tempFluid.getComponent("water").getx(),
 					referencePressure));
 			return tempFluid.getTemperature(unit);
-		} else {
+		}else if(method.equals("multiphase")) {
+			SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+			tempFluid.setPressure(referencePressure);
+			tempFluid.setTemperature(0.1, "C");
+			ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+			try {
+				thermoOps.waterDewPointTemperatureMultiphaseFlash();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return tempFluid.getTemperature(unit);
+		}
+		else {
 			SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
 			SystemInterface tempFluid2 = tempFluid.setModel("GERG-water-EOS");
 			tempFluid2.setPressure(referencePressure);
@@ -86,11 +98,11 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
 		this.referencePressure = referencePressure;
 	}
 
-	private String getMethod() {
+	public String getMethod() {
 		return method;
 	}
 
-	private void setMethod(String method) {
+	public void setMethod(String method) {
 		this.method = method;
 	}
 

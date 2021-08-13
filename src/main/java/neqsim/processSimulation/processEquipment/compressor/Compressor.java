@@ -132,6 +132,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public StreamInterface getOutStream() {
         return outStream;
     }
+    
+	public StreamInterface getInStream() {
+        return inletStream;
+    }
 
     /**
      * Calculates polytropic or isentropic efficiency

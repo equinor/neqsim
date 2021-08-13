@@ -599,5 +599,23 @@ public class ProcessSystem extends java.lang.Object implements java.io.Serializa
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
     }
+    /*
+    @XmlRootElement
+    private class Report extends Object{
+    	public Double name;
+    	public ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
+    	
+    	Report(){
+    		name= getName();
+    		
+    		for (int i = 0; i < unitOperations.size(); i++) {
+    			unitOperationsReports.add(unitOperations.getReport());
+    		}
+        }
+    }
+    
+    public Report getReport(){
+        return this.new Report();
+    }*/
 
 }
