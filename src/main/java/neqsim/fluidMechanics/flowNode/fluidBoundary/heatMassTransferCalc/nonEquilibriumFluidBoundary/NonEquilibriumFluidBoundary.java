@@ -63,7 +63,7 @@ public abstract class NonEquilibriumFluidBoundary
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         NonEquilibriumFluidBoundary clonedSystem = null;
 
         try {
@@ -401,23 +401,23 @@ public abstract class NonEquilibriumFluidBoundary
     }
 
     @Override
-	public void initMassTransferCalc() {
+    public void initMassTransferCalc() {
         super.initMassTransferCalc();
     }
 
     @Override
-	public void initHeatTransferCalc() {
+    public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
     }
 
     @Override
-	public void init() {
+    public void init() {
         calcMolFractionDifference();
         super.init();
     }
 
     @Override
-	public void heatTransSolve() {
+    public void heatTransSolve() {
         double f = 0;
         double df = 0;
         double dhtot = 0.0;
@@ -460,7 +460,7 @@ public abstract class NonEquilibriumFluidBoundary
     }
 
     @Override
-	public void massTransSolve() {
+    public void massTransSolve() {
         int iter = 1;
         double err = 1.0e10, oldErr = 0.0;
         double factor = 10.0;
@@ -474,7 +474,7 @@ public abstract class NonEquilibriumFluidBoundary
             setfvecMassTrans2();
             setJacMassTrans2();
             dx = Jac.solve(fvec);
-            if (!new Double(dx.norm2()).isNaN()) {
+            if (!Double.valueOf(dx.norm2()).isNaN()) {
                 uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
                 tempMatr = dx.arrayRightDivide(uMassTrans);
                 err = Math.abs(dx.norm2() / uMassTrans.norm2());
@@ -490,7 +490,7 @@ public abstract class NonEquilibriumFluidBoundary
     }
 
     @Override
-	public double[] calcFluxes() {
+    public double[] calcFluxes() {
         double sum = 0.0;
         // System.out.println("starter...");
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -503,7 +503,7 @@ public abstract class NonEquilibriumFluidBoundary
     }
 
     @Override
-	public void solve() {
+    public void solve() {
         // interphaseSystem = (SystemInterface) bulkSystem.clone();
         initInterphaseSystem();
         init();
