@@ -14,6 +14,7 @@ import org.apache.logging.log4j.*;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -131,6 +132,10 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 	public StreamInterface getOutStream() {
         return outStream;
     }
+    
+	public StreamInterface getInStream() {
+        return inletStream;
+    }
 
     /**
      * Calculates polytropic or isentropic efficiency
@@ -207,7 +212,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
                 polytropicHead = getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0
                         * getPolytropicEfficiency();
                 polytropicFluidHead = polytropicHead;
-                polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
+                polytropicHeadMeter = polytropicFluidHead * 1000.0 / ThermodynamicConstantsInterface.gravity;
                 return;
             } else {
                 double MW = thermoSystem.getMolarMass();

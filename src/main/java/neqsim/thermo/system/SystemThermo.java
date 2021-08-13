@@ -81,6 +81,7 @@ abstract class SystemThermo implements SystemInterface {
     protected double[] beta = new double[6];
     protected int a, initType = 3;
     private ArrayList<String> componentNames = new ArrayList<String>();
+    protected ArrayList resultArray1 = new ArrayList();
     protected String[] CapeOpenProperties11 = {"molecularWeight", "speedOfSound",
             "jouleThomsonCoefficient", "internalEnergy", "internalEnergy.Dtemperature",
             "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient", "logFugacityCoefficient",

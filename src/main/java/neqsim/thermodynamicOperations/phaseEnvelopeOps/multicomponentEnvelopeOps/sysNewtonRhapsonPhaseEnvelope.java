@@ -80,7 +80,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         solver.setOrder(3);
     }
 
-    public void setfvec2() {
+    public void setfvec22() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0,
                     Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
@@ -98,6 +98,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     }
 
     public void setfvec() {
+    	
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, u.get(i, 0) + system.getPhase(0).getComponents()[i].getLogFugasityCoeffisient()
                     - system.getPhase(1).getComponents()[i].getLogFugasityCoeffisient());
@@ -115,6 +116,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         system.getPhase(0).getComponents()[numberOfComponents - 1].getAcentricFactor();
 
         for (int i = 0; i < numberOfComponents; i++) {
+        	if(system.getComponent(i).getz()<1e-10) {
+    			continue;
+    		}
             if (system.getPhase(0).getComponents()[i].getTC() > system.getPhase(0).getComponents()[speceq].getTC()) {
                 speceq = system.getPhase(0).getComponents()[i].getComponentNumber();
                 specVal = u.get(i, 0);

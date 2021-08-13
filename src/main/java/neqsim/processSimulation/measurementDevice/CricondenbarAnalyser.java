@@ -56,16 +56,34 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     @Override
 	public double getMeasuredValue(String unit) {
         SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
-        SystemInterface tempFluid2 = tempFluid.setModel("GERG-water-EOS");
-        tempFluid2.setPressure(70.0);
-        tempFluid2.setTemperature(-17.0, "C");
-        ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid2);
+        tempFluid.removeComponent("water");
+       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
-            thermoOps.waterDewPointTemperatureFlash();
+            thermoOps.setRunAsThread(true);
+            thermoOps.calcPTphaseEnvelope(false, 1.);
+            thermoOps.waitAndCheckForFinishedCalculation(15000);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return tempFluid2.getTemperature(unit);
+        return thermoOps.get("cricondenbar")[1];
+    }
+    
+	public double getMeasuredValue2(String unit, double temp) {
+        SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
+        tempFluid.setTemperature(temp, "C");
+        tempFluid.setPressure(10.0, "bara");
+        if(tempFluid.getPhase(0).hasComponent("water")) {
+        	tempFluid.removeComponent("water");
+        }
+        neqsim.PVTsimulation.simulation.SaturationPressure thermoOps = new neqsim.PVTsimulation.simulation.SaturationPressure(tempFluid);
+        try {
+        	thermoOps.run();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return thermoOps.getSaturationPressure();
     }
 
 }
