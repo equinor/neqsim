@@ -1,5 +1,5 @@
 /*
- * Component_Interface.java
+ * ComponentInterface.java
  *
  * Created on 8. april 2000, 23:15
  */

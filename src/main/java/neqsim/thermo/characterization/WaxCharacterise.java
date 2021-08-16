@@ -1,7 +1,9 @@
 package neqsim.thermo.characterization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * @author ESOL
@@ -121,7 +123,6 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
 
             parameterWaxHeatOfFusion[0] = 1.0;
             parameterWaxTriplePointTemperature[0] = 1.0;
-
         }
 
         public double calcTriplePointTemperature(int componentNumber) {
@@ -231,7 +232,6 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
                 }
             }
         }
-
     }
 
     public WaxModelInterface getModel(String name) {
@@ -257,5 +257,4 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     public void setModelName(String name) {
         this.name = name;
     }
-
 }

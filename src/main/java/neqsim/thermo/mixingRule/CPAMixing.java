@@ -1,5 +1,5 @@
 /*
- * EosMixingRules.java
+ * CPAMixing.java
  *
  * Created on 4. juni 2000, 12:38
  */
@@ -119,8 +119,9 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         public double getCrossAssociationEnergy(int compnumb1, int compnumb2, PhaseInterface phase, double temperature,
                 double pressure, int numbcomp) {
             if (Math.abs(cpaEpsCross[compnumb1][compnumb2]) > 1e-10) {
-                double ec = (phase.getComponent(compnumb1).getAssociationEnergy()
-                        + phase.getComponent(compnumb2).getAssociationEnergy()) / 2.0;
+                // double ec = (phase.getComponent(compnumb1).getAssociationEnergy() +
+                // phase.getComponent(compnumb2).getAssociationEnergy()) / 2.0;
+
                 // System.out.println("epscross " + ec + " .. " +
                 // cpaEpsCross[compnumb1][compnumb2]);
                 return cpaEpsCross[compnumb1][compnumb2];
@@ -335,7 +336,8 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                 if (((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1,
                         siteNumber2) == 1) {
                     double tempDelta = calcDelta(compnumb2, compnumb2, phase, temperature, pressure, numbcomp);
-                    double temp2 = calcDelta(compnumb2, compnumb2, phase, temperature, pressure, numbcomp);
+                    // double temp2 = calcDelta(compnumb2, compnumb2, phase, temperature, pressure,
+                    // numbcomp);
                     return ((PhaseCPAInterface) phase).getCrossAssosiationScheme(compnumb1, compnumb2, siteNumber1,
                             siteNumber2) * 0.5 * Math.pow(tempDelta, -1.0) * 2.0
                             * calcDeltadT(siteNumber1, siteNumber2, compnumb1, compnumb2, phase, temperature, pressure,
@@ -433,7 +435,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                                 * Math.pow(dDeltaidT * deltaj + dDeltajdT * deltai, 2.0)
                                 + 0.5 * Math.pow(deltajjdeltaii, -1.0 / 2.0)
                                         * (dDeltaidTdT * deltaj + 2.0 * dDeltaidT * dDeltajdT + dDeltajdTdT * deltai));
-
             }
 
             double derivative1 = -getCrossAssociationEnergy(compnumb1, compnumb2, phase, temperature, pressure,
@@ -581,7 +582,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                         || phase.getComponent(k).getNumberOfAssociationSites() == 0) {
                 } else {
                     try {
-                        int templ = l, tempk = k;
                         // database = new util.database.NeqSimDataBase();
                         if (NeqSimDataBase.createTemporaryTables()) {
                             dataSet = database.getResultSet("SELECT * FROM intertemp WHERE (comp1='" + component_name
@@ -611,7 +611,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
                     }
                 }
             }
-
         }
         try {
             if (database.getStatement() != null) {
@@ -633,7 +632,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         } else {
             return new CPA_Radoch();
         }
-
     }
 
     public CPAMixingInterface resetMixingRule(int i, PhaseInterface phase) {
@@ -693,7 +691,6 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
             if (phase.getComponent(compnumb2).getAssociationScheme().equals("1A")) {
                 comp2Scheme = charge1A;
             }
-
         } else {
             return new int[0][0];
         }
