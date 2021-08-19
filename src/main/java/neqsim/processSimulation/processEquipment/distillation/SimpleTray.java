@@ -69,6 +69,10 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         super.run();
         temperature = mixedStream.getTemperature();
     }
+    
+    public void TPflash() {
+    	
+    }
 
     @Override
 	public void run() {
