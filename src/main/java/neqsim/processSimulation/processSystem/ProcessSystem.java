@@ -281,6 +281,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
                         ((Runnable) unitOperations.get(i)).run();
                     } catch (Exception e) {
                         String error = e.getMessage();
+                        e.printStackTrace();
                     }
                 if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
                         && recycleController.doSolveRecycle((Recycle) unitOperations.get(i))) {

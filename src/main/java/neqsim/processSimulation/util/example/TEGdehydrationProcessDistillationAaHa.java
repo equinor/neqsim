@@ -137,7 +137,7 @@ public class TEGdehydrationProcessDistillationAaHa {
         // 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
 
         Stream strippingGas = new Stream("stripGas", stripGas);
-        strippingGas.setFlowRate(55.0, "Sm3/hr");
+        strippingGas.setFlowRate(255.0, "Sm3/hr");
         strippingGas.setTemperature(80.0, "C");
         strippingGas.setPressure(1.02, "bara");
 
@@ -171,12 +171,17 @@ public class TEGdehydrationProcessDistillationAaHa {
         stripper.addGasInStream(strippingGas);
         stripper.setNumberOfStages(4);
         stripper.setStageEfficiency(0.5);
-
+  /*    
+        DistillationColumn stripper = new DistillationColumn(3, false, false);
+        stripper.setName("TEG stripper");
+        stripper.addFeedStream(column.getLiquidOutStream(), 2);
+        stripper.getTray(0).addStream(strippingGas);
+*/
         Recycle recycleGasFromStripper = new Recycle("stripping gas recirc");
         recycleGasFromStripper.addStream(stripper.getGasOutStream());
         recycleGasFromStripper.setOutletStream(gasToReboiler);
 
-        Heater bufferTank = new Heater("TEG buffer tank", stripper.getSolventOutStream());
+        Heater bufferTank = new Heater("TEG buffer tank", stripper.getLiquidOutStream());
         bufferTank.setOutTemperature(273.15 + 191.0);
 
         Pump hotLeanTEGPump = new Pump(bufferTank.getOutStream());// stripper.getSolventOutStream());
