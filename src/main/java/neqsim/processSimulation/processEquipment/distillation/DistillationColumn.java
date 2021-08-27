@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass
-		implements ProcessEquipmentInterface, DistillationInterface {
+		implements DistillationInterface {
 
 	private static final long serialVersionUID = 1000;
 	private boolean doInitializion = true;
