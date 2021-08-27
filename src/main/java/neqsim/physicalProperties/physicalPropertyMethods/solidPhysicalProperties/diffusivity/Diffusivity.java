@@ -5,16 +5,16 @@
  */
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.diffusivity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class Diffusivity
         extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable {
+        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
@@ -36,7 +36,7 @@ public class Diffusivity
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -54,29 +54,29 @@ public class Diffusivity
     }
 
     @Override
-	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
 
         return binaryDiffusionCoeffisients;
     }
 
     @Override
-	public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoeffisients() {
 
     }
 
     @Override
-	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
     @Override
-	public double getEffectiveDiffusionCoefficient(int i) {
+    public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
     @Override
-	public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double nonIdealCorrection = 1.0;
         return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non ideality factor
     }

@@ -1,15 +1,12 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
  * @author ESOL
  */
-public class Reboiler extends neqsim.processSimulation.processEquipment.distillation.SimpleTray
-        implements TrayInterface {
+public class Reboiler extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
 
     private static final long serialVersionUID = 1000;
 
@@ -37,16 +34,15 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
 
     public double getDuty() {
         return duty;
-//		return calcMixStreamEnthalpy();
+        // return calcMixStreamEnthalpy();
     }
 
     @Override
-	public void run() {
+    public void run() {
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem()
-                    .clone();
+            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);

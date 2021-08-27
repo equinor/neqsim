@@ -1,20 +1,21 @@
 /*
- * TPflash.java
+ * dTPflash.java
  *
  * Created on 2. oktober 2000, 22:26
  */
 
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class dTPflash extends TPflash implements java.io.Serializable {
+public class dTPflash extends TPflash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(dTPflash.class);
@@ -22,7 +23,7 @@ public class dTPflash extends TPflash implements java.io.Serializable {
 
     // SystemInterface clonedSystem;
 
-    /** Creates new TPflash */
+    /** Creates new dTPflash */
     public dTPflash() {
     }
 
@@ -32,7 +33,7 @@ public class dTPflash extends TPflash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         iterations = 0;
         double diff = 0.0;

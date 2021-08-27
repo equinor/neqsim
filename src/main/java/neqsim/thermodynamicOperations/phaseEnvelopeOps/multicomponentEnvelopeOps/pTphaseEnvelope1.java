@@ -21,22 +21,26 @@
  */
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
-import neqsim.thermodynamicOperations.OperationInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class pTphaseEnvelope1 extends BaseOperation implements OperationInterface, java.io.Serializable {
+public class pTphaseEnvelope1 extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelope1.class);
@@ -112,7 +116,7 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         try {
 
@@ -334,7 +338,7 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -377,11 +381,11 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(1);
         nf.applyPattern("####.#");
@@ -398,12 +402,12 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return points2;
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         if (name.equals("bubT")) {
             return points2[0];
         }
@@ -445,7 +449,7 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         fileName = name;
     }
 
@@ -453,7 +457,6 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
      * Getter for property bubblePointFirst.
      * 
      * @return Value of property bubblePointFirst.
-     *
      */
     public boolean isBubblePointFirst() {
         return bubblePointFirst;
@@ -463,14 +466,13 @@ public class pTphaseEnvelope1 extends BaseOperation implements OperationInterfac
      * Setter for property bubblePointFirst.
      * 
      * @param bubblePointFirst New value of property bubblePointFirst.
-     *
      */
     public void setBubblePointFirst(boolean bubblePointFirst) {
         this.bubblePointFirst = bubblePointFirst;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 

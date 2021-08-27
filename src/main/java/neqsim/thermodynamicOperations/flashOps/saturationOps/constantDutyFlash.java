@@ -6,10 +6,12 @@
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public abstract class constantDutyFlash implements constantDutyFlashInterface, java.io.Serializable {
+import neqsim.thermo.system.SystemInterface;
+
+public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(constantDutyFlash.class);
@@ -40,12 +42,12 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
     }
 
     @Override
-	public void setBeta(double beta) {
+    public void setBeta(double beta) {
         this.beta = beta;
     }
 
     @Override
-	public void run() {
+    public void run() {
         system.init(0);
         system.init(2);
 
@@ -92,21 +94,21 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return null;
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         return null;
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         system.display();
     }
 
@@ -116,7 +118,7 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
      * @return Value of property superCritical.
      */
     @Override
-	public boolean isSuperCritical() {
+    public boolean isSuperCritical() {
         return superCritical;
     }
 
@@ -130,12 +132,12 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface, j
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return null;
     }
 
     @Override
-	public void addData(String name, double[][] data) {
+    public void addData(String name, double[][] data) {
 
     }
 }

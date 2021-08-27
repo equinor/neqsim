@@ -22,6 +22,7 @@ package neqsim.chemicalReactions;
 
 import java.util.HashSet;
 import java.util.Iterator;
+
 import Jama.Matrix;
 import neqsim.chemicalReactions.chemicalEquilibriaum.ChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalEquilibriaum.LinearProgrammingChemicalEquilibrium;
@@ -32,11 +33,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ChemicalReactionOperations
-        implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
+public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -61,16 +61,16 @@ public class ChemicalReactionOperations
     LinearProgrammingChemicalEquilibrium initCalc;
 
     /** Creates new ChemicalReactionOperations */
-    public ChemicalReactionOperations() {}
+    public ChemicalReactionOperations() {
+    }
 
     public ChemicalReactionOperations(SystemInterface system) {
         initCalc = new LinearProgrammingChemicalEquilibrium();
-        boolean newcomps = true, newcompsOld = true;
+        boolean newcomps = true;
         int old = system.getPhase(0).getNumberOfComponents();
         this.system = system;
 
         do {
-            newcompsOld = newcomps;
             // if statement added by Procede
             if (!newcomps) {
                 break;
@@ -94,8 +94,7 @@ public class ChemicalReactionOperations
             elements = getAllElements();
 
             try {
-                initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components,
-                        elements, this, 1);
+                initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -126,15 +125,13 @@ public class ChemicalReactionOperations
 
     public void setComponents() {
         for (int j = 0; j < components.length; j++) {
-            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] =
-                    components[j];
+            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
         }
     }
 
     public void setComponents(int phase) {
         for (int j = 0; j < components.length; j++) {
-            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] =
-                    components[j];
+            system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
         }
     }
 
@@ -177,8 +174,7 @@ public class ChemicalReactionOperations
         ComponentInterface tempComp;
         for (int i = 0; i < components.length; i++) {
             for (int j = i + 1; j < components.length; j++) {
-                if (components[j].getGibbsEnergyOfFormation() < components[i]
-                        .getGibbsEnergyOfFormation()) {
+                if (components[j].getGibbsEnergyOfFormation() < components[i].getGibbsEnergyOfFormation()) {
                     tempComp = components[i];
                     components[i] = components[j];
                     components[j] = tempComp;
@@ -259,8 +255,7 @@ public class ChemicalReactionOperations
     public double[] calcChemRefPot(int phase) {
         double[] referencePotentials = new double[components.length];
         reactionList.createReactionMatrix(system.getPhase(phase), components);
-        double[] newreferencePotentials =
-                reactionList.updateReferencePotentials(system.getPhase(phase), components);
+        double[] newreferencePotentials = reactionList.updateReferencePotentials(system.getPhase(phase), components);
         if (newreferencePotentials != null) {
             for (int i = 0; i < newreferencePotentials.length; i++) {
                 referencePotentials[i] = newreferencePotentials[i];
@@ -276,14 +271,13 @@ public class ChemicalReactionOperations
         double changeMoles = 0.0;
         for (int i = 0; i < components.length; i++) {
             if (Math.abs(newMoles[i]) > 1e-45) {
-                changeMoles += (newMoles[i]
-                        - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
-                                .getNumberOfMolesInPhase());
+                changeMoles += (newMoles[i] - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
+                        .getNumberOfMolesInPhase());
                 // System.out.println("update moles first " + (components[i].getComponentName()
                 // + " moles " + components[i].getNumberOfMolesInPhase()));
                 system.getPhase(phase).addMolesChemReac(components[i].getComponentNumber(),
-                        (newMoles[i] - system.getPhase(phase).getComponents()[components[i]
-                                .getComponentNumber()].getNumberOfMolesInPhase()));
+                        (newMoles[i] - system.getPhase(phase).getComponents()[components[i].getComponentNumber()]
+                                .getNumberOfMolesInPhase()));
                 // System.out.println("update moles after " + (components[i].getComponentName()
                 // + " moles " + components[i].getNumberOfMolesInPhase()));
             }
@@ -393,5 +387,4 @@ public class ChemicalReactionOperations
     // reactionList) {
     // this.reactionList = reactionList;
     // }
-
 }

@@ -5,24 +5,31 @@
  */
 package neqsim.processSimulation.processEquipment.mixer;
 
-import java.awt.*;
-import java.text.*;
-import java.util.*;
-import javax.swing.*;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.util.ArrayList;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface, MixerInterface {
+public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -42,26 +49,26 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return mixedStream.getThermoSystem();
     }
 
     @Override
-	public void replaceStream(int i, StreamInterface newStream) {
+    public void replaceStream(int i, StreamInterface newStream) {
         streams.set(i, newStream);
     }
 
     @Override
-	public void addStream(StreamInterface newStream) {
+    public void addStream(StreamInterface newStream) {
         streams.add(newStream);
 
         try {
             if (getNumberOfInputStreams() == 0) {
                 mixedStream = (Stream) streams.get(0).clone(); // cloning the first stream
-//            mixedStream.getThermoSystem().setNumberOfPhases(2);
-//            mixedStream.getThermoSystem().reInitPhaseType();
-//            mixedStream.getThermoSystem().init(0);
-//            mixedStream.getThermoSystem().init(3);
+                // mixedStream.getThermoSystem().setNumberOfPhases(2);
+                // mixedStream.getThermoSystem().reInitPhaseType();
+                // mixedStream.getThermoSystem().init(0);
+                // mixedStream.getThermoSystem().init(3);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,26 +91,21 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
                 lowestPressure = streams.get(k).getThermoSystem().getPhase(0).getPressure();
                 mixedStream.getThermoSystem().getPhase(0).setPressure(lowestPressure);
             }
-            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
-                    .getNumberOfComponents(); i++) {
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
-                        .getName();
+                String componentName = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
                 // System.out.println("adding: " + componentName);
                 int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i)
-                        .getNumberOfmoles();
+                double moles = streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
                 for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); p++) {
                     if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName().equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-                                .getComponentNumber();
-                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
-                                .getComponentName();
+                        index = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+                        compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentName();
 
                     }
                 }
@@ -122,9 +124,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
         }
         if (hasAddedNewComponent)
             mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
-//        mixedStream.getThermoSystem().init_x_y();
-//        mixedStream.getThermoSystem().initBeta();
-//        mixedStream.getThermoSystem().init(2);
+        // mixedStream.getThermoSystem().init_x_y();
+        // mixedStream.getThermoSystem().initBeta();
+        // mixedStream.getThermoSystem().init(2);
     }
 
     public double guessTemperature() {
@@ -151,17 +153,17 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     }
 
     @Override
-	public Stream getOutStream() {
+    public Stream getOutStream() {
         return mixedStream;
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
         run();
     }
 
     @Override
-	public void run() {
+    public void run() {
         double enthalpy = 0.0;
         // ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
@@ -215,7 +217,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         SystemInterface thermoSystem = mixedStream.getThermoSystem();
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -311,12 +313,12 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void setPressure(double pres) {
+    public void setPressure(double pres) {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().setPressure(pres);
         }
@@ -352,7 +354,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements ProcessEquipment
     }
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         getOutStream().run();
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {

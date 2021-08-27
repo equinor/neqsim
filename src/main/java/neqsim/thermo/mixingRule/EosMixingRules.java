@@ -7,9 +7,14 @@ package neqsim.thermo.mixingRule;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
@@ -20,8 +25,6 @@ import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
-
-import org.apache.logging.log4j.*;
 
 /**
  * @author  Even Solbraa
@@ -76,7 +79,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         return clonedSystem;
     }
 
-    public class ClassicVdW implements EosMixingRulesInterface, Cloneable, java.io.Serializable {
+    public class ClassicVdW implements EosMixingRulesInterface, java.io.Serializable {
 
         private static final long serialVersionUID = 1000;
 
@@ -360,7 +363,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class ClassicSRK extends ClassicVdW implements EosMixingRulesInterface, Cloneable, java.io.Serializable {
+    public class ClassicSRK extends ClassicVdW {
 
         private static final long serialVersionUID = 1000;
 
@@ -531,7 +534,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class ClassicSRKT extends ClassicSRK implements EosMixingRulesInterface, Cloneable, java.io.Serializable {
+    public class ClassicSRKT extends ClassicSRK {
 
         private static final long serialVersionUID = 1000;
 
@@ -635,8 +638,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class ClassicSRKT2x extends ClassicSRKT2
-            implements EosMixingRulesInterface, Cloneable, java.io.Serializable {
+    public class ClassicSRKT2x extends ClassicSRKT2 {
 
         private static final long serialVersionUID = 1000;
 
@@ -886,7 +888,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class ClassicSRKT2 extends ClassicSRKT implements EosMixingRulesInterface, Cloneable, java.io.Serializable {
+    public class ClassicSRKT2 extends ClassicSRKT {
 
         private static final long serialVersionUID = 1000;
 
@@ -936,7 +938,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class SRKHuronVidal extends ClassicSRK implements HVmixingRuleInterface, EosMixingRulesInterface {
+    public class SRKHuronVidal extends ClassicSRK implements HVmixingRuleInterface {
 
         private static final long serialVersionUID = 1000;
 
@@ -1108,7 +1110,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class SRKHuronVidal2 extends ClassicSRK implements HVmixingRuleInterface, EosMixingRulesInterface {
+    public class SRKHuronVidal2 extends ClassicSRK implements HVmixingRuleInterface {
 
         private static final long serialVersionUID = 1000;
 
@@ -1392,8 +1394,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class WongSandlerMixingRule extends SRKHuronVidal2
-            implements HVmixingRuleInterface, EosMixingRulesInterface {
+    public class WongSandlerMixingRule extends SRKHuronVidal2 {
 
         private static final long serialVersionUID = 1000;
 
@@ -1695,7 +1696,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
-    public class ElectrolyteMixRule implements ElectrolyteMixingRulesInterface, Cloneable, java.io.Serializable {
+    public class ElectrolyteMixRule implements ElectrolyteMixingRulesInterface, Cloneable {
 
         private static final long serialVersionUID = 1000;
 

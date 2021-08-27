@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Cloneable {
+public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,7 +35,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         TwoPhaseTrayTowerFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseTrayTowerFlowNode) super.clone();
@@ -47,14 +47,14 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         super.init();
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
 
@@ -69,7 +69,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode implements Clone
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         TwoPhaseTrayTowerFlowNode newNode = (TwoPhaseTrayTowerFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

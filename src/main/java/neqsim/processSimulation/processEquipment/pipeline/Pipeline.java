@@ -10,17 +10,15 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface, PipeLineInterface {
+public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -63,7 +61,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setOutputFileName(String name) {
+    public void setOutputFileName(String name) {
         this.fileName = name;
     }
 
@@ -72,17 +70,17 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setNumberOfLegs(int number) {
+    public void setNumberOfLegs(int number) {
         this.numberOfLegs = number;
     }
 
     @Override
-	public void setNumberOfNodesInLeg(int number) {
+    public void setNumberOfNodesInLeg(int number) {
         this.numberOfNodesInLeg = number;
     }
 
     @Override
-	public void setHeightProfile(double[] heights) {
+    public void setHeightProfile(double[] heights) {
         if (heights.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of heights specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -95,7 +93,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setLegPositions(double[] positions) {
+    public void setLegPositions(double[] positions) {
         if (positions.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of legpositions specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -108,7 +106,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setPipeDiameters(double[] diameter) {
+    public void setPipeDiameters(double[] diameter) {
         if (diameter.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
             System.out.println("Number of diameters must be number of legs + 1 ");
@@ -145,7 +143,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setPipeWallRoughness(double[] rough) {
+    public void setPipeWallRoughness(double[] rough) {
         if (rough.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of roghuness points specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -158,7 +156,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setOuterTemperatures(double[] outerTemp) {
+    public void setOuterTemperatures(double[] outerTemp) {
         if (outerTemp.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of outer temperature points specified.");
             System.out.println("Number of heights must be number of legs + 1 ");
@@ -179,7 +177,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void run() {
+    public void run() {
         system = inStream.getThermoSystem();
         GeometryDefinitionInterface[] pipeGemometry = new PipeData[numberOfLegs + 1];
         for (int i = 0; i < pipeDiameters.length; i++) {
@@ -207,26 +205,26 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
     }
 
     @Override
-	public FlowSystemInterface getPipe() {
+    public FlowSystemInterface getPipe() {
         return pipe;
     }
 
     @Override
-	public void setInitialFlowPattern(String flowPattern) {
+    public void setInitialFlowPattern(String flowPattern) {
         this.flowPattern = flowPattern;
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -265,7 +263,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
     }
 }

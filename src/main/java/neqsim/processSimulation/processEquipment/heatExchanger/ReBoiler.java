@@ -7,17 +7,15 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public class ReBoiler extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -41,7 +39,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         ThermodynamicOperations testOps = new ThermodynamicOperations(system);
         testOps.TPflash();
@@ -50,21 +48,21 @@ public class ReBoiler extends ProcessEquipmentBaseClass implements ProcessEquipm
         testOps.TPflash();
         testOps.PHflash(oldH + reboilerDuty, 0);
         outStream.setThermoSystem(system);
-//        if(setTemperature) system.setTemperature(temperatureOut);
-//        else system.setTemperature(system.getTemperature()+dT);
-//        testOps = new ThermodynamicOperations(system);
-//        system.setTemperat ure(temperatureOut);
-//        testOps.TPflash();
-//        double newH = system.getEnthalpy();
-//        dH = newH - oldH;
-//        // system.setTemperature(temperatureOut);
-//        //  testOps.TPflash();
-//        //    system.setTemperature(temperatureOut);
-//        outStream.setThermoSystem(system);
+        // if(setTemperature) system.setTemperature(temperatureOut);
+        // else system.setTemperature(system.getTemperature()+dT);
+        // testOps = new ThermodynamicOperations(system);
+        // system.setTemperat ure(temperatureOut);
+        // testOps.TPflash();
+        // double newH = system.getEnthalpy();
+        // dH = newH - oldH;
+        // // system.setTemperature(temperatureOut);
+        // // testOps.TPflash();
+        // // system.setTemperature(temperatureOut);
+        // outStream.setThermoSystem(system);
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         System.out.println("out Temperature " + reboilerDuty);
     }
 

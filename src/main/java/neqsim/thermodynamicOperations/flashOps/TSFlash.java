@@ -15,7 +15,7 @@
  */
 
 /*
-* PHflash.java
+* TSFlash.java
 *
 * Created on 8. mars 2001, 10:56
 */
@@ -26,11 +26,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class TSFlash extends QfuncFlash implements java.io.Serializable {
+public class TSFlash extends QfuncFlash {
 
     private static final long serialVersionUID = 1000;
 
@@ -38,7 +37,7 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
     Flash tpFlash;
 
     /**
-     * Creates new PHflash
+     * Creates new TSFlash
      */
     public TSFlash() {
     }
@@ -50,7 +49,7 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     @Override
-	public double calcdQdTT() {
+    public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
@@ -65,13 +64,13 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     @Override
-	public double calcdQdT() {
+    public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
     @Override
-	public double solveQ() {
+    public double solveQ() {
         // this method is not yet implemented
         double oldTemp = system.getPressure(), nyTemp = system.getPressure();
         int iterations = 1;
@@ -100,7 +99,7 @@ public class TSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         solveQ();
     }

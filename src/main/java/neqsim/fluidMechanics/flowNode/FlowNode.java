@@ -16,10 +16,19 @@
 
 package neqsim.fluidMechanics.flowNode;
 
-import neqsim.util.util.DoubleCloneable;
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Toolkit;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.InterphaseTransportCoefficientBaseClass;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.InterphaseTransportCoefficientInterface;
@@ -27,9 +36,9 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
+import neqsim.util.util.DoubleCloneable;
 
-public abstract class FlowNode
-        implements FlowNodeInterface, ThermodynamicConstantsInterface {
+public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -105,7 +114,7 @@ public abstract class FlowNode
     }
 
     @Override
-	public void setFrictionFactorType(int type) {
+    public void setFrictionFactorType(int type) {
         if (type == 0) {
             interphaseTransportCoefficient = new InterphaseTransportCoefficientBaseClass(this);
         }
@@ -120,58 +129,58 @@ public abstract class FlowNode
     // }
 
     @Override
-	public void setGeometryDefinitionInterface(GeometryDefinitionInterface pipe) {
+    public void setGeometryDefinitionInterface(GeometryDefinitionInterface pipe) {
         this.pipe = (GeometryDefinitionInterface) pipe.clone();
     }
 
     @Override
-	public void setDistanceToCenterOfNode(double distanceToCenterOfNode) {
+    public void setDistanceToCenterOfNode(double distanceToCenterOfNode) {
         this.distanceToCenterOfNode = distanceToCenterOfNode;
     }
 
     @Override
-	public InterphaseTransportCoefficientInterface getInterphaseTransportCoefficient() {
+    public InterphaseTransportCoefficientInterface getInterphaseTransportCoefficient() {
         return interphaseTransportCoefficient;
     }
 
     @Override
-	public double getDistanceToCenterOfNode() {
+    public double getDistanceToCenterOfNode() {
         return this.distanceToCenterOfNode;
     }
 
     @Override
-	public double getVerticalPositionOfNode() {
+    public double getVerticalPositionOfNode() {
         return this.veticalPositionOfNode;
     }
 
     @Override
-	public void setVerticalPositionOfNode(double veticalPositionOfNode) {
+    public void setVerticalPositionOfNode(double veticalPositionOfNode) {
         this.veticalPositionOfNode = veticalPositionOfNode;
     }
 
     @Override
-	public double getSuperficialVelocity(int i) {
+    public double getSuperficialVelocity(int i) {
         return this.superficialVelocity[i];
     }
 
     @Override
-	public String getFlowNodeType() {
+    public String getFlowNodeType() {
         return this.flowNodeType;
     }
 
     @Override
-	public void setLengthOfNode(double lengthOfNode) {
+    public void setLengthOfNode(double lengthOfNode) {
         this.lengthOfNode = lengthOfNode;
         getGeometry().setNodeLength(lengthOfNode);
     }
 
     @Override
-	public double getLengthOfNode() {
+    public double getLengthOfNode() {
         return lengthOfNode;
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         FlowNode clonedSystem = null;
         try {
             clonedSystem = (FlowNode) super.clone();
@@ -221,154 +230,154 @@ public abstract class FlowNode
     }
 
     @Override
-	public void init() {
+    public void init() {
         bulkSystem.init(3);
         bulkSystem.initPhysicalProperties();
     }
 
     @Override
-	public void initBulkSystem() {
+    public void initBulkSystem() {
         bulkSystem.init(3);
         bulkSystem.initPhysicalProperties();
     }
 
     @Override
-	public SystemInterface getBulkSystem() {
+    public SystemInterface getBulkSystem() {
         return bulkSystem;
     }
 
     @Override
-	public DoubleCloneable getVelocityOut(int i) {
+    public DoubleCloneable getVelocityOut(int i) {
         return velocityOut[i];
     }
 
     @Override
-	public DoubleCloneable getVelocityIn(int i) {
+    public DoubleCloneable getVelocityIn(int i) {
         return velocityIn[i];
     }
 
     @Override
-	public DoubleCloneable getVelocityOut() {
+    public DoubleCloneable getVelocityOut() {
         return velocityOut[0];
     }
 
     @Override
-	public DoubleCloneable getVelocityIn() {
+    public DoubleCloneable getVelocityIn() {
         return velocityIn[0];
     }
 
     @Override
-	public void setVelocity(double vel) {
+    public void setVelocity(double vel) {
         velocity[0] = vel;
     }
 
     @Override
-	public void setVelocity(int phase, double vel) {
+    public void setVelocity(int phase, double vel) {
         velocity[phase] = vel;
     }
 
     @Override
-	public void setVelocityIn(double vel) {
+    public void setVelocityIn(double vel) {
         velocityIn[0].set(vel);
     }
 
     @Override
-	public void setVelocityOut(double vel) {
+    public void setVelocityOut(double vel) {
         velocityOut[0].set(vel);
     }
 
     @Override
-	public void setVelocityOut(int phase, double vel) {
+    public void setVelocityOut(int phase, double vel) {
         velocityOut[phase].set(vel);
     }
 
     @Override
-	public void setVelocityIn(int phase, double vel) {
+    public void setVelocityIn(int phase, double vel) {
         velocityIn[phase].set(vel);
     }
 
     @Override
-	public void setVelocityOut(DoubleCloneable vel) {
+    public void setVelocityOut(DoubleCloneable vel) {
         velocityOut[0] = vel;
     }
 
     @Override
-	public void setVelocityIn(DoubleCloneable vel) {
+    public void setVelocityIn(DoubleCloneable vel) {
         velocityIn[0] = vel;
     }
 
     @Override
-	public void setVelocityIn(int phase, DoubleCloneable vel) {
+    public void setVelocityIn(int phase, DoubleCloneable vel) {
         velocityIn[phase] = vel;
     }
 
     @Override
-	public void setVelocityOut(int phase, DoubleCloneable vel) {
+    public void setVelocityOut(int phase, DoubleCloneable vel) {
         velocityOut[phase] = vel;
     }
 
     @Override
-	public double getVelocity() {
+    public double getVelocity() {
         return velocity[0];
     }
 
     @Override
-	public double getVelocity(int phase) {
+    public double getVelocity(int phase) {
         return velocity[phase];
     }
 
     @Override
-	public double getWallFrictionFactor() {
+    public double getWallFrictionFactor() {
         return wallFrictionFactor[0];
     }
 
     @Override
-	public double getWallFrictionFactor(int phase) {
+    public double getWallFrictionFactor(int phase) {
         return wallFrictionFactor[phase];
     }
 
     @Override
-	public double getInterPhaseFrictionFactor() {
+    public double getInterPhaseFrictionFactor() {
         return interphaseFrictionFactor[0];
     }
 
     @Override
-	public double getReynoldsNumber() {
+    public double getReynoldsNumber() {
         return reynoldsNumber[0];
     }
 
     @Override
-	public double getHydraulicDiameter(int i) {
+    public double getHydraulicDiameter(int i) {
         return hydraulicDiameter[i];
     }
 
     @Override
-	public double getReynoldsNumber(int i) {
+    public double getReynoldsNumber(int i) {
         return reynoldsNumber[i];
     }
 
     @Override
-	public SystemInterface getInterphaseSystem() {
+    public SystemInterface getInterphaseSystem() {
         return fluidBoundary.getInterphaseSystem();
     }
 
     @Override
-	public FluidBoundaryInterface getFluidBoundary() {
+    public FluidBoundaryInterface getFluidBoundary() {
         return fluidBoundary;
     }
 
     @Override
-	public GeometryDefinitionInterface getGeometry() {
+    public GeometryDefinitionInterface getGeometry() {
         return pipe;
     }
 
     @Override
-	public void setInterphaseSystem(SystemInterface interphaseSystem) {
+    public void setInterphaseSystem(SystemInterface interphaseSystem) {
         fluidBoundary.setInterphaseSystem((SystemInterface) interphaseSystem.clone());
     }
 
     @Override
-	public void setInterphaseModelType(int i) {
+    public void setInterphaseModelType(int i) {
         if (i == 0) {
             // System.out.println("set equilibrium");
             this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.equilibriumFluidBoundary.EquilibriumFluidBoundary(
@@ -386,7 +395,7 @@ public abstract class FlowNode
     }
 
     @Override
-	public void setBulkSystem(SystemInterface bulkSystem) {
+    public void setBulkSystem(SystemInterface bulkSystem) {
         this.bulkSystem = (SystemInterface) bulkSystem.clone();
         phaseOps = new ThermodynamicOperations(this.getBulkSystem());
         phaseOps.TPflash();
@@ -394,103 +403,103 @@ public abstract class FlowNode
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         return (FlowNodeInterface) this.clone();
     }
 
     @Override
-	public double getVolumetricFlow() {
+    public double getVolumetricFlow() {
         return volumetricFlowRate[0];
     }
 
     @Override
-	public void calcFluxes() {
+    public void calcFluxes() {
     }
 
     @Override
-	public void setFluxes(double dn[]) {
+    public void setFluxes(double dn[]) {
     }
 
     @Override
-	public double calcSherwoodNumber(double schmidtNumber, int phase) {
+    public double calcSherwoodNumber(double schmidtNumber, int phase) {
         return 0;
     }
 
     @Override
-	public double calcNusseltNumber(double prandtlNumber, int phase) {
+    public double calcNusseltNumber(double prandtlNumber, int phase) {
         return 0;
     }
 
     @Override
-	public double getPrandtlNumber(int phase) {
+    public double getPrandtlNumber(int phase) {
         return getBulkSystem().getPhases()[phase].getCp()
                 * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()
                 / getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
     }
 
     @Override
-	public double getSchmidtNumber(int phase, int component1, int component2) {
+    public double getSchmidtNumber(int phase, int component1, int component2) {
         return getBulkSystem().getPhase(phase).getPhysicalProperties().getDiffusionCoeffisient(component1, component2)
                 / getBulkSystem().getPhase(phase).getPhysicalProperties().getKinematicViscosity();
     }
 
     @Override
-	public double getEffectiveSchmidtNumber(int phase, int component) {
+    public double getEffectiveSchmidtNumber(int phase, int component) {
         getBulkSystem().getPhase(phase).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
         return getBulkSystem().getPhase(phase).getPhysicalProperties().getKinematicViscosity()
                 / getBulkSystem().getPhase(phase).getPhysicalProperties().getEffectiveDiffusionCoefficient(component);
     }
 
     @Override
-	public double calcStantonNumber(double schmidtNumber, int phase) {
+    public double calcStantonNumber(double schmidtNumber, int phase) {
         return 0;
     }
 
     @Override
-	public double getArea(int i) {
+    public double getArea(int i) {
         return pipe.getArea() * phaseFraction[i];
     }
 
     @Override
-	public void updateMolarFlow() {
+    public void updateMolarFlow() {
     }
 
     @Override
-	public double getPhaseFraction(int phase) {
+    public double getPhaseFraction(int phase) {
         return phaseFraction[phase];
     }
 
     @Override
-	public double getInterphaseContactArea() {
+    public double getInterphaseContactArea() {
         return interphaseContactArea;
     }
 
     @Override
-	public void setPhaseFraction(int phase, double frac) {
+    public void setPhaseFraction(int phase, double frac) {
         phaseFraction[phase] = frac;
     }
 
     @Override
-	public double getWallContactLength(int phase) {
+    public double getWallContactLength(int phase) {
         return wallContactLength[phase];
     }
 
     @Override
-	public double getInterphaseContactLength(int phase) {
+    public double getInterphaseContactLength(int phase) {
         return interphaseContactLength[phase];
     }
 
     @Override
-	public double getMassFlowRate(int phase) {
+    public double getMassFlowRate(int phase) {
         return massFlowRate[phase];
     }
 
     @Override
-	public void increaseMolarRate(double moles) {
+    public void increaseMolarRate(double moles) {
     }
 
     @Override
-	public double calcTotalHeatTransferCoefficient(int phase) {
+    public double calcTotalHeatTransferCoefficient(int phase) {
         double prandtlNumber = getBulkSystem().getPhases()[phase].getCp()
                 / getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
                 * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()
@@ -503,16 +512,16 @@ public abstract class FlowNode
     }
 
     @Override
-	public void setEnhancementType(int type) {
+    public void setEnhancementType(int type) {
     }
 
     @Override
-	public void display() {
+    public void display() {
         display("");
     }
 
     @Override
-	public void display(String name) {
+    public void display(String name) {
         DecimalFormat nf = new DecimalFormat();
 
         nf.setMaximumFractionDigits(5);
@@ -536,7 +545,7 @@ public abstract class FlowNode
     }
 
     @Override
-	public void update() {
+    public void update() {
     }
 
     /**
@@ -545,7 +554,7 @@ public abstract class FlowNode
      * @return Value of property operations.
      */
     @Override
-	public neqsim.thermodynamicOperations.ThermodynamicOperations getOperations() {
+    public neqsim.thermodynamicOperations.ThermodynamicOperations getOperations() {
         return operations;
     }
 
@@ -559,7 +568,7 @@ public abstract class FlowNode
     }
 
     @Override
-	public double getMolarMassTransferRate(int componentNumber) {
+    public double getMolarMassTransferRate(int componentNumber) {
         return getFluidBoundary().getInterphaseMolarFlux(componentNumber) * interphaseContactArea;
     }
 
@@ -569,7 +578,7 @@ public abstract class FlowNode
      * @return Value of property flowDirection.
      */
     @Override
-	public int getFlowDirection(int i) {
+    public int getFlowDirection(int i) {
         return this.flowDirection[i];
     }
 
@@ -579,7 +588,7 @@ public abstract class FlowNode
      * @param flowDirection New value of property flowDirection.
      */
     @Override
-	public void setFlowDirection(int flowDirection, int i) {
+    public void setFlowDirection(int flowDirection, int i) {
         this.flowDirection[i] = flowDirection;
     }
 
@@ -589,7 +598,6 @@ public abstract class FlowNode
         nf.applyPattern("#.#####E0");
 
         String[][] table = new String[bulkSystem.getPhases()[0].getNumberOfComponents() * 10][5];
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
         table[0][0] = "";
         table[0][1] = "";
         table[0][2] = "";
@@ -684,7 +692,7 @@ public abstract class FlowNode
     }
 
     @Override
-	public void write(String name, String filename, boolean newfile) {
+    public void write(String name, String filename, boolean newfile) {
         String[][] table = createTable(name);
         neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         if (newfile) {
@@ -696,5 +704,4 @@ public abstract class FlowNode
         getBulkSystem().write(("thermo for " + name), filename, false);
         getFluidBoundary().write(("boundary for " + name), filename, false);
     }
-
 }

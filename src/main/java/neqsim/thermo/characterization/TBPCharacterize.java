@@ -8,10 +8,9 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
  * @author ESOL
  */
-public class TBPCharacterize extends PlusCharacterize implements java.io.Serializable, CharacteriseInterface {
+public class TBPCharacterize extends PlusCharacterize {
     private static final long serialVersionUID = 1000;
     int startPlus = 7;
     int endPlus = 20;
@@ -33,7 +32,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     @Override
-	public boolean groupTBPfractions() {
+    public boolean groupTBPfractions() {
         system.init(0);
         double old = 0;
 
@@ -106,7 +105,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     @Override
-	public void addTBPFractions() {
+    public void addTBPFractions() {
         for (int i = 0; i < TBPdens.length; i++) {
             // System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
             system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i], TBPdens[i]);
@@ -136,7 +135,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @param coefs New value of property coefs.
      */
     @Override
-	public void setCoefs(double coef, int i) {
+    public void setCoefs(double coef, int i) {
         this.coefs[i] = coef;
     }
 
@@ -154,7 +153,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     @Override
-	public void solve() {
+    public void solve() {
         NewtonSolveABCD solver = new NewtonSolveABCD(system, this);
         solver.solve();
     }
@@ -170,7 +169,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @param coefs New value of property coefs.
      */
     @Override
-	public void setCoefs(double[] coefs) {
+    public void setCoefs(double[] coefs) {
         this.coefs = coefs;
     }
 
@@ -202,7 +201,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @return Value of property length.
      */
     @Override
-	public int getLength() {
+    public int getLength() {
         return length;
     }
 
@@ -230,7 +229,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @return Value of property carbonNumberVector.
      */
     @Override
-	public int[] getCarbonNumberVector() {
+    public int[] getCarbonNumberVector() {
         return this.carbonNumberVector;
     }
 
@@ -240,7 +239,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @param carbonNumberVector New value of property carbonNumberVector.
      */
     @Override
-	public void setCarbonNumberVector(int[] carbonNumberVector) {
+    public void setCarbonNumberVector(int[] carbonNumberVector) {
         this.carbonNumberVector = carbonNumberVector;
     }
 
@@ -268,12 +267,12 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @return Value of property plusCoefs.
      */
     @Override
-	public double[] getPlusCoefs() {
+    public double[] getPlusCoefs() {
         return this.plusCoefs;
     }
 
     @Override
-	public double getPlusCoefs(int i) {
+    public double getPlusCoefs(int i) {
         return this.plusCoefs[i];
     }
 
@@ -283,7 +282,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * @param plusCoefs New value of property plusCoefs.
      */
     @Override
-	public void setPlusCoefs(double[] plusCoefs) {
+    public void setPlusCoefs(double[] plusCoefs) {
         this.plusCoefs = plusCoefs;
     }
 
@@ -291,10 +290,9 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * Getter for property densPlus.
      * 
      * @return Value of property densPlus.
-     *
      */
     @Override
-	public double getDensPlus() {
+    public double getDensPlus() {
         return densPlus;
     }
 
@@ -302,15 +300,14 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
      * Setter for property densPlus.
      * 
      * @param densPlus New value of property densPlus.
-     *
      */
     @Override
-	public void setDensPlus(double densPlus) {
+    public void setDensPlus(double densPlus) {
         this.densPlus = densPlus;
     }
 
     @Override
-	public boolean isPseudocomponents() {
+    public boolean isPseudocomponents() {
         return false;
     }
 
@@ -318,7 +315,7 @@ public class TBPCharacterize extends PlusCharacterize implements java.io.Seriali
     }
 
     @Override
-	public void addHeavyEnd() {
+    public void addHeavyEnd() {
         int old = getFirstPlusFractionNumber();
         setFirstPlusFractionNumber(length + 7);
         generateTBPFractions();

@@ -9,8 +9,7 @@ import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.Packi
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironment;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public interface GeometryDefinitionInterface extends Cloneable {

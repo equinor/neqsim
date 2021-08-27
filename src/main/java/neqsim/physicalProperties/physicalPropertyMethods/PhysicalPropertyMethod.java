@@ -6,14 +6,14 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
-public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethodInterface, java.io.Serializable {
+public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
@@ -23,7 +23,7 @@ public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethod
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         PhysicalPropertyMethod properties = null;
 
         try {
@@ -36,11 +36,11 @@ public class PhysicalPropertyMethod implements Cloneable, PhysicalPropertyMethod
     }
 
     @Override
-	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
     }
 
     @Override
-	public void tuneModel(double val, double temperature, double pressure) {
+    public void tuneModel(double val, double temperature, double pressure) {
         logger.error("model tuning not implemented!");
     }
     // should contain phase objects ++ get diffusivity methods .. more ?
