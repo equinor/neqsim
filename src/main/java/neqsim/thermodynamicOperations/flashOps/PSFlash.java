@@ -24,11 +24,10 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class PSFlash extends QfuncFlash implements java.io.Serializable {
+public class PSFlash extends QfuncFlash {
 
     private static final long serialVersionUID = 1000;
 
@@ -50,7 +49,7 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     @Override
-	public double calcdQdTT() {
+    public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
 
         if (system.getNumberOfPhases() == 1) {
@@ -65,13 +64,13 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     @Override
-	public double calcdQdT() {
+    public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
     @Override
-	public double solveQ() {
+    public double solveQ() {
         double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
         int iterations = 1;
         double error = 1.0, erorOld = 10.0e10;
@@ -121,7 +120,7 @@ public class PSFlash extends QfuncFlash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
 
         if (type == 0) {

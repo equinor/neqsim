@@ -12,7 +12,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author  esol
  * @version
  */
-public interface CompressorInterface extends ProcessEquipmentInterface, java.io.Serializable {
+public interface CompressorInterface extends ProcessEquipmentInterface {
 
     @Override
     public void run();

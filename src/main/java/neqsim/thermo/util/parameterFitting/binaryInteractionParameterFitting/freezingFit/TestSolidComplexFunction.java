@@ -2,13 +2,14 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.fr
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,13 +22,13 @@ public class TestSolidComplexFunction {
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         NeqSimDataBase database = new NeqSimDataBase();
 
-        ResultSet dataSet = database
-                .getResultSet("SELECT * FROM comlexsolidfreezingdata WHERE Component1='TEG' AND Component2='water'");
+        ResultSet dataSet = database.getResultSet(
+                "SELECT * FROM comlexsolidfreezingdata WHERE Component1='TEG' AND Component2='water'");
         // double parameterGuess[] = {0.1640550024};//, 7578.080};//, 245.0};
-        double parameterGuess[] = { 0.119803125, 4482.0 };
+        double parameterGuess[] = {0.119803125, 4482.0};
 
         try {
             while (dataSet.next()) {
@@ -39,16 +40,20 @@ public class TestSolidComplexFunction {
 
                 SystemInterface testSystem = new SystemSrkCPAstatoil(val,
                         Double.parseDouble(dataSet.getString("pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til komponenter til systemet
+                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til
+                                                                              // komponenter til
+                                                                              // systemet
                 testSystem.addComponent(dataSet.getString("Component2"), x2);
                 // testSystem.createDatabase(true);
                 testSystem.setMixingRule(10);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.13, 0.1 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.13, 0.1}; // std.dev temperature // presure std.dev
+                                                           // pressure
 
-                SampleValue sample = new SampleValue(val, Double.parseDouble(dataSet.getString("StandardDeviation")),
-                        sample1, standardDeviation1);
+                SampleValue sample = new SampleValue(val,
+                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(testSystem.getTemperature()));

@@ -8,7 +8,7 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
+public class BubbleFlowNode extends TwoPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
     private double averageBubbleDiameter = 0.001;
@@ -34,13 +34,13 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public double calcGasLiquidContactArea() {
+    public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
         return interphaseContactArea;
     }
 
     @Override
-	public void initFlowCalc() {
+    public void initFlowCalc() {
 
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
@@ -52,7 +52,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         BubbleFlowNode clonedSystem = null;
         try {
             clonedSystem = (BubbleFlowNode) super.clone();
@@ -64,7 +64,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
@@ -72,7 +72,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
@@ -91,7 +91,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         BubbleFlowNode newNode = (BubbleFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

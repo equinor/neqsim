@@ -5,10 +5,12 @@
  */
 package neqsim.thermo.component;
 
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.atomElement.UNIFACgroup;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,7 +21,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
 
     private static final long serialVersionUID = 1000;
 
-    java.util.ArrayList<UNIFACgroup> unifacGroups = new java.util.ArrayList();
+    ArrayList<UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();
     UNIFACgroup[] unifacGroupsArray = new UNIFACgroup[0];
     double[] lnGammakComp = null;
     double[] lnGammakMix = null;
@@ -31,10 +33,10 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     /**
      * Creates new ComponentGEUniquac
      */
-    public ComponentGEUnifac() {
-    }
+    public ComponentGEUnifac() {}
 
-    public ComponentGEUnifac(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentGEUnifac(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         if (!this.getClass().equals(ComponentGEUnifac.class)) {
             return;
@@ -48,15 +50,18 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
             return;
         }
         try {
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
                 dataSet.next();
                 dataSet.getClob("name");
             } catch (Exception e) {
                 dataSet.close();
-                dataSet = database.getResultSet(("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM unifaccomp WHERE Name='" + component_name + "'"));
                 dataSet.next();
             }
 
@@ -108,10 +113,11 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     @Override
-	public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
-        fugasityCoeffisient = (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
-                * this.getAntoineVaporPressure(temperature) / pressure);
+    public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
+        fugasityCoeffisient =
+                (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
+                        * this.getAntoineVaporPressure(temperature) / pressure);
         return fugasityCoeffisient;
     }
 
@@ -120,33 +126,40 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         double sum3Comp = 0.0, sum3Mix = 0.0;
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
-            sum1Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
-                    .getAij(getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
-            sum1Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
-                    .getAij(getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
+            sum1Comp += getUnifacGroup(i).getQComp()
+                    * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase).getAij(
+                            getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
+            sum1Mix += getUnifacGroup(i).getQMix()
+                    * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase).getAij(
+                            getUnifacGroup(i).getGroupIndex(), getUnifacGroup(k).getGroupIndex()));
             double sum2Comp = 0.0, sum2Mix = 0.0;
             for (int j = 0; j < getNumberOfUNIFACgroups(); j++) {
-                sum2Comp += getUnifacGroup(j).getQComp()
-                        * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
-                                .getAij(getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
-                sum2Mix += getUnifacGroup(j).getQMix()
-                        * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
-                                .getAij(getUnifacGroup(j).getGroupIndex(), getUnifacGroup(i).getGroupIndex()));
+                sum2Comp += getUnifacGroup(j).getQComp() * Math.exp(-1.0 / phase.getTemperature()
+                        * ((PhaseGEUnifac) phase).getAij(getUnifacGroup(j).getGroupIndex(),
+                                getUnifacGroup(i).getGroupIndex()));
+                sum2Mix += getUnifacGroup(j).getQMix() * Math.exp(-1.0 / phase.getTemperature()
+                        * ((PhaseGEUnifac) phase).getAij(getUnifacGroup(j).getGroupIndex(),
+                                getUnifacGroup(i).getGroupIndex()));
             }
-            sum3Comp += getUnifacGroup(i).getQComp() * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
-                    .getAij(getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex())) / sum2Comp;
-            sum3Mix += getUnifacGroup(i).getQMix() * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase)
-                    .getAij(getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex())) / sum2Mix;
+            sum3Comp += getUnifacGroup(i).getQComp()
+                    * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase).getAij(
+                            getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex()))
+                    / sum2Comp;
+            sum3Mix += getUnifacGroup(i).getQMix()
+                    * Math.exp(-1.0 / phase.getTemperature() * ((PhaseGEUnifac) phase).getAij(
+                            getUnifacGroup(k).getGroupIndex(), getUnifacGroup(i).getGroupIndex()))
+                    / sum2Mix;
         }
-        double tempGammaComp = this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Comp) - sum3Comp);
+        double tempGammaComp =
+                this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Comp) - sum3Comp);
         double tempGammaMix = this.getUnifacGroup(k).getQ() * (1.0 - Math.log(sum1Mix) - sum3Mix);
         getUnifacGroup(k).setLnGammaComp(tempGammaComp);
         getUnifacGroup(k).setLnGammaMix(tempGammaMix);
     }
 
     @Override
-	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
         double lngammaCombinational = 0.0, lngammaResidual = 0.0;
         dlngammadn = new double[numberOfComponents];
         dlngammadt = 0.0;
@@ -157,15 +170,16 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         for (int j = 0; j < numberOfComponents; j++) {
             temp1 += compArray[j].getx() * compArray[j].getR();
             temp2 += (compArray[j].getQ() * compArray[j].getx());
-            suml += compArray[j].getx()
-                    * (10.0 / 2.0 * (compArray[j].getR() - compArray[j].getQ()) - (compArray[j].getR() - 1.0));
+            suml += compArray[j].getx() * (10.0 / 2.0 * (compArray[j].getR() - compArray[j].getQ())
+                    - (compArray[j].getR() - 1.0));
         }
 
         V = this.getx() * this.getR() / temp1;
         F = this.getx() * this.getQ() / temp2;
         double li = 10.0 / 2.0 * (getR() - getQ()) - (getR() - 1.0);
         // System.out.println("li " + li);
-        lngammaCombinational = Math.log(V / getx()) + 10.0 / 2.0 * getQ() * Math.log(F / V) + li - V / getx() * suml;
+        lngammaCombinational = Math.log(V / getx()) + 10.0 / 2.0 * getQ() * Math.log(F / V) + li
+                - V / getx() * suml;
         // System.out.println("ln gamma comb " + lngammaCombinational);
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
@@ -193,36 +207,40 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     }
 
     @Override
-	public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
-        dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, phasetype))
-                - Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01, phasetype))) / 0.02;
+    public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
+        dfugdp = (Math
+                .log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, phasetype))
+                - Math.log(fugcoef(phase, numberOfComponents, temperature, pressure - 0.01,
+                        phasetype)))
+                / 0.02;
         return dfugdp;
     }
 
     @Override
-	public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
-        dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, phasetype))
-                - Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure, phasetype))) / 0.02;
+    public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype) {
+        dfugdt = (Math
+                .log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, phasetype))
+                - Math.log(fugcoef(phase, numberOfComponents, temperature - 0.01, pressure,
+                        phasetype)))
+                / 0.02;
         return dfugdt;
     }
 
     /*
-     * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
-     * double temperature, double pressure, int phasetype){ // NumericalDerivative
-     * deriv = new NumericalDerivative(); // System.out.println("dfugdP : " +
-     * NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents,
-     * temperature, pressure, phasetype)); return
-     * NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents,
+     * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double
+     * temperature, double pressure, int phasetype){ // NumericalDerivative deriv = new
+     * NumericalDerivative(); // System.out.println("dfugdP : " +
+     * NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents, temperature, pressure,
+     * phasetype)); return NumericalDerivative.fugcoefDiffPres(this, phase, numberOfComponents,
      * temperature, pressure, phasetype); }
      * 
-     * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
-     * double temperature, double pressure, int phasetype){ NumericalDerivative
-     * deriv = new NumericalDerivative(); // System.out.println("dfugdT : " +
-     * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents,
-     * temperature, pressure, phasetype)); return
-     * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents,
+     * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double
+     * temperature, double pressure, int phasetype){ NumericalDerivative deriv = new
+     * NumericalDerivative(); // System.out.println("dfugdT : " +
+     * NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents, temperature, pressure,
+     * phasetype)); return NumericalDerivative.fugcoefDiffTemp(this, phase, numberOfComponents,
      * temperature, pressure, phasetype);
      * 
      * }
@@ -234,7 +252,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * @return Value of property unifacGroups.
      *
      */
-    public java.util.ArrayList<UNIFACgroup> getUnifacGroups2() {
+    public ArrayList<UNIFACgroup> getUnifacGroups2() {
         return unifacGroups;
     }
 
@@ -256,7 +274,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * @param unifacGroups New value of property unifacGroups.
      *
      */
-    public void setUnifacGroups(java.util.ArrayList<UNIFACgroup> unifacGroups) {
+    public void setUnifacGroups(ArrayList<UNIFACgroup> unifacGroups) {
         this.unifacGroups = unifacGroups;
         unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     }

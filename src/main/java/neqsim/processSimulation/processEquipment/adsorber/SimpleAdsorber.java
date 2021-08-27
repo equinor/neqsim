@@ -7,17 +7,15 @@ package neqsim.processSimulation.processEquipment.adsorber;
 
 import neqsim.processSimulation.mechanicalDesign.adsorber.AdsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SimpleAdsorber extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -68,7 +66,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass implements Process
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         outStream[0].setName(name + "_Sout1");
         outStream[1].setName(name + "_Sout2");
         this.name = name;
@@ -95,7 +93,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass implements Process
     }
 
     @Override
-	public void run() {
+    public void run() {
         SystemInterface systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
         outStream[0].run();
@@ -131,13 +129,13 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass implements Process
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         outStream[0].displayResult();
         outStream[1].displayResult();
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 

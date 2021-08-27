@@ -6,7 +6,9 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import java.util.*;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -14,31 +16,30 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermo.system.SystemSrkEos;
-import org.apache.logging.log4j.*;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cloneable {
+public class TestBinaryHVfitToActivityCPA implements Cloneable {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestBinaryHVfitToActivityCPA.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryHVfitToActivityCPA() {
-    }
+    public TestBinaryHVfitToActivityCPA() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-//        double parameterGuess[] ={2012.8210952954, -1074.4698351045, 5.5675858688, -1.0503110172, -0.0082939895};//, 1.3505557460};//, 0.1169806819}; /SRK-EOS
+        // double parameterGuess[] ={2012.8210952954, -1074.4698351045, 5.5675858688, -1.0503110172,
+        // -0.0082939895};//, 1.3505557460};//, 0.1169806819}; /SRK-EOS
         // double parameterGuess[] ={1506.3, -863.3, 4.11, -0.603, -0.0145};//,
         // 1.3505557460};//, 0.1169806819}; /PR-EOS
-        double parameterGuess[] = { -359.2, 351.7, -1.31, 2.44, 0.25 }; // PVTsim SRK
+        double parameterGuess[] = {-359.2, 351.7, -1.31, 2.44, 0.25}; // PVTsim SRK
         // double parameterGuess[] ={ -446.3717107738, 523.8799876586, -1.2101168104,
         // 1.1754366244, 0.1726026869}; // fitted MeOH
 
@@ -48,7 +49,8 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
             numb++;
             for (int j = 0; j < 10; j++) {
 
-                BinaryHVparameterFitToActivityCoefficientFunction function = new BinaryHVparameterFitToActivityCoefficientFunction();
+                BinaryHVparameterFitToActivityCoefficientFunction function =
+                        new BinaryHVparameterFitToActivityCoefficientFunction();
                 SystemInterface testSystem = new SystemSrkEos(268.15 + 10.0 * i, 1.0);
                 testSystem.addComponent("water", 100.0 - j * j);
                 // testSystem.addComponent("MEG", 1.0+j*j);
@@ -72,10 +74,11 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
                         + testSystem2.getPhase(1).getComponent("methanol").getx());
 
                 function.setInitialGuess(parameterGuess);
-                double sample1[] = { testSystem2.getPhase(1).getComponent("methanol").getx(),
-                        testSystem.getTemperature() };
-                double standardDeviation1[] = { 1.0 };
-                SampleValue sample = new SampleValue(activ, activ / 100.0, sample1, standardDeviation1);
+                double sample1[] = {testSystem2.getPhase(1).getComponent("methanol").getx(),
+                        testSystem.getTemperature()};
+                double standardDeviation1[] = {1.0};
+                SampleValue sample =
+                        new SampleValue(activ, activ / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
@@ -86,7 +89,8 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
             numb++;
             for (int j = 0; j < 10; j++) {
 
-                BinaryHVparameterFitToActivityCoefficientFunction function = new BinaryHVparameterFitToActivityCoefficientFunction();
+                BinaryHVparameterFitToActivityCoefficientFunction function =
+                        new BinaryHVparameterFitToActivityCoefficientFunction();
                 SystemInterface testSystem = new SystemPrEos(300.0 + 20.0 * i, 1.0);
                 testSystem.addComponent("water", 100.0 - j * j);
                 // testSystem.addComponent("MEG", 1.0+j*j);
@@ -106,13 +110,14 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
                 testSystem2.init(0);
                 testSystem2.init(2);
                 double activ = testSystem2.getPhase(1).getActivityCoefficient(0);
-                logger.info(
-                        "activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("MEG").getx());
+                logger.info("activity " + activ + " molfraction MEG "
+                        + testSystem2.getPhase(1).getComponent("MEG").getx());
 
                 function.setInitialGuess(parameterGuess);
-                double sample1[] = { numb / 1000.0, testSystem.getTemperature() };
-                double standardDeviation1[] = { 1.0 };
-                SampleValue sample = new SampleValue(activ, activ / 100.0, sample1, standardDeviation1);
+                double sample1[] = {numb / 1000.0, testSystem.getTemperature()};
+                double standardDeviation1[] = {1.0};
+                SampleValue sample =
+                        new SampleValue(activ, activ / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
@@ -123,7 +128,8 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
             numb++;
             for (int j = 0; j < 0; j++) {
 
-                BinaryHVparameterFitToActivityCoefficientFunction function = new BinaryHVparameterFitToActivityCoefficientFunction();
+                BinaryHVparameterFitToActivityCoefficientFunction function =
+                        new BinaryHVparameterFitToActivityCoefficientFunction();
                 SystemInterface testSystem = new SystemPrEos(253.0 + 20.0 * i, 1.0);
                 // testSystem.addComponent("MEG", 1.0+j*10);
                 testSystem.addComponent("methanolPVTsim", 1.0 + j * j);
@@ -142,12 +148,13 @@ public class TestBinaryHVfitToActivityCPA extends java.lang.Object implements Cl
                 testSystem2.init(0);
                 testSystem2.init(2);
                 double activ = testSystem2.getPhase(1).getActivityCoefficient(0);
-                logger.info(
-                        "activity " + activ + " molfraction MEG " + testSystem2.getPhase(1).getComponent("MEG").getx());
+                logger.info("activity " + activ + " molfraction MEG "
+                        + testSystem2.getPhase(1).getComponent("MEG").getx());
                 function.setInitialGuess(parameterGuess);
-                double sample1[] = { numb / 1000.0, testSystem.getTemperature() };
-                double standardDeviation1[] = { 1.0 };
-                SampleValue sample = new SampleValue(activ, activ / 100.0, sample1, standardDeviation1);
+                double sample1[] = {numb / 1000.0, testSystem.getTemperature()};
+                double standardDeviation1[] = {1.0};
+                SampleValue sample =
+                        new SampleValue(activ, activ / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);

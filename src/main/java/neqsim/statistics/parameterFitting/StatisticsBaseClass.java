@@ -1,14 +1,21 @@
 /*
- * LevenbergMarquardt.java
+ * StatisticsBaseClass.java
  *
  * Created on 22. januar 2001, 23:00
  */
 package neqsim.statistics.parameterFitting;
 
-import Jama.*;
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+
+import Jama.Matrix;
 import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
 
 /**
@@ -242,9 +249,9 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     }
 
     @Override
-    public void runMonteCarloSimulation(int numerOfRuns) {
+    public void runMonteCarloSimulation(int numRuns) {
         neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
-                this, numerOfRuns);
+                this, numRuns);
         montCarlSim.runSimulation();
     }
 
@@ -384,7 +391,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         dialogContentPane.add(scrollpane);
         dialog.pack();
         dialog.setVisible(true);
-
     }
 
     public void displayResultWithDeviation() {
@@ -568,7 +574,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         try {
             displayValues();
         } catch (Exception e) {
-
             System.out.println("could not display graph");
             e.printStackTrace();
         }
@@ -601,7 +606,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
             System.out.println("could not calc deviation");
             e.printStackTrace();
         }
-
     }
 
     /**

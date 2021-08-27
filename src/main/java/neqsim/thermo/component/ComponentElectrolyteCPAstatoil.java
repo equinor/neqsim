@@ -8,11 +8,10 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA implements ComponentCPAInterface {
+public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
 
     private static final long serialVersionUID = 1000;
 
@@ -35,7 +34,7 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
 
         ComponentElectrolyteCPAstatoil clonedComponent = null;
         try {
@@ -48,20 +47,20 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA impl
     }
 
     @Override
-	public double calc_lngi(PhaseInterface phase) {
+    public double calc_lngi(PhaseInterface phase) {
         // System.out.println("val "
         // +0.475/(1.0-0.475*phase.getB()/phase.getTotalVolume())*getBi()/phase.getTotalVolume());
         return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
     }
 
     @Override
-	public double calc_lngidV(PhaseInterface phase) {
+    public double calc_lngidV(PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         return -0.475 * getBi() / (temp * temp);
     }
 
     @Override
-	public double calc_lngij(int j, PhaseInterface phase) {
+    public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
         // getBij(j));

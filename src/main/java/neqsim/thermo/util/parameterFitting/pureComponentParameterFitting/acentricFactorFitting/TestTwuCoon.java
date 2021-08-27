@@ -5,7 +5,9 @@
  */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
-import java.util.*;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -13,26 +15,24 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestTwuCoon extends java.lang.Object {
+public class TestTwuCoon {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestTwuCoon.class);
 
     /** Creates new TestAcentric */
-    public TestTwuCoon() {
-    }
+    public TestTwuCoon() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // String ComponentName = "CO2";
         // String ComponentName = "methane";
@@ -69,7 +69,7 @@ public class TestTwuCoon extends java.lang.Object {
             // double guess[] ={0.08838047169500897,0.9400222937525736,3.4011901770700264} ;
             // // neon chi sqr 0.044
             // double guess[] = {0.0179791, 0.983218, 5.63251};
-            double guess[] = { 0.068584, 0.9784, 2.244 };
+            double guess[] = {0.068584, 0.9784, 2.244};
 
             // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(40, 1);
             // SystemInterface testSystem = new SystemSrkEos(280, 1);
@@ -99,13 +99,15 @@ public class TestTwuCoon extends java.lang.Object {
                 // kan legge inn dewTflash for aa finne avvik til tilsvarende linje med
                 // schwarzentruber... da ogsaa for flerkomponent blandinger istedenfor antoine
                 // ligningen.
-//                double pressure = testSystem.getPhase(0).getComponent(0).getAntoineVaporPressure(temperature);
+                // double pressure =
+                // testSystem.getPhase(0).getComponent(0).getAntoineVaporPressure(temperature);
                 System2.setTemperature(temperature);
                 Ops.dewPointPressureFlash();
                 double pressure = System2.getPressure();
 
-                double sample1[] = { temperature }; // temperature
-                double standardDeviation1[] = { 0.1, 0.1, 0.1 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {temperature}; // temperature
+                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
+                                                               // std.dev pressure
                 double val = Math.log(pressure);
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
@@ -125,7 +127,7 @@ public class TestTwuCoon extends java.lang.Object {
         optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();
-//        optim.writeToCdfFile("c:/testFit.nc");
-//        optim.writeToTextFile("c:/testFit.txt");
+        // optim.writeToCdfFile("c:/testFit.nc");
+        // optim.writeToTextFile("c:/testFit.txt");
     }
 }

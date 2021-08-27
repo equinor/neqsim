@@ -15,21 +15,20 @@
  */
 
 /*
- * FlowSystemInterface.java
+ * FluidBoundaryInterface.java
  *
  * Created on 11. desember 2000, 17:17
  */
 
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactor;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public interface FluidBoundaryInterface extends Cloneable {

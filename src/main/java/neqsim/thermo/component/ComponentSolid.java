@@ -178,7 +178,7 @@ public class ComponentSolid extends ComponentSrk {
     public void setSolidRefFluidPhase(PhaseInterface phase) {
         try {
              if((!isTBPfraction && !isPlusFraction)){
-            refPhase = phase.getClass().newInstance();
+            refPhase = phase.getClass().getDeclaredConstructor().newInstance();
             refPhase.setTemperature(273.0);
             refPhase.setPressure(1.0);
             try {

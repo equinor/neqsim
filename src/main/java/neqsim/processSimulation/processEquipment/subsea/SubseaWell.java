@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.subsea;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.reservoir.SimpleReservoir;
@@ -28,7 +27,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
@@ -46,8 +45,7 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
          * 
          * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
          * 
-         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn);
-         * ops.TPflash();
+         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
          * 
          * getOutStream().setFluid(fluidIn);
          */
@@ -55,8 +53,8 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
 
     public static void main(String[] args) {
 
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0),
-                250.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);
         testSystem.addComponent("nitrogen", 0.100);
         testSystem.addComponent("methane", 70.00);
         testSystem.addComponent("ethane", 1.0);
@@ -81,10 +79,12 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
 
         reservoirOps.run();
 
-        System.out
-                .println("water volume" + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
-        System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
-        System.out.println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
+        System.out.println("water volume"
+                + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
+        System.out.println(
+                "oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
+        System.out.println(
+                "total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
 
         SubseaWell well1 = new SubseaWell(reservoirOps.getOilProducer("oilproducer_1").getStream());
         well1.getPipeline().setDiameter(0.3);
@@ -115,18 +115,19 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         ops.add(topsideChoke);
         ops.add(adjust);
 
-        ArrayList<double[]> res = new ArrayList();
+        ArrayList<double[]> res = new ArrayList<double[]>();
         // for(int i=0;i<152;i++) {
         // do {
         reservoirOps.runTransient(60 * 60 * 24 * 1);
         ops.run();
-        res.add(new double[] { reservoirOps.getTime(), producedOilStream.getFluid().getFlowRate("kg/hr"),
-                reservoirOps.getOilProductionTotal("MSm3 oe") });
+        res.add(new double[] {reservoirOps.getTime(),
+                producedOilStream.getFluid().getFlowRate("kg/hr"),
+                reservoirOps.getOilProductionTotal("MSm3 oe")});
         System.out.println("subsea choke DP " + subseaChoke.getDeltaPressure("bara"));
         System.out.println("topside  choke DP " + topsideChoke.getDeltaPressure("bara"));
         System.out.println("oil production " + producedOilStream.getFluid().getFlowRate("kg/hr"));
-//			}
-//		while(producedOilStream.getFluid().getFlowRate("kg/hr")>1.0e5);
+        // }
+        // while(producedOilStream.getFluid().getFlowRate("kg/hr")>1.0e5);
 
         ProcessSystem GasOilProcess = ProcessSystem.open("c:/temp/offshorePro.neqsim");
         ((StreamInterface) GasOilProcess.getUnit("well stream"))

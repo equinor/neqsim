@@ -6,16 +6,16 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class Diffusivity
         extends neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable {
+        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
@@ -37,7 +37,7 @@ public class Diffusivity
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -55,7 +55,7 @@ public class Diffusivity
     }
 
     @Override
-	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
+    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         // method - estimation method
         // if(method==? then)
         double A2 = 1.06036, B2 = 0.15610, C2 = 0.19300, D2 = 0.47635, E2 = 1.03587, F2 = 1.52996, G2 = 1.76474,
@@ -70,7 +70,7 @@ public class Diffusivity
     }
 
     @Override
-	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
 
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
@@ -90,7 +90,7 @@ public class Diffusivity
     }
 
     @Override
-	public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
 
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
@@ -106,17 +106,17 @@ public class Diffusivity
     }
 
     @Override
-	public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    public double getFickBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
     @Override
-	public double getEffectiveDiffusionCoefficient(int i) {
+    public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
     @Override
-	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         /*
          * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
          * gasPhase.getPhase().getComponents()[i].getx() *

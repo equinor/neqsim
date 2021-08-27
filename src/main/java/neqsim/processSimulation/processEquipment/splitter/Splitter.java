@@ -6,18 +6,16 @@
 package neqsim.processSimulation.processEquipment.splitter;
 
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface, SplitterInterface {
+public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -45,7 +43,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setSplitNumber(int i) {
+    public void setSplitNumber(int i) {
         splitNumber = i;
         this.setInletStream(inletStream);
         splitFactor = new double[splitNumber];
@@ -58,7 +56,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void setInletStream(StreamInterface inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         splitStream = new Stream[splitNumber];
         try {
@@ -72,12 +70,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public Stream getSplitStream(int i) {
+    public Stream getSplitStream(int i) {
         return (Stream) splitStream[i];
     }
 
     @Override
-	public void run() {
+    public void run() {
         for (int i = 0; i < splitNumber; i++) {
             thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
             thermoSystem.init(0);
@@ -93,11 +91,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements ProcessEquipm
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
     }
 
 }

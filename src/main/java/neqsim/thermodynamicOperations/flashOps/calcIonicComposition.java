@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /*
- * PHflash.java
+ * calcIonicComposition.java
  *
  * Created on 8. mars 2001, 10:56
  */
@@ -22,14 +22,14 @@ package neqsim.thermodynamicOperations.flashOps;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class calcIonicComposition extends Flash implements java.io.Serializable {
+public class calcIonicComposition extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -48,7 +48,7 @@ public class calcIonicComposition extends Flash implements java.io.Serializable 
     }
 
     @Override
-	public void run() {
+    public void run() {
         resultTable = new String[system.getPhase(0).getNumberOfComponents() + 2][4];
         resultTable[0][0] = "Component";
         resultTable[0][1] = "mmol/kgSolvent";
@@ -64,35 +64,37 @@ public class calcIonicComposition extends Flash implements java.io.Serializable 
         for (int i = 0; i < system.getPhase(phaseNumber).getNumberOfComponents(); i++) {
             // if (system.getPhase(phaseNumber).getComponent(i).isIsIon()) {
             resultTable[ionNumber + 1][0] = system.getPhase(phaseNumber).getComponent(i).getComponentName();
-            resultTable[ionNumber
-                    + 1][1] = new Double(
+            resultTable[ionNumber + 1][1] = Double
+                    .valueOf(
                             nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
                                     / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
                                             * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
-                                    * 1000)).toString();
-            resultTable[ionNumber + 1][2] = new Double(
-                    nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
+                                    * 1000))
+                    .toString();
+            resultTable[ionNumber + 1][2] = Double
+                    .valueOf(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
                             * system.getPhase(phaseNumber).getComponent(i).getMolarMass()
                             / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
                                     * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
-                            * 1e6)).toString();
-            resultTable[ionNumber + 1][3] = new Double(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,
-                    system.getPhase(phaseNumber).getComponent("water").getComponentNumber()))).toString();
+                            * 1e6))
+                    .toString();
+            resultTable[ionNumber + 1][3] = Double
+                    .valueOf(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,
+                            system.getPhase(phaseNumber).getComponent("water").getComponentNumber())))
+                    .toString();
 
             ionNumber++;
-
             // }
         }
-
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return resultTable;
     }
 }

@@ -21,18 +21,18 @@
  */
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import org.apache.logging.log4j.*;
-
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class VHflashQfunc extends Flash implements java.io.Serializable {
+public class VHflashQfunc extends Flash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VHflashQfunc.class);
@@ -109,7 +109,7 @@ public class VHflashQfunc extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         // logger.info("internaleng: " + system.getInternalEnergy());
         // logger.info("volume: " + system.getVolume());
@@ -118,7 +118,7 @@ public class VHflashQfunc extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

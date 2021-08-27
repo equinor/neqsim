@@ -6,34 +6,34 @@
 
 package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
+public class TestIonicInteractionParameterFitting_CO2 {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFitting_CO2.class);
 
     /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFitting_CO2() {
-    }
+    public TestIonicInteractionParameterFitting_CO2() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         double ID, pressure, temperature, x1, x2, x3, loading;
 
         // inserting samples from database
@@ -45,12 +45,21 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
         // double guess[] = {0.0004463876, -0.0001475081, 0.0021294606, 0.0002761438,
         // -0.0003450177}; //Detailed reactions, no data for 75 wt% MDEA or temp > 400K,
         // more iterations
-        double guess[] = { -0.0001660156, -0.0006035675, -0.0000068587, -0.0002164970 };// ,0.0005}; //Detailed
-                                                                                        // reactions, no data for 75 wt%
-                                                                                        // MDEA or temp > 400K or
-                                                                                        // loading < 0.1 and bias = -4%
-                                                                                        // and AAD = 18% for loading
-                                                                                        // >0.1
+        double guess[] = {-0.0001660156, -0.0006035675, -0.0000068587, -0.0002164970};// ,0.0005};
+                                                                                      // //Detailed
+                                                                                      // reactions,
+                                                                                      // no data for
+                                                                                      // 75 wt%
+                                                                                      // MDEA or
+                                                                                      // temp > 400K
+                                                                                      // or
+                                                                                      // loading <
+                                                                                      // 0.1 and
+                                                                                      // bias = -4%
+                                                                                      // and AAD =
+                                                                                      // 18% for
+                                                                                      // loading
+                                                                                      // >0.1
         // double guess[] = {0.0004164151, 0.0002034767, 0.0018993447, 0.0022461592,
         // -0.0008412103}; //Detailed reactions, no data for 75 wt% MDEA or temp > 400K
         // or loading > 0.1 bias of -7% and AAD= 27% for loading<0.1
@@ -67,7 +76,8 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
             logger.info("adding....");
             while (dataSet.next()) {
                 i++;
-                IonicInteractionParameterFittingFunction_CO2 function = new IonicInteractionParameterFittingFunction_CO2();
+                IonicInteractionParameterFittingFunction_CO2 function =
+                        new IonicInteractionParameterFittingFunction_CO2();
                 function.setInitialGuess(guess);
 
                 ID = Integer.parseInt(dataSet.getString("ID"));
@@ -81,7 +91,9 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
 
                 // if(loading <= 0.1) continue;
 
-                if ((ID > 56 && ID < 64) || (ID > 92 && ID < 101) || (ID > 123 && ID < 131)) { // 75 wt% amine
+                if ((ID > 56 && ID < 64) || (ID > 92 && ID < 101) || (ID > 123 && ID < 131)) { // 75
+                                                                                               // wt%
+                                                                                               // amine
                     continue;
                 }
                 if (ID == 155) {
@@ -90,11 +102,13 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
                 if (ID == 29 || ID == 28 || ID == 258) {
                     continue; // large values of Pexp/Pcalc
                 }
-                if (temperature > 400) { // Since Wij are assumed to be temp. independent, higher temp. are neglected
+                if (temperature > 400) { // Since Wij are assumed to be temp. independent, higher
+                                         // temp. are neglected
                     continue;
                 }
 
-                SystemInterface testSystem = new SystemFurstElectrolyteEos(temperature, 1.5 * pressure);
+                SystemInterface testSystem =
+                        new SystemFurstElectrolyteEos(temperature, 1.5 * pressure);
                 testSystem.addComponent("CO2", x1);
                 testSystem.addComponent("MDEA", x3);
                 testSystem.addComponent("water", x2);
@@ -106,10 +120,11 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { loading };
-                double standardDeviation1[] = { 0.1 };
+                double sample1[] = {loading};
+                double standardDeviation1[] = {0.1};
                 double stddev = (pressure / 100.0);
-                SampleValue sample = new SampleValue((pressure), stddev, sample1, standardDeviation1);
+                SampleValue sample =
+                        new SampleValue((pressure), stddev, sample1, standardDeviation1);
 
                 sample.setFunction(function);
                 sample.setReference(Double.toString(ID));
@@ -129,8 +144,8 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
             while (dataSet.next()) {
                 i++;
 
-                IonicInteractionParameterFittingFunction_CO2 function = new IonicInteractionParameterFittingFunction_CO2(
-                        1, 1);
+                IonicInteractionParameterFittingFunction_CO2 function =
+                        new IonicInteractionParameterFittingFunction_CO2(1, 1);
                 function.setInitialGuess(guess);
 
                 ID = Integer.parseInt(dataSet.getString("ID"));
@@ -164,7 +179,8 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
                 if (ID == 328 || ID == 329 || (ID > 332 && ID < 339)) {
                     continue;
                 }
-                if (temperature > 400) { // Since Wij are assumed to be temp. independent, higher temp. are neglected
+                if (temperature > 400) { // Since Wij are assumed to be temp. independent, higher
+                                         // temp. are neglected
                     continue;
                 }
 
@@ -173,10 +189,11 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { loading };
-                double standardDeviation1[] = { 0.1 };
+                double sample1[] = {loading};
+                double standardDeviation1[] = {0.1};
                 double stddev = (pressure / 100.0);
-                SampleValue sample = new SampleValue((pressure), stddev, sample1, standardDeviation1);
+                SampleValue sample =
+                        new SampleValue((pressure), stddev, sample1, standardDeviation1);
 
                 sample.setFunction(function);
                 sample.setReference(Double.toString(ID));
@@ -194,7 +211,8 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
             logger.info("adding....");
             while (dataSet.next()) {
                 i++;
-                IonicInteractionParameterFittingFunction_CO2 function = new IonicInteractionParameterFittingFunction_CO2();
+                IonicInteractionParameterFittingFunction_CO2 function =
+                        new IonicInteractionParameterFittingFunction_CO2();
                 function.setInitialGuess(guess);
 
                 ID = Integer.parseInt(dataSet.getString("ID"));
@@ -207,7 +225,8 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
                 loading = x1 / x3;
                 // if(loading <= 0.1) continue;
 
-                SystemInterface testSystem = new SystemFurstElectrolyteEos(temperature, 1.5 * pressure);
+                SystemInterface testSystem =
+                        new SystemFurstElectrolyteEos(temperature, 1.5 * pressure);
                 testSystem.addComponent("CO2", x1);
                 testSystem.addComponent("MDEA", x3);
                 testSystem.addComponent("water", x2);
@@ -219,10 +238,11 @@ public class TestIonicInteractionParameterFitting_CO2 extends java.lang.Object {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { loading };
-                double standardDeviation1[] = { 0.1 };
+                double sample1[] = {loading};
+                double standardDeviation1[] = {0.1};
                 double stddev = (pressure / 100.0);
-                SampleValue sample = new SampleValue((pressure), stddev, sample1, standardDeviation1);
+                SampleValue sample =
+                        new SampleValue((pressure), stddev, sample1, standardDeviation1);
 
                 sample.setFunction(function);
                 sample.setReference(Double.toString(ID));

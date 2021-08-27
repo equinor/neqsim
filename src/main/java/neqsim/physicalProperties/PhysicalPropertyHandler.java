@@ -15,12 +15,13 @@
  */
 package neqsim.physicalProperties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.SolidPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
  * @author ESOL
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {

@@ -6,11 +6,12 @@
 
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
-import java.io.*;
-import java.util.*;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class DataReader implements DataReaderInterface {
@@ -21,8 +22,7 @@ public class DataReader implements DataReaderInterface {
     protected ArrayList sampleObjectList = new ArrayList();
 
     /** Creates new DataReader */
-    public DataReader() {
-    }
+    public DataReader() {}
 
     public DataReader(String fileName) {
         this.fileName = fileName;
@@ -65,8 +65,8 @@ public class DataReader implements DataReaderInterface {
         return sampleObjectList;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         DataReader reader = new DataReader("31011222");
     }
-
 }

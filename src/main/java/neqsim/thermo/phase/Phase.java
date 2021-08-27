@@ -1,40 +1,38 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
-* Phase.java
-*
-* Created on 8. april 2000, 23:38
-*/
+ * Phase.java
+ *
+ * Created on 8. april 2000, 23:38
+ */
 package neqsim.thermo.phase;
 
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.PhysicalPropertyHandler;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
-import org.apache.logging.log4j.*;
-
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-abstract class Phase extends Object
-        implements PhaseInterface{
+
+abstract class Phase implements PhaseInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -67,11 +65,10 @@ abstract class Phase extends Object
         componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
     }
 
-    public Phase(Phase phase) {
-    }
+    public Phase(Phase phase) {}
 
     @Override
-	public Object clone() {
+    public Object clone() {
 
         Phase clonedPhase = null;
 
@@ -87,8 +84,9 @@ abstract class Phase extends Object
         }
         // System.out.println("cloed length: " + componentArray.length);
         if (physicalPropertyHandler != null) {
-            clonedPhase.physicalPropertyHandler = ((neqsim.physicalProperties.PhysicalPropertyHandler) this.physicalPropertyHandler
-                    .clone());
+            clonedPhase.physicalPropertyHandler =
+                    ((neqsim.physicalProperties.PhysicalPropertyHandler) this.physicalPropertyHandler
+                            .clone());
         }
 
         return clonedPhase;
@@ -100,8 +98,10 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void removeComponent(String componentName, double moles, double molesInPhase, int compNumber) {
-        java.util.ArrayList temp = new java.util.ArrayList();
+    public void removeComponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
+        ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
+
 
         try {
             for (int i = 0; i < numberOfComponents; i++) {
@@ -125,7 +125,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void setEmptyFluid() {
+    public void setEmptyFluid() {
         numberOfMolesInPhase = 0.0;
         for (int i = 0; i < getNumberOfComponents(); i++) {
             this.getComponent(i).setNumberOfMolesInPhase(0.0);
@@ -134,35 +134,37 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void addMoles(int component, double dn) {
+    public void addMoles(int component, double dn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMoles(dn);
     }
 
     @Override
-	public void addMolesChemReac(int component, double dn) {
+    public void addMolesChemReac(int component, double dn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMolesChemReac(dn);
     }
 
     @Override
-	public void addMolesChemReac(int component, double dn, double totdn) {
+    public void addMolesChemReac(int component, double dn, double totdn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMolesChemReac(dn, totdn);
         if (numberOfMolesInPhase < 0.0 || getComponent(component).getNumberOfMolesInPhase() < 0.0) {
             logger.error("Negative number of moles in phase.");
-            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            neqsim.util.exception.InvalidInputException e =
+                    new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
         }
         if (getComponent(component).getNumberOfMolesInPhase() < 0.0) {
             logger.error("Negative number of moles of component " + component);
-            neqsim.util.exception.InvalidInputException e = new neqsim.util.exception.InvalidInputException();
+            neqsim.util.exception.InvalidInputException e =
+                    new neqsim.util.exception.InvalidInputException();
             throw new RuntimeException(e);
         }
     }
 
     @Override
-	public void setProperties(PhaseInterface phase) {
+    public void setProperties(PhaseInterface phase) {
         this.phaseType = phase.getPhaseType();
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
             this.getComponent(i).setProperties(phase.getComponent(i));
@@ -175,12 +177,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public ComponentInterface[] getcomponentArray() {
+    public ComponentInterface[] getcomponentArray() {
         return componentArray;
     }
 
     @Override
-	public double getAntoineVaporPressure(double temp) {
+    public double getAntoineVaporPressure(double temp) {
         double pres = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             pres += componentArray[i].getx() * componentArray[i].getAntoineVaporPressure(temp);
@@ -190,17 +192,18 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getWtFrac(String componentName) {
+    public double getWtFrac(String componentName) {
         return getWtFrac(getComponent(componentName).getComponentNumber());
     }
 
     @Override
-	public double getWtFrac(int component) {
-        return getComponent(component).getMolarMass() * getComponent(component).getx() / this.getMolarMass();
+    public double getWtFrac(int component) {
+        return getComponent(component).getMolarMass() * getComponent(component).getx()
+                / this.getMolarMass();
     }
 
     @Override
-	public double getPseudoCriticalTemperature() {
+    public double getPseudoCriticalTemperature() {
         double temp = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             temp += componentArray[i].getx() * componentArray[i].getTC();
@@ -209,7 +212,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getPseudoCriticalPressure() {
+    public double getPseudoCriticalPressure() {
         double pres = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             pres += componentArray[i].getx() * componentArray[i].getPC();
@@ -218,7 +221,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void normalize() {
+    public void normalize() {
         double sumx = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             sumx += componentArray[i].getx();
@@ -229,7 +232,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void setMoleFractions(double[] x) {
+    public void setMoleFractions(double[] x) {
         for (int i = 0; i < numberOfComponents; i++) {
             componentArray[i].setx(x[i]);
         }
@@ -237,7 +240,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
@@ -247,24 +250,25 @@ abstract class Phase extends Object
      * @return pressure in unit bara
      */
     @Override
-	public double getPressure() {
+    public double getPressure() {
         return pressure;
     }
 
     /**
      * method to return pressure in a given unit
      *
-     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
-     * @return pressure in specified unit
+     * @param  unit The unit as a string. Supported units are bara, barg, Pa and MPa
+     * @return      pressure in specified unit
      */
     @Override
-	public final double getPressure(String unit) {
-        neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(getPressure(), "bara");
-        return presConversion.getValue(unit);
+    public final double getPressure(String unit) {
+        neqsim.util.unit.PressureUnit presConversion =
+                new neqsim.util.unit.PressureUnit(getPressure(), "bara");
+                return presConversion.getValue(unit);
     }
 
     @Override
-	public int getInitType() {
+    public int getInitType() {
         return initType;
     }
 
@@ -272,7 +276,7 @@ abstract class Phase extends Object
      * Returns the mole composition vector in unit mole fraction
      */
     @Override
-	public double[] getMolarComposition() {
+    public double[] getMolarComposition() {
         double[] comp = new double[getNumberOfComponents()];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -282,11 +286,10 @@ abstract class Phase extends Object
     }
 
     /**
-     * Returns the composition vector in unit
-     * molefraction/wtfraction/molespersec/volumefraction
+     * Returns the composition vector in unit molefraction/wtfraction/molespersec/volumefraction
      */
     @Override
-	public double[] getComposition(String unit) {
+    public double[] getComposition(String unit) {
         double[] comp = new double[getNumberOfComponents()];
 
         for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
@@ -303,7 +306,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getMixGibbsEnergy() {
+    public double getMixGibbsEnergy() {
         double gmix = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             gmix += getComponent(i).getx() * Math.log(getComponent(i).getx());
@@ -312,7 +315,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getExessGibbsEnergy() {
+    public double getExessGibbsEnergy() {
         double GE = 0.0;
         if (refPhase == null) {
             initRefPhases(false);
@@ -324,7 +327,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getExessGibbsEnergySymetric() {
+    public double getExessGibbsEnergySymetric() {
         double GE = 0.0;
         if (refPhase == null) {
             initRefPhases(true);
@@ -336,12 +339,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getZ() {
+    public double getZ() {
         return Z;
     }
 
     @Override
-	public void setPressure(double pres) {
+    public void setPressure(double pres) {
         this.pressure = pres;
     }
 
@@ -351,12 +354,12 @@ abstract class Phase extends Object
      * @param temp in unit Kelvin
      */
     @Override
-	public void setTemperature(double temp) {
+    public void setTemperature(double temp) {
         this.temperature = temp;
     }
 
     @Override
-	public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
+    public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
         if (physicalPropertyHandler == null) {
             initPhysicalProperties();
             return physicalPropertyHandler.getPhysicalProperty(this);
@@ -366,16 +369,17 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void init() {
+    public void init() {
         init(numberOfMolesInPhase / beta, numberOfComponents, initType, phaseType, beta);
     }
 
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
 
         this.beta = beta;
         numberOfMolesInPhase = beta * totalNumberOfMoles;
@@ -391,7 +395,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void setPhysicalProperties() {
+    public void setPhysicalProperties() {
         // System.out.println("Physical properties: Default model");
         setPhysicalProperties(physicalPropertyType);
         // physicalProperty = new
@@ -399,11 +403,11 @@ abstract class Phase extends Object
     }
 
     /**
-     * specify the type model for the physical properties you want to use. Type:
-     * Model 0 Orginal/default 1 Water 2 Glycol 3 Amine
+     * specify the type model for the physical properties you want to use. Type: Model 0
+     * Orginal/default 1 Water 2 Glycol 3 Amine
      */
     @Override
-	public void setPhysicalProperties(int type) {
+    public void setPhysicalProperties(int type) {
         if (physicalPropertyHandler == null) {
             physicalPropertyHandler = new PhysicalPropertyHandler();
         }
@@ -412,12 +416,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void resetPhysicalProperties() {
+    public void resetPhysicalProperties() {
         physicalPropertyHandler = null;
     }
 
     @Override
-	public void initPhysicalProperties() {
+    public void initPhysicalProperties() {
         if (physicalPropertyHandler == null) {
             physicalPropertyHandler = new PhysicalPropertyHandler();
         }
@@ -429,7 +433,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public void initPhysicalProperties(String type) {
+    public void initPhysicalProperties(String type) {
         if (physicalPropertyHandler == null) {
             physicalPropertyHandler = new PhysicalPropertyHandler();
         }
@@ -447,97 +451,101 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
     @Override
-	public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
     @Override
-	public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
     @Override
-	public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
     @Override
-	public double getg() {
+    public double getg() {
         return 1;
     }
 
-    public double calcA(int comp, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-        return 1;
-    }
-
-    @Override
-	public double calcAi(int comp, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-        return 1;
-    }
-
-    @Override
-	public double calcAiT(int comp, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-        return 1;
-    }
-
-    @Override
-	public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
-        return 1;
-    }
-
-    @Override
-	public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
+    public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
+        return 1;
+    }
+
+    @Override
+    public double calcAi(int comp, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp) {
+        return 1;
+    }
+
+    @Override
+    public double calcAiT(int comp, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp) {
+        return 1;
+    }
+
+    @Override
+    public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp) {
+
+        return 1;
+    }
+
+    @Override
+    public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
+            double pressure, int numbcomp) {
         return 0;
     }
 
     @Override
-	public double calcBij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
-            int numbcomp) {
+    public double calcBij(int compNumb, int j, PhaseInterface phase, double temperature,
+            double pressure, int numbcomp) {
         return 0;
     }
 
     @Override
-	public double calcBi(int comp, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
+    public double calcBi(int comp, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp) {
         return 1;
     }
 
     @Override
-	public void setAtractiveTerm(int i) {
+    public void setAtractiveTerm(int i) {
         for (int k = 0; k < numberOfComponents; k++) {
             componentArray[k].setAtractiveTerm(i);
         }
     }
 
     /**
-     * method to return molar volume of the phase note: without Peneloux volume
-     * correction
+     * method to return molar volume of the phase note: without Peneloux volume correction
      *
      * @return molar volume volume in unit m3/mol*1e5
      */
     @Override
-	public double getMolarVolume() {
+    public double getMolarVolume() {
         return molarVolume;
     }
 
     @Override
-	public int getNumberOfComponents() {
+    public int getNumberOfComponents() {
         return numberOfComponents;
     }
 
-
     @Override
-	public double getA() {
+    public double getA() {
         return 0;
     }
 
     @Override
-	public double getB() {
+    public double getB() {
         return 0;
     }
 
@@ -546,12 +554,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getAT() {
+    public double getAT() {
         return 0;
     }
 
     @Override
-	public double getATT() {
+    public double getATT() {
         return 0;
     }
 
@@ -560,27 +568,27 @@ abstract class Phase extends Object
     }
 
     @Override
-	public PhaseInterface getPhase() {
+    public PhaseInterface getPhase() {
         return this;
     }
 
     @Override
-	public double getNumberOfMolesInPhase() {
+    public double getNumberOfMolesInPhase() {
         return numberOfMolesInPhase;
     }
 
     @Override
-	public ComponentInterface[] getComponents() {
+    public ComponentInterface[] getComponents() {
         return componentArray;
     }
 
     @Override
-	public void setComponentArray(ComponentInterface[] components) {
+    public void setComponentArray(ComponentInterface[] components) {
         this.componentArray = components;
     }
 
     @Override
-	public double calcR() {
+    public double calcR() {
 
         double R = 8.314 / getMolarMass();
 
@@ -588,162 +596,162 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double Fn() {
+    public double Fn() {
         return 1;
     }
 
     @Override
-	public double FT() {
+    public double FT() {
         return 1;
     }
 
     @Override
-	public double FV() {
+    public double FV() {
         return 1;
     }
 
     @Override
-	public double FD() {
+    public double FD() {
         return 1;
     }
 
     @Override
-	public double FB() {
+    public double FB() {
         return 1;
     }
 
     @Override
-	public double gb() {
+    public double gb() {
         return 1;
     }
 
     @Override
-	public double fb() {
+    public double fb() {
         return 1;
     }
 
     @Override
-	public double gV() {
+    public double gV() {
         return 1;
     }
 
     @Override
-	public double fv() {
+    public double fv() {
         return 1;
     }
 
     @Override
-	public double FnV() {
+    public double FnV() {
         return 1;
     }
 
     @Override
-	public double FnB() {
+    public double FnB() {
         return 1;
     }
 
     @Override
-	public double FTT() {
+    public double FTT() {
         return 1;
     }
 
     @Override
-	public double FBT() {
+    public double FBT() {
         return 1;
     }
 
     @Override
-	public double FDT() {
+    public double FDT() {
         return 1;
     }
 
     @Override
-	public double FBV() {
+    public double FBV() {
         return 1;
     }
 
     @Override
-	public double FBB() {
+    public double FBB() {
         return 1;
     }
 
     @Override
-	public double FDV() {
+    public double FDV() {
         return 1;
     }
 
     @Override
-	public double FBD() {
+    public double FBD() {
         return 1;
     }
 
     @Override
-	public double FTV() {
+    public double FTV() {
         return 1;
     }
 
     @Override
-	public double FVV() {
+    public double FVV() {
         return 1;
     }
 
     @Override
-	public double gVV() {
+    public double gVV() {
         return 1;
     }
 
     @Override
-	public double gBV() {
+    public double gBV() {
         return 1;
     }
 
     @Override
-	public double gBB() {
+    public double gBB() {
         return 1;
     }
 
     @Override
-	public double fVV() {
+    public double fVV() {
         return 1;
     }
 
     @Override
-	public double fBV() {
+    public double fBV() {
         return 1;
     }
 
     @Override
-	public double fBB() {
+    public double fBB() {
         return 1;
     }
 
     @Override
-	public double dFdT() {
+    public double dFdT() {
         return 1;
     }
 
     @Override
-	public double dFdV() {
+    public double dFdV() {
         return 1;
     }
 
     @Override
-	public double dFdTdV() {
+    public double dFdTdV() {
         return 1;
     }
 
     @Override
-	public double dFdVdV() {
+    public double dFdVdV() {
         return 1;
     }
 
     @Override
-	public double dFdTdT() {
+    public double dFdTdT() {
         return 1;
     }
 
     @Override
-	public double getCpres() {
+    public double getCpres() {
         return 1;
     }
 
@@ -752,7 +760,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getHresTP() {
+    public double getHresTP() {
         logger.error("error Hres");
         return 0;
     }
@@ -763,7 +771,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getGresTP() {
+    public double getGresTP() {
         logger.error("error Gres");
         return 0;
     }
@@ -774,12 +782,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getSresTP() {
+    public double getSresTP() {
         return 0;
     }
 
     @Override
-	public double getCp0() {
+    public double getCp0() {
         double tempVar = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             tempVar += componentArray[i].getx() * componentArray[i].getCp0(temperature);
@@ -787,7 +795,7 @@ abstract class Phase extends Object
         return tempVar;
     }
 
-//Integral av Cp0 mhp T
+    // Integral av Cp0 mhp T
     public double getHID() {
         double tempVar = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -802,7 +810,7 @@ abstract class Phase extends Object
      * @return Cp in unit J/K
      */
     @Override
-	public double getCp() {
+    public double getCp() {
         // System.out.println("Cp res:" + this.getCpres() + " Cp0: " + getCp0());
         return getCp0() * numberOfMolesInPhase + this.getCpres();
     }
@@ -810,27 +818,26 @@ abstract class Phase extends Object
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-     *             kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
      * @return Cp in specified unit
      */
     @Override
-	public double getCp(String unit) {
+    public double getCp(String unit) {
         double refCp = getCp(); // Cp in J/K
         double conversionFactor = 1.0;
         switch (unit) {
-        case "J/K":
-            conversionFactor = 1.0;
-            break;
-        case "J/molK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase();
-            break;
-        case "J/kgK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-            break;
-        case "kJ/kgK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactor = 1.0;
+                break;
+            case "J/molK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase();
+                break;
+            case "J/kgK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
+                break;
+            case "kJ/kgK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+                break;
         }
         return refCp * conversionFactor;
     }
@@ -841,34 +848,33 @@ abstract class Phase extends Object
      * @return Cv in unit J/K
      */
     @Override
-	public double getCv() {
+    public double getCv() {
         return getCp0() * numberOfMolesInPhase - R * numberOfMolesInPhase + getCvres();
     }
 
     /**
      * method to return specific heat capacity (Cv) in a given unit
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-     *             kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
      * @return Cv in specified unit
      */
     @Override
-	public double getCv(String unit) {
+    public double getCv(String unit) {
         double refCv = getCv(); // Cv in J/K
         double conversionFactor = 1.0;
         switch (unit) {
-        case "J/K":
-            conversionFactor = 1.0;
-            break;
-        case "J/molK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase();
-            break;
-        case "J/kgK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-            break;
-        case "kJ/kgK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactor = 1.0;
+                break;
+            case "J/molK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase();
+                break;
+            case "J/kgK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
+                break;
+            case "kJ/kgK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+                break;
         }
         return refCv * conversionFactor;
     }
@@ -879,18 +885,18 @@ abstract class Phase extends Object
      * @return kappa
      */
     @Override
-	public double getKappa() {
+    public double getKappa() {
         return getCp() / getCv();
     }
 
     /**
-     * method to return heat capacity ratio/adiabatic index/Poisson constant. The
-     * method calculates it as Cp (real) /Cv (real)
+     * method to return heat capacity ratio/adiabatic index/Poisson constant. The method calculates
+     * it as Cp (real) /Cv (real)
      *
      * @return gamma
      */
     @Override
-	public double getGamma() {
+    public double getGamma() {
         return getCp() / getCv();
     }
 
@@ -900,7 +906,7 @@ abstract class Phase extends Object
      * @return kappa
      */
     @Override
-	public double getGamma2() {
+    public double getGamma2() {
         double cp0 = getCp();
         return cp0 / (cp0 - ThermodynamicConstantsInterface.R * numberOfMolesInPhase);
     }
@@ -909,55 +915,54 @@ abstract class Phase extends Object
      * method to return enthalpy of a phase in unit Joule
      */
     @Override
-	public double getEnthalpy() {
+    public double getEnthalpy() {
         return getHID() * numberOfMolesInPhase + this.getHresTP();
     }
 
     /**
      * method to return phase enthalpy in a given unit
      *
-     * @param unit The unit as a string. Supported units are J, J/mol, J/kg and
-     *             kJ/kg
+     * @param unit The unit as a string. Supported units are J, J/mol, J/kg and kJ/kg
      * @return enthalpy in specified unit
      */
     @Override
-	public double getEnthalpy(String unit) {
+    public double getEnthalpy(String unit) {
         double refEnthalpy = getEnthalpy(); // enthalpy in J
         double conversionFactor = 1.0;
         switch (unit) {
-        case "J":
-            conversionFactor = 1.0;
-            break;
-        case "J/mol":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase();
-            break;
-        case "J/kg":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-            break;
-        case "kJ/kg":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-            break;
+            case "J":
+                conversionFactor = 1.0;
+                break;
+            case "J/mol":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase();
+                break;
+            case "J/kg":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
+                break;
+            case "kJ/kg":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+                break;
         }
         return refEnthalpy * conversionFactor;
     }
 
     @Override
-	public double getEnthalpydP() {
+    public double getEnthalpydP() {
         return this.getHresdP();
     }
 
     @Override
-	public double getEnthalpydT() {
+    public double getEnthalpydT() {
         return getCp();
     }
 
     @Override
-	public void setNumberOfComponents(int numberOfComponents) {
+    public void setNumberOfComponents(int numberOfComponents) {
         this.numberOfComponents = numberOfComponents;
     }
 
     @Override
-	public final int getNumberOfMolecularComponents() {
+    public final int getNumberOfMolecularComponents() {
         int mol = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getIonicCharge() == 0) {
@@ -968,7 +973,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public final int getNumberOfIonicComponents() {
+    public final int getNumberOfIonicComponents() {
         int ion = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getIonicCharge() != 0) {
@@ -982,7 +987,7 @@ abstract class Phase extends Object
      * method to return entropy of the phase
      */
     @Override
-	public double getEntropy() {
+    public double getEntropy() {
         double tempVar = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             tempVar += componentArray[i].getx() * componentArray[i].getIdEntropy(temperature);
@@ -995,45 +1000,46 @@ abstract class Phase extends Object
             }
         }
 
-        return tempVar * numberOfMolesInPhase - numberOfMolesInPhase * R * Math.log(pressure / referencePressure)
+        return tempVar * numberOfMolesInPhase
+                - numberOfMolesInPhase * R * Math.log(pressure / referencePressure)
                 + tempVar2 * numberOfMolesInPhase + this.getSresTP();
     }
 
     /**
      * method to return entropy of the phase
      *
-     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and
-     *             kJ/kgK
+     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
      * @return entropy in specified unit
+
      */
     @Override
-	public double getEntropy(String unit) {
+    public double getEntropy(String unit) {
         double refEntropy = getEntropy(); // entropy in J/K
         double conversionFactor = 1.0;
         switch (unit) {
-        case "J/K":
-            conversionFactor = 1.0;
-            break;
-        case "J/molK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase();
-            break;
-        case "J/kgK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
-            break;
-        case "kJ/kgK":
-            conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactor = 1.0;
+                break;
+            case "J/molK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase();
+                break;
+            case "J/kgK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass();
+                break;
+            case "kJ/kgK":
+                conversionFactor = 1.0 / getNumberOfMolesInPhase() / getMolarMass() / 1000.0;
+                break;
         }
         return refEntropy * conversionFactor;
     }
 
     @Override
-	public double getEntropydP() {
+    public double getEntropydP() {
         return getdPdTVn() / getdPdVTn();
     }
 
     @Override
-	public double getEntropydT() {
+    public double getEntropydT() {
         return getCp() / temperature;
     }
 
@@ -1043,30 +1049,30 @@ abstract class Phase extends Object
      * @return viscosity in unit kg/msec
      */
     @Override
-	public double getViscosity() {
+    public double getViscosity() {
         return getPhysicalProperties().getViscosity();
     }
 
     /**
      * method to return viscosity og the phase in a given unit
      *
-     * @param unit The unit as a string. Supported units are kg/msec, cP
-     *             (centipoise)
+     * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
      * @return viscosity in specified unit
+
      */
     @Override
-	public double getViscosity(String unit) {
+    public double getViscosity(String unit) {
         double refViscosity = getViscosity(); // viscosity in kg/msec
         double conversionFactor = 1.0;
         switch (unit) {
-        case "kg/msec":
-            conversionFactor = 1.0;
-            break;
-        case "cP":
-            conversionFactor = 1.0e3;
-            break;
-        default:
-            throw new RuntimeException();
+            case "kg/msec":
+                conversionFactor = 1.0;
+                break;
+            case "cP":
+                conversionFactor = 1.0e3;
+                break;
+            default:
+                throw new RuntimeException();
         }
         return refViscosity * conversionFactor;
     }
@@ -1077,18 +1083,18 @@ abstract class Phase extends Object
      * @return conductivity in unit W/m*K
      */
     @Override
-	public double getThermalConductivity() {
+    public double getThermalConductivity() {
         return getPhysicalProperties().getConductivity();
     }
 
     /**
      * method to return conductivity of a phase
      *
-     * @return conductivity in unit W/m*K
+     * @return     conductivity in unit W/m*K
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
-	@Deprecated
+    @Deprecated
     public double getConductivity() {
         return getPhysicalProperties().getConductivity();
     }
@@ -1096,23 +1102,22 @@ abstract class Phase extends Object
     /**
      * method to return conductivity in a given unit
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     *
-     * @return conductivity in specified unit
+     * @param  unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return      conductivity in specified unit
      */
     @Override
-	public double getThermalConductivity(String unit) {
+    public double getThermalConductivity(String unit) {
         double refConductivity = getThermalConductivity(); // conductivity in W/m*K
         double conversionFactor = 1.0;
         switch (unit) {
-        case "W/mK":
-            conversionFactor = 1.0;
-            break;
-        case "W/cmK":
-            conversionFactor = 0.01;
-            break;
-        default:
-            throw new RuntimeException();
+            case "W/mK":
+                conversionFactor = 1.0;
+                break;
+            case "W/cmK":
+                conversionFactor = 0.01;
+                break;
+            default:
+                throw new RuntimeException();
         }
         return refConductivity * conversionFactor;
     }
@@ -1120,31 +1125,30 @@ abstract class Phase extends Object
     /**
      * method to return conductivity in a given unit
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     *
-     * @return conductivity in specified unit
-     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
+     * @param      unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return          conductivity in specified unit
+     * @deprecated      use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override
-	@Deprecated
+    @Deprecated
     public double getConductivity(String unit) {
         double refConductivity = getConductivity(); // conductivity in W/m*K
         double conversionFactor = 1.0;
         switch (unit) {
-        case "W/mK":
-            conversionFactor = 1.0;
-            break;
-        case "W/cmK":
-            conversionFactor = 0.01;
-            break;
-        default:
-            throw new RuntimeException();
+            case "W/mK":
+                conversionFactor = 1.0;
+                break;
+            case "W/cmK":
+                conversionFactor = 0.01;
+                break;
+            default:
+                throw new RuntimeException();
         }
         return refConductivity * conversionFactor;
     }
 
     @Override
-	public void initRefPhases(boolean onlyPure) {
+    public void initRefPhases(boolean onlyPure) {
         if (refPhase == null) {
             initRefPhases(onlyPure, "water");
         }
@@ -1154,7 +1158,7 @@ abstract class Phase extends Object
         refPhase = new PhaseInterface[numberOfComponents];
         for (int i = 0; i < numberOfComponents; i++) {
             try {
-                refPhase[i] = this.getClass().newInstance();
+                refPhase[i] = this.getClass().getDeclaredConstructor().newInstance();
             } catch (Exception e) {
                 logger.error("err " + e.toString());
             }
@@ -1164,7 +1168,8 @@ abstract class Phase extends Object
                 if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
                     refPhase[i].addcomponent("default", 10.0, 10.0, 0);
                     refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
-                    refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
+                    refPhase[i].getComponent(0)
+                            .setAcentricFactor(this.getComponent(i).getAcentricFactor());
                     refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
                     refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
                     refPhase[i].getComponent(0).setComponentType("TBPfraction");
@@ -1175,25 +1180,29 @@ abstract class Phase extends Object
                 refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
                 refPhase[i].setPhaseType(this.getPhaseType());
-                refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(), 1.0);
+                refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(),
+                        1.0);
 
             } else {
                 // System.out.println("ref " + name);
                 if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
                     refPhase[i].addcomponent("default", 10.0, 10.0, 0);
                     refPhase[i].getComponent(0).setMolarMass(this.getComponent(i).getMolarMass());
-                    refPhase[i].getComponent(0).setAcentricFactor(this.getComponent(i).getAcentricFactor());
+                    refPhase[i].getComponent(0)
+                            .setAcentricFactor(this.getComponent(i).getAcentricFactor());
                     refPhase[i].getComponent(0).setTC(this.getComponent(i).getTC());
                     refPhase[i].getComponent(0).setPC(this.getComponent(i).getPC());
                     refPhase[i].getComponent(0).setComponentType("TBPfraction");
                     refPhase[i].getComponent(0).setIsTBPfraction(true);
                 } else {
-                    refPhase[i].addcomponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10, 0);
+                    refPhase[i].addcomponent(getComponent(i).getComponentName(), 1.0e-10, 1.0e-10,
+                            0);
                 }
                 refPhase[i].addcomponent(name, 10.0, 10.0, 1);
                 refPhase[i].setAtractiveTerm(this.getComponent(i).getAtractiveTermNumber());
                 refPhase[i].setMixingRule(this.getMixingRuleNumber());
-                refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(), 1.0);
+                refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 2, 0, this.getPhaseType(),
+                        1.0);
             }
         }
     }
@@ -1210,22 +1219,22 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getLogPureComponentFugacity(int p) {
+    public double getLogPureComponentFugacity(int p) {
         return getLogPureComponentFugacity(p, false);
     }
 
     @Override
-	public double getPureComponentFugacity(int p) {
+    public double getPureComponentFugacity(int p) {
         return Math.exp(getLogPureComponentFugacity(p));
     }
 
     @Override
-	public double getPureComponentFugacity(int p, boolean pure) {
+    public double getPureComponentFugacity(int p, boolean pure) {
         return Math.exp(getLogPureComponentFugacity(p, pure));
     }
 
     @Override
-	public double getLogInfiniteDiluteFugacity(int k, int p) {
+    public double getLogInfiniteDiluteFugacity(int k, int p) {
         if (refPhase == null) {
             initRefPhases(false, getComponent(p).getName());
         }
@@ -1237,18 +1246,18 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getLogInfiniteDiluteFugacity(int k) {
+    public double getLogInfiniteDiluteFugacity(int k) {
         PhaseInterface dilphase = (PhaseInterface) this.clone();
         dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
         dilphase.getComponent(k).setx(1e-10);
-        dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1, dilphase.getPhaseType(),
-                1.0);
+        dilphase.init(dilphase.getNumberOfMolesInPhase(), dilphase.getNumberOfComponents(), 1,
+                dilphase.getPhaseType(), 1.0);
         dilphase.getComponent(k).fugcoef(dilphase);
         return dilphase.getComponent(k).getLogFugasityCoeffisient();
     }
 
     @Override
-	public double getInfiniteDiluteFugacity(int k, int p) {
+    public double getInfiniteDiluteFugacity(int k, int p) {
         return Math.exp(getLogInfiniteDiluteFugacity(k, p));
     }
 
@@ -1257,7 +1266,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getLogActivityCoefficient(int k, int p) {
+    public double getLogActivityCoefficient(int k, int p) {
         double fug = 0.0;
         double oldFug = getComponent(k).getLogFugasityCoeffisient();
         if (getComponent(k).getReferenceStateType().equals("solvent")) {
@@ -1269,7 +1278,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getActivityCoefficient(int k, int p) {
+    public double getActivityCoefficient(int k, int p) {
         double fug = 0.0;
         double oldFug = getComponent(k).getLogFugasityCoeffisient();
         if (getComponent(k).getReferenceStateType().equals("solvent")) {
@@ -1281,7 +1290,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getActivityCoefficient(int k) {
+    public double getActivityCoefficient(int k) {
         double fug = 0.0;
 
         double oldFug = getComponent(k).getLogFugasityCoeffisient();
@@ -1294,7 +1303,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getActivityCoefficientSymetric(int k) {
+    public double getActivityCoefficientSymetric(int k) {
         if (refPhase == null) {
             initRefPhases(true);
         }
@@ -1305,7 +1314,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getActivityCoefficientUnSymetric(int k) {
+    public double getActivityCoefficientUnSymetric(int k) {
         double fug = 0.0;
         double oldFug = getComponent(k).getLogFugasityCoeffisient();
         fug = getLogInfiniteDiluteFugacity(k);
@@ -1313,7 +1322,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getMolalMeanIonicActivity(int comp1, int comp2) {
+    public double getMolalMeanIonicActivity(int comp1, int comp2) {
         double act1 = 0.0;
         double act2 = 0.0;
         int watNumb = 0;
@@ -1332,16 +1341,20 @@ abstract class Phase extends Object
             }
         }
 
-        act1 = Math.pow(getActivityCoefficient(comp1, watNumb), Math.abs(getComponent(comp2).getIonicCharge()));
-        act2 = Math.pow(getActivityCoefficient(comp2, watNumb), Math.abs(getComponent(comp1).getIonicCharge()));
+        act1 = Math.pow(getActivityCoefficient(comp1, watNumb),
+                Math.abs(getComponent(comp2).getIonicCharge()));
+        act2 = Math.pow(getActivityCoefficient(comp2, watNumb),
+                Math.abs(getComponent(comp1).getIonicCharge()));
 
-        return Math.pow(act1 * act2,
-                1.0 / (Math.abs(getComponent(comp1).getIonicCharge()) + Math.abs(getComponent(comp2).getIonicCharge())))
+        return Math
+                .pow(act1 * act2,
+                        1.0 / (Math.abs(getComponent(comp1).getIonicCharge())
+                                + Math.abs(getComponent(comp2).getIonicCharge())))
                 * 1.0 / (1.0 + val);
     }
 
     @Override
-	public double getOsmoticCoefficientOfWater() {
+    public double getOsmoticCoefficientOfWater() {
         int watNumb = 0;
         for (int j = 0; j < this.numberOfComponents; j++) {
             if (getComponent(j).getComponentName().equals("water")) {
@@ -1352,7 +1365,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getOsmoticCoefficient(int watNumb) {
+    public double getOsmoticCoefficient(int watNumb) {
         double oldFug = getComponent(watNumb).getFugasityCoeffisient();
         double pureFug = getPureComponentFugacity(watNumb);
         double ions = 0.0;
@@ -1361,25 +1374,28 @@ abstract class Phase extends Object
                 ions += getComponent(j).getx();
             }
         }
-        double val = -Math.log(oldFug * getComponent(watNumb).getx() / pureFug) * getComponent(watNumb).getx() / ions;
+        double val = -Math.log(oldFug * getComponent(watNumb).getx() / pureFug)
+                * getComponent(watNumb).getx() / ions;
         return val;
     }
 
-//    public double getOsmoticCoefficient(int watNumb, String refState){
-//        if(refState.equals("molality")){
-//            double oldFug = getComponent(watNumb).getFugasityCoeffisient();
-//            double pureFug = getPureComponentFugacity(watNumb);system.getPhase(i).
-//            double ions=0.0;
-//            for(int j=0;j<this.numberOfComponents;j++){
-//                if(getComponent(j).getIonicCharge()!=0) ions += getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();//*Math.abs(getComponent(j).getIonicCharge());
-//            }
-//            double val = - Math.log(oldFug*getComponent(watNumb).getx()/pureFug) * 1.0/ions/getComponent(watNumb).getMolarMass();
-//            return val;
-//        }
-//        else return getOsmoticCoefficient(watNumb);
-//    }
+    // public double getOsmoticCoefficient(int watNumb, String refState){
+    // if(refState.equals("molality")){
+    // double oldFug = getComponent(watNumb).getFugasityCoeffisient();
+    // double pureFug = getPureComponentFugacity(watNumb);system.getPhase(i).
+    // double ions=0.0;
+    // for(int j=0;j<this.numberOfComponents;j++){
+    // if(getComponent(j).getIonicCharge()!=0) ions +=
+    // getComponent(j).getNumberOfMolesInPhase()/getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();//*Math.abs(getComponent(j).getIonicCharge());
+    // }
+    // double val = - Math.log(oldFug*getComponent(watNumb).getx()/pureFug) *
+    // 1.0/ions/getComponent(watNumb).getMolarMass();
+    // return val;
+    // }
+    // else return getOsmoticCoefficient(watNumb);
+    // }
     @Override
-	public double getMeanIonicActivity(int comp1, int comp2) {
+    public double getMeanIonicActivity(int comp1, int comp2) {
         double act1 = 0.0;
         double act2 = 0.0;
         int watNumb = 0;
@@ -1391,29 +1407,31 @@ abstract class Phase extends Object
             }
         }
 
-        act1 = Math.pow(getActivityCoefficient(comp1, watNumb), Math.abs(getComponent(comp2).getIonicCharge()));
-        act2 = Math.pow(getActivityCoefficient(comp2, watNumb), Math.abs(getComponent(comp1).getIonicCharge()));
-        return Math.pow(act1 * act2, 1.0
-                / (Math.abs(getComponent(comp1).getIonicCharge()) + Math.abs(getComponent(comp2).getIonicCharge())));
+        act1 = Math.pow(getActivityCoefficient(comp1, watNumb),
+                Math.abs(getComponent(comp2).getIonicCharge()));
+        act2 = Math.pow(getActivityCoefficient(comp2, watNumb),
+                Math.abs(getComponent(comp1).getIonicCharge()));
+        return Math.pow(act1 * act2, 1.0 / (Math.abs(getComponent(comp1).getIonicCharge())
+                + Math.abs(getComponent(comp2).getIonicCharge())));
     }
 
     @Override
-	public final int getPhaseType() {
+    public final int getPhaseType() {
         return phaseType;
     }
 
     @Override
-	public double getGibbsEnergy() {
+    public double getGibbsEnergy() {
         return getEnthalpy() - temperature * getEntropy();
     }
 
     @Override
-	public double getInternalEnergy() {
+    public double getInternalEnergy() {
         return getEnthalpy() - pressure * getMolarVolume() * numberOfMolesInPhase;
     }
 
     @Override
-	public double getHelmholtzEnergy() {
+    public double getHelmholtzEnergy() {
         return getInternalEnergy() - temperature * getEntropy();
     }
 
@@ -1421,7 +1439,7 @@ abstract class Phase extends Object
      * Returns the molar mass of the phase. Unit: kg/mol
      */
     @Override
-	public final double getMolarMass() {
+    public final double getMolarMass() {
         double tempVar = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             tempVar += componentArray[i].getx() * componentArray[i].getMolarMass();
@@ -1430,105 +1448,102 @@ abstract class Phase extends Object
     }
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented in
-     * phaseEos
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      * 
-     * @param unit The unit as a string. Supported units are K/bar, C/bar
-     *
-     * @return Joule Thomson coefficient in given unit
+     * @param  unit The unit as a string. Supported units are K/bar, C/bar
+     * @return      Joule Thomson coefficient in given unit
      */
     @Override
-	public double getJouleThomsonCoefficient(String unit) {
+    public double getJouleThomsonCoefficient(String unit) {
         double JTcoef = getJouleThomsonCoefficient();
         double conversionFactor = 1.0;
         switch (unit) {
-        case "K/bar":
-            conversionFactor = 1.0;
-            break;
-        case "C/bar":
-            conversionFactor = 1.0;
-            break;
+            case "K/bar":
+                conversionFactor = 1.0;
+                break;
+            case "C/bar":
+                conversionFactor = 1.0;
+                break;
         }
         return JTcoef * conversionFactor;
     }
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented in
-     * phaseEos
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      *
      * @return Joule Thomson coefficient in K/bar
      */
     @Override
-	public double getJouleThomsonCoefficient() {
+    public double getJouleThomsonCoefficient() {
         return 0;
     }
 
     /**
-     * method to get density of a phase note: does not use Peneloux volume
-     * correction
+     * method to get density of a phase note: does not use Peneloux volume correction
      *
      * @return density with unit kg/m3
      */
     @Override
-	public double getDensity() {
+    public double getDensity() {
         return 1.0 / getMolarVolume() * getMolarMass() * 1.0e5;
     }
 
     /**
      * method to get density of a fluid note: with Peneloux volume correction
      *
-     * @param unit The unit as a string. Supported units are kg/m3, mol/m3
-     * @return density in specified unit
+     * @param  unit The unit as a string. Supported units are kg/m3, mol/m3
+     * @return      density in specified unit
      */
     @Override
-	public double getDensity(String unit) {
+    public double getDensity(String unit) {
         double refDensity = getPhysicalProperties().getDensity(); // density in kg/m3
         double conversionFactor = 1.0;
         switch (unit) {
-        case "kg/m3":
-            conversionFactor = 1.0;
-            break;
-        case "mol/m3":
-            conversionFactor = 1.0 / getMolarMass();
-            break;
-        default:
-            throw new RuntimeException("Could not create conversion factor because molar mass is NULL or 0");
+            case "kg/m3":
+                conversionFactor = 1.0;
+                break;
+            case "mol/m3":
+                conversionFactor = 1.0 / getMolarMass();
+                break;
+            default:
+                throw new RuntimeException(
+                        "Could not create conversion factor because molar mass is NULL or 0");
         }
         return refDensity * conversionFactor;
     }
 
     @Override
-	public final double getPhaseFraction() {
+    public final double getPhaseFraction() {
         return getBeta();
     }
 
     @Override
-	public final double getBeta() {
+    public final double getBeta() {
         return this.beta;
     }
 
     @Override
-	public double getdPdrho() {
+    public double getdPdrho() {
         return 0;
     }
 
     @Override
-	public double getdrhodP() {
+    public double getdrhodP() {
         return 0.0;
     }
 
     @Override
-	public double getdrhodT() {
+    public double getdrhodT() {
         return 0;
     }
 
     @Override
-	public double getdrhodN() {
+    public double getdrhodN() {
         return 0;
     }
 
     @Override
-	public void setMixingRule(int type) {
+    public void setMixingRule(int type) {
         mixingRuleNumber = type;
     }
 
@@ -1564,27 +1579,28 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getdPdTVn() {
+    public double getdPdTVn() {
         return 0;
     }
 
     @Override
-	public double getdPdVTn() {
+    public double getdPdVTn() {
         return 0;
     }
 
     @Override
-	public double getpH() {
+    public double getpH() {
         return getpH_old();
-//        System.out.println("ph - old " + getpH_old());
-//        initPhysicalProperties();
-//        for(int i = 0; i<numberOfComponents; i++) {
-//            if(componentArray[i].getName().equals("H3O+")){
-//                return - MathLib.generalMath.GeneralMath.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
-//            }
-//        }
-//        System.out.println("no H3Oplus");
-//        return 7.0;
+        // System.out.println("ph - old " + getpH_old());
+        // initPhysicalProperties();
+        // for(int i = 0; i<numberOfComponents; i++) {
+        // if(componentArray[i].getName().equals("H3O+")){
+        // return -
+        // MathLib.generalMath.GeneralMath.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()/(numberOfMolesInPhase*getMolarMass())*1e-3);
+        // }
+        // }
+        // System.out.println("no H3Oplus");
+        // return 7.0;
     }
 
     public double getpH_old() {
@@ -1593,7 +1609,8 @@ abstract class Phase extends Object
                 // return -neqsim.MathLib.generalMath.GeneralMath.log10(componentArray[i].getx()
                 // * getActivityCoefficient(i));
                 return -java.lang.Math.log10(componentArray[i].getx() * getActivityCoefficient(i)
-                        / (0.01802 * neqsim.thermo.util.empiric.Water.waterDensity(temperature) / 1000.0));
+                        / (0.01802 * neqsim.thermo.util.empiric.Water.waterDensity(temperature)
+                                / 1000.0));
             }
         }
         logger.info("no H3Oplus");
@@ -1601,12 +1618,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public ComponentInterface getComponent(int i) {
+    public ComponentInterface getComponent(int i) {
         return componentArray[i];
     }
 
     @Override
-	public ComponentInterface getComponent(String name) {
+    public ComponentInterface getComponent(String name) {
         try {
             for (int i = 0; i < numberOfComponents; i++) {
                 if (componentArray[i].getName().equals(name)) {
@@ -1622,7 +1639,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public boolean hasComponent(String name) {
+    public boolean hasComponent(String name) {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getName().equals(name)) {
                 return true;
@@ -1637,18 +1654,18 @@ abstract class Phase extends Object
      * @return Value of property mixingRuleNumber.
      */
     @Override
-	public final int getMixingRuleNumber() {
+    public final int getMixingRuleNumber() {
         return mixingRuleNumber;
     }
 
     /**
      * Indexed getter for property refPhase.
      *
-     * @param index Index of the property.
-     * @return Value of the property at <CODE>index</CODE>.
+     * @param  index Index of the property.
+     * @return       Value of the property at <CODE>index</CODE>.
      */
     @Override
-	public neqsim.thermo.phase.PhaseInterface getRefPhase(int index) {
+    public neqsim.thermo.phase.PhaseInterface getRefPhase(int index) {
         if (refPhase == null) {
             initRefPhases(false);
         }
@@ -1661,7 +1678,7 @@ abstract class Phase extends Object
      * @return Value of property refPhase.
      */
     @Override
-	public neqsim.thermo.phase.PhaseInterface[] getRefPhase() {
+    public neqsim.thermo.phase.PhaseInterface[] getRefPhase() {
         if (refPhase == null) {
             initRefPhases(false);
         }
@@ -1671,11 +1688,11 @@ abstract class Phase extends Object
     /**
      * Indexed setter for property refPhase.
      *
-     * @param index    Index of the property.
+     * @param index Index of the property.
      * @param refPhase New value of the property at <CODE>index</CODE>.
      */
     @Override
-	public void setRefPhase(int index, neqsim.thermo.phase.PhaseInterface refPhase) {
+    public void setRefPhase(int index, neqsim.thermo.phase.PhaseInterface refPhase) {
         this.refPhase[index] = refPhase;
     }
 
@@ -1688,7 +1705,7 @@ abstract class Phase extends Object
      * @param refPhase New value of property refPhase.
      */
     @Override
-	public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase) {
+    public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase) {
         this.refPhase = refPhase;
     }
 
@@ -1698,7 +1715,7 @@ abstract class Phase extends Object
      * @return Value of property physicalPropertyType.
      */
     @Override
-	public final int getPhysicalPropertyType() {
+    public final int getPhysicalPropertyType() {
         return physicalPropertyType;
     }
 
@@ -1708,35 +1725,36 @@ abstract class Phase extends Object
      * @param physicalPropertyType New value of property physicalPropertyType.
      */
     @Override
-	public void setPhysicalPropertyType(int physicalPropertyType) {
+    public void setPhysicalPropertyType(int physicalPropertyType) {
         this.physicalPropertyType = physicalPropertyType;
     }
 
     @Override
-	public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule,
-            double[][] intparam) {
-    }
+    public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
+            String[][] mixRule, double[][] intparam) {}
 
     @Override
-	public final boolean useVolumeCorrection() {
+    public final boolean useVolumeCorrection() {
         return useVolumeCorrection;
     }
 
     @Override
-	public void useVolumeCorrection(boolean volcor) {
+    public void useVolumeCorrection(boolean volcor) {
         useVolumeCorrection = volcor;
     }
 
     @Override
-	public double getFugacity(int compNumb) {
+    public double getFugacity(int compNumb) {
         // System.out.println("fugcoef" +
         // this.getComponent(compNumb).getFugasityCoefficient());
-        return this.getComponent(compNumb).getx() * this.getComponent(compNumb).getFugasityCoefficient() * pressure;
+        return this.getComponent(compNumb).getx()
+                * this.getComponent(compNumb).getFugasityCoefficient() * pressure;
     }
 
     @Override
-	public double getFugacity(String compName) {
-        return this.getComponent(compName).getx() * this.getComponent(compName).getFugasityCoefficient() * pressure;
+    public double getFugacity(String compName) {
+        return this.getComponent(compName).getx()
+                * this.getComponent(compName).getFugasityCoefficient() * pressure;
     }
 
     public double[] groupTBPfractions() {
@@ -1783,25 +1801,23 @@ abstract class Phase extends Object
      * Setter for property beta.
      *
      * @param beta New value of property beta.
-     *
      */
     @Override
-	public final void setBeta(double beta) {
+    public final void setBeta(double beta) {
         this.beta = beta;
     }
 
     @Override
-	public void setMixingRuleGEModel(String name) {
-    }
+    public void setMixingRuleGEModel(String name) {}
+
 
     /**
      * Getter for property phaseTypeName.
      *
      * @return Value of property phaseTypeName.
-     *
      */
     @Override
-	public java.lang.String getPhaseTypeName() {
+    public java.lang.String getPhaseTypeName() {
         return phaseTypeName;
     }
 
@@ -1809,10 +1825,9 @@ abstract class Phase extends Object
      * Setter for property phaseTypeName.
      *
      * @param phaseTypeName New value of property phaseTypeName.
-     *
      */
     @Override
-	public void setPhaseTypeName(java.lang.String phaseTypeName) {
+    public void setPhaseTypeName(java.lang.String phaseTypeName) {
         this.phaseTypeName = phaseTypeName;
     }
 
@@ -1820,10 +1835,9 @@ abstract class Phase extends Object
      * Getter for property mixingRuleDefined.
      *
      * @return Value of property mixingRuleDefined.
-     *
      */
     @Override
-	public boolean isMixingRuleDefined() {
+    public boolean isMixingRuleDefined() {
         return mixingRuleDefined;
     }
 
@@ -1831,10 +1845,9 @@ abstract class Phase extends Object
      * Setter for property mixingRuleDefined.
      *
      * @param mixingRuleDefined New value of property mixingRuleDefined.
-     *
      */
     @Override
-	public void setMixingRuleDefined(boolean mixingRuleDefined) {
+    public void setMixingRuleDefined(boolean mixingRuleDefined) {
         this.mixingRuleDefined = mixingRuleDefined;
     }
 
@@ -1842,25 +1855,24 @@ abstract class Phase extends Object
      * Setter for property phaseType.
      *
      * @param phaseType New value of property phaseType.
-     *
      */
     @Override
-	public final void setPhaseType(int phaseType) {
+    public final void setPhaseType(int phaseType) {
         this.phaseType = phaseType;
     }
 
     @Override
-	public void setMolarVolume(double molarVolume) {
+    public void setMolarVolume(double molarVolume) {
         this.molarVolume = molarVolume;
     }
 
     @Override
-	public void calcMolarVolume(boolean test) {
+    public void calcMolarVolume(boolean test) {
         this.calcMolarVolume = test;
     }
 
     @Override
-	public void setTotalVolume(double volume) {
+    public void setTotalVolume(double volume) {
         phaseVolume = volume;
     }
 
@@ -1870,7 +1882,7 @@ abstract class Phase extends Object
      * @return volume in unit m3*1e5
      */
     @Override
-	public double getTotalVolume() {
+    public double getTotalVolume() {
         if (constantPhaseVolume) {
             return phaseVolume;
         }
@@ -1883,27 +1895,26 @@ abstract class Phase extends Object
      * @return volume in unit m3*1e5
      */
     @Override
-	public double getVolume() {
+    public double getVolume() {
         return getTotalVolume();
     }
 
     /**
      * method to return fluid volume
      *
-     * @param unit The unit as a string. Supported units are m3, litre
-     *
-     * @return volume in specified unit
+     * @param  unit The unit as a string. Supported units are m3, litre
+     * @return      volume in specified unit
      */
     @Override
-	public double getVolume(String unit) {
+    public double getVolume(String unit) {
         double conversionFactor = 1.0;
         switch (unit) {
-        case "m3":
-            conversionFactor = 1.0;
-            break;
-        case "litre":
-            conversionFactor = 1000.0;
-            break;
+            case "m3":
+                conversionFactor = 1.0;
+                break;
+            case "litre":
+                conversionFactor = 1000.0;
+                break;
         }
         return conversionFactor * getVolume() / 1.0e5;
     }
@@ -1915,12 +1926,12 @@ abstract class Phase extends Object
      * @return volume in unit m3
      */
     @Override
-	public double getCorrectedVolume() {
+    public double getCorrectedVolume() {
         return getMolarMass() / getPhysicalProperties().getDensity() * getNumberOfMolesInPhase();
     }
 
     @Override
-	public boolean hasPlusFraction() {
+    public boolean hasPlusFraction() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (getComponent(i).isIsPlusFraction()) {
                 return true;
@@ -1930,7 +1941,7 @@ abstract class Phase extends Object
     }
 
     @Override
-	public boolean hasTBPFraction() {
+    public boolean hasTBPFraction() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (getComponent(i).isIsTBPfraction()) {
                 return true;
@@ -1940,17 +1951,17 @@ abstract class Phase extends Object
     }
 
     @Override
-	public boolean isConstantPhaseVolume() {
+    public boolean isConstantPhaseVolume() {
         return constantPhaseVolume;
     }
 
     @Override
-	public void setConstantPhaseVolume(boolean constantPhaseVolume) {
+    public void setConstantPhaseVolume(boolean constantPhaseVolume) {
         this.constantPhaseVolume = constantPhaseVolume;
     }
 
     @Override
-	public double getMass() {
+    public double getMass() {
         return getMolarMass() * numberOfMolesInPhase;
     }
 
@@ -1960,12 +1971,12 @@ abstract class Phase extends Object
      * @return speed of sound in m/s
      */
     @Override
-	public double getSoundSpeed() {
+    public double getSoundSpeed() {
         return 0.0;
     }
 
     @Override
-	public ComponentInterface getComponentWithIndex(int index) {
+    public ComponentInterface getComponentWithIndex(int index) {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getIndex() == index) {
                 return componentArray[i];
@@ -1975,12 +1986,12 @@ abstract class Phase extends Object
     }
 
     @Override
-	public double getWtFraction(SystemInterface system) {
+    public double getWtFraction(SystemInterface system) {
         return getBeta() * getMolarMass() / system.getMolarMass();
     }
 
     @Override
-	public double getMoleFraction() {
+    public double getMoleFraction() {
         return beta;
     }
 
@@ -1988,17 +1999,18 @@ abstract class Phase extends Object
      * @param initType the initType to set
      */
     @Override
-	public void setInitType(int initType) {
+    public void setInitType(int initType) {
         this.initType = initType;
     }
 
     @Override
-	public double getWtFractionOfWaxFormingComponents() {
+    public double getWtFractionOfWaxFormingComponents() {
         double wtFrac = 0.0;
 
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].isWaxFormer()) {
-                wtFrac += componentArray[i].getx() * componentArray[i].getMolarMass() / getMolarMass();
+                wtFrac += componentArray[i].getx() * componentArray[i].getMolarMass()
+                        / getMolarMass();
             }
         }
         return wtFrac;
@@ -2010,8 +2022,9 @@ abstract class Phase extends Object
      * @return density with unit kg/m3
      */
     @Override
-	public double getDensity_GERG2008() {
-        neqsim.thermo.util.GERG.NeqSimGERG2008 test = new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+    public double getDensity_GERG2008() {
+        neqsim.thermo.util.GERG.NeqSimGERG2008 test =
+                new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
         return test.getDensity();
     }
 
@@ -2021,21 +2034,22 @@ abstract class Phase extends Object
      * @return density with unit kg/m3
      */
     @Override
-	public double getDensity_AGA8() {
-        neqsim.thermo.util.GERG.NeqSimAGA8Detail test = new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
+    public double getDensity_AGA8() {
+        neqsim.thermo.util.GERG.NeqSimAGA8Detail test =
+                new neqsim.thermo.util.GERG.NeqSimAGA8Detail(this);
         return test.getDensity();
     }
 
     /**
      * method to return flow rate of phase
      *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                 m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *        m3/hr, mole/sec, mole/min, mole/hr
      *
      * @return flow rate in specified unit
      */
     @Override
-	public double getFlowRate(String flowunit) {
+    public double getFlowRate(String flowunit) {
         if (flowunit.equals("kg/sec")) {
             return numberOfMolesInPhase * getMolarMass();
         } else if (flowunit.equals("kg/min")) {

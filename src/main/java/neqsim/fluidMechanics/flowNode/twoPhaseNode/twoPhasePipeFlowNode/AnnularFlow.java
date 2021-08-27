@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
+public class AnnularFlow extends TwoPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
     // ThermodynamicOperations interphaseOps = new ThermodynamicOperations();
@@ -39,7 +39,7 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         AnnularFlow clonedSystem = null;
         try {
             clonedSystem = (AnnularFlow) super.clone();
@@ -50,14 +50,14 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 1.0;
         this.calcContactLength();
         super.init();
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         wallContactLength[1] = pi * pipe.getDiameter();
         wallContactLength[0] = 0.0;
 
@@ -67,7 +67,7 @@ public class AnnularFlow extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         AnnularFlow newNode = (AnnularFlow) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

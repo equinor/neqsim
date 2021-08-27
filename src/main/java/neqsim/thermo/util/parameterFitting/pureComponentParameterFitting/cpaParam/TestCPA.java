@@ -6,33 +6,33 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestCPA extends java.lang.Object {
+public class TestCPA {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPA.class);
 
     /** Creates new TestAcentric */
-    public TestCPA() {
-    }
+    public TestCPA() {}
 
     public static void main(String[] args) {
 
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -50,9 +50,10 @@ public class TestCPA extends java.lang.Object {
                 testSystem.addComponent(dataSet.getString("ComponentName"), 100.0);
 
                 // testSystem.createDatabase(true);// legger til komponenter til systemet
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 testSystem.setTemperature(sample1[0]);
-                double standardDeviation1[] = { 0.1 }; // std.dev temperature // presure std.dev pressure
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
                 double val = Double.parseDouble(dataSet.getString("VapourPressure"));
                 testSystem.setPressure(val);
                 double stddev = val / 100.0;
@@ -65,8 +66,9 @@ public class TestCPA extends java.lang.Object {
 
                 // double guess[] =
                 // {((ComponentSrk)testSystem.getPhase(0).getComponent(0)).geta(),((ComponentSrk)testSystem.getPhase(0).getComponent(0)).getb(),testSystem.getPhase(0).getComponent(0).getAcentricFactor(),0.04567};
-                double guess[] = { 13.21, 39.123563589168, 1.1692, 0.0188, 14337.0 };// , 0.3255175584,
-                                                                                     // 10725.7300849509};
+                double guess[] = {13.21, 39.123563589168, 1.1692, 0.0188, 14337.0};// ,
+                                                                                   // 0.3255175584,
+                                                                                   // 10725.7300849509};
                 // abs 3.2% 10,8185533003 33,0294376487 1,0676048144 0,0221795587
                 // 12220,2224075760
 
@@ -81,29 +83,35 @@ public class TestCPA extends java.lang.Object {
             logger.error("database error" + e);
         }
 
-        dataSet = database.getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'");
+        dataSet = database
+                .getResultSet("SELECT * FROM PureComponentDensity WHERE ComponentName='MDEA'");
 
         try {
             while (dataSet.next()) {
                 CPAFunctionDens function = new CPAFunctionDens();
                 SystemInterface testSystem = new SystemSrkCPAs(280, 0.001);
                 // SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til komponenter til
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
+                                                                                    // komponenter
+                                                                                    // til
                                                                                     // systemet
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("Pressure")));
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 testSystem.setTemperature(sample1[0]);
                 testSystem.init(0);
                 testSystem.setMixingRule(1);
-                double standardDeviation1[] = { 0.1 }; // std.dev temperature // presure std.dev pressure
+                double standardDeviation1[] = {0.1}; // std.dev temperature // presure std.dev
+                                                     // pressure
                 double val = Double.parseDouble(dataSet.getString("Density"));
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 // double guess[] =
                 // {testSystem.getPhase(0).geta(),testSystem.getPhase(0).getb(),
                 // testSystem.getPhase(0).getComponent(0).getAcentricFactor()};// , 2260.69,
                 // 0.0229};
-                double guess[] = { 13.21, 39.123563589168, 1.1692, 0.0188, 14337.0 };// , 0.4354649799, 0.3255175584,
-                                                                                     // 10725.7300849509};
+                double guess[] = {13.21, 39.123563589168, 1.1692, 0.0188, 14337.0};// ,
+                                                                                   // 0.4354649799,
+                                                                                   // 0.3255175584,
+                                                                                   // 10725.7300849509};
 
                 // {((ComponentSrk)testSystem.getPhase(0).getComponent(0)).geta(),((ComponentSrk)testSystem.getPhase(0).getComponent(0)).getb(),testSystem.getPhase(0).getComponent(0).getAcentricFactor(),0.04567};
 

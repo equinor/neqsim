@@ -7,8 +7,7 @@
 package neqsim.util.util;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public class DoubleCloneable implements Cloneable {
@@ -26,7 +25,7 @@ public class DoubleCloneable implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         DoubleCloneable clonedSystem = null;
         try {
             clonedSystem = (DoubleCloneable) super.clone();
@@ -43,5 +42,4 @@ public class DoubleCloneable implements Cloneable {
     public double doubleValue() {
         return doubleValue;
     }
-
 }

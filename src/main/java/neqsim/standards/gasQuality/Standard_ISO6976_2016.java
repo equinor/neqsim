@@ -7,15 +7,15 @@ package neqsim.standards.gasQuality;
 
 import java.util.ArrayList;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
  * @author ESOL
  */
-public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
     private static final long serialVersionUID = 1000;
 
@@ -163,7 +163,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
     }
 
     @Override
-	public void calculate() {
+    public void calculate() {
         Zmix0 = 1.0;
         Zmix15 = 1.0;
         Zmix60F = 1.0;
@@ -217,7 +217,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
     }
 
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("GCV")) {
             returnParameter = "SuperiorCalorificValue";
         }
@@ -328,12 +328,12 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 implements neqsim.th
     }
 
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         if (returnParameter.equals("CompressionFactor")) {
             return "-";
         } else {
