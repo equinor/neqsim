@@ -21,7 +21,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
-public class sysNewtonRhapsonPHflash extends Object implements java.io.Serializable, ThermodynamicConstantsInterface {
+public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPHflash.class);

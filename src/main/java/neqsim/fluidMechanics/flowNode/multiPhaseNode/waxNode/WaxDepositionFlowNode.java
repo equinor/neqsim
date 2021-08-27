@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneable {
+public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
 
@@ -36,7 +36,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();
@@ -48,7 +48,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
@@ -56,7 +56,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
@@ -67,7 +67,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode implements Cloneab
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

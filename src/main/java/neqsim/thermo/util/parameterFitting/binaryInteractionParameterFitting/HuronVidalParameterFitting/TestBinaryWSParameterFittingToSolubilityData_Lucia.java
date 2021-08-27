@@ -6,34 +6,35 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lang.Object {
+public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestBinaryWSParameterFittingToSolubilityData_Lucia.class);
+    static Logger logger =
+            LogManager.getLogger(TestBinaryWSParameterFittingToSolubilityData_Lucia.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryWSParameterFittingToSolubilityData_Lucia() {
-    }
+    public TestBinaryWSParameterFittingToSolubilityData_Lucia() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -58,7 +59,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
             int p = 0;
             while (dataSet.next() && p < 100) {
                 p++;
-                BinaryWSParameterFittingToSolubilityData function = new BinaryWSParameterFittingToSolubilityData();
+                BinaryWSParameterFittingToSolubilityData function =
+                        new BinaryWSParameterFittingToSolubilityData();
 
                 // SystemInterface testSystem = new SystemFurstElectrolyteEos(280, 1.0);
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(
@@ -90,8 +92,9 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
                 // testSystem.addComponent("NaPlus", 1.0e-10);
                 // testSystem.addComponent("methane", 1.1);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = Double.parseDouble(dataSet.getString("L2"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -99,8 +102,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV CO2
-                double parameterGuess[] = { 4802.7795779589, -440.6638711230, -7.6109236981, 4.8742002317, 0.1,
-                        -0.0420817811 }; // HV methan570
+                double parameterGuess[] = {4802.7795779589, -440.6638711230, -7.6109236981,
+                        4.8742002317, 0.1, -0.0420817811}; // HV methan570
                 // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
                 // , 13.0150379323}; // HV
                 // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV
@@ -138,7 +141,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
             int p = 0;
             while (dataSet.next() && p < 100) {
                 p++;
-                BinaryWSParameterFittingToSolubilityData function = new BinaryWSParameterFittingToSolubilityData(0, 0);
+                BinaryWSParameterFittingToSolubilityData function =
+                        new BinaryWSParameterFittingToSolubilityData(0, 0);
 
                 // SystemInterface testSystem = new
                 // SystemFurstElectrolyteEos(Double.parseDouble(dataSet.getString("Temperature")),
@@ -171,8 +175,9 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
                 // testSystem.addComponent("NaPlus", 1.0e-10);
                 // testSystem.addComponent("methane", 1.1);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -180,8 +185,8 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia extends java.lan
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV CO2
-                double parameterGuess[] = { 4802.7795779589, -440.6638711230, -7.6109236981, 4.8742002317, 0.1,
-                        -0.0420817811 }; // HV methan570
+                double parameterGuess[] = {4802.7795779589, -440.6638711230, -7.6109236981,
+                        4.8742002317, 0.1, -0.0420817811}; // HV methan570
                 // double parameterGuess[] = {3204.3057406886, -2753.7379912645, -12.4728330162
                 // , 13.0150379323}; // HV
                 // double parameterGuess[] = {8.992E3, -3.244E3, -8.424E0, -1.824E0}; // HV

@@ -20,7 +20,7 @@ import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
-public class NewtonSolveABCD extends Object implements java.io.Serializable {
+public class NewtonSolveABCD implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
     Matrix Jac;
@@ -35,7 +35,7 @@ public class NewtonSolveABCD extends Object implements java.io.Serializable {
     }
 
     public NewtonSolveABCD(SystemInterface system, TBPCharacterize characterizeClass) {
-        //this.system = system;
+        // this.system = system;
         this.characterizeClass = characterizeClass;
         numberOfComponents = system.getPhase(0).getNumberOfComponents();
         Jac = new Matrix(2 * characterizeClass.getLength(), 4);

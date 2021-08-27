@@ -21,7 +21,7 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.linear.*;
 import org.apache.logging.log4j.*;
 
-public class sysNewtonRhapsonPhaseEnvelope2 extends Object implements java.io.Serializable {
+public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope2.class);
@@ -63,7 +63,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 extends Object implements java.io.Se
         findSpecEqInit();
         solver = new newtonRhapson();
         solver.setOrder(3);
-
     }
 
     public void setfvec() {
@@ -265,6 +264,7 @@ public class sysNewtonRhapsonPhaseEnvelope2 extends Object implements java.io.Se
                 numb = i;
             }
         }
+
         logger.info("klnmax: " + u.getEntry(numb, 0) + "  np " + np + " xlnmax " + xlnkmax + "avsxp " + avscp);
         // logger.info("np: " + np + " ico2p: " + ic02p + " ic03p " + ic03p);
 
@@ -357,7 +357,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 extends Object implements java.io.Se
         if (testcrit == 1) {
             testcrit = -3;
         }
-
     }
 
     public int getNpCrit() {

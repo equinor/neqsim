@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
+public class DropletFlowNode extends TwoPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
     private double averageDropletDiameter = 100.0e-6;
@@ -35,13 +35,13 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public double calcGasLiquidContactArea() {
+    public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
         return interphaseContactArea;
     }
 
     @Override
-	public void initFlowCalc() {
+    public void initFlowCalc() {
 
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
@@ -53,7 +53,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         DropletFlowNode clonedSystem = null;
         try {
             clonedSystem = (DropletFlowNode) super.clone();
@@ -65,7 +65,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
@@ -73,7 +73,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
@@ -92,7 +92,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         DropletFlowNode newNode = (DropletFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

@@ -1,14 +1,11 @@
 package neqsim.processSimulation.mechanicalDesign.designStandards;
 
-import java.io.Serializable;
-
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- *
  * @author esol
  */
-public class DesignStandard implements Serializable {
+public class DesignStandard implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 

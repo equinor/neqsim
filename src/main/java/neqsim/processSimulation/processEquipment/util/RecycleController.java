@@ -1,9 +1,8 @@
 package neqsim.processSimulation.processEquipment.util;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
-public class RecycleController implements Serializable {
+public class RecycleController implements java.io.Serializable {
 
     ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
     ArrayList<Integer> priorityArray = new ArrayList<Integer>();

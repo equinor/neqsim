@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemPrEos;
  * @author Even Solbraa
  * @version
  */
-public class TestCharacterisation extends java.lang.Object {
+public class TestCharacterisation {
 
     private static final long serialVersionUID = 1000;
 

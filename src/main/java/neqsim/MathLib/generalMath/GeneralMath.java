@@ -22,11 +22,10 @@
 package neqsim.MathLib.generalMath;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class GeneralMath extends Object implements java.io.Serializable {
+public class GeneralMath implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 

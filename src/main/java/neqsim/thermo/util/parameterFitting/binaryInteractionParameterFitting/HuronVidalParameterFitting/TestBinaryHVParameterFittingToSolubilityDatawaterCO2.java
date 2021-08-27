@@ -6,34 +6,35 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.lang.Object {
+public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityDatawaterCO2.class);
+    static Logger logger =
+            LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityDatawaterCO2.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToSolubilityDatawaterCO2() {
-    }
+    public TestBinaryHVParameterFittingToSolubilityDatawaterCO2() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -48,12 +49,15 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
             int p = 0;
             while (dataSet.next() && p < 550) {
                 p++;
-                BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(1, 10);
+                BinaryHVParameterFittingToSolubilityData function =
+                        new BinaryHVParameterFittingToSolubilityData(1, 10);
 
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(
                         (Double.parseDouble(dataSet.getString("temperatureC")) + 273.15),
                         10.0 * Double.parseDouble(dataSet.getString("pressureMPA")));
-//                SystemInterface testSystem = new SystemSrkEos((Double.parseDouble(dataSet.getString("temperatureC"))+273.15), Double.parseDouble(dataSet.getString("pressurebar")));
+                // SystemInterface testSystem = new
+                // SystemSrkEos((Double.parseDouble(dataSet.getString("temperatureC"))+273.15),
+                // Double.parseDouble(dataSet.getString("pressurebar")));
                 double valCO2 = Double.parseDouble(dataSet.getString("xCO2"));
                 testSystem.addComponent("CO2", valCO2);
                 testSystem.addComponent("water", 100.0 - valCO2);
@@ -62,8 +66,9 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
                 testSystem.setMixingRule("HV");
 
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = testSystem.getPressure();
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -73,7 +78,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
                 sample.setDescription(dataSet.getString("reference"));
                 // double parameterGuess[] = {5601.2391787479, -3170.8329162571, -1.7069851770,
                 // -0.5058509407}; // HV CO2
-                double parameterGuess[] = { 5251.7374371982, -3121.2788585048, -0.8420253536, -0.5123316046 };//
+                double parameterGuess[] =
+                        {5251.7374371982, -3121.2788585048, -0.8420253536, -0.5123316046};//
                 // double parameterGuess[] ={13694.7303713825, -807.1129937507, -10.4589547972,
                 // -10.9746096153};
                 function.setInitialGuess(parameterGuess);
@@ -91,7 +97,8 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
             int p = 0;
             while (!dataSet.next() && p < 100) {
                 p++;
-                BinaryHVParameterFittingToSolubilityData function = new BinaryHVParameterFittingToSolubilityData(0, 0);
+                BinaryHVParameterFittingToSolubilityData function =
+                        new BinaryHVParameterFittingToSolubilityData(0, 0);
 
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(
                         Double.parseDouble(dataSet.getString("Temperature")),
@@ -101,8 +108,9 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
                 testSystem.setMixingRule("HV");
 
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -111,7 +119,7 @@ public class TestBinaryHVParameterFittingToSolubilityDatawaterCO2 extends java.l
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // double parameterGuess[] = {5601.2391787479, -3170.8329162571, -1.7069851770,
                 // -0.5058509407}; // HV CO2
-                double parameterGuess[] = { 3626.0, -2241.0, 3.91, -3.16 };// ; // HV CO2
+                double parameterGuess[] = {3626.0, -2241.0, 3.91, -3.16};// ; // HV CO2
                 function.setInitialGuess(parameterGuess);
                 sample.setDescription(Double.toString(testSystem.getTemperature()));
                 sampleList.add(sample);

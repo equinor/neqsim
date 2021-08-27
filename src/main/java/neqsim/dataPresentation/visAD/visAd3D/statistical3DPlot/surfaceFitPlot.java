@@ -7,17 +7,27 @@
 package neqsim.dataPresentation.visAD.visAd3D.statistical3DPlot;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
-import visad.*;
+import javax.swing.JFrame;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java3d.DisplayImplJ3D;
-import visad.util.*;
+import visad.util.ContourWidget;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class surfaceFitPlot extends java.lang.Object {
+public class surfaceFitPlot {
 
     private static final long serialVersionUID = 1000;
 
@@ -39,14 +49,13 @@ public class surfaceFitPlot extends java.lang.Object {
     /** Creates new visAdContourPlot */
     public surfaceFitPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
 
-        latitude = new RealType(firstax);
-        longitude = new RealType(secax);
+        latitude = RealType.getRealType(firstax);
+        longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
-        temperature = new RealType(zax);
-        isotemperature = new RealType("isoTemperature");
+        temperature = RealType.getRealType(zax);
+        isotemperature = RealType.getRealType("isoTemperature");
         func_domain_range = new FunctionType(domain_tuple, temperature);
         func_domain_iso_range = new FunctionType(domain_tuple, isotemperature);
-
     }
 
     public void setXYvals(double xMin, double xMax, int Nrows, double yMin, double yMax, int NCols)
@@ -67,12 +76,10 @@ public class surfaceFitPlot extends java.lang.Object {
      */
 
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
-
         z_samples = vals;
     }
 
     public void init() throws RemoteException, VisADException {
-
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
@@ -97,7 +104,6 @@ public class surfaceFitPlot extends java.lang.Object {
         lonMap = new ScalarMap(longitude, Display.XAxis);
 
         // This is new!
-
         tempIsoMap = new ScalarMap(temperature, Display.ZAxis);
         tempRGBMap = new ScalarMap(temperature, Display.RGB);
 
@@ -106,10 +112,8 @@ public class surfaceFitPlot extends java.lang.Object {
         // tempIsoMapIso = new ScalarMap( isotemperature, Display.IsoContour );
 
         // Add maps to display
-
         display.addMap(latMap);
         display.addMap(lonMap);
-
         display.addMap(tempIsoMap);
         display.addMap(tempRGBMap);
 
@@ -127,7 +131,6 @@ public class surfaceFitPlot extends java.lang.Object {
         // ContourWidget contourWid = new ContourWidget(tempIsoMapIso);
 
         // Create a data reference and set the FlatField as our data
-
         data_ref = new DataReferenceImpl("data_ref");
         iso_data_ref = new DataReferenceImpl("data_ref2");
 
@@ -135,23 +138,19 @@ public class surfaceFitPlot extends java.lang.Object {
         iso_data_ref.setData(iso_vals_ff);
 
         // Add reference to display
-
         display.addReference(data_ref);
         display.addReference(iso_data_ref);
 
         // Create application window and add display to window
-
         JFrame jframe = new JFrame("NeqSim 3D-plot");
         jframe.getContentPane().add(display.getComponent());
 
         // Set window size and make it visible
-
         jframe.setSize(700, 700);
         jframe.setVisible(true);
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
-
         /*
          * visAd3DPlot test = new visAd3DPlot("long", "alt", "height");
          * test.setXYvals(0, 10, 4, 0, 10, 4);
@@ -161,7 +160,5 @@ public class surfaceFitPlot extends java.lang.Object {
          * test.setZvals(z); test.init();
          * 
          */
-
     }
-
 }

@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public abstract class BaseFunction extends java.lang.Object implements Cloneable, FunctionInterface {
+public abstract class BaseFunction implements FunctionInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -28,7 +27,7 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         BaseFunction clonedClass = null;
         try {
             clonedClass = (BaseFunction) super.clone();
@@ -43,51 +42,51 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
     }
 
     @Override
-	public void setThermodynamicSystem(SystemInterface system) {
+    public void setThermodynamicSystem(SystemInterface system) {
         this.system = system;
         thermoOps = new ThermodynamicOperations(system);
     }
 
     @Override
-	public double getFittingParams(int i) {
+    public double getFittingParams(int i) {
         return params[i];
     }
 
     @Override
-	public SystemInterface getSystem() {
+    public SystemInterface getSystem() {
         return system;
     }
 
     @Override
-	public double[] getFittingParams() {
+    public double[] getFittingParams() {
         return params;
     }
 
     @Override
-	public int getNumberOfFittingParams() {
+    public int getNumberOfFittingParams() {
         return params.length;
     }
 
     @Override
-	public void setInitialGuess(double[] guess) {
+    public void setInitialGuess(double[] guess) {
         System.out.println("start fitting " + guess.length + " parameter(s)...");
         params = new double[guess.length];
         System.arraycopy(guess, 0, params, 0, guess.length);
     }
 
     @Override
-	public abstract double calcValue(double[] dependentValues);
+    public abstract double calcValue(double[] dependentValues);
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public abstract void setFittingParams(int i, double value);
+    public abstract void setFittingParams(int i, double value);
 
     @Override
-	public void setDatabaseParameters() {
+    public void setDatabaseParameters() {
     }
 
     /**
@@ -96,17 +95,17 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
      * @return Value of property bounds.
      */
     @Override
-	public double getLowerBound(int i) {
+    public double getLowerBound(int i) {
         return this.bounds[i][0];
     }
 
     @Override
-	public double getUpperBound(int i) {
+    public double getUpperBound(int i) {
         return this.bounds[i][1];
     }
 
     @Override
-	public double[][] getBounds() {
+    public double[][] getBounds() {
         return this.bounds;
     }
 
@@ -116,7 +115,7 @@ public abstract class BaseFunction extends java.lang.Object implements Cloneable
      * @param bounds New value of property bounds.
      */
     @Override
-	public void setBounds(double[][] bounds) {
+    public void setBounds(double[][] bounds) {
         this.bounds = bounds;
     }
 

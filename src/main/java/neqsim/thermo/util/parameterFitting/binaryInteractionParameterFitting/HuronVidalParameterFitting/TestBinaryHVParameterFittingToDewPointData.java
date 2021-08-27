@@ -6,34 +6,34 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryHVParameterFittingToDewPointData extends java.lang.Object {
+public class TestBinaryHVParameterFittingToDewPointData {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToDewPointData.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToDewPointData() {
-    }
+    public TestBinaryHVParameterFittingToDewPointData() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -48,15 +48,19 @@ public class TestBinaryHVParameterFittingToDewPointData extends java.lang.Object
             logger.info("adding....");
             while (dataSet.next() && p < 300) {
                 p++;
-                BinaryHVParameterFittingToDewPointData function = new BinaryHVParameterFittingToDewPointData();
+                BinaryHVParameterFittingToDewPointData function =
+                        new BinaryHVParameterFittingToDewPointData();
 
                 // SystemInterface testSystem = new SystemFurstElectrolyteEos(280, 1.0);
                 // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(290, 1.0);
                 SystemInterface testSystem = new SystemPrEos(290, 1.0);
-                testSystem.addComponent(dataSet.getString("comp1"), Double.parseDouble(dataSet.getString("x1")));
-                testSystem.addComponent(dataSet.getString("comp2"), Double.parseDouble(dataSet.getString("x2")));
+                testSystem.addComponent(dataSet.getString("comp1"),
+                        Double.parseDouble(dataSet.getString("x1")));
+                testSystem.addComponent(dataSet.getString("comp2"),
+                        Double.parseDouble(dataSet.getString("x2")));
                 testSystem.addComponent("ethane", Double.parseDouble(dataSet.getString("x3")));
-                testSystem.addComponent(dataSet.getString("comp4"), Double.parseDouble(dataSet.getString("x4")));
+                testSystem.addComponent(dataSet.getString("comp4"),
+                        Double.parseDouble(dataSet.getString("x4")));
                 // testSystem.setSolidPhaseCheck(true);
                 // testSystem.addComponent("CO2", 1.0);
                 // testSystem.addComponent("water", 1.0);
@@ -75,14 +79,15 @@ public class TestBinaryHVParameterFittingToDewPointData extends java.lang.Object
                 testSystem.setTemperature(Double.parseDouble(dataSet.getString("temperature")));
                 testSystem.setPressure(Double.parseDouble(dataSet.getString("pressure")));
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
-                SampleValue sample = new SampleValue(testSystem.getTemperature(), testSystem.getTemperature() / 100.0,
-                        sample1, standardDeviation1);
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
+                SampleValue sample = new SampleValue(testSystem.getTemperature(),
+                        testSystem.getTemperature() / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(testSystem.getTemperature()));
-                double parameterGuess[] = { 0.01 };
+                double parameterGuess[] = {0.01};
                 // double parameterGuess[] = {4799.35, -2772.29, 0.6381, -1.68096};
                 // double parameterGuess[] = {3932.0, -4127.0, -5.89, 8.9}; // HV CO2
                 // double parameterGuess[] = {5023.6600682957, -136.4306560594, -3.9812435921,

@@ -15,24 +15,26 @@
  */
 
 /*
- * TPflash.java
+ * TPmultiflash_1.java
  *
  * Created on 2. oktober 2000, 22:26
  */
 
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
-import java.util.*;
+import java.util.ArrayList;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
+public class TPmultiflash_1 extends TPflash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflash_1.class);
@@ -44,7 +46,7 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
     double E[];
     double Q = 0;
 
-    /** Creates new TPflash */
+    /** Creates new TPmultiflash_1 */
     public TPmultiflash_1() {
     }
 
@@ -158,7 +160,7 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
     }
 
     @Override
-	public void stabilityAnalysis() {
+    public void stabilityAnalysis() {
         double[] logWi = new double[system.getPhases()[1].getNumberOfComponents()];
         double[][] Wi = new double[system.getPhases()[1].getNumberOfComponents()][system.getPhases()[0]
                 .getNumberOfComponents()];
@@ -170,13 +172,13 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
                 .getNumberOfComponents()];
 
         SystemInterface minimumGibbsEnergySystem;
-        ArrayList clonedSystem = new ArrayList(1);
+        ArrayList<SystemInterface> clonedSystem = new ArrayList<SystemInterface>(1);
 
         minimumGibbsEnergySystem = (SystemInterface) system.clone();
 
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
             double numb = 0;
-            clonedSystem.add(system.clone());
+            clonedSystem.add((SystemInterface) system.clone());
             ((SystemInterface) clonedSystem.get(i)).init(0);
             for (int j = 0; j < system.getPhases()[1].getNumberOfComponents(); j++) {
                 numb = i == j ? 1.0 : 1.0e-3;
@@ -266,7 +268,7 @@ public class TPmultiflash_1 extends TPflash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         logger.info("Starting multiphase-flash....");
         stabilityAnalysis();
         system.init(1);

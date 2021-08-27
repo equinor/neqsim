@@ -10,8 +10,7 @@ import java.io.*;
 import java.text.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class dataHandeling {
@@ -23,22 +22,22 @@ public class dataHandeling {
     }
 
     public Number getXValue(int series, int item) {
-        return new Double(-10.0 + (item * 0.2));
+        return Double.valueOf(-10.0 + (item * 0.2));
     }
 
     /**
      * Returns the y-value for the specified series and item. Series are numbered 0,
      * 1, ...
      * 
-     * @param series The index (zero-based) of the series;
-     * @param item   The index (zero-based) of the required item;
-     * @return The y-value for the specified series and item.
+     * @param  series The index (zero-based) of the series;
+     * @param  item   The index (zero-based) of the required item;
+     * @return        The y-value for the specified series and item.
      */
     public Number getYValue(int series, int item) {
         if (series == 0) {
-            return new Double(Math.cos(-10.0 + (item * 0.2)));
+            return Double.valueOf(Math.cos(-10.0 + (item * 0.2)));
         } else {
-            return new Double(2 * (Math.sin(-10.0 + (item * 0.2))));
+            return Double.valueOf(2 * (Math.sin(-10.0 + (item * 0.2))));
         }
     }
 
@@ -54,8 +53,8 @@ public class dataHandeling {
     /**
      * Returns the name of the series.
      * 
-     * @param series The index (zero-based) of the series;
-     * @return The name of the series.
+     * @param  series The index (zero-based) of the series;
+     * @return        The name of the series.
      */
     public String getSeriesName(int series) {
         if (series == 0) {
@@ -70,8 +69,8 @@ public class dataHandeling {
     /**
      * Returns the number of items in the specified series.
      * 
-     * @param series The index (zero-based) of the series;
-     * @return The number of items in the specified series.
+     * @param  series The index (zero-based) of the series;
+     * @return        The number of items in the specified series.
      */
     public int getItemCount(int series) {
         return 81;

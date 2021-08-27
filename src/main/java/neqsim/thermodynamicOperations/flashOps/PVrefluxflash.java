@@ -24,11 +24,10 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class PVrefluxflash extends Flash implements java.io.Serializable {
+public class PVrefluxflash extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -48,7 +47,7 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("enthalpy: " + system.getEnthalpy());
         double err = 0;
         int iter = 0;
@@ -91,7 +90,7 @@ public class PVrefluxflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

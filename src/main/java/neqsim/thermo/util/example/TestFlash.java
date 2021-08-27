@@ -21,7 +21,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /**
- *
  * @author ESOL
  */
 public class TestFlash {
@@ -255,7 +254,7 @@ public class TestFlash {
             fluidProperties[t][k++] = Double.NaN; // Mix JT Coefficient [K/Pa]
             fluidProperties[t][k++] = Double.NaN; // Mix Velocity of Sound [m/s]
             fluidProperties[t][k++] = fluid.getViscosity("kg/msec"); // Mix Viscosity [Pa s] or [kg/(m*s)]
-            fluidProperties[t][k++] = fluid.getConductivity("W/mK"); // Mix Thermal Conductivity [W/mK]
+            fluidProperties[t][k++] = fluid.getThermalConductivity("W/mK"); // Mix Thermal Conductivity [W/mK]
             // fluidProperties[t][0] = fluid.getInterfacialTension("gas","oil"); // Surface
             // Tension(N/m) between gas and oil phase** NOT USED
             // fluidProperties[t][0] = fluid.getInterfacialTension("gas","aqueous"); //

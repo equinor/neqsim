@@ -6,7 +6,7 @@
 
 package neqsim.statistics.monteCarloSimulation;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.statistics.parameterFitting.StatisticsBaseClass;
 import neqsim.statistics.parameterFitting.StatisticsInterface;
 
@@ -15,7 +15,7 @@ import neqsim.statistics.parameterFitting.StatisticsInterface;
  * @author Even Solbraa
  * @version
  */
-public class MonteCarloSimulation extends java.lang.Object {
+public class MonteCarloSimulation {
 
     private static final long serialVersionUID = 1000;
     StatisticsInterface baseStatClass;
@@ -24,8 +24,7 @@ public class MonteCarloSimulation extends java.lang.Object {
     int numberOfRuns = 50;
 
     /** Creates new MonteCarloSimultion */
-    public MonteCarloSimulation() {
-    }
+    public MonteCarloSimulation() {}
 
     public MonteCarloSimulation(StatisticsInterface baseStatClass) {
         this.baseStatClass = baseStatClass;
@@ -57,7 +56,8 @@ public class MonteCarloSimulation extends java.lang.Object {
 
             for (int j = 0; j < statClasses[0].getSampleSet().getSample(0).getFunction()
                     .getNumberOfFittingParams(); j++) {
-                reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
+                reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction()
+                        .getFittingParams(j);
             }
         }
 

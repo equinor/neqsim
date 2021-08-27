@@ -2,7 +2,7 @@ package neqsim.fluidMechanics.geometryDefinitions.stirredCell;
 
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
-public class StirredCell extends GeometryDefinition implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class StirredCell extends GeometryDefinition {
 
     private static final long serialVersionUID = 1000;
 
@@ -19,12 +19,12 @@ public class StirredCell extends GeometryDefinition implements neqsim.thermo.The
     }
 
     @Override
-	public void init() {
+    public void init() {
         super.init();
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         StirredCell clonedPipe = null;
         try {
             clonedPipe = (StirredCell) super.clone();

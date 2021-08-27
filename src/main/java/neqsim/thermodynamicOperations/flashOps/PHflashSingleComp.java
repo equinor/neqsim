@@ -24,11 +24,10 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class PHflashSingleComp extends Flash implements java.io.Serializable {
+public class PHflashSingleComp extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -46,7 +45,7 @@ public class PHflashSingleComp extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         neqsim.thermodynamicOperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(
                 system);
         double initTemp = system.getTemperature();
@@ -98,7 +97,7 @@ public class PHflashSingleComp extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

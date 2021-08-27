@@ -22,15 +22,16 @@
 
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class QfuncFlash extends Flash implements java.io.Serializable {
+public class QfuncFlash extends Flash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(QfuncFlash.class);
@@ -75,7 +76,7 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         logger.info("entropy: " + system.getEntropy());
         sysNewtonRhapsonPHflash secondOrderSolver = new sysNewtonRhapsonPHflash(system, 2,
@@ -85,7 +86,7 @@ public class QfuncFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

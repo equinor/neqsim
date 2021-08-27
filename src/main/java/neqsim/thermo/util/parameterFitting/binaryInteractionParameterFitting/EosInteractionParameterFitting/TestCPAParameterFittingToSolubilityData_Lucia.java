@@ -6,34 +6,35 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Object {
+public class TestCPAParameterFittingToSolubilityData_Lucia {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestCPAParameterFittingToSolubilityData_Lucia.class);
+    static Logger logger =
+            LogManager.getLogger(TestCPAParameterFittingToSolubilityData_Lucia.class);
 
     /** Creates new TestAcentric */
-    public TestCPAParameterFittingToSolubilityData_Lucia() {
-    }
+    public TestCPAParameterFittingToSolubilityData_Lucia() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -69,10 +70,12 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
             logger.info("adding....");
             while (!dataSet.next() && p < 50) {
                 p++;
-                CPAParameterFittingToSolubilityData function = new CPAParameterFittingToSolubilityData();
+                CPAParameterFittingToSolubilityData function =
+                        new CPAParameterFittingToSolubilityData();
 
-                SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")),
-                        Double.parseDouble(dataSet.getString("Pressure")) / 1.0e5);
+                SystemInterface testSystem =
+                        new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")),
+                                Double.parseDouble(dataSet.getString("Pressure")) / 1.0e5);
                 // SystemInterface testSystem = new
                 // SystemSrkEos(Double.parseDouble(dataSet.getString("Temperature")),
                 // Double.parseDouble(dataSet.getString("Pressure"))/1.0e5);
@@ -82,8 +85,9 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
                 // testSystem.createDatabase(true);
                 testSystem.setMixingRule(7);
                 testSystem.init(0);
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = Double.parseDouble(dataSet.getString("L2"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -91,7 +95,8 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
                 sample.setThermodynamicSystem(testSystem);// 34.7
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // double parameterGuess[] = {0.05155112588}; //srk
-                double parameterGuess[] = { 0.0459393339 }; // cpa-srk- metan 23.658199 abs dev bias -6.267%
+                double parameterGuess[] = {0.0459393339}; // cpa-srk- metan 23.658199 abs dev bias
+                                                          // -6.267%
                 // double parameterGuess[] = {0.1592294845}; //cpa-pr - metan 21.9
                 // double parameterGuess[] = {-0.059201934}; //cpa-srk - nitrogen
                 // double parameterGuess[] = {0.1};
@@ -136,10 +141,12 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
             logger.info("adding....");
             while (dataSet.next() && p < 150) {
                 p++;
-                CPAParameterFittingToSolubilityData_Vap function = new CPAParameterFittingToSolubilityData_Vap();
+                CPAParameterFittingToSolubilityData_Vap function =
+                        new CPAParameterFittingToSolubilityData_Vap();
 
-                SystemInterface testSystem = new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")),
-                        Double.parseDouble(dataSet.getString("Pressure")) / 1.0e5);
+                SystemInterface testSystem =
+                        new SystemSrkCPA(Double.parseDouble(dataSet.getString("Temperature")),
+                                Double.parseDouble(dataSet.getString("Pressure")) / 1.0e5);
                 // SystemInterface testSystem = new
                 // SystemSrkEos(Double.parseDouble(dataSet.getString("Temperature")),
                 // Double.parseDouble(dataSet.getString("Pressure"))/1.0e5);
@@ -150,8 +157,9 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
                 testSystem.init(0);
                 testSystem.setMixingRule(7);
 
-                double sample1[] = { testSystem.getPressure(), testSystem.getTemperature() }; // temperature
-                double standardDeviation1[] = { 0.01 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {testSystem.getPressure(), testSystem.getTemperature()}; // temperature
+                double standardDeviation1[] = {0.01}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 double val = 1.0 - Double.parseDouble(dataSet.getString("Y"));
                 double sdev = val / 100.0;
                 SampleValue sample = new SampleValue(val, sdev, sample1, standardDeviation1);
@@ -160,7 +168,7 @@ public class TestCPAParameterFittingToSolubilityData_Lucia extends java.lang.Obj
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // double parameterGuess[] = {0.0459393339}; //cpa-srk- metan 23.658199 abs dev
                 // bias -6.267%
-                double parameterGuess[] = { 0.0459393339 }; // cpa-pr - metan
+                double parameterGuess[] = {0.0459393339}; // cpa-pr - metan
                 // double parameterGuess[] = {-0.059201934}; //cpa-srk - nitrogen
                 // double parameterGuess[] = {0.1};
                 // double parameterGuess[] = {0.2413992410}; //cpa-pr - nitrogen

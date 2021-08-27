@@ -7,11 +7,10 @@
 package neqsim.fluidMechanics.flowSolver;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public abstract class FlowSolver extends java.lang.Object implements FlowSolverInterface, java.io.Serializable {
+public abstract class FlowSolver implements FlowSolverInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -26,32 +25,32 @@ public abstract class FlowSolver extends java.lang.Object implements FlowSolverI
     }
 
     @Override
-	public void solve() {
+    public void solve() {
     }
 
     @Override
-	public void setDynamic(boolean ans) {
+    public void setDynamic(boolean ans) {
         dynamic = ans;
     }
 
     @Override
-	public void setSolverType(int type) {
+    public void setSolverType(int type) {
         solverType = type;
     }
 
     @Override
-	public void setTimeStep(double timeStep) {
+    public void setTimeStep(double timeStep) {
         this.timeStep = timeStep;
     }
 
     @Override
-	public void setBoundarySpecificationType(int type) {
+    public void setBoundarySpecificationType(int type) {
         if (type == 0) {
             numberOfVelocityNodes = numberOfNodes - 2;
         }
     }
 
     @Override
-	public void solveTDMA() {
+    public void solveTDMA() {
     }
 }

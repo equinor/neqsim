@@ -10,12 +10,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk
-        implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
 
     private static final long serialVersionUID = 1000;
 
@@ -70,7 +68,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         ComponentModifiedFurstElectrolyteEosMod2004 clonedComponent = null;
         try {
             clonedComponent = (ComponentModifiedFurstElectrolyteEosMod2004) super.clone();
@@ -82,22 +80,22 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk
     }
 
     @Override
-	public double calca() {
+    public double calca() {
         return a;
     }
 
     @Override
-	public double calcb() {
+    public double calcb() {
         return b;
     }
 
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
     @Override
-	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
+    public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
         Wi = ((PhaseModifiedFurstElectrolyteEosMod2004) phase).calcWi(componentNumber, phase, temp, pres,
                 numberOfComponents);
@@ -161,7 +159,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk
     }
 
     @Override
-	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = 0, FSR2 = 0, FLR = 0, FBorn = 0;
         Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         FSR2 = dFSR2dN(phase, numberOfComponents, temperature, pressure);
@@ -181,7 +179,7 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk
     }
 
     @Override
-	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
                 + sr2On * dFSR2dNdT(phase, numberOfComponents, temperature, pressure)
                 + lrOn * dFLRdNdT(phase, numberOfComponents, temperature, pressure)
@@ -189,14 +187,14 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk
     }
 
     @Override
-	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
                 + sr2On * dFSR2dNdV(phase, numberOfComponents, temperature, pressure)
                 + lrOn * dFLRdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
     @Override
-	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure)
                 + sr2On * dFSR2dNdN(j, phase, numberOfComponents, temperature, pressure)
                 + lrOn * dFLRdNdN(j, phase, numberOfComponents, temperature, pressure)

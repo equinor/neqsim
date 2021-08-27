@@ -8,8 +8,7 @@ package neqsim.physicalProperties.physicalPropertySystem;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public interface PhysicalPropertiesInterface extends Cloneable {

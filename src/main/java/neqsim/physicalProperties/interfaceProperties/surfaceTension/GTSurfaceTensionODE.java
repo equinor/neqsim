@@ -1,24 +1,24 @@
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
-import org.apache.logging.log4j.*;
-import org.ejml.data.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.dense.row.SingularOps_DDRM;
-import org.ejml.dense.row.factory.*;
+import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition;
 import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
+import neqsim.thermo.system.SystemInterface;
 
 /**
- * @brief ODE-system for integrating the surface tension in cases where the a
- *        reference component number mole density can be used as integration
- *        variable.
+ * @brief ODE-system for integrating the surface tension in cases where the a reference component
+ *        number mole density can be used as integration variable.
  *
- *        This method can only be used when the reference component density
- *        varies monotonically over the interface, and where there are no binary
- *        interaction parameters for the attractive parameter in the EOS.
+ *        This method can only be used when the reference component density varies monotonically
+ *        over the interface, and where there are no binary interaction parameters for the
+ *        attractive parameter in the EOS.
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
@@ -47,8 +47,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     public double abstol = 1e-6;
     public int maxit = 40;
 
-    public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2, int referenceComponent,
-            double yscale) {
+    public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2,
+            int referenceComponent, double yscale) {
         int i, idx = 0;
 
         /* Setup local system clone and some parameters. */
@@ -76,7 +76,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
          * Get influence parameters and densities at phase equilibrium.
          */
         for (i = 0; i < this.ncomp; i++) {
-            this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
+            this.ci[i] =
+                    this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
             this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx()
                     / this.sys.getPhase(phase1).getMolarVolume() / m3;
             this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx()
@@ -117,16 +118,19 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         double[] mueq2 = new double[this.ncomp];
         double[] p0 = new double[1];
 
-        GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph1, this.mueq, dmu_drho1, this.p0);
-        GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph2, mueq2, dmu_drho2, p0);
+        GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph1, this.mueq,
+                dmu_drho1, this.p0);
+        GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph2, mueq2, dmu_drho2,
+                p0);
 
         // Check flash equilibrium
         for (i = 0; i < this.ncomp; i++) {
             maxerr = Math.max(maxerr, Math.abs(this.mueq[i] / mueq2[i] - 1.0));
         }
         if (maxerr > this.reltol) {
-            logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr
-                    + " > " + reltol);
+            logger.error(
+                    "Flash is not properly solved.  Maximum relative error in chemical potential:  "
+                            + maxerr + " > " + reltol);
             throw new RuntimeException("Flash not solved!");
         }
         this.initialized = true;
@@ -143,8 +147,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     /**
      * Compute the ODE differential ydot = f(t, y)
      *
-     * @param t    normalized density of the reference component
-     * @param y    scaled surface tension
+     * @param t normalized density of the reference component
+     * @param y scaled surface tension
      * @param yDot scaled surface tension differential
      */
     @Override
@@ -183,7 +187,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         if (!svd.decompose(df)) {
             throw new RuntimeException("Decomposition failed");
         }
-        dn_dnref = SingularOps_DDRM.nullSpace((SingularValueDecomposition_F64) svd, ms, 1e-12); // UtilEjml.EPS);
+        dn_dnref = SingularOps_DDRM.nullSpace((SingularValueDecomposition_F64<DMatrixRMaj>) svd, ms,
+                1e-12); // UtilEjml.EPS);
         CommonOps_DDRM.divide(dn_dnref.get(this.refcomp, 0), dn_dnref);
         delta_omega = -(p[0] - this.p0[0]);
         for (i = 0; i < this.ncomp; i++) {
@@ -199,11 +204,10 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         }
 
         /*
-         * If the discriminant becomes negative, this can be due to numerical problems
-         * when approaching bulk. Assume the profile is sufficiently flat if the
-         * reference density has exceeded 90% of the target bulk density. A better way
-         * is to use the approximations given by Davis, Statistical mechanics of
-         * surfaces and thin films, VHC Publishers Inc, 1996.
+         * If the discriminant becomes negative, this can be due to numerical problems when
+         * approaching bulk. Assume the profile is sufficiently flat if the reference density has
+         * exceeded 90% of the target bulk density. A better way is to use the approximations given
+         * by Davis, Statistical mechanics of surfaces and thin films, VHC Publishers Inc, 1996.
          */
         if (delta_omega * dsigma < 0.0) {
             if (t > 0.9) {
@@ -232,13 +236,13 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      * 
      * @param[in,out] rho Number density [mol/m3]
      * @param[out] mu Chemical potential [J/mol]
-     * @param[out] dmu_drho Chemical potential derivative with respect to mole
-     *             numbers [J/mol^2]
+     * @param[out] dmu_drho Chemical potential derivative with respect to mole numbers [J/mol^2]
      * @param[out] p Pressure [Pa]
      * @param[out] f Residual of equilibrium relations.
      * @param[out] jac Jacobian of the equilibrium relations.
      */
-    private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f, double[][] jac) {
+    private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
+            double[][] jac) {
 
         double normf, norm0, norm, rho_ref, s;
         int i, j, k, iter;
@@ -340,8 +344,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      * Residual function for the algebraic equilibrium equations.
      *
      * @param[in] mu Chemical potential
-     * @param[in] dmu_drho Chemical potential derivative with respect to component
-     *            number density.
+     * @param[in] dmu_drho Chemical potential derivative with respect to component number density.
      * @param[out] f Residual function.
      * @param[out] jac Redidual function Jacobian.
      */
@@ -358,7 +361,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             f[i] = scale * (sqrtci * delta_muref - sqrtcref * (this.mueq[i] - mu[i]));
             for (j = 0; j < this.ncomp; j++) {
                 double tmp1, tmp2;
-                jac[i][j] = scale * (sqrtci * (-dmu_drho[this.refcomp][j]) - sqrtcref * (-dmu_drho[i][j]));
+                jac[i][j] = scale
+                        * (sqrtci * (-dmu_drho[this.refcomp][j]) - sqrtcref * (-dmu_drho[i][j]));
             }
         }
     }

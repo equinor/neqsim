@@ -11,8 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
@@ -60,7 +59,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double getHydrateEquilibriumTemperature() {
+    public double getHydrateEquilibriumTemperature() {
         if (!thermoSystem.getPhase(0).hasComponent("water")) {
             System.out.println("ny hydrate: no water in stream: " + name);
             return 0.0;
@@ -106,7 +105,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Stream clonedSystem = null;
         try {
             clonedSystem = (Stream) super.clone();
@@ -121,22 +120,22 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double getTemperature() {
+    public double getTemperature() {
         return thermoSystem.getTemperature();
     }
 
     @Override
-	public double getPressure() {
+    public double getPressure() {
         return thermoSystem.getPressure();
     }
 
     @Override
-	public double getMolarRate() {
+    public double getMolarRate() {
         return thermoSystem.getTotalNumberOfMoles();
     }
 
     @Override
-	public void setThermoSystem(SystemInterface thermoSystem) {
+    public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
         if (stream != null) {
             stream.setThermoSystem(thermoSystem);
@@ -144,12 +143,12 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public void setFluid(SystemInterface fluid) {
+    public void setFluid(SystemInterface fluid) {
         this.setThermoSystem(fluid);
     }
 
     @Override
-	public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName) {
+    public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName) {
         if (phaseTypeName.equals("liquid")) {
             if (thermoSystem.hasPhaseType("oil") && thermoSystem.hasPhaseType("aqueous")) {
                 this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"),
@@ -175,48 +174,48 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public void setEmptyThermoSystem(SystemInterface thermoSystem) {
+    public void setEmptyThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem.getEmptySystemClone();
         this.thermoSystem.setNumberOfPhases(0);
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return this.thermoSystem;
     }
 
     @Override
-	public void setFlowRate(double flowrate, String unit) {
+    public void setFlowRate(double flowrate, String unit) {
         this.getFluid().setTotalFlowRate(flowrate, unit);
     }
 
     @Override
-	public void setPressure(double pressure, String unit) {
+    public void setPressure(double pressure, String unit) {
         getFluid().setPressure(pressure, unit);
     }
 
     @Override
-	public void setTemperature(double temperature, String unit) {
+    public void setTemperature(double temperature, String unit) {
         getFluid().setTemperature(temperature, unit);
     }
 
     @Override
-	public double getFlowRate(String unit) {
+    public double getFlowRate(String unit) {
         return this.getFluid().getFlowRate(unit);
     }
 
     @Override
-	public double getPressure(String unit) {
+    public double getPressure(String unit) {
         return getFluid().getPressure(unit);
     }
 
     @Override
-	public double getTemperature(String unit) {
+    public double getTemperature(String unit) {
         return getFluid().getTemperature(unit);
     }
 
     @Override
-	public void runTPflash() {
+    public void runTPflash() {
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
         }
@@ -227,7 +226,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
@@ -297,21 +296,21 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display(name);
     }
-    
-    public String[][] getResultTable(){
-    	return thermoSystem.getResultTable();
+
+    public String[][] getResultTable() {
+        return thermoSystem.getResultTable();
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         run();
     }
 
     @Override
-	public void flashStream() {
+    public void flashStream() {
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
         ops.TPflash();
     }
@@ -327,7 +326,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double CCB(String unit) {
+    public double CCB(String unit) {
         SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
@@ -346,7 +345,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double CCT(String unit) {
+    public double CCT(String unit) {
         SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
         ops.setRunAsThread(true);
@@ -365,7 +364,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double TVP(double temperature, String unit) {
+    public double TVP(double temperature, String unit) {
         SystemInterface localSyst = (SystemInterface) thermoSystem.clone();
         localSyst.setTemperature(temperature, unit);
         ThermodynamicOperations ops = new ThermodynamicOperations(localSyst);
@@ -378,7 +377,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public String[][] reportResults() {
+    public String[][] reportResults() {
         return thermoSystem.getResultTable();
     }
 
@@ -392,7 +391,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double GCV() {
+    public double GCV() {
         Standard_ISO6976 standard = new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
         standard.setReferenceType("molar");
@@ -401,7 +400,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-	public double LCV() {
+    public double LCV() {
         Standard_ISO6976 standard = new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
         standard.setReferenceType("molar");

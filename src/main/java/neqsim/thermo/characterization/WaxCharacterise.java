@@ -1,13 +1,14 @@
 package neqsim.thermo.characterization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
  * @author ESOL
  */
-public class WaxCharacterise extends Object implements java.io.Serializable, Cloneable {
+public class WaxCharacterise implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WaxCharacterise.class);
     SystemInterface thermoSystem = null;
@@ -19,7 +20,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         WaxCharacterise clonedSystem = null;
         try {
             clonedSystem = (WaxCharacterise) super.clone();
@@ -37,7 +38,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         double[] parameterWaxTriplePointTemperature = new double[1];
 
         @Override
-		public Object clone() {
+        public Object clone() {
             WaxBaseModel clonedSystem = null;
             try {
                 clonedSystem = (WaxBaseModel) super.clone();
@@ -48,32 +49,32 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         }
 
         @Override
-		public void addTBPWax() {
+        public void addTBPWax() {
 
         }
 
         @Override
-		public void setWaxParameters(double[] parameters) {
+        public void setWaxParameters(double[] parameters) {
             parameterWax = parameters;
         }
 
         @Override
-		public void setWaxParameter(int i, double parameters) {
+        public void setWaxParameter(int i, double parameters) {
             parameterWax[i] = parameters;
         }
 
         @Override
-		public void setParameterWaxHeatOfFusion(int i, double parameters) {
+        public void setParameterWaxHeatOfFusion(int i, double parameters) {
             parameterWaxHeatOfFusion[i] = parameters;
         }
 
         @Override
-		public void setParameterWaxTriplePointTemperature(int i, double parameters) {
+        public void setParameterWaxTriplePointTemperature(int i, double parameters) {
             parameterWaxTriplePointTemperature[i] = parameters;
         }
 
         @Override
-		public double[] getWaxParameters() {
+        public double[] getWaxParameters() {
             return parameterWax;
         }
 
@@ -81,7 +82,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          * @return the parameterWaxHeatOfFusion
          */
         @Override
-		public double[] getParameterWaxHeatOfFusion() {
+        public double[] getParameterWaxHeatOfFusion() {
             return parameterWaxHeatOfFusion;
         }
 
@@ -89,7 +90,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          * @param parameterWaxHeatOfFusion the parameterWaxHeatOfFusion to set
          */
         @Override
-		public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion) {
+        public void setParameterWaxHeatOfFusion(double[] parameterWaxHeatOfFusion) {
             this.parameterWaxHeatOfFusion = parameterWaxHeatOfFusion;
         }
 
@@ -97,7 +98,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          * @return the parameterWaxTriplePointTemperature
          */
         @Override
-		public double[] getParameterWaxTriplePointTemperature() {
+        public double[] getParameterWaxTriplePointTemperature() {
             return parameterWaxTriplePointTemperature;
         }
 
@@ -107,7 +108,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
          *                                           to set
          */
         @Override
-		public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature) {
+        public void setParameterWaxTriplePointTemperature(double[] parameterWaxTriplePointTemperature) {
             this.parameterWaxTriplePointTemperature = parameterWaxTriplePointTemperature;
         }
 
@@ -122,7 +123,6 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
 
             parameterWaxHeatOfFusion[0] = 1.0;
             parameterWaxTriplePointTemperature[0] = 1.0;
-
         }
 
         public double calcTriplePointTemperature(int componentNumber) {
@@ -152,7 +152,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         }
 
         @Override
-		public void addTBPWax() {
+        public void addTBPWax() {
             int numberOfCOmponents = thermoSystem.getPhase(0).getNumberOfComponents();
             boolean hasWax = false;
             for (int i = 0; i < numberOfCOmponents; i++) {
@@ -222,7 +222,7 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
         }
 
         @Override
-		public void removeWax() {
+        public void removeWax() {
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
                 if (thermoSystem.getPhase(0).getComponent(i).getName().startsWith("wax")) {
                     String compName = thermoSystem.getPhase(0).getComponent(i).getName().substring(3);
@@ -232,7 +232,6 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
                 }
             }
         }
-
     }
 
     public WaxModelInterface getModel(String name) {
@@ -258,5 +257,4 @@ public class WaxCharacterise extends Object implements java.io.Serializable, Clo
     public void setModelName(String name) {
         this.name = name;
     }
-
 }

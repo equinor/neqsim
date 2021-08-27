@@ -41,26 +41,28 @@ public class DensitySim extends BasePVTsimulation {
     }
 
     public void runTuning() {
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
             System.out.println("adding....");
 
             for (int i = 0; i < experimentalData[0].length; i++) {
                 ViscosityFunction function = new ViscosityFunction();
-                double guess[] = { 1.0 };// getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
+                double guess[] = {1.0};// getThermoSystem().getPhase(0).getComponent(0).getCriticalViscosity()};
                 function.setInitialGuess(guess);
 
-                SystemInterface tempSystem = getThermoSystem();// (SystemInterface) getThermoSystem().clone();
+                SystemInterface tempSystem = getThermoSystem();// (SystemInterface)
+                                                               // getThermoSystem().clone();
 
                 tempSystem.setTemperature(temperature[i]);
                 tempSystem.setPressure(pressure[i]);
                 thermoOps.TPflash();
                 // tempSystem.display();
-                double sample1[] = { temperature[i] };
+                double sample1[] = {temperature[i]};
                 double viscosity = experimentalData[0][i];
-                double standardDeviation1[] = { 1.5 };
-                SampleValue sample = new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
+                double standardDeviation1[] = {1.5};
+                SampleValue sample =
+                        new SampleValue(viscosity, viscosity / 50.0, sample1, standardDeviation1);
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
@@ -95,13 +97,16 @@ public class DensitySim extends BasePVTsimulation {
             waxFraction[i] = 0.0;
 
             if (getThermoSystem().hasPhaseType("gas")) {
-                gasDensity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
+                gasDensity[i] =
+                        getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
             }
             if (getThermoSystem().hasPhaseType("oil")) {
-                oilDensity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
+                oilDensity[i] =
+                        getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
             }
             if (getThermoSystem().hasPhaseType("aqueous")) {
-                aqueousDensity[i] = getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
+                aqueousDensity[i] = getThermoSystem().getPhase("aqueous").getPhysicalProperties()
+                        .getViscosity();
             }
         }
     }
@@ -124,15 +129,15 @@ public class DensitySim extends BasePVTsimulation {
         tempSystem.init(1);
 
         DensitySim sepSim = new DensitySim(tempSystem);
-        double[] temps = { 300.15, 293.15, 283.15, 273.15, 264.15 };
-        double[] pres = { 5, 5, 5, 5.0, 5.0 };
+        double[] temps = {300.15, 293.15, 283.15, 273.15, 264.15};
+        double[] pres = {5, 5, 5, 5.0, 5.0};
         sepSim.setTemperaturesAndPressures(temps, pres);
         sepSim.runCalc();
 
-        double[][] expData = { { 2e-4, 3e-4, 4e-4, 5e-4, 6e-4 }, };
+        double[][] expData = {{2e-4, 3e-4, 4e-4, 5e-4, 6e-4},};
         sepSim.setExperimentalData(expData);
         sepSim.runTuning();
-//sepSim.runCalc();
+        // sepSim.runCalc();
         double a = sepSim.getGasDensity()[0];
         double a2 = sepSim.getOilDensity()[0];
         sepSim.getThermoSystem().display();

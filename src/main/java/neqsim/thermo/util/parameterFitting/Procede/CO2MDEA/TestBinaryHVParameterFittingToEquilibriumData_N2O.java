@@ -8,34 +8,35 @@
 
 package neqsim.thermo.util.parameterFitting.Procede.CO2MDEA;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Neeraj Agrawal
  * @version
  */
-public class TestBinaryHVParameterFittingToEquilibriumData_N2O extends java.lang.Object {
+public class TestBinaryHVParameterFittingToEquilibriumData_N2O {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_N2O.class);
+    static Logger logger =
+            LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_N2O.class);
 
     /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToEquilibriumData_N2O() {
-    }
+    public TestBinaryHVParameterFittingToEquilibriumData_N2O() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         double error = 5;
 
         // inserting samples from database
@@ -47,12 +48,15 @@ public class TestBinaryHVParameterFittingToEquilibriumData_N2O extends java.lang
 
         // double guess[] = {493.2862980752, 265.1993459038, -0.4817235596,
         // -0.6827900771, -0.7855706585}; //First one
-        double guess[] = { -387.8913684529, -2028.8216959926, 6.1851396710, 3.4677644464, -0.2029288678 }; // Second one
+        double guess[] =
+                {-387.8913684529, -2028.8216959926, 6.1851396710, 3.4677644464, -0.2029288678}; // Second
+                                                                                                // one
 
         try {
 
             while (dataSet.next()) {
-                BinaryHVParameterFittingFunction_N2O function = new BinaryHVParameterFittingFunction_N2O();
+                BinaryHVParameterFittingFunction_N2O function =
+                        new BinaryHVParameterFittingFunction_N2O();
 
                 function.setInitialGuess(guess);
 
@@ -83,10 +87,11 @@ public class TestBinaryHVParameterFittingToEquilibriumData_N2O extends java.lang
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
 
-                double sample1[] = { x3, temperature };
-                double standardDeviation1[] = { x3 / 100, temperature / 100.0 };
+                double sample1[] = {x3, temperature};
+                double standardDeviation1[] = {x3 / 100, temperature / 100.0};
 
-                SampleValue sample = new SampleValue(pressure, error * pressure / 100.0, sample1, standardDeviation1);
+                SampleValue sample = new SampleValue(pressure, error * pressure / 100.0, sample1,
+                        standardDeviation1);
 
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(testSystem);

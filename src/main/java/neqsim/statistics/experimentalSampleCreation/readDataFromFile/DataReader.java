@@ -6,15 +6,15 @@
 
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
-import java.io.*;
-import java.util.*;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 /**
- *
  * @author even solbraa
  * @version
  */
-public class DataReader extends Object implements DataReaderInterface {
+public class DataReader implements DataReaderInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -22,8 +22,7 @@ public class DataReader extends Object implements DataReaderInterface {
     protected ArrayList sampleObjectList = new ArrayList();
 
     /** Creates new DataReader */
-    public DataReader() {
-    }
+    public DataReader() {}
 
     public DataReader(String fileName) {
         this.fileName = fileName;
@@ -31,7 +30,7 @@ public class DataReader extends Object implements DataReaderInterface {
     }
 
     @Override
-	public void readData() {
+    public void readData() {
         StringTokenizer tokenizer;
         String token;
 
@@ -66,8 +65,8 @@ public class DataReader extends Object implements DataReaderInterface {
         return sampleObjectList;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         DataReader reader = new DataReader("31011222");
     }
-
 }

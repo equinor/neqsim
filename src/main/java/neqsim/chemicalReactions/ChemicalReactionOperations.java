@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -22,8 +20,10 @@
 
 package neqsim.chemicalReactions;
 
-import Jama.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Iterator;
+
+import Jama.Matrix;
 import neqsim.chemicalReactions.chemicalEquilibriaum.ChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalEquilibriaum.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalReactions.chemicalReaction.ChemicalReactionList;
@@ -33,12 +33,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ChemicalReactionOperations extends Object
-        implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable, java.io.Serializable {
+public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -68,12 +66,11 @@ public class ChemicalReactionOperations extends Object
 
     public ChemicalReactionOperations(SystemInterface system) {
         initCalc = new LinearProgrammingChemicalEquilibrium();
-        boolean newcomps = true, newcompsOld = true;
+        boolean newcomps = true;
         int old = system.getPhase(0).getNumberOfComponents();
         this.system = system;
 
         do {
-            newcompsOld = newcomps;
             // if statement added by Procede
             if (!newcomps) {
                 break;
@@ -116,7 +113,7 @@ public class ChemicalReactionOperations extends Object
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         ChemicalReactionOperations clonedSystem = null;
         try {
             clonedSystem = (ChemicalReactionOperations) super.clone();
@@ -209,7 +206,7 @@ public class ChemicalReactionOperations extends Object
     }
 
     public String[] getAllElements() {
-        HashSet elementsLocal = new HashSet();
+        HashSet<String> elementsLocal = new HashSet<String>();
         for (int j = 0; j < components.length; j++) {
             for (int i = 0; i < components[j].getElements().getElementNames().length; i++) {
                 // System.out.println("elements: " +
@@ -220,13 +217,13 @@ public class ChemicalReactionOperations extends Object
 
         String[] elementList = new String[elementsLocal.size()];
         int k = 0;
-        Iterator newe = elementsLocal.iterator();
+        Iterator<String> newe = elementsLocal.iterator();
         while (newe.hasNext()) {
             elementList[k++] = (String) newe.next();
         }
         /*
-         * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: "
-         * +elementList[j]); }
+         * for(int j=0;j<elementList.length;j++){ System.out.println("elements2: " +elementList[j]);
+         * }
          */
         return elementList;
     }
@@ -390,5 +387,4 @@ public class ChemicalReactionOperations extends Object
     // reactionList) {
     // this.reactionList = reactionList;
     // }
-
 }

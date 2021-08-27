@@ -1,12 +1,9 @@
 package neqsim.thermo.characterization;
 
-import java.io.Serializable;
-
 /**
- *
  * @author ESOL
  */
-public interface WaxModelInterface extends Serializable, Cloneable {
+public interface WaxModelInterface extends java.io.Serializable, Cloneable {
 
     public void addTBPWax();
 

@@ -1,24 +1,21 @@
 /*
- * ValveInterface.java
+ * CompressorInterface.java
  *
  * Created on 22. august 2001, 17:20
  */
 package neqsim.processSimulation.processEquipment.compressor;
 
-import java.io.Serializable;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
-public interface CompressorInterface extends ProcessEquipmentInterface, Serializable {
+public interface CompressorInterface extends ProcessEquipmentInterface {
 
     @Override
-	public void run();
+    public void run();
 
     public void setOutletPressure(double pressure);
 
@@ -27,7 +24,7 @@ public interface CompressorInterface extends ProcessEquipmentInterface, Serializ
     public double getEnergy();
 
     @Override
-	public String getName();
+    public String getName();
 
     public StreamInterface getOutStream();
 

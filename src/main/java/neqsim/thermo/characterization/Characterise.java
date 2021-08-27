@@ -16,14 +16,15 @@
 
 package neqsim.thermo.characterization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
- *
  * @author esol
  */
-public class Characterise extends Object implements java.io.Serializable, Cloneable {
+public class Characterise implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;
     SystemInterface system = null;
     TBPCharacterize TBPCharacterise = null;
@@ -62,7 +63,7 @@ public class Characterise extends Object implements java.io.Serializable, Clonea
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Characterise clonedSystem = null;
         try {
             clonedSystem = (Characterise) super.clone();

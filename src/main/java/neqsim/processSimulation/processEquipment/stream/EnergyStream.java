@@ -1,18 +1,15 @@
 package neqsim.processSimulation.processEquipment.stream;
 
-import java.io.Serializable;
-
-public class EnergyStream implements Serializable, Cloneable {
+public class EnergyStream implements java.io.Serializable, Cloneable {
 
     private double duty = 0.0;
 
     public static void main(String[] args) {
         // TODO Auto-generated method stub
-
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         EnergyStream clonedStream = null;
         try {
             clonedStream = (EnergyStream) super.clone();
@@ -29,5 +26,4 @@ public class EnergyStream implements Serializable, Cloneable {
     public void setDuty(double duty) {
         this.duty = duty;
     }
-
 }

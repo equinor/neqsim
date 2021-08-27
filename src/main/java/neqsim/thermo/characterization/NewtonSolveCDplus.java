@@ -4,7 +4,7 @@ import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
-public class NewtonSolveCDplus extends Object implements java.io.Serializable {
+public class NewtonSolveCDplus implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
     Matrix Jac;
@@ -12,14 +12,14 @@ public class NewtonSolveCDplus extends Object implements java.io.Serializable {
     Matrix sol, dx;
     int numberOfComponents = 0;
     PlusCharacterize characterizeClass;
-    //SystemInterface system = null;
+    // SystemInterface system = null;
     static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
     public NewtonSolveCDplus() {
     }
 
     public NewtonSolveCDplus(SystemInterface system, PlusCharacterize characterizeClass) {
-        //this.system = system;
+        // this.system = system;
         this.characterizeClass = characterizeClass;
         numberOfComponents = system.getPhase(0).getNumberOfComponents();
         Jac = new Matrix(3, 3);

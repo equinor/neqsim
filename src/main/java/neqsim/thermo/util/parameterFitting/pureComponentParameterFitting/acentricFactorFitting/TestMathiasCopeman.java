@@ -6,7 +6,9 @@
 
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
-import java.util.*;
+import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -14,26 +16,24 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkMathiasCopeman;
 import neqsim.thermo.system.SystemSrkTwuCoonEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestMathiasCopeman extends java.lang.Object {
+public class TestMathiasCopeman {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestMathiasCopeman.class);
 
     /** Creates new TestAcentric */
-    public TestMathiasCopeman() {
-    }
+    public TestMathiasCopeman() {}
 
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // String ComponentName = "CO2";
         String ComponentName = "methane";
@@ -51,7 +51,10 @@ public class TestMathiasCopeman extends java.lang.Object {
             MathiasCopeman function = new MathiasCopeman();
             // double guess[] = {0.8817389299100502,-0.8562550217314793,3.0949393273488686};
             // // CO2 chi sqr 0.0025
-            double guess[] = { 0.5379142011507664, -0.3219393792621987, 0.4361033659755846 }; // Methane chi sqr 0.1425
+            double guess[] = {0.5379142011507664, -0.3219393792621987, 0.4361033659755846}; // Methane
+                                                                                            // chi
+                                                                                            // sqr
+                                                                                            // 0.1425
             // double guess[] ={0.654848543521529,-0.18438917116800416,0.2601600498810114} ;
             // // ethane chi sqr 0.35
             // double guess[] ={0.721211485876844,-0.09921664231818139,0.18182922712791916}
@@ -102,8 +105,9 @@ public class TestMathiasCopeman extends java.lang.Object {
                 Ops.dewPointPressureFlash();
                 double pressure = System2.getPressure();
 
-                double sample1[] = { temperature }; // temperature
-                double standardDeviation1[] = { 0.1, 0.1, 0.1 }; // std.dev temperature // presure std.dev pressure
+                double sample1[] = {temperature}; // temperature
+                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
+                                                               // std.dev pressure
                 double val = Math.log(pressure);
                 SampleValue sample = new SampleValue(val, val / 100.0, sample1, standardDeviation1);
                 sample.setFunction(function);
@@ -123,7 +127,7 @@ public class TestMathiasCopeman extends java.lang.Object {
         // optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();
-//        optim.writeToCdfFile("c:/testFit.nc");
-//        optim.writeToTextFile("c:/testFit.txt");
+        // optim.writeToCdfFile("c:/testFit.nc");
+        // optim.writeToTextFile("c:/testFit.txt");
     }
 }

@@ -15,23 +15,20 @@
  */
 
 /*
- * OperationInterafce.java
+ * OperationInterface.java
  *
  * Created on 2. oktober 2000, 22:14
  */
 
 package neqsim.thermodynamicOperations;
 
-import java.io.Serializable;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public interface OperationInterface extends Runnable, Serializable {
+public interface OperationInterface extends Runnable, java.io.Serializable {
     public void displayResult();
 
     public double[][] getPoints(int i);

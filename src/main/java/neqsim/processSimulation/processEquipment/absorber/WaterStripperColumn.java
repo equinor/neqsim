@@ -5,10 +5,17 @@
  */
 package neqsim.processSimulation.processEquipment.absorber;
 
-import java.awt.*;
-import java.text.*;
-import java.util.*;
-import javax.swing.*;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import java.util.ArrayList;
+
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -16,15 +23,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInterface {
+public class WaterStripperColumn extends SimpleAbsorber {
 
     private static final long serialVersionUID = 1000;
 
-    protected ArrayList<StreamInterface> streams = new ArrayList(0);
+    protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
     protected double pressure = 0;
     protected int numberOfInputStreams = 0;
     protected Stream mixedStream;
@@ -50,12 +56,12 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public void addStream(StreamInterface newStream) {
+    public void addStream(StreamInterface newStream) {
         streams.add(newStream);
         if (numberOfInputStreams == 0) {
             mixedStream = (Stream) streams.get(0).clone();
@@ -87,7 +93,7 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public void setPressure(double pressure) {
+    public void setPressure(double pressure) {
         this.pressure = pressure;
     }
 
@@ -97,28 +103,23 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
 
         for (int k = 1; k < streams.size(); k++) {
 
-            for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
-                    .getNumberOfComponents(); i++) {
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem()
-                        .getPhases()[0].getComponents()[i].getName();
+                String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getName();
                 // System.out.println("adding: " + componentName);
                 int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
-                double moles = streams.get(k).getThermoSystem().getPhases()[0]
-                        .getComponents()[i].getNumberOfmoles();
+                double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
                 for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
                     if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
                             .equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhases()[0]
-                                .getComponents()[p].getComponentNumber();
-                        compName = streams.get(0).getThermoSystem()
-                                .getPhases()[0].getComponents()[p].getComponentName();
-
+                        index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p].getComponentNumber();
+                        compName = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+                                .getComponentName();
                     }
                 }
 
@@ -162,7 +163,7 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public Stream getOutStream() {
+    public Stream getOutStream() {
         return mixedStream;
     }
 
@@ -171,22 +172,22 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public Stream getGasOutStream() {
+    public Stream getGasOutStream() {
         return gasOutStream;
     }
 
     @Override
-	public Stream getLiquidOutStream() {
+    public Stream getLiquidOutStream() {
         return solventOutStream;
     }
 
     @Override
-	public Stream getSolventInStream() {
+    public Stream getSolventInStream() {
         return solventInStream;
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
     }
 
     public double calcEa() {
@@ -212,13 +213,12 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public void run() {
+    public void run() {
         try {
             double x2 = getSolventInStream().getFluid().getPhase(0).getComponent("water").getz();
             double x0 = 0.0;
             double absorptionEffiency = 0.0;
-            mixedStream
-                    .setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
+            mixedStream.setThermoSystem(((SystemInterface) streams.get(0).getThermoSystem().clone()));
             mixedStream.getThermoSystem().setNumberOfPhases(2);
             mixedStream.getThermoSystem().reInitPhaseType();
             mixedStream.getThermoSystem().init(0);
@@ -300,7 +300,7 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         SystemInterface thermoSystem = mixedStream.getThermoSystem();
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -396,7 +396,7 @@ public class WaterStripperColumn extends SimpleAbsorber implements AbsorberInter
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 

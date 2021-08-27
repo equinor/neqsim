@@ -78,11 +78,10 @@ import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGenerat
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class ThermodynamicOperations extends Object implements java.io.Serializable, Cloneable {
+public class ThermodynamicOperations implements java.io.Serializable, Cloneable {
 
     private static final long serialVersionUID = 1000;
 
@@ -120,7 +119,6 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
      *
      * @param volumeSpec is the specified volume
      * @param unit       The unit as a string. units supported are m3, litre,
-     *
      */
     public void TPVflash(double volumeSpec, String unit) {
         unit = "m3";
@@ -481,20 +479,23 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
             lowTemperature = system.getTemperature();
         }
 
-//        if(lowTemperature<273.15 && system.doSolidPhaseCheck()){
-//            hydrateFormationTemperature(0);
-//            if(system.getTemperature()>lowTemperature) lowTemperature  = system.getTemperature();
-//        }
-//
-//        if(system.doHydrateCheck()){
-//            hydrateFormationTemperature(1);
-//            if(system.getTemperature()>lowTemperature) lowTemperature  = system.getTemperature();
-//            hydrateFormationTemperature(2);
-//            if(system.getTemperature()>lowTemperature) lowTemperature  = system.getTemperature();
-//        }
-////
+        // if(lowTemperature<273.15 && system.doSolidPhaseCheck()){
+        // hydrateFormationTemperature(0);
+        // if(system.getTemperature()>lowTemperature) lowTemperature =
+        // system.getTemperature();
+        // }
+        //
+        // if(system.doHydrateCheck()){
+        // hydrateFormationTemperature(1);
+        // if(system.getTemperature()>lowTemperature) lowTemperature =
+        // system.getTemperature();
+        // hydrateFormationTemperature(2);
+        // if(system.getTemperature()>lowTemperature) lowTemperature =
+        // system.getTemperature();
+        // }
+        ////
         system.setTemperature(lowTemperature);
-//        TPflash();
+        // TPflash();
 
         if (Double.isNaN(system.getTemperature())) {
             throw new neqsim.util.exception.IsNaNException(
@@ -775,7 +776,7 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         operation = new cricondebarFlash(system);
         // operation = new CricondenBarFlash(system);
 
-//  operation = new cricondenBarTemp1(system);
+        // operation = new cricondenBarTemp1(system);
         operation.run();
         return system.getPressure();
     }
@@ -1037,9 +1038,9 @@ public class ThermodynamicOperations extends Object implements java.io.Serializa
         getOperation().printToFile(name);
     }
 
-//    public double[] get(String name){
-//        return operation.get(name);
-//    }
+    // public double[] get(String name){
+    // return operation.get(name);
+    // }
     public double[][] getData() {
         return getOperation().getPoints(0);
     }

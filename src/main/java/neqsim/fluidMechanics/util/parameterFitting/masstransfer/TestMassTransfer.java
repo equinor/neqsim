@@ -6,31 +6,30 @@
 
 package neqsim.fluidMechanics.util.parameterFitting.masstransfer;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
-import java.util.*;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class TestMassTransfer extends java.lang.Object {
+public class TestMassTransfer {
 
     private static final long serialVersionUID = 1000;
 
     /** Creates new TestAcentric */
-    public TestMassTransfer() {
-    }
+    public TestMassTransfer() {}
 
     public static void main(String[] args) {
 
-        ArrayList sampleList = new ArrayList();
+        ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
@@ -41,17 +40,21 @@ public class TestMassTransfer extends java.lang.Object {
             System.out.println("adding....");
             while (dataSet.next()) {
                 MassTransferFunction function = new MassTransferFunction();
-                double guess[] = { 0.3311 };
-                double bound[][] = { { 0, 1.0 }, };
+                double guess[] = {0.3311};
+                double bound[][] = {{0, 1.0},};
                 function.setInitialGuess(guess);
                 SystemInterface testSystem = new SystemSrkEos(280, 0.001);
-                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til komponenter til
+                testSystem.addComponent(dataSet.getString("ComponentName"), 100.0); // legger til
+                                                                                    // komponenter
+                                                                                    // til
                                                                                     // systemet
-                double sample1[] = { Double.parseDouble(dataSet.getString("Temperature")) }; // temperature
+                double sample1[] = {Double.parseDouble(dataSet.getString("Temperature"))}; // temperature
                 double vappres = Double.parseDouble(dataSet.getString("VapourPressure"));
-                double standardDeviation1[] = { 0.15 }; // std.dev temperature // presure std.dev pressure
+                double standardDeviation1[] = {0.15}; // std.dev temperature // presure std.dev
+                                                      // pressure
                 SampleValue sample = new SampleValue(Math.log(vappres),
-                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1, standardDeviation1);
+                        Double.parseDouble(dataSet.getString("StandardDeviation")), sample1,
+                        standardDeviation1);
                 sample.setFunction(function);
                 function.setInitialGuess(guess);
                 // function.setBounds(bound);

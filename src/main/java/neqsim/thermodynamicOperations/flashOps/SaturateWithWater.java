@@ -21,17 +21,18 @@
 */
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class SaturateWithWater extends QfuncFlash implements java.io.Serializable {
+public class SaturateWithWater extends QfuncFlash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SaturateWithWater.class);
@@ -50,7 +51,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
     }
 
     @Override
-	public void run() {
+    public void run() {
 
         if (!system.getPhase(0).hasComponent("water")) {
             system.addComponent("water", system.getTotalNumberOfMoles());
@@ -84,7 +85,7 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
                 system.addComponent("water", lastdn * 0.5);
                 lastdn *= 0.8;
             } else {
-            	lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+                lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
                 dn = lastdn / system.getNumberOfMoles();
                 system.addComponent("water", -lastdn);
             }
@@ -95,8 +96,8 @@ public class SaturateWithWater extends QfuncFlash implements java.io.Serializabl
         if (i == 50) {
             logger.error("could not find solution - in water sturate : dn  " + dn);
         }
-         //logger.info("i " + i + " dn " + dn);
-         //System.out.println("i " + i + " dn " + dn) ;       // system.display();
+        // logger.info("i " + i + " dn " + dn);
+        // System.out.println("i " + i + " dn " + dn) ; // system.display();
         system.removePhase(system.getNumberOfPhases() - 1);
         tpFlash.run();
     }

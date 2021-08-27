@@ -1,13 +1,13 @@
 package neqsim.processSimulation.conditionMonitor;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
-public class ConditionMonitor extends java.lang.Object implements java.io.Serializable, Runnable {
+public class ConditionMonitor implements java.io.Serializable, Runnable {
     private static final long serialVersionUID = 1000;
     ProcessSystem refprocess = null;
     ProcessSystem process = null;
+    String report;
 
     public ConditionMonitor() {
 
@@ -23,6 +23,8 @@ public class ConditionMonitor extends java.lang.Object implements java.io.Serial
                 .getUnit(unitName);
         ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
                 .runConditionAnalysis(refUn);
+        report += ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
+                .getConditionAnalysisMessage();
     }
 
     public void conditionAnalysis() {
@@ -31,13 +33,17 @@ public class ConditionMonitor extends java.lang.Object implements java.io.Serial
             conditionAnalysis(names.get(i));
         }
     }
+    
+    public String getReport() {
+    	return report;
+    }
 
     public ProcessSystem getProcess() {
         return process;
     }
 
     @Override
-	public void run() {
+    public void run() {
         process = refprocess.copy();
     }
 

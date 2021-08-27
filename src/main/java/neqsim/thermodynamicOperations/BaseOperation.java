@@ -25,11 +25,10 @@ package neqsim.thermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
-public abstract class BaseOperation extends java.lang.Object implements OperationInterface, java.io.Serializable {
+public abstract class BaseOperation implements OperationInterface {
 
     private static final long serialVersionUID = 1000;
 
@@ -40,41 +39,41 @@ public abstract class BaseOperation extends java.lang.Object implements Operatio
     }
 
     @Override
-	public double[] get(String name) {
+    public double[] get(String name) {
         return new double[3];
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return new String[10][3];
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return null;
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     @Override
-	public void printToFile(String name) {
+    public void printToFile(String name) {
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
 
     }
 
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return null;
     }
 
     @Override
-	public void addData(String name, double[][] data) {
+    public void addData(String name, double[][] data) {
 
     }
 }

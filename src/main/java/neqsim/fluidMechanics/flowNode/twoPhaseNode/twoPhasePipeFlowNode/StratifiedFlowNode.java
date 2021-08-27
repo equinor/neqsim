@@ -8,7 +8,7 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
+public class StratifiedFlowNode extends TwoPhaseFlowNode {
 
     private static final long serialVersionUID = 1000;
 
@@ -34,7 +34,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();
@@ -46,7 +46,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public void init() {
+    public void init() {
         inclination = 0.0;
         this.calcContactLength();
         // System.out.println("len " + this.calcContactLength());
@@ -54,7 +54,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public double calcContactLength() {
+    public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
                 + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
@@ -65,7 +65,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode implements Cloneable {
     }
 
     @Override
-	public FlowNodeInterface getNextNode() {
+    public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {

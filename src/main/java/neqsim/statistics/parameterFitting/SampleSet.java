@@ -1,23 +1,23 @@
 /*
- * DataSet.java
+ * SampleSet.java
  *
  * Created on 28. januar 2001, 13:17
  */
 
 package neqsim.statistics.parameterFitting;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SampleSet extends Object implements Cloneable {
+public class SampleSet implements Cloneable {
 
     private static final long serialVersionUID = 1000;
 
-    private ArrayList samples = new ArrayList(1);
+    private ArrayList<SampleValue> samples = new ArrayList<SampleValue>(1);
 
     /** Creates new DataSet */
     public SampleSet() {
@@ -27,14 +27,14 @@ public class SampleSet extends Object implements Cloneable {
         samples.addAll(Arrays.asList(samplesIn));
     }
 
-    public SampleSet(ArrayList samplesIn) {
+    public SampleSet(ArrayList<SampleValue> samplesIn) {
         for (int i = 0; i < samplesIn.size(); i++) {
             samples.add(samplesIn.get(i));
         }
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SampleSet clonedSet = null;
         try {
             clonedSet = (SampleSet) super.clone();
@@ -42,9 +42,9 @@ public class SampleSet extends Object implements Cloneable {
             e.printStackTrace(System.err);
         }
 
-        clonedSet.samples = (ArrayList) samples.clone();
+        clonedSet.samples = (ArrayList<SampleValue>) samples.clone();
         for (int i = 0; i < samples.size(); i++) {
-            clonedSet.samples.set(i, ((SampleValue) samples.get(i)).clone());
+            clonedSet.samples.set(i, (SampleValue) samples.get(i).clone());
         }
 
         return clonedSet;
@@ -64,13 +64,13 @@ public class SampleSet extends Object implements Cloneable {
         return (SampleValue) this.samples.get(i);
     }
 
-//    public SampleValue[] getSamples() {
-//        SampleValue[] samplesOut = new SampleValue[samples.size()];
-//        for(int i=0;i<samples.size();i++){
-//            samplesOut[i] = (SampleValue) this.samples.get(i);
-//        }
-//        return samplesOut;
-//    }
+    // public SampleValue[] getSamples() {
+    // SampleValue[] samplesOut = new SampleValue[samples.size()];
+    // for(int i=0;i<samples.size();i++){
+    // samplesOut[i] = (SampleValue) this.samples.get(i);
+    // }
+    // return samplesOut;
+    // }
 
     public int getLength() {
         return samples.size();
@@ -92,5 +92,4 @@ public class SampleSet extends Object implements Cloneable {
         }
         return newSet;
     }
-
 }

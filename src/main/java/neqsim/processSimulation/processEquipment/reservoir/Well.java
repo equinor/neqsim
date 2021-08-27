@@ -1,19 +1,17 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
-import java.io.Serializable;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-public class Well implements Serializable {
+public class Well implements java.io.Serializable {
 
     private StreamInterface stream = null;
     private String name;
     double x, y, z;
 
     public Well() {
-
     }
 
     public Well(String name) {
@@ -74,5 +72,4 @@ public class Well implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
-
 }

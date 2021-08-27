@@ -1,13 +1,11 @@
 package neqsim.thermo.characterization;
 
-import java.io.Serializable;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
  * @author ESOL
  */
-public class PlusFractionModel implements Serializable {
+public class PlusFractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     private String name = "";
     private SystemInterface system = null;
@@ -68,17 +66,17 @@ public class PlusFractionModel implements Serializable {
          * @return the name
          */
         @Override
-		public String getName() {
+        public String getName() {
             return name;
         }
 
         @Override
-		public double getMPlus() {
+        public double getMPlus() {
             return MPlus;
         }
 
         @Override
-		public double getZPlus() {
+        public double getZPlus() {
             return zPlus;
         }
 
@@ -86,42 +84,42 @@ public class PlusFractionModel implements Serializable {
          * @return the maxPlusMolarMass
          */
         @Override
-		public double getMaxPlusMolarMass() {
+        public double getMaxPlusMolarMass() {
             return maxPlusMolarMass;
         }
 
         @Override
-		public double getNumberOfPlusPseudocomponents() {
+        public double getNumberOfPlusPseudocomponents() {
             return numberOfPlusPseudocomponents;
         }
 
         @Override
-		public double[] getZ() {
+        public double[] getZ() {
             return z;
         }
 
         @Override
-		public double[] getM() {
+        public double[] getM() {
             return M;
         }
 
         @Override
-		public double[] getDens() {
+        public double[] getDens() {
             return dens;
         }
 
         @Override
-		public double getDensPlus() {
+        public double getDensPlus() {
             return densPlus;
         }
 
         @Override
-		public int getFirstPlusFractionNumber() {
+        public int getFirstPlusFractionNumber() {
             return firstPlusFractionNumber;
         }
 
         @Override
-		public int getFirstTBPFractionNumber() {
+        public int getFirstTBPFractionNumber() {
             int firstTBPNumber = 0;
             double M = 1e10, Mmin = 1e10;
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -145,17 +143,17 @@ public class PlusFractionModel implements Serializable {
         }
 
         @Override
-		public int getPlusComponentNumber() {
+        public int getPlusComponentNumber() {
             return plusComponentNumber;
         }
 
         @Override
-		public int getLastPlusFractionNumber() {
+        public int getLastPlusFractionNumber() {
             return lastPlusFractionNumber;
         }
 
         @Override
-		public boolean hasPlusFraction() {
+        public boolean hasPlusFraction() {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
                 if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
                     MPlus = system.getPhase(0).getComponent(i).getMolarMass();
@@ -169,7 +167,7 @@ public class PlusFractionModel implements Serializable {
         }
 
         @Override
-		public void characterizePlusFraction(TBPModelInterface TBPModel) {
+        public void characterizePlusFraction(TBPModelInterface TBPModel) {
             system.init(0);
             Integer firstPlusNumber = new Integer(0);
             if (system.getPhase(0).getComponent(plusComponentNumber).getComponentName().substring(3, 4).equals("_")) {

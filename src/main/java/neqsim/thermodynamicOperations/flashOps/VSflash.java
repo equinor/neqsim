@@ -27,11 +27,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class VSflash extends Flash implements java.io.Serializable {
+public class VSflash extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -48,8 +47,8 @@ public class VSflash extends Flash implements java.io.Serializable {
         this.tpFlash = new TPflash(system);
         this.Sspec = Sspec;
         this.Vspec = Vspec;
-//        System.out.println("entalpy " + Hspec);
-//        System.out.println("volume " + Vspec);
+        // System.out.println("entalpy " + Hspec);
+        // System.out.println("volume " + Vspec);
     }
 
     public double calcdQdPP() {
@@ -114,14 +113,14 @@ public class VSflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tpFlash.run();
         solveQ();
 
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 

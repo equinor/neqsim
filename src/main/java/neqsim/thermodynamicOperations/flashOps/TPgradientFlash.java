@@ -15,7 +15,7 @@
  */
 
 /*
- * PHflash.java
+ * TPgradientFlash.java
  *
  * Created on 8. mars 2001, 10:56
  */
@@ -25,11 +25,10 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author even solbraa
+ * @author  even solbraa
  * @version
  */
-public class TPgradientFlash extends Flash implements java.io.Serializable {
+public class TPgradientFlash extends Flash {
 
     private static final long serialVersionUID = 1000;
 
@@ -42,7 +41,7 @@ public class TPgradientFlash extends Flash implements java.io.Serializable {
     Matrix dx;
     Matrix uold;
 
-    /** Creates new PHflash */
+    /** Creates new TPgradientFlash */
     public TPgradientFlash() {
     }
 
@@ -111,7 +110,7 @@ public class TPgradientFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         tempSystem = (SystemInterface) system.clone();
         tempSystem.init(0);
         tempSystem.init(3);
@@ -140,12 +139,12 @@ public class TPgradientFlash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return localSystem;
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

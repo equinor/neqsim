@@ -27,11 +27,10 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class Element extends Object implements ThermodynamicConstantsInterface, java.io.Serializable {
+public class Element implements ThermodynamicConstantsInterface {
 	private static final long serialVersionUID = 1000;
 	String[] nameArray;
 	double[] coefArray;

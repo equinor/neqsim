@@ -1,12 +1,11 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
-import java.io.Serializable;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.logging.log4j.*;
 
-public class StoneWallCurve implements Serializable {
+public class StoneWallCurve implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(StoneWallCurve.class);
     double[] flow;
