@@ -2,7 +2,7 @@ package neqsim.fluidMechanics.geometryDefinitions.reactor;
 
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
-public class ReactorData extends GeometryDefinition implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class ReactorData extends GeometryDefinition {
 
     private static final long serialVersionUID = 1000;
 
@@ -24,7 +24,7 @@ public class ReactorData extends GeometryDefinition implements neqsim.thermo.The
     }
 
     @Override
-	public void setPackingType(int i) {
+    public void setPackingType(int i) {
         // if(i!=100){
         packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
         // }
@@ -45,7 +45,7 @@ public class ReactorData extends GeometryDefinition implements neqsim.thermo.The
     }
 
     @Override
-	public void setPackingType(String name, String material, int size) {
+    public void setPackingType(String name, String material, int size) {
         if (name.equals("pallring")) {
             packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
                     "pallring", material, size);
@@ -60,12 +60,12 @@ public class ReactorData extends GeometryDefinition implements neqsim.thermo.The
     }
 
     @Override
-	public void init() {
+    public void init() {
         super.init();
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         ReactorData clonedPipe = null;
         try {
             clonedPipe = (ReactorData) super.clone();

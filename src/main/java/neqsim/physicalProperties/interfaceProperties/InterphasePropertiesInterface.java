@@ -9,8 +9,7 @@ import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionI
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensionInterface;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public interface InterphasePropertiesInterface extends Cloneable {

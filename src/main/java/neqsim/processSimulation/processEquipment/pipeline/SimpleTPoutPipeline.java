@@ -7,18 +7,16 @@
 package neqsim.processSimulation.processEquipment.pipeline;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInterface, PipeLineInterface {
+public class SimpleTPoutPipeline extends Pipeline {
 
     private static final long serialVersionUID = 1000;
 
@@ -36,12 +34,12 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public StreamInterface getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
@@ -54,7 +52,7 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
     }
 
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         system.setTemperature(this.temperatureOut);
@@ -66,7 +64,7 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         outStream.getThermoSystem().display(name);
         outStream.getThermoSystem().initPhysicalProperties();
         System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
@@ -76,21 +74,21 @@ public class SimpleTPoutPipeline extends Pipeline implements ProcessEquipmentInt
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
     }
 
     @Override
-	public FlowSystemInterface getPipe() {
+    public FlowSystemInterface getPipe() {
         return null;
     }
 
     @Override
-	public void setInitialFlowPattern(String flowPattern) {
+    public void setInitialFlowPattern(String flowPattern) {
 
     }
 

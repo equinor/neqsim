@@ -1,7 +1,9 @@
 package neqsim.thermo.characterization;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * @author ESOL
@@ -170,7 +172,7 @@ public class TBPfractionModel implements java.io.Serializable {
             double penelouxC = (thermoSystem.getPhase(0).getMolarVolume() - molarMass / (density * 10.0));
             // System.out.println("peneloux c " + penelouxC);
             double TC = calcTC(molarMass, density);
-            double TB = calcTB(molarMass, density);
+            // double TB = calcTB(molarMass, density);
             double PC = calcPC(molarMass, density);
             return TPBracketcoefs[0]
                     - penelouxC / (TPBracketcoefs[1] * neqsim.thermo.ThermodynamicConstantsInterface.R * TC / PC);
@@ -189,7 +191,6 @@ public class TBPfractionModel implements java.io.Serializable {
                     { 8.02988e-1, 1.78396, 1.56740e2, -6.96559e3, 0.25 },
                     { -4.7268e-2, 6.02931e-2, 1.21051, -5.76676e-3, 0 } };
             TBPfractionCoefOil = TBPfractionCoefsHeavyOil;
-
         }
     }
 
@@ -215,8 +216,8 @@ public class TBPfractionModel implements java.io.Serializable {
             double[][] TBPfractionCoefHeavyOil2 = { { 9.13222e2, 1.01134e1, 4.54194e-2, -1.3587e4, 0.0 },
                     { 1.28155, 1.26838, 1.67106e2, -8.10164e3, 0.25 },
                     { -2.3838e-1, 6.10147e-2, 1.32349, -6.52067e-3, 0.0 } };
-            double[][] TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
-            double[][] TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
+            // double[][] TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
+            // double[][] TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
             TBPfractionCoefOil = TBPfractionCoefHeavyOil2;
             TBPfractionCoefsHeavyOil = TBPfractionCoefHeavyOil2;
         }

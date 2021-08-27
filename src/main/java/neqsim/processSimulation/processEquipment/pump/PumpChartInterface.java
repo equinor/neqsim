@@ -23,16 +23,16 @@ public interface PumpChartInterface extends Cloneable {
     /**
      * Get method for polytropic head from reference curves.
      *
-     * @param flow [m3/h], speed in [rpm].
-     * @return polytropic head in unit [getHeadUnit]
+     * @param  flow [m3/h], speed in [rpm].
+     * @return      polytropic head in unit [getHeadUnit]
      */
     public double getHead(double flow, double speed);
 
     /**
      * Get method for efficiency from reference curves.
      *
-     * @param flow [m3/h], speed in [rpm].
-     * @return efficiency [%].
+     * @param  flow [m3/h], speed in [rpm].
+     * @return      efficiency [%].
      */
     public double getEfficiency(double flow, double speed);
 

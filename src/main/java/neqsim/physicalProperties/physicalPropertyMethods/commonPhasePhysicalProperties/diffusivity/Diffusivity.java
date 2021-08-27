@@ -6,16 +6,17 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod;
-import org.apache.logging.log4j.*;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class Diffusivity extends CommonPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable {
+        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
@@ -38,7 +39,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -51,13 +52,13 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
     }
 
     @Override
-	public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
+    public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
 
         return 1.0e-6;
     }
 
     @Override
-	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
 
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
@@ -77,7 +78,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
     }
 
     @Override
-	public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
 
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
@@ -93,17 +94,17 @@ public class Diffusivity extends CommonPhysicalPropertyMethod
     }
 
     @Override
-	public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    public double getFickBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
     @Override
-	public double getEffectiveDiffusionCoefficient(int i) {
+    public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
     @Override
-	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         /*
          * double temp = (i==j)? 1.0: 0.0; double nonIdealCorrection = temp +
          * gasPhase.getPhase().getComponents()[i].getx() *

@@ -1,8 +1,8 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
  * @author ESOL
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass

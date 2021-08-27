@@ -5,7 +5,8 @@
  */
 package neqsim.physicalProperties.interfaceProperties;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionInterface;
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.PotentialTheoryAdsorption;
@@ -18,11 +19,10 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
-public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable, Cloneable {
+public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -52,7 +52,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         InterfaceProperties clonedSystem = null;
         try {
             // clonedSystem = (InterfaceProperties) suclone();
@@ -66,13 +66,13 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-	public void init(SystemInterface system) {
+    public void init(SystemInterface system) {
         this.system = system;
         init();
     }
 
     @Override
-	public void init() {
+    public void init() {
         numberOfInterfaces = system.getNumberOfPhases() - 1;
         surfaceTension = new double[numberOfInterfaces + 1];
         if (gasLiquidSurfaceTensionCalc == null || gasAqueousSurfaceTensionCalc == null
@@ -85,7 +85,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-	public void initAdsorption() {
+    public void initAdsorption() {
         setAdsorptionCalc(new AdsorptionInterface[system.getNumberOfPhases()]);
 
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -94,14 +94,14 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-	public void setSolidAdsorbentMaterial(String material) {
+    public void setSolidAdsorbentMaterial(String material) {
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
             getAdsorptionCalc()[i].setSolidMaterial(material);
         }
     }
 
     @Override
-	public void calcAdsorption() {
+    public void calcAdsorption() {
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
             getAdsorptionCalc()[i].calcAdorption(i);
         }
@@ -112,7 +112,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
      * return 0.0; } else { return surfaceTension[numb]; } }
      */
     @Override
-	public double getSurfaceTension(int numb1, int numb2) {
+    public double getSurfaceTension(int numb1, int numb2) {
 
         if (system.getPhase(numb1).getPhaseTypeName().equals("gas")
                 && system.getPhase(numb2).getPhaseTypeName().equals("oil")) {
@@ -127,14 +127,14 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 
     // TODO add unit conversion implementation to interfacial tension
     @Override
-	public double getSurfaceTension(int numb1, int numb2, String unit) {
+    public double getSurfaceTension(int numb1, int numb2, String unit) {
         double val = getSurfaceTension(numb1, numb2);
         /// ...conversion methods
         return val;
     }
 
     @Override
-	public SurfaceTensionInterface getSurfaceTensionModel(int i) {
+    public SurfaceTensionInterface getSurfaceTensionModel(int i) {
         if (system.getPhase(i).getPhaseTypeName().equals("gas")) {
             return gasLiquidSurfaceTensionCalc;
         } else {
@@ -146,7 +146,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
      * @return the interfacialTensionModel
      */
     @Override
-	public int getInterfacialTensionModel() {
+    public int getInterfacialTensionModel() {
         return interfacialTensionModel;
     }
 
@@ -154,7 +154,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
      * @param interfacialTensionModel the interfacialTensionModel to set
      */
     @Override
-	public void setInterfacialTensionModel(String phase1, String phase2, String model) {
+    public void setInterfacialTensionModel(String phase1, String phase2, String model) {
         SurfaceTensionInterface surfTensModel = null;
         if ("Linear Gradient Theory".equals(model)) {
             surfTensModel = new LGTSurfaceTension(system);
@@ -181,7 +181,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-	public void setInterfacialTensionModel(int interfacialTensionModel) {
+    public void setInterfacialTensionModel(int interfacialTensionModel) {
         this.interfacialTensionModel = interfacialTensionModel;
         if (interfacialTensionModel == 0) {
             gasLiquidSurfaceTensionCalc = new ParachorSurfaceTension(system);
@@ -219,17 +219,17 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-	public AdsorptionInterface[] getAdsorptionCalc() {
+    public AdsorptionInterface[] getAdsorptionCalc() {
         return adsorptionCalc;
     }
 
     @Override
-	public AdsorptionInterface getAdsorptionCalc(String phaseName) {
+    public AdsorptionInterface getAdsorptionCalc(String phaseName) {
         return adsorptionCalc[system.getPhaseNumberOfPhase(phaseName)];
     }
 
     @Override
-	public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc) {
+    public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc) {
         this.adsorptionCalc = adsorptionCalc;
     }
 }

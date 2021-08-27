@@ -21,17 +21,17 @@
 */
 package neqsim.thermodynamicOperations.flashOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-import org.apache.logging.log4j.*;
-
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class TPflash extends Flash implements java.io.Serializable {
+public class TPflash extends Flash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash.class);
@@ -164,7 +164,7 @@ public class TPflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public void run() {
+    public void run() {
         if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
             system.setNumberOfPhases(1);
             return;
@@ -460,7 +460,7 @@ public class TPflash extends Flash implements java.io.Serializable {
     }
 
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 }

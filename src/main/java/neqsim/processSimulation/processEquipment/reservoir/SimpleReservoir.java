@@ -15,15 +15,15 @@
  */
 
 /*
- * Separator.java
+ * SimpleReservoir.java
  *
  * Created on 12. mars 2001, 19:48
  */
 package neqsim.processSimulation.processEquipment.reservoir;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -31,11 +31,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class SimpleReservoir extends ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
+public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
     private static final long serialVersionUID = 1000;
 
@@ -52,14 +51,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
     double OOIP = 0.0;
     double OGIP = 0.0;
 
-//	StreamInterface gasOutStream;
-//	StreamInterface oilOutStream;
+    // StreamInterface gasOutStream;
+    // StreamInterface oilOutStream;
     double reservoirVolume = 0.0;
     double lowPressureLimit = 50.0;
     double time = 0.0;
 
     /**
-     * Creates new Separator
+     * Creates new SimpleReservoir
      */
     public SimpleReservoir() {
         super();
@@ -82,7 +81,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
     }
 
     @Override
-	public SystemInterface getFluid() {
+    public SystemInterface getFluid() {
         return thermoSystem;
     }
 
@@ -223,7 +222,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         thermoSystem.initProperties();
         // thermoSystem.display();
         // gasOutStream = new Stream();
-//		gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
+        // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
         reservoirVolume = gasVolume + oilVolume + waterVolume;
 
         OOIP = getOilInPlace("Sm3");
@@ -235,7 +234,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
     }
 
     @Override
-	public void run() {
+    public void run() {
         System.out.println("gas volume " + thermoSystem.getPhase("gas").getVolume("m3"));
         System.out.println("oil volume " + thermoSystem.getPhase("oil").getVolume("m3"));
         System.out.println("water volume " + thermoSystem.getPhase("aqueous").getVolume("m3"));
@@ -304,7 +303,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         time = getTime() + dt;
         if (thermoSystem.getPressure("bara") < lowPressureLimit) {
             System.out.println("low pressure reservoir limit reached");
@@ -385,7 +384,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         // getReservoirFluid().getPhase("oil").getVolume("m3")/1.0e6 + " water volume "+
         // getReservoirFluid().getPhase("aqueous").getVolume("m3")/1.0e6);
         // oilOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("oil").getMolarComposition());
-//		oilOutStream.run();
+        // oilOutStream.run();
 
         // thermoSystem.display();
         for (int k = 0; k < gasProducer.size(); k++) {
@@ -406,7 +405,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display();
     }
 
@@ -452,10 +451,11 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         // StreamInterface injectorGasStream =
         // reservoirOps.addGasInjector("SLP_A32562GI");
         injectorGasStream.setFlowRate(0.01, "MSm3/day");
-//		injectorGasStream.getFluid().setMolarComposition(.new double[0.1, 0.1]);
+        // injectorGasStream.getFluid().setMolarComposition(.new double[0.1, 0.1]);
 
-//		StreamInterface producedGasStream2 = reservoirOps.addGasProducer("SLP_A32562G2");
-//		producedGasStream2.setFlowRate(0.011, "MSm3/hr");
+        // StreamInterface producedGasStream2 =
+        // reservoirOps.addGasProducer("SLP_A32562G2");
+        // producedGasStream2.setFlowRate(0.011, "MSm3/hr");
 
         producedOilStream.setFlowRate(50000000.0, "kg/day");
 
@@ -464,8 +464,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass implements Proces
         // StreamInterface producedGasStream = reservoirOps.getGasOutStream();
         // producedGasStream.setFlowRate(1.0e-3, "MSm3/day");
 
-//		StreamInterface producedOilStream = reservoirOps.getOilOutStream();
-//		producedOilStream.setFlowRate(1500000.0, "kg/hr");
+        // StreamInterface producedOilStream = reservoirOps.getOilOutStream();
+        // producedOilStream.setFlowRate(1500000.0, "kg/hr");
 
         reservoirOps.run();
 

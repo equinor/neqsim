@@ -6,16 +6,16 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 abstract class Diffusivity
         extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface, Cloneable {
+        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
@@ -37,7 +37,7 @@ abstract class Diffusivity
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Diffusivity properties = null;
 
         try {
@@ -55,7 +55,7 @@ abstract class Diffusivity
     }
 
     @Override
-	public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
+    public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         double tempVar = 0, tempVar2 = 0;
 
@@ -82,7 +82,7 @@ abstract class Diffusivity
     }
 
     @Override
-	public void calcEffectiveDiffusionCoeffisients() {
+    public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
 
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -98,17 +98,17 @@ abstract class Diffusivity
     }
 
     @Override
-	public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
+    public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
     @Override
-	public double getEffectiveDiffusionCoefficient(int i) {
+    public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
     @Override
-	public double getFickBinaryDiffusionCoefficient(int i, int j) {
+    public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double temp = (i == j) ? 1.0 : 0.0;
         double nonIdealCorrection = temp + liquidPhase.getPhase().getComponents()[i].getx()
                 * liquidPhase.getPhase().getComponents()[i].getdfugdn(j)

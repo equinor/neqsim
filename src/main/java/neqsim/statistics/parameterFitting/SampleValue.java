@@ -144,5 +144,4 @@ public class SampleValue implements Cloneable {
     public void setDescription(java.lang.String description) {
         this.description = description;
     }
-
 }

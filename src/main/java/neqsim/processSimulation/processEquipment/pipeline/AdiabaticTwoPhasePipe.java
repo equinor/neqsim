@@ -8,18 +8,16 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.processSimulation.mechanicalDesign.pipeline.PipelineMechanicalDeisgn;
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentInterface, PipeLineInterface {
+public class AdiabaticTwoPhasePipe extends Pipeline {
 
     private static final long serialVersionUID = 1000;
 
@@ -57,17 +55,17 @@ public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentI
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return outStream.getThermoSystem();
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public StreamInterface getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
@@ -142,7 +140,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentI
     }
 
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         inletPressure = system.getPressure();
         // system.setMultiPhaseCheck(true);
@@ -237,28 +235,28 @@ public class AdiabaticTwoPhasePipe extends Pipeline implements ProcessEquipmentI
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         system.display();
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
 
         run();
     }
 
     @Override
-	public FlowSystemInterface getPipe() {
+    public FlowSystemInterface getPipe() {
         return null;
     }
 
     @Override
-	public void setInitialFlowPattern(String flowPattern) {
+    public void setInitialFlowPattern(String flowPattern) {
     }
 
     /**

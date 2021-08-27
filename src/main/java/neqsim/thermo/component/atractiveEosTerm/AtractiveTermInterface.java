@@ -7,8 +7,7 @@
 package neqsim.thermo.component.atractiveEosTerm;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public interface AtractiveTermInterface extends Cloneable, java.io.Serializable {
@@ -33,5 +32,4 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
     public void setParameters(int i, double val);
 
     public Object clone();
-
 }

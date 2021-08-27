@@ -1,5 +1,5 @@
 /*
- * LevenbergMarquardt.java
+ * LevenbergMarquardtBiasDev.java
  *
  * Created on 22. januar 2001, 23:00
  */
@@ -7,8 +7,7 @@
 package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
@@ -21,7 +20,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         LevenbergMarquardtBiasDev clonedClass = null;
         try {
             clonedClass = (LevenbergMarquardtBiasDev) super.clone();
@@ -33,7 +32,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
     }
 
     @Override
-	public double calcChiSquare() {
+    public double calcChiSquare() {
         double chiSquare = 0;
         for (int i = 0; i < sampleSet.getLength(); i++) {
 
@@ -44,7 +43,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
     }
 
     @Override
-	public double[][] calcAlphaMatrix() {
+    public double[][] calcAlphaMatrix() {
         double[][] alpha = new double[sampleSet.getSample(0).getFunction().getFittingParams().length][sampleSet
                 .getSample(0).getFunction().getFittingParams().length];
         for (int i = 0; i < alpha.length; i++) {
@@ -62,7 +61,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
     }
 
     @Override
-	public double[] calcBetaMatrix() {
+    public double[] calcBetaMatrix() {
         double[] beta = new double[sampleSet.getSample(0).getFunction().getFittingParams().length];
         for (int i = 0; i < beta.length; i++) {
             beta[i] = 0.0;

@@ -6,17 +6,15 @@
 
 package neqsim.processSimulation.processEquipment.separator;
 
-import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
-public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInterface, SeparatorInterface {
+public class TwoPhaseSeparator extends Separator {
 
     private static final long serialVersionUID = 1000;
 
@@ -40,12 +38,12 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public void setInletStream(StreamInterface inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -58,27 +56,27 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
     }
 
     @Override
-	public StreamInterface getLiquidOutStream() {
+    public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
     @Override
-	public StreamInterface getGasOutStream() {
+    public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
     @Override
-	public StreamInterface getGas() {
+    public StreamInterface getGas() {
         return getGasOutStream();
     }
 
     @Override
-	public StreamInterface getLiquid() {
+    public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
     @Override
-	public void run() {
+    public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         gasSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[0]);
         gasSystem.setNumberOfPhases(1);
@@ -91,11 +89,11 @@ public class TwoPhaseSeparator extends Separator implements ProcessEquipmentInte
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 

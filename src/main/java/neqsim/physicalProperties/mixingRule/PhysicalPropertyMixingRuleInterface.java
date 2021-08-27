@@ -8,8 +8,7 @@ package neqsim.physicalProperties.mixingRule;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- *
- * @author esol
+ * @author  esol
  * @version
  */
 public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
