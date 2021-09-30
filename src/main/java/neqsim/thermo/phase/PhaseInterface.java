@@ -137,6 +137,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
      * @return density with unit kg/m3
      */
     public double getDensity_GERG2008();
+    
+    public double[] getProperties_GERG2008();
 
     /**
      * method to get density of a phase note: does not use Peneloux volume
