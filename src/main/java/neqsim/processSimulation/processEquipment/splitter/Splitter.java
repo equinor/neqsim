@@ -47,11 +47,22 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         splitNumber = i;
         this.setInletStream(inletStream);
         splitFactor = new double[splitNumber];
+        splitFactor[0] = 1.0;
     }
 
     public void setSplitFactors(double[] splitFact) {
+    	double sum = 0.0;
+    	for(int i=0;i<splitFact.length;i++) {
+    		if(splitFact[i]<0.0) {
+    			splitFact[i] = 0.0;
+    		}
+    		sum += splitFact[i];
+    	}
+    	splitFactor = new double[splitFact.length];
+    	for(int i=0;i<splitFact.length;i++) {
+    		splitFactor[i] = splitFact[i]/sum;
+    	}
         splitNumber = splitFact.length;
-        splitFactor = splitFact;
         setInletStream(inletStream);
     }
 
@@ -61,7 +72,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         splitStream = new Stream[splitNumber];
         try {
             for (int i = 0; i < splitNumber; i++) {
-                System.out.println("splitting...." + i);
+                //System.out.println("splitting...." + i);
                 splitStream[i] = new Stream("Split Stream", (SystemInterface) inletStream.getThermoSystem().clone());
             }
         } catch (Exception e) {
