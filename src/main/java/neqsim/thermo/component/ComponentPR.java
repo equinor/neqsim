@@ -1,8 +1,8 @@
 /*
-* System_SRK_EOS.java
-*
-* Created on 8. april 2000, 23:14
-*/
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:14
+ */
 package neqsim.thermo.component;
 
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
@@ -13,14 +13,12 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
  * @version
  */
 public class ComponentPR extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates new System_SRK_EOS
      */
-    public ComponentPR() {
-    }
+    public ComponentPR() {}
 
     public ComponentPR(double moles) {
         numberOfMoles = moles;
@@ -38,7 +36,7 @@ public class ComponentPR extends ComponentEos {
         delta2 = 1.0 - Math.sqrt(2.0);
         setAtractiveParameter(new AtractiveTermPr(this));
 
-        double[] surfTensInfluenceParamtemp = { 1.3192, 1.6606, 1.1173, 0.8443 };
+        double[] surfTensInfluenceParamtemp = {1.3192, 1.6606, 1.1173, 0.8443};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
     }
 
@@ -47,8 +45,7 @@ public class ComponentPR extends ComponentEos {
     }
 
     @Override
-	public Object clone() {
-
+    public Object clone() {
         ComponentPR clonedComponent = null;
         try {
             clonedComponent = (ComponentPR) super.clone();
@@ -60,22 +57,23 @@ public class ComponentPR extends ComponentEos {
     }
 
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
     @Override
-	public double calca() {
+    public double calca() {
         return .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
     @Override
-	public double calcb() {
+    public double calcb() {
         return .077803333 * R * criticalTemperature / criticalPressure;
     }
 
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (Math.abs(this.getRacketZ()) < 1e-10) {
             racketZ = 0.29056 - 0.08775 * getAcentricFactor();
         }
@@ -95,13 +93,15 @@ public class ComponentPR extends ComponentEos {
     }
 
     @Override
-	public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();
         if (TR < 0) {
             TR = 0.5;
         }
-        double AA = -1.0e-16 / (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
-        double BB = 1.0e-16 / (surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor());
+        double AA = -1.0e-16
+                / (surfTensInfluenceParam[0] + surfTensInfluenceParam[1] * getAcentricFactor());
+        double BB = 1.0e-16
+                / (surfTensInfluenceParam[2] + surfTensInfluenceParam[3] * getAcentricFactor());
 
         // System.out.println("scale2 " + aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) *
         // (AA * TR + BB));

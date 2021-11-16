@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -25,11 +23,10 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class VHflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Hspec = 0;
@@ -37,8 +34,7 @@ public class VHflash extends Flash {
     Flash pHFlash;
 
     /** Creates new PHflash */
-    public VHflash() {
-    }
+    public VHflash() {}
 
     public VHflash(SystemInterface system, double Hspec, double Vspec) {
         this.system = system;
@@ -81,7 +77,8 @@ public class VHflash extends Flash {
                     system.setPressure(system.getPressure() + err / 10.0);
                 } else {
                     // System.out.println("pres " + (system.getPressure()+0.1*dPdV*(newVol-Vspec)));
-                    system.setPressure(system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));// system.getdVdPtn()*(newVol-Vspec));//dPdV*(newVol-Vspec));
+                    system.setPressure(system.getPressure()
+                            - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec));// system.getdVdPtn()*(newVol-Vspec));//dPdV*(newVol-Vspec));
                 }
                 pNew = system.getPressure();
                 dPdV = (pOld - pOldOld) / (newVol - oldVol);
@@ -96,5 +93,4 @@ public class VHflash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

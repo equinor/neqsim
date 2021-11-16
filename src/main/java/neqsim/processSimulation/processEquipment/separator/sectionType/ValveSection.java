@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  */
 public class ValveSection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     public ValveSection(String type, Separator sep) {

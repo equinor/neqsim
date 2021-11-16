@@ -3,8 +3,7 @@
  *
  * Created on 10. oktober 2006, 19:59
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
 
 package neqsim.processSimulation.controllerDevice;
@@ -16,7 +15,6 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
  * @author ESOL
  */
 public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
     private String name = "controller", unit = "[?]";
@@ -32,74 +30,74 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     private double Tderiv = 300.0;
 
     /** Creates a new instance of ControllerDeviceBaseClass */
-    public ControllerDeviceBaseClass() {
-    }
+    public ControllerDeviceBaseClass() {}
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public void setTransmitter(MeasurementDeviceInterface device) {
+    public void setTransmitter(MeasurementDeviceInterface device) {
         this.transmitter = device;
     }
 
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return this.transmitter.getMeasuredValue();
     }
 
     @Override
-	public void run(double percentSignal, double dt) {
+    public void run(double percentSignal, double dt) {
         if (reverseActing) {
             propConstant = -1;
         }
         oldoldError = error;
         oldError = error;
-        error = transmitter.getMeasuredPercentValue() - (controllerSetPoint - transmitter.getMinimumValue())
-                / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
+        error = transmitter.getMeasuredPercentValue()
+                - (controllerSetPoint - transmitter.getMinimumValue())
+                        / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100;
 
         TintValue += Ksp / Tint * error * dt;
         double TderivValue = Ksp * Tderiv * (error - oldError) / dt;
         response = percentSignal + propConstant * (Ksp * error + TintValue + TderivValue);
         System.out.println("error " + error + " %");
-//        error = device.getMeasuredPercentValue()-controlValue;
-//        double regulatorSignal = error*1.0;
+        // error = device.getMeasuredPercentValue()-controlValue;
+        // double regulatorSignal = error*1.0;
     }
 
     @Override
-	public void setControllerSetPoint(double signal) {
+    public void setControllerSetPoint(double signal) {
         this.controllerSetPoint = signal;
     }
 
     @Override
-	public String getUnit() {
+    public String getUnit() {
         return unit;
     }
 
     @Override
-	public void setUnit(String unit) {
+    public void setUnit(String unit) {
         this.unit = unit;
     }
 
     @Override
-	public double getResponse() {
+    public double getResponse() {
         return response;
     }
 
     @Override
-	public boolean isReverseActing() {
+    public boolean isReverseActing() {
         return reverseActing;
     }
 
     @Override
-	public void setReverseActing(boolean reverseActing) {
+    public void setReverseActing(boolean reverseActing) {
         this.reverseActing = reverseActing;
     }
 
@@ -112,7 +110,7 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     @Override
-	public void setControllerParameters(double Ksp, double Ti, double Td) {
+    public void setControllerParameters(double Ksp, double Ti, double Td) {
         this.setKsp(Ksp);
         this.setTint(Ti);
         this.setTderiv(Td);
@@ -133,5 +131,4 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     public void setTderiv(double Tderiv) {
         this.Tderiv = Tderiv;
     }
-
 }

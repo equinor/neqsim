@@ -15,26 +15,26 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 
 public class ComponentGeNRTL extends ComponentGE {
-
     private static final long serialVersionUID = 1000;
 
     double r = 0, q = 0;
 
     /** Creates new ComponentGENRTLmodifiedHV */
-    public ComponentGeNRTL() {
-    }
+    public ComponentGeNRTL() {}
 
-    public ComponentGeNRTL(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentGeNRTL(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
     @Override
-	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
-
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
+            double[][] intparam, String[][] mixRule) {
         double type = phase.getInitType();
-        double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, ny = 0, tau = 0, tau2 = 0, G = 0, G2 = 0, alpha = 0, Dij = 0,
-                Djj = 0, Dji = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
+        double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, ny = 0, tau = 0, tau2 = 0, G = 0, G2 = 0,
+                alpha = 0, Dij = 0, Djj = 0, Dji = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0,
+                F2T = 0, tot2 = 0;
         int i, j, l, k, delta = 0;
         double dAdT = 0, dBdT = 0, dEdT, dCdT = 0, dFdT = 0, dDdT = 0;
         double dtaudt = 0, dtau2dt = 0, dGdt = 0, dG2dt = 0;
@@ -42,8 +42,8 @@ public class ComponentGeNRTL extends ComponentGE {
         double[][] tauMatrix = new double[numberOfComponents][numberOfComponents];
         dlngammadn = new double[numberOfComponents];
         ComponentInterface[] comp_Array = phase.getcomponentArray();
-        double lngammaold = 0, dlngammadtold = 0, dA2dTetter = 0, dA3dTetter = 0, dA4dTetter = 0, dA5dTetter = 0,
-                dA6dTetter = 0;
+        double lngammaold = 0, dlngammadtold = 0, dA2dTetter = 0, dA3dTetter = 0, dA4dTetter = 0,
+                dA5dTetter = 0, dA6dTetter = 0;
         // for(int w=0;w<3;w++){
         F = 0;
         dFdT = 0;
@@ -105,7 +105,6 @@ public class ComponentGeNRTL extends ComponentGE {
             // System.out.println("hei");
 
             for (l = 0; l < numberOfComponents; l++) {
-
                 Dij = HVgij[l][j];
                 alpha = HValpha[l][j];
                 tau = Dij / (temperature);
@@ -140,7 +139,8 @@ public class ComponentGeNRTL extends ComponentGE {
 
         lngamma = A / B + F;
         // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
-        dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter);
+        dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter
+                - dA5dTetter - dA6dTetter);
         /*
          * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
          * 
@@ -159,7 +159,6 @@ public class ComponentGeNRTL extends ComponentGE {
         // System.out.println("gamma " +gamma);
         // if derivates....
         if (type == 3) {
-
             double dAdn = 0;
             double dBdn = 0;
             double Etemp = 0;
@@ -170,9 +169,11 @@ public class ComponentGeNRTL extends ComponentGE {
             double Gtemp = 0;
 
             for (int p = 0; p < numberOfComponents; p++) {
-                dAdn = tauMatrix[p][this.getComponentNumber()] * Gmatrix[p][this.getComponentNumber()];
+                dAdn = tauMatrix[p][this.getComponentNumber()]
+                        * Gmatrix[p][this.getComponentNumber()];
                 dBdn = Gmatrix[p][this.getComponentNumber()];
-                dEdn = Gmatrix[this.getComponentNumber()][p] * tauMatrix[this.getComponentNumber()][p];
+                dEdn = Gmatrix[this.getComponentNumber()][p]
+                        * tauMatrix[this.getComponentNumber()][p];
                 // dFdn = Gmatrix[this.getComponentNumber()][p];
                 Dtemp = 0;
                 Ctemp = 0;
@@ -191,18 +192,20 @@ public class ComponentGeNRTL extends ComponentGE {
                         sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
                     }
                     Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
-                            * tauMatrix[this.getComponentNumber()][f] * comp_Array[f].getx() / (sum * sum);
-                    Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
-                            / (sum * sum * sum);
+                            * tauMatrix[this.getComponentNumber()][f] * comp_Array[f].getx()
+                            / (sum * sum);
+                    Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2
+                            * Gmatrix[this.getComponentNumber()][f] / (sum * sum * sum);
                     Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f]
                             * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
                 }
                 dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
-                        - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
-                                                                                                                // +
-                                                                                                                // E/C*(-dDdn[p]/C
-                                                                                                                // +
-                                                                                                                // D/(C*C)*dCdn[p]);
+                        - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp)
+                        + 2.0 * Ftemp - Gtemp;// E/(C*C)*dCdn[p]*(tau2-D/C)
+                                              // +
+                                              // E/C*(-dDdn[p]/C
+                                              // +
+                                              // D/(C*C)*dCdn[p]);
                 dlngammadn[p] /= (nt);
             }
             // System.out.println("Dlngamdn: " + dlngammadn[p] + " x: " +
@@ -213,17 +216,15 @@ public class ComponentGeNRTL extends ComponentGE {
     }
 
     /*
-     * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
-     * double temperature, double pressure, int phasetype){ dfugdp =
-     * (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure+0.01,
-     * phasetype))-Math.log(fugcoef(phase, numberOfComponents, temperature,
-     * pressure-0.01, phasetype)))/0.02; return dfugdp; }
+     * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double
+     * temperature, double pressure, int phasetype){ dfugdp = (Math.log(fugcoef(phase,
+     * numberOfComponents, temperature, pressure+0.01, phasetype))-Math.log(fugcoef(phase,
+     * numberOfComponents, temperature, pressure-0.01, phasetype)))/0.02; return dfugdp; }
      * 
-     * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
-     * double temperature, double pressure, int phasetype){ dfugdt =
-     * (Math.log(fugcoef(phase, numberOfComponents, temperature+0.01, pressure,
-     * phasetype))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,
-     * pressure, phasetype)))/0.02; return dfugdt; }
+     * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double
+     * temperature, double pressure, int phasetype){ dfugdt = (Math.log(fugcoef(phase,
+     * numberOfComponents, temperature+0.01, pressure, phasetype))-Math.log(fugcoef(phase,
+     * numberOfComponents, temperature-0.01, pressure, phasetype)))/0.02; return dfugdt; }
      */
 
     public double getr() {
@@ -243,5 +244,4 @@ public class ComponentGeNRTL extends ComponentGE {
     public double getLngamma() {
         return lngamma;
     }
-
 }

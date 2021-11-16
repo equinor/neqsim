@@ -15,7 +15,6 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TwuCoon extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TwuCoon.class);
 
@@ -25,7 +24,7 @@ public class TwuCoon extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         // System.out.println("dep " + dependentValues[0]);
         system.setTemperature(dependentValues[0]);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -42,12 +41,12 @@ public class TwuCoon extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return Math.exp(val);
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[0].setTwuCoonParams(i, value);
         system.getPhases()[1].getComponents()[0].setTwuCoonParams(i, value);

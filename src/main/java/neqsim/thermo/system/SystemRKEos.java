@@ -11,7 +11,7 @@ import neqsim.thermo.phase.PhaseRK;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -19,7 +19,6 @@ import neqsim.thermo.phase.PhaseRK;
  * This class defines a thermodynamic system using the RK equation of state
  */
 public class SystemRKEos extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
@@ -71,7 +70,7 @@ public class SystemRKEos extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemRKEos clonedSystem = null;
         try {
             clonedSystem = (SystemRKEos) super.clone();
@@ -81,5 +80,4 @@ public class SystemRKEos extends SystemEos {
 
         return clonedSystem;
     }
-
 }

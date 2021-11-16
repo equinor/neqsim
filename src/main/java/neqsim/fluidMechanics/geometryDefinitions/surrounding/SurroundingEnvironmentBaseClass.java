@@ -4,9 +4,10 @@ package neqsim.fluidMechanics.geometryDefinitions.surrounding;
  *
  * @author ESOL
  */
-public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /**
-                                                                                * @return the heatTransferCoefficient
-                                                                                */
+public class SurroundingEnvironmentBaseClass
+        implements SurroundingEnvironment /**
+                                           * @return the heatTransferCoefficient
+                                           */
 {
     private static final long serialVersionUID = 1000;
 
@@ -14,7 +15,7 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
      * @return the temperature
      */
     @Override
-	public double getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
@@ -22,19 +23,17 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
      * @param temperature the temperature to set
      */
     @Override
-	public void setTemperature(double temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 
     private double heatTransferCoefficient = 20.0;
     private double temperature = 298.15;
 
-    public SurroundingEnvironmentBaseClass() {
-
-    }
+    public SurroundingEnvironmentBaseClass() {}
 
     @Override
-	public double getHeatTransferCoefficient() {
+    public double getHeatTransferCoefficient() {
         return heatTransferCoefficient;
     }
 
@@ -42,8 +41,7 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
      * @param heatTransferCoefficient the heatTransferCoefficient to set
      */
     @Override
-	public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    public void setHeatTransferCoefficient(double heatTransferCoefficient) {
         this.heatTransferCoefficient = heatTransferCoefficient;
     }
-
 }

@@ -3,8 +3,7 @@
  *
  * Created on 6. juni 2006, 15:24
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
 
 package neqsim.processSimulation.measurementDevice;
@@ -19,7 +18,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
-
 	private static final long serialVersionUID = 1000;
 
 	protected int streamNumber = 0;
@@ -29,8 +27,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
 	private String method = "Bukacek";
 
 	/** Creates a new instance of TemperatureTransmitter */
-	public WaterDewPointAnalyser() {
-	}
+	public WaterDewPointAnalyser() {}
 
 	public WaterDewPointAnalyser(StreamInterface stream) {
 		this.stream = stream;
@@ -60,10 +57,10 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
 	public double getMeasuredValue(String unit) {
 		if (method.equals("Bukacek")) {
 			SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
-			tempFluid.setTemperature(BukacekWaterInGas.waterDewPointTemperature(tempFluid.getComponent("water").getx(),
-					referencePressure));
+			tempFluid.setTemperature(BukacekWaterInGas.waterDewPointTemperature(
+					tempFluid.getComponent("water").getx(), referencePressure));
 			return tempFluid.getTemperature(unit);
-		}else if(method.equals("multiphase")) {
+		} else if (method.equals("multiphase")) {
 			SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
 			tempFluid.setPressure(referencePressure);
 			tempFluid.setTemperature(0.1, "C");
@@ -74,8 +71,7 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
 				e.printStackTrace();
 			}
 			return tempFluid.getTemperature(unit);
-		}
-		else {
+		} else {
 			SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
 			SystemInterface tempFluid2 = tempFluid.setModel("GERG-water-EOS");
 			tempFluid2.setPressure(referencePressure);
@@ -105,5 +101,4 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
 	public void setMethod(String method) {
 		this.method = method;
 	}
-
 }

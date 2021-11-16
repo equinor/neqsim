@@ -15,8 +15,7 @@ import MathLib.JamaLinAlg.*;
  * @version
  */
 public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
-
-    private static final long serialVersionUID = 1000;
+private static final long serialVersionUID = 1000;
 
     public CPAMixing cpaSelect = new CPAMixing();
     public CPAMixingInterface cpamix;
@@ -38,8 +37,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     /** Creates new PhaseSrkEos */
     public PhaseSrkCPA() {
         super();
-
-    }
+}
 
     public Object clone() {
         PhaseSrkCPA clonedPhase = null;
@@ -102,7 +100,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             System.out.println("DFdVdT " + dFCPAdTdV() + " dFDtDT" + dFCPAdTdT());
             //         hcpatotdT = calc_hCPAdT();
 
-
             //          calcXsitedV();
             //  calcXsitedT();
         }
@@ -139,8 +136,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         Matrix tempMatrix = ksiMatrix.transpose().times(KlkMatrix.times(ksiMatrix)).times(-0.5);
         // System.out.println("matrix QdV");
         tempMatrix.print(10, 10);
-
-    }
+}
 
     public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
@@ -205,8 +201,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     public double dFCPAdT() {
-
-        double tot = 0.0;
+double tot = 0.0;
         double ans = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             tot = 0.0;
@@ -244,8 +239,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
       public double dFCPAdTdT() {
-
-        double tot = 0.0;
+double tot = 0.0;
         double ans = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             tot = 0.0;
@@ -258,8 +252,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         }
         // System.out.println("dFCPAdT " + ans);
         return ans;
-
-    }
+}
 
     public double dFCPAdTdT2() {
         //  System.out.println
@@ -368,8 +361,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         double tot = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int k = 0; k < numberOfComponents; k++) {
-
-                htot = 0.0;
+htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
                         htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j] * ((ComponentSrkCPA) getComponent(k)).getXsite()[l] * getCpamix().calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
@@ -393,7 +385,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() / ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
 
         gv2 = 1.0 / (2.0 - getB() / (4.0 * getTotalVolume())) * getB() / (4.0 * Math.pow(getTotalVolume(), 2.0)) - 3.0 / (1.0 - getB() / (4.0 * getTotalVolume())) * getB() / (4.0 * Math.pow(getTotalVolume(), 2.0));
-//
+
 //        System.out.println("err gv " + (100.0-gv/gv2*100));
         //-2.0*getB()*(10.0*getTotalVolume()-getB())/getTotalVolume()/((8.0*getTotalVolume()-getB())*(4.0*getTotalVolume()-getB()));
 //         System.out.println("gv " + gv);
@@ -470,8 +462,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                 ((ComponentCPAInterface) getComponent(i)).setXsitedT(k, temp8 / (getComponent(i).getNumberOfMolesInPhase() * (1.0 / ((ComponentCPAInterface) getComponent(i)).getXsite()[k] - 1.0 / 2.0)) / (2.0 * getTotalVolume()));
                 ((ComponentCPAInterface) getComponent(i)).setXsitedTdT(k,temp12 / (getComponent(i).getNumberOfMolesInPhase() * (1.0 / ((ComponentCPAInterface) getComponent(i)).getXsite()[k] - 1.0 / 2.0)) / (2.0 * getTotalVolume()));
                 //  System.out.println("X " + ((ComponentCPAInterface) getComponent(i)).getXsite()[k] + " Xdt" + ((ComponentCPAInterface) getComponent(i)).getXsitedT()[k] + " volume " + getTotalVolume());
-
-            }
+}
         }
     }
 
@@ -492,7 +483,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             }
             temp4 += temp3 * getComponent(i).getNumberOfMolesInPhase();
         }
-        //System.out.println("sum " +temp4);//
+        //System.out.println("sum " +temp4);
         temp4 = (getHcpatot() - temp4) / 2.0 / getTotalVolume();
 
         for (int i = 0; i < numberOfComponents; i++) {
@@ -544,8 +535,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                 dFCPAdXdXdTtotal +=
                         XdT * ((ComponentCPAInterface) getComponent(i)).dFCPAdXi(j, this);
             }
-
-        }
+}
         for (int i = 0; i <
                 numberOfComponents; i++) {
             for (int j = 0; j <
@@ -556,8 +546,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                             getComponent(k).getNumberOfAssociationSites(); j2++) {
                         dFCPAdTdT += ((ComponentCPAInterface) getComponent(i)).dFCPAdXidXj(j, j2, k, this) * ((ComponentCPAInterface) getComponent(i)).getXsitedT()[j] * ((ComponentCPAInterface) getComponent(k)).getXsitedT()[j2];
                     }
-
-                }
+}
             }
         }
         setTemperature(temperature - dt);
@@ -565,8 +554,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         do {
             super.init(this.getNumberOfMolesInPhase(), numberOfComponents, this.getInitType(), this.getPhaseType(), this.getBeta());
         } while (!solveX());
-
-    }
+}
 
     public double getdFdVdXdXdVtotal() {
         return dFdVdXdXdVtotal;
@@ -575,7 +563,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     public boolean solveX() {
         double err = .0;
         int iter = 0;
-
 
         do {
             iter++;
@@ -600,8 +587,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         } else {
             return false;
         }
-
-    }
+}
 
     /** Getter for property hcpatot.
      * @return Value of property hcpatot.
@@ -622,8 +608,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     public double molarVolume(double pressure, double temperature, double A, double B, int phasetype) throws util.exception.IsNaNException, util.exception.TooManyIterationsException {
-
-        double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
         if (BonV < 0) {
             BonV = 1.0e-8;
@@ -647,8 +632,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         int iterations = 0;
         do {
-
-            gcpa = calc_g();
+gcpa = calc_g();
             lngcpa =
                     Math.log(gcpa);
             setGcpav(calc_lngV());
@@ -661,7 +645,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
             hcpatot =
                     calc_hCPA();
-
 
             calcXsitedV();
             iterations++;
@@ -690,8 +673,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                 if (Math.abs(hnew) > Math.abs(h)) {
                     BonV = phasetype == 1 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
-
-            }
+}
 
             if (BonV > 1) {
                 BonV = 1.0 - 1.0e-8;
@@ -724,8 +706,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     }
 
     public double molarVolume2(double pressure, double temperature, double A, double B, int phase) throws util.exception.IsNaNException, util.exception.TooManyIterationsException {
-
-        Z = phase == 0 ? 1.0 : 1.0e-5;
+Z = phase == 0 ? 1.0 : 1.0e-5;
         setMolarVolume(Z * R * temperature / pressure);
         // super.molarVolume(pressure,temperature, A, B, phase);
         int iterations = 0;
@@ -736,8 +717,6 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             A = calcA(this, temperature, pressure, numberOfComponents);
             B =
                     calcB(this, temperature, pressure, numberOfComponents);
-
-
 
             double dFdV = dFdV(), dFdVdV = dFdVdV(), dFdVdVdV = dFdVdVdV();
             double factor1 = 1.0e0, factor2 = 1.0e0;

@@ -5,12 +5,12 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
@@ -22,8 +22,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     /**
      * Creates new bubblePointFlash
      */
-    public SolidComplexTemperatureCalc() {
-    }
+    public SolidComplexTemperatureCalc() {}
 
     public SolidComplexTemperatureCalc(SystemInterface system) {
         super(system);
@@ -46,7 +45,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             // HrefComplex = 4863.59239495220;
             HrefComplex = 6629.1366952637;
             TrefComplex = 244.19;
-
         }
 
         if (comp1.equals("methanol") && comp2.equals("water")) {
@@ -54,7 +52,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             HrefComplex = 8540.0;
             TrefComplex = 171.25;
         }
-
     }
 
     public void runOld() {
@@ -112,7 +109,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     }
 
     @Override
-	public void run() {
+    public void run() {
         double sumx = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -135,17 +132,19 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
             // reading activity coefficients
 
-            double complexActivity = system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1)
-                    * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
-                    * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
-                    * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
+            double complexActivity =
+                    system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1)
+                            * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
+                            * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
+                            * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
 
             if (complexActivity < 1e-5) {
                 complexActivity = 1e-5;
             }
             // logger.info("activityMix.... " + complexActivity);
 
-            double rightSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
+            double rightSide =
+                    neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
             // logger.info("right.... " + rightSide);
             double leftSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(Kcomplex)
                     + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
@@ -167,14 +166,11 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             oldError = error;
             // logger.info("temperature " + temperature);
             system.setTemperature(system.getTemperature() + deltaT);
-
         } while (Math.abs(deltaT) > 0.001 && iteration < 50);
-
     }
 
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
     /**
      * @return the Kcomplex

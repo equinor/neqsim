@@ -1,10 +1,14 @@
 package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
  * Sleipneracetate.java
@@ -17,19 +21,16 @@ import org.apache.logging.log4j.*;
  * @author agrawalnj
  */
 public class Water_MDEA1 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Water_MDEA1.class);
 
     /** Creates a new instance of Sleipneracetate */
-    public Water_MDEA1() {
-    }
+    public Water_MDEA1() {}
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
         FileOutputStream outfile;
         PrintStream p;
         try {
@@ -44,7 +45,6 @@ public class Water_MDEA1 {
         double x = 0;
 
         for (x = 0.85; x <= 1; x += 0.010) {
-
             SystemInterface testSystem = new SystemSrkSchwartzentruberEos(temperature, pressure);
             testSystem.addComponent("water", x);
             testSystem.addComponent("MDEA", 1 - x);
@@ -80,16 +80,15 @@ public class Water_MDEA1 {
                 p = new PrintStream(outfile);
                 // p.println(x+" "+testSystem.getPhase(0).getComponent(0).getx()+"
                 // "+testSystem.getPhase(0).getComponent(1).getx());
-                p.println(x + " " + testSystem.getPhase(0).getComponent(1).getx() + " " + testSystem.getPressure() + " "
+                p.println(x + " " + testSystem.getPhase(0).getComponent(1).getx() + " "
+                        + testSystem.getPressure() + " "
                         + testSystem.getPhase(0).getComponent(1).getFugasityCoeffisient());
                 // p.println(x+" "+aMDEA+" "+awater);
                 p.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());
             }
-
         }
         logger.info("Finished");
-
     }
 }

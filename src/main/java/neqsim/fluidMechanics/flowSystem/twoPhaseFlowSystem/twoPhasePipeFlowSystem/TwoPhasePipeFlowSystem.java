@@ -94,7 +94,7 @@ public class TwoPhasePipeFlowSystem
         // Definerer termodyanmikken5 - initierer et system som benytter SRK tilstandsligning
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
-        
+
         // med trykk 305.3 K og 125 bar - // gjor termodynamiske Flash rutiner tilgjengelige
         neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
                 new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);

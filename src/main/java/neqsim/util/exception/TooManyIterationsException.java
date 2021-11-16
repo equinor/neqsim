@@ -12,18 +12,15 @@ package neqsim.util.exception;
  * @version
  */
 public class TooManyIterationsException extends neqsim.util.exception.ThermoException {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates new <code>IterationException</code> without detail message.
      */
-    public TooManyIterationsException() {
-    }
+    public TooManyIterationsException() {}
 
     /**
-     * Constructs an <code>IterationException</code> with the specified detail
-     * message.
+     * Constructs an <code>IterationException</code> with the specified detail message.
      * 
      * @param msg the detail message.
      */

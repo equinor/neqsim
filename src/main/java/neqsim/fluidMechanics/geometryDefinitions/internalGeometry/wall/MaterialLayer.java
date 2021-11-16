@@ -5,7 +5,6 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall;
  * @author ESOL
  */
 public class MaterialLayer {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -109,5 +108,4 @@ public class MaterialLayer {
     public void setOutsideTemperature(double outsideTemperature) {
         this.outsideTemperature = outsideTemperature;
     }
-
 }

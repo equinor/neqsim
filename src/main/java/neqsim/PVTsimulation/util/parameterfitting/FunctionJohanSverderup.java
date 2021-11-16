@@ -14,7 +14,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -27,8 +26,9 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
-        system.addComponent("methane", -system.getPhase(0).getComponent("methane").getNumberOfmoles());
+    public double calcValue(double[] dependentValues) {
+        system.addComponent("methane",
+                -system.getPhase(0).getComponent("methane").getNumberOfmoles());
         system.addComponent("methane", params[0]);
         system.init_x_y();
         system.init(1);
@@ -40,7 +40,7 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }

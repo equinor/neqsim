@@ -18,12 +18,10 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class AminePhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new AminePhysicalProperties */
-    public AminePhysicalProperties() {
-    }
+    public AminePhysicalProperties() {}
 
     public AminePhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {

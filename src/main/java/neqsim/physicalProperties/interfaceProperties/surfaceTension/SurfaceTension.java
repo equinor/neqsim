@@ -15,14 +15,12 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class SurfaceTension extends InterfaceProperties implements SurfaceTensionInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface system;
 
     /** Creates new SurfaceTension */
-    public SurfaceTension() {
-    }
+    public SurfaceTension() {}
 
     public SurfaceTension(SystemInterface system) {
         this.system = system;
@@ -33,7 +31,7 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
     }
 
     @Override
-	public double calcSurfaceTension(int int1, int int2) {
+    public double calcSurfaceTension(int int1, int int2) {
         return 0.0;
     }
 
@@ -48,5 +46,4 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
         }
         return compNumb;
     }
-
 }

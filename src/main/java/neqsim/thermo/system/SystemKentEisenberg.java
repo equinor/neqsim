@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemKentEisenberg extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
@@ -77,7 +76,7 @@ public class SystemKentEisenberg extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemKentEisenberg clonedSystem = null;
         try {
             clonedSystem = (SystemKentEisenberg) super.clone();
@@ -85,11 +84,10 @@ public class SystemKentEisenberg extends SystemEos {
             logger.error("Cloning failed.", e);
         }
 
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }
-
 }

@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  */
 public class MecMeshSection extends SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     public MecMeshSection(SeparatorSection separatorSection) {
@@ -15,8 +14,9 @@ public class MecMeshSection extends SepDesignSection {
     }
 
     @Override
-	public void calcDesign() {
-        double vesselDiameter = separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
+    public void calcDesign() {
+        double vesselDiameter =
+                separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
         if (vesselDiameter <= 616) {
             totalWeight = 5.0;
         } else if (vesselDiameter <= 770) {

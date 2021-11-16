@@ -13,7 +13,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @author esol
  */
 public class WaxFractionSim extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -34,11 +33,9 @@ public class WaxFractionSim extends BasePVTsimulation {
     }
 
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 
     public void runTuning() {
@@ -115,7 +112,6 @@ public class WaxFractionSim extends BasePVTsimulation {
     }
 
     public static void main(String[] args) {
-
         NeqSimDataBase.setConnectionString(
                 "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
         NeqSimDataBase.setCreateTemporaryTables(true);

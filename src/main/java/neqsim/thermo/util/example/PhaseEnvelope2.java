@@ -14,7 +14,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 public class PhaseEnvelope2 {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
     /**
@@ -38,5 +37,4 @@ public class PhaseEnvelope2 {
             logger.error("error", e);
         }
     }
-
 }

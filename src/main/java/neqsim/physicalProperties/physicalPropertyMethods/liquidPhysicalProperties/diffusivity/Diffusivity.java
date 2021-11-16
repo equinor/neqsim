@@ -10,30 +10,27 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-abstract class Diffusivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
-
+abstract class Diffusivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
     double[][] binaryDiffusionCoeffisients;
     double[] effectiveDiffusionCoefficient;
 
-    /** Creates new Conductivity */
+    public Diffusivity() {}
 
-    public Diffusivity() {
-    }
-
-    public Diffusivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+    public Diffusivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
-        binaryDiffusionCoeffisients = new double[liquidPhase.getPhase().getNumberOfComponents()][liquidPhase.getPhase()
-                .getNumberOfComponents()];
+        binaryDiffusionCoeffisients = new double[liquidPhase.getPhase()
+                .getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
-
     }
 
     @Override
@@ -48,7 +45,8 @@ abstract class Diffusivity
 
         properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0, properties.binaryDiffusionCoeffisients[i], 0,
+            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0,
+                    properties.binaryDiffusionCoeffisients[i], 0,
                     liquidPhase.getPhase().getNumberOfComponents());
         }
         return properties;
@@ -61,8 +59,8 @@ abstract class Diffusivity
 
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-                binaryDiffusionCoeffisients[i][j] = calcBinaryDiffusionCoefficient(i, j,
-                        binaryDiffusionCoefficientMethod);
+                binaryDiffusionCoeffisients[i][j] =
+                        calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
             }
         }
 
@@ -90,10 +88,12 @@ abstract class Diffusivity
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
                 if (i == j) {
                 } else {
-                    sum += liquidPhase.getPhase().getComponents()[j].getx() / binaryDiffusionCoeffisients[i][j];
+                    sum += liquidPhase.getPhase().getComponents()[j].getx()
+                            / binaryDiffusionCoeffisients[i][j];
                 }
             }
-            effectiveDiffusionCoefficient[i] = (1.0 - liquidPhase.getPhase().getComponents()[i].getx()) / sum;
+            effectiveDiffusionCoefficient[i] =
+                    (1.0 - liquidPhase.getPhase().getComponents()[i].getx()) / sum;
         }
     }
 
@@ -116,6 +116,7 @@ abstract class Diffusivity
         if (Double.isNaN(nonIdealCorrection)) {
             nonIdealCorrection = 1.0;
         }
-        return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non ideality factor
+        return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non
+                                                                       // ideality factor
     }
 }

@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package neqsim.util.database;
 
@@ -20,19 +18,22 @@ package neqsim.util.database;
  *
  * Created on 1. november 2001, 08:56
  */
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
      * @return the createTemporaryTables
      */
@@ -69,7 +70,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      * Creates new testPointbase
      */
     public NeqSimDataBase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -78,7 +78,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
@@ -86,7 +85,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      * Creates new NeqSimDataBase
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
-
         javax.naming.InitialContext ctx = null;
         javax.sql.DataSource ds = null;
         try {
@@ -99,13 +97,14 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
             } else if (dataBaseType.equals("MSAccess")) {
                 String dir = "";
                 if (System.getProperty("NeqSim.home") == null) {
-                    dir = neqsim.util.util.FileSystemSettings.root + "\\programming\\NeqSimSourceCode\\java\\neqsim";
+                    dir = neqsim.util.util.FileSystemSettings.root
+                            + "\\programming\\NeqSimSourceCode\\java\\neqsim";
                 } else {
                     dir = System.getProperty("NeqSim.home");
                 }
-                return DriverManager.getConnection(
-                        "jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\NeqSimDatabase");
-
+                return DriverManager
+                        .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
+                                + dir + "\\data\\NeqSimDatabase");
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -179,7 +178,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
         try {
             if (dataBaseType.equals("MSAccess")) {
-                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("H2")) {
                 Class.forName("org.h2.Driver");
             } else if (dataBaseType.equals("H2RT")) {
@@ -191,11 +191,14 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
             } else if (dataBaseType.equals("mySQLNTNU")) {
                 Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("Derby")) {
-                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor().newInstance();
+                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("oracle")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("oracleST")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor()
+                        .newInstance();
             } else {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }
@@ -207,12 +210,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
 
     public Statement getStatement() {
         return statement;
-
     }
 
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**
@@ -251,12 +252,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         try {
             dataSet.next();
             logger.info("dataset " + dataSet.getString("molarmass"));
-
         } catch (Exception e) {
             logger.error("failed " + e.toString());
             throw new RuntimeException(e);
         }
-
     }
 
     public static String[] getComponentNames() {
@@ -278,7 +277,8 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         java.sql.ResultSet dataSet = null;
         String[] names = null;
         try {
-            dataSet = database.getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");
+            dataSet = database
+                    .getResultSet("select count(*) from comp WHERE NAME='" + compName + "'");
             dataSet.next();
             int size = dataSet.getInt(1);
             if (size == 0) {

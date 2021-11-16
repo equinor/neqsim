@@ -3,13 +3,13 @@
  *
  * Created on 22. januar 2001, 22:59
  */
-//double guess[] = {0.0000186887, -0.0001842913, -0.0003730569, -0.0001375761}; //Case I
+// double guess[] = {0.0000186887, -0.0001842913, -0.0003730569, -0.0001375761}; //Case I
 package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,15 +17,13 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
 
     /** Creates new Test */
-    public IonicInteractionParameterFittingFunction_CO2() {
-    }
+    public IonicInteractionParameterFittingFunction_CO2() {}
 
     public IonicInteractionParameterFittingFunction_CO2(int phase, int type) {
         this.phase = phase;
@@ -33,7 +31,7 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -48,14 +46,15 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return (val);
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, CO3numb = 0, OHnumb = 0;
+        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, CO3numb = 0,
+                OHnumb = 0;
 
         int j = 0;
         do {
@@ -109,8 +108,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijParameter(MDEAplusNumb, Waternumb, value);
 
-            if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]
-                    .getRefPhase(MDEAplusNumb)).getElectrolyteMixingRule() != null) {
+            if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1].getRefPhase(MDEAplusNumb))
+                    .getElectrolyteMixingRule() != null) {
                 ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0].getRefPhase(MDEAplusNumb))
                         .getElectrolyteMixingRule().setWijParameter(0, 1, value);
                 ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0].getRefPhase(MDEAplusNumb))
@@ -156,7 +155,5 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                 .setWijParameter(MDEAplusNumb, OHnumb, 1e-10);
         // }
-
     }
-
 }

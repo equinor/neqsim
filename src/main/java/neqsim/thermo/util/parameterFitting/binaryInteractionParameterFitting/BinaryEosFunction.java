@@ -15,7 +15,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class BinaryEosFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new Test */
@@ -25,7 +24,7 @@ public class BinaryEosFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.setPressure(dependentValues[1]);
         thermoOps.TPflash();
@@ -35,34 +34,37 @@ public class BinaryEosFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
-        ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value);
+        ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0,
+                1, value);
+        ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0,
+                1, value);
     }
 
     @Override
-	public double getFittingParams(int i) {
+    public double getFittingParams(int i) {
         return params[i];
     }
 
     @Override
-	public double[] getFittingParams() {
+    public double[] getFittingParams() {
         return params;
     }
 
     @Override
-	public int getNumberOfFittingParams() {
+    public int getNumberOfFittingParams() {
         return params.length;
     }
 
     @Override
-	public void setFittingParams(double[] value) {
+    public void setFittingParams(double[] value) {
         for (int i = 0; i < value.length; i++) {
             params[i] = value[i];
-            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(0, 1, value[i]);
-            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(0, 1, value[i]);
+            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .setBinaryInteractionParameter(0, 1, value[i]);
+            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .setBinaryInteractionParameter(0, 1, value[i]);
         }
     }
-
 }

@@ -11,17 +11,14 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  * @author esol
  * @version
  */
-public class OnePhaseFlowVisualization
-        extends neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
-
+public class OnePhaseFlowVisualization extends
+        neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.FlowSystemVisualization {
     private static final long serialVersionUID = 1000;
 
     /** Creates new OnePhaseFlowVisualization */
-    public OnePhaseFlowVisualization() {
-    }
+    public OnePhaseFlowVisualization() {}
 
     public OnePhaseFlowVisualization(int nodes, int timeSteps) {
         super(nodes, timeSteps);
     }
-
 }

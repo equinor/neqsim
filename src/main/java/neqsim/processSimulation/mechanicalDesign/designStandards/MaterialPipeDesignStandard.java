@@ -6,11 +6,9 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class MaterialPipeDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
-    public MaterialPipeDesignStandard() {
-    }
+    public MaterialPipeDesignStandard() {}
 
     public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
@@ -85,22 +83,23 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         this.grade = grade;
         specificationNumber = specNo;
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
-                        + specificationNumber + "' AND grade='" + grade + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
+                                + specificationNumber + "' AND grade='" + grade + "'"));
                 while (dataSet.next()) {
-
-                    minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength")))
-                            * 0.00689475729;
+                    minimumYeildStrength =
+                            (Double.parseDouble(dataSet.getString("minimumYeildStrength")))
+                                    * 0.00689475729;
 
                     // design factor table has to be developed
                     // Efactor table has to be implemented
                     // temperatureDeratingFactor has to be implemented
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -119,5 +118,4 @@ public class MaterialPipeDesignStandard extends DesignStandard {
             }
         }
     }
-
 }

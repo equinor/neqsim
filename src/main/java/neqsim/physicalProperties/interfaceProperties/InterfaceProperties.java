@@ -19,11 +19,10 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  esol
+ * @author esol
  * @version
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface system;
@@ -39,8 +38,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     /**
      * Creates new InterfaceProperties
      */
-    public InterfaceProperties() {
-    }
+    public InterfaceProperties() {}
 
     public InterfaceProperties(SystemInterface system) {
         numberOfInterfaces = system.getNumberOfPhases() - 1;
@@ -108,12 +106,11 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     /*
-     * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) {
-     * return 0.0; } else { return surfaceTension[numb]; } }
+     * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
+     * else { return surfaceTension[numb]; } }
      */
     @Override
     public double getSurfaceTension(int numb1, int numb2) {
-
         if (system.getPhase(numb1).getPhaseTypeName().equals("gas")
                 && system.getPhase(numb2).getPhaseTypeName().equals("oil")) {
             return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
@@ -177,7 +174,6 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         } else if (phase1.equals("oil") && phase2.equals("aqueous")) {
             liquidLiquidSurfaceTensionCalc = surfTensModel;
         }
-
     }
 
     @Override
@@ -215,7 +211,6 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
             gasAqueousSurfaceTensionCalc = new ParachorSurfaceTension(system);
             liquidLiquidSurfaceTensionCalc = new ParachorSurfaceTension(system);
         }
-
     }
 
     @Override

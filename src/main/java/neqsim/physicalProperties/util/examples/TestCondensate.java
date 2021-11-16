@@ -1,31 +1,19 @@
 package neqsim.physicalProperties.util.examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
  *
- * Created on 27. september 2001, 09:43
+ * @author esol
+ * 
+ * @version
  */
-
-/*
-*
-* @author  esol
-* @version
-*/
 public class TestCondensate {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCondensate.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public TestCondensate() {
-    }
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 1.01325);

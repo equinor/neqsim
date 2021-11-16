@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class SampleValue implements Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     protected FunctionInterface testFunction;
@@ -34,8 +33,7 @@ public class SampleValue implements Cloneable {
     double[] standardDeviations;
 
     /** Creates new SampleValue */
-    public SampleValue() {
-    }
+    public SampleValue() {}
 
     public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues) {
         this.dependentValues = new double[dependentValues.length];
@@ -62,7 +60,8 @@ public class SampleValue implements Cloneable {
         // clonedValue.system = (SystemInterface) system.clone();
         clonedValue.testFunction = (FunctionInterface) testFunction.clone();
         clonedValue.dependentValues = this.dependentValues.clone();
-        System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0, dependentValues.length);
+        System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0,
+                dependentValues.length);
 
         return clonedValue;
     }

@@ -1,8 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompInterfaceTension;
 
 import java.sql.ResultSet;
@@ -22,12 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestParachorFit {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestParachorFit.class);
-
-    /** Creates new TestAcentric */
-    public TestParachorFit() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
@@ -77,6 +67,5 @@ public class TestParachorFit {
         optim.displayCurveFit();
 
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

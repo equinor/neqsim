@@ -1,5 +1,5 @@
 /*
- * TestAcentric.java
+ * TestLevenbergMarquardt.java
  *
  * Created on 23. januar 2001, 22:08
  */
@@ -17,19 +17,13 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class TestLevenbergMarquardt {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new TestAcentric */
-    public TestLevenbergMarquardt() {}
-
     public static void main(String[] args) {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         TestFunction function = new TestFunction();
 
         double sample1[] = {0.1}; // temperature
-        double standardDeviation1[] = {0.1}; //
+        double standardDeviation1[] = {0.1};
         SampleValue sample_01 = new SampleValue(0.5, 0.05, sample1, standardDeviation1);
         sample_01.setFunction(function);
         sampleList.add(sample_01);

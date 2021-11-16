@@ -13,11 +13,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class SimpleTPoutPipeline extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -25,8 +24,7 @@ public class SimpleTPoutPipeline extends Pipeline {
     double dH = 0.0;
 
     /** Creates new Heater */
-    public SimpleTPoutPipeline() {
-    }
+    public SimpleTPoutPipeline() {}
 
     public SimpleTPoutPipeline(StreamInterface inStream) {
         this.inStream = inStream;
@@ -70,7 +68,6 @@ public class SimpleTPoutPipeline extends Pipeline {
         System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
         System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1, 1));
         System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2, 1));
-
     }
 
     @Override
@@ -79,8 +76,7 @@ public class SimpleTPoutPipeline extends Pipeline {
     }
 
     @Override
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     @Override
     public FlowSystemInterface getPipe() {
@@ -88,8 +84,5 @@ public class SimpleTPoutPipeline extends Pipeline {
     }
 
     @Override
-    public void setInitialFlowPattern(String flowPattern) {
-
-    }
-
+    public void setInitialFlowPattern(String flowPattern) {}
 }

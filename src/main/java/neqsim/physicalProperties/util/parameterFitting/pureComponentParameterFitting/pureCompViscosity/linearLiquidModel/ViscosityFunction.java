@@ -14,24 +14,22 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates new ViscosityFunction
      */
-    public ViscosityFunction() {
-    }
+    public ViscosityFunction() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(1);
         system.initPhysicalProperties();
         return system.getPhases()[1].getPhysicalProperties().getViscosity() * 1e3;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[0].setLiquidViscosityParameter(value, i);
         system.getPhases()[1].getComponents()[0].setLiquidViscosityParameter(value, i);

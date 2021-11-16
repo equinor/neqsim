@@ -8,13 +8,11 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  */
 public class MeshSection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     public MeshSection(String type, Separator sep) {
         super(type, sep);
         mechanicalDesign = new MecMeshSection(this);
-
     }
 
     public MeshSection(String name, String type, Separator sep) {
@@ -23,7 +21,7 @@ public class MeshSection extends SeparatorSection {
     }
 
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();
         if (gasLoadF > 0.1) {
             return 0.1 / gasLoadF;

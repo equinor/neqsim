@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class SwellingTest extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] gasInjected = null;
@@ -43,7 +42,8 @@ public class SwellingTest extends BasePVTsimulation {
 
         for (int i = 0; i < getPressures().length; i++) {
             if (gasInjected[i] > 1e-10) {
-                injectionGas.setTotalFlowRate(oilMoles * (gasInjected[i] - oldInjected) / 100.0, "mol/sec");
+                injectionGas.setTotalFlowRate(oilMoles * (gasInjected[i] - oldInjected) / 100.0,
+                        "mol/sec");
                 injectionGas.init(0);
                 injectionGas.init(1);
                 oldInjected = gasInjected[i];
@@ -66,13 +66,12 @@ public class SwellingTest extends BasePVTsimulation {
         }
 
         for (int i = 0; i < getPressures().length; i++) {
-            System.out.println("pressure " + getPressures()[i] + " relativeOil volume " + getRelativeOilVolume()[i]);
+            System.out.println("pressure " + getPressures()[i] + " relativeOil volume "
+                    + getRelativeOilVolume()[i]);
         }
-
     }
 
     public static void main(String[] args) {
-
         SystemInterface oilSystem = new SystemSrkEos(298.0, 50);
         oilSystem.addComponent("methane", 5.01);
         oilSystem.addComponent("propane", 0.01);
@@ -91,7 +90,7 @@ public class SwellingTest extends BasePVTsimulation {
         test.setInjectionGas(gasSystem);
         test.setTemperature(298.15);
         test.setCummulativeMolePercentGasInjected(
-                new double[] { 0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0 });
+                new double[] {0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0});
         test.runCalc();
 
         test.getThermoSystem().display();

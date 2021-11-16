@@ -13,18 +13,21 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public interface EosMixingRulesInterface extends Cloneable {
-
     double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
     double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
-    double calcAi(int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcAi(int compnumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcBi(int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcBi(int compnumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcBij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcBij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcAij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcAij(int compnumb, int j, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
     public void setBinaryInteractionParameterji(int i, int j, double value);
 
@@ -32,7 +35,8 @@ public interface EosMixingRulesInterface extends Cloneable {
 
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
-    public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
     public void setBinaryInteractionParameter(int i, int j, double value);
 

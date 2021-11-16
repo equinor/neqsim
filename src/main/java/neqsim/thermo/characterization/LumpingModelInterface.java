@@ -5,7 +5,6 @@ package neqsim.thermo.characterization;
  * @author ESOL
  */
 public interface LumpingModelInterface {
-
     public void setNumberOfLumpedComponents(int numb);
 
     public String getName();
@@ -23,5 +22,4 @@ public interface LumpingModelInterface {
     public String getLumpedComponentName(int i);
 
     public String[] getLumpedComponentNames();
-
 }

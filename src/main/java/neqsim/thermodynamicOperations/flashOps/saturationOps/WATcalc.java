@@ -5,25 +5,24 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class WATcalc extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WATcalc.class);
 
     /** Creates new bubblePointFlash */
-    public WATcalc() {
-    }
+    public WATcalc() {}
 
     public WATcalc(SystemInterface system) {
         super(system);
     }
 
     @Override
-	public void run() {
+    public void run() {
         double sumx = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -40,7 +39,8 @@ public class WATcalc extends constantDutyTemperatureFlash {
 
             sumx = 0.0;
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                system.getPhases()[5].getComponent(i).setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
+                system.getPhases()[5].getComponent(i)
+                        .setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
                 Ksolid[i] = system.getPhase(0).getComponent(i).getFugasityCoefficient()
                         / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
                 sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
@@ -68,6 +68,5 @@ public class WATcalc extends constantDutyTemperatureFlash {
     }
 
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 }

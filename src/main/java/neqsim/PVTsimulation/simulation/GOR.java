@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class GOR extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -27,10 +26,8 @@ public class GOR extends BasePVTsimulation {
     }
 
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
-
     }
 
     public void runCalc() {
@@ -102,11 +99,10 @@ public class GOR extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
 
         GOR sepSim = new GOR(tempSystem);
-        double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
-        double[] pres = { 500, 400, 200, 100, 50.0, 5.0, 1.01325 };
+        double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
+        double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setTemperaturesAndPressures(temps, pres);
         sepSim.runCalc();
-
     }
 
     /**

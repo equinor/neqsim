@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -25,19 +23,17 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class TVflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Vspec = 0;
     Flash tpFlash;
 
     /** Creates new TVflash */
-    public TVflash() {
-    }
+    public TVflash() {}
 
     public TVflash(SystemInterface system, double Vspec) {
         this.system = system;
@@ -48,7 +44,8 @@ public class TVflash extends Flash {
     public double calcdQdVV() {
         double dQdVV = 0.0;
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
-            dQdVV += 1.0 / (system.getPhase(i).getVolume() / system.getVolume()) * 1.0 / system.getPhase(i).getdPdVTn();// *system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
+            dQdVV += 1.0 / (system.getPhase(i).getVolume() / system.getVolume()) * 1.0
+                    / system.getPhase(i).getdPdVTn();// *system.getPhase(i).getdVdP();system.getPhase(i).getVolume()/system.getVolume()*
         }
         return dQdVV;
     }
@@ -74,7 +71,8 @@ public class TVflash extends Flash {
             // System.out.println(" dQdv " + calcdQdV() + " new pressure " + nyPres + "
             // error " + Math.abs((nyPres-oldPres)/(nyPres)) + "
             // numberofphases"+system.getNumberOfPhases());
-        } while (Math.abs((nyPres - oldPres) / (nyPres)) > 1e-9 && iterations < 1000 || iterations < 3);
+        } while (Math.abs((nyPres - oldPres) / (nyPres)) > 1e-9 && iterations < 1000
+                || iterations < 3);
         return nyPres;
     }
 

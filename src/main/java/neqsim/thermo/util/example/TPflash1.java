@@ -6,30 +6,15 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
  *
- * Created on 27. september 2001, 09:43
+ * @author esol @version
  */
-
-/*
-*
-* @author esol @version
-*/
 public class TPflash1 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash1.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public TPflash1() {
-    }
-
     public static void main(String[] args) {
-        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 100.0, 0.5);//
-
+        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 100.0, 0.5);
         // testSystem.addComponent("CO2", 10.01);
         testSystem.addComponent("water", 10.000083156844);
 
@@ -60,7 +45,5 @@ public class TPflash1 {
         // System.out.print("liquid enthalpy " +
         // testSystem.getPhase(1).getEnthalpy("kJ/kg"));
         testSystem.display();
-
     }
-
 }

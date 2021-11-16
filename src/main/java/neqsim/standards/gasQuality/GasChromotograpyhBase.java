@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class GasChromotograpyhBase extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
 
     String componentName = "", unit = "mol%";
@@ -30,14 +29,13 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
     }
 
     @Override
-	public void calculate() {
+    public void calculate() {
         thermoSystem.init(0);
         thermoSystem.init(0);
-
     }
 
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         unit = returnUnit;
         if (returnUnit.equals("mol%")) {
             return 100 * thermoSystem.getPhase(0).getComponent(componentName).getz();
@@ -50,17 +48,17 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
     }
 
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         return thermoSystem.getPhase(0).getComponent(componentName).getz();
     }
 
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         return unit;
     }
 
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return true;
     }
 }

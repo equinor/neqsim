@@ -7,15 +7,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class Condenser extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
-
     private static final long serialVersionUID = 1000;
 
     private double refluxRatio = 0.1;
     boolean refluxIsSet = false;
     double duty = 0.0;
 
-    public Condenser() {
-    }
+    public Condenser() {}
 
     /**
      * @return the refluxRatio
@@ -44,7 +42,8 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         if (!refluxIsSet) {
             super.run();
         } else {
-            SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
+            SystemInterface thermoSystem2 =
+                    (SystemInterface) streams.get(0).getThermoSystem().clone();
             // System.out.println("total number of moles " +
             // thermoSystem2.getTotalNumberOfMoles());
             mixedStream.setThermoSystem(thermoSystem2);

@@ -5,80 +5,89 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
+        private static final long serialVersionUID = 1000;
+        static Logger logger = LogManager.getLogger(bubblePointTemperatureFlash.class);
 
-    private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(bubblePointTemperatureFlash.class);
+        /**
+         * Creates new bubblePointFlash
+         */
+        public bubblePointTemperatureFlash() {}
 
-    /**
-     * Creates new bubblePointFlash
-     */
-    public bubblePointTemperatureFlash() {
-    }
-
-    public bubblePointTemperatureFlash(SystemInterface system) {
-        super(system);
-    }
-
-    @Override
-	public void run() {
-
-        int iterations = 0, maxNumberOfIterations = 10000;
-        double yold = 0, ytotal = 1;
-        double deriv = 0, funk = 0;
-
-        for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-            system.getPhases()[1].getComponents()[i].setx(system.getPhases()[0].getComponents()[i].getz());
-            system.getPhases()[0].getComponents()[i].setx(
-                    system.getPhases()[0].getComponents()[i].getK() * system.getPhases()[1].getComponents()[i].getx());
+        public bubblePointTemperatureFlash(SystemInterface system) {
+                super(system);
         }
-        system.setNumberOfPhases(2);
-        do {
-            system.setTemperature((system.getTemperature() + system.getTemperature() / ytotal) / 10);
-            // logger.info("temp . " + system.getTemperature());
-            funk = 0;
-            deriv = 0;
-            ytotal = 0;
-            system.init(2);
-            for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
 
+        @Override
+        public void run() {
+                int iterations = 0, maxNumberOfIterations = 10000;
+                double yold = 0, ytotal = 1;
+                double deriv = 0, funk = 0;
+
+                for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+                        system.getPhases()[1].getComponents()[i]
+                                        .setx(system.getPhases()[0].getComponents()[i].getz());
+                        system.getPhases()[0].getComponents()[i]
+                                        .setx(system.getPhases()[0].getComponents()[i].getK()
+                                                        * system.getPhases()[1].getComponents()[i]
+                                                                        .getx());
+                }
+                system.setNumberOfPhases(2);
                 do {
-                    iterations++;
+                        system.setTemperature(
+                                        (system.getTemperature() + system.getTemperature() / ytotal)
+                                                        / 10);
+                        // logger.info("temp . " + system.getTemperature());
+                        funk = 0;
+                        deriv = 0;
+                        ytotal = 0;
+                        system.init(2);
+                        for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+                                do {
+                                        iterations++;
 
-                    yold = system.getPhases()[0].getComponents()[i].getx();
-                    system.getPhases()[0].getComponents()[i]
-                            .setK(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                                    / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
-                    system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
-                    system.getPhases()[0].getComponents()[i].setx(system.getPhases()[1].getComponents()[i].getx()
-                            * system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                            / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
+                                        yold = system.getPhases()[0].getComponents()[i].getx();
+                                        system.getPhases()[0].getComponents()[i].setK(system
+                                                        .getPhases()[1].getComponents()[i]
+                                                                        .getFugasityCoeffisient()
+                                                        / system.getPhases()[0].getComponents()[i]
+                                                                        .getFugasityCoeffisient());
+                                        system.getPhases()[1].getComponents()[i].setK(
+                                                        system.getPhases()[0].getComponents()[i]
+                                                                        .getK());
+                                        system.getPhases()[0].getComponents()[i].setx(system
+                                                        .getPhases()[1].getComponents()[i].getx()
+                                                        * system.getPhases()[1].getComponents()[i]
+                                                                        .getFugasityCoeffisient()
+                                                        / system.getPhases()[0].getComponents()[i]
+                                                                        .getFugasityCoeffisient());
+                                } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i]
+                                                .getx()) > 1e-10)
+                                                && (iterations < maxNumberOfIterations));
 
-                } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
-                        && (iterations < maxNumberOfIterations));
+                                ytotal += system.getPhases()[0].getComponents()[i].getx();
+                                funk += system.getPhases()[1].getComponents()[i].getx()
+                                                * system.getPhases()[1].getComponents()[i].getK();
+                                deriv += system.getPhases()[1].getComponents()[i].getx()
+                                                * system.getPhases()[1].getComponents()[i].getK()
+                                                * (system.getPhases()[1].getComponents()[i]
+                                                                .getdfugdt()
+                                                                - system.getPhases()[0]
+                                                                                .getComponents()[i]
+                                                                                                .getdfugdt());
+                        }
 
-                ytotal += system.getPhases()[0].getComponents()[i].getx();
-                funk += system.getPhases()[1].getComponents()[i].getx()
-                        * system.getPhases()[1].getComponents()[i].getK();
-                deriv += system.getPhases()[1].getComponents()[i].getx()
-                        * system.getPhases()[1].getComponents()[i].getK()
-                        * (system.getPhases()[1].getComponents()[i].getdfugdt()
-                                - system.getPhases()[0].getComponents()[i].getdfugdt());
-            }
+                        // logger.info("FUNK: " + funk);
+                        logger.info("temp: " + system.getTemperature());
+                        // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
+                        system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
+                } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
+        }
 
-            // logger.info("FUNK: " + funk);
-            logger.info("temp: " + system.getTemperature());
-            // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
-            system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
-
-        } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
-
-    }
-
-    @Override
-	public void printToFile(String name) {
-    }
+        @Override
+        public void printToFile(String name) {}
 }

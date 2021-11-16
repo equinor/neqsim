@@ -2,16 +2,15 @@ package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.Mixer;
+import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processEquipment.separator.*;
 
 public class oxygenRemovalWater {
-
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
         neqsim.thermo.Fluid.setHasWater(true);
-        neqsim.thermo.system.SystemInterface fluid1 = neqsim.thermo.Fluid.create("air").autoSelectModel();
+        neqsim.thermo.system.SystemInterface fluid1 =
+                neqsim.thermo.Fluid.create("air").autoSelectModel();
         fluid1.setMultiPhaseCheck(true);
         neqsim.thermo.system.SystemInterface fluid2 = neqsim.thermo.Fluid.create("water");
         fluid1.setPressure(1.01325);
@@ -36,7 +35,8 @@ public class oxygenRemovalWater {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutStream());
         LP_valve.setOutletPressure(30.0e-3);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_air);
         operations.add(stream_water);
         operations.add(mix);
@@ -51,5 +51,4 @@ public class oxygenRemovalWater {
         double wtFracO2 = LP_valve.getThermoSystem().getPhase("aqueous").getWtFrac("oxygen") * 1e9;
         System.out.println("oxygen ppb " + wtFracO2);
     }
-
 }

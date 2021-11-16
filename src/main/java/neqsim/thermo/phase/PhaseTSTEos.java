@@ -14,7 +14,6 @@ import neqsim.thermo.component.ComponentTST;
  * @version
  */
 public class PhaseTSTEos extends PhaseEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new PhaseSrkEos */
@@ -27,7 +26,7 @@ public class PhaseTSTEos extends PhaseEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         PhaseTSTEos clonedPhase = null;
         try {
             clonedPhase = (PhaseTSTEos) super.clone();
@@ -39,9 +38,10 @@ public class PhaseTSTEos extends PhaseEos {
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentTST(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentTST(componentName, moles, molesInPhase, compNumber);
     }
-
 }

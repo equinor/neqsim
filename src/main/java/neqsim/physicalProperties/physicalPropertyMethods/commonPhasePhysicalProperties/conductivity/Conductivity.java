@@ -15,23 +15,23 @@ import org.apache.logging.log4j.*;
  */
 abstract class Conductivity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
     double conductivity = 0;
 
     /** Creates new Conductivity */
-    public Conductivity() {
-    }
+    public Conductivity() {}
 
-    public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    public Conductivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Conductivity properties = null;
 
         try {
@@ -42,5 +42,4 @@ abstract class Conductivity extends
 
         return properties;
     }
-
 }

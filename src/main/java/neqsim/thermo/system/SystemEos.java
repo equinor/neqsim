@@ -12,7 +12,6 @@ package neqsim.thermo.system;
  * @version
  */
 abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new System_EOS */
@@ -24,5 +23,4 @@ abstract class SystemEos extends neqsim.thermo.system.SystemThermo {
     public SystemEos() {
         super();
     }
-
 }

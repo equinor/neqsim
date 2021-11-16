@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.processSimulation.mechanicalDesign;
@@ -39,7 +37,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  * @author esol
  */
 public class MechanicalDesign implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -52,7 +49,8 @@ public class MechanicalDesign implements java.io.Serializable {
     /**
      * @param materialPipeDesignStandard the materialPipeDesignStandard to set
      */
-    public void setMaterialPipeDesignStandard(MaterialPipeDesignStandard materialPipeDesignStandard) {
+    public void setMaterialPipeDesignStandard(
+            MaterialPipeDesignStandard materialPipeDesignStandard) {
         this.materialPipeDesignStandard = materialPipeDesignStandard;
     }
 
@@ -86,8 +84,10 @@ public class MechanicalDesign implements java.io.Serializable {
     // private String valveDesignStandard="Statoil";
     private double tensileStrength = 483; // MPa
     private double jointEfficiency = 1.0; // fully radiographed
-    private MaterialPlateDesignStandard materialPlateDesignStandard = new MaterialPlateDesignStandard();
-    private MaterialPipeDesignStandard materialPipeDesignStandard = new MaterialPipeDesignStandard();
+    private MaterialPlateDesignStandard materialPlateDesignStandard =
+            new MaterialPlateDesignStandard();
+    private MaterialPipeDesignStandard materialPipeDesignStandard =
+            new MaterialPipeDesignStandard();
     private String construtionMaterial = "steel";
     private double corrosionAllowanse = 0.0; // mm
     private double pressureMarginFactor = 0.1;
@@ -96,10 +96,12 @@ public class MechanicalDesign implements java.io.Serializable {
     public double wallThickness = 0.0;
     public double tantanLength = 0.0; // tantan is same as seamtoseam length
     private double weightTotal = 0.0, volumeTotal = 2.0;
-    public double weigthInternals = 0.0, weightNozzle = 0.0, weightPiping = 0.0, weightElectroInstrument = 0.0,
-            weightStructualSteel = 0.0, weightVessel = 0.0, weigthVesselShell = 0.0;
+    public double weigthInternals = 0.0, weightNozzle = 0.0, weightPiping = 0.0,
+            weightElectroInstrument = 0.0, weightStructualSteel = 0.0, weightVessel = 0.0,
+            weigthVesselShell = 0.0;
     public double moduleHeight = 0.0, moduleWidth = 0, moduleLength = 0.0;
-    public Hashtable<String, DesignStandard> designStandard = new Hashtable<String, DesignStandard>();
+    public Hashtable<String, DesignStandard> designStandard =
+            new Hashtable<String, DesignStandard>();
     public UnitCostEstimateBaseClass costEstimate = null;
 
     public MechanicalDesign(ProcessEquipmentInterface processEquipment) {
@@ -122,8 +124,7 @@ public class MechanicalDesign implements java.io.Serializable {
         return getMinOperationPressure() * (1.0 - pressureMarginFactor);
     }
 
-    public void readDesignSpecifications() {
-    }
+    public void readDesignSpecifications() {}
 
     /**
      * @param maxPressure the maxPressure to set
@@ -194,13 +195,11 @@ public class MechanicalDesign implements java.io.Serializable {
             setCompanySpecificDesignStandards("default");
         }
         readDesignSpecifications();
-
     }
 
     public void setDesign() {
         System.out.println("reading design paramters for: " + processEquipment.getName());
         readDesignSpecifications();
-
     }
 
     /**
@@ -289,23 +288,24 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * @param companySpecificDesignStandards the companySpecificDesignStandards to
-     *                                       set
+     * @param companySpecificDesignStandards the companySpecificDesignStandards to set
      */
     public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
         this.companySpecificDesignStandards = companySpecificDesignStandards;
 
         if (companySpecificDesignStandards.equals("StatoilTR")) {
-
             getDesignStandard().put("pressure vessel design code",
                     new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
-            getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
+            getDesignStandard().put("separator process design",
+                    new SeparatorDesignStandard("StatoilTR", this));
             getDesignStandard().put("gas scrubber process design",
                     new GasScrubberDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("adsorption dehydration process design",
                     new AdsorptionDehydrationDesignStandard("", this));
-            getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("pipeline design codes",
+                    new PipelineDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("compressor design codes",
+                    new CompressorDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("material plate design codes",
                     new MaterialPlateDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("plate Joint Efficiency design codes",
@@ -317,24 +317,26 @@ public class MechanicalDesign implements java.io.Serializable {
             // setPipingDesignStandard("TR1945_Statoil");
             // setValveDesignStandard("TR1903_Statoil");
         } else {
-            System.out.println(
-                    "using default mechanical design standards...no design standard " + companySpecificDesignStandards);
+            System.out.println("using default mechanical design standards...no design standard "
+                    + companySpecificDesignStandards);
             getDesignStandard().put("pressure vessel design code",
                     new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
-            getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));
+            getDesignStandard().put("separator process design",
+                    new SeparatorDesignStandard("StatoilTR", this));
             getDesignStandard().put("gas scrubber process design",
                     new GasScrubberDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("adsorption dehydration process design",
                     new AdsorptionDehydrationDesignStandard("", this));
-            getDesignStandard().put("pipeline design codes", new PipelineDesignStandard("Statoil_TR1414", this));
-            getDesignStandard().put("compressor design codes", new CompressorDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("pipeline design codes",
+                    new PipelineDesignStandard("Statoil_TR1414", this));
+            getDesignStandard().put("compressor design codes",
+                    new CompressorDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("material plate design codes",
                     new MaterialPlateDesignStandard("Statoil_TR1414", this));
             getDesignStandard().put("plate Joint Efficiency design codes",
                     new JointEfficiencyPlateStandard("Statoil_TR1414", this));
             getDesignStandard().put("material pipe design codes",
                     new MaterialPipeDesignStandard("Statoil_TR1414", this));
-
         }
         hasSetCompanySpecificDesignStandards = true;
     }
@@ -669,12 +671,11 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     public void displayResults() {
-
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "", "Volume", "Weight" };
+        String[] names = {"", "Volume", "Weight"};
         String[][] table = new String[3][3];// createTable(getProcessEquipment().getName());
         table[1][0] = getProcessEquipment().getName();
         table[1][1] = Double.toString(getWeightTotal());
@@ -702,11 +703,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * @param hasSetCompanySpecificDesignStandards the
-     *                                             hasSetCompanySpecificDesignStandards
-     *                                             to set
+     * @param hasSetCompanySpecificDesignStandards the hasSetCompanySpecificDesignStandards to set
      */
-    public void setHasSetCompanySpecificDesignStandards(boolean hasSetCompanySpecificDesignStandards) {
+    public void setHasSetCompanySpecificDesignStandards(
+            boolean hasSetCompanySpecificDesignStandards) {
         this.hasSetCompanySpecificDesignStandards = hasSetCompanySpecificDesignStandards;
     }
 
@@ -716,5 +716,4 @@ public class MechanicalDesign implements java.io.Serializable {
     public UnitCostEstimateBaseClass getCostEstimate() {
         return costEstimate;
     }
-
 }

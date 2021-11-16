@@ -6,27 +6,15 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
  *
- * Created on 27. september 2001, 09:43
- */
-
-/*
- *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestUNIFAC {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestUNIFAC.class);
 
-    /** Creates new TPflash */
-    public TestUNIFAC() {
-    }
-
     public static void main(String args[]) {
-        //
         SystemInterface testSystem = new SystemPsrkEos(273.15 + 120.0, 0.15);
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15 + 25.0,
         // 1.01325301325);
@@ -58,11 +46,9 @@ public class TestUNIFAC {
             // testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString(), e);
-
         }
         testSystem.display();
         logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
         logger.info("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
     }
-
 }

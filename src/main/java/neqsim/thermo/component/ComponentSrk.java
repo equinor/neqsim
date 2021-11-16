@@ -1,8 +1,8 @@
 /*
-* System_SRK_EOS.java
-*
-* Created on 8. april 2000, 23:14
-*/
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:14
+ */
 package neqsim.thermo.component;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -14,7 +14,6 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
  * @version
  */
 public class ComponentSrk extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -23,8 +22,7 @@ public class ComponentSrk extends ComponentEos {
      */
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
-    public ComponentSrk() {
-    }
+    public ComponentSrk() {}
 
     public ComponentSrk(double moles) {
         numberOfMoles = moles;
@@ -33,8 +31,8 @@ public class ComponentSrk extends ComponentEos {
     public ComponentSrk(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
-        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-                / criticalPressure;
+        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
+                * criticalTemperature / criticalPressure;
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         delta1 = 1.0;
         delta2 = 0.0;
@@ -42,10 +40,9 @@ public class ComponentSrk extends ComponentEos {
         // atractiveParameter = new AtractiveTermSchwartzentruber(this);
         setAtractiveParameter(new AtractiveTermSrk(this));
 
-        double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
-                -0.1611763157 };
+        double[] surfTensInfluenceParamtemp =
+                {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     public ComponentSrk(int number, double TC, double PC, double M, double a, double moles) {
@@ -53,8 +50,7 @@ public class ComponentSrk extends ComponentEos {
     }
 
     @Override
-	public Object clone() {
-
+    public Object clone() {
         ComponentSrk clonedComponent = null;
         try {
             clonedComponent = (ComponentSrk) super.clone();
@@ -66,12 +62,13 @@ public class ComponentSrk extends ComponentEos {
     }
 
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (ionicCharge != 0) {
             return 0.0;
         }
@@ -84,12 +81,13 @@ public class ComponentSrk extends ComponentEos {
     }
 
     @Override
-	public double calca() {
-        return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+    public double calca() {
+        return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature
+                / criticalPressure;
     }
 
     @Override
-	public double calcb() {
+    public double calcb() {
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     }
 
@@ -106,7 +104,7 @@ public class ComponentSrk extends ComponentEos {
     }
 
     @Override
-	public double getSurfaceTenisionInfluenceParameter(double temperature) {
+    public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();
         if (TR < 0) {
             if (componentName.equals("CO2")) {
@@ -134,6 +132,5 @@ public class ComponentSrk extends ComponentEos {
         // Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0));
         return (aT * 1e-5 * Math.pow(b * 1e-5, 2.0 / 3.0) * (AA * TR + BB))
                 / Math.pow(ThermodynamicConstantsInterface.avagadroNumber, 2.0 / 3.0);
-
     }
 }

@@ -21,12 +21,10 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class FluidBoundarySystemReactive extends FluidBoundarySystem {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new FluidBoundarySystemReactive */
-    public FluidBoundarySystemReactive() {
-    }
+    public FluidBoundarySystemReactive() {}
 
     public FluidBoundarySystemReactive(FluidBoundaryInterface boundary) {
         super(boundary);
@@ -34,7 +32,7 @@ public class FluidBoundarySystemReactive extends FluidBoundarySystem {
     }
 
     @Override
-	public void createSystem() {
+    public void createSystem() {
         nodes = new FluidBoundaryNodeReactive[numberOfNodes];
         super.createSystem();
 
@@ -63,13 +61,11 @@ public class FluidBoundarySystemReactive extends FluidBoundarySystem {
         test.getFluidBoundary().setEnhancementType(0);
         test.calcFluxes();
         /*
-         * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().
-         * createSystem();
+         * test.getFluidBoundary().getEnhancementFactor().getNumericInterface(). createSystem();
          * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
          * System.out.println("enhancement " +
          * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().
          * getEnhancementFactor(0));
          **/
     }
-
 }

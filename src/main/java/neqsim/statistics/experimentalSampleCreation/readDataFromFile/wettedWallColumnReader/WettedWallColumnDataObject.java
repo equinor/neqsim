@@ -15,7 +15,6 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject;
  * @version
  */
 public class WettedWallColumnDataObject extends DataObject {
-
     private static final long serialVersionUID = 1000;
 
     double pressure = 0, inletGasTemperature = 0, outletGasTemperature = 0;
@@ -24,8 +23,7 @@ public class WettedWallColumnDataObject extends DataObject {
     Time time = null;
 
     /** Creates new WettedWallColumnDataObject */
-    public WettedWallColumnDataObject() {
-    }
+    public WettedWallColumnDataObject() {}
 
     public void setTime(String time) {
         this.time = Time.valueOf(time);
@@ -106,5 +104,4 @@ public class WettedWallColumnDataObject extends DataObject {
     public double getInletLiquidFlow() {
         return this.inletLiquidFlow;
     }
-
 }

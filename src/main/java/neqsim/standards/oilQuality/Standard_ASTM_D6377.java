@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package neqsim.standards.oilQuality;
 
@@ -22,7 +20,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
     String unit = "bara";
     double RVP = 1.0;
@@ -32,7 +29,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     }
 
     @Override
-	public void calculate() {
+    public void calculate() {
         this.thermoSystem.setTemperature(273.15 + 30.7);
         this.thermoSystem.setPressure(1.01325);
 
@@ -42,26 +39,25 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
             e.printStackTrace();
         }
         RVP = this.thermoSystem.getPressure();
-
     }
 
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return true;
     }
 
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         return unit;
     }
 
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         return RVP;
     }
 
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         return RVP;
     }
 }

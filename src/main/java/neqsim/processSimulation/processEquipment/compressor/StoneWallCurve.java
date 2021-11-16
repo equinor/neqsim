@@ -3,7 +3,8 @@ package neqsim.processSimulation.processEquipment.compressor;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class StoneWallCurve implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -46,10 +47,7 @@ public class StoneWallCurve implements java.io.Serializable {
             return false;
     }
 
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
-    }
+    public static void main(String[] args) {}
 
     boolean isActive() {
         return isActive;
@@ -58,5 +56,4 @@ public class StoneWallCurve implements java.io.Serializable {
     void setActive(boolean isActive) {
         this.isActive = isActive;
     }
-
 }

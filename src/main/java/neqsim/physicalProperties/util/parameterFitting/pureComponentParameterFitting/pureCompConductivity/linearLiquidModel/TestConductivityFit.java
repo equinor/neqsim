@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompConductivity.linearLiquidModel;
 
 import java.sql.ResultSet;
@@ -23,12 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestConductivityFit {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestConductivityFit.class);
-
-    /** Creates new TestAcentric */
-    public TestConductivityFit() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
@@ -42,7 +31,6 @@ public class TestConductivityFit {
         // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
         try {
-
             logger.info("adding....");
             while (dataSet.next()) {
                 ConductivityFunction function = new ConductivityFunction();
@@ -87,6 +75,5 @@ public class TestConductivityFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

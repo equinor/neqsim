@@ -3,15 +3,13 @@ package neqsim.processSimulation.processEquipment.util;
 import java.util.ArrayList;
 
 public class RecycleController implements java.io.Serializable {
-
     ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
     ArrayList<Integer> priorityArray = new ArrayList<Integer>();
     private int currentPriorityLevel = 100;
     private int minimumPriorityLevel = 100;
     private int maximumPriorityLevel = 100;
 
-    public RecycleController() {
-    }
+    public RecycleController() {}
 
     public void init() {
         for (Recycle recyc : recycleArray) {
@@ -19,11 +17,9 @@ public class RecycleController implements java.io.Serializable {
                 minimumPriorityLevel = recyc.getPriority();
             if (recyc.getPriority() > maximumPriorityLevel)
                 maximumPriorityLevel = recyc.getPriority();
-
         }
 
         currentPriorityLevel = minimumPriorityLevel;
-
     }
 
     public void resetPriorityLevel() {
@@ -90,10 +86,7 @@ public class RecycleController implements java.io.Serializable {
         priorityArray.clear();
     }
 
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
-    }
+    public static void main(String[] args) {}
 
     public int getCurrentPriorityLevel() {
         return currentPriorityLevel;
@@ -102,5 +95,4 @@ public class RecycleController implements java.io.Serializable {
     public void setCurrentPriorityLevel(int currentPriorityLevel) {
         this.currentPriorityLevel = currentPriorityLevel;
     }
-
 }

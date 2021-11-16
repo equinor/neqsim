@@ -25,11 +25,10 @@ import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class lineFitPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType x, y, index;
@@ -56,7 +55,6 @@ public class lineFitPlot {
 
     /** Creates new visAdContourPlot */
     public lineFitPlot(String firstax, String yax) throws RemoteException, VisADException {
-
         x = RealType.getRealType("test1");
         y = RealType.getRealType("test");
 
@@ -130,7 +128,6 @@ public class lineFitPlot {
      */
 
     public void init() throws RemoteException, VisADException {
-
         index_set = new Integer1DSet(index, xy_samples[0].length);
         points_ff = new FlatField(func_i_tuple, index_set);
         points_ff.setSamples(xy_samples);
@@ -189,7 +186,6 @@ public class lineFitPlot {
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
-
         lineFitPlot plot = new lineFitPlot("long", "alt");
 
         double[][] z = {{0, 0.5, 1, 3, 1}, {2, 6, 4, 1, 3}, {1, 3, 2, 1, 1}, {3, 2, 1, 3, 2},

@@ -12,11 +12,8 @@ package neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver;
  * @version
  */
 public abstract class OnePhaseFlowSolver extends neqsim.fluidMechanics.flowSolver.FlowSolver {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new OnePhaseFlowSolver */
-    public OnePhaseFlowSolver() {
-    }
-
+    public OnePhaseFlowSolver() {}
 }

@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  */
 public class MechManwaySection extends SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     public MechManwaySection(SeparatorSection separatorSection) {
@@ -16,8 +15,7 @@ public class MechManwaySection extends SepDesignSection {
     }
 
     @Override
-	public void calcDesign() {
-
+    public void calcDesign() {
         if (nominalSize.equals("DN 500")) {
             if (getANSIclass() == 150) {
                 totalWeight = 317;

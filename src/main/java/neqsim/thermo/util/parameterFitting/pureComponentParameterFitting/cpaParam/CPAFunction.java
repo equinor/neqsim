@@ -5,8 +5,9 @@
  */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -14,18 +15,16 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class CPAFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunction.class);
 
     /**
      * Creates new Test
      */
-    public CPAFunction() {
-    }
+    public CPAFunction() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         // system.setTemperature(dependentValues[0]);
         system.init(0);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -40,12 +39,12 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
 
         // i += 5;
@@ -90,6 +89,5 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhases()[0].getComponents()[0].setVolumeCorrectionT_CPA(value);
             system.getPhases()[1].getComponents()[0].setVolumeCorrectionT_CPA(value);
         }
-
     }
 }

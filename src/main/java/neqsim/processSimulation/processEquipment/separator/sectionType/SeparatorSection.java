@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  */
 public class SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     private double efficiency = 0.95;
@@ -68,8 +67,8 @@ public class SeparatorSection {
     public double getMinimumLiquidSealHeight() {
         return getPresureDrop() * 1e5 / neqsim.thermo.ThermodynamicConstantsInterface.gravity
                 / (getSeparator().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity()
-                        - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
-
+                        - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties()
+                                .getDensity());
     }
 
     /**

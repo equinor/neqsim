@@ -1,26 +1,23 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 public class sysNewtonRhapsonTPflash implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -39,13 +36,13 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
     Matrix dx;
     Matrix xcoef;
 
-    public sysNewtonRhapsonTPflash() {
-    }
+    public sysNewtonRhapsonTPflash() {}
 
     /**
      * Creates new nonlin
      */
-    public sysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {
+    public sysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases,
+            int numberOfComponents) {
         this.system = system;
         this.numberOfComponents = numberOfComponents;
         neq = numberOfComponents;
@@ -60,13 +57,11 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
 
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
-
-            fvec.set(i, 0,
-                    Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+            fvec.set(i, 0, Math
+                    .log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
                             * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
-                            - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
-                                    * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
-
+                    - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
+                            * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
         }
     }
 
@@ -83,8 +78,9 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
                 tempJ = 1.0 / system.getBeta()
                         * (dij / system.getPhase(0).getComponents()[i].getx() - 1.0
                                 + system.getPhase(0).getComponents()[i].getdfugdx(j))
-                        + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhase(1).getComponents()[i].getx() - 1.0
-                                + system.getPhase(1).getComponents()[i].getdfugdx(j));
+                        + 1.0 / (1.0 - system.getBeta())
+                                * (dij / system.getPhase(1).getComponents()[i].getx() - 1.0
+                                        + system.getPhase(1).getComponents()[i].getdfugdx(j));
                 Jac.set(i, j, tempJ);
             }
         }
@@ -107,11 +103,12 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhase(0).getComponents()[i].setx(u.get(i, 0) / system.getBeta());
             system.getPhase(1).getComponents()[i]
-                    .setx((system.getPhase(0).getComponents()[i].getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
-            system.getPhase(0).getComponents()[i]
-                    .setK(system.getPhase(0).getComponents()[i].getx() / system.getPhase(1).getComponents()[i].getx());
-            system.getPhase(1).getComponents()[i].setK(system.getPhase(0).getComponents()[i].getK());
-
+                    .setx((system.getPhase(0).getComponents()[i].getz() - u.get(i, 0))
+                            / (1.0 - system.getBeta()));
+            system.getPhase(0).getComponents()[i].setK(system.getPhase(0).getComponents()[i].getx()
+                    / system.getPhase(1).getComponents()[i].getx());
+            system.getPhase(1).getComponents()[i]
+                    .setK(system.getPhase(0).getComponents()[i].getK());
         }
 
         system.init(3);

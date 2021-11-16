@@ -6,7 +6,7 @@
 
 package neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.stirredCellSolver;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver;
 import neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
@@ -18,8 +18,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author Even Solbraa
  * @version
  */
-public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.thermo.ThermodynamicConstantsInterface {
-
+public class StirredCellSolver extends TwoPhasePipeFlowSolver
+        implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     Matrix diffMatrix;
     double dn[][];
@@ -36,8 +36,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
     protected double oldEnergy[][];
 
     /** Creates new steadstateOnePhasePipeFlowSolver */
-    public StirredCellSolver() {
-    }
+    public StirredCellSolver() {}
 
     /** Creates new nonlin */
     public StirredCellSolver(FlowSystemInterface pipe, double length, int nodes) {
@@ -50,17 +49,19 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         oldMass = new double[2][nodes];
         oldComp = new double[2][nodes];
         oldImpuls = new double[2][nodes];
-        diff4Matrix = new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        diff4Matrix =
+                new Matrix[pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()];
         oldEnergy = new double[2][nodes];
         oldVelocity = new double[2][nodes];
         oldDensity = new double[2][nodes];
         oldInternalEnergy = new double[2][nodes];
-        oldComposition = new double[2][pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents()][nodes];
+        oldComposition = new double[2][pipe.getNode(0).getBulkSystem().getPhases()[0]
+                .getNumberOfComponents()][nodes];
         numberOfVelocityNodes = nodes;
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();
@@ -78,8 +79,9 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         testOps.TPflash();
         testOps.displayResult();
 
-        double[][][] molDiff = new double[numberOfNodes][2][pipe.getNode(0).getBulkSystem().getPhases()[0]
-                .getNumberOfComponents()];
+        double[][][] molDiff =
+                new double[numberOfNodes][2][pipe.getNode(0).getBulkSystem().getPhases()[0]
+                        .getNumberOfComponents()];
         pipe.getNode(0).init();
         pipe.getNode(0).calcFluxes();
 
@@ -87,42 +89,55 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
             pipe.getNode(i).init();
             pipe.getNode(i).calcFluxes();
 
-            for (int componentNumber = 0; componentNumber < pipe.getNode(0).getBulkSystem().getPhases()[0]
-                    .getNumberOfComponents(); componentNumber++) {
-                double liquidMolarRate = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                        * pipe.getNode(i).getInterphaseContactLength(0) * pipe.getNode(i).getGeometry().getNodeLength();
-                double gasMolarRate = -pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                        * pipe.getNode(i).getInterphaseContactLength(0) * pipe.getNode(i).getGeometry().getNodeLength();
+            for (int componentNumber =
+                    0; componentNumber < pipe.getNode(0).getBulkSystem().getPhases()[0]
+                            .getNumberOfComponents(); componentNumber++) {
+                double liquidMolarRate =
+                        pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+                                * pipe.getNode(i).getInterphaseContactLength(0)
+                                * pipe.getNode(i).getGeometry().getNodeLength();
+                double gasMolarRate =
+                        -pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+                                * pipe.getNode(i).getInterphaseContactLength(0)
+                                * pipe.getNode(i).getGeometry().getNodeLength();
                 double liquidHeatRate = pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(1)
-                        * pipe.getNode(i).getInterphaseContactLength(0) * pipe.getNode(i).getGeometry().getNodeLength();
+                        * pipe.getNode(i).getInterphaseContactLength(0)
+                        * pipe.getNode(i).getGeometry().getNodeLength();
                 double gasHeatRate = -pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0)
-                        * pipe.getNode(i).getInterphaseContactLength(0) * pipe.getNode(i).getGeometry().getNodeLength();
+                        * pipe.getNode(i).getInterphaseContactLength(0)
+                        * pipe.getNode(i).getGeometry().getNodeLength();
 
-                double liquid_dT = -liquidHeatRate / pipe.getNode(i).getBulkSystem().getPhase(1).getCp();
+                double liquid_dT =
+                        -liquidHeatRate / pipe.getNode(i).getBulkSystem().getPhase(1).getCp();
                 double gas_dT = gasHeatRate / pipe.getNode(i).getBulkSystem().getPhase(0).getCp();
 
                 molDiff[i][0][componentNumber] = molDiff[i - 1][0][componentNumber] + gasMolarRate;
-                molDiff[i][1][componentNumber] = molDiff[i - 1][1][componentNumber] + liquidMolarRate;
+                molDiff[i][1][componentNumber] =
+                        molDiff[i - 1][1][componentNumber] + liquidMolarRate;
 
                 pipe.getNode(i + 1).getBulkSystem().getPhases()[0].addMoles(componentNumber,
                         molDiff[i][0][componentNumber]);
                 pipe.getNode(i + 1).getBulkSystem().getPhases()[1].addMoles(componentNumber,
                         molDiff[i][1][componentNumber]);
 
-                pipe.getNode(i + 1).getBulkSystem().getPhase(0)
-                        .setTemperature(pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature() + gas_dT);
-                pipe.getNode(i + 1).getBulkSystem().getPhase(1)
-                        .setTemperature(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
+                pipe.getNode(i + 1).getBulkSystem().getPhase(0).setTemperature(
+                        pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature() + gas_dT);
+                pipe.getNode(i + 1).getBulkSystem().getPhase(1).setTemperature(
+                        pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
             }
 
             pipe.getNode(i + 1).getBulkSystem().initBeta();
             pipe.getNode(i + 1).getBulkSystem().init_x_y();
             pipe.getNode(i + 1).initFlowCalc();
 
-            System.out.println("x " + pipe.getNode(i - 1).getBulkSystem().getPhases()[1].getComponents()[0].getx());
-            System.out.println("x " + pipe.getNode(i - 1).getBulkSystem().getPhases()[1].getComponents()[1].getx());
-            System.out.println("y " + pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getComponents()[0].getx());
-            System.out.println("y " + pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getComponents()[1].getx());
+            System.out.println("x "
+                    + pipe.getNode(i - 1).getBulkSystem().getPhases()[1].getComponents()[0].getx());
+            System.out.println("x "
+                    + pipe.getNode(i - 1).getBulkSystem().getPhases()[1].getComponents()[1].getx());
+            System.out.println("y "
+                    + pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getComponents()[0].getx());
+            System.out.println("y "
+                    + pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getComponents()[1].getx());
         }
         pipe.getNode(numberOfNodes - 1).init();
         pipe.getNode(numberOfNodes - 1).calcFluxes();
@@ -146,17 +161,20 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
             sol3Matrix[0].set(i, 0, enthalpy0);
             sol3Matrix[1].set(i, 0, enthalpy1);
 
-            solPhaseConsMatrix[0].set(i, 0,
-                    pipe.getNode(i).getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity());
+            solPhaseConsMatrix[0].set(i, 0, pipe.getNode(i).getBulkSystem().getPhases()[0]
+                    .getPhysicalProperties().getDensity());
             solPhaseConsMatrix[1].set(i, 0, pipe.getNode(i).getPhaseFraction(1));
 
             for (int phase = 0; phase < 2; phase++) {
-                for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfComponents(); j++) {
+                for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
+                        .getNumberOfComponents(); j++) {
                     solMolFracMatrix[phase][j].set(i, 0,
-                            pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponents()[j].getx()
-                                    * pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponents()[j]
-                                            .getMolarMass()
-                                    / pipe.getNode(i).getBulkSystem().getPhases()[phase].getMolarMass());
+                            pipe.getNode(i).getBulkSystem().getPhases()[phase].getComponents()[j]
+                                    .getx()
+                                    * pipe.getNode(i).getBulkSystem().getPhases()[phase]
+                                            .getComponents()[j].getMolarMass()
+                                    / pipe.getNode(i).getBulkSystem().getPhases()[phase]
+                                            .getMolarMass());
                 }
             }
         }
@@ -166,7 +184,8 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
             pipe.getNode(i).getBulkSystem().setPressure(
-                    0.8 * pipe.getNode(i).getBulkSystem().getPhases()[phase].getdPdrho() * diffMatrix.get(i, 0) * 1e-5
+                    0.8 * pipe.getNode(i).getBulkSystem().getPhases()[phase].getdPdrho()
+                            * diffMatrix.get(i, 0) * 1e-5
                             + pipe.getNode(i).getBulkSystem().getPressure());
             pipe.getNode(i).init();
         }
@@ -174,8 +193,10 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
 
     public void initVelocity(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
-            pipe.getNode(i).setVelocityIn(phase, pipe.getNode(i).getVelocityIn(phase).doubleValue()
-                    + 0.8 * (solMatrix[phase].get(i, 0) - pipe.getNode(i).getVelocityIn(phase).doubleValue()));
+            pipe.getNode(i).setVelocityIn(phase,
+                    pipe.getNode(i).getVelocityIn(phase).doubleValue()
+                            + 0.8 * (solMatrix[phase].get(i, 0)
+                                    - pipe.getNode(i).getVelocityIn(phase).doubleValue()));
         }
 
         for (int i = 0; i < numberOfNodes; i++) {
@@ -189,12 +210,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
             pipe.getNode(i).getBulkSystem()
-                    .setTemperature(
-                            pipe.getNode(i).getBulkSystem().getTemperature(phase) + 0.8 * diffMatrix.get(i, 0)
+                    .setTemperature(pipe.getNode(i).getBulkSystem().getTemperature(phase)
+                            + 0.8 * diffMatrix.get(i, 0)
                                     / (pipe.getNode(i).getBulkSystem().getPhases()[phase].getCp()
                                             / pipe.getNode(i).getBulkSystem().getPhases()[phase]
                                                     .getNumberOfMolesInPhase()
-                                            / pipe.getNode(i).getBulkSystem().getPhases()[phase].getMolarMass()),
+                                            / pipe.getNode(i).getBulkSystem().getPhases()[phase]
+                                                    .getMolarMass()),
                             phase);
             pipe.getNode(i).init();
         }
@@ -211,33 +233,44 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
 
     public void initComposition(int phase, int comp) {
         for (int j = 0; j < numberOfNodes; j++) {
-            if ((pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getx() + diffMatrix.get(j, 0)
-                    * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
-                    / pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getMolarMass()) > 1.0) {
-                pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].setx(1.0 - 1e-30);
-            } else if (pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getx()
-                    + diffMatrix.get(j, 0) * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
-                            / pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
-                                    .getMolarMass() < 0.0) {
-                pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].setx(1e-30);
-            } else {
+            if ((pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getx()
+                    + diffMatrix.get(j, 0)
+                            * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
+                            / pipe.getNode(j).getBulkSystem().getPhases()[phase]
+                                    .getComponents()[comp].getMolarMass()) > 1.0) {
                 pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
-                        .setx(pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getx()
+                        .setx(1.0 - 1e-30);
+            } else if (pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
+                    .getx()
+                    + diffMatrix.get(j, 0)
+                            * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
+                            / pipe.getNode(j).getBulkSystem().getPhases()[phase]
+                                    .getComponents()[comp].getMolarMass() < 0.0) {
+                pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
+                        .setx(1e-30);
+            } else {
+                pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].setx(
+                        pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
+                                .getx()
                                 + diffMatrix.get(j, 0)
-                                        * pipe.getNode(j).getBulkSystem().getPhases()[phase].getMolarMass()
-                                        / pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp]
-                                                .getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
-                                                                 // + 0.5*diff4Matrix[p].get(j,0));
+                                        * pipe.getNode(j).getBulkSystem().getPhases()[phase]
+                                                .getMolarMass()
+                                        / pipe.getNode(j).getBulkSystem().getPhases()[phase]
+                                                .getComponents()[comp].getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
+                                                                                       // +
+                                                                                       // 0.5*diff4Matrix[p].get(j,0));
             }
 
             double xSum = 0.0;
-            for (int i = 0; i < pipe.getNode(j).getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1; i++) {
-                xSum += pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[i].getx();
+            for (int i = 0; i < pipe.getNode(j).getBulkSystem().getPhases()[phase]
+                    .getNumberOfComponents() - 1; i++) {
+                xSum += pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[i]
+                        .getx();
             }
 
             pipe.getNode(j).getBulkSystem().getPhases()[phase]
-                    .getComponents()[pipe.getNode(j).getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1]
-                            .setx(1.0 - xSum);
+                    .getComponents()[pipe.getNode(j).getBulkSystem().getPhases()[phase]
+                            .getNumberOfComponents() - 1].setx(1.0 - xSum);
             pipe.getNode(j).init();
         }
     }
@@ -245,12 +278,16 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
     public void initFinalResults(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn().doubleValue();
-            oldDensity[phase][i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
-            oldInternalEnergy[phase][i] = pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy()
-                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()
-                    / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+            oldDensity[phase][i] = pipe.getNode(i).getBulkSystem().getPhases()[0]
+                    .getPhysicalProperties().getDensity();
+            oldInternalEnergy[phase][i] =
+                    pipe.getNode(i).getBulkSystem().getPhases()[0].getEnthalpy()
+                            / pipe.getNode(i).getBulkSystem().getPhases()[0]
+                                    .getNumberOfMolesInPhase()
+                            / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
 
-            for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0].getNumberOfComponents(); j++) {
+            for (int j = 0; j < pipe.getNode(i).getBulkSystem().getPhases()[0]
+                    .getNumberOfComponents(); j++) {
                 oldComposition[phase][j][i] = xNew[phase][j][i];
             }
         }
@@ -269,8 +306,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
     }
 
     @Override
-	public void solveTDMA() {
+    public void solveTDMA() {
         initProfiles();
     }
-
 }

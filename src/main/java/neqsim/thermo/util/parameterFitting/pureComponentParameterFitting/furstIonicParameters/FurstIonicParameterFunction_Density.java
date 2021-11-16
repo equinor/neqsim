@@ -15,7 +15,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version
  */
 public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new Test */
@@ -24,7 +23,7 @@ public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunct
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         system.init(1);
         system.initPhysicalProperties();
@@ -33,12 +32,12 @@ public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunct
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         neqsim.thermo.util.constants.FurstElectrolyteConstants.setFurstParam(i, value);
         ((PhaseModifiedFurstElectrolyteEos) system.getPhase(0)).reInitFurstParam();

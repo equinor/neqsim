@@ -5,27 +5,13 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
-/*
- * PhaseEnvelope.java
- *
- * Created on 27. september 2001, 10:21
- */
-
 /**
  *
  * @author esol
  * @version
  */
 public class DewPointCurve {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(DewPointCurve.class);
-
-    /**
-     * Creates new PhaseEnvelope
-     */
-    public DewPointCurve() {
-    }
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemPrEos(260.0, 5.0);
@@ -46,13 +32,10 @@ public class DewPointCurve {
         /*
          * testSystem.addComponent("n-pentane", 2653);
          *
-         * testSystem.addComponent("n-hexane", 514.2);
-         * testSystem.addComponent("benzene", 61.03); testSystem.addComponent("toluene",
-         * 24.63); testSystem.addComponent("c-hexane", 45.23);
-         * testSystem.addComponent("n-heptane", 93.83);
-         * testSystem.addComponent("n-octane", 12.17);
-         * testSystem.addComponent("n-nonane", 0.03); testSystem.addComponent("nC10",
-         * 0.01);
+         * testSystem.addComponent("n-hexane", 514.2); testSystem.addComponent("benzene", 61.03);
+         * testSystem.addComponent("toluene", 24.63); testSystem.addComponent("c-hexane", 45.23);
+         * testSystem.addComponent("n-heptane", 93.83); testSystem.addComponent("n-octane", 12.17);
+         * testSystem.addComponent("n-nonane", 0.03); testSystem.addComponent("nC10", 0.01);
          */
         // testSystem.addComponent("CO2", 1.0);
         // testSystem.addComponent("water", 200.0e-4);
@@ -86,20 +69,18 @@ public class DewPointCurve {
 
         // testSystem.dewPointCondensationRate()
         /*
-         * System.out.println("temp " + (testSystem.getTemperature() - 273.15)); for
-         * (int i = 0; i < testSystem.getPhase(0).getNumberOfComponents(); i++) {
+         * System.out.println("temp " + (testSystem.getTemperature() - 273.15)); for (int i = 0; i <
+         * testSystem.getPhase(0).getNumberOfComponents(); i++) {
          * System.out.println("unsymetric activity coeff " +
          * testSystem.getPhase(1).getComponent(i).getName() + " " +
-         * testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i =
-         * 0; i < testSystem.getPhase(0).getNumberOfComponents(); i++) {
+         * testSystem.getPhase(1).getActivityCoefficientUnSymetric(i)); } for (int i = 0; i <
+         * testSystem.getPhase(0).getNumberOfComponents(); i++) {
          * System.out.println("symetric activity coeff " +
          * testSystem.getPhase(1).getComponent(i).getName() + " " +
          * testSystem.getPhase(1).getActivityCoefficientSymetric(i)); }
-         * System.out.println("activity coeff " +
-         * testSystem.getPhase(1).getComponent(1).getName() + " " +
-         * testSystem.getPhase(1).getActivityCoefficient(1, 0));
+         * System.out.println("activity coeff " + testSystem.getPhase(1).getComponent(1).getName() +
+         * " " + testSystem.getPhase(1).getActivityCoefficient(1, 0));
          *
          */
-
     }
 }

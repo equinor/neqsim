@@ -8,7 +8,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 // import org.apache.spark.sql.SparkSession;
 
 public class PropertyGenerator {
-
     double[] temperatures, pressures;
     SystemInterface fluid = null;
     HashMap<String, double[]> properties = new HashMap<String, double[]>();
@@ -141,7 +140,6 @@ public class PropertyGenerator {
                 joulethomsoncoefficientGas[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
                 thermalconductivitygas[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
-
             } else {
                 molarmassGas[i] = Double.NaN;
                 ZGas[i] = Double.NaN;
@@ -160,7 +158,6 @@ public class PropertyGenerator {
                 gammaGas[i] = Double.NaN;
                 joulethomsoncoefficientGas[i] = Double.NaN;
                 thermalconductivitygas[i] = Double.NaN;
-
             }
             if (fluid.hasPhaseType("oil")) {
                 int phasenumb = fluid.getPhaseNumberOfPhase("oil");
@@ -182,7 +179,6 @@ public class PropertyGenerator {
                 joulethomsoncoefficientOil[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
                 thermalconductivityOil[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
-
             } else {
                 molarmassOil[i] = Double.NaN;
                 ZOil[i] = Double.NaN;
@@ -201,7 +197,6 @@ public class PropertyGenerator {
                 gammaOil[i] = Double.NaN;
                 joulethomsoncoefficientOil[i] = Double.NaN;
                 thermalconductivityOil[i] = Double.NaN;
-
             }
             if (fluid.hasPhaseType("aqueous")) {
                 int phasenumb = fluid.getPhaseNumberOfPhase("aqueous");
@@ -223,7 +218,6 @@ public class PropertyGenerator {
                 joulethomsoncoefficientAqueous[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
                 thermalconductivityAqueous[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
-
             } else {
                 molarmassAqueous[i] = Double.NaN;
                 ZAqueous[i] = Double.NaN;
@@ -241,7 +235,6 @@ public class PropertyGenerator {
                 gammaAqueous[i] = Double.NaN;
                 joulethomsoncoefficientAqueous[i] = Double.NaN;
                 thermalconductivityAqueous[i] = Double.NaN;
-
             }
         }
         properties.put("molarmass[kg/mol]", molarmass);
@@ -318,16 +311,12 @@ public class PropertyGenerator {
      * public void test(Dataset<Row> teenagersDF){ SparkSession spark = SparkSession .builder()
      * .appName("Java Spark SQL basic example") .config("spark.some.config.option", "some-value")
      * .getOrCreate(); // Dataset<Row> df =
-     * spark.read().json("examples./src/main/resources/people.json"); Dataset<Row> df = teenagersDF;
+     * spark.read().json("examples/src/main/resources/people.json"); Dataset<Row> df = teenagersDF;
      * // Displays the content of the DataFrame to stdout df.show(); }
      */
     public double getValue(String propertyName) {
         return 0.0;
     }
 
-    static void main(String[] args) {
-        // TODO Auto-generated method stub
-
-    }
-
+    static void main(String[] args) {}
 }

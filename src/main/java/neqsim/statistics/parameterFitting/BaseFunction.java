@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public abstract class BaseFunction implements FunctionInterface {
-
     private static final long serialVersionUID = 1000;
 
     public double[] params = null;
@@ -23,8 +22,7 @@ public abstract class BaseFunction implements FunctionInterface {
     public SystemInterface system;
     public ThermodynamicOperations thermoOps;
 
-    public BaseFunction() {
-    }
+    public BaseFunction() {}
 
     @Override
     public Object clone() {
@@ -86,8 +84,7 @@ public abstract class BaseFunction implements FunctionInterface {
     public abstract void setFittingParams(int i, double value);
 
     @Override
-    public void setDatabaseParameters() {
-    }
+    public void setDatabaseParameters() {}
 
     /**
      * Getter for property bounds.
@@ -118,5 +115,4 @@ public abstract class BaseFunction implements FunctionInterface {
     public void setBounds(double[][] bounds) {
         this.bounds = bounds;
     }
-
 }

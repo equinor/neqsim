@@ -1,32 +1,33 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 /*
-* To change this license header, choose License Headers in Project Properties.
-* To change this template file, choose Tools | Templates
-* and open the template in the editor.
-*/
+ * To change this license header, choose License Headers in Project Properties. To change this
+ * template file, choose Tools | Templates and open the template in the editor.
+ */
 package neqsim.util.database;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  * @author esol
  */
-public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
+public class AspenIP21Database
+        implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     protected Connection databaseConnection = null;
@@ -34,10 +35,10 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
     private Statement statement = null;
 
     public AspenIP21Database() {
-
         try {
             if (dataBaseType.equals("Karsto")) {
-                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor()
+                        .newInstance();
             }
         } catch (Exception ex) {
             System.out.println("error in Online Karsto " + ex.toString());
@@ -49,7 +50,6 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
             setStatement(databaseConnection.createStatement());
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
-
         }
     }
 
@@ -62,7 +62,8 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
             System.out.println("error in Kaarsto DB " + ex.toString());
-            System.out.println("The Kaarsto database must be registered on the local DBMS to work.");
+            System.out
+                    .println("The Kaarsto database must be registered on the local DBMS to work.");
         } finally {
             try {
                 if (ctx != null) {
@@ -103,7 +104,6 @@ public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, j
         ResultSet dataSet = database.getResultSet("Karsto", "....'");
         try {
             while (dataSet.next()) {
-
                 System.out.println("dataset " + dataSet.getString(4));
                 System.out.println("dataset value " + dataSet.getDouble("..."));
             }

@@ -15,7 +15,6 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunctionS8.class);
 
@@ -25,7 +24,7 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             system.getPhase(0).getComponent(0).getSolidVaporPressure(dependentValues[0]);
@@ -36,7 +35,7 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             system.getPhases()[0].getComponents()[0].setAntoineASolid(value);

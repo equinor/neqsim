@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.chungMethod;
 
 import java.sql.ResultSet;
@@ -23,12 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestChungFit {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestChungFit.class);
-
-    /** Creates new TestAcentric */
-    public TestChungFit() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
@@ -40,7 +29,6 @@ public class TestChungFit {
                                                                                           // ComponentName='MDEA*'");
 
         try {
-
             while (dataSet.next()) {
                 ChungFunction function = new ChungFunction();
                 double guess[] = {0.3211};
@@ -74,6 +62,5 @@ public class TestChungFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

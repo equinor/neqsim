@@ -14,11 +14,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class AdiabaticPipe extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     double inletPressure = 0;
@@ -79,7 +78,8 @@ public class AdiabaticPipe extends Pipeline {
         } else {
             flowPattern = "turbulent";
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
+                    (1.0 / (-1.8 * GeneralMath
+                            .log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
                     2.0);
         }
     }
@@ -91,16 +91,21 @@ public class AdiabaticPipe extends Pipeline {
                 / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
         double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
         double dp = Math
-                .pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass()
+                .pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase()
+                        * system.getPhase(0).getMolarMass()
                         / neqsim.thermo.ThermodynamicConstantsInterface.pi, 2.0)
-                * frictionFactor * length * system.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
-                / system.getPhase(0).getMolarMass() * system.getTemperature() / Math.pow(insideDiameter, 5.0);
+                * frictionFactor * length * system.getPhase(0).getZ()
+                * neqsim.thermo.ThermodynamicConstantsInterface.R
+                / system.getPhase(0).getMolarMass() * system.getTemperature()
+                / Math.pow(insideDiameter, 5.0);
         // \\System.out.println("friction fact" + frictionFactor + " velocity " +
         // velocity + " reynolds number " + reynoldsNumber);
-        System.out.println("dp gravity " + system.getDensity("kg/m3")
-                * neqsim.thermo.ThermodynamicConstantsInterface.gravity * (inletElevation - outletElevation) / 1.0e5);
-        double dp_gravity = system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-                * (inletElevation - outletElevation);
+        System.out.println("dp gravity "
+                + system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
+                        * (inletElevation - outletElevation) / 1.0e5);
+        double dp_gravity =
+                system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
+                        * (inletElevation - outletElevation);
         return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp) / 1.0e5 + dp_gravity / 1.0e5;
     }
 
@@ -122,8 +127,9 @@ public class AdiabaticPipe extends Pipeline {
             reynoldsNumber = velocity * insideDiameter
                     / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
             double frictionFactor = calcWallFrictionFactor(reynoldsNumber) * 4.0;
-            double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0) / (gasGravity
-                    * system.getPhase(0).getZ() * system.getTemperature() * frictionFactor * length / 1000.0));
+            double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0)
+                    / (gasGravity * system.getPhase(0).getZ() * system.getTemperature()
+                            * frictionFactor * length / 1000.0));
             flow = 1.1494e-3 * 288.15 / (system.getPressure() * 100) * temp;
             system.setTotalFlowRate(flow / 1e6, "MSm^3/day");
             system.init(1);
@@ -152,7 +158,6 @@ public class AdiabaticPipe extends Pipeline {
                 system.setPressure(calcPressureOut());
             } while (Math.abs(system.getPressure() - oldPressure) > 1e-2 && iter < 25);
         } else {
-
             calcFlow();
             system.setPressure(pressureOut);
             system.init(3);
@@ -178,7 +183,6 @@ public class AdiabaticPipe extends Pipeline {
 
     @Override
     public void runTransient() {
-
         run();
     }
 
@@ -188,8 +192,7 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     @Override
-    public void setInitialFlowPattern(String flowPattern) {
-    }
+    public void setInitialFlowPattern(String flowPattern) {}
 
     /**
      * @return the length
@@ -262,7 +265,8 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     public static void main(String[] name) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 220.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 220.00);
         testSystem.addComponent("methane", 24.0, "MSm^3/day");
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -276,7 +280,8 @@ public class AdiabaticPipe extends Pipeline {
         pipe.setPipeWallRoughness(5e-6);
         pipe.setOutPressure(112.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipe);
         operations.run();

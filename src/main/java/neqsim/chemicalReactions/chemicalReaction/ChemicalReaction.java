@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -22,17 +20,16 @@
 
 package neqsim.chemicalReactions.chemicalReaction;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     String[] names, reactantNames, productNames;
@@ -46,12 +43,10 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     int numberOfReactants = 0;
 
     /** Creates new chemicalReaction */
-    public ChemicalReaction() {
-    }
+    public ChemicalReaction() {}
 
     public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
             double activationEnergy, double refT) {
-
         /*
          * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
          * 
@@ -148,7 +143,8 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
             if (system.getPhase(phaseNumb).getComponent(names[i]).calcActivity()) {
                 kgamma *= Math.pow(system.getPhase(phaseNumb).getActivityCoefficient(
                         system.getPhase(phaseNumb).getComponent(names[i]).getComponentNumber(),
-                        system.getPhase(phaseNumb).getComponent("water").getComponentNumber()), stocCoefs[i]);
+                        system.getPhase(phaseNumb).getComponent("water").getComponentNumber()),
+                        stocCoefs[i]);
             }
         }
         return kgamma;
@@ -159,7 +155,8 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         for (int i = 0; i < names.length; i++) {
             // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
             if (stocCoefs[i] < 0) {
-                ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(), -stocCoefs[i]);
+                ksp *= Math.pow(system.getPhase(phaseNumb).getComponent(names[i]).getx(),
+                        -stocCoefs[i]);
             }
         }
         ksp /= (getK(system.getPhase(phaseNumb)));
@@ -173,8 +170,8 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     /**
      * Generaters initial estimates for the molenumbers
      */
-    public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components, double[][] Amatrix,
-            double[] chemRefPot) {
+    public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
+            double[][] Amatrix, double[] chemRefPot) {
         Matrix tempAmatrix = new Matrix(Amatrix.length, names.length);
         Matrix tempNmatrix = new Matrix(names.length, 1);
         Matrix tempRefPotmatrix = new Matrix(names.length, 1);
@@ -228,7 +225,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         // tempNReacmatrix.print(10,2);
         // tempAProdmatrix.print(10,2);
         // tempAReacmatrix.print(10,2);
-
     }
 
     public void init(PhaseInterface phase) {
@@ -269,8 +265,8 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     public boolean reactantsContains(String[] names) {
         boolean test = false;
         /*
-         * if(reactantNames.length>names.length || productNames.length>names.length ){
-         * return false; }
+         * if(reactantNames.length>names.length || productNames.length>names.length ){ return false;
+         * }
          */
 
         for (int j = 0; j < reactantNames.length; j++) {
@@ -304,7 +300,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         }
 
         return test;
-
     }
 
     /**
@@ -335,13 +330,13 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R *
-     * T^2
+     * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R * T^2
      * 
      * @return Value of property reactionHeat.
      */
     public double getReactionHeat(PhaseInterface phase) {
-        double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0) + K[2] / phase.getTemperature() + K[3];
+        double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0)
+                + K[2] / phase.getTemperature() + K[3];
         double sign = (shiftSignK = true) ? -1.0 : 1.0;
         return sign * diffKt * Math.pow(phase.getTemperature(), 2.0) * R;
     }
@@ -385,5 +380,4 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     public void setName(java.lang.String name) {
         this.name = name;
     }
-
 }

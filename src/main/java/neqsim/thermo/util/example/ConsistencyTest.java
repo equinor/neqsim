@@ -5,11 +5,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ConsistencyTest {
-
-    private static final long serialVersionUID = 1000;
-
     /**
-     * A easy implementation to test a thermodyanmic model
+     * A easy implementation to test a thermodynamic model
      */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(310.0, 10);
@@ -22,5 +19,4 @@ public class ConsistencyTest {
         ThermodynamicModelTest testModel = new ThermodynamicModelTest(testSystem);
         testModel.runTest();
     }
-
 }

@@ -6,8 +6,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 public class SolidFlash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
     public static void main(String args[]) {

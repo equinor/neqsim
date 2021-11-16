@@ -10,11 +10,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class onePhasePipeFlowNode extends onePhaseFlowNode {
-
     private static final long serialVersionUID = 1000;
 
-    public onePhasePipeFlowNode() {
-    }
+    public onePhasePipeFlowNode() {}
 
     public onePhasePipeFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -25,7 +23,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         onePhasePipeFlowNode clonedSystem = null;
         try {
             clonedSystem = (onePhasePipeFlowNode) super.clone();
@@ -36,19 +34,18 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     }
 
     @Override
-	public void init() {
+    public void init() {
         super.init();
     }
 
     @Override
-	public double calcReynoldsNumber() {
+    public double calcReynoldsNumber() {
         reynoldsNumber[0] = getVelocity() * pipe.getDiameter()
                 / getBulkSystem().getPhases()[0].getPhysicalProperties().getKinematicViscosity();
         return reynoldsNumber[0];
     }
 
     public static void main(String[] args) {
-
         System.out.println("Starter.....");
         SystemSrkEos testSystem = new SystemSrkEos(300.3, 200.0);
 
@@ -69,8 +66,8 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
         test[0].init();
 
         // test[0].getVolumetricFlow();
-        System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: " + test[0].getVelocity()
-                + " reynolds number " + test[0].getReynoldsNumber() + "friction : " + test[0].getWallFrictionFactor());
+        System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: "
+                + test[0].getVelocity() + " reynolds number " + test[0].getReynoldsNumber()
+                + "friction : " + test[0].getWallFrictionFactor());
     }
-
 }

@@ -7,7 +7,6 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class JointEfficiencyPipelineStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     public JointEfficiencyPipelineStandard(String name, MechanicalDesign equipmentInn) {
@@ -33,9 +32,7 @@ public class JointEfficiencyPipelineStandard extends DesignStandard {
     private double JEFactor = 1.0;
 
     public void readJointEfficiencyStandard(String typeName, String radiagraphType) {
-
-//... to be implemented  
+        // ... to be implemented
         JEFactor = 1.0;
-
     }
 }

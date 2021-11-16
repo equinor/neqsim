@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.thermo.characterization;
@@ -40,8 +38,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
     /**
      * Creates a new instance of TBPCharacterize
      */
-    public Characterise() {
-    }
+    public Characterise() {}
 
     public Characterise(SystemInterface system) {
         this.system = system;
@@ -102,9 +99,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     public void characterisePlusFraction() {
         system.init(0);
         if (plusFractionModel.hasPlusFraction()) {
-
             if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
-                logger.error("plus fraction molar mass too heavy for " + plusFractionModel.getName());
+                logger.error(
+                        "plus fraction molar mass too heavy for " + plusFractionModel.getName());
                 plusFractionModel = plusFractionModelSelector.getModel("heavyOil");
                 logger.info("changing to " + plusFractionModel.getName());
             }
@@ -117,14 +114,13 @@ public class Characterise implements java.io.Serializable, Cloneable {
      *
      * public boolean addPlusFraction(int start, int end) { plusFractionModel = new
      * PlusCharacterize(system); if (TBPCharacterise.hasPlusFraction()) {
-     * TBPCharacterise.groupTBPfractions(); TBPCharacterise.generateTBPFractions();
-     * return true; } else {
-     * System.out.println("not able to generate pluss fraction"); return false; } }
+     * TBPCharacterise.groupTBPfractions(); TBPCharacterise.generateTBPFractions(); return true; }
+     * else { System.out.println("not able to generate pluss fraction"); return false; } }
      *
      *
      * public boolean characterize2() { if (TBPCharacterise.groupTBPfractions()) {
-     * TBPCharacterise.solve(); return true; } else { System.out.println("not able
-     * to generate pluss fraction"); return false; } }
+     * TBPCharacterise.solve(); return true; } else { System.out.println("not able to generate pluss
+     * fraction"); return false; } }
      *
      *
      */

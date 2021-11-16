@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author esol
  */
 public interface SimulationInterface {
-
     public SystemInterface getThermoSystem();
 
     public void setThermoSystem(SystemInterface thermoSystem);

@@ -15,19 +15,15 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * @version
  */
 public class InterphaseTwoPhase extends InterphaseTransportCoefficientBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new FrictionFactorBaseClass All frictionfactors are the fanning
-     * frictionfactor.
+     * Creates new FrictionFactorBaseClass All frictionfactors are the fanning frictionfactor.
      */
 
-    public InterphaseTwoPhase() {
-    }
+    public InterphaseTwoPhase() {}
 
     public InterphaseTwoPhase(FlowNodeInterface node) {
         // flowNode = node;
     }
-
 }

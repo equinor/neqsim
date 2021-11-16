@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.util.ArrayList;
@@ -23,15 +17,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class TestMathiasCopeman {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestMathiasCopeman.class);
 
-    /** Creates new TestAcentric */
-    public TestMathiasCopeman() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

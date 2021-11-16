@@ -8,9 +8,9 @@ public class PumpCurve implements java.io.Serializable {
     public double speed = 1000.0;
 
     public PumpCurve() {
-        flow = new double[] { 453.2, 600.0, 750.0 };
-        head = new double[] { 1000.0, 900.0, 800.0 };
-        efficiency = new double[] { 78.0, 79.0, 78.0 };
+        flow = new double[] {453.2, 600.0, 750.0};
+        head = new double[] {1000.0, 900.0, 800.0};
+        efficiency = new double[] {78.0, 79.0, 78.0};
     }
 
     public PumpCurve(double speed, double[] flow, double[] head, double[] efficiency) {
@@ -20,7 +20,5 @@ public class PumpCurve implements java.io.Serializable {
         this.efficiency = efficiency;
     }
 
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-    }
+    public static void main(String[] args) {}
 }

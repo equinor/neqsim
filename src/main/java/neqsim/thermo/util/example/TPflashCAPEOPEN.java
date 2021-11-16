@@ -5,29 +5,13 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- * TPflash.java
  *
- * Created on 27. september 2001, 09:43
+ * @author esol @version
  */
-
-/*
-*
-* @author esol @version
-*/
 public class TPflashCAPEOPEN {
-
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * Creates new TPflash
-     */
-    public TPflashCAPEOPEN() {
-    }
-
     public static void main(String[] args) {
-
-        SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 15.01325);//
-        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 88.8);//
+        SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 15.01325);
+        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 88.8);
         testSystem.addComponent("nitrogen", 1.681146444);
         testSystem.addComponent("CO2", 2.185242497);
         testSystem.addComponent("methane", 78.0590685);
@@ -54,18 +38,17 @@ public class TPflashCAPEOPEN {
         testSystem.init(0);
         testSystem.setNumberOfPhases(1);
         testSystem.setMolarComposition(
-                new double[] { 0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0 });
+                new double[] {0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0});
         testSystem.init(0, 0);
         testSystem.setPhaseType(0, "gas");
         testSystem.init(3);
         testSystem.initPhysicalProperties();
 
         testSystem.setMolarComposition(
-                new double[] { 0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0 });
+                new double[] {0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0});
         testSystem.init(0, 0);
         testSystem.setPhaseType(0, "liquid");
         testSystem.init(3);
         testSystem.initPhysicalProperties();
-
     }
 }

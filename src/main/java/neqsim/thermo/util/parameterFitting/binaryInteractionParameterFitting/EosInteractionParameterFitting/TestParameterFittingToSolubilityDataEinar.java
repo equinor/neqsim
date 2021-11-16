@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import java.sql.ResultSet;
@@ -23,15 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestParameterFittingToSolubilityDataEinar {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestParameterFittingToSolubilityDataEinar.class);
 
-    /** Creates new TestAcentric */
-    public TestParameterFittingToSolubilityDataEinar() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -48,7 +36,7 @@ public class TestParameterFittingToSolubilityDataEinar {
                 CPAParameterFittingToSolubilityData function =
                         new CPAParameterFittingToSolubilityData();
 
-                SystemInterface testSystem = new SystemPrEos(290, 1.0); // SystemPrEos //
+                SystemInterface testSystem = new SystemPrEos(290, 1.0); // SystemPrEos
                                                                         // SystemSrkSchwartzentruberEos
                                                                         // // SystemSrkEos
                                                                         // //SystemSrkMathiasCopemanEos

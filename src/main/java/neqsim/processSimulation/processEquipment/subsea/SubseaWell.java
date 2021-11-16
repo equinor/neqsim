@@ -10,7 +10,6 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 public class SubseaWell extends ProcessEquipmentBaseClass {
-
     protected StreamInterface inStream;
     private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
@@ -28,7 +27,6 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
 
     @Override
     public void run() {
-
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
@@ -52,7 +50,6 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     }
 
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);
         testSystem.addComponent("nitrogen", 0.100);
@@ -141,7 +138,6 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
             System.out.println("time " + res.get(i)[0] + " oil production " + res.get(i)[1]
                     + " total production MSm3 oe " + res.get(i)[2]);
         }
-
     }
 
     public StreamInterface getOutStream() {

@@ -1,8 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import java.sql.ResultSet;
@@ -21,18 +16,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
-
-    private static final long serialVersionUID = 1000;
+public class TestBinaryCPAfitToActivityCoefficientDB {
     static Logger logger = LogManager.getLogger(TestBinaryCPAfitToActivityCoefficientDB.class);
 
-    /**
-     * Creates new TestAcentric
-     */
-    public TestBinaryCPAfitToActivityCoefficientDB() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

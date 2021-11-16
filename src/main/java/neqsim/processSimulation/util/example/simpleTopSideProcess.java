@@ -9,15 +9,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class simpleTopSideProcess {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 50.0), 50.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 50.0), 50.00);
         testSystem.addComponent("methane", 900.00);
         testSystem.addComponent("ethane", 200.00);
         testSystem.addComponent("n-hexane", 200.0);
@@ -54,14 +51,16 @@ public class simpleTopSideProcess {
 
         mixerHP.addStream(stream_3);
 
-        Mixer mixer = new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer export");
+        Mixer mixer =
+                new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer export");
         mixer.addStream(separator.getGasOutStream());
         mixer.addStream(gasScrubber.getGasOutStream());
 
         Compressor HPcompressor = new Compressor(mixer.getOutStream());
         HPcompressor.setOutletPressure(200.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(mixerHP);
         operations.add(separator);

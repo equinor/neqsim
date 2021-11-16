@@ -57,7 +57,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     @Override
     public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
             double[][] head, double[][] polyEff) {
-
         this.speed = speed;
         this.head = head;
         this.polytropicEfficiency = polyEff;
@@ -98,9 +97,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         setUseCompressorChart(true);
     }
 
-    public void fitReducedCurve() {
-
-    }
+    public void fitReducedCurve() {}
 
     @Override
     public double getPolytropicHead(double flow, double speed) {
@@ -121,7 +118,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
     @Override
     public int getSpeed(double flow, double head) {
-
         int iter = 1;
         double error = 1.0, derrordspeed = 1.0;
         double newspeed = referenceSpeed;
@@ -333,7 +329,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         System.out.println("power " + comp1.getPower());
 
         comp1.getCompressorChart().plot();
-
     }
 
     @Override
@@ -389,5 +384,4 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
                         "red eff vs red dflow", "red flow", "red eff");
         graph4.setVisible(true);
     }
-
 }

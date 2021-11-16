@@ -6,16 +6,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class shtokman_MEG {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0),
-                130.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0), 130.00);
         testSystem.addComponent("methane", 1.0);
         // testSystem.addComponent("ethane", 10.039);
         // testSystem.addComponent("propane", 5.858);
@@ -29,7 +25,8 @@ public class shtokman_MEG {
         Separator separator = new Separator("Separator 1", stream_1);
         StreamInterface stream_2 = separator.getGasOutStream();
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         try {
             operations.add(separator);
@@ -45,9 +42,9 @@ public class shtokman_MEG {
         ThermodynamicOperations ops = new ThermodynamicOperations(stream_2.getThermoSystem());
         try {
             ops.TPflash();
-//            stream_2.getThermoSystem().display();
-//            stream_2.getThermoSystem().setTemperature(250.0);
-//            ops.dewPointTemperatureFlash();
+            // stream_2.getThermoSystem().display();
+            // stream_2.getThermoSystem().setTemperature(250.0);
+            // ops.dewPointTemperatureFlash();
         } catch (Exception ex) {
             ex.printStackTrace();
         }

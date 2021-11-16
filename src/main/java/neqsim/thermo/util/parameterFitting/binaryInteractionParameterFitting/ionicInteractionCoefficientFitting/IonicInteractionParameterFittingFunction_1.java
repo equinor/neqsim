@@ -6,24 +6,24 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
  * @author Even Solbraa
  * @version
  */
-public class IonicInteractionParameterFittingFunction_1 extends IonicInteractionParameterFittingFunction {
-
+public class IonicInteractionParameterFittingFunction_1
+        extends IonicInteractionParameterFittingFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_1.class);
 
     /** Creates new Test */
-    public IonicInteractionParameterFittingFunction_1() {
-    }
+    public IonicInteractionParameterFittingFunction_1() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // System.out.println("pres " +
@@ -33,5 +33,4 @@ public class IonicInteractionParameterFittingFunction_1 extends IonicInteraction
         }
         return system.getPressure();
     }
-
 }

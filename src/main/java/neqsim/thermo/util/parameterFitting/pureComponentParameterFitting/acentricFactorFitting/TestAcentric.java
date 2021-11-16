@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -18,14 +12,7 @@ import neqsim.thermo.system.SystemPrEos;
  * @version
  */
 public class TestAcentric {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new TestAcentric */
-    public TestAcentric() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
 
         AcentricFunction function = new AcentricFunction();

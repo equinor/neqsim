@@ -1,22 +1,19 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class TestFluidIssues {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestFluidIssues.class);
 
     /**
      * This method is just meant to test the thermo package.
      */
+
     public static void main(String args[]) {
-
-        double[][] points;
-
         // SystemInterface testSystem = new SystemSrkEos(303.15, 10.01325);
         SystemInterface testSystem = new SystemSrkCPAstatoil(303.15, 15.0);
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(298.15,

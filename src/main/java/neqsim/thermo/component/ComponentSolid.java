@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class ComponentSolid extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     double dpdt = 1.0;
@@ -27,10 +26,10 @@ public class ComponentSolid extends ComponentSrk {
     /**
      * Creates new SolidComponent
      */
-    public ComponentSolid() {
-    }
+    public ComponentSolid() {}
 
-    public ComponentSolid(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentSolid(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
@@ -38,12 +37,13 @@ public class ComponentSolid extends ComponentSrk {
      * Uses Claperyons equation to calculate the solid fugacity
      */
     @Override
-	public double fugcoef(PhaseInterface phase1) {
+    public double fugcoef(PhaseInterface phase1) {
         // dfugdt(phase, phase.getNumberOfComponents(), phase.getTemperature(),
         // phase.getPressure());
-//        return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+        // return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+        // phase.getPressure());
         if (!solidCheck) {
-//            return 1.0e20;
+            // return 1.0e20;
         }
         if (componentName.equals("methane")) {
             return 1e30;
@@ -58,7 +58,8 @@ public class ComponentSolid extends ComponentSrk {
         refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 1, 0, 1.0);
         refPhase.getComponent(0).fugcoef(refPhase);
 
-        double liquidPhaseFugacity = refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
+        double liquidPhaseFugacity =
+                refPhase.getComponent(0).getFugasityCoefficient() * refPhase.getPressure();
 
         // Calculates delta Cp solid-liquid
         double deltaCpSL = -(getPureComponentCpSolid(getTriplePointTemperature())
@@ -87,11 +88,15 @@ public class ComponentSolid extends ComponentSrk {
         // System.out.println("liquid density " + 1.0/liqMolVol*getMolarMass() + " solid
         // density " + 1.0/solMolVol*getMolarMass());
 
-        SolidFug = getx() * liquidPhaseFugacity * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
-                * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-                + deltaCpSL / (R * phase1.getTemperature()) * (getTriplePointTemperature() - phase1.getTemperature())
-                - deltaCpSL / R * Math.log(getTriplePointTemperature() / phase1.getTemperature())
-                - deltaSolVol * (1.0 - phase1.getPressure()) / (R * phase1.getTemperature()));
+        SolidFug = getx() * liquidPhaseFugacity
+                * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
+                        * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
+                        + deltaCpSL / (R * phase1.getTemperature())
+                                * (getTriplePointTemperature() - phase1.getTemperature())
+                        - deltaCpSL / R
+                                * Math.log(getTriplePointTemperature() / phase1.getTemperature())
+                        - deltaSolVol * (1.0 - phase1.getPressure())
+                                / (R * phase1.getTemperature()));
 
         // System.out.println("solidfug " + SolidFug);
         fugasityCoeffisient = SolidFug / (phase1.getPressure() * getx());
@@ -100,7 +105,6 @@ public class ComponentSolid extends ComponentSrk {
     }
 
     public double fugcoef(double temp, double pres) {
-
         if (Math.abs(Hsub) < 0.000001) {
             CCequation = false;
         }
@@ -124,7 +128,7 @@ public class ComponentSolid extends ComponentSrk {
 
         soldens = getPureComponentSolidDensity(temp) * 1000;
         // System.out.println("solid density " + soldens);
-//            if(soldens>2000)
+        // if(soldens>2000)
         soldens = 1000.0;
         solvol = 1.0 / soldens * getMolarMass();
         // System.out.println("molmass " + getMolarMass());
@@ -141,57 +145,59 @@ public class ComponentSolid extends ComponentSrk {
         // System.out.println("Pvap solid " + SolidFug);
         dfugdt = Math.log(PvapSoliddT * Math.exp(solvol / (R * temp) * (pres - PvapSolid))) / pres;
         fugasityCoeffisient = SolidFug / pres;
-//        } else{
-//            fugasityCoeffisient = 1e5;
-//            dfugdt=0;
-//        }
+        // } else{
+        // fugasityCoeffisient = 1e5;
+        // dfugdt=0;
+        // }
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
         return fugasityCoeffisient;
     }
 
-//    public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres){
-//        if(componentName.equals("water")){
-//            // double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
-//            double solvol = 1.0/(780*0.92)*getMolarMass();
-//
-//            dfugdt = Math.log((getSolidVaporPressuredT(temp)*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp))))/pres);
-//        }
-//        else if(componentName.equals("MEG")){
-//            double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
-//            dfugdt = Math.log((getSolidVaporPressuredT(temp))/pres);
-//        }
-//        else if(componentName.equals("S8")){
-//            double solvol = 1.0/(1800.0)*getMolarMass();
-//            dfugdt = Math.log((getSolidVaporPressuredT(temp)*10*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp)*10)))/pres);
-//        }
-//
-//        else dfugdt=0;
-//        return dfugdt;
-//    }
-//    public double getdpdt() {
-//        return dpdt;
-//    }
+    // public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres){
+    // if(componentName.equals("water")){
+    // // double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
+    // double solvol = 1.0/(780*0.92)*getMolarMass();
+    //
+    // dfugdt =
+    // Math.log((getSolidVaporPressuredT(temp)*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp))))/pres);
+    // }
+    // else if(componentName.equals("MEG")){
+    // double solvol = 1.0/getPureComponentSolidDensity(getMeltingPointTemperature())*molarMass;
+    // dfugdt = Math.log((getSolidVaporPressuredT(temp))/pres);
+    // }
+    // else if(componentName.equals("S8")){
+    // double solvol = 1.0/(1800.0)*getMolarMass();
+    // dfugdt =
+    // Math.log((getSolidVaporPressuredT(temp)*10*Math.exp(solvol/(R*temp)*(pres-getSolidVaporPressure(temp)*10)))/pres);
+    // }
+    //
+    // else dfugdt=0;
+    // return dfugdt;
+    // }
+    // public double getdpdt() {
+    // return dpdt;
+    // }
     public double getMolarVolumeSolid() {
         return getPureComponentSolidDensity(getMeltingPointTemperature()) / molarMass;
     }
 
     public void setSolidRefFluidPhase(PhaseInterface phase) {
         try {
-             if((!isTBPfraction && !isPlusFraction)){
-            refPhase = phase.getClass().getDeclaredConstructor().newInstance();
-            refPhase.setTemperature(273.0);
-            refPhase.setPressure(1.0);
-            try {
-                refPhase.addcomponent(componentName, 10.0, 10.0, 0);
-            } catch (Exception e) {
-                logger.error("error occured", e);
-                refPhase.addcomponent("methane", 10.0, 10.0, 0);
-                refPhase.getComponent("methane").setComponentName(componentName);
+            if ((!isTBPfraction && !isPlusFraction)) {
+                refPhase = phase.getClass().getDeclaredConstructor().newInstance();
+                refPhase.setTemperature(273.0);
+                refPhase.setPressure(1.0);
+                try {
+                    refPhase.addcomponent(componentName, 10.0, 10.0, 0);
+                } catch (Exception e) {
+                    logger.error("error occured", e);
+                    refPhase.addcomponent("methane", 10.0, 10.0, 0);
+                    refPhase.getComponent("methane").setComponentName(componentName);
+                }
+                refPhase.getComponent(componentName).setAtractiveTerm(
+                        phase.getComponent(componentName).getAtractiveTermNumber());
+                refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
             }
-            refPhase.getComponent(componentName)
-                    .setAtractiveTerm(phase.getComponent(componentName).getAtractiveTermNumber());
-            refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 0, 1, 1.0);
-             }
         } catch (Exception e) {
             logger.error("error occured", e);
         }

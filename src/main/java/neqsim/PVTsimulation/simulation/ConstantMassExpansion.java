@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] relativeVolume = null;
@@ -32,7 +31,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     public void calcSaturationConditions() {
-
         getThermoSystem().setPressure(1.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
@@ -181,7 +179,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -199,7 +196,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     public static void main(String[] args) {
-
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 73.0, 10.0);
         tempSystem.addComponent("nitrogen", 0.972);
         tempSystem.addComponent("CO2", 0.632);
@@ -228,9 +224,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
          * tempSystem.addComponent("methane", 74.16); tempSystem.addComponent("ethane", 7.9);
          * tempSystem.addComponent("propane", 4.15); tempSystem.addComponent("i-butane", 0.71);
          * tempSystem.addComponent("n-butane", 0.71); tempSystem.addComponent("i-pentane", 0.66);
-         * tempSystem.addComponent("n-pentane", 0.66); tempSystem.addComponent("n-hexane", 0.81); //
-         * tempSystem.addTBPfraction("C7", 1.2, 91.0 / 1000.0, 0.746); //
-         * tempSystem.addTBPfraction("C8", 1.15, 104.0 / 1000.0, 0.770); //
+         * tempSystem.addComponent("n-pentane", 0.66); tempSystem.addComponent("n-hexane", 0.81);
+         * tempSystem.addTBPfraction("C7", 1.2, 91.0 / 1000.0, 0.746);
+         * tempSystem.addTBPfraction("C8", 1.15, 104.0 / 1000.0, 0.770);
          * tempSystem.addTBPfraction("C9", 5.15, 125.0 / 1000.0, 0.8);
          */
 
@@ -311,11 +307,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressures = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
-
 }

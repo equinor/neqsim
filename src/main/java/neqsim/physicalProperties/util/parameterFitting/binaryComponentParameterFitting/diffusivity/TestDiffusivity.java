@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameterFitting.diffusivity;
 
 import java.sql.ResultSet;
@@ -23,12 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestDiffusivity {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestDiffusivity.class);
-
-    /** Creates new TestAcentric */
-    public TestDiffusivity() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
@@ -81,6 +70,5 @@ public class TestDiffusivity {
         // optim.runMonteCarloSimulation();
         optim.displayGraph();
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

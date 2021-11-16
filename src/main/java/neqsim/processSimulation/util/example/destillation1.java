@@ -7,15 +7,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class destillation1 {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 63.0), 16.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 63.0), 16.00);
         // testSystem.addComponent("methane", 1.00);
         testSystem.addComponent("ethane", 0.002);
         // testSystem.addComponent("CO2", 10.00);
@@ -41,8 +38,7 @@ public class destillation1 {
         // column.setReboilerTemperature(360);
         // column.setReboilerTemperature(300);
         /*
-         * Heater heater = new Heater((Stream) column.getGasOutStream());
-         * heater.setdT(-15.0);
+         * Heater heater = new Heater((Stream) column.getGasOutStream()); heater.setdT(-15.0);
          * 
          * DistillationColumn column2 = new DistillationColumn(4, true, true);
          * column2.addFeedStream(heater.getOutStream(), 2); ((Reboiler)
@@ -50,7 +46,8 @@ public class destillation1 {
          * column2.getCondenser()).setRefluxRatio(0.01);
          */
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(column);
         // operations.add(heater);

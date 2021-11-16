@@ -1,39 +1,35 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
+ * PHflash.java
+ *
+ * Created on 8. mars 2001, 10:56
+ */
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class SaturateWithWater extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SaturateWithWater.class);
 
@@ -42,8 +38,7 @@ public class SaturateWithWater extends QfuncFlash {
     /**
      * Creates new PHflash
      */
-    public SaturateWithWater() {
-    }
+    public SaturateWithWater() {}
 
     public SaturateWithWater(SystemInterface system) {
         this.system = system;
@@ -52,7 +47,6 @@ public class SaturateWithWater extends QfuncFlash {
 
     @Override
     public void run() {
-
         if (!system.getPhase(0).hasComponent("water")) {
             system.addComponent("water", system.getTotalNumberOfMoles());
             system.createDatabase(true);
@@ -73,7 +67,8 @@ public class SaturateWithWater extends QfuncFlash {
         }
         double lastdn = 0.0;
         if (system.hasPhaseType("aqueous")) {
-            lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+            lastdn = system.getPhaseOfType("aqueous").getComponent("water")
+                    .getNumberOfMolesInPhase();
         } else {
             lastdn = system.getPhase(0).getNumberOfMolesInPhase() / 100.0;
         }
@@ -85,7 +80,8 @@ public class SaturateWithWater extends QfuncFlash {
                 system.addComponent("water", lastdn * 0.5);
                 lastdn *= 0.8;
             } else {
-                lastdn = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase();
+                lastdn = system.getPhaseOfType("aqueous").getComponent("water")
+                        .getNumberOfMolesInPhase();
                 dn = lastdn / system.getNumberOfMoles();
                 system.addComponent("water", -lastdn);
             }

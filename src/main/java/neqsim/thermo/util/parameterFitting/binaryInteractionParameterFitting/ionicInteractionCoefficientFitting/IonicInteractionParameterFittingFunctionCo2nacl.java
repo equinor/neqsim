@@ -6,9 +6,10 @@
 
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -16,32 +17,32 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
+    static Logger logger =
+            LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
 
     /** Creates new Test */
-    public IonicInteractionParameterFittingFunctionCo2nacl() {
-    }
+    public IonicInteractionParameterFittingFunctionCo2nacl() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.TPflash();
         } catch (Exception e) {
             logger.error(e.toString());
         }
         return system.getPhase(1).getComponent(0).getx()
-                / (1.0 - system.getPhase(1).getComponent(2).getx() - system.getPhase(1).getComponent(3).getx());
+                / (1.0 - system.getPhase(1).getComponent(2).getx()
+                        - system.getPhase(1).getComponent(3).getx());
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         int CO2Numb = 0, Naplusnumb = 0;
         int j = 0;
@@ -70,7 +71,5 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijT1Parameter(Naplusnumb, CO2Numb, value);
         }
-
     }
-
 }

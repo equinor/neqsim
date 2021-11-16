@@ -23,7 +23,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @author esol
  */
 public class SystemMechanicalDesign implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     ProcessSystem processSystem = null;
@@ -39,7 +38,6 @@ public class SystemMechanicalDesign implements java.io.Serializable {
             processSystem.getUnitOperations().get(i).getMechanicalDesign()
                     .setCompanySpecificDesignStandards(name);
         }
-
     }
 
     public void runDesignCalculation() {
@@ -78,7 +76,6 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     public double getTotalVolume() {
-
         return totalVolume;
     }
 
@@ -87,7 +84,6 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     public int getTotalNumberOfModules() {
-
         return numberOfModules;
     }
 }

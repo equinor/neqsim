@@ -1,8 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.hydrate;
 
 import java.sql.ResultSet;
@@ -22,15 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestHydrateFunction {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestHydrateFunction.class);
 
-    /** Creates new TestAcentric */
-    public TestHydrateFunction() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -58,7 +47,7 @@ public class TestHydrateFunction {
 
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM HydratePureComp WHERE GuestMolecule='methane' AND Type<>'IHV' AND Pressure<57  AND Temperature>273.15");
-        //
+
         int numb = 0;
         try {
             logger.info("adding....");

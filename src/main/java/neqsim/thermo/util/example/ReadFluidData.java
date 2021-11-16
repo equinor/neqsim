@@ -6,30 +6,16 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
  *
- * Created on 27. september 2001, 09:43
+ * @author esol
+ * 
+ * @version
  */
-
-/*
-*
-* @author  esol
-* @version
-*/
 public class ReadFluidData {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public ReadFluidData() {
-    }
-
     public static void main(String args[]) {
-
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);//
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);
         // testSystem.addComponent("nitrogen", 12.681146444);
         testSystem.addComponent("methane", 90.681146444);
         testSystem.addComponent("CO2", 12.185242497);
@@ -56,6 +42,5 @@ public class ReadFluidData {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

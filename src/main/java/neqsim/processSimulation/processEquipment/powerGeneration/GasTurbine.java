@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -15,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class GasTurbine extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
 
@@ -71,7 +69,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -115,11 +113,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
         power = expanderPower - compressorPower;
         setHeat(cooler1.getDuty());
-
     }
 
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     public static void main(String[] args) {
         // test code;....
@@ -139,7 +135,6 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
         System.out.println("power generated " + gasturb.getPower() / 1.0e6);
         System.out.println("heat generated " + gasturb.getHeat() / 1.0e6);
-
     }
 
     public double getHeat() {
@@ -149,5 +144,4 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public void setHeat(double heat) {
         this.heat = heat;
     }
-
 }

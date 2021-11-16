@@ -12,5 +12,4 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
  * @version
  */
 public interface DataObjectInterface {
-
 }

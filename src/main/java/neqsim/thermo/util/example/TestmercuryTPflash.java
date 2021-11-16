@@ -1,33 +1,19 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkTwuCoonStatoilEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
  * @author esol @version
  */
 public class TestmercuryTPflash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public TestmercuryTPflash() {
-    }
-
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemSrkTwuCoonStatoilEos(273.15 - 172.0, 1.0);
 
         testSystem.addComponent("nitrogen", 2.97007999748152e-002);
@@ -51,8 +37,9 @@ public class TestmercuryTPflash {
             logger.error(e.toString());
         }
         // ((PhaseEosInterface)testSystem.getPhase(0)).displayInteractionCoefficients("");
-        System.out.println(
-                "vapour pressure " + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
-        System.out.println("Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
+        System.out.println("vapour pressure "
+                + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
+        System.out.println("Ttrip "
+                + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
     }
 }

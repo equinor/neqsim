@@ -6,7 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -14,31 +15,36 @@ import org.apache.logging.log4j.*;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class LBCViscosityMethod extends Viscosity {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
 
-    double a[] = { 0.10230, 0.023364, 0.058533, -0.040758, 0.0093324 };
+    double a[] = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
     /** Creates new ChungViscosityMethod */
-    public LBCViscosityMethod() {
-    }
+    public LBCViscosityMethod() {}
 
-    public LBCViscosityMethod(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    public LBCViscosityMethod(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
     }
 
     @Override
-	public double calcViscosity() {
-        double viscosity = 0.0, lowPresVisc = 0.0, temp = 0.0, temp2 = 0.0, temp3 = 0.0, temp4 = 0.0;
+    public double calcViscosity() {
+        double viscosity = 0.0, lowPresVisc = 0.0, temp = 0.0, temp2 = 0.0, temp3 = 0.0,
+                temp4 = 0.0;
         double eps = 0, critDens = 0.0;
         double par1 = 0.0, par2 = 0.0, par3 = 0.0, par4 = 0.0;
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-            par1 += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getTC();
-            par2 += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
-            par3 += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getPC();
-            par4 += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getCriticalVolume();
-            double TR = phase.getPhase().getTemperature() / phase.getPhase().getComponent(i).getTC();
+            par1 += phase.getPhase().getComponent(i).getx()
+                    * phase.getPhase().getComponent(i).getTC();
+            par2 += phase.getPhase().getComponent(i).getx()
+                    * phase.getPhase().getComponent(i).getMolarMass() * 1000.0;
+            par3 += phase.getPhase().getComponent(i).getx()
+                    * phase.getPhase().getComponent(i).getPC();
+            par4 += phase.getPhase().getComponent(i).getx()
+                    * phase.getPhase().getComponent(i).getCriticalVolume();
+            double TR =
+                    phase.getPhase().getTemperature() / phase.getPhase().getComponent(i).getTC();
             temp2 = Math.pow(phase.getPhase().getComponent(i).getTC(), 1.0 / 6.0)
                     / (Math.pow(phase.getPhase().getComponent(i).getMolarMass() * 1000.0, 1.0 / 2.0)
                             * Math.pow(phase.getPhase().getComponent(i).getPC(), 2.0 / 3.0));
@@ -55,8 +61,8 @@ public class LBCViscosityMethod extends Viscosity {
         // logger.info("LP visc " + lowPresVisc);
         critDens = 1.0 / par4; // mol/cm3
         eps = Math.pow(par1, 1.0 / 6.0) * Math.pow(par2, -1.0 / 2.0) * Math.pow(par3, -2.0 / 3.0);
-        double reducedDensity = phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass()
-                / critDens / 1000000.0;
+        double reducedDensity = phase.getPhase().getPhysicalProperties().getDensity()
+                / phase.getPhase().getMolarMass() / critDens / 1000000.0;
         // System.out.println("reduced density " + reducedDensity);
         double numb = a[0] + a[1] * reducedDensity + a[2] * Math.pow(reducedDensity, 2.0)
                 + a[3] * Math.pow(reducedDensity, 3.0) + a[4] * Math.pow(reducedDensity, 4.0);
@@ -67,8 +73,7 @@ public class LBCViscosityMethod extends Viscosity {
     }
 
     @Override
-	public double getPureComponentViscosity(int i) {
+    public double getPureComponentViscosity(int i) {
         return 0;
     }
-
 }

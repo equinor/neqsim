@@ -23,11 +23,10 @@ import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class visAdContourPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType longitude, latitude, temperature;
@@ -47,7 +46,6 @@ public class visAdContourPlot {
     /** Creates new visAdContourPlot */
     public visAdContourPlot(String firstax, String secax, String zax)
             throws RemoteException, VisADException {
-
         latitude = RealType.getRealType(firstax);
         longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
@@ -73,9 +71,7 @@ public class visAdContourPlot {
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
-
             for (int r = 0; r < NROWS; r++) {
-
                 flat_samples[0][c * NROWS + r] = (float) z_samples[c][r];
             }
         }

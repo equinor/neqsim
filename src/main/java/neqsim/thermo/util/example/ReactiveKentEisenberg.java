@@ -1,28 +1,18 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 /**
  *
  * @author esol
  * @version
  */
 public class ReactiveKentEisenberg {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ReactiveKentEisenberg.class);
-
-    /** Creates new TPflash */
-    public ReactiveKentEisenberg() {
-    }
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemKentEisenberg(326.0, 1.1);
@@ -45,7 +35,8 @@ public class ReactiveKentEisenberg {
             for (int i = 0; i < 1; i++) {
                 testSystem.addComponent("H2S", 0.01);
                 ops.bubblePointPressureFlash(false);
-                logger.info("pres H2S " + testSystem.getPressure() * testSystem.getPhase(0).getComponent("H2S").getx());
+                logger.info("pres H2S " + testSystem.getPressure()
+                        * testSystem.getPhase(0).getComponent("H2S").getx());
             }
             // ops.TPflash();
         } catch (Exception e) {

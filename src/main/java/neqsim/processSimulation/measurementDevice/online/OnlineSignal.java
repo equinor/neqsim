@@ -6,7 +6,6 @@ import java.util.Date;
  * @author esol
  */
 public class OnlineSignal implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -46,7 +45,8 @@ public class OnlineSignal implements java.io.Serializable {
             database = new neqsim.util.database.AspenIP21Database();
         }
         try {
-            dataSet = database.getResultSet(("SELECT * FROM IP_AnalogDef WHERE NAME='" + name + "'"));
+            dataSet =
+                    database.getResultSet(("SELECT * FROM IP_AnalogDef WHERE NAME='" + name + "'"));
             dataSet.next();
             value = dataSet.getDouble("IP_VALUE");
         } catch (Exception e) {
@@ -63,7 +63,8 @@ public class OnlineSignal implements java.io.Serializable {
     public double getValue() {
         try {
             // System.out.println("reading online vale from: " + transmitterName );
-            dataSet = database.getResultSet(("SELECT * FROM IP_AnalogDef WHERE NAME='" + transmitterName + "'"));
+            dataSet = database.getResultSet(
+                    ("SELECT * FROM IP_AnalogDef WHERE NAME='" + transmitterName + "'"));
             dataSet.next();
             value = dataSet.getDouble("IP_VALUE");
             // System.out.println("value + " + value );

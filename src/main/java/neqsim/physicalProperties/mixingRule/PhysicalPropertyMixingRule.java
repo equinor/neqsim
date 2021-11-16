@@ -12,12 +12,11 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * @author  esol
+ * @author esol
  * @version
  */
 public class PhysicalPropertyMixingRule
         implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMixingRule.class);
 
@@ -26,8 +25,7 @@ public class PhysicalPropertyMixingRule
     /**
      * Creates new PhysicalPropertyMixingRule
      */
-    public PhysicalPropertyMixingRule() {
-    }
+    public PhysicalPropertyMixingRule() {}
 
     @Override
     public Object clone() {
@@ -70,19 +68,22 @@ public class PhysicalPropertyMixingRule
 
         database = new neqsim.util.database.NeqSimDataBase();
         for (int l = 0; l < phase.getNumberOfComponents(); l++) {
-            if (phase.getComponent(l).isIsTBPfraction() || phase.getComponent(l).getIonicCharge() != 0) {
+            if (phase.getComponent(l).isIsTBPfraction()
+                    || phase.getComponent(l).getIonicCharge() != 0) {
                 break;
             }
             String component_name = phase.getComponents()[l].getComponentName();
             for (int k = l; k < phase.getNumberOfComponents(); k++) {
-                if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
+                if (k == l || phase.getComponent(k).getIonicCharge() != 0
+                        || phase.getComponent(k).isIsTBPfraction()) {
                     break;
                 } else {
                     try {
-                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
-                                + "' AND COMP2='" + phase.getComponents()[k].getComponentName() + "') OR (COMP1='"
-                                + phase.getComponents()[k].getComponentName() + "' AND COMP2='" + component_name
-                                + "')");
+                        dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
+                                + component_name + "' AND COMP2='"
+                                + phase.getComponents()[k].getComponentName() + "') OR (COMP1='"
+                                + phase.getComponents()[k].getComponentName() + "' AND COMP2='"
+                                + component_name + "')");
                         if (dataSet.next()) {
                             Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
                         } else {
@@ -99,7 +100,8 @@ public class PhysicalPropertyMixingRule
                                 dataSet.close();
                             }
                         } catch (Exception e) {
-                            logger.error("err closing dataSet in physical property mixing rule...", e);
+                            logger.error("err closing dataSet in physical property mixing rule...",
+                                    e);
                         }
                     }
                 }

@@ -10,12 +10,9 @@ import org.apache.logging.log4j.*;
  * @author esol
  */
 public class TestSurfaceTenison {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSurfaceTenison.class);
 
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemSrkEos(310.95, 20.00);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 0.736);
@@ -41,6 +38,5 @@ public class TestSurfaceTenison {
         testSystem.display();
         testSystem.display();
         testSystem.display();
-
     }
 }

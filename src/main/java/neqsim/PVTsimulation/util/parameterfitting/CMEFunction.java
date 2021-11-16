@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class CMEFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -29,7 +28,6 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     }
 
     public void calcSaturationConditions(SystemInterface system) {
-
         do {
             system.setPressure(system.getPressure() + 10.0);
             thermoOps.TPflash();
@@ -46,8 +44,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
         /*
-         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-         * e.printStackTrace(); }
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
          */
         saturationVolume = system.getVolume();
         saturationPressure = system.getPressure();
@@ -55,7 +52,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -88,7 +85,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         int plusNumber = 0;
         for (int ii = 0; ii < system.getPhase(0).getNumberOfComponents(); ii++) {

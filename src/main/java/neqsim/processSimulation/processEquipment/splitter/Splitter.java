@@ -12,11 +12,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -28,8 +27,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     /**
      * Creates new Separator
      */
-    public Splitter() {
-    }
+    public Splitter() {}
 
     public Splitter(StreamInterface inletStream) {
         this.setInletStream(inletStream);
@@ -51,17 +49,17 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
 
     public void setSplitFactors(double[] splitFact) {
-    	double sum = 0.0;
-    	for(int i=0;i<splitFact.length;i++) {
-    		if(splitFact[i]<0.0) {
-    			splitFact[i] = 0.0;
-    		}
-    		sum += splitFact[i];
-    	}
-    	splitFactor = new double[splitFact.length];
-    	for(int i=0;i<splitFact.length;i++) {
-    		splitFactor[i] = splitFact[i]/sum;
-    	}
+        double sum = 0.0;
+        for (int i = 0; i < splitFact.length; i++) {
+            if (splitFact[i] < 0.0) {
+                splitFact[i] = 0.0;
+            }
+            sum += splitFact[i];
+        }
+        splitFactor = new double[splitFact.length];
+        for (int i = 0; i < splitFact.length; i++) {
+            splitFactor[i] = splitFact[i] / sum;
+        }
         splitNumber = splitFact.length;
         setInletStream(inletStream);
     }
@@ -72,8 +70,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
         splitStream = new Stream[splitNumber];
         try {
             for (int i = 0; i < splitNumber; i++) {
-                //System.out.println("splitting...." + i);
-                splitStream[i] = new Stream("Split Stream", (SystemInterface) inletStream.getThermoSystem().clone());
+                // System.out.println("splitting...." + i);
+                splitStream[i] = new Stream("Split Stream",
+                        (SystemInterface) inletStream.getThermoSystem().clone());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -91,22 +90,24 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
             thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
             thermoSystem.init(0);
             splitStream[i].setThermoSystem(thermoSystem);
-            for (int j = 0; j < inletStream.getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-                int index = inletStream.getThermoSystem().getPhase(0).getComponent(j).getComponentNumber();
-                double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j).getNumberOfmoles();
-                splitStream[i].getThermoSystem().addComponent(index, moles * splitFactor[i] - moles);
+            for (int j = 0; j < inletStream.getThermoSystem().getPhase(0)
+                    .getNumberOfComponents(); j++) {
+                int index = inletStream.getThermoSystem().getPhase(0).getComponent(j)
+                        .getComponentNumber();
+                double moles = inletStream.getThermoSystem().getPhase(0).getComponent(j)
+                        .getNumberOfmoles();
+                splitStream[i].getThermoSystem().addComponent(index,
+                        moles * splitFactor[i] - moles);
             }
-            ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
+            ThermodynamicOperations thermoOps =
+                    new ThermodynamicOperations(splitStream[i].getThermoSystem());
             thermoOps.TPflash();
         }
     }
 
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     @Override
-    public void runTransient(double dt) {
-    }
-
+    public void runTransient(double dt) {}
 }

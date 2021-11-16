@@ -6,27 +6,15 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
  *
- * Created on 27. september 2001, 09:43
- */
-
-/*
- *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestCSPsrk {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCSPsrk.class);
 
-    /** Creates new TPflash */
-    public TestCSPsrk() {
-    }
-
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemCSPsrkEos(158, 5.662);
         // SystemInterface testSystem = new SystemSrkEos(110.0, 1.262);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

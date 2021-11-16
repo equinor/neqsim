@@ -1,24 +1,21 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
-import Jama.*;
+import Jama.Matrix;
 
 public class ChemEq implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int NSPEC = 10, NELE = 3;
     double R = 8.3143, G_min = 0;
@@ -61,7 +58,8 @@ public class ChemEq implements java.io.Serializable {
         }
     }
 
-    public ChemEq(double T, double P, double[][] A_matrix, double n_mol[], double chem_ref[], double b_element[]) {
+    public ChemEq(double T, double P, double[][] A_matrix, double n_mol[], double chem_ref[],
+            double b_element[]) {
         this.T = T;
         this.P = P;
         this.A_matrix = A_matrix;
@@ -94,17 +92,13 @@ public class ChemEq implements java.io.Serializable {
 
     public ChemEq(double[][] A_matrix) {
         this.A_matrix = A_matrix;
-
     }
 
     public ChemEq(double T, double P, double[][] A_matrix) {
         this.T = T;
         this.P = P;
         this.A_matrix = A_matrix;
-
     }
-
-    // public void
 
     public void chemSolve() {
         n_t = 0;
@@ -122,7 +116,6 @@ public class ChemEq implements java.io.Serializable {
         for (i = 0; i < NSPEC; i++) {
             chem_pot[i] = chem_ref[i] + Math.log(Math.abs(n_mol[i] / n_t));
             System.out.println("chempot: " + i + "  = " + chem_pot[i]);
-
         }
 
         sum = 0;
@@ -162,7 +155,6 @@ public class ChemEq implements java.io.Serializable {
         double[][] btest = new double[NNOT][1];
 
         for (i = 0; i < NNOT; i++) {
-
             btest[i][0] = b_vector[i];
 
             for (j = 0; j < NNOT; j++) {
@@ -328,12 +320,10 @@ public class ChemEq implements java.io.Serializable {
         double Gibbs = 0;
 
         do {
-
             error = 0;
             chemSolve();
 
             for (i = 0; i < NSPEC; i++) {
-
                 System.out.println(n_mol[i] + "  prove korreksjon  " + step * d_n[i]);
 
                 error += d_n[i] / n_mol[i];
@@ -355,15 +345,13 @@ public class ChemEq implements java.io.Serializable {
         } while (error > 0.00005);
 
         for (j = 0; j < NSPEC; j++) {
-
-            System.out.println(" SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
+            System.out.println(
+                    " SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
         }
-
     }
 
     public static void main(String args[]) {
         ChemEq testSystem = new ChemEq();
         testSystem.solve();
-
     }
 }

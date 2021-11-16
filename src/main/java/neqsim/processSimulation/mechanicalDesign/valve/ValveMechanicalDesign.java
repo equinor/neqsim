@@ -28,22 +28,21 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     }
 
     @Override
-	public void readDesignSpecifications() {
-
+    public void readDesignSpecifications() {
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("valve design codes")) {
-            System.out
-                    .println("valve code standard: " + getDesignStandard().get("valve design codes").getStandardName());
-            valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
+            System.out.println("valve code standard: "
+                    + getDesignStandard().get("valve design codes").getStandardName());
+            valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes"))
+                    .getValveCvMax();
         } else {
             System.out.println("no valve code standard specified......using default");
         }
-
     }
 
     @Override
-	public void calcDesign() {
+    public void calcDesign() {
         super.calcDesign();
         ThrottlingValve valve1 = (ThrottlingValve) getProcessEquipment();
         inletPressure = valve1.getInletPressure();
@@ -56,13 +55,12 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     }
 
     @Override
-	public void displayResults() {
-
+    public void displayResults() {
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "Name", "Value", "Unit" };
+        String[] names = {"Name", "Value", "Unit"};
 
         String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
 

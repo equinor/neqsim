@@ -11,15 +11,13 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 /**
- * This class defines a thermodynamic system using the Electrolyte CPA EoS of
- * Equinor
+ * This class defines a thermodynamic system using the Electrolyte CPA EoS of Equinor
  */
 public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new SystemModifiedFurstElectrolyteEos */
@@ -48,7 +46,7 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemElectrolyteCPAstatoil clonedSystem = null;
         try {
             clonedSystem = (SystemElectrolyteCPAstatoil) super.clone();
@@ -62,5 +60,4 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
 
         return clonedSystem;
     }
-
 }

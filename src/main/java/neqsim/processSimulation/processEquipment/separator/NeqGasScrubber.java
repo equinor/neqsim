@@ -13,11 +13,10 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class NeqGasScrubber extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -102,14 +101,12 @@ public class NeqGasScrubber extends Separator {
     }
 
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     @Override
     public String getName() {
         return name;
     }
 
-    public void runTransient() {
-    }
+    public void runTransient() {}
 }

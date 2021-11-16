@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemDesmukhMather extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
@@ -77,7 +76,7 @@ public class SystemDesmukhMather extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemDesmukhMather clonedSystem = null;
         try {
             clonedSystem = (SystemDesmukhMather) super.clone();
@@ -87,5 +86,4 @@ public class SystemDesmukhMather extends SystemEos {
 
         return clonedSystem;
     }
-
 }

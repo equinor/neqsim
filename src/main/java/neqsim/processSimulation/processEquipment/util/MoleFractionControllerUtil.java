@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  */
 public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
-
 	private static final long serialVersionUID = 1000;
 
 	StreamInterface inletStream;
@@ -51,8 +50,10 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
 		moleFractionReduction = false;
 
 		if (unit.equals("litre/MSm^3")) {
-			System.out.println("density .." + thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity());
-			this.moleFrac = rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
+			System.out.println("density .."
+					+ thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity());
+			this.moleFrac = rate
+					* thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
 					/ thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
 		} else {
 			System.out.println("error ..unit not defined..");
@@ -75,7 +76,8 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
 			thermoSystem.init(1);
 			double deltaFrac = moleFrac - thermoSystem.getPhase(0).getComponent(compName).getz();
 			if (moleFractionReduction) {
-				deltaFrac = (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
+				deltaFrac = (moleFractionReductionRatio)
+						* thermoSystem.getPhase(0).getComponent(compName).getz();
 			}
 			double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
 			thermoSystem.addComponent(compName, molesChange);// deltaFrac*thermoSystem.getTotalNumberOfMoles());

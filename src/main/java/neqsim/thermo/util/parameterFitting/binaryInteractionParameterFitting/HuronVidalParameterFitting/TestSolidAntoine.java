@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import java.sql.ResultSet;
@@ -23,15 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestSolidAntoine {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSolidAntoine.class);
 
-    /** Creates new TestAcentric */
-    public TestSolidAntoine() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

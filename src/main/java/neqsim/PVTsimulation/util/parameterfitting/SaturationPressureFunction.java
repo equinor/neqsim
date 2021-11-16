@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class SaturationPressureFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -28,7 +27,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -58,7 +57,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }

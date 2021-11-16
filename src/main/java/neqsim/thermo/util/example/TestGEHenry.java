@@ -1,32 +1,21 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestGEHenry {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestGEHenry.class);
 
-    /** Creates new TPflash */
-    public TestGEHenry() {
-    }
-
     public static void main(String args[]) {
-        //
         SystemInterface testSystem = new SystemGEWilson(273.15 + 55.0, 1.301325);
         // SystemInterface testSystem = new SystemNRTL(273.15 + 55.0,1.301325);
 
@@ -46,5 +35,4 @@ public class TestGEHenry {
         }
         testSystem.display();
     }
-
 }

@@ -16,7 +16,6 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
  * @version
  */
 public class WettedWallDataReader extends DataReader {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new WettedWallDataReader */

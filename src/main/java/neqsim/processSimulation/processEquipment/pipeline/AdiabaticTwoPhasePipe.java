@@ -14,11 +14,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class AdiabaticTwoPhasePipe extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     double inletPressure = 0;
@@ -87,7 +86,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         } else {
             flowPattern = "turbulent";
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
+                    (1.0 / (-1.8 * GeneralMath
+                            .log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
                     2.0);
         }
     }
@@ -97,16 +97,18 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         velocity = system.getFlowRate("m3/sec") / area;
         double reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity("m2/sec");
         double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
-        double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0) / insideDiameter
-                / system.getDensity("kg/m3");// * () * neqsim.thermo.ThermodynamicConstantsInterface.R
+        double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0)
+                / insideDiameter / system.getDensity("kg/m3");// * () *
+                                                              // neqsim.thermo.ThermodynamicConstantsInterface.R
         // / system.getMolarMass() * system.getTemperature() / Math.pow(insideDiameter,
         // 5.0);
         // \\System.out.println("friction fact" + frictionFactor + " velocity " +
         // velocity + " reynolds number " + reynoldsNumber);
         // System.out.println("dp gravity " +
         // system.getDensity("kg/m3")*neqsim.thermo.ThermodynamicConstantsInterface.gravity*(inletElevation-outletElevation)/1.0e5);
-        double dp_gravity = system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-                * (inletElevation - outletElevation);
+        double dp_gravity =
+                system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
+                        * (inletElevation - outletElevation);
         return (inletPressure * 1e5 - dp) / 1.0e5 + dp_gravity / 1.0e5;
     }
 
@@ -128,8 +130,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
             velocity = system.getVolume("m3") / area;
             reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity();
             double frictionFactor = calcWallFrictionFactor(reynoldsNumber) * 4.0;
-            double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0)
-                    / (gasGravity * system.getZ() * system.getTemperature() * frictionFactor * length / 1000.0));
+            double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0) / (gasGravity
+                    * system.getZ() * system.getTemperature() * frictionFactor * length / 1000.0));
             flow = 1.1494e-3 * 288.15 / (system.getPressure() * 100) * temp;
             system.setTotalFlowRate(flow / 1e6, "MSm^3/day");
             testOps.TPflash();
@@ -177,7 +179,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                 do {
                     iter++;
                     oldPressure = system.getNumberOfMoles();
-                    system.setTotalNumberOfMoles(system.getNumberOfMoles() * outP / pressureOutLimit);
+                    system.setTotalNumberOfMoles(
+                            system.getNumberOfMoles() * outP / pressureOutLimit);
 
                     // System.out.println("new moles " +
                     // system.getNumberOfMoles() + " outP "+ outP);
@@ -192,8 +195,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
                     if (outP < 1e-10 || Double.isNaN(outP))
                         break;
-
-                } while (Math.abs(system.getNumberOfMoles() - oldPressure) / oldPressure > 1e-3 && iter < 3);
+                } while (Math.abs(system.getNumberOfMoles() - oldPressure) / oldPressure > 1e-3
+                        && iter < 3);
                 // calcFlow(pressureOutLimit);
                 // System.out.println("new moles " +
                 // system.getNumberOfMoles()*system.getPressure()/pressureOutLimit);
@@ -203,7 +206,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                 system.setTotalFlowRate(flowLimit, maxflowunit);
                 system.init(1);
             }
-            inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit), maxflowunit);
+            inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit),
+                    maxflowunit);
             inStream.run();
         } else {
             calcFlow(pressureOut);
@@ -223,7 +227,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                     testOps = new ThermodynamicOperations(system);
                     testOps.TPflash();
                 } while (Math.abs(system.getPressure() - oldPressure) > 1e-2 && iter < 25);
-
             }
         }
         testOps = new ThermodynamicOperations(system);
@@ -231,7 +234,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         System.out.println("flow rate " + system.getFlowRate(maxflowunit));
         // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);
-
     }
 
     @Override
@@ -246,7 +248,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
     @Override
     public void runTransient() {
-
         run();
     }
 
@@ -256,8 +257,7 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     @Override
-    public void setInitialFlowPattern(String flowPattern) {
-    }
+    public void setInitialFlowPattern(String flowPattern) {}
 
     /**
      * @return the length
@@ -330,7 +330,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     public static void main(String[] name) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 100.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 100.00);
         testSystem.addComponent("methane", 10.0, "MSm^3/day");
         testSystem.addComponent("n-heptane", 5.0, "MSm^3/day");
         testSystem.createDatabase(true);
@@ -345,7 +346,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         pipe.setPipeWallRoughness(10e-6);
         // pipe.setOutPressure(112.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipe);
         operations.run();

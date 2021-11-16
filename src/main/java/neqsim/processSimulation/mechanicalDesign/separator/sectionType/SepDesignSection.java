@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  */
 public class SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     SeparatorSection separatorSection = null;

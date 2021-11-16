@@ -12,15 +12,13 @@ package neqsim.util.unit;
  * @version
  */
 public class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected double SIvalue = 0.0, invalue = 0.0, factor = 1.0;
     protected String inunit = null;
 
     /** Creates new UnitBase */
-    public BaseUnit() {
-    }
+    public BaseUnit() {}
 
     public BaseUnit(double value, String name) {
         this.invalue = value;
@@ -28,18 +26,17 @@ public class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConstantsInter
     }
 
     @Override
-	public double getSIvalue() {
+    public double getSIvalue() {
         return SIvalue;
     }
 
     @Override
-	public double getValue(String fromunit) {
+    public double getValue(String fromunit) {
         return 0.0;
     }
 
     @Override
-	public double getValue(double val, String fromunit, String tounit) {
+    public double getValue(double val, String fromunit, String tounit) {
         return 0.0;
     }
-
 }

@@ -13,14 +13,12 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates new GasLiquidSurfaceTension
      */
-    public FirozabadiRamleyInterfaceTension() {
-    }
+    public FirozabadiRamleyInterfaceTension() {}
 
     public FirozabadiRamleyInterfaceTension(SystemInterface system) {
         super(system);
@@ -30,23 +28,29 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
      * Calculates the pure component surfacetension using the Macleod/Sugden method
      */
     @Override
-	public double calcPureComponentSurfaceTension(int componentNumber) {
-        return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-                * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
-                        * system.getPhases()[1].getComponents()[componentNumber].getx()
-                        - system.getPhases()[0].getPhysicalProperties().getDensity()
-                                / system.getPhases()[0].getMolarMass()
-                                * system.getPhases()[0].getComponents()[componentNumber].getx()),
-                4.0);
+    public double calcPureComponentSurfaceTension(int componentNumber) {
+        return 1.0e-3
+                * Math.pow(
+                        system.getPhases()[0].getComponents()[componentNumber]
+                                .getParachorParameter()
+                                * 1.0e-6
+                                * (system.getPhases()[1].getPhysicalProperties().getDensity()
+                                        / system.getPhases()[1].getMolarMass()
+                                        * system.getPhases()[1].getComponents()[componentNumber]
+                                                .getx()
+                                        - system.getPhases()[0].getPhysicalProperties().getDensity()
+                                                / system.getPhases()[0].getMolarMass()
+                                                * system.getPhases()[0]
+                                                        .getComponents()[componentNumber].getx()),
+                        4.0);
     }
 
     /**
-     * Calculates the surfacetension using the Firozabadi Ramley (1988) method for
-     * mixtures Units: N/m
+     * Calculates the surfacetension using the Firozabadi Ramley (1988) method for mixtures Units:
+     * N/m
      */
     @Override
-	public double calcSurfaceTension(int interface1, int interface2) {
-        double temp = 0;
+    public double calcSurfaceTension(int interface1, int interface2) {
         if (system.getNumberOfPhases() < 2) {
             return 0.0;
         }

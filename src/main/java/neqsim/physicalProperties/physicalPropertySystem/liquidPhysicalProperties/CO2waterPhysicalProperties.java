@@ -18,13 +18,12 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
-
+public class CO2waterPhysicalProperties
+        extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 
-    public CO2waterPhysicalProperties() {
-    }
+    public CO2waterPhysicalProperties() {}
 
     public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
@@ -36,7 +35,7 @@ public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physic
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         CO2waterPhysicalProperties properties = null;
 
         try {
@@ -46,5 +45,4 @@ public class CO2waterPhysicalProperties extends neqsim.physicalProperties.physic
         }
         return properties;
     }
-
 }

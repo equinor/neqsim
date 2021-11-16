@@ -12,10 +12,10 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-public class Conductivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
+public class Conductivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
@@ -24,15 +24,15 @@ public class Conductivity
     /**
      * Creates new Conductivity
      */
-    public Conductivity() {
-    }
+    public Conductivity() {}
 
-    public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    public Conductivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Conductivity properties = null;
 
         try {
@@ -45,7 +45,7 @@ public class Conductivity
     }
 
     @Override
-	public double calcConductivity() {
+    public double calcConductivity() {
         // using default value of parafin wax
         if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
             conductivity = 0.25;

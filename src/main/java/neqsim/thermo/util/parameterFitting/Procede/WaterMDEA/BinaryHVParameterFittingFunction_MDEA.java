@@ -6,10 +6,11 @@
 
 package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,15 +18,13 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_MDEA.class);
 
     /** Creates new Test */
-    public BinaryHVParameterFittingFunction_MDEA() {
-    }
+    public BinaryHVParameterFittingFunction_MDEA() {}
 
     public BinaryHVParameterFittingFunction_MDEA(int phase, int type) {
         this.phase = phase;
@@ -33,7 +32,7 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         double aMDEAold, aWaterold, aMDEAnew, aWaternew, daMDEAdT, daWaterdT, H;
 
         if (type == 0) {
@@ -86,12 +85,12 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return (val);
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
 
         /*
@@ -102,38 +101,36 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
          */
 
         if (i == 0) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijParameter(0,
-                    1, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijParameter(0,
-                    1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule())
+                    .setHVDijParameter(0, 1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
+                    .setHVDijParameter(0, 1, value);
         }
         if (i == 1) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijParameter(1,
-                    0, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijParameter(1,
-                    0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule())
+                    .setHVDijParameter(1, 0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
+                    .setHVDijParameter(1, 0, value);
         }
 
         if (i == 4) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHValphaParameter(0,
-                    1, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHValphaParameter(0,
-                    1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule())
+                    .setHValphaParameter(0, 1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
+                    .setHValphaParameter(0, 1, value);
         }
 
         if (i == 2) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijTParameter(0,
-                    1, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijTParameter(0,
-                    1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule())
+                    .setHVDijTParameter(0, 1, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
+                    .setHVDijTParameter(0, 1, value);
         }
         if (i == 3) {
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()).setHVDijTParameter(1,
-                    0, value);
-            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()).setHVDijTParameter(1,
-                    0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[0]).getMixingRule())
+                    .setHVDijTParameter(1, 0, value);
+            ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
+                    .setHVDijTParameter(1, 0, value);
         }
-
     }
-
 }

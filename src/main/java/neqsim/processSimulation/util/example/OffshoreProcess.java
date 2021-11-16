@@ -11,15 +11,13 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class OffshoreProcess {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
         double fakt = 1000.0 / 3600.0;
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 - 4.3), 90.2);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 - 4.3), 90.2);
         testSystem.addComponent("CO2", (152.6119 + 3513.5) * fakt);
         testSystem.addComponent("nitrogen", (9.8305 + 765 + 6882) * fakt);
         testSystem.addComponent("methane", (2799.24 + 109822.0) * fakt);
@@ -44,14 +42,14 @@ public class OffshoreProcess {
         testSystem.addComponent("toluene", (14.5174 + 7.61) * fakt);
         testSystem.addComponent("22-DM-C5", (7.57 + 2.86) * fakt);
         testSystem.addComponent("M-cy-C5", (7.51 + 2.6357) * fakt);
-        //
+
         testSystem.addComponent("m-Xylene", (5.5397 + 1.36) * fakt);
         testSystem.addComponent("2-M-C8", (2.8017 + 0.5818) * fakt);
         testSystem.addComponent("n-nonane", (1.5738 + 0.258) * fakt);
-        //
+
         testSystem.addComponent("p-Xylene", (1.93 + 1.02) * fakt);
         testSystem.addComponent("o-Xylene", (1.1343 + 0.27) * fakt);
-        // //
+
         testSystem.addComponent("nC10", (1.5464 + 0.145) * fakt);
         testSystem.addComponent("nC12", (0.2741 + 7.8295e-3) * fakt);
 
@@ -91,11 +89,11 @@ public class OffshoreProcess {
         pipe.setOutputFileName("c:/tempAsgard.nc");
         pipe.setInitialFlowPattern("annular");
         int numberOfLegs = 1, numberOfNodesInLeg = 120;
-        double[] legHeights = { 0, 0 };
-        double[] legPositions = { 0.0, 74.0 };
-        double[] pipeDiameters = { 1.02507588, 1.02507588 };
-        double[] outerTemperature = { 275.0, 275.0 };
-        double[] pipeWallRoughness = { 1e-5, 1e-5 };
+        double[] legHeights = {0, 0};
+        double[] legPositions = {0.0, 74.0};
+        double[] pipeDiameters = {1.02507588, 1.02507588};
+        double[] outerTemperature = {275.0, 275.0};
+        double[] pipeWallRoughness = {1e-5, 1e-5};
         pipe.setNumberOfLegs(numberOfLegs);
         pipe.setNumberOfNodesInLeg(numberOfNodesInLeg);
         pipe.setLegPositions(legPositions);
@@ -107,7 +105,8 @@ public class OffshoreProcess {
         pipe.setEquilibriumMassTransfer(false);
         pipe.setEquilibriumHeatTransfer(false);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);

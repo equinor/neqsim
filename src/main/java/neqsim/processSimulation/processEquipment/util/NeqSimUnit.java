@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author esol
  */
 public class NeqSimUnit extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     Stream inletStream;
@@ -46,7 +45,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public void run() {
+    public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         if (equipment.equals("pipeline") && flowPattern.equals("stratified")) {
             runStratified();

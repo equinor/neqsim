@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -27,7 +25,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import org.apache.logging.log4j.*;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class Element implements ThermodynamicConstantsInterface {
@@ -37,11 +35,9 @@ public class Element implements ThermodynamicConstantsInterface {
 	static Logger logger = LogManager.getLogger(Element.class);
 
 	/** Creates new Element */
-	public Element() {
-	}
+	public Element() {}
 
 	public Element(String name) {
-
 		ArrayList<String> names = new ArrayList<String>();
 		ArrayList<String> stocCoef = new ArrayList<String>();
 		neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -83,5 +79,4 @@ public class Element implements ThermodynamicConstantsInterface {
 	public double[] getElementCoefs() {
 		return coefArray;
 	}
-
 }

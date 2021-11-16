@@ -14,11 +14,10 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.*;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class visAd3DPlot extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private RealType longitude, latitude, temperature, isotemperature;
@@ -38,7 +37,8 @@ public class visAd3DPlot extends visAdBaseClass {
     private ContourWidget contourWid;
 
     /** Creates new visAdContourPlot */
-    public visAd3DPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
+    public visAd3DPlot(String firstax, String secax, String zax)
+            throws RemoteException, VisADException {
         latitude = RealType.getRealType(firstax);
         longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
@@ -64,27 +64,22 @@ public class visAd3DPlot extends visAdBaseClass {
          * 
          * for(int i=0;i<NCOLS){ for(int j=0;j<NROWS;j++){ numbs[j][i] = yvals[j] } }
          * 
-         * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax,
-         * NCOLS);
+         * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS);
          * 
          * set_samples = domain_set.getSamples( true );
          */
     }
 
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
-
         z_samples = vals;
     }
 
     @Override
     public void init() throws RemoteException, VisADException {
-
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
-
             for (int r = 0; r < NROWS; r++) {
-
                 flat_samples[0][c * NROWS + r] = (float) z_samples[c][r];
             }
         }
@@ -161,15 +156,12 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
-
         visAd3DPlot test = new visAd3DPlot("long", "alt", "height");
         test.setXYvals(0, 10, 4, 0, 10, 4);
 
-        double[][] z = { { 3, 2, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{3, 2, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         test.setZvals(z);
         test.init();
-
     }
-
 }

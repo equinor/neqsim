@@ -12,15 +12,13 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
  * @version
  */
 public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;
     int type = 1;
 
     /** Creates new Test */
-    public BinaryWSParameterFittingToSolubilityData() {
-    }
+    public BinaryWSParameterFittingToSolubilityData() {}
 
     public BinaryWSParameterFittingToSolubilityData(int phase, int type) {
         this.phase = phase;
@@ -28,7 +26,7 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
         if (type == 1) {
             // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
@@ -39,7 +37,7 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 }

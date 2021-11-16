@@ -9,9 +9,7 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     ProcessSystem process = null;
     String report;
 
-    public ConditionMonitor() {
-
-    }
+    public ConditionMonitor() {}
 
     public ConditionMonitor(ProcessSystem refprocess) {
         this.refprocess = refprocess;
@@ -19,12 +17,13 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     }
 
     public void conditionAnalysis(String unitName) {
-        neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass refUn = (neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass) refprocess
-                .getUnit(unitName);
-        ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
-                .runConditionAnalysis(refUn);
-        report += ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
-                .getConditionAnalysisMessage();
+        neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass refUn =
+                (neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass) refprocess
+                        .getUnit(unitName);
+        ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process
+                .getUnit(unitName)).runConditionAnalysis(refUn);
+        report += ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process
+                .getUnit(unitName)).getConditionAnalysisMessage();
     }
 
     public void conditionAnalysis() {
@@ -33,9 +32,9 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
             conditionAnalysis(names.get(i));
         }
     }
-    
+
     public String getReport() {
-    	return report;
+        return report;
     }
 
     public ProcessSystem getProcess() {
@@ -46,5 +45,4 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     public void run() {
         process = refprocess.copy();
     }
-
 }

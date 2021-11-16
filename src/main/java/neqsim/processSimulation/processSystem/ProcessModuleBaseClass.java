@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -19,8 +17,7 @@
  *
  * Created on 1. november 2006, 22:07
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
 package neqsim.processSimulation.processSystem;
 
@@ -34,60 +31,57 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public abstract class ProcessModuleBaseClass implements ModuleInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String preferedThermodynamicModel = "", moduleName = "";
     protected boolean isInitializedModule = false, isInitializedStreams = false;
     private boolean isCalcDesign = false;
-    private neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+    private neqsim.processSimulation.processSystem.ProcessSystem operations =
+            new neqsim.processSimulation.processSystem.ProcessSystem();
 
     /**
      * Creates a new instance of ProcessModuleBaseClass
      */
-    public ProcessModuleBaseClass() {
-    }
+    public ProcessModuleBaseClass() {}
 
     @Override
-	public String getPreferedThermodynamicModel() {
+    public String getPreferedThermodynamicModel() {
         return preferedThermodynamicModel;
     }
 
     @Override
-	public void setPreferedThermodynamicModel(String preferedThermodynamicModel) {
+    public void setPreferedThermodynamicModel(String preferedThermodynamicModel) {
         this.preferedThermodynamicModel = preferedThermodynamicModel;
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         getOperations().displayResult();
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return moduleName;
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         moduleName = name;
     }
 
     @Override
-	public void setRegulatorOutSignal(double signal) {
-    }
+    public void setRegulatorOutSignal(double signal) {}
 
     @Override
-	public void setController(ControllerDeviceInterface controller) {
-    }
+    public void setController(ControllerDeviceInterface controller) {}
 
     @Override
-	public ControllerDeviceInterface getController() {
+    public ControllerDeviceInterface getController() {
         return null;
     }
 
     @Override
-	public MechanicalDesign getMechanicalDesign() {
+    public MechanicalDesign getMechanicalDesign() {
         return null;
     }
 
@@ -96,7 +90,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     public abstract void setDesign();
 
     @Override
-	public String[][] reportResults() {
+    public String[][] reportResults() {
         return null;
     }
 
@@ -104,7 +98,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
      * @return the isCalcDesign
      */
     @Override
-	public boolean isCalcDesign() {
+    public boolean isCalcDesign() {
         return isCalcDesign;
     }
 
@@ -112,7 +106,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
      * @param isCalcDesign the isCalcDesign to set
      */
     @Override
-	public void setIsCalcDesign(boolean isCalcDesign) {
+    public void setIsCalcDesign(boolean isCalcDesign) {
         this.isCalcDesign = isCalcDesign;
     }
 
@@ -120,36 +114,34 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
      * @return the operations
      */
     @Override
-	public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
+    public neqsim.processSimulation.processSystem.ProcessSystem getOperations() {
         return operations;
     }
 
     // this method needs to be updated...need to chec if all equipment are solved
     // correctly
     @Override
-	public boolean solved() {
+    public boolean solved() {
         return true;
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return null;
     }
 
     @Override
-	public SystemInterface getFluid() {
+    public SystemInterface getFluid() {
         return getThermoSystem();
     }
 
-    public void setSpecification(String specificationName, double value) {
-
-    }
+    public void setSpecification(String specificationName, double value) {}
 
     /**
      * @return the specification
      */
     @Override
-	public String getSpecification() {
+    public String getSpecification() {
         return null;
     }
 
@@ -157,58 +149,52 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
      * @param specification the specification to set
      */
     @Override
-	public void setSpecification(String specification) {
-    }
+    public void setSpecification(String specification) {}
 
     @Override
-	public Object getUnit(String name) {
+    public Object getUnit(String name) {
         return operations.getUnit("name");
     }
 
     @Override
-	public void setProperty(String propertyName, double value) {
+    public void setProperty(String propertyName, double value) {
         setSpecification(propertyName, value);
     }
 
-    public void setProperty(String propertyName, double value, String unit) {
-    }
+    public void setProperty(String propertyName, double value, String unit) {}
 
     @Override
-	public double getPressure() {
+    public double getPressure() {
         return 1.0;
     }
 
     @Override
-	public void setPressure(double pressure) {
-
-    }
+    public void setPressure(double pressure) {}
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         return 0.0;
     }
 
     @Override
-	public double getMassBalance(String unit) {
+    public double getMassBalance(String unit) {
         return 0.0;
     }
 
     @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double sourrondingTemperature) {
         return 0.0;
     }
 
     @Override
-	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
     @Override
-	public String getConditionAnalysisMessage() {
+    public String getConditionAnalysisMessage() {
         return null;
     }
-    
-    public String[][] getResultTable(){
-    	return null;
+
+    public String[][] getResultTable() {
+        return null;
     }
 }

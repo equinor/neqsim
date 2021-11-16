@@ -15,10 +15,10 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     SystemInterface system = null;
     static Logger logger = LogManager.getLogger(PedersenPlusModelSolver.class);
 
-    public PedersenPlusModelSolver() {
-    }
+    public PedersenPlusModelSolver() {}
 
-    public PedersenPlusModelSolver(SystemInterface system, PlusFractionModel.PedersenPlusModel characterizeClass) {
+    public PedersenPlusModelSolver(SystemInterface system,
+            PlusFractionModel.PedersenPlusModel characterizeClass) {
         this.system = system;
         this.characterizeClass = characterizeClass;
         numberOfComponents = system.getPhase(0).getNumberOfComponents();
@@ -40,7 +40,8 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
         double zSum = 0.0, mSum = 0.0, densSum = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            double ztemp = Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
+            double ztemp =
+                    Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
             double M = characterizeClass.PVTsimMolarMass[i - 6] / 1000.0;
             zSum += ztemp;
             mSum += ztemp * M;
@@ -51,7 +52,6 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
         fvecAB.set(0, 0, zSum - characterizeClass.getZPlus());
 
         fvecAB.set(1, 0, mSum / zSum - characterizeClass.getMPlus());
-
     }
 
     public void setJacAB() {
@@ -66,7 +66,8 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
             for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                     .getLastPlusFractionNumber(); i++) {
                 nTot += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                nTot2 += i * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
+                nTot2 += i
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
             }
             if (j == 0) {
                 tempJ = nTot;
@@ -84,9 +85,12 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
                         * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
                 mTot2 += i * (characterizeClass.PVTsimMolarMass[i - 6] / 1000.0)
                         * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                zSum2 += Math.pow(Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i), 2.0);
+                zSum2 += Math.pow(
+                        Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i),
+                        2.0);
                 zSum += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                zSum3 += i * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
+                zSum3 += i
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
             }
             if (j == 0) {
                 tempJ = (mTot1 * zSum - mTot1 * zSum) / zSum2;
@@ -98,12 +102,11 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
     }
 
     public void setfvecCD() {
-
-        double densTBO = characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber() - 6];// 0.71;//characterizeClass.getDensLastTBP();
-        fvecCD.set(0, 0,
-                (characterizeClass.getCoef(2)
-                        + characterizeClass.getCoef(3) * Math.log(characterizeClass.getFirstPlusFractionNumber() - 1))
-                        - densTBO);
+        double densTBO =
+                characterizeClass.PVTsimDensities[characterizeClass.getFirstPlusFractionNumber()
+                        - 6];// 0.71;//characterizeClass.getDensLastTBP();
+        fvecCD.set(0, 0, (characterizeClass.getCoef(2) + characterizeClass.getCoef(3)
+                * Math.log(characterizeClass.getFirstPlusFractionNumber() - 1)) - densTBO);
         double temp = 0.0, temp2 = 0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
@@ -136,10 +139,13 @@ public class PedersenPlusModelSolver implements java.io.Serializable {
                     / (characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i));
             temp3 -= Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i))
                     * characterizeClass.PVTsimMolarMass[i - 6]
-                    / Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), 2.0);
-            deriv += 1.0 / ((characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i))
-                    * characterizeClass.PVTsimMolarMass[i - 6]
-                    / Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), 2.0));
+                    / Math.pow(characterizeClass.getCoef(2)
+                            + characterizeClass.getCoef(3) * Math.log(i), 2.0);
+            deriv += 1.0
+                    / ((characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i))
+                            * characterizeClass.PVTsimMolarMass[i - 6]
+                            / Math.pow(characterizeClass.getCoef(2)
+                                    + characterizeClass.getCoef(3) * Math.log(i), 2.0));
         }
 
         double dAdC = temp3 * 1;

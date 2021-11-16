@@ -13,7 +13,6 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version
  */
 public class AtractiveTermPr1978 extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -32,7 +31,7 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         AtractiveTermPr1978 atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermPr1978) super.clone();
@@ -44,14 +43,15 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
     }
 
     @Override
-	public void init() {
+    public void init() {
         if (getComponent().getAcentricFactor() > 0.49) {
             m = (0.379642 + 1.48503 * getComponent().getAcentricFactor()
-                    - 0.164423 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
+                    - 0.164423 * getComponent().getAcentricFactor()
+                            * getComponent().getAcentricFactor()
                     + 0.01666 * Math.pow(getComponent().getAcentricFactor(), 3.0));
         } else {
-            m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
-                    - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
+            m = (0.37464 + 1.54226 * getComponent().getAcentricFactor() - 0.26992
+                    * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
         }
     }
 }

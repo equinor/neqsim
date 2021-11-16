@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
@@ -27,11 +25,10 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeInterface[] flowNode;
@@ -39,10 +36,12 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
     protected double startLongitudionalCoordinate, endLongitudionalCoordinate;
     protected double startHeightCoordinate, endHeightCoordinate;
     protected double startOuterTemperature, endOuterTemperature, startOuterHeatTransferCoefficient,
-            endOuterHeatTransferCoefficient, startWallHeatTransferCOefficients, endWallHeatTransferCOefficients;
+            endOuterHeatTransferCoefficient, startWallHeatTransferCOefficients,
+            endWallHeatTransferCOefficients;
     protected SystemInterface thermoSystem;
     protected GeometryDefinitionInterface equipmentGeometry;
-    protected double heightChangePerNode = 0, longitudionalChangePerNode = 0, temperatureChangePerNode = 0;
+    protected double heightChangePerNode = 0, longitudionalChangePerNode = 0,
+            temperatureChangePerNode = 0;
     protected FlowNodeSelector nodeSelector = new FlowNodeSelector();
 
     /** Creates new FlowLeg */
@@ -52,12 +51,15 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
 
     @Override
     public void createFlowNodes() {
-        temperatureChangePerNode = (endOuterTemperature - startOuterTemperature) / (1.0 * getNumberOfNodes());
+        temperatureChangePerNode =
+                (endOuterTemperature - startOuterTemperature) / (1.0 * getNumberOfNodes());
         longitudionalChangePerNode = (endLongitudionalCoordinate - startLongitudionalCoordinate)
                 / (1.0 * getNumberOfNodes());
-        heightChangePerNode = (endHeightCoordinate - startHeightCoordinate) / (1.0 * getNumberOfNodes());
+        heightChangePerNode =
+                (endHeightCoordinate - startHeightCoordinate) / (1.0 * getNumberOfNodes());
 
-        flowNode[0].setDistanceToCenterOfNode(this.startLongitudionalCoordinate + 0.5 * longitudionalChangePerNode);
+        flowNode[0].setDistanceToCenterOfNode(
+                this.startLongitudionalCoordinate + 0.5 * longitudionalChangePerNode);
         flowNode[0].setLengthOfNode(longitudionalChangePerNode);
         flowNode[0].setVerticalPositionOfNode(startHeightCoordinate + 0.5 * heightChangePerNode);
         flowNode[0].getGeometry().getSurroundingEnvironment()
@@ -68,30 +70,32 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
             flowNode[i + 1] = flowNode[i].getNextNode();
             flowNode[i + 1].setDistanceToCenterOfNode(
                     flowNode[0].getDistanceToCenterOfNode() + (i + 1) * longitudionalChangePerNode);
-            flowNode[i + 1]
-                    .setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
+            flowNode[i + 1].setVerticalPositionOfNode(
+                    flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
             flowNode[i + 1].setLengthOfNode(longitudionalChangePerNode);
             flowNode[i].getGeometry().getSurroundingEnvironment()
                     .setTemperature(startOuterTemperature + (i + 1) * temperatureChangePerNode);
-            flowNode[i].getGeometry().getSurroundingEnvironment().setHeatTransferCoefficient(
-                    startOuterHeatTransferCoefficient + (i + 1) * 1.0 / (getNumberOfNodes() * 1.0)
-                            * (endOuterHeatTransferCoefficient - startOuterHeatTransferCoefficient));
-            flowNode[i].getGeometry().setWallHeatTransferCoefficient(
-                    startWallHeatTransferCOefficients + (i + 1) * 1.0 / (getNumberOfNodes() * 1.0)
-                            * (endWallHeatTransferCOefficients - startWallHeatTransferCOefficients));
+            flowNode[i].getGeometry().getSurroundingEnvironment()
+                    .setHeatTransferCoefficient(startOuterHeatTransferCoefficient + (i + 1) * 1.0
+                            / (getNumberOfNodes() * 1.0) * (endOuterHeatTransferCoefficient
+                                    - startOuterHeatTransferCoefficient));
+            flowNode[i].getGeometry()
+                    .setWallHeatTransferCoefficient(startWallHeatTransferCOefficients + (i + 1)
+                            * 1.0 / (getNumberOfNodes() * 1.0) * (endWallHeatTransferCOefficients
+                                    - startWallHeatTransferCOefficients));
             flowNode[i + 1].init();
         }
     }
 
     public void setFlowNodeTypes() {
-
         nodeSelector.getFlowNodeType(flowNode);
 
         for (int i = 0; i < getNumberOfNodes(); i++) {
             flowNode[i].setDistanceToCenterOfNode(
                     flowNode[0].getDistanceToCenterOfNode() + (i) * longitudionalChangePerNode);
             flowNode[i].setLengthOfNode(longitudionalChangePerNode);
-            flowNode[i].setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i) * heightChangePerNode);
+            flowNode[i].setVerticalPositionOfNode(
+                    flowNode[0].getVerticalPositionOfNode() + (i) * heightChangePerNode);
             flowNode[i].getGeometry().getSurroundingEnvironment()
                     .setTemperature(startOuterTemperature + (i) * temperatureChangePerNode);
             flowNode[i].init();
@@ -102,7 +106,8 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
     public void setFlowPattern(String flowPattern) {
         nodeSelector.setFlowPattern(flowNode, flowPattern);
         flowNode[0].init();
-        flowNode[0].setDistanceToCenterOfNode(this.startLongitudionalCoordinate + 0.5 * longitudionalChangePerNode);
+        flowNode[0].setDistanceToCenterOfNode(
+                this.startLongitudionalCoordinate + 0.5 * longitudionalChangePerNode);
         flowNode[0].setLengthOfNode(longitudionalChangePerNode);
         flowNode[0].setVerticalPositionOfNode(startHeightCoordinate + 0.5 * heightChangePerNode);
 
@@ -110,8 +115,8 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
             flowNode[i + 1] = flowNode[i].getNextNode();
             flowNode[i + 1].setDistanceToCenterOfNode(
                     flowNode[0].getDistanceToCenterOfNode() + (i + 1) * longitudionalChangePerNode);
-            flowNode[i + 1]
-                    .setVerticalPositionOfNode(flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
+            flowNode[i + 1].setVerticalPositionOfNode(
+                    flowNode[0].getVerticalPositionOfNode() + (i + 1) * heightChangePerNode);
             flowNode[i + 1].setLengthOfNode(longitudionalChangePerNode);
             flowNode[i].getGeometry().getSurroundingEnvironment()
                     .setTemperature(startOuterTemperature + (i) * temperatureChangePerNode);
@@ -161,7 +166,8 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
     }
 
     @Override
-    public void setLongitudionalCoordinates(double startLongitudionalCoordinate, double endLongitudionalCoordinate) {
+    public void setLongitudionalCoordinates(double startLongitudionalCoordinate,
+            double endLongitudionalCoordinate) {
         this.startLongitudionalCoordinate = startLongitudionalCoordinate;
         this.endLongitudionalCoordinate = endLongitudionalCoordinate;
     }

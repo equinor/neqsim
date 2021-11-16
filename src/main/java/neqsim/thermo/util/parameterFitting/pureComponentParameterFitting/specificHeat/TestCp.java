@@ -12,11 +12,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 public class TestCp {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCp.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -61,6 +59,5 @@ public class TestCp {
         optim.setSampleSet(sampleSet);
 
         optim.solve();
-
     }
 }

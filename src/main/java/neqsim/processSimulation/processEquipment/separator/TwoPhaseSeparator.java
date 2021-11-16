@@ -11,11 +11,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class TwoPhaseSeparator extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -25,8 +24,7 @@ public class TwoPhaseSeparator extends Separator {
     String name = new String();
 
     /** Creates new Separator */
-    public TwoPhaseSeparator() {
-    }
+    public TwoPhaseSeparator() {}
 
     public TwoPhaseSeparator(StreamInterface inletStream) {
         this.setInletStream(inletStream);
@@ -89,15 +87,12 @@ public class TwoPhaseSeparator extends Separator {
     }
 
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     @Override
     public String getName() {
         return name;
     }
 
-    public void runTransient() {
-    }
-
+    public void runTransient() {}
 }

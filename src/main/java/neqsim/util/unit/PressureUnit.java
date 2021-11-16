@@ -11,7 +11,6 @@ package neqsim.util.unit;
  * @version
  */
 public class PressureUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -22,13 +21,13 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     }
 
     @Override
-	public double getValue(double val, String fromunit, String tounit) {
+    public double getValue(double val, String fromunit, String tounit) {
         invalue = val;
         return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
     }
 
     @Override
-	public double getValue(String tounit) {
+    public double getValue(String tounit) {
         if (tounit.equals("barg")) {
             return (getConversionFactor(inunit) / getConversionFactor("bara")) * invalue - 1.01325;
         } else {
@@ -37,20 +36,18 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
     }
 
     public double getConversionFactor(String name) {
-
         double conversionFactor = 1.0;
         switch (name) {
-        case "bara":
-            conversionFactor = 1.0;
-            break;
-        case "Pa":
-            conversionFactor = 1.0e-5;
-            break;
-        case "MPa":
-            conversionFactor = 10.0;
-            break;
+            case "bara":
+                conversionFactor = 1.0;
+                break;
+            case "Pa":
+                conversionFactor = 1.0e-5;
+                break;
+            case "MPa":
+                conversionFactor = 10.0;
+                break;
         }
         return conversionFactor;
     }
-
 }

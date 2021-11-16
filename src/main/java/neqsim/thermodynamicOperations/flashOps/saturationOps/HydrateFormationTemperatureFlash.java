@@ -5,21 +5,20 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
 
     /**
      * Creates new bubblePointFlash
      */
-    public HydrateFormationTemperatureFlash() {
-    }
+    public HydrateFormationTemperatureFlash() {}
 
     public HydrateFormationTemperatureFlash(SystemInterface system) {
         super(system);
@@ -30,7 +29,7 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
     }
 
     @Override
-	public void run() {
+    public void run() {
         double olfFug = 0.0;
         double temp = 0.0, oldTemp = 0.0, oldDiff = 0.0, oldOldDiff = 0.0;
         // system.setHydrateCheck(true);
@@ -47,16 +46,17 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
             system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
             system.getPhase(4).getComponent("water").setx(1.0);
             oldDiff = diff;
-            diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
+            diff = 1.0 - (system.getPhase(4).getFugacity("water")
+                    / system.getPhase(0).getFugacity("water"));
             oldTemp = temp;
             temp = system.getTemperature();
             double dDiffdT = (diff - oldDiff) / (temp - oldTemp);
 
             if (iter < 2) {
                 system.setTemperature((system.getTemperature() + 0.1));
-
             } else {
-                double dT = (Math.abs(diff / dDiffdT)) > 10 ? Math.signum(diff / dDiffdT) * 10 : diff / dDiffdT;
+                double dT = (Math.abs(diff / dDiffdT)) > 10 ? Math.signum(diff / dDiffdT) * 10
+                        : diff / dDiffdT;
                 if (Double.isNaN(dT)) {
                     dT = 0.1;
                 }
@@ -73,9 +73,8 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
                 Thread.sleep(100);
             } catch (InterruptedException iex) {
             }
-
-        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100
-                || iter < 3);
+        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6
+                && iter < 100 || iter < 3);
     }
 
     public void run2() {
@@ -102,15 +101,16 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
                 }
                 system.setTemperature((system.getTemperature() + change));
             } else {
-                double change = (1.0
-                        - system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
+                double change = (1.0 - system.getPhase(4).getFugacity("water")
+                        / system.getPhase(0).getFugacity("water"));
                 if (Math.abs(change) > 5.0) {
                     change = Math.abs(change) / change * 5.0;
                 }
                 system.setTemperature(system.getTemperature() + change);
             }
 
-            double diff = 1.0 - (system.getPhase(4).getFugacity("water") / system.getPhase(0).getFugacity("water"));
+            double diff = 1.0 - (system.getPhase(4).getFugacity("water")
+                    / system.getPhase(0).getFugacity("water"));
             // logger.info("iter " + iter + " diff " +
             // (system.getPhase(4).getFugacity("water") /
             // system.getPhase(0).getFugacity("water")));
@@ -122,8 +122,8 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
 
             // logger.info("temperature " + system.getTemperature());
             // logger.info("x water " + system.getPhase(4).getComponent("water").getx());
-        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6 && iter < 100
-                || iter < 3);
+        } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6
+                && iter < 100 || iter < 3);
     }
 
     public void setFug() {
@@ -145,6 +145,5 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
     }
 
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 }

@@ -45,7 +45,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class ProcessSystem implements java.io.Serializable, Runnable {
-
     private static final long serialVersionUID = 1000;
 
     Thread thisThread;
@@ -93,7 +92,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
                 for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
                         .getUnitOperations().size(); j++) {
-
                     if (((ModuleInterface) getUnitOperations().get(i)).getOperations()
                             .getUnitOperations().get(j).getName().equals(name)) {
                         return ((ModuleInterface) getUnitOperations().get(i)).getOperations()
@@ -103,7 +101,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             } else if (getUnitOperations().get(i).getName().equals(name)) {
                 return getUnitOperations().get(i);
             }
-
         }
         return null;
     }
@@ -130,7 +127,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
                 for (int j = 0; j < ((ModuleInterface) getUnitOperations().get(i)).getOperations()
                         .getUnitOperations().size(); j++) {
-
                     if (((ModuleInterface) getUnitOperations().get(i)).getOperations()
                             .getUnitOperations().get(j).getName().equals(name)) {
                         return j;
@@ -139,7 +135,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             } else if (getUnitOperations().get(i).getName().equals(name)) {
                 return i;
             }
-
         }
         return 0;
     }
@@ -373,9 +368,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             signalDB[timeStepNumber][3 * i + 2] =
                     Double.toString(measurementDevices.get(i).getMeasuredValue());
             signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
-
         }
-
     }
 
     public int size() {
@@ -387,7 +380,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     public void displayResult() {
-
         try {
             thisThread.join();
         } catch (Exception e) {
@@ -419,12 +411,10 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
                 System.out.println(
                         "Online value: " + measurementDevices.get(i).getOnlineSignal().getValue()
                                 + " " + measurementDevices.get(i).getOnlineSignal().getUnit());
-
         }
     }
 
     public void save(String filePath) {
-
         ObjectOutputStream out = null;
         InputStream in = null;
         try {
@@ -440,7 +430,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     public static ProcessSystem open(String filePath) {
-
         FileInputStream streamIn = null;
         InputStream in = null;
         ProcessSystem tempSystem = null;
@@ -609,22 +598,14 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return new ConditionMonitor(this);
     }
     /*
-    @XmlRootElement
-    private class Report extends Object{
-    	public Double name;
-    	public ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
-    	
-    	Report(){
-    		name= getName();
-    		
-    		for (int i = 0; i < unitOperations.size(); i++) {
-    			unitOperationsReports.add(unitOperations.getReport());
-    		}
-        }
-    }
-    
-    public Report getReport(){
-        return this.new Report();
-    }*/
-
+     * @XmlRootElement private class Report extends Object{ public Double name; public
+     * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
+     * 
+     * Report(){ name= getName();
+     * 
+     * for (int i = 0; i < unitOperations.size(); i++) {
+     * unitOperationsReports.add(unitOperations.getReport()); } } }
+     * 
+     * public Report getReport(){ return this.new Report(); }
+     */
 }

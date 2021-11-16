@@ -8,14 +8,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class VLSolidTray extends SimpleTray {
-
     private static final long serialVersionUID = 1000;
 
     double heatInput = 0.0;
     private double temperature = 273.15;
 
-    public VLSolidTray() {
-    }
+    public VLSolidTray() {}
 
     @Override
     public void init() {
@@ -26,7 +24,6 @@ public class VLSolidTray extends SimpleTray {
         for (int k = pp; k < streams.size(); k++) {
             (streams.get(k).getThermoSystem()).setTemperature(temperature);
         }
-
     }
 
     @Override
@@ -41,7 +38,8 @@ public class VLSolidTray extends SimpleTray {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            System.out.println("total enthalpy k : " + streams.get(k).getThermoSystem().getEnthalpy());
+            System.out.println(
+                    "total enthalpy k : " + streams.get(k).getThermoSystem().getEnthalpy());
         }
         System.out.println("total enthalpy of streams: " + enthalpy);
         return enthalpy;
@@ -90,8 +88,7 @@ public class VLSolidTray extends SimpleTray {
     }
 
     @Override
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     @Override
     public Stream getGasOutStream() {

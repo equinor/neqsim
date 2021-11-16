@@ -1,28 +1,29 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.math3.linear.*;
-import org.apache.logging.log4j.*;
 
 public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope2.class);
 
@@ -44,8 +45,7 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     boolean etterCP = false;
     boolean etterCP2 = false;
 
-    public sysNewtonRhapsonPhaseEnvelope2() {
-    }
+    public sysNewtonRhapsonPhaseEnvelope2() {}
 
     /**
      * Creates new nonlin
@@ -67,14 +67,14 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
 
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            fvec.setEntry(i, 0,
-                    u.getEntry(i, 0) + Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
+            fvec.setEntry(i, 0, u.getEntry(i, 0)
+                    + Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
                             / system.getPhase(1).getComponents()[i].getFugasityCoeffisient()));
-
         }
         double fsum = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            fsum += system.getPhase(0).getComponents()[i].getx() - system.getPhase(1).getComponents()[i].getx();
+            fsum += system.getPhase(0).getComponents()[i].getx()
+                    - system.getPhase(1).getComponents()[i].getx();
         }
         fvec.setEntry(system.getPhase(0).getNumberOfComponents(), 0, fsum);
         fvec.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0, 0);
@@ -85,10 +85,12 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         int speceqmin = 0;
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            if (system.getPhase(0).getComponents()[i].getTC() > system.getPhase(0).getComponents()[speceq].getTC()) {
+            if (system.getPhase(0).getComponents()[i]
+                    .getTC() > system.getPhase(0).getComponents()[speceq].getTC()) {
                 speceq = system.getPhase(0).getComponents()[i].getComponentNumber();
             }
-            if (system.getPhase(0).getComponents()[i].getTC() < system.getPhase(0).getComponents()[speceqmin].getTC()) {
+            if (system.getPhase(0).getComponents()[i]
+                    .getTC() < system.getPhase(0).getComponents()[speceqmin].getTC()) {
                 speceqmin = system.getPhase(0).getComponents()[i].getComponentNumber();
             }
         }
@@ -120,7 +122,8 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         int nofc = system.getPhase(0).getNumberOfComponents();
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             dxidlnk[i] = -system.getBeta() * system.getPhase(1).getComponents()[i].getx()
-                    * system.getPhase(0).getComponents()[i].getx() / system.getPhase(0).getComponents()[i].getz();
+                    * system.getPhase(0).getComponents()[i].getx()
+                    / system.getPhase(0).getComponents()[i].getz();
             dyidlnk[i] = system.getPhase(0).getComponents()[i].getx()
                     + system.getPhase(1).getComponents()[i].getK() * dxidlnk[i];
             // logger.info("dxidlnk("+i+") "+dxidlnk[i]);
@@ -148,8 +151,10 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             u.setEntry(i, 0, Math.log(system.getPhase(0).getComponents()[i].getK()));
         }
-        u.setEntry(system.getPhase(0).getNumberOfComponents(), 0, Math.log(system.getTemperature()));
-        u.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0, Math.log(system.getPressure()));
+        u.setEntry(system.getPhase(0).getNumberOfComponents(), 0,
+                Math.log(system.getTemperature()));
+        u.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0,
+                Math.log(system.getPressure()));
     }
 
     public void init() {
@@ -200,11 +205,13 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
                 // Now we check wheater this ds is greater than dTmax and dPmax.
                 if (Math.abs(system.getTemperature() * dxds.getEntry(nofc, 0) * ds) > dTmax) {
                     // logger.info("true T");
-                    ds = sign(dTmax / system.getTemperature() / Math.abs(dxds.getEntry(nofc, 0)), ds);
+                    ds = sign(dTmax / system.getTemperature() / Math.abs(dxds.getEntry(nofc, 0)),
+                            ds);
                 }
 
                 if (Math.abs(system.getPressure() * dxds.getEntry(nofc + 1, 0) * ds) > dPmax) {
-                    ds = sign(dPmax / system.getPressure() / Math.abs(dxds.getEntry(nofc + 1, 0)), ds);
+                    ds = sign(dPmax / system.getPressure() / Math.abs(dxds.getEntry(nofc + 1, 0)),
+                            ds);
                     // logger.info("true P");
                 }
 
@@ -248,10 +255,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
             DecompositionSolver solver2 = new LUDecomposition(a).getSolver();
             xcoef = solver2.solve(xg.transpose());
             double sny = ds + s.getEntry(0, 3);
-            u.setEntry(j, 0, xcoef.getEntry(0, 0)
-                    + sny * (xcoef.getEntry(1, 0) + sny * (xcoef.getEntry(2, 0) + sny * xcoef.getEntry(3, 0))));
+            u.setEntry(j, 0, xcoef.getEntry(0, 0) + sny * (xcoef.getEntry(1, 0)
+                    + sny * (xcoef.getEntry(2, 0) + sny * xcoef.getEntry(3, 0))));
             logger.info("u" + j + " " + Math.exp(u.getEntry(j, 0)));
-
         }
         uold = u.copy();
 
@@ -265,7 +271,8 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
             }
         }
 
-        logger.info("klnmax: " + u.getEntry(numb, 0) + "  np " + np + " xlnmax " + xlnkmax + "avsxp " + avscp);
+        logger.info("klnmax: " + u.getEntry(numb, 0) + "  np " + np + " xlnmax " + xlnkmax
+                + "avsxp " + avscp);
         // logger.info("np: " + np + " ico2p: " + ic02p + " ic03p " + ic03p);
 
         if ((testcrit == -3) && ic03p != np) {
@@ -314,7 +321,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
             // system.setPhaseType(1,1);
             return;
         } else if ((xlnkmax < 1.5 && testcrit != 1) && (np != ic03p && !etterCP)) {
-
             logger.info("hei fra her");
             testcrit = 1;
             xg = Xgij.getSubMatrix(numb, numb, 0, 3);
@@ -406,10 +412,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
 
     public static void main(String args[]) {
         /*
-         * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new
-         * double[]{0.4,0.4}; test.setx(constants); while (test.nonsol()>1.0e-8) {
-         * constants=test.getx(); logger.info(constants[0]+" "+constants[1]); }
-         * test.nonsol(); constants=test.getf();
+         * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
+         * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
+         * logger.info(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
          * logger.info(constants[0]+" "+constants[1]); System.exit(0);
          */ }
 }

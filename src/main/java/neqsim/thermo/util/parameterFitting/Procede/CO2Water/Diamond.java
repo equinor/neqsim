@@ -1,12 +1,16 @@
 package neqsim.thermo.util.parameterFitting.Procede.CO2Water;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.io.*;
-import java.sql.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.sql.ResultSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /*
  * Sleipneracetate.java
@@ -18,21 +22,18 @@ import org.apache.logging.log4j.*;
  * @author agrawalnj
  */
 public class Diamond {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diamond.class);
 
     /**
      * Creates a new instance of Sleipneracetate
      */
-    public Diamond() {
-    }
+    public Diamond() {}
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
         FileOutputStream outfile;
         PrintStream p;
         try {
@@ -54,7 +55,8 @@ public class Diamond {
                 pressure = Double.parseDouble(dataSet.getString("Pressure"));
                 x = Double.parseDouble(dataSet.getString("x"));
 
-                SystemInterface testSystem = new SystemSrkSchwartzentruberEos(temperature, 0.9 * pressure);
+                SystemInterface testSystem =
+                        new SystemSrkSchwartzentruberEos(temperature, 0.9 * pressure);
                 testSystem.addComponent("CO2", x);
                 testSystem.addComponent("water", 1 - x);
 
@@ -82,11 +84,9 @@ public class Diamond {
                     logger.error("Could not read from Patrick.txt" + e.getMessage());
                 }
             }
-
         } catch (Exception e) {
             logger.error("database error" + e);
         }
         logger.info("Finished");
-
     }
 }

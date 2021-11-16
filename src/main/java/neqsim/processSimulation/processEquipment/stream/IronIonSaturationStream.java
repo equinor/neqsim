@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class IronIonSaturationStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
@@ -54,7 +53,8 @@ public class IronIonSaturationStream extends Stream {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
         }
         if (stream != null) {
-            reactiveThermoSystem = this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
+            reactiveThermoSystem =
+                    this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
         }
         reactiveThermoSystem.addComponent("Fe++", 1e-6);
         // reactiveThermoSystem.chemicalReactionInit();
@@ -65,8 +65,10 @@ public class IronIonSaturationStream extends Stream {
         thermoOps.TPflash();
         reactiveThermoSystem.display();
         try {
-            System.out.println("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
-            thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"), "FeCO3", "Fe++");
+            System.out.println("aqueous phase number "
+                    + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
+            thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
+                    "FeCO3", "Fe++");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -79,5 +81,4 @@ public class IronIonSaturationStream extends Stream {
     public void displayResult() {
         reactiveThermoSystem.display(name);
     }
-
 }

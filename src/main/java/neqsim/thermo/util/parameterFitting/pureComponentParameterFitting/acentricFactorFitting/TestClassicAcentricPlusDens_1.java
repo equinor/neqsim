@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.sql.ResultSet;
@@ -23,15 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestClassicAcentricPlusDens_1 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestClassicAcentricPlusDens_1.class);
 
-    /** Creates new TestAcentric */
-    public TestClassicAcentricPlusDens_1() {}
-
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
@@ -48,7 +36,7 @@ public class TestClassicAcentricPlusDens_1 {
         // ORDER BY Temperature ASC");
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' ORDER BY Reference,Temperature");
-        double guess[] = {1.242};//
+        double guess[] = {1.242};
         try {
             logger.info("adding....");
             while (dataSet.next()) {
@@ -125,7 +113,7 @@ public class TestClassicAcentricPlusDens_1 {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
+
         // optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();

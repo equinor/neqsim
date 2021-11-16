@@ -7,7 +7,6 @@ import java.util.ArrayList;
  * @author ESOL
  */
 public class Wall implements WallInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -28,13 +27,13 @@ public class Wall implements WallInterface {
     private double heatTransferCoefficient = 10.0;
 
     @Override
-	public void addMaterialLayer(MaterialLayer layer) {
+    public void addMaterialLayer(MaterialLayer layer) {
         wallMaterialLayers.add(layer);
         heatTransferCoefficient = calcHeatTransferCoefficient();
     }
 
     @Override
-	public MaterialLayer getWallMaterialLayer(int i) {
+    public MaterialLayer getWallMaterialLayer(int i) {
         return wallMaterialLayers.get(i);
     }
 
@@ -45,5 +44,4 @@ public class Wall implements WallInterface {
         }
         return 1.0 / invheatTransCoef;
     }
-
 }

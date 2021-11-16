@@ -8,24 +8,22 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 
 public class simpleTopSideProcess2 {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.Fluid.setHasWater(true);
         neqsim.thermo.system.SystemInterface fluid = neqsim.thermo.Fluid.create("gas condensate");
         fluid.setTemperature(45.0, "C");
         fluid.setPressure(5.0, "bara");
         Stream stream_inlet = new Stream("Stream1", fluid);
 
-        Mixer mixer_inlet = new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer HP");
+        Mixer mixer_inlet =
+                new neqsim.processSimulation.processEquipment.mixer.StaticMixer("Mixer HP");
         mixer_inlet.addStream(stream_inlet);
 
-        ThreePhaseSeparator separator_inlet = new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutStream());
+        ThreePhaseSeparator separator_inlet =
+                new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutStream());
 
         Stream stream_gasFromSep = new Stream(separator_inlet.getGasOutStream());
 
@@ -38,7 +36,8 @@ public class simpleTopSideProcess2 {
         recyleOp.addStream(scrubber.getLiquidOutStream());
         mixer_inlet.addStream(recyleOp.getOutStream());
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_inlet);
         operations.add(mixer_inlet);
         operations.add(separator_inlet);

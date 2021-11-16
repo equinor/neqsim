@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.furstIonicParameters;
 
 import java.sql.ResultSet;
@@ -23,15 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestFurstIonicParameterFunction {
-
-        private static final long serialVersionUID = 1000;
         static Logger logger = LogManager.getLogger(TestFurstIonicParameterFunction.class);
 
-        /** Creates new TestAcentric */
-        public TestFurstIonicParameterFunction() {}
-
         public static void main(String[] args) {
-
                 LevenbergMarquardt optim = new LevenbergMarquardt();
                 ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -81,7 +69,7 @@ public class TestFurstIonicParameterFunction {
                                                 Double.parseDouble(dataSet.getString("Pressure")));
                                 testSystem.init(0);
                                 double sample1[] = {x2 / 0.01802}; // temperature
-                                double standardDeviation1[] = {0.01}; // std.dev temperature //
+                                double standardDeviation1[] = {0.01}; // std.dev temperature
                                                                       // presure std.dev
                                                                       // pressure
                                 double osmcoef = Double.parseDouble(
@@ -132,7 +120,7 @@ public class TestFurstIonicParameterFunction {
                                                 Double.parseDouble(dataSet.getString("Pressure")));
                                 testSystem.init(0);
                                 double sample1[] = {x2 / 0.01802}; // temperature
-                                double standardDeviation1[] = {0.01}; // std.dev temperature //
+                                double standardDeviation1[] = {0.01}; // std.dev temperature
                                                                       // presure std.dev
                                                                       // pressure
                                 // SampleValue sample = new
@@ -174,7 +162,7 @@ public class TestFurstIonicParameterFunction {
                                 testSystem.setMixingRule(7);
                                 testSystem.init(0);
                                 double sample1[] = {x2 / 0.01802}; // temperature
-                                double standardDeviation1[] = {0.01}; // std.dev temperature //
+                                double standardDeviation1[] = {0.01}; // std.dev temperature
                                                                       // presure std.dev
                                                                       // pressure
                                 // SampleValue sample = new

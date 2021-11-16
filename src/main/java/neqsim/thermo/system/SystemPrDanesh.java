@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemPrDanesh extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemPrEos clonedSystem;
@@ -78,7 +77,7 @@ public class SystemPrDanesh extends SystemPrEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemPrDanesh clonedSystem = null;
         try {
             clonedSystem = (SystemPrDanesh) super.clone();
@@ -93,5 +92,4 @@ public class SystemPrDanesh extends SystemPrEos {
 
         return clonedSystem;
     }
-
 }

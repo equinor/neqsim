@@ -7,17 +7,14 @@
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters
- * equation of state
+ * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
-
-
     public SystemUMRPRUMCEosNew() {
         super();
         setBmixType(1);
@@ -30,14 +27,12 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
         attractiveTermNumber = 13;
     }
 
-
-
     public SystemUMRPRUMCEosNew(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemUMRPRUMCEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUMCEosNew) super.clone();
@@ -47,5 +42,4 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
         return clonedSystem;
     }
-
 }

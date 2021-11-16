@@ -3,8 +3,7 @@
  *
  * Created on 6. september 2006, 14:46
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
 
 package neqsim.processSimulation.util.example;
@@ -21,28 +20,27 @@ import neqsim.processSimulation.processEquipment.valve.ValveInterface;
  * @author ESOL
  */
 public class LNGtankfilling {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates a new instance of LNGfilling */
-    public LNGtankfilling() {
-    }
-
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 0.0), 1.02);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 0.0), 1.02);
         double total1 = 9.5;
         testSystem.addComponent("nitrogen", total1 * 429.9 / (16.0 / 1000.0) / 3600.0);
-        testSystem.addComponent("methane", total1 / 1.0e5 * 0.970934 * 429.9 / (16.0 / 1000.0) / 3600.0);
-        testSystem.addComponent("ethane", total1 / 1.0e5 * 0.02432 * 429.9 / (16.0 / 1000.0) / 3600.0);
-        testSystem.addComponent("propane", total1 / 1.0e5 * 0.003646 * 429.9 / (16.0 / 1000.0) / 3600.0);
-        testSystem.addComponent("i-butane", total1 / 1.0e5 * 0.000641 * 429.9 / (16.0 / 1000.0) / 3600.0);
-        testSystem.addComponent("n-butane", total1 / 1.0e5 * 0.000406 * 429.9 / (16.0 / 1000.0) / 3600.0);
+        testSystem.addComponent("methane",
+                total1 / 1.0e5 * 0.970934 * 429.9 / (16.0 / 1000.0) / 3600.0);
+        testSystem.addComponent("ethane",
+                total1 / 1.0e5 * 0.02432 * 429.9 / (16.0 / 1000.0) / 3600.0);
+        testSystem.addComponent("propane",
+                total1 / 1.0e5 * 0.003646 * 429.9 / (16.0 / 1000.0) / 3600.0);
+        testSystem.addComponent("i-butane",
+                total1 / 1.0e5 * 0.000641 * 429.9 / (16.0 / 1000.0) / 3600.0);
+        testSystem.addComponent("n-butane",
+                total1 / 1.0e5 * 0.000406 * 429.9 / (16.0 / 1000.0) / 3600.0);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 - 165.0), 7.2);
+        neqsim.thermo.system.SystemInterface testSystem2 =
+                new neqsim.thermo.system.SystemSrkEos((273.15 - 165.0), 7.2);
         total1 = 9.5;
         testSystem2.addComponent("nitrogen", total1 * 0.000122 * 429.9 / (16.0 / 1000.0) / 3600.0);
         testSystem2.addComponent("methane", total1 * 0.970934 * 429.9 / (16.0 / 1000.0) / 3600.0);
@@ -54,8 +52,8 @@ public class LNGtankfilling {
         testSystem2.createDatabase(true);
         testSystem2.setMixingRule(2);
 
-        neqsim.thermodynamicOperations.ThermodynamicOperations ops = new neqsim.thermodynamicOperations.ThermodynamicOperations(
-                testSystem);
+        neqsim.thermodynamicOperations.ThermodynamicOperations ops =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
 
@@ -71,23 +69,26 @@ public class LNGtankfilling {
         ValveInterface valve2 = new ThrottlingValve(tank.getGasOutStream());
         valve2.setOutletPressure(0.9);
 
-        PressureTransmitter tankPressureTransmitter = new PressureTransmitter(tank.getGasOutStream());
+        PressureTransmitter tankPressureTransmitter =
+                new PressureTransmitter(tank.getGasOutStream());
         tankPressureTransmitter.setUnit("bar");
         tankPressureTransmitter.setMaximumValue(1.2);
         tankPressureTransmitter.setMinimumValue(0.9);
 
-        TemperatureTransmitter tankTemperatureTransmitter = new TemperatureTransmitter(tank.getGasOutStream());
+        TemperatureTransmitter tankTemperatureTransmitter =
+                new TemperatureTransmitter(tank.getGasOutStream());
         tankTemperatureTransmitter.setUnit("K");
         tankTemperatureTransmitter.setMaximumValue(0.0);
         tankTemperatureTransmitter.setMinimumValue(400.0);
 
-//        ControllerDeviceInterface pressureController = new ControllerDeviceBaseClass();
-//        pressureController.setTransmitter(tankPressureTransmitter);
-//        pressureController.setReverseActing(false);
-//        pressureController.setControllerSetPoint(1.01325+0.110);
-//        pressureController.setControllerParameters(2.0,400,0);
+        // ControllerDeviceInterface pressureController = new ControllerDeviceBaseClass();
+        // pressureController.setTransmitter(tankPressureTransmitter);
+        // pressureController.setReverseActing(false);
+        // pressureController.setControllerSetPoint(1.01325+0.110);
+        // pressureController.setControllerParameters(2.0,400,0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(valve);
         operations.add(tank);

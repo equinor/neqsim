@@ -1,17 +1,16 @@
 package neqsim.physicalProperties.util.examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
- * @author esol //
+ * @author esol
  */
 public class TestSolidAdsorption {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSolidAdsorption.class);
 
     public static void main(String args[]) {
@@ -34,12 +33,9 @@ public class TestSolidAdsorption {
         testSystem.getInterphaseProperties().setSolidAdsorbentMaterial("AC"); // AC Norit R1
         testSystem.getInterphaseProperties().calcAdsorption();
         // testSystem.initPhysicalProperties();
-        System.out.println("surface excess CO2 from gas "
-                + testSystem.getInterphaseProperties().getAdsorptionCalc("gas").getSurfaceExcess("CO2")
-                + " kg CO2/kg AC");
-        System.out.println("surface excess CO2 from oil "
-                + testSystem.getInterphaseProperties().getAdsorptionCalc("oil").getSurfaceExcess("CO2")
-                + " kg CO2/kg AC");
-
+        System.out.println("surface excess CO2 from gas " + testSystem.getInterphaseProperties()
+                .getAdsorptionCalc("gas").getSurfaceExcess("CO2") + " kg CO2/kg AC");
+        System.out.println("surface excess CO2 from oil " + testSystem.getInterphaseProperties()
+                .getAdsorptionCalc("oil").getSurfaceExcess("CO2") + " kg CO2/kg AC");
     }
 }

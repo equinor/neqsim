@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 // To find HV parameters for CO2 - MDEA system
 
 package neqsim.thermo.util.parameterFitting.Procede.CO2MDEA;
@@ -25,16 +19,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryHVParameterFittingToEquilibriumData_N2O {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_N2O.class);
 
-    /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToEquilibriumData_N2O() {}
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         double error = 5;
@@ -53,7 +41,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData_N2O {
                                                                                                 // one
 
         try {
-
             while (dataSet.next()) {
                 BinaryHVParameterFittingFunction_N2O function =
                         new BinaryHVParameterFittingFunction_N2O();
@@ -97,7 +84,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData_N2O {
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(ID));
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             logger.error("database error" + e);

@@ -7,16 +7,14 @@
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the Predictive SRK-EoS
- * equation of state
+ * This class defines a thermodynamic system using the Predictive SRK-EoS equation of state
  */
 public class SystemPsrkEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
@@ -40,7 +38,7 @@ public class SystemPsrkEos extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemPsrkEos clonedSystem = null;
         try {
             clonedSystem = (SystemPsrkEos) super.clone();
@@ -48,12 +46,10 @@ public class SystemPsrkEos extends SystemSrkEos {
             logger.error("Cloning failed.", e);
         }
 
-        //
         // for(int i = 0; i < numberOfPhases; i++) {
         // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
         // }
 
         return clonedSystem;
     }
-
 }

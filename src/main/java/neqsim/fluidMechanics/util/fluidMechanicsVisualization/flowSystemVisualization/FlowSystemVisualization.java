@@ -16,7 +16,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version
  */
 public class FlowSystemVisualization implements FlowSystemVisualizationInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeVisualizationInterface[][] flowNodes;
@@ -25,8 +24,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     protected double[] absTime;
 
     /** Creates new FlowVisualization */
-    public FlowSystemVisualization() {
-    }
+    public FlowSystemVisualization() {}
 
     public FlowSystemVisualization(int nodes, int timeSteps) {
         flowNodes = new FlowNodeVisualization[timeSteps][nodes];
@@ -42,7 +40,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     }
 
     @Override
-	public void setNextData(FlowSystemInterface system) {
+    public void setNextData(FlowSystemInterface system) {
         flowSystem[time] = system;
         absTime[time] = 0;
         for (int i = 0; i < flowNodes[time].length; i++) {
@@ -53,7 +51,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     }
 
     @Override
-	public void setNextData(FlowSystemInterface system, double abstime) {
+    public void setNextData(FlowSystemInterface system, double abstime) {
         flowSystem[time] = system;
         absTime[time] = abstime;
         for (int i = 0; i < flowNodes[time].length; i++) {
@@ -63,7 +61,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         System.out.println("ok...");
         for (int j = 0; j < time; j++) {
             for (int i = 0; i < flowNodes[j].length; i++) {
@@ -73,11 +71,8 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     }
 
     @Override
-	public void setPoints() {
-    }
+    public void setPoints() {}
 
     @Override
-	public void displayResult(String name) {
-    }
-
+    public void displayResult(String name) {}
 }

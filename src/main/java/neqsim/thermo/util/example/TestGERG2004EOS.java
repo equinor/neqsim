@@ -1,15 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * PhaseEnvelope.java
- *
- * Created on 27. september 2001, 10:21
- */
 
 /**
  *
@@ -17,13 +12,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TestGERG2004EOS {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestGERG2004EOS.class);
-
-    /** Creates new PhaseEnvelope */
-    public TestGERG2004EOS() {
-    }
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemGERG2004Eos(29.74536 + 273.15, 90.66201);
@@ -39,15 +28,15 @@ public class TestGERG2004EOS {
         // testSystem.addComponent("i-butane", 0.003749);
         // testSystem.addComponent("n-pentane", 0.001920);
         // testSystem.addComponent("iC5", 0.001850);
-//        testSystem.addComponent("n-hexane", 0.001160);
-//        testSystem.addComponent("n-heptane", 0.000460);
-//        testSystem.addComponent("n-octane", 0.000225);
-//        testSystem.addComponent("hydrogen", 0.1);
-//        testSystem.addComponent("oxygen", 0.1);
-//        testSystem.addComponent("CO", 0.1);
+        // testSystem.addComponent("n-hexane", 0.001160);
+        // testSystem.addComponent("n-heptane", 0.000460);
+        // testSystem.addComponent("n-octane", 0.000225);
+        // testSystem.addComponent("hydrogen", 0.1);
+        // testSystem.addComponent("oxygen", 0.1);
+        // testSystem.addComponent("CO", 0.1);
         // testSystem.addComponent("water", 0.000800);
-//        testSystem.addComponent("helium", 0.1);
-//        testSystem.addComponent("argon", 1.0);
+        // testSystem.addComponent("helium", 0.1);
+        // testSystem.addComponent("argon", 1.0);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -57,7 +46,7 @@ public class TestGERG2004EOS {
 
         try {
             testOps.TPflash();
-//            testOps.bubblePointTemperatureFlash();
+            // testOps.bubblePointTemperatureFlash();
             // testOps.freezingPointTemperatureFlash();
             testSystem.display();
         } catch (Exception e) {
@@ -67,6 +56,5 @@ public class TestGERG2004EOS {
         // standards.gasQuality.Draft_GERG2004 temp2 = new
         // standards.gasQuality.Draft_GERG2004(testSystem);
         // temp2.calculate();
-
     }
 }

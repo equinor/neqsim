@@ -17,7 +17,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version
  */
 public class FluidBoundarySystem implements FluidBoundarySystemInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected FluidBoundaryInterface boundary;
@@ -28,8 +27,7 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
     protected FluidBoundarySolverInterface solver;
 
     /** Creates new FiniteVolumeBoundary */
-    public FluidBoundarySystem() {
-    }
+    public FluidBoundarySystem() {}
 
     public FluidBoundarySystem(FluidBoundaryInterface boundary) {
         this.boundary = boundary;
@@ -37,53 +35,51 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
     }
 
     @Override
-	public void addBoundary(FluidBoundaryInterface boundary) {
+    public void addBoundary(FluidBoundaryInterface boundary) {
         this.boundary = boundary;
     }
 
     @Override
-	public void setNumberOfNodes(int nodes) {
+    public void setNumberOfNodes(int nodes) {
         this.numberOfNodes = nodes;
     }
 
     @Override
-	public int getNumberOfNodes() {
+    public int getNumberOfNodes() {
         return numberOfNodes;
     }
 
     @Override
-	public FluidBoundaryNodeInterface getNode(int i) {
+    public FluidBoundaryNodeInterface getNode(int i) {
         return nodes[i];
     }
 
     @Override
-	public void setFilmThickness(double filmThickness) {
+    public void setFilmThickness(double filmThickness) {
         this.filmThickness = filmThickness;
     }
 
     @Override
-	public double getNodeLength() {
+    public double getNodeLength() {
         return this.filmThickness / this.numberOfNodes;
     }
 
     @Override
-	public double getFilmThickness() {
+    public double getFilmThickness() {
         return filmThickness;
     }
 
     @Override
-	public FluidBoundaryInterface getFluidBoundary() {
+    public FluidBoundaryInterface getFluidBoundary() {
         return boundary;
     }
 
     @Override
-	public void createSystem() {
-    }
+    public void createSystem() {}
 
     @Override
-	public void solve() {
+    public void solve() {
         solver = new FluidBoundarySolver(this, reactive);
         solver.solve();
     }
-
 }

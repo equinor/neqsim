@@ -7,11 +7,10 @@
 package neqsim.statistics.experimentalEquipmentData;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class ExperimentalEquipmentData {
-
     private static final long serialVersionUID = 1000;
 
     protected double diameter = 0, length = 0;
@@ -19,6 +18,5 @@ public class ExperimentalEquipmentData {
     protected double diameterUncertaty = 0, lengthUncertanty = 0;
 
     /** Creates new ExperimentalEquipmentData */
-    public ExperimentalEquipmentData() {
-    }
+    public ExperimentalEquipmentData() {}
 }

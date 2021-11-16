@@ -12,11 +12,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class TestFitToOilFieldFluid {
-
-    private static final long serialVersionUID = 1000;
-
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
@@ -67,6 +63,5 @@ public class TestFitToOilFieldFluid {
         optim.setSampleSet(sampleSet);
         optim.solve();
         optim.displayCurveFit();
-
     }
 }

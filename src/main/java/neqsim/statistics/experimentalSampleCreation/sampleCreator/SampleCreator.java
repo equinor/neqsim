@@ -11,11 +11,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class SampleCreator {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface system;
@@ -23,8 +22,7 @@ public class SampleCreator {
     ExperimentalEquipmentData equipment;
 
     /** Creates new SampleCreator */
-    public SampleCreator() {
-    }
+    public SampleCreator() {}
 
     public SampleCreator(SystemInterface system, ThermodynamicOperations thermoOps) {
         this.system = system;

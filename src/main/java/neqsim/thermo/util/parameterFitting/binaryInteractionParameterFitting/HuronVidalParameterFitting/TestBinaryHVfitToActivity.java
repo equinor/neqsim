@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import java.util.ArrayList;
@@ -18,15 +12,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  * @version
  */
-public class TestBinaryHVfitToActivity implements Cloneable {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new TestAcentric */
-    public TestBinaryHVfitToActivity() {}
-
+public class TestBinaryHVfitToActivity {
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

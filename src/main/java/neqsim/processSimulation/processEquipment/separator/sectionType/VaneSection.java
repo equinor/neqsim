@@ -8,7 +8,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  */
 public class VaneSection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     public VaneSection(String type, Separator sep) {
@@ -22,7 +21,7 @@ public class VaneSection extends SeparatorSection {
     }
 
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();
         if (gasLoadF > 0.1) {
             return 0.1 / gasLoadF;

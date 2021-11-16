@@ -15,12 +15,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class EquilibriumStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new Stream */
-    public EquilibriumStream() {
-    }
+    public EquilibriumStream() {}
 
     public EquilibriumStream(SystemInterface thermoSystem) {
         super(thermoSystem);
@@ -35,7 +33,7 @@ public class EquilibriumStream extends Stream {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         EquilibriumStream clonedStream = null;
 
         try {
@@ -49,12 +47,11 @@ public class EquilibriumStream extends Stream {
     }
 
     @Override
-	public void run() {
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());
     }
-
 }

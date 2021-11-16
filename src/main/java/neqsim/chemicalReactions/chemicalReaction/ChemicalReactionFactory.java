@@ -27,7 +27,6 @@ import java.util.ArrayList;
  * @author ESOL
  */
 public class ChemicalReactionFactory {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a new instance of ChemicalReactionFactory */
@@ -69,7 +68,6 @@ public class ChemicalReactionFactory {
 
             // System.out.println("reaction added ok...");
             dataSet.close();
-
         } catch (Exception e) {
             e.printStackTrace();
             String err = e.toString();

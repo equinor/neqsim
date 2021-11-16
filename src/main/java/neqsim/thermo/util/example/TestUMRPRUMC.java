@@ -6,25 +6,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
-
-/*
  *
  * @author esol @version
  */
 public class TestUMRPRUMC {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestUMRPRUMC.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public TestUMRPRUMC() {
-    }
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 20, 10.0);
@@ -65,24 +51,18 @@ public class TestUMRPRUMC {
         // testSystem.addComponent("nC10", 0.0053);
         // testSystem.addComponent("nC11", 0.0004);
         /*
-         * testSystem.addComponent("c-hexane", 10.0);
-         * testSystem.addComponent("c-hexane", 10.0);
-         * testSystem.addComponent("223-TM-C4", 10.0);
-         * testSystem.addComponent("n-heptane", 10.0);
-         * testSystem.addComponent("n-heptane", 10.0);
-         * testSystem.addComponent("M-cy-C6", 10.0); testSystem.addComponent("toluene",
-         * 10.0); testSystem.addComponent("33-DM-C6", 10.0);
-         * testSystem.addComponent("n-octane", 10.0);
-         * testSystem.addComponent("ethylcyclohexane", 10.0);
-         * testSystem.addComponent("m-Xylene", 10.0); testSystem.addComponent("3-M-C8",
-         * 10.0); testSystem.addComponent("n-nonane", 10.0);
-         * testSystem.addComponent("n-Bcychexane", 10.0);
-         * testSystem.addComponent("Pent-CC6", 10.0); //
-         * testSystem.addComponent("methanol", 10.0);
+         * testSystem.addComponent("c-hexane", 10.0); testSystem.addComponent("c-hexane", 10.0);
+         * testSystem.addComponent("223-TM-C4", 10.0); testSystem.addComponent("n-heptane", 10.0);
+         * testSystem.addComponent("n-heptane", 10.0); testSystem.addComponent("M-cy-C6", 10.0);
+         * testSystem.addComponent("toluene", 10.0); testSystem.addComponent("33-DM-C6", 10.0);
+         * testSystem.addComponent("n-octane", 10.0); testSystem.addComponent("ethylcyclohexane",
+         * 10.0); testSystem.addComponent("m-Xylene", 10.0); testSystem.addComponent("3-M-C8",
+         * 10.0); testSystem.addComponent("n-nonane", 10.0); testSystem.addComponent("n-Bcychexane",
+         * 10.0); testSystem.addComponent("Pent-CC6", 10.0); // testSystem.addComponent("methanol",
+         * 10.0);
          */
         // testSystem.addComponent("water", 10.0);
         // testSystem.addComponent("n-octane", 10.0);
-        //
 
         // testSystem.addTBPfraction("C8", 1.0, 100.0 / 1000.0, 0.8);
         // testSystem.addTBPfraction("LP_C17", 0.03, 238.779998779297 / 1000.0,
@@ -92,7 +72,7 @@ public class TestUMRPRUMC {
         // testSystem.addComponent("CO2", 1.0e-10);
         // testSystem.addComponent("MEG", 3.0);
         // testSystem.addComponent("ethane", 0.375);
-//       //    testSystem.addComponent("ethane", 99.9);
+        // // testSystem.addComponent("ethane", 99.9);
         // testSystem.addComponent("nC27", 0.25);
         testSystem.createDatabase(true);
         // testSystem.setHydrateCheck(true);
@@ -128,6 +108,5 @@ public class TestUMRPRUMC {
         // testSystem.saveObjectToFile("C:\\Users\\esol\\AppData\\Roaming\\neqsim\\fluids\\testUMR.neqsim","");
         // testSystem.saveFluid(30);
         // testSystem.saveObject(2187);
-
     }
 }

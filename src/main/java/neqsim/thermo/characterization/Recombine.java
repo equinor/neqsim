@@ -13,9 +13,7 @@ public class Recombine {
     private double GOR = 1000.0;
     private double oilDesnity = 0.8;
 
-    public Recombine(SystemInterface gas, SystemInterface oil) {
-
-    }
+    public Recombine(SystemInterface gas, SystemInterface oil) {}
 
     public SystemInterface runRecombination() {
         return getRecombinedSystem();
@@ -55,5 +53,4 @@ public class Recombine {
     public SystemInterface getRecombinedSystem() {
         return recombinedSystem;
     }
-
 }

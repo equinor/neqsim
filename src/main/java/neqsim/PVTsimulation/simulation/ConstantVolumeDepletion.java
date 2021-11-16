@@ -13,11 +13,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     // double temperature = 273.15 + 150.5;
-    //
+
     private double[] relativeVolume = null;
     double[] totalVolume = null, liquidVolumeRelativeToVsat = null, liquidVolume = null;
     boolean saturationConditionFound = false;
@@ -32,15 +31,12 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 
     public void calcSaturationConditions() {
-
         getThermoSystem().setPressure(1.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
@@ -161,7 +157,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -239,7 +234,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
         CVDsim.setExperimentalData(expData);
         // CVDsim.runTuning();
-
     }
 
     /**

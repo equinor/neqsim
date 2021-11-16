@@ -14,15 +14,13 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwu;
  * @version
  */
 public class ComponentTST extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates new System_SRK_EOS
      */
 
-    public ComponentTST() {
-    }
+    public ComponentTST() {}
 
     public ComponentTST(double moles) {
         numberOfMoles = moles;
@@ -46,8 +44,7 @@ public class ComponentTST extends ComponentEos {
     }
 
     @Override
-	public Object clone() {
-
+    public Object clone() {
         ComponentTST clonedComponent = null;
         try {
             clonedComponent = (ComponentTST) super.clone();
@@ -59,26 +56,28 @@ public class ComponentTST extends ComponentEos {
     }
 
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
     @Override
-	public double calca() {
+    public double calca() {
         return .427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
     @Override
-	public double calcb() {
+    public double calcb() {
         return .086641 * R * criticalTemperature / criticalPressure;
     }
 
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (this.getRacketZ() < 1e-10) {
             return 0.0;
         } else {
-            return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
+            return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature
+                    / criticalPressure;
         }
     }
 

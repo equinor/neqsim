@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
     String dewPointTemperatureUnit = "C", pressureUnit = "bar";
     double dewPointTemperature = 273.0, dewPointTemperatureSpec = -12.0;
@@ -50,7 +49,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     }
 
     @Override
-	public void calculate() {
+    public void calculate() {
         this.thermoSystem.setTemperature(initTemperature);
         this.thermoSystem.setPressure(specPressure);
         try {
@@ -62,7 +61,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     }
 
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperature;
         } else {
@@ -71,7 +70,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     }
 
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperature;
         }
@@ -83,7 +82,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     }
 
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperatureUnit;
         }
@@ -95,7 +94,7 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     }
 
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return dewPointTemperature < getSalesContract().getWaterDewPointTemperature();
     }
 }

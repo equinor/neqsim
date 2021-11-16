@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseSrkPenelouxEos;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemSrkPenelouxEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -58,10 +57,10 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
     /**
      * Constructor of a fluid object using the SRK-EoS
      *
-     * @param T          The temperature in unit Kelvin
-     * @param P          The pressure in unit bara (absolute pressure)
-     * @param solidCheck a boolean variable specifying if solid phase check and
-     *                   calculation should be done
+     * @param T The temperature in unit Kelvin
+     * @param P The pressure in unit bara (absolute pressure)
+     * @param solidCheck a boolean variable specifying if solid phase check and calculation should
+     *        be done
      */
     public SystemSrkPenelouxEos(double T, double P, boolean solidCheck) {
         this(T, P);
@@ -94,7 +93,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemSrkPenelouxEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkPenelouxEos) super.clone();

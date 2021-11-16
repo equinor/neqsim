@@ -3,8 +3,7 @@
  *
  * Created on 6. juni 2006, 15:24
  *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
+ * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
 
 package neqsim.processSimulation.measurementDevice;
@@ -16,7 +15,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  */
 public class PressureTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -37,13 +35,12 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         System.out.println("measured temperature " + stream.getPressure());
     }
 
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return stream.getThermoSystem().getPressure();
     }
-
 }

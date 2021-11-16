@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionODE.class);
 
@@ -104,7 +103,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
         this.sys.init_x_y();
         this.sys.setBeta(1.0);
         this.sys.init(3);
-
     }
 
     /**
@@ -226,7 +224,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             y[0] = 0.0;
             // throw new RuntimeException("Negative surface tension.");
         }
-
     }
 
     /**
@@ -243,7 +240,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      */
     private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
             double[][] jac) {
-
         double normf, norm0, norm, rho_ref, s;
         int i, j, k, iter;
         DMatrixRMaj A = new DMatrixRMaj(this.ncomp - 1, this.ncomp - 1);
@@ -297,7 +293,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             double delta;
 
             for (i = 0; i < this.ncomp - 1; i++) {
-
                 delta = x.get(i, 0);
                 if ((rho[this.algidx[i]] + s * delta) < 0) {
                     s = Math.min(s, -0.5 * rho[this.algidx[i]] / delta);
@@ -305,11 +300,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
                 }
             }
             for (i = 0; i < this.ncomp - 1; i++) {
-
                 delta = x.get(i, 0);
                 rho[this.algidx[i]] += s * delta;
                 x0.set(i, 0, rho[this.algidx[i]]);
-
             }
             GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, rho, mu, dmu_drho, p);
 
@@ -337,7 +330,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             }
             throw new RuntimeException("Failed to solve for density");
         }
-
     }
 
     /**
@@ -351,7 +343,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
         int i, j;
         double delta_muref;
-        double cref, sqrtcref, sqrtci, scale;
+        double sqrtcref, sqrtci, scale;
 
         delta_muref = (this.mueq[this.refcomp] - mu[this.refcomp]);
         sqrtcref = Math.sqrt(this.ci[this.refcomp]);
@@ -360,7 +352,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             sqrtci = Math.sqrt(this.ci[i]);
             f[i] = scale * (sqrtci * delta_muref - sqrtcref * (this.mueq[i] - mu[i]));
             for (j = 0; j < this.ncomp; j++) {
-                double tmp1, tmp2;
                 jac[i][j] = scale
                         * (sqrtci * (-dmu_drho[this.refcomp][j]) - sqrtcref * (-dmu_drho[i][j]));
             }

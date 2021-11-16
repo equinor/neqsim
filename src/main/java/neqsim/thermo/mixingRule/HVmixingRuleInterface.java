@@ -12,7 +12,6 @@ package neqsim.thermo.mixingRule;
  * @version
  */
 public interface HVmixingRuleInterface extends EosMixingRulesInterface {
-
     public void setHVDijParameter(int i, int j, double value);
 
     public void setHVDijTParameter(int i, int j, double value);
@@ -28,5 +27,4 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public void setHValphaParameter(int i, int j, double value);
 
     public double getHValphaParameter(int i, int j);
-
 }

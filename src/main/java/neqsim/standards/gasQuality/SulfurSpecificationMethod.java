@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class SulfurSpecificationMethod extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -31,12 +30,12 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
     }
 
     @Override
-	public void calculate() {
+    public void calculate() {
         thermoSystem.init(0);
     }
 
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         thermoSystem.init(0);
         if (thermoSystem.getPhase(0).hasComponent("H2S")) {
             if (returnParameter.equals("H2S content")) {
@@ -48,17 +47,17 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
     }
 
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         return unit;
     }
 
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return true;
     }
 }

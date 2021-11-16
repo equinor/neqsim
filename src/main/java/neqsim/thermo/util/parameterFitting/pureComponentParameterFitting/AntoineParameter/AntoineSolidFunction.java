@@ -15,7 +15,6 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class AntoineSolidFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunction.class);
 
@@ -25,7 +24,7 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             thermoOps.freezingPointTemperatureFlash();
@@ -36,7 +35,7 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             system.getPhases()[0].getComponents()[0].setAntoineASolid(value);

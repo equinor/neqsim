@@ -4,8 +4,7 @@ package neqsim.thermo.characterization;
  *
  * @author ESOL
  */
-public interface PlusFractionModelInterface extends java.io.Serializable{
-
+public interface PlusFractionModelInterface extends java.io.Serializable {
     public boolean hasPlusFraction();
 
     public void characterizePlusFraction(TBPModelInterface model);
@@ -35,10 +34,9 @@ public interface PlusFractionModelInterface extends java.io.Serializable{
     public double[] getM();
 
     public double[] getDens();
-    
+
     public double[] getCoefs();
-    
+
     public double getCoef(int i);
-    
-    
+
 }
