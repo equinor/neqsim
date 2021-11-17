@@ -91,22 +91,13 @@ public class TwoPhasePipeFlowSystem
         // Initierer et nyt rorsystem
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystem();
 
-        // Definerer termodyanmikken5
+        // Definerer termodyanmikken5 - initierer et system som benytter SRK tilstandsligning
         neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkEos(295.3, 5.0); // initierer
-                                                                   // et
-                                                                   // system
-                                                                   // som
-                                                                   // benytter
-                                                                   // SRK
-                                                                   // tilstandsligning
-        // med trykk 305.3 K og 125 bar
+                new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
+        
+        // med trykk 305.3 K og 125 bar - // gjor termodynamiske Flash rutiner tilgjengelige
         neqsim.thermodynamicOperations.ThermodynamicOperations testOps =
-                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem); // gjor
-                                                                                        // termodyanmiske
-                                                                                        // Flash
-                                                                                        // rutiner
-                                                                                        // tilgjengelige
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 0.11152181, 0);
         // testSystem.addComponent("ethane", 0.0011152181, 0);
         testSystem.addComponent("water", 0.04962204876, 1);
@@ -133,11 +124,9 @@ public class TwoPhasePipeFlowSystem
         pipe.setLegWallHeatTransferCoefficients(wallHeacCoef);
         pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
 
+        // Definerer geometrien for roret
         neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
-                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6]; // Deffinerer
-                                                                                // geometrien
-                                                                                // for
-                                                                                // roret
+                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[6];
         double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
         for (int i = 0; i < pipeDiameter.length; i++) {
             pipeGemometry[i] =
