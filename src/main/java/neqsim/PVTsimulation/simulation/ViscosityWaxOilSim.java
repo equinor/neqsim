@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class ViscosityWaxOilSim extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -34,11 +33,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
 
     public void runTuning() {
@@ -66,7 +63,6 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -119,6 +115,7 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
         }
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
         // tempSystem.addComponent("n-heptane", 6.78);

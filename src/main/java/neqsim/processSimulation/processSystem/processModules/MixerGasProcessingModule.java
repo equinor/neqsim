@@ -1,17 +1,15 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.processSimulation.processSystem.processModules;
@@ -32,22 +30,22 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author ESOL
  */
 public class MixerGasProcessingModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     StreamInterface feedStream, gasExitStream, oilExitStream, glycolFeedStream, glycolExitStream;
     Separator glycolScrubber;
     Separator inletSeparator;
     double inletSepTemperature = 50.00; // bar'
-    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0, glycolScrubberTemperature = 20.0,
-            secondStageOutPressure = 200.0; // bar
-    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0, liquidPumpPressure = 150.0; // m^3/hr
+    double gasScrubberTemperature = 30.00, firstStageOutPressure = 110.0,
+            glycolScrubberTemperature = 20.0, secondStageOutPressure = 200.0; // bar
+    double glycolInjectionRate = 10.0, exportGasTemperature = 273.15 + 30.0,
+            liquidPumpPressure = 150.0; // m^3/hr
     Compressor secondStageCompressor;
     Pump oilPump;
     Cooler secondStageAfterCooler;
 
     @Override
-	public void addInputStream(String streamName, StreamInterface stream) {
+    public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
@@ -57,7 +55,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     }
 
     @Override
-	public StreamInterface getOutputStream(String streamName) {
+    public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
@@ -75,7 +73,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     }
 
     @Override
-	public void initializeModule() {
+    public void initializeModule() {
         isInitializedModule = true;
         double inletPressure = feedStream.getPressure();
 
@@ -90,7 +88,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         oilPump = new Pump("liquid pump", inletSeparator.getLiquidOutStream());
         oilPump.setOutletPressure(liquidPumpPressure);
 
-        Separator gasScrubber = new Separator("HC dew point control scrubber", gasCooler.getOutStream());
+        Separator gasScrubber =
+                new Separator("HC dew point control scrubber", gasCooler.getOutStream());
 
         Recycle HPliquidRecycle = new Recycle("Resycle");
         double tolerance = 1e-2;
@@ -98,7 +97,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         HPliquidRecycle.addStream(gasScrubber.getLiquidOutStream());
         inletSeparator.addStream(HPliquidRecycle.getOutStream());
 
-        Compressor firstStageCompressor = new Compressor("1st stage compressor", gasScrubber.getGasOutStream());
+        Compressor firstStageCompressor =
+                new Compressor("1st stage compressor", gasScrubber.getGasOutStream());
         firstStageCompressor.setOutletPressure(firstStageOutPressure);
 
         glycolFeedStream.getThermoSystem().setPressure(firstStageOutPressure);
@@ -107,15 +107,19 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         glycolMixer.addStream(firstStageCompressor.getOutStream());
         glycolMixer.addStream(glycolFeedStream);
 
-        Cooler mixerAfterCooler = new Cooler("glycol mixer after cooler", glycolMixer.getOutStream());
+        Cooler mixerAfterCooler =
+                new Cooler("glycol mixer after cooler", glycolMixer.getOutStream());
         mixerAfterCooler.setOutTemperature(glycolScrubberTemperature + 273.15);
 
-        glycolScrubber = new Separator("Water dew point control scrubber", mixerAfterCooler.getOutStream());
+        glycolScrubber =
+                new Separator("Water dew point control scrubber", mixerAfterCooler.getOutStream());
 
-        secondStageCompressor = new Compressor("2nd stage compressor", glycolScrubber.getGasOutStream());
+        secondStageCompressor =
+                new Compressor("2nd stage compressor", glycolScrubber.getGasOutStream());
         secondStageCompressor.setOutletPressure(secondStageOutPressure);
 
-        secondStageAfterCooler = new Cooler("second stage after cooler", secondStageCompressor.getOutStream());
+        secondStageAfterCooler =
+                new Cooler("second stage after cooler", secondStageCompressor.getOutStream());
         secondStageAfterCooler.setOutTemperature(exportGasTemperature + 273.15);
 
         getOperations().add(inletCooler);
@@ -133,7 +137,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     }
 
     @Override
-	public void run() {
+    public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
@@ -145,28 +149,27 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     }
 
     @Override
-	public void initializeStreams() {
+    public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
     @Override
-	public void calcDesign() {
-        // design is done here //
+    public void calcDesign() {
+        // design is done here
     }
 
     @Override
-	public void setDesign() {
-        // set design is done here //
+    public void setDesign() {
+        // set design is done here
     }
 
     @Override
-	public void setSpecification(String specificationName, double value) {
+    public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("inlet separation temperature")) {
             inletSepTemperature = value;
         } else if (specificationName.equals("gas scrubber temperature")) {
@@ -184,9 +187,10 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         }
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50, 65);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 50, 65);
 
         testSystem.addComponent("methane", 50);
         testSystem.addComponent("propane", 0.15);
@@ -197,8 +201,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         testSystem.setMixingRule(10);
         testSystem.setMultiPhaseCheck(true);
 
-        neqsim.thermo.system.SystemInterface glycolTestSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(
-                273.15 + 15, 50);
+        neqsim.thermo.system.SystemInterface glycolTestSystem =
+                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 15, 50);
         glycolTestSystem.addComponent("methane", 0);
         glycolTestSystem.addComponent("propane", 0);
         glycolTestSystem.addComponent("nC10", 0);
@@ -226,7 +230,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         separationModule.setSpecification("export gas temperature", 30.0);
         separationModule.setSpecification("liquid pump out pressure", 150.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(wellStream);
         operations.add(glycolFeedStream);
         operations.add(separationModule);
@@ -235,8 +240,8 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         // separationModule.getOutputStream("gas exit stream").displayResult();
         // separationModule.getOutputStream("oil exit stream").displayResult();
         // separationModule.getOutputStream("liquid pump").displayResult();
-        double en = ((PumpInterface) separationModule.getOperations().getUnit("liquid pump")).getPower();
-        double test = en;
+        double en = ((PumpInterface) separationModule.getOperations().getUnit("liquid pump"))
+                .getPower();
         // separationModule.getOutputStream("glycol feed stream").displayResult();
         // separationModule.getOutputStream("glycol exit stream").displayResult();
 

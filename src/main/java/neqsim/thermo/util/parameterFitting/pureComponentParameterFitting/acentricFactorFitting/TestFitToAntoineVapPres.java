@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.util.ArrayList;
@@ -21,15 +15,10 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
  * @version
  */
 public class TestFitToAntoineVapPres {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestFitToAntoineVapPres.class);
 
-    /** Creates new TestAcentric */
-    public TestFitToAntoineVapPres() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

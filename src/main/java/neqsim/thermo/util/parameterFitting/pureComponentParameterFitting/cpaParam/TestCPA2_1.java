@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import java.sql.ResultSet;
@@ -23,15 +17,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestCPA2_1 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPA2_1.class);
 
-    /** Creates new TestAcentric */
-    public TestCPA2_1() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
@@ -41,9 +30,9 @@ public class TestCPA2_1 {
         // double guess[] = {23939.4738048507, 1.5971863018, 0.63623134978,
         // 0.00292037583};//, 1002.0};
         // double guess[] = {1.453, 0.9894, 1.0669, 0.0787}; // water - srk-cpa
-        // double guess[] = {1.4563608786, 1.3855596964, 0.6641553237, 0.0464737892}; //
+        // double guess[] = {1.4563608786, 1.3855596964, 0.6641553237, 0.0464737892};
         // water - pr-cpa
-        // double guess[] = {5.2313853467, 12.6519920554, 0.5439839271, 0.0063462374};//
+        // double guess[] = {5.2313853467, 12.6519920554, 0.5439839271, 0.0063462374};
         // MEG cpas
         // double guess[] = {5.2261531848, 10.4652138885, 0.6690350867, 0.0197428805};
 

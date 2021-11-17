@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 
 import java.sql.ResultSet;
@@ -23,15 +17,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestIonicInteractionParameterFitting_CO2 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFitting_CO2.class);
 
-    /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFitting_CO2() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         double ID, pressure, temperature, x1, x2, x3, loading;
@@ -260,6 +249,5 @@ public class TestIonicInteractionParameterFitting_CO2 {
         // optim.solve();
         // optim.displayGraph();
         optim.displayCurveFit();
-
     }
 }

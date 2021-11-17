@@ -1,16 +1,16 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.dataPresentation.dataHandeling;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class FreezeMEGwater {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezeMEGwater.class);
 
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 10.0, 1.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15-23.0, 1.0);
@@ -39,15 +39,15 @@ public class FreezeMEGwater {
             logger.error("error", e);
         }
         testSystem.display();
-//        System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
-//        System.out.println("act water " + testSystem.getPhase(1).getActivityCoefficient(1));
-//        System.out.println("act MEG " + testSystem.getPhase(1).getActivityCoefficient(0));
-//        try{
-//        testOps.bubblePointPressureFlash(false);
-//        }
-//        catch(Exception e){
-//            System.out.println("error");
-//        }
-//        testSystem.display();
+        // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
+        // System.out.println("act water " + testSystem.getPhase(1).getActivityCoefficient(1));
+        // System.out.println("act MEG " + testSystem.getPhase(1).getActivityCoefficient(0));
+        // try{
+        // testOps.bubblePointPressureFlash(false);
+        // }
+        // catch(Exception e){
+        // System.out.println("error");
+        // }
+        // testSystem.display();
     }
 }

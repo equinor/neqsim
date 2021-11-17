@@ -9,10 +9,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class TestSurfaceTension2 {
-
-    private static final long serialVersionUID = 1000;
     // John debug
 
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         int i;
         int nncomp = 6; // Hard coded
