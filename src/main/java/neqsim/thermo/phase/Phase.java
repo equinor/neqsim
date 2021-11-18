@@ -1,16 +1,4 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
+
 
 /*
  * Phase.java
@@ -28,7 +16,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -257,14 +245,14 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to return pressure in a given unit
      *
-     * @param  unit The unit as a string. Supported units are bara, barg, Pa and MPa
-     * @return      pressure in specified unit
+     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
+     * @return pressure in specified unit
      */
     @Override
     public final double getPressure(String unit) {
         neqsim.util.unit.PressureUnit presConversion =
                 new neqsim.util.unit.PressureUnit(getPressure(), "bara");
-                return presConversion.getValue(unit);
+        return presConversion.getValue(unit);
     }
 
     @Override
@@ -1010,7 +998,7 @@ abstract class Phase implements PhaseInterface {
      *
      * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
      * @return entropy in specified unit
-
+     * 
      */
     @Override
     public double getEntropy(String unit) {
@@ -1058,7 +1046,7 @@ abstract class Phase implements PhaseInterface {
      *
      * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
      * @return viscosity in specified unit
-
+     * 
      */
     @Override
     public double getViscosity(String unit) {
@@ -1090,7 +1078,7 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to return conductivity of a phase
      *
-     * @return     conductivity in unit W/m*K
+     * @return conductivity in unit W/m*K
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
@@ -1102,8 +1090,8 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to return conductivity in a given unit
      *
-     * @param  unit The unit as a string. Supported units are W/mK, W/cmK
-     * @return      conductivity in specified unit
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return conductivity in specified unit
      */
     @Override
     public double getThermalConductivity(String unit) {
@@ -1125,9 +1113,9 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to return conductivity in a given unit
      *
-     * @param      unit The unit as a string. Supported units are W/mK, W/cmK
-     * @return          conductivity in specified unit
-     * @deprecated      use {@link #getThermalConductivity(String unit)} instead.
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return conductivity in specified unit
+     * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override
     @Deprecated
@@ -1450,8 +1438,8 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      * 
-     * @param  unit The unit as a string. Supported units are K/bar, C/bar
-     * @return      Joule Thomson coefficient in given unit
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     * @return Joule Thomson coefficient in given unit
      */
     @Override
     public double getJouleThomsonCoefficient(String unit) {
@@ -1491,8 +1479,8 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to get density of a fluid note: with Peneloux volume correction
      *
-     * @param  unit The unit as a string. Supported units are kg/m3, mol/m3
-     * @return      density in specified unit
+     * @param unit The unit as a string. Supported units are kg/m3, mol/m3
+     * @return density in specified unit
      */
     @Override
     public double getDensity(String unit) {
@@ -1661,8 +1649,8 @@ abstract class Phase implements PhaseInterface {
     /**
      * Indexed getter for property refPhase.
      *
-     * @param  index Index of the property.
-     * @return       Value of the property at <CODE>index</CODE>.
+     * @param index Index of the property.
+     * @return Value of the property at <CODE>index</CODE>.
      */
     @Override
     public neqsim.thermo.phase.PhaseInterface getRefPhase(int index) {
@@ -1902,8 +1890,8 @@ abstract class Phase implements PhaseInterface {
     /**
      * method to return fluid volume
      *
-     * @param  unit The unit as a string. Supported units are m3, litre
-     * @return      volume in specified unit
+     * @param unit The unit as a string. Supported units are m3, litre
+     * @return volume in specified unit
      */
     @Override
     public double getVolume(String unit) {
@@ -2027,7 +2015,7 @@ abstract class Phase implements PhaseInterface {
                 new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
         return test.getDensity();
     }
-    
+
     /**
      * method to get GERG properties of a phase using the GERG-2008 EoS
      *
