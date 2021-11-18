@@ -1,14 +1,8 @@
 package neqsim.processSimulation.util.monitor;
 
-import java.security.Key;
-import java.util.LinkedList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.List;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.lang.ArrayUtils;
-import java.util.stream.Collectors;
 
 public class Fluid {
 
@@ -39,14 +33,16 @@ public class Fluid {
             compProp = new HashMap<>();
                 if(inputFluid.getPhase(0).getComponent(i).isIsTBPfraction()){
                     compProp.put("molFraction", inputFluid.getPhase(0).getComponent(i).getz());
+                    compProp.put("massFlow", inputFluid.getPhase(0).getComponent(i).getFlowRate("kg/hr"));
                     compProp.put("molarMass", inputFluid.getPhase(0).getComponent(i).getMolarMass());
                     compProp.put("normalLiquidDensity", inputFluid.getPhase(0).getComponent(i).getNormalLiquidDensity());
                     oilComponent.put(inputFluid.getPhase(0).getComponent(i).getComponentName(), compProp);
                 } 
                 else{
                     compProp.put("molFraction", inputFluid.getPhase(0).getComponent(i).getz());
+                    compProp.put("massFlow", inputFluid.getPhase(0).getComponent(i).getFlowRate("kg/hr"));
                     definedComponent.put(inputFluid.getPhase(0).getComponent(i).getComponentName().replaceAll("-", ""), compProp);
-                }            
+                }
         }
 
         molarMass = inputFluid.getMolarMass();

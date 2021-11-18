@@ -43,8 +43,8 @@ public class TPflashMembrane {
         testSystem.setMixingRule(2);
 
         testSystem.init_x_y();
-        testSystem.getPhase(0).setPressure(100.0);
-        testSystem.getPhase(1).setPressure(20.0);
+        testSystem.getPhase(0).setPressure(30.0);
+        testSystem.getPhase(1).setPressure(2.0);
         testSystem.setPhaseType("all", 1);
         testSystem.allowPhaseShift(false);
 
