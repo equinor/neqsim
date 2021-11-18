@@ -141,6 +141,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to get density of a fluid note: with Peneloux volume correction
      *
+     * @return density with unit kg/m3
+     */
+    public double getDensity();
+
+    /**
+     * method to get density of a fluid note: with Peneloux volume correction
+     *
      * @param unit The unit as a string. Supported units are kg/m3, mol/m3
      * @return density in specified unit
      */
