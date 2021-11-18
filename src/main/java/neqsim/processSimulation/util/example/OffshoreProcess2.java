@@ -10,12 +10,11 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class OffshoreProcess2 {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
+    @SuppressWarnings("unused")
+
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPA(273.15 + 20.0, 31.0);
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15+20.0,
@@ -67,7 +66,8 @@ public class OffshoreProcess2 {
         mixer.addStream(stream_2);
         mixer.addStream(stream_4);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);

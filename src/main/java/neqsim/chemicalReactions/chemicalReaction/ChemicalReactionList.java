@@ -35,7 +35,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class ChemicalReactionList implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     ArrayList<ChemicalReaction> chemicalReactionList = new ArrayList<ChemicalReaction>();
@@ -60,7 +59,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         try {
-
             if (system.getModelName().equals("Kent Eisenberg-model")) {
                 // System.out.println("selecting Kent-Eisenberg reaction set");
                 dataSet = database.getResultSet("SELECT * FROM reactiondatakenteisenberg");
@@ -124,7 +122,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
                     // System.out.println("reaction added ok...");
                 }
             } while (dataSet.next());
-
         } catch (Exception e) {
             String err = e.toString();
             System.out.println("could not add reacton: " + err);
@@ -154,7 +151,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         }
         System.out.println("did not find reaction: " + name);
         return null;
-
     }
 
     public void removeJunkReactions(String[] names) {
@@ -182,7 +178,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             ((ChemicalReaction) e.next()).initMoleNumbers(phase, components, Amatrix, chemRefPot);
             // ((ChemicalReaction)e).checkK(system);
         }
-
     }
 
     public String[] getAllComponents() {
@@ -225,7 +220,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
                 reacGMatrix[reactionNumber][components.length] =
                         R * phase.getTemperature() * Math.log(reaction.getK(phase));
                 reactionNumber++;
-
             }
         } catch (Exception er) {
             er.printStackTrace();
@@ -258,7 +252,6 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     }
 
     public double[] calcReferencePotentials() {
-
         Matrix reacMatr = new Matrix(reacGMatrix);
         Matrix Amatrix = reacMatr.copy().getMatrix(0, chemicalReactionList.size() - 1, 0,
                 chemicalReactionList.size() - 1);// new Matrix(reacGMatrix);
@@ -369,6 +362,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         return reacMat;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         ChemicalReactionList test = new ChemicalReactionList();
         // test.readReactions();

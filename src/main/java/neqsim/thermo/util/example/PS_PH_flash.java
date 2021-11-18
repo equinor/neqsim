@@ -4,26 +4,13 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 /**
  *
  * @author esol
  * @version
  */
 public class PS_PH_flash {
-
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * Creates new TPflash
-     */
-    public PS_PH_flash() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkMathiasCopeman(273.15 + 5, 80);
         SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 100.0);
@@ -47,16 +34,14 @@ public class PS_PH_flash {
          * 0.72122997045517); testSystem.addTBPfraction("CH3", 0.04819875717163090,
          * 0.0987799987792969, 0.754330039024353); testSystem.addTBPfraction("CH4",
          * 0.0972084712982178, 0.1412200012207030, 0.81659996509552);
-         * testSystem.addTBPfraction("CH5", 0.16517408370, 0.1857899932861330,
-         * 0.861050009727478); testSystem.addTBPfraction("CH6", 0.279571933746338,
-         * 0.2410899963378910, 0.902539968490601); testSystem.addTBPfraction("CH7",
-         * 0.2404942512512, 0.4045100097656250, 0.955269992351531);
-         * testSystem.addTBPfraction("CH8", 0.1131200218, 0.9069699, 1.0074599981308);
-         * // testSystem.addComponent("ethane", 0.05); //
-         * testSystem.addComponent("water", 1.19299e-1); //
-         * testSystem.addComponent("n-butane", 3.53465e-1); //
-         * testSystem.addComponent("propane", 50); //testSystem.addComponent("CO2", 50);
-         * //testSystem.addComponent("water", 20);
+         * testSystem.addTBPfraction("CH5", 0.16517408370, 0.1857899932861330, 0.861050009727478);
+         * testSystem.addTBPfraction("CH6", 0.279571933746338, 0.2410899963378910,
+         * 0.902539968490601); testSystem.addTBPfraction("CH7", 0.2404942512512, 0.4045100097656250,
+         * 0.955269992351531); testSystem.addTBPfraction("CH8", 0.1131200218, 0.9069699,
+         * 1.0074599981308); // testSystem.addComponent("ethane", 0.05);
+         * testSystem.addComponent("water", 1.19299e-1); // testSystem.addComponent("n-butane",
+         * 3.53465e-1); // testSystem.addComponent("propane", 50); //testSystem.addComponent("CO2",
+         * 50); //testSystem.addComponent("water", 20);
          */
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
@@ -67,13 +52,12 @@ public class PS_PH_flash {
             testOps.TPflash();
             // testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
-
         }
         testSystem.init(3);
         // testSystem.display();
 
         // testSystem.setPressure(testSystem.getPressure() - 1.2);
-        // double entropy = testSystem.getEntropy(); //
+        // double entropy = testSystem.getEntropy();
         // System.out.println("entropy spec" + entropy);
         double enthalpy = testSystem.getEnthalpy();
         // System.out.println("enthalpy spec" + enthalpy);
@@ -81,11 +65,10 @@ public class PS_PH_flash {
         double entropy = testSystem.getEntropy();
         /*
          * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try {
-         * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch
-         * (Exception e) {
+         * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch (Exception e) {
          * 
-         * } testSystem.init(2); testSystem.setPressure(100.0); //
-         * System.out.println("entropy spec" + entropy);
+         * } testSystem.init(2); testSystem.setPressure(100.0); // System.out.println("entropy spec"
+         * + entropy);
          * 
          * // testSystem.setPressure(20.894745);
          */
@@ -103,7 +86,6 @@ public class PS_PH_flash {
             // testOps.TPflash();
             // testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
-
         }
         // testSystem.init(2);
         // testSystem.setPressure(1.0);

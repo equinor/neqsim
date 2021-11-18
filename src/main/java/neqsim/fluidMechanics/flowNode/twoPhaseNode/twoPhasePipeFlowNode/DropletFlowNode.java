@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class DropletFlowNode extends TwoPhaseFlowNode {
-
     private static final long serialVersionUID = 1000;
     private double averageDropletDiameter = 100.0e-6;
 
@@ -22,16 +21,19 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
         super(system, pipe);
         this.flowNodeType = "droplet";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
     @Override
@@ -42,7 +44,6 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
 
     @Override
     public void initFlowCalc() {
-
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
         phaseFraction[1] = 1.0 - phaseFraction[0];
@@ -74,8 +75,9 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
 
     @Override
     public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -103,6 +105,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    @SuppressWarnings("unused")
     public static void mainOld(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 11.0, 60.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(275.3, 1.01325);
@@ -175,7 +178,6 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
-
     }
 
     public static void main(String[] args) {
@@ -247,7 +249,6 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
-
     }
 
     public double getAverageDropletDiameter() {

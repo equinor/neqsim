@@ -10,10 +10,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class StirredCellNode extends TwoPhaseFlowNode {
-
     private static final long serialVersionUID = 1000;
 
-    private double[] stirrerRate = { 1.0, 1.0 }, stirrerDiameter = { 1.0, 1.0 };
+    private double[] stirrerRate = {1.0, 1.0}, stirrerDiameter = {1.0, 1.0};
     private double dt = 1.0;
 
     public StirredCellNode() {
@@ -24,16 +23,19 @@ public class StirredCellNode extends TwoPhaseFlowNode {
         super(system, pipe);
         this.flowNodeType = "stirred cell";
         this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stirred cell";
         this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
     @Override
@@ -166,6 +168,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
         this.dt = dt;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
         // SystemInterface testSystem = new SystemSrkEos(313.3, 70.01325);
@@ -224,5 +227,4 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     public void setStirrerDiameter(double[] stirrerDiameter) {
         this.stirrerDiameter = stirrerDiameter;
     }
-
 }

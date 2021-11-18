@@ -1,24 +1,21 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 /*
-* To change this license header, choose License Headers in Project Properties.
-* To change this template file, choose Tools | Templates
-* and open the template in the editor.
-*/
+ * To change this license header, choose License Headers in Project Properties. To change this
+ * template file, choose Tools | Templates and open the template in the editor.
+ */
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Cooler;
@@ -36,7 +33,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author esol
  */
 public class WellFluidModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface feedStream = null, outStream = null;
@@ -44,38 +40,38 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     Cooler oilCooler;
     double secondstagePressure = 15.00; // bar'
     double inletPressure = 55.0, gasfactor = 0.1;
-    double thirdstagePressure = 1.01325;//
+    double thirdstagePressure = 1.01325;
     double separationTemperature = 273.15 + 15;
     double exitGasScrubberTemperature = 273.15 + 30;
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
     @Override
-	public void addInputStream(String streamName, StreamInterface stream) {
+    public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
             this.feedStream = stream;
         }
     }
 
     @Override
-	public StreamInterface getOutputStream(String streamName) {
+    public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
             initializeStreams();
         }
         return this.outStream;
-
     }
 
     @Override
-	public void run() {
+    public void run() {
         if (!isInitializedModule) {
             initializeModule();
         }
         getOperations().run();
 
-        double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream().getThermoSystem().getVolume();
-        double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream()
+        double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream()
                 .getThermoSystem().getVolume();
+        double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
+                .getOilOutStream().getThermoSystem().getVolume();
 
         double GOR = volGas / volOil;
         System.out.println("GOR " + GOR);
@@ -83,56 +79,60 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
         // ((Heater) getOperations().getUnit("gas heater")).displayResult();
 
-        Stream gasStream = (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutStream().clone();
+        Stream gasStream =
+                (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutStream().clone();
         gasStream.getThermoSystem().setPressure(inletPressure);
-        Stream oilStream = (Stream) ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
-                .getOilOutStream().clone();
+        Stream oilStream =
+                (Stream) ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
+                        .getOilOutStream().clone();
         oilStream.getThermoSystem().setPressure(inletPressure);
 
         ((Separator) getOperations().getUnit("Inlet separator")).addStream(gasStream);
         ((Separator) getOperations().getUnit("Inlet separator")).addStream(oilStream);
         getOperations().run();
 
-        volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream().getThermoSystem().getVolume();
-        volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream()
-                .getThermoSystem().getVolume();
+        volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutStream().getThermoSystem()
+                .getVolume();
+        volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
+                .getOilOutStream().getThermoSystem().getVolume();
 
         GOR = volGas / volOil;
         System.out.println("GOR " + GOR);
         outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutStream();
-
     }
 
     @Override
-	public void initializeModule() {
+    public void initializeModule() {
         isInitializedModule = true;
         inletPressure = feedStream.getPressure();
         Separator inletSeparator = new Separator("Inlet separator", feedStream);
 
-        Heater liquidOutHeater = new Heater("oil/water heater", inletSeparator.getLiquidOutStream());
+        Heater liquidOutHeater =
+                new Heater("oil/water heater", inletSeparator.getLiquidOutStream());
         liquidOutHeater.setOutTemperature(separationTemperature);
 
-        ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator",
-                liquidOutHeater.getOutStream());
+        ThreePhaseSeparator firstStageSeparator =
+                new ThreePhaseSeparator("1st stage separator", liquidOutHeater.getOutStream());
 
-        ThrottlingValve valve1 = new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
+        ThrottlingValve valve1 =
+                new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
         valve1.setOutletPressure(secondstagePressure);
 
         Heater liquidOutHeater2 = new Heater("oil/water heater2", valve1.getOutStream());
         liquidOutHeater2.setOutTemperature(separationTemperature);
 
-        ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage Separator",
-                liquidOutHeater2.getOutStream());
+        ThreePhaseSeparator secondStageSeparator =
+                new ThreePhaseSeparator("2nd stage Separator", liquidOutHeater2.getOutStream());
 
-        ThrottlingValve thirdStageValve = new ThrottlingValve("2-3stageOilValve",
-                secondStageSeparator.getLiquidOutStream());
+        ThrottlingValve thirdStageValve =
+                new ThrottlingValve("2-3stageOilValve", secondStageSeparator.getLiquidOutStream());
         thirdStageValve.setOutletPressure(thirdstagePressure);
-//
+
         Heater liquidOutHeater3 = new Heater("oil/water heater3", thirdStageValve.getOutStream());
         liquidOutHeater3.setOutTemperature(separationTemperature);
 
-        ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
-                liquidOutHeater3.getOutStream());
+        ThreePhaseSeparator thirdStageSeparator =
+                new ThreePhaseSeparator("3rd stage Separator", liquidOutHeater3.getOutStream());
 
         Mixer gasMixer = new Mixer("gas mixer");
 
@@ -166,28 +166,27 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     }
 
     @Override
-	public void initializeStreams() {
+    public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
     @Override
-	public void calcDesign() {
-        // design is done here //
+    public void calcDesign() {
+        // design is done here
     }
 
     @Override
-	public void setDesign() {
-        // set design is done here //
+    public void setDesign() {
+        // set design is done here
     }
 
     @Override
-	public void setSpecification(String specificationName, double value) {
+    public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("Second stage pressure")) {
             secondstagePressure = value;
         }
@@ -197,12 +196,12 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         if (specificationName.equals("Third stage pressure")) {
             thirdstagePressure = value;
         }
-
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 50, 65);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos(273.15 + 50, 65);
 
         // testSystem.addComponent("CO2", 1);
         // testSystem.addComponent("nitrogen", 1);
@@ -233,14 +232,14 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         separationModule.setSpecification("separation temperature", 273.15 + 15.0);
         separationModule.setSpecification("Third stage pressure", 1.01325);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
 
         operations.add(wellStream);
         operations.add(separationModule);
-//separationModule.getUnit("")
-//        ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
+        // separationModule.getUnit("")
+        // ((Recycle) operations.getUnit("Resycle")).setTolerance(1e-9);
 
         operations.run();
-
     }
 }

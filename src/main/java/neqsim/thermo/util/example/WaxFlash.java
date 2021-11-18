@@ -1,20 +1,19 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
-import org.apache.logging.log4j.*;
-
 public class WaxFlash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WaxFlash.class);
 
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
-
-        NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+        NeqSimDataBase.setConnectionString(
+                "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
         NeqSimDataBase.setCreateTemporaryTables(true);
 
         SystemInterface testSystem = new SystemSrkEos(273.0 + 30, 50.0);
@@ -43,11 +42,9 @@ public class WaxFlash {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
-
             testOps.calcWAT();
             // testOps.TPflash();
             testSystem.display();
-
         } catch (Exception e) {
             logger.error("error", e);
         }

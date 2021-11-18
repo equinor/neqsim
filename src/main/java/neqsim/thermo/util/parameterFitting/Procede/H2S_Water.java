@@ -1,11 +1,12 @@
 package neqsim.thermo.util.parameterFitting.Procede;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.sql.*;
+import java.sql.ResultSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /*
  * Sleipneracetate.java
@@ -18,19 +19,17 @@ import org.apache.logging.log4j.*;
  * @author agrawalnj
  */
 public class H2S_Water {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(H2S_Water.class);
 
     /** Creates a new instance of Sleipneracetate */
-    public H2S_Water() {
-    }
+    public H2S_Water() {}
 
     /**
      * @param args the command line arguments
      */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         int i = 0;
         double aad;
 
@@ -38,7 +37,6 @@ public class H2S_Water {
         ResultSet dataSet = database.getResultSet("SELECT * FROM H2SWater");
 
         try {
-
             while (dataSet.next()) {
                 i++;
                 logger.info("Adding.... " + i);
@@ -70,13 +68,11 @@ public class H2S_Water {
 
                 aad = (pressure - testSystem.getPressure()) / pressure * 100;
                 logger.info(ID + " " + pressure + " " + testSystem.getPressure() + " " + aad);
-
             }
         } catch (Exception e) {
             logger.error("database error" + e);
         }
 
         logger.info("Finished");
-
     }
 }

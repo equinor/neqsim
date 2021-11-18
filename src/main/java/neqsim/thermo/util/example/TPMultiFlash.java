@@ -1,15 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /**
  *
@@ -17,16 +12,9 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TPMultiFlash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPMultiFlash.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public TPMultiFlash() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemPrEos1978(273.15,100.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15,100.0);
@@ -40,31 +28,29 @@ public class TPMultiFlash {
 
         testSystem.addComponent("methane", 167.42);
         /*
-         * testSystem.addComponent("ethane", 29.02); testSystem.addComponent("propane",
-         * 14.31); testSystem.addComponent("i-butane", 0.93);
-         * testSystem.addComponent("n-butane", 1.71);
-         * testSystem.addComponent("i-pentane", 0.74);
-         * testSystem.addComponent("n-pentane", 0.85);
-         * testSystem.addComponent("n-hexane", 1.38); testSystem.addTBPfraction("C7",
-         * 15.5, 59.00 / 1000.0, 0.73); testSystem.addTBPfraction("C8", 5.69, 112.20 /
-         * 1000.0, 0.77); testSystem.addTBPfraction("C9", 10.14, 87.5 / 1000.0, 0.755);
-         * testSystem.addTBPfraction("C10", 0.8, 114.3 / 1000.0, 0.77); //
-         * testSystem.addPlusFraction("C11", 4.58, 236.2 / 1000.0, 0.8398); //
+         * testSystem.addComponent("ethane", 29.02); testSystem.addComponent("propane", 14.31);
+         * testSystem.addComponent("i-butane", 0.93); testSystem.addComponent("n-butane", 1.71);
+         * testSystem.addComponent("i-pentane", 0.74); testSystem.addComponent("n-pentane", 0.85);
+         * testSystem.addComponent("n-hexane", 1.38); testSystem.addTBPfraction("C7", 15.5, 59.00 /
+         * 1000.0, 0.73); testSystem.addTBPfraction("C8", 5.69, 112.20 / 1000.0, 0.77);
+         * testSystem.addTBPfraction("C9", 10.14, 87.5 / 1000.0, 0.755);
+         * testSystem.addTBPfraction("C10", 0.8, 114.3 / 1000.0, 0.77);
+         * testSystem.addPlusFraction("C11", 4.58, 236.2 / 1000.0, 0.8398);
          * testSystem.addPlusFraction("C11", 4.58, 266.2 / 1000.0, 0.8398);
          */
         // testSystem.addComponent("toluene", 0.009);
         // testSystem.addTBPfraction("C7",0.626, 96.00/1000.0, 0.738);
         // testSystem.addComponent("MDEA", 0.54);
         testSystem.addComponent("water", 0.01);
-//        testSystem.addComponent("propane", 4.0062);
-//        testSystem.addComponent("i-butane", 0.6 4205);
+        // testSystem.addComponent("propane", 4.0062);
+        // testSystem.addComponent("i-butane", 0.6 4205);
         // testSystem.addComponent("methane", 10.0);
-//        testSystem.addComponent("ethane", 9.24);
-//        testSystem.addComponent("propane", 2.57);
-//        testSystem.addComponent("CO2", 5.19);
+        // testSystem.addComponent("ethane", 9.24);
+        // testSystem.addComponent("propane", 2.57);
+        // testSystem.addComponent("CO2", 5.19);
         // testSystem.addComponent("CO2", 30.4107);
-//        testSystem.addComponent("MEG", 30.0);
-//        testSystem.addComponent("MEG", 7.00);
+        // testSystem.addComponent("MEG", 30.0);
+        // testSystem.addComponent("MEG", 7.00);
 
         testSystem.setMultiPhaseCheck(true);
 
@@ -80,7 +66,7 @@ public class TPMultiFlash {
         // 1- orginal no interaction 2- classic w interaction
         // 3- Huron-Vidal 4- Wong-Sandler
         // testSystem.setMixingRule(1);
-        //
+
         try {
             int phase = 0;
 
@@ -122,8 +108,10 @@ public class TPMultiFlash {
         }
         // System.out.println("Henrys Constant " +
         // 1.0/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
-//        System.out.println("water fugacity " + testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getComponent("water").getFugasityCoefficient()*testSystem.getPressure());
-//        System.out.println("partial pressure water " + testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPressure());
+        // System.out.println("water fugacity " +
+        // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getComponent("water").getFugasityCoefficient()*testSystem.getPressure());
+        // System.out.println("partial pressure water " +
+        // testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPressure());
         // System.out.println("activity water " +
         // testSystem.getPhase(1).getActivityCoefficient(2));
         // System.out.println("wt%MEG " +

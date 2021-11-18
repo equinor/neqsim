@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompViscosity.linearLiquidModel;
 
 import java.sql.ResultSet;
@@ -23,13 +17,9 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version
  */
 public class TestViscosityFit {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestViscosityFit.class);
 
-    /** Creates new TestAcentric */
-    public TestViscosityFit() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -90,6 +80,5 @@ public class TestViscosityFit {
         // optim.runMonteCarloSimulation();
         // optim.displayCurveFit();
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

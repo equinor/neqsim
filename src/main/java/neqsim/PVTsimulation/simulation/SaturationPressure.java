@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class SaturationPressure extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     private double saturationPressure;
@@ -23,11 +22,13 @@ public class SaturationPressure extends BasePVTsimulation {
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
             thermoOps.TPflash();
-        } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
+        } while (getThermoSystem().getNumberOfPhases() == 1
+                && getThermoSystem().getPressure() < 1000.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
             thermoOps.TPflash();
-        } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
+        } while (getThermoSystem().getNumberOfPhases() > 1
+                && getThermoSystem().getPressure() < 1000.0);
         double minPres = getThermoSystem().getPressure() - 10.0;
         double maxPres = getThermoSystem().getPressure();
         int iteration = 0;
@@ -47,11 +48,12 @@ public class SaturationPressure extends BasePVTsimulation {
     }
 
     @Override
-	public void run() {
+    public void run() {
         super.run();
         saturationPressure = calcSaturationPressure();
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
@@ -86,15 +88,13 @@ public class SaturationPressure extends BasePVTsimulation {
         /*
          * 
          * TuningInterface tuning = new TuneToSaturation(satPresSim);
-         * tuning.setSaturationConditions(saturationTemperature, saturationPressure);
-         * tuning.run(); tuning.getSimulation().getThermoSystem().display();
+         * tuning.setSaturationConditions(saturationTemperature, saturationPressure); tuning.run();
+         * tuning.getSimulation().getThermoSystem().display();
          */
-
     }
 
     @Override
-	public double getSaturationPressure() {
+    public double getSaturationPressure() {
         return saturationPressure;
     }
-
 }
