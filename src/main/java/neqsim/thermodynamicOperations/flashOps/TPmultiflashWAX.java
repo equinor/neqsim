@@ -1,8 +1,11 @@
+package neqsim.thermodynamicOperations.flashOps;
+
 import java.util.ArrayList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
-@version
- */
 public class TPmultiflashWAX extends TPflash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
