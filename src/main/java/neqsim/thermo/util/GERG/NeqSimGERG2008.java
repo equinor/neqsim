@@ -266,6 +266,7 @@ public class NeqSimGERG2008 {
         System.out.println("density GERG " + fluid1.getPhase(0).getDensity_GERG2008());
 
         NeqSimGERG2008 test = new NeqSimGERG2008(fluid1.getPhase("gas"));
+        //fluid1.getPhase("gas").getProperties_GERG2008();
         System.out.println("density " + test.getDensity());
         System.out.println("pressure " + test.getPressure());
         // System.out.println("properties " + test.propertiesGERG());
