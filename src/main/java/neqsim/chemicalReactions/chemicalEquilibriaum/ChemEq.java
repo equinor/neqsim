@@ -1,21 +1,6 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
-import Jama.*;
+import Jama.Matrix;
 
 public class ChemEq implements java.io.Serializable {
 
@@ -61,7 +46,8 @@ public class ChemEq implements java.io.Serializable {
         }
     }
 
-    public ChemEq(double T, double P, double[][] A_matrix, double n_mol[], double chem_ref[], double b_element[]) {
+    public ChemEq(double T, double P, double[][] A_matrix, double n_mol[], double chem_ref[],
+            double b_element[]) {
         this.T = T;
         this.P = P;
         this.A_matrix = A_matrix;
@@ -356,7 +342,8 @@ public class ChemEq implements java.io.Serializable {
 
         for (j = 0; j < NSPEC; j++) {
 
-            System.out.println(" SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
+            System.out.println(
+                    " SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
         }
 
     }

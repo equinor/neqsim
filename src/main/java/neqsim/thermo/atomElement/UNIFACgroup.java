@@ -1,33 +1,13 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * Element.java
- *
- * Created on 4. februar 2001, 22:11
- */
 package neqsim.thermo.atomElement;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
-import org.apache.logging.log4j.*;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
@@ -67,8 +47,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     /**
      * Creates new Element
      */
-    public UNIFACgroup() {
-    }
+    public UNIFACgroup() {}
 
     public UNIFACgroup(int groupNumber, int temp) {
 
@@ -76,12 +55,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         try {
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
                 dataSet.next();
                 dataSet.getClob("name");
             } catch (Exception e) {
                 dataSet.close();
-                dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
                 dataSet.next();
             }
             n = temp;
@@ -213,21 +194,20 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
-     * Compares this object with the specified object for order. Returns a negative
-     * integer, zero, or a positive integer as this object is less than, equal to,
-     * or greater than the specified object.
+     * Compares this object with the specified object for order. Returns a negative integer, zero,
+     * or a positive integer as this object is less than, equal to, or greater than the specified
+     * object.
      * <p>
      *
-     * In the foregoing description, the notation
-     * <tt>sgn(</tt><i>expression</i><tt>)</tt> designates the mathematical
-     * <i>signum</i> function, which is defined to return one of <tt>-1</tt>,
-     * <tt>0</tt>, or <tt>1</tt> according to whether the value of <i>expression</i>
-     * is negative, zero or positive.
+     * In the foregoing description, the notation <tt>sgn(</tt><i>expression</i><tt>)</tt>
+     * designates the mathematical <i>signum</i> function, which is defined to return one of
+     * <tt>-1</tt>, <tt>0</tt>, or <tt>1</tt> according to whether the value of <i>expression</i> is
+     * negative, zero or positive.
      * 
      * The implementor must ensure <tt>sgn(x.compareTo(y)) ==
-     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This implies
-     * that <tt>x.compareTo(y)</tt> must throw an exception iff
-     * <tt>y.compareTo(x)</tt> throws an exception.)
+     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This implies that
+     * <tt>x.compareTo(y)</tt> must throw an exception iff <tt>y.compareTo(x)</tt> throws an
+     * exception.)
      * <p>
      *
      * The implementor must also ensure that the relation is transitive:
@@ -235,22 +215,21 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
      * <tt>x.compareTo(z)&gt;0</tt>.
      * <p>
      *
-     * Finally, the implementer must ensure that <tt>x.compareTo(y)==0</tt> implies
-     * that <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for all <tt>z</tt>.
+     * Finally, the implementer must ensure that <tt>x.compareTo(y)==0</tt> implies that
+     * <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for all <tt>z</tt>.
      * <p>
      *
      * It is strongly recommended, but <i>not</i> strictly required that
-     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>. Generally speaking, any class
-     * that implements the <tt>Comparable</tt> interface and violates this condition
-     * should clearly indicate this fact. The recommended language is "Note: this
-     * class has a natural ordering that is inconsistent with equals."
+     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>. Generally speaking, any class that implements
+     * the <tt>Comparable</tt> interface and violates this condition should clearly indicate this
+     * fact. The recommended language is "Note: this class has a natural ordering that is
+     * inconsistent with equals."
      *
-     * @param  o                  the Object to be compared.
-     * @return                    a negative integer, zero, or a positive integer as
-     *                            this object is less than, equal to, or greater
-     *                            than the specified object.
-     * @throws ClassCastException if the specified object's type prevents it from
-     *                            being compared to this Object.
+     * @param o the Object to be compared.
+     * @return a negative integer, zero, or a positive integer as this object is less than, equal
+     *         to, or greater than the specified object.
+     * @throws ClassCastException if the specified object's type prevents it from being compared to
+     *         this Object.
      */
     @Override
     public boolean equals(Object o) {
@@ -283,16 +262,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         return xComp;
     }
     /*
-     * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0,
-     * tempVal = 0.0;
+     * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
      * 
      * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
-     * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) {
-     * tempVal = phase.getComponent(j).getNumberOfMolesInPhase() *
-     * ((ComponentGEUnifac) phase.getComponent(j)).getUnifacGroup(i).getN(); temp +=
-     * tempVal; if (((ComponentGEUnifac)
-     * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2
-     * += tempVal; } } } xMix = temp2 / temp; return xMix; }
+     * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
+     * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
+     * phase.getComponent(j)).getUnifacGroup(i).getN(); temp += tempVal; if (((ComponentGEUnifac)
+     * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2 += tempVal; } } }
+     * xMix = temp2 / temp; return xMix; }
      */
 
     public double calcQComp(ComponentGEUnifac component) {
@@ -346,8 +323,9 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
                 component = ((ComponentGEUnifac) phase.getComponent(j));
                 for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
                     unifacGroup = component.getUnifacGroup(i);
-                    tempVar = component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
-                            * component.getUnifacGroup(i).getQ();
+                    tempVar =
+                            component.getNumberOfMolesInPhase() * component.getUnifacGroup(i).getN()
+                                    * component.getUnifacGroup(i).getQ();
                     temp += tempVar;
                     if (k == j) {
                         tempVardn = unifacGroup.getN() * unifacGroup.getQ();

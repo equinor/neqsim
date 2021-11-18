@@ -1,30 +1,14 @@
 /*
- * Copyright 2018 ESOL.
+ * PHflash.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 8. mars 2001, 10:56
  */
-
-/*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class PHflash extends Flash {
@@ -38,8 +22,7 @@ public class PHflash extends Flash {
     /**
      * Creates new PHflash
      */
-    public PHflash() {
-    }
+    public PHflash() {}
 
     public PHflash(SystemInterface system, double Hspec, int type) {
         this.system = system;
@@ -81,7 +64,8 @@ public class PHflash extends Flash {
             nyTemp = oldTemp - newCorr;
 
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-                nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+                nyTemp = 1.0 / (system.getTemperature()
+                        - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
                 correctFactor = false;
             } else if (nyTemp < 0) {
                 nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
@@ -110,20 +94,22 @@ public class PHflash extends Flash {
             }
 
             if (false && error * erorOld < 0) {
-                system.setTemperature((Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp)
-                        / (Math.abs(erorOld) + Math.abs(error)));
+                system.setTemperature(
+                        (Math.abs(erorOld) * 1.0 / oldTemp + Math.abs(error) * 1.0 / nyTemp)
+                                / (Math.abs(erorOld) + Math.abs(error)));
                 tpFlash.run();
                 system.init(2);
                 erorOld = error;
                 error = calcdQdT();
-                System.out.println("reset temperature -- new temp " + system.getTemperature() + " error " + error
-                        + " iter " + iterations);
+                System.out.println("reset temperature -- new temp " + system.getTemperature()
+                        + " error " + error + " iter " + iterations);
             }
             // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
             // " error "+ error + " correction " + newCorr + " factor "+ factor);
 
-        } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3) && iterations < 200);
+        } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3)
+                && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter " + iterations
         // + " error " + error);
         return 1.0 / nyTemp;
@@ -149,7 +135,8 @@ public class PHflash extends Flash {
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-                nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+                nyTemp = 1.0 / (system.getTemperature()
+                        - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
                 correctFactor = false;
             } else if (nyTemp < 0) {
                 nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));

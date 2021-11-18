@@ -2,33 +2,21 @@
  * ScalePotentialCheck.java
  *
  * Created on 19. desember 2005, 14:39
- *
- * To change this template, choose Tools | Options and locate the template under
- * the Source Creation and Management node. Right-click the template and choose
- * Open. You can then make changes to the template in the Source Editor.
  */
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
  * @author ESOL
  */
 public class ScalePotentialCheck {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ScalePotentialCheck.class);
-
-    /**
-     * Creates a new instance of ScalePotentialCheck
-     */
-    public ScalePotentialCheck() {
-
-    }
 
     public static void main(String[] args) {
         // SystemInterface testSystem = new Ele(273.15+10.0,10.0);
@@ -36,8 +24,8 @@ public class ScalePotentialCheck {
         // SystemInterface testSystem = new SystemFurstElectrolyteEosMod2004(273.15 +
         // 15.0, 1.0);
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 50.0, 10.0);
-//        testSystem.addComponent("Cl-",0.001);
-//        testSystem.addComponent("CO3--",0.00000095);
+        // testSystem.addComponent("Cl-",0.001);
+        // testSystem.addComponent("CO3--",0.00000095);
         // testSystem.addComponent("HCO3-",0.0001);
         testSystem.addComponent("methane", 90);
         // testSystem.addComponent("ethane", 10.5);
@@ -58,7 +46,7 @@ public class ScalePotentialCheck {
         // testSystem.addComponent("Cl-", (1000 - 100) * 1e-3);
         // testSystem.addComponent("Ca++",0.002);
         // testSystem.addComponent("CO3--",14.0E-6);
-//        testSystem = testSystem.autoSelectModel();
+        // testSystem = testSystem.autoSelectModel();
         testSystem.chemicalReactionInit();
         // testSystem.isChemicalSystem(false);
         testSystem.createDatabase(true);
@@ -83,7 +71,5 @@ public class ScalePotentialCheck {
         }
         logger.info("pH " + testSystem.getPhase("aqueous").getpH());
         // testSystem.display();
-
     }
-
 }
