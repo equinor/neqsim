@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;

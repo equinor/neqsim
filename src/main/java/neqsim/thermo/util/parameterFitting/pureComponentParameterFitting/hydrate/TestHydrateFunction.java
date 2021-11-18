@@ -1,8 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.hydrate;
 
 import java.sql.ResultSet;
@@ -23,11 +18,8 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class TestHydrateFunction {
 
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestHydrateFunction.class);
 
-    /** Creates new TestAcentric */
-    public TestHydrateFunction() {}
 
     public static void main(String[] args) {
 

@@ -9,10 +9,9 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author esol
  */
 public class TestOnlineProcess {
-
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
         testSystem.addComponent("methane", 0.900);
         testSystem.addComponent("ethane", 0.100);
         testSystem.addComponent("n-heptane", 1.00);
@@ -27,7 +26,8 @@ public class TestOnlineProcess {
         ThrottlingValve valve_1 = new ThrottlingValve(stream_1);
         valve_1.setOutletPressure(5.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(temperatureTransmitter);
         operations.add(valve_1);
@@ -36,7 +36,5 @@ public class TestOnlineProcess {
 
         operations.displayResult();
         operations.reportMeasuredValues();
-
     }
-
 }

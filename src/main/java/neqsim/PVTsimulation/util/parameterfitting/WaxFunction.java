@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -18,15 +13,12 @@ public class WaxFunction extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
-    /**
-     * Creates new Test
-     */
     public WaxFunction() {
         params = new double[3];
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         thermoOps.TPflash();
         double waxFraction = 0.0;
@@ -38,7 +30,7 @@ public class WaxFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i < 3) {
             system.getWaxModel().setWaxParameter(i, params[i]);

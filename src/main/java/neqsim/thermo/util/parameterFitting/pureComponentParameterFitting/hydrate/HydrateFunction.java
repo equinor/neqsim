@@ -1,14 +1,9 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.hydrate;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.component.ComponentHydrate;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -20,13 +15,13 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFunction.class);
 
-    /** Creates new Test */
+
     public HydrateFunction() {
         // params = new double[3];
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.hydrateFormationTemperature(1);
             // System.out.println("temperature " + system.getTemperature());
@@ -37,20 +32,26 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         int structure = 1;
         params[i] = value;
-//        if(i==0) ((ComponentHydrate) system.getPhase(4).getComponent("water")).setDGfHydrate(value, structure);
-//        if(i==1) ((ComponentHydrate) system.getPhase(4).getComponent("water")).setDHfHydrate(value, structure);
+        // if(i==0) ((ComponentHydrate)
+        // system.getPhase(4).getComponent("water")).setDGfHydrate(value, structure);
+        // if(i==1) ((ComponentHydrate)
+        // system.getPhase(4).getComponent("water")).setDHfHydrate(value, structure);
         // int k=0;
 
-//        if(i==0) ((ComponentHydrate) system.getPhase(4).getComponent("water")).setEmptyHydrateVapourPressureConstant(0,0, value);
-//        if(i==1) ((ComponentHydrate) system.getPhase(4).getComponent("water")).setEmptyHydrateVapourPressureConstant(0,1, value);
+        // if(i==0) ((ComponentHydrate)
+        // system.getPhase(4).getComponent("water")).setEmptyHydrateVapourPressureConstant(0,0,
+        // value);
+        // if(i==1) ((ComponentHydrate)
+        // system.getPhase(4).getComponent("water")).setEmptyHydrateVapourPressureConstant(0,1,
+        // value);
 
         // for(int k=0;k<system.getNumberOfPhases();k++){
         // if(i==0)
@@ -61,15 +62,18 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
         // }
 
         if (i == 0) {
-            ((ComponentHydrate) system.getPhase(4).getComponent(0)).setLennardJonesEnergyParameterHydrate(value);
+            ((ComponentHydrate) system.getPhase(4).getComponent(0))
+                    .setLennardJonesEnergyParameterHydrate(value);
         }
         if (i == 1) {
-            ((ComponentHydrate) system.getPhase(4).getComponent(0)).setLennardJonesMolecularDiameterHydrate(value);
+            ((ComponentHydrate) system.getPhase(4).getComponent(0))
+                    .setLennardJonesMolecularDiameterHydrate(value);
         }
         if (i == 2) {
-            ((ComponentHydrate) system.getPhase(4).getComponent(0)).setSphericalCoreRadiusHydrate(value);
+            ((ComponentHydrate) system.getPhase(4).getComponent(0))
+                    .setSphericalCoreRadiusHydrate(value);
         }
-//
+        //
 
     }
 }

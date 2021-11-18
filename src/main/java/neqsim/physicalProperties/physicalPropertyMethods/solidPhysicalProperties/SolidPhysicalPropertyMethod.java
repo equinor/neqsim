@@ -1,9 +1,3 @@
-/*
- * GasPhysicalProperties.java
- *
- * Created on 29. oktober 2000, 16:18
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties;
 
 /**
@@ -29,7 +23,8 @@ public class SolidPhysicalPropertyMethod
     }
 
     @Override
-	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    public void setPhase(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         this.solidPhase = solidPhase;
     }
 }

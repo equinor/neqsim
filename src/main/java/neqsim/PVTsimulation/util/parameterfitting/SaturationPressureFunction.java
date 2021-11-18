@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.PVTsimulation.simulation.SaturationPressure;
@@ -20,15 +15,12 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
-    /**
-     * Creates new Test
-     */
     public SaturationPressureFunction() {
         params = new double[1];
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -58,7 +50,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }

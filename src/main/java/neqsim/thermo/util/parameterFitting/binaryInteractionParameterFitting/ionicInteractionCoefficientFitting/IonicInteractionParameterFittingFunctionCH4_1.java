@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 /**
@@ -11,16 +5,16 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
  * @author Even Solbraa
  * @version
  */
-public class IonicInteractionParameterFittingFunctionCH4_1 extends IonicInteractionParameterFittingFunctionCH4 {
+public class IonicInteractionParameterFittingFunctionCH4_1
+        extends IonicInteractionParameterFittingFunctionCH4 {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
-    public IonicInteractionParameterFittingFunctionCH4_1() {
-    }
+
+    public IonicInteractionParameterFittingFunctionCH4_1() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // System.out.println("pres " +

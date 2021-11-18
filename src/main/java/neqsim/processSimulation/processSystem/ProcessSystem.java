@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.processSystem;
 
 import java.io.FileInputStream;

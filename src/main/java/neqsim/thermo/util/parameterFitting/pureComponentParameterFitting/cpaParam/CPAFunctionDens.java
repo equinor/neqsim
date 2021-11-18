@@ -1,12 +1,7 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -20,16 +15,15 @@ public class CPAFunctionDens extends CPAFunction {
 
     int phasetype = 1;
 
-    /** Creates new Test */
-    public CPAFunctionDens() {
-    }
+
+    public CPAFunctionDens() {}
 
     public CPAFunctionDens(int phase) {
         phasetype = phase;
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
@@ -54,7 +48,7 @@ public class CPAFunctionDens extends CPAFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
 

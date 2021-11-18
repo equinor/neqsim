@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.PVTsimulation.simulation.SaturationPressure;
@@ -19,16 +14,14 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
-    /**
-     * Creates new Test
-     */
     public FunctionJohanSverderup() {
         params = new double[1];
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
-        system.addComponent("methane", -system.getPhase(0).getComponent("methane").getNumberOfmoles());
+    public double calcValue(double[] dependentValues) {
+        system.addComponent("methane",
+                -system.getPhase(0).getComponent("methane").getNumberOfmoles());
         system.addComponent("methane", params[0]);
         system.init_x_y();
         system.init(1);
@@ -40,7 +33,7 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
     }
 }
