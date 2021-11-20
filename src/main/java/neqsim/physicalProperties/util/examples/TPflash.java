@@ -1,31 +1,19 @@
 package neqsim.physicalProperties.util.examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
  * @author esol @version
  */
 public class TPflash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public TPflash() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 20, 30.0);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15+20, 1.0);
@@ -37,7 +25,7 @@ public class TPflash {
         // testSystem.changeComponentName("methane", "methaneHYME");
         // testSystem.addComponent("ethane", 0.01);
         // testSystem.addComponent("nitrogen", 1.1);
-//        testSystem.addComponent("n-heptane", 51);
+        // testSystem.addComponent("n-heptane", 51);
         // testSystem.addComponent("ethane", 8.53);
         // testSystem.addComponent("methane", 82.7);
         // testSystem.addComponent("ethane", 7.5);
@@ -52,10 +40,8 @@ public class TPflash {
         // testSystem.addTBPfraction("C10", 5.31, 150.0 / 1000.0, 0.89);
         // testSystem.addComponent("water", 1.1);
         /*
-         * testSystem.addComponent("i-butane", 1.95);
-         * testSystem.addComponent("n-butane", 1.95);
-         * testSystem.addComponent("n-pentane", 0.95);
-         * testSystem.addComponent("i-pentane", 0.95);
+         * testSystem.addComponent("i-butane", 1.95); testSystem.addComponent("n-butane", 1.95);
+         * testSystem.addComponent("n-pentane", 0.95); testSystem.addComponent("i-pentane", 0.95);
          *
          * testSystem.addTBPfraction("C6",0.10,100.0/1000.0,0.8);
          * testSystem.addTBPfraction("C7",0.060,110.0/1000.0,0.82);
@@ -97,7 +83,8 @@ public class TPflash {
         // 1);
         // testSystem.setPhysicalPropertyModel(6);
         // testSystem.getPhase(0).initPhysicalProperties("viscosity");
-        double visc = testSystem.getPhase(1).getPhysicalProperties().getViscosityModel().calcViscosity();
+        double visc =
+                testSystem.getPhase(1).getPhysicalProperties().getViscosityModel().calcViscosity();
         testSystem.display();
     }
 }

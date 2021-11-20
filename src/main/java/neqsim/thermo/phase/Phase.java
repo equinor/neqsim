@@ -2027,6 +2027,18 @@ abstract class Phase implements PhaseInterface {
                 new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
         return test.getDensity();
     }
+    
+    /**
+     * method to get GERG properties of a phase using the GERG-2008 EoS
+     *
+     * @return double array [Pressure [kPa], Compressibility factor, d(P)/d(rho) [kPa/(mol/l), ..]
+     */
+    @Override
+    public double[] getProperties_GERG2008() {
+        neqsim.thermo.util.GERG.NeqSimGERG2008 test =
+                new neqsim.thermo.util.GERG.NeqSimGERG2008(this);
+        return test.propertiesGERG();
+    }
 
     /**
      * method to get density of a phase using the AGA8-Detail EoS

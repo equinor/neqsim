@@ -15,13 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class OsmoticCoefficient_1 {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new OsmoticCoefficient_HCl */
-    public OsmoticCoefficient_1() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(298.15, 1.01325);
         // SystemInterface testSystem = new SystemElectrolyteCPA(298.15,1.01325);
@@ -46,7 +40,7 @@ public class OsmoticCoefficient_1 {
         testSystem.init(3);
         // // System.out.println("volume " + testSystem.getPhase(1).getMolarVolume());
         // double meanact2 = testSystem.getPhase(1).getActivityCoefficient(2);
-        //
+
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
             testOps.bubblePointPressureFlash(false);

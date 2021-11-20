@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import java.sql.ResultSet;
@@ -23,15 +17,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestCPAStatoil {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPAStatoil.class);
 
-    /** Creates new TestAcentric */
-    public TestCPAStatoil() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         LevenbergMarquardt optim = new LevenbergMarquardt();
         // inserting samples from database

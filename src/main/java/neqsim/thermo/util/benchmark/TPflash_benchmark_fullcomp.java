@@ -1,36 +1,33 @@
 /*
  * Copyright 2018 ESOL.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package neqsim.thermo.util.benchmark;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class TPflash_benchmark_fullcomp {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash_benchmark_fullcomp.class);
 
     /**
      * This method is just meant to test the thermo package.
      */
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
-
         double[][] points;
 
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 5.0, 10.0);
@@ -56,7 +53,7 @@ public class TPflash_benchmark_fullcomp {
         testSystem.addTBPfraction("C9", 0.879912, 121.0 / 1000.0, 0.781);
         testSystem.addTBPfraction("C10", 0.45, 134.0 / 1000.0, 0.792);
 
-//        testSystem.addComponent("methanol", 1.0);
+        // testSystem.addComponent("methanol", 1.0);
         // testSystem.addComponent("MEG", 11.0);
         // testSystem.addComponent("water", 84.35);
         // testSystem.addComponent("methanol", 15.65);

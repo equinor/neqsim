@@ -1,18 +1,12 @@
 package neqsim.thermo.util.example;
 
-import neqsim.thermo.system.SystemInterface;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.PVTsimulation.simulation.SaturationPressure;
 import neqsim.PVTsimulation.simulation.SimulationInterface;
-import neqsim.thermo.system.*;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
-import org.apache.logging.log4j.*;
-
-/*
- * PhaseEnvelope.java
- *
- * Created on 27. september 2001, 10:21
- */
 
 /**
  *
@@ -20,18 +14,10 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class PhaseEnvelope {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
-    /**
-     * Creates new PhaseEnvelope
-     */
-    public PhaseEnvelope() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
-
         // SystemInterface testSystem = new SystemUMRPRUEos(225.65, 1.00);
         // SystemInterface testSystem = new SystemPrEos1978(223.15,50.00);
         // SystemInterface testSystem = new SystemPrGassemEos(253.15,50.00);
@@ -108,11 +94,10 @@ public class PhaseEnvelope {
         // Calculates the phase envelope for pashe fraction x and 1-x
         // calcPTphaseEnvelope(minimum pressure, phase fraction);
         try {
-
             /*
-             * testOps.setRunAsThread(true); testOps.waterDewPointLine(10, 200); boolean
-             * isFinished = testOps.waitAndCheckForFinishedCalculation(50000); double[][]
-             * waterData = testOps.getData();
+             * testOps.setRunAsThread(true); testOps.waterDewPointLine(10, 200); boolean isFinished
+             * = testOps.waitAndCheckForFinishedCalculation(50000); double[][] waterData =
+             * testOps.getData();
              * 
              * testOps.hydrateEquilibriumLine(10, 200); isFinished =
              * testOps.waitAndCheckForFinishedCalculation(50000); double[][] hydData =
@@ -155,6 +140,5 @@ public class PhaseEnvelope {
 
         // System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));
         // testOps.displayResult();
-
     }
 }

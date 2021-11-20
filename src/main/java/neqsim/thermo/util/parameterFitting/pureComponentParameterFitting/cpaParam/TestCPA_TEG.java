@@ -1,8 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import java.sql.ResultSet;
@@ -22,17 +17,10 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version
  */
 public class TestCPA_TEG {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPA_TEG.class);
 
-    /**
-     * Creates new TestAcentric
-     */
-    public TestCPA_TEG() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database
@@ -40,8 +28,8 @@ public class TestCPA_TEG {
 
         // double guess[] = {13.21, 39.1260, 1.1692, 0.0188, 1.4337};//,1.0008858863,
         // 1.8649645470, -4.6720397496}; // MEG - srk-cpa
-        // double guess[] = {0.903477158616734, 1.514853438, -1.86430399826};//
-        double guess[] = {0.28454, -0.0044236};//
+        // double guess[] = {0.903477158616734, 1.514853438, -1.86430399826};
+        double guess[] = {0.28454, -0.0044236};
         // double guess[] = {0.28652795, 0.001};
         // double guess[] ={ 0.6224061375113976, -0.050295759360433255,
         // 0.7162394329011095};//water CPA statoil
@@ -49,7 +37,7 @@ public class TestCPA_TEG {
         // 2.1912144731621446};//water CPA statoil
 
         // double guess[] = {2.97, 3.7359, 0.0692, 0.0787};//, 0.01787};//co2
-        // double guess[] = {0.1};//
+        // double guess[] = {0.1};
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='TEG' AND Temperature>273.15 AND Temperature<690.0 ORDER BY Temperature");
 

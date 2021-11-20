@@ -17,9 +17,9 @@ public class Water {
         return 1000.0;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         Water testWater = new Water();
         System.out.println("water density " + Water.waterDensity(273.15 + 4));
     }
-
 }

@@ -29,7 +29,7 @@ public class SulfureDeposition {
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkTwuCoonEos(220.15, 6.0);
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 65.0, 12.0);
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 55.0, 150.9);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 62.5, 12);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // testSystem.addComponent("methane", 1);
@@ -57,6 +57,7 @@ public class SulfureDeposition {
          * 0.076902, 525.0 / 1000.0, 0.94072);
          */
 //Vigdis 2 stage
+        /*
         testSystem.addComponent("nitrogen", 0.000301);
         testSystem.addComponent("CO2", 0.000171);
         testSystem.addComponent("methane", 0.023407);
@@ -72,7 +73,7 @@ public class SulfureDeposition {
         testSystem.addTBPfraction("Vigdis_C13-C18", 0.011015, 213.76 / 1000.0, 0.85103);
         testSystem.addTBPfraction("Vigdis_C19-C29", 0.00791, 333.84 / 1000.0, 0.89639);
         testSystem.addTBPfraction("Vigdis_C30-C80", 0.003898, 525.0 / 1000.0, 0.94072);
-
+       // testSystem.addComponent("water", 0.2514);*/
         // snorre
         /*
          * testSystem.addComponent("nitrogen", 0.000501); testSystem.addComponent("CO2",
@@ -116,23 +117,34 @@ public class SulfureDeposition {
 //            testSystem.addPlusFraction(7,15);
 //        }
         // testSystem.addComponent("water", 0.00301);
-        testSystem.addComponent("S8", 0.00000048028452962001990);
-        testSystem.createDatabase(true);
+      //  testSystem.addComponent("S8", 0.00000048028452962001990);
+        //testSystem.createDatabase(true);
+        testSystem.addComponent("nitrogen", 5.84704017689321e-003);
+        testSystem.addComponent("CO2", 0.021);
+        testSystem.addComponent("methane", 0.63);
+        testSystem.addComponent("ethane", 0.134769062252199);
+        testSystem.addComponent("propane", 9.11979242318279e-002);
+        testSystem.addComponent("i-butane", 0.020654078469792);
+        testSystem.addComponent("n-butane", 3.74972131983075e-002);
+        testSystem.addComponent("i-pentane", 1.13683864588619e-002);
+        testSystem.addComponent("n-pentane", 1.03129901150887e-002);
+        testSystem.addComponent("n-hexane", 6.103129901150887e-002);
+        testSystem.addComponent("S8", 10.0077E-06);
         testSystem.setMixingRule(2);
 
         testSystem.setMultiPhaseCheck(true);
-        // testSystem.setSolidPhaseCheck("S8");
+        testSystem.setSolidPhaseCheck("S8");
 
         try {
-            testOps.TPflash();
-            // testOps.TPSolidflash();
+        //    testOps.TPflash();
+           testOps.TPSolidflash();
             // testOps.bubblePointPressureFlash();
             // testOps.calcPTphaseEnvelope();
             // testOps.displayResult();
             // testOps.bubblePointTemperatureFlash();
 //            testOps.calcPTphaseEnvelope();
 //            testOps.displayResult();
-            // testOps.freezingPointTemperatureFlash();
+           //  testOps.freezingPointTemperatureFlash();
             // ((thermo.phase.PhaseEosInterface)
             // testSystem.getPhase(0)).displayInteractionCoefficients("");
 

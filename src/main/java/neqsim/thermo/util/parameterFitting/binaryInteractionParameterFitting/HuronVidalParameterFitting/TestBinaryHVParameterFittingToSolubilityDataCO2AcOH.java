@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import java.sql.ResultSet;
@@ -23,16 +17,11 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityDataCO2AcOH.class);
 
-    /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToSolubilityDataCO2AcOH() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -41,7 +30,6 @@ public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH {
         ResultSet dataSet = database.getResultSet("SELECT * FROM CO2AcOHdata WHERE X>0 AND y>0");
 
         try {
-
             logger.info("adding....");
             while (dataSet.next()) {
                 BinaryHVParameterFittingToSolubilityData function =

@@ -6,38 +6,37 @@ package neqsim.thermo.util.GERG;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
-//import java.lang.Math.*;
+// import java.lang.Math.*;
 
 /**
  * @author esol
  *
  */
 public class DETAIL {
-
     // The compositions in the x() array use the following order and must be sent as
     // mole fractions:
-//	     0 - PLACEHOLDER
-//	     1 - Methane
-//	     2 - Nitrogen
-//	     3 - Carbon dioxide
-//	     4 - Ethane
-//	     5 - Propane
-//	     6 - Isobutane
-//	     7 - n-Butane
-//	     8 - Isopentane
-//	     9 - n-Pentane
-//	    10 - n-Hexane
-//	    11 - n-Heptane
-//	    12 - n-Octane
-//	    13 - n-Nonane
-//	    14 - n-Decane
-//	    15 - Hydrogen
-//	    16 - Oxygen
-//	    17 - Carbon monoxide
-//	    18 - Water
-//	    19 - Hydrogen sulfide
-//	    20 - Helium
-//	    21 - Argon
+    // 0 - PLACEHOLDER
+    // 1 - Methane
+    // 2 - Nitrogen
+    // 3 - Carbon dioxide
+    // 4 - Ethane
+    // 5 - Propane
+    // 6 - Isobutane
+    // 7 - n-Butane
+    // 8 - Isopentane
+    // 9 - n-Pentane
+    // 10 - n-Hexane
+    // 11 - n-Heptane
+    // 12 - n-Octane
+    // 13 - n-Nonane
+    // 14 - n-Decane
+    // 15 - Hydrogen
+    // 16 - Oxygen
+    // 17 - Carbon monoxide
+    // 18 - Water
+    // 19 - Hydrogen sulfide
+    // 20 - Helium
+    // 21 - Argon
     //
     // For example, a mixture (in moles) of 94% methane, 5% CO2, and 1% helium would
     // be (in mole fractions):
@@ -135,12 +134,15 @@ public class DETAIL {
         }
         xTermsDetail(x);
         AlpharDetail(0, 2, T, D, ar);
-        Z.val = 1 + ar[0][1].val / RDetail / T; // ar(0,1) is the first derivative of alpha(r) with respect to density
+        Z.val = 1 + ar[0][1].val / RDetail / T; // ar(0,1) is the first derivative of alpha(r) with
+                                                // respect to density
         P.val = D * RDetail * T * Z.val;
-        dPdDsave = RDetail * T + 2 * ar[0][1].val + ar[0][2].val; // d(P)/d(D) for use in density iteration
+        dPdDsave = RDetail * T + 2 * ar[0][1].val + ar[0][2].val; // d(P)/d(D) for use in density
+                                                                  // iteration
     }
 
-    public static void DensityDetail(double T, double P, double[] x, doubleW D, intW ierr, StringW herr) {
+    public static void DensityDetail(double T, double P, double[] x, doubleW D, intW ierr,
+            StringW herr) {
         // Sub DensityDetail(T, P, x, D, ierr, herr)
 
         // Calculate density as a function of temperature and pressure. This is an
@@ -187,7 +189,8 @@ public class DETAIL {
         for (int it = 1; it <= 20; ++it) {
             if (vlog < -7 || vlog > 100) {
                 ierr.val = 1;
-                herr.val = "Calculation failed to converge in DETAIL method, ideal gas density returned.";
+                herr.val =
+                        "Calculation failed to converge in DETAIL method, ideal gas density returned.";
                 D.val = P / RDetail / T;
                 return;
             }
@@ -214,9 +217,9 @@ public class DETAIL {
         return;
     }
 
-    public static void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD,
-            doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp,
-            doubleW W, doubleW G, doubleW JT, doubleW Kappa) {
+    public static void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z,
+            doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H,
+            doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa) {
         // Sub Properties(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
         // G, JT, Kappa)
 
@@ -307,7 +310,7 @@ public class DETAIL {
         d2PdTD.val = 0;
     }
 
-// The following routines are low-level routines that should not be called outside of this code.
+    // The following routines are low-level routines that should not be called outside of this code.
     static void xTermsDetail(double[] x) {
         // Calculate terms dependent only on composition
         //
@@ -349,7 +352,8 @@ public class DETAIL {
                 Q += x[i] * Qi[i]; // Q and F depend only on the pure fluid parts
                 F += xi2 * Fi[i];
                 for (int n = 1; n <= 18; ++n) {
-                    Bs[n] = Bs[n] + xi2 * Bsnij2[i][i][n]; // Pure fluid contributions to second virial coefficient
+                    Bs[n] = Bs[n] + xi2 * Bsnij2[i][i][n]; // Pure fluid contributions to second
+                                                           // virial coefficient
                 }
             }
         }
@@ -366,7 +370,8 @@ public class DETAIL {
                         U = U + xij * Uij5[i][j];
                         G = G + xij * Gij5[i][j];
                         for (int n = 1; n <= 18; ++n) {
-                            Bs[n] = Bs[n] + xij * Bsnij2[i][j][n]; // Second virial coefficients of mixture
+                            Bs[n] = Bs[n] + xij * Bsnij2[i][j][n]; // Second virial coefficients of
+                                                                   // mixture
                         }
                     }
                 }
@@ -448,7 +453,8 @@ public class DETAIL {
                         }
                     }
                 }
-                a0[0].val += x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
+                a0[0].val +=
+                        x[i] * (LogxD + n0i[i][1] + n0i[i][2] / T - n0i[i][3] * LogT + SumHyp0);
                 a0[1].val += x[i] * (LogxD + n0i[i][1] - n0i[i][3] * (1 + LogT) + SumHyp1);
                 a0[2].val += -x[i] * (n0i[i][3] + SumHyp2);
             }
@@ -579,7 +585,7 @@ public class DETAIL {
         }
     }
 
-/// The following routine must be called once before any other routine.
+    /// The following routine must be called once before any other routine.
     public static void SetupDetail() {
         // Initialize all the constants and parameters in the DETAIL model.
         // Some values are modified for calculations that do not depend on T, D, and x
@@ -1419,9 +1425,8 @@ public class DETAIL {
         // }
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
         DETAIL test = new DETAIL();
         DETAIL.SetupDetail();
 
@@ -1434,8 +1439,9 @@ public class DETAIL {
         int iFlag = 0;
         StringW herr = new StringW("");
 
-        double x[] = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
-                0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
+        double x[] = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215,
+                0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007,
+                0.001};
 
         DETAIL.MolarMassDetail(x, Mm);
 
@@ -1448,16 +1454,16 @@ public class DETAIL {
         System.out.println("Z " + Z.val);
 
         doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d),
-                dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d), S = new doubleW(0.0d),
-                A = new doubleW(0.0d), P2 = new doubleW(0.0d);
-        doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
-                JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
+                dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d),
+                S = new doubleW(0.0d), A = new doubleW(0.0d), P2 = new doubleW(0.0d);
+        doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d),
+                G = new doubleW(0.0d), JT = new doubleW(0.0d), Kappa = new doubleW(0.0d),
+                PP = new doubleW(0.0d);
 
-        DETAIL.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa);
+        DETAIL.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
+                G, JT, Kappa);
 
         System.out.println("JT " + JT.val);
         System.out.println("Kappa " + Kappa.val);
-
     }
-
 }
