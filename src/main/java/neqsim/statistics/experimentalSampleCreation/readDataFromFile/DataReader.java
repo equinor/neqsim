@@ -15,7 +15,6 @@ import java.util.StringTokenizer;
  * @version
  */
 public class DataReader implements DataReaderInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String fileName;

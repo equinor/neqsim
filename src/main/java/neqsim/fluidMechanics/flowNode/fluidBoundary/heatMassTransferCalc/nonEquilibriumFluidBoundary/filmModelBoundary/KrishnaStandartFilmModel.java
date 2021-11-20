@@ -1,6 +1,6 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularFlow;
 import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
@@ -12,7 +12,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class KrishnaStandartFilmModel extends
         neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.NonEquilibriumFluidBoundary
         implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     Matrix phiMatrix;
@@ -20,8 +19,7 @@ public class KrishnaStandartFilmModel extends
     Matrix redCorrectionMatrix;
     Matrix betaMatrix;
 
-    public KrishnaStandartFilmModel() {
-    }
+    public KrishnaStandartFilmModel() {}
 
     public KrishnaStandartFilmModel(SystemInterface system) {
         super(system);
@@ -47,11 +45,12 @@ public class KrishnaStandartFilmModel extends
         uMassTransold = uMassTrans.copy();
         phiMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1,
                 getBulkSystem().getPhases()[0].getNumberOfComponents() - 1);
-        redCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
+        redCorrectionMatrix =
+                new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         KrishnaStandartFilmModel clonedSystem = null;
 
         try {
@@ -66,9 +65,10 @@ public class KrishnaStandartFilmModel extends
     public double calcBinarySchmidtNumbers(int phase) {
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents(); i++) {
             for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
-                binarySchmidtNumber[phase][i][j] = getBulkSystem().getPhases()[phase].getPhysicalProperties()
-                        .getKinematicViscosity()
-                        / getBulkSystem().getPhases()[phase].getPhysicalProperties().getDiffusionCoeffisient(i, j);
+                binarySchmidtNumber[phase][i][j] = getBulkSystem().getPhases()[phase]
+                        .getPhysicalProperties().getKinematicViscosity()
+                        / getBulkSystem().getPhases()[phase].getPhysicalProperties()
+                                .getDiffusionCoeffisient(i, j);
                 // System.out.println("i j " + i +" j " + j);
                 // System.out.println("phase " + phase + " diff" +
                 // getBulkSystem().getPhases()[phase].getPhysicalProperties().getDiffusionCoeffisient(i,j));
@@ -82,8 +82,9 @@ public class KrishnaStandartFilmModel extends
     public double calcBinaryMassTransferCoefficients(int phase) {
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents(); i++) {
             for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
-                binaryMassTransferCoefficient[phase][i][j] = flowNode.getInterphaseTransportCoefficient()
-                        .calcInterphaseMassTransferCoefficient(phase, binarySchmidtNumber[phase][i][j], flowNode);
+                binaryMassTransferCoefficient[phase][i][j] = flowNode
+                        .getInterphaseTransportCoefficient().calcInterphaseMassTransferCoefficient(
+                                phase, binarySchmidtNumber[phase][i][j], flowNode);
             }
         }
         return 1;
@@ -94,7 +95,6 @@ public class KrishnaStandartFilmModel extends
 
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1; i++) {
             double tempVar = 0;
-            double tempVar2 = 0;
             for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
                 if (i != j) {
                     tempVar += getBulkSystem().getPhases()[phase].getComponents()[j].getx()
@@ -120,26 +120,27 @@ public class KrishnaStandartFilmModel extends
 
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1; i++) {
             double tempVar = 0;
-            double tempVar2 = 0;
             for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
                 if (i != j || i == n) {
-                    tempVar += nFlux.get(i, 0) / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                            * binaryMassTransferCoefficient[phase][i][j]);
+                    tempVar += nFlux.get(i, 0)
+                            / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                                    * binaryMassTransferCoefficient[phase][i][j]);
                 }
                 if (j < n) {
-                    phiMatrix.set(i, j,
-                            -nFlux.get(i, 0) * (1.0
-                                    / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                                            * binaryMassTransferCoefficient[phase][i][j])
-                                    - 1.0 / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                                            * binaryMassTransferCoefficient[phase][i][n])));
+                    phiMatrix.set(i, j, -nFlux.get(i, 0) * (1.0
+                            / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                                    * binaryMassTransferCoefficient[phase][i][j])
+                            - 1.0 / (1.0
+                                    / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                                    * binaryMassTransferCoefficient[phase][i][n])));
                 }
             }
-            phiMatrix.set(i, i,
-                    tempVar + nFlux.get(i, 0) / (1.0 / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
-                            * binaryMassTransferCoefficient[phase][i][n]));
+            phiMatrix
+                    .set(i, i,
+                            tempVar + nFlux.get(i, 0) / (1.0
+                                    / (getBulkSystem().getPhases()[phase].getMolarVolume() * 1e-5)
+                                    * binaryMassTransferCoefficient[phase][i][n]));
         }
-
     }
 
     public void calcRedPhiMatrix(int phase) {
@@ -148,45 +149,48 @@ public class KrishnaStandartFilmModel extends
 
     public void calcRedCorrectionMatrix(int phase) {
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1; i++) {
-            redCorrectionMatrix.set(i, 0, (redPhiMatrix.get(0, i) * Math.exp(redPhiMatrix.get(0, i)))
-                    / (Math.exp(redPhiMatrix.get(0, i)) - (1.0 - 1e-15)));
+            redCorrectionMatrix.set(i, 0,
+                    (redPhiMatrix.get(0, i) * Math.exp(redPhiMatrix.get(0, i)))
+                            / (Math.exp(redPhiMatrix.get(0, i)) - (1.0 - 1e-15)));
         }
     }
 
     public void calcCorrectionMatrix(int phase) {
         Matrix modalPhiMatrix = phiMatrix.eig().getV();
-        Matrix diagonalRedCorrectionMatrix = new Matrix(getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1,
-                getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1);
+        Matrix diagonalRedCorrectionMatrix =
+                new Matrix(getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1,
+                        getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1);
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1; i++) {
             diagonalRedCorrectionMatrix.set(i, i, redCorrectionMatrix.get(i, 0));
         }
-        rateCorrectionMatrix[phase] = modalPhiMatrix.times(diagonalRedCorrectionMatrix.times(modalPhiMatrix.inverse()));
+        rateCorrectionMatrix[phase] =
+                modalPhiMatrix.times(diagonalRedCorrectionMatrix.times(modalPhiMatrix.inverse()));
     }
 
     public void calcTotalMassTransferCoefficientMatrix(int phase) {
         totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
-//        System.out.println("before phase: " + phase);
-//        totalMassTransferCoefficientMatrix[phase].print(10,10);
-//        System.out.println("eqcorr " + useThermodynamicCorrections(phase));
-//        System.out.println("fluxcorr " + useFiniteFluxCorrection(phase));
+        // System.out.println("before phase: " + phase);
+        // totalMassTransferCoefficientMatrix[phase].print(10,10);
+        // System.out.println("eqcorr " + useThermodynamicCorrections(phase));
+        // System.out.println("fluxcorr " + useFiniteFluxCorrection(phase));
         if (Math.abs(totalFlux) > 1e-30) {
             if (useFiniteFluxCorrection(phase) && useThermodynamicCorrections(phase)) {
-                totalMassTransferCoefficientMatrix[phase] = rateCorrectionMatrix[phase]
-                        .times(nonIdealCorrections[phase].times(massTransferCoefficientMatrix[phase]));
+                totalMassTransferCoefficientMatrix[phase] = rateCorrectionMatrix[phase].times(
+                        nonIdealCorrections[phase].times(massTransferCoefficientMatrix[phase]));
             } else if (useFiniteFluxCorrection(phase)) {
-                totalMassTransferCoefficientMatrix[phase] = rateCorrectionMatrix[phase]
-                        .times(massTransferCoefficientMatrix[phase]);
+                totalMassTransferCoefficientMatrix[phase] =
+                        rateCorrectionMatrix[phase].times(massTransferCoefficientMatrix[phase]);
             } else if (useThermodynamicCorrections(phase)) {
-                totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase]
-                        .times(nonIdealCorrections[phase]);
+                totalMassTransferCoefficientMatrix[phase] =
+                        massTransferCoefficientMatrix[phase].times(nonIdealCorrections[phase]);
             } else {
                 totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
             }
         } else {
             totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
         }
-//        System.out.println("phase: " + phase);
-//        totalMassTransferCoefficientMatrix[phase].print(10,10);
+        // System.out.println("phase: " + phase);
+        // totalMassTransferCoefficientMatrix[phase].print(10,10);
     }
 
     public void initCorrections(int phase) {
@@ -202,7 +206,7 @@ public class KrishnaStandartFilmModel extends
     }
 
     @Override
-	public void initMassTransferCalc() {
+    public void initMassTransferCalc() {
         super.initMassTransferCalc();
         for (int phase = 0; phase < 2; phase++) {
             this.calcBinarySchmidtNumbers(phase);
@@ -216,7 +220,7 @@ public class KrishnaStandartFilmModel extends
     }
 
     @Override
-	public void initHeatTransferCalc() {
+    public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
         for (int phase = 0; phase < 2; phase++) {
             this.calcHeatTransferCoeffisients(phase);
@@ -225,7 +229,7 @@ public class KrishnaStandartFilmModel extends
     }
 
     @Override
-	public void init() {
+    public void init() {
         super.init();
         if (massTransferCalc) {
             this.initMassTransferCalc();
@@ -236,10 +240,11 @@ public class KrishnaStandartFilmModel extends
     }
 
     @Override
-	public void solve() {
+    public void solve() {
         super.solve();
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         System.out.println("Starter.....");
         SystemSrkEos testSystem = new SystemSrkEos(295.3, 3.0);
@@ -262,7 +267,5 @@ public class KrishnaStandartFilmModel extends
         test2.calcFluxes();
         test2.getInterphaseSystem().display();
         test2.display("");
-
     }
-
 }

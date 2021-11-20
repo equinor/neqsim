@@ -26,7 +26,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 	private static final long serialVersionUID = 1000;
 
 	SystemInterface thermoSystem;
-	StreamInterface inletStream;
+	private StreamInterface inStream;
 	StreamInterface outStream;
 	double dH = 0.0;
 	double pressure = 0.0;
@@ -58,7 +58,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
 	@Override
 	public void setInletStream(StreamInterface inletStream) {
-		this.inletStream = inletStream;
+		this.inStream = inletStream;
 
 		this.outStream = (StreamInterface) inletStream.clone();
 	}
@@ -75,6 +75,19 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
 	@Override
 	public double getPower() {
+		return dH;
+	}
+	
+	public double getPower(String unit) {
+		if(unit.equals("W")){
+			return dH;
+		}
+		else if(unit.equals("kW")){
+			return dH/1000.0;
+		}
+		else if(unit.equals("MW")){
+			return dH/1.0e6;
+		}
 		return dH;
 	}
 
@@ -94,12 +107,12 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 	@Override
 	public void run() {
 		// System.out.println("pump running..");
-		inletStream.getThermoSystem().init(3);
-		double hinn = inletStream.getThermoSystem().getEnthalpy();
-		double entropy = inletStream.getThermoSystem().getEntropy();
+		inStream.getThermoSystem().init(3);
+		double hinn = inStream.getThermoSystem().getEnthalpy();
+		double entropy = inStream.getThermoSystem().getEntropy();
 
 		if (useOutTemperature) {
-			thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+			thermoSystem = (SystemInterface) inStream.getThermoSystem().clone();
 			ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 			// thermoSystem.setTotalNumberOfMoles(molarFlow);
 			thermoSystem.setTemperature(outTemperature);
@@ -108,7 +121,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 			thermoSystem.init(3);
 		} else {
 			if (calculateAsCompressor) {
-				thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+				thermoSystem = (SystemInterface) inStream.getThermoSystem().clone();
 				thermoSystem.setPressure(pressure, pressureUnit);
 				// System.out.println("entropy inn.." + entropy);
 				ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -127,20 +140,20 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 				pumpHead = getPumpChart().getHead(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 				isentropicEfficiency = getPumpChart().getEfficiency(thermoSystem.getFlowRate("m3/hr"), getSpeed());
 				double deltaP = pumpHead*1000.0*ThermodynamicConstantsInterface.gravity/1.0E5; 
-				thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-				thermoSystem.setPressure(inletStream.getPressure() + deltaP);
+				thermoSystem = (SystemInterface) inStream.getThermoSystem().clone();
+				thermoSystem.setPressure(inStream.getPressure() + deltaP);
 				double dH = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3")
-						* (thermoSystem.getPressure("Pa") - inletStream.getThermoSystem().getPressure("Pa"))
+						* (thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa"))
 						/ (isentropicEfficiency/100.0);
 				ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
 				double hout = hinn + dH;
 				thermoOps.PHflash(hout, 0);
 				thermoSystem.init(3);
 			} else {
-				thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+				thermoSystem = (SystemInterface) inStream.getThermoSystem().clone();
 				thermoSystem.setPressure(pressure, pressureUnit);
 				double dH = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3")
-						* (thermoSystem.getPressure("Pa") - inletStream.getThermoSystem().getPressure("Pa"))
+						* (thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa"))
 						/ isentropicEfficiency;
 				ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
 				double hout = hinn + dH;
@@ -299,7 +312,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
 	@Override
 	public double getEntropyProduction(String unit) {
-		return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
+		return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 	}
 
 	@Override
@@ -392,5 +405,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
 	public PumpChart getPumpChart() {
 		return pumpChart;
+	}
+
+	public StreamInterface getInStream() {
+		return inStream;
 	}
 }

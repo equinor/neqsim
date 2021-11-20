@@ -6,54 +6,44 @@ import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * PhaseEnvelope.java
- *
- * Created on 27. september 2001, 10:21
- */
-
 /**
  *
  * @author esol
  * @version
  */
 public class Test_ISO18453 {
+        @SuppressWarnings("unused")
+        public static void main(String args[]) {
+                SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
 
-    private static final long serialVersionUID = 1000;
+                ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+                testSystem.addComponent("methane", 0.9);
+                testSystem.addComponent("water", 0.0000051);
 
-    /** Creates new PhaseEnvelope */
-    public Test_ISO18453() {
-    }
+                testSystem.createDatabase(true);
+                testSystem.setMixingRule(8);
 
-    public static void main(String args[]) {
-        SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
+                testSystem.init(0);
 
-        ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-        testSystem.addComponent("methane", 0.9);
-        testSystem.addComponent("water", 0.0000051);
+                StandardInterface standard = new Draft_ISO18453(testSystem);
+                standard.setSalesContract("Base");
+                standard.calculate();
+                System.out.println("Draft_ISO18453: dew temp "
+                                + standard.getValue("dewPointTemperature") + " "
+                                + standard.getUnit("dewPointTemperature"));
 
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule(8);
+                testSystem.setStandard("Draft_ISO18453");
+                testSystem.getStandard().setSalesContract("Base");
+                testSystem.getStandard().calculate();
 
-        testSystem.init(0);
+                System.out.println("Draft_ISO18453: dew temp "
+                                + testSystem.getStandard().getValue("dewPointTemperature") + " "
+                                + testSystem.getStandard().getUnit("dewPointTemperature"));
 
-        StandardInterface standard = new Draft_ISO18453(testSystem);
-        standard.setSalesContract("Base");
-        standard.calculate();
-        System.out.println("Draft_ISO18453: dew temp " + standard.getValue("dewPointTemperature") + " "
-                + standard.getUnit("dewPointTemperature"));
+                System.out.println("Draft_ISO18453: pressure "
+                                + testSystem.getStandard().getValue("pressure") + " "
+                                + testSystem.getStandard().getUnit("pressureUnit"));
 
-        testSystem.setStandard("Draft_ISO18453");
-        testSystem.getStandard().setSalesContract("Base");
-        testSystem.getStandard().calculate();
-
-        System.out.println("Draft_ISO18453: dew temp " + testSystem.getStandard().getValue("dewPointTemperature") + " "
-                + testSystem.getStandard().getUnit("dewPointTemperature"));
-
-        System.out.println("Draft_ISO18453: pressure " + testSystem.getStandard().getValue("pressure") + " "
-                + testSystem.getStandard().getUnit("pressureUnit"));
-
-        System.out.println("is onSpec ? " + testSystem.getStandard().isOnSpec());
-
-    }
+                System.out.println("is onSpec ? " + testSystem.getStandard().isOnSpec());
+        }
 }

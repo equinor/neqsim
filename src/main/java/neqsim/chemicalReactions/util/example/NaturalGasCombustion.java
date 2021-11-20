@@ -5,9 +5,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class NaturalGasCombustion {
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemSrkEos(303.3, 2.8);
 
         testSystem.addComponent("methane", 5.0, "kg/sec");
@@ -25,6 +24,5 @@ public class NaturalGasCombustion {
         testSystem.display();
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         // ops.compustionCalc();
-
     }
 }

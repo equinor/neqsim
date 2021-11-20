@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.sql.ResultSet;
@@ -23,15 +17,10 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version
  */
 public class TestClassicAcentric {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestClassicAcentric.class);
 
-    /** Creates new TestAcentric */
-    public TestClassicAcentric() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database

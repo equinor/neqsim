@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class BubbleFlowNode extends TwoPhaseFlowNode {
-
     private static final long serialVersionUID = 1000;
     private double averageBubbleDiameter = 0.001;
 
@@ -21,16 +20,19 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
         super(system, pipe);
         this.flowNodeType = "bubble";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
-    public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
+    public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem,
+            GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "bubble";
         this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
     @Override
@@ -41,7 +43,6 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
 
     @Override
     public void initFlowCalc() {
-
         // phaseFraction[0] = bulkSystem.getPhase(0).getBeta();
         phaseFraction[0] = getBulkSystem().getVolumeFraction(0);
         phaseFraction[1] = 1.0 - phaseFraction[0];
@@ -73,8 +74,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
 
     @Override
     public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -102,8 +104,10 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-        SystemInterface testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
+        SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         PipeData pipe1 = new PipeData(0.0250203, 0.00025);
         testSystem.addComponent("CO2", 100.1061152181, "kg/hr", 0);

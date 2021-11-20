@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 import java.sql.ResultSet;
@@ -23,14 +17,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestIonicInteractionParameterFitting_Sleipnernoacid {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(TestIonicInteractionParameterFitting_Sleipnernoacid.class);
 
-    /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFitting_Sleipnernoacid() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -81,7 +71,6 @@ public class TestIonicInteractionParameterFitting_Sleipnernoacid {
                 sample.setDescription(Double.toString(ID));
                 sample.setThermodynamicSystem(testSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             logger.error("database error" + e);

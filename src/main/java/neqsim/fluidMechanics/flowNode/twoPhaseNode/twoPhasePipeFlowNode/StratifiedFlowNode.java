@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class StratifiedFlowNode extends TwoPhaseFlowNode {
-
     private static final long serialVersionUID = 1000;
 
     public StratifiedFlowNode() {
@@ -20,8 +19,9 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
     public StratifiedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
@@ -29,8 +29,9 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         super(system, pipe);
         this.flowNodeType = "stratified";
         this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
-        this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                this);
+        this.fluidBoundary =
+                new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                        this);
     }
 
     @Override
@@ -55,8 +56,9 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
 
     @Override
     public double calcContactLength() {
-        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-                + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+        double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
+                * (1.0 - 2.0 * phaseFraction[1] + Math.pow(phaseFraction[1], 1.0 / 3.0)
+                        - Math.pow(phaseFraction[0], 1.0 / 3.0));
         wallContactLength[1] = phaseAngel * pipe.getDiameter();
         wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
         interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -76,6 +78,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 11.0, 60.0);
         SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(325.3, 100.0);
@@ -98,7 +101,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         testSystem.setMixingRule(10);
         // testSystem.getPhase(0).setTemperature(273.15 + 100.0);
         testSystem.initPhysicalProperties();
-        //
+
         // testSystem.addComponent("nitrogen", testSystem.getPhase(1).getMolarVolume() /
         // testSystem.getPhase(0).getMolarVolume() *
         // testSystem.getPhase(0).getComponent("CO2").getNumberOfmoles(), 0);

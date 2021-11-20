@@ -1,12 +1,16 @@
 package neqsim.thermo.util.parameterFitting.Procede.CH4CO2WaterMDEA;
 
-import neqsim.util.database.NeqSimDataBase;
-import java.io.*;
-import java.sql.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.sql.ResultSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
+import neqsim.util.database.NeqSimDataBase;
 
 /*
  * Sleipneracetate.java
@@ -19,19 +23,17 @@ import org.apache.logging.log4j.*;
  * @author agrawalnj
  */
 public class CO2_MDEA_methane {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2_MDEA_methane.class);
 
     /** Creates a new instance of Sleipneracetate */
-    public CO2_MDEA_methane() {
-    }
+    public CO2_MDEA_methane() {}
 
     /**
      * @param args the command line arguments
      */
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         FileOutputStream outfile;
         PrintStream p;
         try {
@@ -43,21 +45,20 @@ public class CO2_MDEA_methane {
             logger.error("Could not find file");
         }
 
-        int i = 0, j, CH4Numb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0;
+        int i = 0, j, CH4Numb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0,
+                MDEAHpNumb = 0;
         int iter = 0;
         double error, newValue, oldValue, guess, dx, dP, Pold, Pnew;
         /*
-         * double pressure, n1,n2,n3; double MDEAwt = 35; double loading = 0.4; double
-         * temperature = 313.0;
+         * double pressure, n1,n2,n3; double MDEAwt = 35; double loading = 0.4; double temperature =
+         * 313.0;
          */
 
         NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet("SELECT * FROM PatrickCO2");
 
         try {
-
             while (dataSet.next()) {
-
                 i += 1;
                 logger.info("Adding.... " + i);
 
@@ -86,37 +87,43 @@ public class CO2_MDEA_methane {
                 do {
                     CO2Numb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("CO2"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("CO2"));
 
                 j = 0;
                 do {
                     CH4Numb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("methane"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("methane"));
 
                 j = 0;
                 do {
                     MDEANumb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("MDEA"));
 
                 j = 0;
                 do {
                     WaterNumb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("water"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("water"));
 
                 j = 0;
                 do {
                     HCO3Numb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("HCO3-"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("HCO3-"));
 
                 j = 0;
                 do {
                     MDEAHpNumb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("MDEA+"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("MDEA+"));
 
                 ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -133,7 +140,6 @@ public class CO2_MDEA_methane {
 
                     try {
                         testOps.bubblePointPressureFlash(false);
-
                     } catch (Exception e) {
                         logger.error(e.toString());
                     }
@@ -146,7 +152,6 @@ public class CO2_MDEA_methane {
 
                     try {
                         testOps.bubblePointPressureFlash(false);
-
                     } catch (Exception e) {
                         logger.error(e.toString());
                     }
@@ -159,19 +164,20 @@ public class CO2_MDEA_methane {
                     testSystem.addComponent("methane",
                             -testSystem.getPhase(1).getComponent(CH4Numb).getNumberOfmoles());
                     testSystem.addComponent("methane", newValue);
-
                 } while (Math.abs(error) > 1e-9 && iter < 50);
 
                 j = 0;
                 do {
                     CO2Numb = j;
                     j++;
-                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName().equals("CO2"));
+                } while (!testSystem.getPhases()[1].getComponents()[j - 1].getComponentName()
+                        .equals("CO2"));
 
-                double aad = (pressureCO2
-                        - testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx()) / pressureCO2
-                        * 100;
-                logger.info(ID + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx()
+                double aad = (pressureCO2 - testSystem.getPressure()
+                        * testSystem.getPhase(0).getComponent(CO2Numb).getx()) / pressureCO2 * 100;
+                logger.info(ID + " "
+                        + testSystem.getPressure()
+                                * testSystem.getPhase(0).getComponent(CO2Numb).getx()
                         + " " + pressureCO2 + " " + aad);
                 /*
                  * //System.out.println(testSystem.getPhase(1).getComponent(CO2Numb).getx()/
@@ -198,8 +204,9 @@ public class CO2_MDEA_methane {
                     // p.println(ID+" "+pressure+" "+pressureCO2+" "+" "+testSystem.getPressure()+"
                     // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx()+"
                     // "+testSystem.getPhase(1).getComponent(CH4Numb).getx()+" "+iter);
-                    p.println(ID + " " + pressure + " " + pressureCO2 + " " + testSystem.getPressure() + " "
-                            + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx());
+                    p.println(ID + " " + pressure + " " + pressureCO2 + " "
+                            + testSystem.getPressure() + " " + testSystem.getPressure()
+                                    * testSystem.getPhase(0).getComponent(CO2Numb).getx());
                     // p.println(ID+" "+pressure+" "+" "+testSystem.getPressure()+"
                     // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
                     p.close();
@@ -207,7 +214,6 @@ public class CO2_MDEA_methane {
                     logger.error("Could not find file" + e.getMessage());
                     logger.error("Could not read from Patrick.txt" + e.getMessage());
                 }
-
             }
 
             // }
@@ -220,6 +226,5 @@ public class CO2_MDEA_methane {
         // }
         // }
         logger.info("Finished");
-
     }
 }

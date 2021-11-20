@@ -6,25 +6,13 @@ import neqsim.thermo.system.SystemGERGwaterEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * PhaseEnvelope.java
- *
- * Created on 27. september 2001, 10:21
- */
-
 /**
  *
  * @author esol
  * @version
  */
 public class Test_ContractBase {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new PhaseEnvelope */
-    public Test_ContractBase() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);
 

@@ -1,34 +1,25 @@
 package neqsim.thermo.util.example;
-/*
- * TPflash.java
- *b
- * Created on 27. september 2001, 09:43
- */
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestPCSAFT {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestPCSAFT.class);
 
-    /** Creates new TPflash */
-    public TestPCSAFT() {
-    }
-
+    @SuppressWarnings("unused")
     public static void main(String args[]) {
-
-//        SystemInterface testSystem = new SystemSrkEos(273.14, 50.00);
-//        SystemInterface testSystem = new SystemGERG2004Eos(273.14-55, 75.00);       
+        // SystemInterface testSystem = new SystemSrkEos(273.14, 50.00);
+        // SystemInterface testSystem = new SystemGERG2004Eos(273.14-55, 75.00);
         // SystemInterface testSystem = new SystemGERG2004Eos(260.0, 50.00);
         SystemInterface testSystem = new SystemSrkCPAstatoil(353, 10.00);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -48,10 +39,9 @@ public class TestPCSAFT {
             testOps.TPflash();
             // testOps.dewPointTemperatureFlash();
             ThermodynamicModelTest test = new ThermodynamicModelTest(testSystem);
-//
+
             // test.runTest();
             // testOps.bubblePointPressureFlash(false);
-
         } catch (Exception e) {
             logger.error(e.toString(), e);
         }
@@ -73,6 +63,5 @@ public class TestPCSAFT {
         logger.info("fuagcity liquid" + testSystem.getPhase(1).getFugacity(0));
         logger.info("K " + testSystem.getPhase(1).getComponent(0).getFugasityCoefficient()
                 / testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
-
     }
 }

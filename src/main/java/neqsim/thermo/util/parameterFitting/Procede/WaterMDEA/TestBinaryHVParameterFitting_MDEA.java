@@ -1,10 +1,4 @@
 /*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
-/*
  * This program calculated Water - MDEA HV interaction parameters. Two types of data is available.
  * VLE data and freezing point depression data
  */
@@ -28,15 +22,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryHVParameterFitting_MDEA {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFitting_MDEA.class);
 
-    /** Creates new TestAcentric */
-    public TestBinaryHVParameterFitting_MDEA() {}
-
+    @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         double ID, pressure, temperature, x1, x2, x3, gamma1, Hm, act1, act2;
@@ -225,6 +214,5 @@ public class TestBinaryHVParameterFitting_MDEA {
         // optim.solve();
         // optim.displayGraph();
         optim.displayCurveFit();
-
     }
 }
