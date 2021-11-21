@@ -1,12 +1,7 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -21,9 +16,8 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
     int phase = 1;
     int type = 1;
 
-    /** Creates new Test */
-    public BinaryHVParameterFittingToSolubilityData() {
-    }
+
+    public BinaryHVParameterFittingToSolubilityData() {}
 
     public BinaryHVParameterFittingToSolubilityData(int phase, int type) {
         this.phase = phase;
@@ -31,7 +25,7 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
 
         if (type == 1) {
             thermoOps.TPflash();
@@ -53,7 +47,7 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 }

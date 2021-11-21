@@ -1,9 +1,3 @@
-/*
- * PhysicalPropertiesInterface.java
- *
- * Created on 29. oktober 2000, 16:14
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.methodInterface;
 
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -18,5 +12,5 @@ public interface ConductivityInterface extends ThermodynamicConstantsInterface,
     public double calcConductivity();
 
     @Override
-	public Object clone();
+    public Object clone();
 }

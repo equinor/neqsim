@@ -1,30 +1,9 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class PHflashSingleComp extends Flash {
@@ -33,11 +12,7 @@ public class PHflashSingleComp extends Flash {
 
     double Hspec = 0;
 
-    /**
-     * Creates new PHflash
-     */
-    public PHflashSingleComp() {
-    }
+    public PHflashSingleComp() {}
 
     public PHflashSingleComp(SystemInterface system, double Hspec, int type) {
         this.system = system;
@@ -46,8 +21,8 @@ public class PHflashSingleComp extends Flash {
 
     @Override
     public void run() {
-        neqsim.thermodynamicOperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicOperations.ThermodynamicOperations(
-                system);
+        neqsim.thermodynamicOperations.ThermodynamicOperations bubOps =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(system);
         double initTemp = system.getTemperature();
 
         if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
@@ -68,20 +43,19 @@ public class PHflashSingleComp extends Flash {
         }
 
         system.init(3);
-        double gasEnthalpy = system.getPhase(0).getEnthalpy() / system.getPhase(0).getNumberOfMolesInPhase()
-                * system.getTotalNumberOfMoles();
-        double liqEnthalpy = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
-                * system.getTotalNumberOfMoles();
+        double gasEnthalpy = system.getPhase(0).getEnthalpy()
+                / system.getPhase(0).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
+        double liqEnthalpy = system.getPhase(1).getEnthalpy()
+                / system.getPhase(1).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
         double solidEnthalpy = 0.0;
 
         /*
          * if (system.doSolidPhaseCheck()) { system.init(3, 3); solidEnthalpy =
-         * system.getPhases()[3].getEnthalpy() /
-         * system.getPhases()[3].getNumberOfMolesInPhase()
+         * system.getPhases()[3].getEnthalpy() / system.getPhases()[3].getNumberOfMolesInPhase()
          * system.getTotalNumberOfMoles();
          * 
-         * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec
-         * - liqEnthalpy) / (gasEnthalpy - liqEnthalpy); } }
+         * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec -
+         * liqEnthalpy) / (gasEnthalpy - liqEnthalpy); } }
          */
 
         if (Hspec < liqEnthalpy || Hspec > gasEnthalpy) {

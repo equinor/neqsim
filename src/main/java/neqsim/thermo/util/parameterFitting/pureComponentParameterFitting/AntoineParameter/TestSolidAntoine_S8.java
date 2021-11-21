@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter;
 
 import java.sql.ResultSet;
@@ -24,11 +18,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class TestSolidAntoine_S8 {
 
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSolidAntoine_S8.class);
-
-    /** Creates new TestAcentric */
-    public TestSolidAntoine_S8() {}
 
     public static void main(String[] args) {
 

@@ -1,12 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -28,9 +19,7 @@ public class pHProbe extends MeasurementDeviceBaseClass {
     protected SystemInterface reactiveThermoSystem;
     protected ThermodynamicOperations thermoOps;
 
-    /** Creates a new instance of TemperatureTransmitter */
-    public pHProbe() {
-    }
+    public pHProbe() {}
 
     public pHProbe(StreamInterface stream) {
         this.stream = stream;
@@ -40,19 +29,21 @@ public class pHProbe extends MeasurementDeviceBaseClass {
 
     public void run() {
         if (stream != null) {
-            reactiveThermoSystem = this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
+            reactiveThermoSystem =
+                    this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
         }
         thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
         thermoOps.TPflash();
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         System.out.println("measured temperature " + stream.getTemperature());
     }
 
     @Override
-	public double getMeasuredValue() {
-        return reactiveThermoSystem.getPhase(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous")).getpH();
+    public double getMeasuredValue() {
+        return reactiveThermoSystem.getPhase(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"))
+                .getpH();
     }
 }

@@ -1,18 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package neqsim.util.database;
 
 /*
@@ -20,14 +5,20 @@ package neqsim.util.database;
  *
  * Created on 1. november 2001, 08:56
  */
-import java.sql.*;
-import org.apache.logging.log4j.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimExperimentDatabase
+        implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
 
     /**
      * @return the createTemporaryTables
@@ -50,7 +41,8 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
     private static boolean createTemporaryTables = false;
 
     private static String dataBaseType = "MSAccessUCanAccess";
-    public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
+    public static String connectionString =
+            "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
 
     private Statement statement = null;
     protected Connection databaseConnection = null;
@@ -154,7 +146,8 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
 
         try {
             if (dataBaseType.equals("MSAccess")) {
-                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor().newInstance();
+                Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("H2")) {
                 Class.forName("org.h2.Driver");
             } else if (dataBaseType.equals("H2RT")) {
@@ -166,11 +159,14 @@ public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSett
             } else if (dataBaseType.equals("mySQLNTNU")) {
                 Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
             } else if (dataBaseType.equals("Derby")) {
-                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor().newInstance();
+                Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("oracle")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor()
+                        .newInstance();
             } else if (dataBaseType.equals("oracleST")) {
-                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
+                Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor()
+                        .newInstance();
             } else {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
             }

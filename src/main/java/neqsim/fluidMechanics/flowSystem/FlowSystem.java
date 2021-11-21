@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.fluidMechanics.flowSystem;
 
 import neqsim.fluidMechanics.flowLeg.FlowLegInterface;
@@ -48,16 +32,14 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     double inletMolarLiquidFlowRate = 0, inletMolarGasFlowRate = 0;
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
 
-    public FlowSystem() {
-    }
+    public FlowSystem() {}
 
     public FlowSystem(SystemInterface system) {
         System.out.println("Hei der");
     }
 
     @Override
-    public void init() {
-    }
+    public void init() {}
 
     @Override
     public void createSystem() {
@@ -83,7 +65,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
             this.flowLeg[i].setEquipmentGeometry(equipmentGeometry[i]);
             this.flowLeg[i].setNumberOfNodes(numberOfNodesInLeg[i]);
             this.flowLeg[i].setHeightCoordinates(legHeights[i], legHeights[i + 1]);
-            this.flowLeg[i].setOuterTemperatures(legOuterTemperatures[i], legOuterTemperatures[i + 1]);
+            this.flowLeg[i].setOuterTemperatures(legOuterTemperatures[i],
+                    legOuterTemperatures[i + 1]);
             this.flowLeg[i].setLongitudionalCoordinates(legPositions[i], legPositions[i + 1]);
             this.flowLeg[i].setOuterHeatTransferCOefficients(legOuterHeatTransferCoefficients[i],
                     legOuterHeatTransferCoefficients[i + 1]);
@@ -112,8 +95,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
         flowNode[totalNumberOfNodes - 1] = flowNode[totalNumberOfNodes - 2].getNextNode();
         flowNode[totalNumberOfNodes - 1].setLengthOfNode(systemLength / 1000.0);
-        flowNode[totalNumberOfNodes - 1].setDistanceToCenterOfNode(
-                legPositions[numberOfFlowLegs] + flowNode[totalNumberOfNodes - 1].getLengthOfNode() / 2.0);
+        flowNode[totalNumberOfNodes - 1].setDistanceToCenterOfNode(legPositions[numberOfFlowLegs]
+                + flowNode[totalNumberOfNodes - 1].getLengthOfNode() / 2.0);
         flowNode[totalNumberOfNodes - 1].setVerticalPositionOfNode(legHeights[numberOfFlowLegs]);
         if (endPressure != 0) {
             flowNode[totalNumberOfNodes - 1].getBulkSystem().setPressure(endPressure);
@@ -248,22 +231,21 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
             System.out.println("node " + flowNode[i].getDistanceToCenterOfNode() + " pressure: "
                     + flowNode[i].getBulkSystem().getPhases()[0].getPressure() + " temperature: "
                     + flowNode[i].getBulkSystem().getPhases()[1].getTemperature() + "  flow: "
-                    + flowNode[i].getMassFlowRate(0) + " velocity: " + flowNode[i].getVelocity() + " reynolds number "
-                    + flowNode[i].getReynoldsNumber() + " friction : " + flowNode[i].getWallFrictionFactor() + " x1 : "
+                    + flowNode[i].getMassFlowRate(0) + " velocity: " + flowNode[i].getVelocity()
+                    + " reynolds number " + flowNode[i].getReynoldsNumber() + " friction : "
+                    + flowNode[i].getWallFrictionFactor() + " x1 : "
                     + flowNode[i].getBulkSystem().getPhases()[0].getComponents()[1].getx());
         }
     }
 
     @Override
-    public void calcFluxes() {
-    }
+    public void calcFluxes() {}
 
     public static void main(String[] args) {
         System.out.println("Hei der!");
     }
 
-    public void solveTransient() {
-    }
+    public void solveTransient() {}
 
     @Override
     public double getTotalMolarMassTransferRate(int component) {
@@ -293,7 +275,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
     @Override
     public double getTotalPressureDrop(int lastNode) {
-        return flowNode[0].getBulkSystem().getPressure() - flowNode[lastNode].getBulkSystem().getPressure();
+        return flowNode[0].getBulkSystem().getPressure()
+                - flowNode[lastNode].getBulkSystem().getPressure();
     }
 
     @Override

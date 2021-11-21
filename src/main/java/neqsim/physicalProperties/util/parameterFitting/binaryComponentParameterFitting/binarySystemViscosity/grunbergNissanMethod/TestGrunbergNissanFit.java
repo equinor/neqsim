@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameterFitting.binarySystemViscosity.grunbergNissanMethod;
 
 import java.sql.ResultSet;
@@ -24,11 +18,7 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class TestGrunbergNissanFit {
 
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestGrunbergNissanFit.class);
-
-    /** Creates new TestAcentric */
-    public TestGrunbergNissanFit() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();

@@ -1,16 +1,10 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.Procede.CH4CO2WaterMDEA;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -24,9 +18,7 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
-    /** Creates new Test */
-    public IonicInteractionParameterFittingFunctionCH4() {
-    }
+    public IonicInteractionParameterFittingFunctionCH4() {}
 
     public IonicInteractionParameterFittingFunctionCH4(int phase, int type) {
         this.phase = phase;
@@ -34,7 +26,7 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -45,20 +37,21 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
             return system.getPressure();
         } else {
             return (system.getPressure() * system.getPhases()[0].getComponent(1).getx()
-                    / (system.getPhases()[0].getComponent(0).getx() + system.getPhases()[0].getComponent(1).getx()));
+                    / (system.getPhases()[0].getComponent(0).getx()
+                            + system.getPhases()[0].getComponent(1).getx()));
         }
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return (val);
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, CO3numb = 0, OHnumb = 0,
-                CH4Numb = 0;
+        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0, CO3numb = 0,
+                OHnumb = 0, CH4Numb = 0;
 
         int j = 0;
         do {
@@ -86,7 +79,8 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         do {
             CH4Numb = j;
             j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("methane"));
+        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName()
+                .equals("methane"));
 
         j = 0;
         do {
@@ -117,8 +111,8 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                 .setWijParameter(MDEAplusNumb, Waternumb, 0.0004092282);
 
-        if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]
-                .getRefPhase(MDEAplusNumb)).getElectrolyteMixingRule() != null) {
+        if (((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1].getRefPhase(MDEAplusNumb))
+                .getElectrolyteMixingRule() != null) {
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0].getRefPhase(MDEAplusNumb))
                     .getElectrolyteMixingRule().setWijParameter(0, 1, 0.0004092282);
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[0].getRefPhase(MDEAplusNumb))
@@ -162,10 +156,10 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         }
 
         if (i == 1) {
-            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule().setBinaryInteractionParameter(CO2Numb, CH4Numb,
-                    value);
-            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule().setBinaryInteractionParameter(CO2Numb, CH4Numb,
-                    value);
+            ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
+                    .setBinaryInteractionParameter(CO2Numb, CH4Numb, value);
+            ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
+                    .setBinaryInteractionParameter(CO2Numb, CH4Numb, value);
         }
 
     }

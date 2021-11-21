@@ -1,12 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -26,9 +17,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     protected StreamInterface stream = null;
     private double referencePressure = 0;
 
-    /** Creates a new instance of TemperatureTransmitter */
-    public HydrateEquilibriumTemperatureAnalyser() {
-    }
+    public HydrateEquilibriumTemperatureAnalyser() {}
 
     public HydrateEquilibriumTemperatureAnalyser(StreamInterface stream) {
         this.stream = stream;
@@ -39,7 +28,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         try {
             // System.out.println("total water production [kg/dag]" +
             // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
@@ -50,19 +39,19 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     }
 
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return getMeasuredValue(unit);
     }
 
     @Override
-	public double getMeasuredValue(String unit) {
+    public double getMeasuredValue(String unit) {
         SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
-        if(!tempFluid.doHydrateCheck()) {
-        	tempFluid.setHydrateCheck(true);
+        if (!tempFluid.doHydrateCheck()) {
+            tempFluid.setHydrateCheck(true);
         }
         tempFluid.setTemperature(10.0, "C");
-        if(referencePressure>1e-10) {
-        	tempFluid.setPressure(referencePressure);
+        if (referencePressure > 1e-10) {
+            tempFluid.setPressure(referencePressure);
         }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
@@ -72,13 +61,13 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
         }
         return tempFluid.getTemperature(unit);
     }
-    
+
     public double getReferencePressure() {
         return referencePressure;
     }
 
     public void setReferencePressure(double referencePressure) {
-		this.referencePressure = referencePressure;
-	}
+        this.referencePressure = referencePressure;
+    }
 
 }

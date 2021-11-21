@@ -1,9 +1,3 @@
-/*
- * PhysicalPropertiesInterface.java
- *
- * Created on 29. oktober 2000, 16:14
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.methodInterface;
 
 /**
@@ -18,5 +12,5 @@ public interface ViscosityInterface
     public double getPureComponentViscosity(int i);
 
     @Override
-	public Object clone();
+    public Object clone();
 }

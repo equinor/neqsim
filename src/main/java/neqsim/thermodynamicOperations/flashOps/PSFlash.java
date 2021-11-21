@@ -1,30 +1,14 @@
 /*
- * Copyright 2018 ESOL.
+ * PHflash.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 8. mars 2001, 10:56
  */
-
-/*
-* PHflash.java
-*
-* Created on 8. mars 2001, 10:56
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class PSFlash extends QfuncFlash {
@@ -38,8 +22,7 @@ public class PSFlash extends QfuncFlash {
     /**
      * Creates new PHflash
      */
-    public PSFlash() {
-    }
+    public PSFlash() {}
 
     public PSFlash(SystemInterface system, double Sspec, int type) {
         this.system = system;
@@ -91,7 +74,8 @@ public class PSFlash extends QfuncFlash {
             newCorr = factor * calcdQdT() / calcdQdTT();
             nyTemp = oldTemp - newCorr;
             if (Math.abs(system.getTemperature() - nyTemp) > 10.0) {
-                nyTemp = system.getTemperature() - Math.signum(system.getTemperature() - nyTemp) * 10.0;
+                nyTemp = system.getTemperature()
+                        - Math.signum(system.getTemperature() - nyTemp) * 10.0;
                 correctFactor = false;
             } else if (nyTemp < 0) {
                 nyTemp = Math.abs(system.getTemperature() - 10.0);

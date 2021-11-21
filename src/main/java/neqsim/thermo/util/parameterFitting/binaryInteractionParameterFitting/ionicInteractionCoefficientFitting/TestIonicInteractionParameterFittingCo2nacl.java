@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 import java.sql.ResultSet;
@@ -23,12 +17,7 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestIonicInteractionParameterFittingCo2nacl {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingCo2nacl.class);
-
-    /** Creates new TestAcentric */
-    public TestIonicInteractionParameterFittingCo2nacl() {}
 
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
