@@ -1,9 +1,3 @@
-/*
- * dataRepresentation.java
- *
- * Created on 15. juni 2000, 18:21
- */
-
 package neqsim.dataPresentation;
 
 import java.io.BufferedOutputStream;

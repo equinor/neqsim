@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -18,7 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
 public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
     public CPAParameterFittingToSolubilityData_Vap() {
         params = new double[1];
     }

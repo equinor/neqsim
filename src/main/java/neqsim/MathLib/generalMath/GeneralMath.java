@@ -1,10 +1,3 @@
-
-/*
- * newtonRhapson.java
- *
- * Created on 15. juli 2000, 17:43
- */
-
 package neqsim.MathLib.generalMath;
 
 /**

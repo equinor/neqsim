@@ -1,17 +1,22 @@
-/*
- * visAdContourPlot.java
- *
- * Created on 7. november 2000, 17:51
- */
-
 package neqsim.dataPresentation.visAD.visAd3D;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
+import javax.swing.JFrame;
 import neqsim.dataPresentation.visAD.visAdBaseClass;
-import visad.*;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java3d.DisplayImplJ3D;
-import visad.util.*;
+import visad.util.ContourWidget;
 
 /**
  * @author Even Solbraa

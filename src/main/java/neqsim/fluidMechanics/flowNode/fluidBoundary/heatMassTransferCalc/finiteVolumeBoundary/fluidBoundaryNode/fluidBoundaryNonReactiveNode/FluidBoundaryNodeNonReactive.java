@@ -1,10 +1,8 @@
-
 /*
  * FluidBoundaryNodeReactive.java
  *
  * Created on 8. august 2001, 14:50
  */
-
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundaryNode.fluidBoundaryNonReactiveNode;
 
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundaryNode.FluidBoundaryNode;

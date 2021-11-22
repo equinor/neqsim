@@ -1,5 +1,3 @@
-
-
 /*
  * AtractiveTermBaseClass.java
  *

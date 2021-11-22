@@ -1,10 +1,3 @@
-
-
-/*
- * thermoOps.java
- *
- * Created on 2. oktober 2000, 20:27
- */
 package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;

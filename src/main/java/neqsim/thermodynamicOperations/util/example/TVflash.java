@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.util.example;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +14,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class TVflash {
     static Logger logger = LogManager.getLogger(TVflash.class);
+
+    /** Creates new TVflash */
+    public TVflash() {}
 
     public static void main(String args[]) {
         // SystemInterface testSystem2 = (SystemInterface)

@@ -1,5 +1,3 @@
-
-
 /*
  * PSflashSingleComp.java
  *

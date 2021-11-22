@@ -1,11 +1,3 @@
-
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +16,6 @@ public class QfuncFlash extends Flash {
     Flash tpFlash;
     int type = 0;
 
-    /** Creates new PHflash */
     public QfuncFlash() {}
 
     public QfuncFlash(SystemInterface system, double Hspec, int type) {

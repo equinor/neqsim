@@ -1,10 +1,5 @@
-/*
- * SrkTest.java JUnit based test
- *
- * Created on 27. september 2003, 19:51
- */
-
 package neqsim.thermo.util.example;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;

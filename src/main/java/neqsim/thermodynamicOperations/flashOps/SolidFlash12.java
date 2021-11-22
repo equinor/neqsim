@@ -1,5 +1,3 @@
-
-
 /*
  * SolidFlash12.java
  *

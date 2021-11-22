@@ -1,11 +1,8 @@
-
-
 /*
  * PipeLeg.java
  *
  * Created on 8. desember 2000, 19:32
  */
-
 package neqsim.fluidMechanics.flowLeg.pipeLeg;
 
 import neqsim.fluidMechanics.flowLeg.FlowLeg;

@@ -1,5 +1,3 @@
-
-
 /*
  * PHsolidFlash.java
  *

@@ -1,4 +1,3 @@
-
 /*
  * calcIonicComposition.java
  *
@@ -20,9 +19,6 @@ public class calcIonicComposition extends Flash {
     int phaseNumber;
     String[][] resultTable = null;
 
-    /**
-     * Creates new PHflash
-     */
     public calcIonicComposition() {}
 
     public calcIonicComposition(SystemInterface system, int phase) {

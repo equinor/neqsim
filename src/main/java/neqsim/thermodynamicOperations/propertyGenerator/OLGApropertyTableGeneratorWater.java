@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.propertyGenerator;
 
 import java.io.BufferedWriter;

@@ -1,10 +1,3 @@
-
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,9 +16,6 @@ public class SaturateWithWater extends QfuncFlash {
 
     Flash tpFlash;
 
-    /**
-     * Creates new PHflash
-     */
     public SaturateWithWater() {}
 
     public SaturateWithWater(SystemInterface system) {

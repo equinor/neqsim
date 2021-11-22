@@ -1,9 +1,3 @@
-/*
- * ViscosityFunction.java
- *
- * Created on 24. januar 2001, 23:30
- */
-
 package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFitting.pureCompConductivity.linearLiquidModel;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;

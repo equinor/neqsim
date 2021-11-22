@@ -1,13 +1,8 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -18,7 +13,7 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunctionS8.class);
 
-    /** Creates new Test */
+
     public AntoineSolidFunctionS8() {
         params = new double[2];
     }

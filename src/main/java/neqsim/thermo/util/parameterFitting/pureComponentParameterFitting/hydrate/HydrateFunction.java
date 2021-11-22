@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.hydrate;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +14,7 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFunction.class);
 
-    /** Creates new Test */
+
     public HydrateFunction() {
         // params = new double[3];
     }
@@ -78,6 +72,5 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
             ((ComponentHydrate) system.getPhase(4).getComponent(0))
                     .setSphericalCoreRadiusHydrate(value);
         }
-
     }
 }

@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
@@ -17,7 +11,6 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
     int phase = 1;
     int type = 1;
 
-    /** Creates new Test */
     public BinaryWSParameterFittingToSolubilityData() {}
 
     public BinaryWSParameterFittingToSolubilityData(int phase, int type) {

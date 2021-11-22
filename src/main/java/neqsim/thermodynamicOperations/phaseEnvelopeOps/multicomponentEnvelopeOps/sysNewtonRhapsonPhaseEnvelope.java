@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import org.apache.logging.log4j.LogManager;

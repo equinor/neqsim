@@ -1,11 +1,3 @@
-
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -20,7 +12,6 @@ public class PUflash extends Flash {
     double Uspec = 0;
     Flash tpFlash;
 
-    /** Creates new PHflash */
     public PUflash() {}
 
     public PUflash(SystemInterface system, double Uspec) {

@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowSystem;
 
 import neqsim.fluidMechanics.flowLeg.FlowLegInterface;

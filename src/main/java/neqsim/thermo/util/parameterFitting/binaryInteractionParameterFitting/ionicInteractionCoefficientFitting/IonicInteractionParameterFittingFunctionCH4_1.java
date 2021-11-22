@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 /**
@@ -13,9 +7,9 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
  */
 public class IonicInteractionParameterFittingFunctionCH4_1
         extends IonicInteractionParameterFittingFunctionCH4 {
+
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
     public IonicInteractionParameterFittingFunctionCH4_1() {}
 
     @Override

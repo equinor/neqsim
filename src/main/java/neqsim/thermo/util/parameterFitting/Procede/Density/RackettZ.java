@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 // To find the Rackett constant for Water and MDEA
 package neqsim.thermo.util.parameterFitting.Procede.Density;
 
@@ -16,7 +11,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 public class RackettZ extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
+
     public RackettZ() {
         params = new double[1];
     }

@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.propertyGenerator;
 
 import java.io.BufferedWriter;
@@ -340,8 +338,9 @@ public class OLGApropertyTableGeneratorWaterEven
                  * try { xcoef[jj] = aMatrix.solve(xg.transpose()); } catch (Exception e) {
                  * logger.error("error",e); } // logger.info("xcoef " + j); // xcoef.print(10, 10);
                  * //logger.info("dss: " +ds * dxds.get(speceq, 0)); // specVal = xcoef.get(0, 0) +
-                 * sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0)));
-                 * logger.info("vall" + vall); } }
+                 * <<<<<<< HEAD sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3,
+                 * 0))); ======= sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny *
+                 * xcoef.get(3, 0))); // >>>>>>> master logger.info("vall" + vall); } }
                  */
                 if (thermoSystem.hasPhaseType("oil") && acceptedFlash) {
                     int phaseNumb = thermoSystem.getPhaseNumberOfPhase("oil");

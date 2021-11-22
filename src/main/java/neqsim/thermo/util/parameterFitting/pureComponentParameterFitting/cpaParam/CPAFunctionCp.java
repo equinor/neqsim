@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +14,6 @@ public class CPAFunctionCp extends CPAFunction {
 
     int phasetype = 1;
 
-    /** Creates new Test */
     public CPAFunctionCp() {}
 
     public CPAFunctionCp(int phase) {

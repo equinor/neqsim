@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystem;

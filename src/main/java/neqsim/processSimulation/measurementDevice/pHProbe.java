@@ -1,11 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -26,7 +18,6 @@ public class pHProbe extends MeasurementDeviceBaseClass {
     protected SystemInterface reactiveThermoSystem;
     protected ThermodynamicOperations thermoOps;
 
-    /** Creates a new instance of TemperatureTransmitter */
     public pHProbe() {}
 
     public pHProbe(StreamInterface stream) {

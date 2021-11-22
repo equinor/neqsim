@@ -1,5 +1,3 @@
-
-
 package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;

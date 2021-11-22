@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.mechanicalDesign.separator.sectionType;
 
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;

@@ -1,9 +1,3 @@
-/*
- * TestLevenbergMarquardt.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.statistics.parameterFitting.util.example;
 
 import java.util.ArrayList;

@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
@@ -382,6 +380,10 @@ public class SolidFlash1 extends TPflash {
         double[] solidCandidate = new double[system.getPhases()[0].getNumberOfComponents()];
 
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
             if (system.getTemperature() > system.getPhase(0).getComponent(k)
                     .getTriplePointTemperature()) {
                 solidCandidate[k] = 0;

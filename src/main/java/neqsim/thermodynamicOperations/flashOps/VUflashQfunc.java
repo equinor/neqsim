@@ -1,5 +1,3 @@
-
-
 /*
  * VUflashQfunc.java
  *
@@ -24,9 +22,6 @@ public class VUflashQfunc extends Flash {
     double Vspec = 0, Uspec = 0.0;
     Flash tpFlash;
 
-    /**
-     * Creates new PHflash
-     */
     public VUflashQfunc() {}
 
     public VUflashQfunc(SystemInterface system, double Vspec, double Uspec) {

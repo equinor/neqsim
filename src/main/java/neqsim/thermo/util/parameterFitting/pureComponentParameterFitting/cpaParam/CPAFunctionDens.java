@@ -1,12 +1,7 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -19,7 +14,6 @@ public class CPAFunctionDens extends CPAFunction {
 
     int phasetype = 1;
 
-    /** Creates new Test */
     public CPAFunctionDens() {}
 
     public CPAFunctionDens(int phase) {

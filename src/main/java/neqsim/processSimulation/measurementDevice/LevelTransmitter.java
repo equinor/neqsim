@@ -1,11 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.separator.Separator;
@@ -19,7 +11,6 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
 
     protected Separator separator = null;
 
-    /** Creates a new instance of TemperatureTransmitter */
     public LevelTransmitter() {}
 
     public LevelTransmitter(Separator separator) {
@@ -28,7 +19,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
 
     @Override
     public void displayResult() {
-        System.out.println("measured temperature " + separator.getLiquidLevel());
+        System.out.println("measured level " + separator.getLiquidLevel());
     }
 
     @Override

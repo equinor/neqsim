@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -17,9 +12,6 @@ public class DensityFunction extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
-    /**
-     * Creates new Test
-     */
     public DensityFunction() {
         params = new double[1];
     }

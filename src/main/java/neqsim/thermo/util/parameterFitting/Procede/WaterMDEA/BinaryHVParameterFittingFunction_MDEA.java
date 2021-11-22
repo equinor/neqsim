@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +17,6 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_MDEA.class);
 
-    /** Creates new Test */
     public BinaryHVParameterFittingFunction_MDEA() {}
 
     public BinaryHVParameterFittingFunction_MDEA(int phase, int type) {

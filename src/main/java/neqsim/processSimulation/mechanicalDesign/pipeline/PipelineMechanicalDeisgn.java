@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.mechanicalDesign.pipeline;
 
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;

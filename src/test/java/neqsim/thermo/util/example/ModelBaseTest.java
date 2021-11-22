@@ -1,9 +1,3 @@
-/*
- * SrkTest.java JUnit based test
- *
- * Created on 27. september 2003, 19:51
- */
-
 package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -20,6 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  */
 @Disabled
 public class ModelBaseTest {
+
+    private static final long serialVersionUID = 1000;
+
     static SystemInterface thermoSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
 

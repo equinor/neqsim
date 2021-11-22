@@ -1,11 +1,8 @@
-
-
 /*
  * TVflash.java
  *
  * Created on 8. mars 2001, 10:56
  */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;

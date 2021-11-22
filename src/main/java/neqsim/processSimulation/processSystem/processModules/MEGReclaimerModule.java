@@ -1,13 +1,3 @@
-
-
-/*
- * SnohvitCO2RemovalModule.java
- *
- * Created on 1. november 2006, 20:33
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
- */
-
 package neqsim.processSimulation.processSystem.processModules;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;

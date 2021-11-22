@@ -1,5 +1,3 @@
-
-
 /*
  * PHflash.java
  *
@@ -20,7 +18,6 @@ public class PVrefluxflash extends Flash {
     int refluxPhase = 0;
     double refluxSpec = 0.5;
 
-    /** Creates new PHflash */
     public PVrefluxflash() {}
 
     public PVrefluxflash(SystemInterface system, double refluxSpec, int refluxPhase) {

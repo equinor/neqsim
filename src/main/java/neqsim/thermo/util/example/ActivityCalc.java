@@ -1,5 +1,3 @@
-
-
 /*
  * ActivityCalc.java
  *

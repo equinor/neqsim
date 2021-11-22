@@ -1,11 +1,8 @@
-
-
 /*
  * HPTphaseEnvelope.java
  *
  * Created on 14. oktober 2000, 21:59
  */
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.awt.FlowLayout;

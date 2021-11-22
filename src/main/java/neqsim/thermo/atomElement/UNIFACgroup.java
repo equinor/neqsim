@@ -1,10 +1,3 @@
-
-
-/*
- * Element.java
- *
- * Created on 4. februar 2001, 22:11
- */
 package neqsim.thermo.atomElement;
 
 import org.apache.logging.log4j.LogManager;

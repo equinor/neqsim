@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -20,9 +15,6 @@ public class CVDFunction extends LevenbergMarquardtFunction {
     double saturationVolume = 0, saturationPressure = 0;
     double Zsaturation = 0;
 
-    /**
-     * Creates new Test
-     */
     public CVDFunction() {
         params = new double[3];
     }

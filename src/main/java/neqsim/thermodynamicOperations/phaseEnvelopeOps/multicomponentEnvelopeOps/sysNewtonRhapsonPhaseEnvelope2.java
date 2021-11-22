@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;

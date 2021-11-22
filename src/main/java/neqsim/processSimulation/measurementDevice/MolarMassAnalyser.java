@@ -1,11 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -21,7 +13,6 @@ public class MolarMassAnalyser extends MeasurementDeviceBaseClass {
     protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
 
-    /** Creates a new instance of TemperatureTransmitter */
     public MolarMassAnalyser() {
         name = "molar mass analsyer";
         unit = "gr/mol";

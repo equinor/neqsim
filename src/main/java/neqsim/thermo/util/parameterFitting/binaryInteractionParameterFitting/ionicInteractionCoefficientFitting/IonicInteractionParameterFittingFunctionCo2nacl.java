@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +15,6 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
 
-    /** Creates new Test */
     public IonicInteractionParameterFittingFunctionCo2nacl() {}
 
     @Override

@@ -1,5 +1,3 @@
-
-
 /*
  * Separator.java
  *

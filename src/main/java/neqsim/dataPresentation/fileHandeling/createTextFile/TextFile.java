@@ -1,17 +1,8 @@
-
-
-/*
- * NetCdf.java
- *
- * Created on 5. august 2001, 21:52
- */
-
 package neqsim.dataPresentation.fileHandeling.createTextFile;
 
 import java.io.File;
 import java.io.FileWriter;
 
-// import ucar.nc2.*;
 /**
  *
  * @author esol

@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.Procede.CH4MDEA;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +17,6 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_CH4.class);
 
-    /** Creates new Test */
     public BinaryHVParameterFittingFunction_CH4() {}
 
     public BinaryHVParameterFittingFunction_CH4(int phase, int type) {

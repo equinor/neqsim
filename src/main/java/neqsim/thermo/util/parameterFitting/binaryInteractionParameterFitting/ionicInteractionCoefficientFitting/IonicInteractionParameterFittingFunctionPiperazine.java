@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +15,6 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
 
-    /** Creates new Test */
     public IonicInteractionParameterFittingFunctionPiperazine() {}
 
     @Override

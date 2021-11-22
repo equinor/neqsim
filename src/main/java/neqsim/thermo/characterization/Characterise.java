@@ -1,4 +1,14 @@
- private static final long serialVersionUID = 1000;
+package neqsim.thermo.characterization;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemInterface;
+
+/**
+ * @author esol
+ */
+public class Characterise implements java.io.Serializable, Cloneable {
+    private static final long serialVersionUID = 1000;
     SystemInterface system = null;
     TBPCharacterize TBPCharacterise = null;
     private TBPModelInterface TBPfractionModel = null;

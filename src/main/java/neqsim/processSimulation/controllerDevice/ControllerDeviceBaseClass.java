@@ -2,10 +2,7 @@
  * ControllerDeviceBaseClass.java
  *
  * Created on 10. oktober 2006, 19:59
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
-
 package neqsim.processSimulation.controllerDevice;
 
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -130,5 +127,7 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
 
     public void setTderiv(double Tderiv) {
         this.Tderiv = Tderiv;
-    }
+    }<<<<<<<HEAD=======
+
+    >>>>>>>master
 }

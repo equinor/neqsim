@@ -3,7 +3,6 @@
  *
  * Created on 30. oktober 2001, 23:09
  */
-
 package neqsim.processSimulation;
 
 /**
@@ -12,6 +11,5 @@ package neqsim.processSimulation;
  * @version
  */
 public class test {
-    /** Creates new test */
     public test() {}
 }

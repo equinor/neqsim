@@ -1,8 +1,3 @@
-/*
- * ThrottelValve.java
- *
- * Created on 22. august 2001, 17:20
- */
 package neqsim.processSimulation.processEquipment.pump;
 
 import java.awt.Container;
@@ -14,7 +9,6 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -177,6 +171,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
     @Override
     public void displayResult() {
+
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
@@ -339,7 +334,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
                 new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.00);
         feedGas.addComponent("water", 1.0);
 
-        Stream feedGasStream = new Stream("feed fluid", feedGas);
+        neqsim.processSimulation.processEquipment.stream.Stream feedGasStream = new neqsim.processSimulation.processEquipment.stream.Stream("feed fluid", feedGas);
         feedGasStream.setFlowRate(4000.0 * 1000, "kg/hr");
         feedGasStream.setTemperature(20.0, "C");
         feedGasStream.setPressure(1.0, "bara");
@@ -403,6 +398,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         System.out.println("Pump duty " + pump1.getDuty() / 1E3 + " kW");
         System.out.println(
                 "Pump outlet temperature " + pump1.getOutStream().getTemperature("C") + " C");
+
+    public PumpChart getPumpChart() {
+        return pumpChart;
     }
 
     public void setSpeed(double speed) {
@@ -411,10 +409,6 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
     public double getSpeed() {
         return speed;
-    }
-
-    public PumpChart getPumpChart() {
-        return pumpChart;
     }
 
     public StreamInterface getInStream() {

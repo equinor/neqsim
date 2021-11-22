@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

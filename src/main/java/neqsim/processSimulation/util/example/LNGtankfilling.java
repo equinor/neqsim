@@ -1,11 +1,3 @@
-/*
- * LNGfilling.java
- *
- * Created on 6. september 2006, 14:46
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
- */
-
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.measurementDevice.PressureTransmitter;

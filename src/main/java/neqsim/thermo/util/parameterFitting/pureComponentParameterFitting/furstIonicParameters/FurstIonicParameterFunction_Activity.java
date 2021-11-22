@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.furstIonicParameters;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -17,7 +11,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 public class FurstIonicParameterFunction_Activity extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
+
     public FurstIonicParameterFunction_Activity() {
         // params = new double[3];
     }

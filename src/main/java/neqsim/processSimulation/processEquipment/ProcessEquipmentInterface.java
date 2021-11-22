@@ -1,10 +1,3 @@
-
-
-/*
- * OperationInterafce.java
- *
- * Created on 2. oktober 2000, 22:14
- */
 package neqsim.processSimulation.processEquipment;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;

@@ -1,9 +1,3 @@
-/*
- * IterationException.java
- *
- * Created on 1. mai 2001, 12:56
- */
-
 package neqsim.util.exception;
 
 /**

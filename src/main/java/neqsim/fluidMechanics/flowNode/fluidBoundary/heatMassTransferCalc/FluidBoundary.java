@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc;
 
 import java.awt.BorderLayout;

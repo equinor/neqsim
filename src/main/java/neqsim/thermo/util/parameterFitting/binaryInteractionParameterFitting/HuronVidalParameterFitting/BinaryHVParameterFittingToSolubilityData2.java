@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
@@ -16,7 +10,6 @@ public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunctio
 
     int phase = 1;
 
-    /** Creates new Test */
     public BinaryHVParameterFittingToSolubilityData2() {}
 
     public BinaryHVParameterFittingToSolubilityData2(int phase) {

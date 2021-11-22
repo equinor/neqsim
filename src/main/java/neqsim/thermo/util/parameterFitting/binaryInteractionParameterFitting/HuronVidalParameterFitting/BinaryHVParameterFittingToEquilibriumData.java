@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
@@ -17,7 +11,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
 public class BinaryHVParameterFittingToEquilibriumData extends HuronVidalFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
+
     public BinaryHVParameterFittingToEquilibriumData() {
         params = new double[2];
     }

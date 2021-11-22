@@ -1,5 +1,3 @@
-
-
 /*
  * TPgradientFlash.java
  *

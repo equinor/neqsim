@@ -1,10 +1,3 @@
-
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -18,9 +11,6 @@ public class PHflashSingleComp extends Flash {
 
     double Hspec = 0;
 
-    /**
-     * Creates new PHflash
-     */
     public PHflashSingleComp() {}
 
     public PHflashSingleComp(SystemInterface system, double Hspec, int type) {

@@ -1,5 +1,3 @@
-
-
 package neqsim.util.database;
 
 /*

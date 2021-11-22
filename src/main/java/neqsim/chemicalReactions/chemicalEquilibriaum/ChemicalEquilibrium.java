@@ -1,5 +1,3 @@
-
-
 package neqsim.chemicalReactions.chemicalEquilibriaum;
 
 import Jama.Matrix;

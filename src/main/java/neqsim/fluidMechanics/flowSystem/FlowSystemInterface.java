@@ -1,5 +1,3 @@
-
-
 /*
  * FlowSystemInterface.java
  *

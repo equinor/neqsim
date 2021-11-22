@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.processSystem;
 
 import java.io.FileInputStream;
@@ -596,4 +594,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * 
      * public Report getReport(){ return this.new Report(); }
      */
+    <<<<<<<HEAD=======
+
+    >>>>>>>master
 }

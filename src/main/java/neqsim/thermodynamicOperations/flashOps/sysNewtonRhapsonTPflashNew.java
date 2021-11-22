@@ -1,5 +1,3 @@
-
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import Jama.Matrix;

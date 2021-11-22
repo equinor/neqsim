@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
 
 import neqsim.statistics.parameterFitting.BaseFunction;
@@ -16,7 +10,6 @@ import neqsim.statistics.parameterFitting.BaseFunction;
 public class LevenbergMarquardtFunction extends BaseFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
     public LevenbergMarquardtFunction() {}
 
     @Override

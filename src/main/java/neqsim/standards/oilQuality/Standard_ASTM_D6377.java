@@ -1,4 +1,3 @@
-
 package neqsim.standards.oilQuality;
 
 import neqsim.thermo.system.SystemInterface;

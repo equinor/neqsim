@@ -1,8 +1,3 @@
-/*
- * Heater.java
- *
- * Created on 15. mars 2001, 14:17
- */
 package neqsim.processSimulation.processEquipment.absorber;
 
 import neqsim.processSimulation.mechanicalDesign.absorber.AbsorberMechanicalDesign;
@@ -31,9 +26,6 @@ public class SimpleAbsorber extends Separator implements AbsorberInterface {
     private double stageEfficiency = 0.25;
     private double fsFactor = 0.0;
 
-    /**
-     * Creates new Heater
-     */
     public SimpleAbsorber() {
         mechanicalDesign = new AbsorberMechanicalDesign(this);
     }

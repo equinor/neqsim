@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.mechanicalDesign;
 
 import java.awt.BorderLayout;

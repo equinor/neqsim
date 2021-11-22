@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowNode;
 
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularFlow;

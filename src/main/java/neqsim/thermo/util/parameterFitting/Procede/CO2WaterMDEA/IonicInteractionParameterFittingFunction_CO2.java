@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-// double guess[] = {0.0000186887, -0.0001842913, -0.0003730569, -0.0001375761}; //Case I
 package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +16,6 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
 
-    /** Creates new Test */
     public IonicInteractionParameterFittingFunction_CO2() {}
 
     public IonicInteractionParameterFittingFunction_CO2(int phase, int type) {

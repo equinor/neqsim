@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
@@ -14,7 +8,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
 public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVidalFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
     public BinaryHVparameterFitToActivityCoefficientFunction() {}
 
     @Override

@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.equilibriumFluidBoundary;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;

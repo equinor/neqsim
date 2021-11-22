@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem;
 
 import neqsim.fluidMechanics.flowSystem.FlowSystem;

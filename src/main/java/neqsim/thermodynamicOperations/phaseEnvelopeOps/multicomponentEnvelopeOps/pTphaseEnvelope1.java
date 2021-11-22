@@ -1,5 +1,3 @@
-
-
 /*
  * pTphaseEnvelope.java
  *

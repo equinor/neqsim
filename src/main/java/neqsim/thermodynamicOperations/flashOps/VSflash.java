@@ -1,11 +1,3 @@
-
-
-/*
- * VUflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
@@ -23,7 +15,6 @@ public class VSflash extends Flash {
     double Vspec = 0;
     Flash tpFlash;
 
-    /** Creates new PHflash */
     public VSflash() {}
 
     public VSflash(SystemInterface system, double Vspec, double Sspec) {

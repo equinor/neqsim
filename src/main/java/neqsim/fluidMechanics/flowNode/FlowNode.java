@@ -1,5 +1,3 @@
-
-
 package neqsim.fluidMechanics.flowNode;
 
 import java.awt.BorderLayout;

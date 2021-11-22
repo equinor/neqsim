@@ -1,5 +1,3 @@
-
-
 package neqsim.processSimulation.mechanicalDesign.separator;
 
 import neqsim.processSimulation.mechanicalDesign.designStandards.GasScrubberDesignStandard;

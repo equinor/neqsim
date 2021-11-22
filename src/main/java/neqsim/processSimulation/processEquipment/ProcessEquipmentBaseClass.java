@@ -1,11 +1,7 @@
-
-
 /*
  * ProcessEquipmentBaseClass.java
  *
  * Created on 6. juni 2006, 15:12
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
  */
 package neqsim.processSimulation.processEquipment;
 

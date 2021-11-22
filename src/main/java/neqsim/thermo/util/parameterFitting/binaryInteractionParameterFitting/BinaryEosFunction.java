@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -17,7 +11,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
 public class BinaryEosFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Test */
     public BinaryEosFunction() {
         params = new double[1];
         params[0] = -0.34;

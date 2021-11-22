@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod;
@@ -19,16 +14,10 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     double molarMass = 0.0;
     boolean includeWaxEmulsionViscosity = true;
 
-    /**
-     * Creates new Test
-     */
     public ViscosityFunction() {
         params = new double[1];
     }
 
-    /**
-     * Creates new Test
-     */
     public ViscosityFunction(boolean includeWax) {
         params = new double[1];
         includeWaxEmulsionViscosity = includeWax;

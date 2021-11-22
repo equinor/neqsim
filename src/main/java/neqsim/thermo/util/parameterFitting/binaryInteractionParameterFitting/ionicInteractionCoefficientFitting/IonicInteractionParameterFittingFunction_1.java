@@ -1,9 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,10 +10,10 @@ import org.apache.logging.log4j.Logger;
  */
 public class IonicInteractionParameterFittingFunction_1
         extends IonicInteractionParameterFittingFunction {
+
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_1.class);
 
-    /** Creates new Test */
     public IonicInteractionParameterFittingFunction_1() {}
 
     @Override

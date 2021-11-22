@@ -1,11 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -24,7 +16,6 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     protected StreamInterface stream = null;
     private double referencePressure = 0;
 
-    /** Creates a new instance of TemperatureTransmitter */
     public HydrateEquilibriumTemperatureAnalyser() {}
 
     public HydrateEquilibriumTemperatureAnalyser(StreamInterface stream) {
