@@ -334,7 +334,8 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
                 new neqsim.thermo.system.SystemSrkEos(273.15 + 20.0, 10.00);
         feedGas.addComponent("water", 1.0);
 
-        neqsim.processSimulation.processEquipment.stream.Stream feedGasStream = new neqsim.processSimulation.processEquipment.stream.Stream("feed fluid", feedGas);
+        neqsim.processSimulation.processEquipment.stream.Stream feedGasStream =
+                new neqsim.processSimulation.processEquipment.stream.Stream("feed fluid", feedGas);
         feedGasStream.setFlowRate(4000.0 * 1000, "kg/hr");
         feedGasStream.setTemperature(20.0, "C");
         feedGasStream.setPressure(1.0, "bara");
@@ -398,6 +399,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         System.out.println("Pump duty " + pump1.getDuty() / 1E3 + " kW");
         System.out.println(
                 "Pump outlet temperature " + pump1.getOutStream().getTemperature("C") + " C");
+    }
 
     public PumpChart getPumpChart() {
         return pumpChart;
