@@ -2,6 +2,10 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Eo
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -16,6 +20,8 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
 
+	static Logger logger = LogManager.getLogger(TestBinaryCPAfitToActivityCoefficientDB.class);
+	
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
