@@ -332,10 +332,6 @@ public class ChemEq implements java.io.Serializable {
         } while (error > 0.00005);
 
         for (j = 0; j < NSPEC; j++) {
-<<<<<<< HEAD
-=======
-
->>>>>>> master
             System.out.println(
                     " SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
         }
