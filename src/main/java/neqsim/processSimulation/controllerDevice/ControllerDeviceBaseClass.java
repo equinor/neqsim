@@ -127,7 +127,5 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
 
     public void setTderiv(double Tderiv) {
         this.Tderiv = Tderiv;
-    }<<<<<<<HEAD=======
-
-    >>>>>>>master
+    }
 }

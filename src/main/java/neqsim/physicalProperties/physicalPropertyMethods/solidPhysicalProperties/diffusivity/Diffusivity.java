@@ -74,12 +74,6 @@ public class Diffusivity extends
 
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-<<<<<<< HEAD
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of
-                                                                       // generated methods, choose
-                                                                       // Tools | Templates.
-=======
         throw new UnsupportedOperationException("Not supported yet.");
->>>>>>> master
     }
 }
