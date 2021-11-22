@@ -12,7 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
@@ -127,7 +126,5 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
             ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
                     .setHVDijTParameter(1, 0, value);
         }
-
     }
-
 }

@@ -10,16 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class StaticMixer extends Mixer {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new staticMixer */
-    public StaticMixer() {
-    }
+    public StaticMixer() {}
 
     public StaticMixer(String name) {
         super(name);
@@ -30,22 +28,27 @@ public class StaticMixer extends Mixer {
         int index = 0;
         String compName = new String();
         for (int k = 1; k < streams.size(); k++) {
-
-            for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
-
+            for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
+                    .getNumberOfComponents(); i++) {
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getName();
+                String componentName =
+                        streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
+                                .getName();
                 // System.out.println("adding: " + componentName);
-                double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i].getNumberOfmoles();
+                double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
+                        .getNumberOfmoles();
                 // System.out.println("moles: " + moles + " " +
                 // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
-                for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
+                for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
+                        .getNumberOfComponents(); p++) {
                     if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
                             .equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p].getComponentNumber();
-                        compName = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
-                                .getComponentName();
+                        index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+                                .getComponentNumber();
+                        compName =
+                                streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+                                        .getComponentName();
                     }
                 }
 
@@ -69,7 +72,6 @@ public class StaticMixer extends Mixer {
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }
@@ -80,7 +82,8 @@ public class StaticMixer extends Mixer {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
             enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
-            System.out.println("total enthalpy k : " + streams.get(k).getThermoSystem().getEnthalpy());
+            System.out.println(
+                    "total enthalpy k : " + streams.get(k).getThermoSystem().getEnthalpy());
         }
         System.out.println("total enthalpy of streams: " + enthalpy);
         return enthalpy;
@@ -97,14 +100,13 @@ public class StaticMixer extends Mixer {
         mixedStream.getThermoSystem().setNumberOfPhases(2);
         mixedStream.getThermoSystem().reInitPhaseType();
         mixStream();
-        ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
+        ThermodynamicOperations testOps =
+                new ThermodynamicOperations(mixedStream.getThermoSystem());
         testOps.PHflash(enthalpy, 0);
         // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
         mixedStream.getThermoSystem().init(3);
     }
 
     @Override
-    public void runTransient() {
-    }
-
+    public void runTransient() {}
 }

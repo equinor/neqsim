@@ -12,7 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAParameterFittingToDewPointData.class);
 
@@ -26,7 +25,6 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
             thermoOps.waterPrecipitationTemperature();
         } catch (Exception e) {
             logger.error("error", e);
-
         }
         // System.out.println("x " + system.getPhases()[1].getComponents()[0].getx());
         return system.getTemperature(); // lucia data

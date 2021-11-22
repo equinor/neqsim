@@ -13,11 +13,10 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     ProcessEquipmentInterface sourceEquipment = null, targetEquipment = null;
@@ -29,8 +28,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     static Logger logger = LogManager.getLogger(SetPoint.class);
 
     /** Creates new staticMixer */
-    public SetPoint() {
-    }
+    public SetPoint() {}
 
     public SetPoint(String name) {
         super(name);
@@ -44,7 +42,8 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         run();
     }
 
-    public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
+    public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment,
+            String adjstedVariable) {
         this.sourceEquipment = adjustedEquipment;
         this.sourceVarialble = adjstedVariable;
     }
@@ -53,21 +52,22 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.sourceEquipment = adjustedEquipment;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-            String targetUnit) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
+            double targetValue, String targetUnit) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.targetValue = targetValue;
         this.targetUnit = targetUnit;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment,
+            String targetVariable) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-            String targetUnit, String targetPhase) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
+            double targetValue, String targetUnit, String targetPhase) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.targetValue = targetValue;
@@ -75,8 +75,8 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.targetPhase = targetPhase;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-            String targetUnit, String targetPhase, String targetComponent) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
+            double targetValue, String targetUnit, String targetPhase, String targetComponent) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.targetValue = targetValue;
@@ -91,13 +91,13 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
     @Override
     public void run() {
-
         if (targetVariable.equals("pressure")) {
             targetEquipment.setPressure(sourceEquipment.getPressure());
         } else {
             inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();
 
-            double targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
+            double targetValueCurrent =
+                    ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
 
             double deviation = targetValue - targetValueCurrent;
 
@@ -108,13 +108,12 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     }
 
     @Override
-    public void displayResult() {
-
-    }
+    public void displayResult() {}
 
     public static void main(String[] args) {
         // test code for adjuster...
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
         testSystem.addComponent("methane", 1000.00);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -124,11 +123,11 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         adjuster1.setSourceVariable(stream_1, "molarFlow");
         adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "", "MSm3/day");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(adjuster1);
 
         operations.run();
     }
-
 }

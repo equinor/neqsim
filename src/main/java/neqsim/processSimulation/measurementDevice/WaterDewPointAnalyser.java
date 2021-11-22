@@ -10,7 +10,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -93,5 +92,4 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
     public void setMethod(String method) {
         this.method = method;
     }
-
 }

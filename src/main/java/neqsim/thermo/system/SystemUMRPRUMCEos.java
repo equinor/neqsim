@@ -7,16 +7,14 @@
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters
- * equation of state
+ * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
 public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
@@ -34,11 +32,12 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
         setBmixType(1);
         modelName = "UMR-PRU-MC-EoS";
         attractiveTermNumber = 13;
-        CapeOpenProperties11 = new String[] { "speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
-                "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
-                "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
-                "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy", "heatCapacityCp",
-                "heatCapacityCv", "density", "volume" };
+        CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
+                "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
+                "fugacityCoefficient", "logFugacityCoefficient",
+                "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
+                "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy",
+                "heatCapacityCp", "heatCapacityCv", "density", "volume"};
     }
 
     public SystemUMRPRUMCEos(double T, double P, boolean solidCheck) {
@@ -49,7 +48,7 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemUMRPRUMCEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUMCEos) super.clone();
@@ -59,5 +58,4 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
 
         return clonedSystem;
     }
-
 }

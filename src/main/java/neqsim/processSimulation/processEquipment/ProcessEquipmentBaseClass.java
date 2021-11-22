@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
-
     private static final long serialVersionUID = 1000;
 
     private ControllerDeviceInterface controller = null;
@@ -166,9 +165,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     @Override
-    public void setPressure(double pressure) {
-
-    }
+    public void setPressure(double pressure) {}
 
     @Override
     public double getEntropyProduction(String unit) {
@@ -186,9 +183,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     @Override
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
     public String conditionAnalysisMessage = "";
 
@@ -200,5 +195,4 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     public String[][] getResultTable() {
         return null;
     }
-
 }

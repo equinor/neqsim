@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public interface FlowSystemInterface {
-
     public void init();
 
     public void setNodes();

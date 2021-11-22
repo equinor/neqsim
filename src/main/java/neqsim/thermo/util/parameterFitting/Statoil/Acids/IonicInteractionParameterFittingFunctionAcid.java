@@ -11,7 +11,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version
  */
 public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;

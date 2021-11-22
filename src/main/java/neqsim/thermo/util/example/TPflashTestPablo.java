@@ -5,18 +5,16 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
-*
-* @author esol @version
-*/
+ *
+ * @author esol @version
+ */
 public class TPflashTestPablo {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * Creates new TPflash
      */
-    public TPflashTestPablo() {
-    }
+    public TPflashTestPablo() {}
 
     public static void main(String[] args) {
         SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 35.0, 90.0);
@@ -49,7 +47,6 @@ public class TPflashTestPablo {
             testOps.TPflash();
             fluid.display();
         } catch (Exception e) {
-
         }
 
         SystemInterface oilstream = fluid.phaseToSystem("aqueous");
@@ -60,7 +57,6 @@ public class TPflashTestPablo {
             testOps3.TPflash();
             oilstream.display();
         } catch (Exception e) {
-
         }
 
         SystemInterface newstream = fluid.phaseToSystem("gas");
@@ -71,7 +67,6 @@ public class TPflashTestPablo {
             testOps4.TPflash();
             newstream.display();
         } catch (Exception e) {
-
         }
 
         newstream.addFluid(oilstream);
@@ -82,8 +77,6 @@ public class TPflashTestPablo {
             testOps2.TPflash();
             newstream.display();
         } catch (Exception e) {
-
         }
-
     }
 }

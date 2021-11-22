@@ -18,13 +18,11 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
-
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData_Lucia.class);
 
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

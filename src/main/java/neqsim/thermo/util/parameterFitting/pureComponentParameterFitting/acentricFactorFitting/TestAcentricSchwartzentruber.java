@@ -18,11 +18,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestAcentricSchwartzentruber {
-
     static Logger logger = LogManager.getLogger(TestAcentricSchwartzentruber.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

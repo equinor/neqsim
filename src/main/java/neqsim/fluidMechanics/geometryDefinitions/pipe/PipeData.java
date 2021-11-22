@@ -4,7 +4,6 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall.PipeWall;
 
 public class PipeData extends GeometryDefinition {
-
     private static final long serialVersionUID = 1000;
 
     public PipeData() {
@@ -14,7 +13,6 @@ public class PipeData extends GeometryDefinition {
     public PipeData(double diameter) {
         super(diameter);
         wall = new PipeWall();
-
     }
 
     public PipeData(double diameter, double roughness) {

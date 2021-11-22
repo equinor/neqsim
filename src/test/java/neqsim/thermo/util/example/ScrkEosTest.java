@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
  */
 @Disabled
 public class ScrkEosTest extends ModelBaseTest {
-
     private static final long serialVersionUID = 1000;
 
     @BeforeAll
@@ -21,5 +20,4 @@ public class ScrkEosTest extends ModelBaseTest {
         thermoSystem.createDatabase(true);
         thermoSystem.setMixingRule(1);
     }
-
 }

@@ -10,7 +10,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author ESOL
  */
 public class CO2RemovalModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface streamToAbsorber = null, streamFromAbsorber = null,
@@ -93,5 +92,4 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     public void setDesign() {
         // set design is done here //
     }
-
 }

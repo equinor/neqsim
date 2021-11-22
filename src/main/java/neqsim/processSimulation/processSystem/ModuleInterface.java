@@ -13,7 +13,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  */
 public interface ModuleInterface extends ProcessEquipmentInterface {
-
     public neqsim.processSimulation.processSystem.ProcessSystem getOperations();
 
     public void addInputStream(String streamName, StreamInterface stream);
@@ -44,5 +43,4 @@ public interface ModuleInterface extends ProcessEquipmentInterface {
 
     @Override
     public void setName(String name);
-
 }

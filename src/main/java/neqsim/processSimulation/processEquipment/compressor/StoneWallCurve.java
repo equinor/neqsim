@@ -48,7 +48,6 @@ public class StoneWallCurve implements java.io.Serializable {
 
     public static void main(String[] args) {
         // TODO Auto-generated method stub
-
     }
 
     boolean isActive() {
@@ -58,5 +57,4 @@ public class StoneWallCurve implements java.io.Serializable {
     void setActive(boolean isActive) {
         this.isActive = isActive;
     }
-
 }

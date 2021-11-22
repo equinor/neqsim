@@ -22,7 +22,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author ESOL
  */
 public class DPCUModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     StreamInterface ethaneOvhComp, gasDistColumnExit, liquidDistColumnExit, feedStream,
@@ -204,7 +203,6 @@ public class DPCUModule extends ProcessModuleBaseClass {
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
     @Override
@@ -229,7 +227,6 @@ public class DPCUModule extends ProcessModuleBaseClass {
         } else if (specificationName.equals("gas scrubber temperature")) {
             gasScrubberTemperature = value;
         }
-
     }
 
     @Override
@@ -240,7 +237,6 @@ public class DPCUModule extends ProcessModuleBaseClass {
     }
 
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos(273.15 + 7.5, 110.0);
 
@@ -282,6 +278,5 @@ public class DPCUModule extends ProcessModuleBaseClass {
 
         dpcuModule.displayResult();
         // dpcuModule.getOutputStream("gasmixer").displayResult();
-
     }
 }

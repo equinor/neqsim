@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] relativeVolume = null;
@@ -32,7 +31,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     public void calcSaturationConditions() {
-
         getThermoSystem().setPressure(1.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
@@ -181,7 +179,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
                 sample.setFunction(function);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -199,7 +196,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     public static void main(String[] args) {
-
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 73.0, 10.0);
         tempSystem.addComponent("nitrogen", 0.972);
         tempSystem.addComponent("CO2", 0.632);
@@ -311,11 +307,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressures = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
-
     }
-
 }

@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  */
 public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -44,5 +43,4 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
                 * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
                 * 24;
     }
-
 }

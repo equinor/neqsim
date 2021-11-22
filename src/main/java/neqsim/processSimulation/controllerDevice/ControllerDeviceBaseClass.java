@@ -13,7 +13,6 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
  * @author ESOL
  */
 public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
     private String name = "controller", unit = "[?]";
@@ -130,5 +129,4 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     public void setTderiv(double Tderiv) {
         this.Tderiv = Tderiv;
     }
-
 }

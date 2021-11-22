@@ -5,7 +5,6 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 public class ChemicalEquilibrium implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface system;
@@ -223,7 +222,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
         system.initBeta(); // this was added for mass trans calc
         system.init_x_y();
-
     }
 
     public boolean solve() {
@@ -390,12 +388,10 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
         // return step;
         return 1.0;
-
     }
 
     public double innerStep(int i, double[] n_omega, int check, double step, boolean test) {
         if (test) {
-
             agemo = (-n_mol[i] / d_n[i]) * (1.0 - 0.03);
 
             for (i = check; i < NSPEC; i++) {

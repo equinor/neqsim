@@ -10,24 +10,22 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class TEGAbsorberTest {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
-                (273.15 + 20.0), 80.00);
+        neqsim.thermo.system.SystemSrkEos testSystem =
+                new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 80.00);
         testSystem.addComponent("methane", 120.00);
         testSystem.addComponent("water", 0.1);
         testSystem.addComponent("TEG", 1e-10);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        neqsim.thermo.system.SystemSrkEos testSystem2 = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
-                (273.15 + 20.0), 80.00);
+        neqsim.thermo.system.SystemSrkEos testSystem2 =
+                new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 80.00);
         testSystem2.addComponent("methane", 1e-10);
         testSystem2.addComponent("water", 1e-9);
         testSystem2.addComponent("TEG", 0.10);
@@ -47,10 +45,10 @@ public class TEGAbsorberTest {
         absorber.addSolventInStream(TEGstreamIn);
         absorber.setNumberOfStages(5);
         absorber.setStageEfficiency(0.5);
-//
+        //
         Stream gasStreamOut = new Stream(absorber.getGasOutStream());
         gasStreamOut.setName("gasStreamOut");
-//
+        //
         Stream TEGStreamOut = new Stream(absorber.getSolventOutStream());
         TEGStreamOut.setName("TEGStreamOut");
 
@@ -64,15 +62,15 @@ public class TEGAbsorberTest {
 
         StreamInterface MPstreamLiq = MPseparator.getLiquidOutStream();
         MPstreamLiq.setName("MPLiqStream");
-//
+        //
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", MPstreamLiq);
         LP_valve.setOutletPressure(1.5);
 
         ReBoiler reboiler = new ReBoiler(LP_valve.getOutStream());
         reboiler.setReboilerDuty(20000.0);
 
-        neqsim.thermo.system.SystemSrkEos testSystem3 = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
-                (273.15 + 20.0), 1.500);
+        neqsim.thermo.system.SystemSrkEos testSystem3 =
+                new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 1.500);
         testSystem3.addComponent("methane", 0.39);
         testSystem3.addComponent("water", 1e-10);
         testSystem3.addComponent("TEG", 1e-10);
@@ -87,14 +85,16 @@ public class TEGAbsorberTest {
 
         Stream ReboilLiqStream = mix.getOutStream();
         ReboilLiqStream.setName("ReboilLiqStream");
-//
-//         Stream ReboilGasStream = reboiler.getOutStream();
-//        ReboilLiqStream.setName("ReboilLiqStream");
+        //
+        // Stream ReboilGasStream = reboiler.getOutStream();
+        // ReboilLiqStream.setName("ReboilLiqStream");
 
-//        processSimulation.processEquipment.absorber.SimpleGlycolAbsorber TEGabsorber = new processSimulation.processEquipment.absorber.SimpleGlycolAbsorber(gasStreamIn);
-//        TEGabsorber.setName("TEGabsorber");
+        // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber TEGabsorber = new
+        // processSimulation.processEquipment.absorber.SimpleGlycolAbsorber(gasStreamIn);
+        // TEGabsorber.setName("TEGabsorber");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(fluidStreamIn);
         operations.add(gasScrubber);
         operations.add(gasToAbsorber);

@@ -17,11 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestClassicAcentricPlusDens {
-
     static Logger logger = LogManager.getLogger(TestClassicAcentricPlusDens.class);
 
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database

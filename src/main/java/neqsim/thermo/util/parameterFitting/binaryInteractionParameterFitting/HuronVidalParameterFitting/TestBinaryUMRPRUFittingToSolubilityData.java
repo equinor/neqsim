@@ -18,11 +18,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryUMRPRUFittingToSolubilityData {
-
     static Logger logger = LogManager.getLogger(TestBinaryUMRPRUFittingToSolubilityData.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

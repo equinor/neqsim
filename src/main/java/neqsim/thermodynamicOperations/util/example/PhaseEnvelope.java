@@ -173,7 +173,6 @@ public class PhaseEnvelope {
             javax.imageio.ImageIO.write(buf, "jpeg", file);
 
             chart.createBufferedImage(640, 400, null);
-
         } catch (Exception e) {
             logger.error("error", e);
             // testOps.displayResult();

@@ -14,12 +14,11 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author esol
  */
 public class propaneTwoStageCoolingCycle {
-
     private static final long serialVersionUID = 1000;
 
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
         // testSystem.addComponent("ethane", 10.0, "kg/hr");
         testSystem.addComponent("propane", 4759.0, "kg/hr");
         testSystem.createDatabase(true);
@@ -63,7 +62,8 @@ public class propaneTwoStageCoolingCycle {
         cooler3.setSpecification("out stream");
         cooler3.setOutStream(stream_1);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(JTvalve1);
         operations.add(medPresSep);
@@ -117,15 +117,16 @@ public class propaneTwoStageCoolingCycle {
 
         // System.out.println("compressor isentropic ef " +
         // compressor1.getIsentropicEfficiency());
-        System.out.println("cooler2 mass flow " + cooler2.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
-        System.out.println("cooler3 mass flow " + cooler3.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+        System.out.println("cooler2 mass flow "
+                + cooler2.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+        System.out.println("cooler3 mass flow "
+                + cooler3.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
-        System.out.println("delta enthalpy "
-                + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutStream().getFluid().getEnthalpy()));
+        System.out.println("delta enthalpy " + (stream_3.getFluid().getEnthalpy()
+                - JTvalve2.getOutStream().getFluid().getEnthalpy()));
 
         System.out.println("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
         System.out.println("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");
         // System.out.println("heater duty " + heater.getEnergyInput());
-
     }
 }

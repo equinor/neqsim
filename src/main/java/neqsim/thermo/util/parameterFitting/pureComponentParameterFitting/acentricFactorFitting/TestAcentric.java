@@ -18,14 +18,12 @@ import neqsim.thermo.system.SystemPrEos;
  * @version
  */
 public class TestAcentric {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new TestAcentric */
     public TestAcentric() {}
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
 
         AcentricFunction function = new AcentricFunction();

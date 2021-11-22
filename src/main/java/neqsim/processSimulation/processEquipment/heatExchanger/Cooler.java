@@ -13,7 +13,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @version
  */
 public class Cooler extends Heater {
-
     private static final long serialVersionUID = 1000;
 
     public Cooler() {
@@ -29,7 +28,7 @@ public class Cooler extends Heater {
     }
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         //
         double entrop = 0.0;
 
@@ -40,9 +39,9 @@ public class Cooler extends Heater {
 
         double heatTransferEntropyProd = coolingMediumTemperature * getDuty();
         System.out.println("heat entropy " + heatTransferEntropyProd);
-        entrop += getOutStream().getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+        entrop += getOutStream().getThermoSystem().getEntropy(unit)
+                - inStream.getThermoSystem().getEntropy(unit);
 
         return entrop;
     }
-
 }

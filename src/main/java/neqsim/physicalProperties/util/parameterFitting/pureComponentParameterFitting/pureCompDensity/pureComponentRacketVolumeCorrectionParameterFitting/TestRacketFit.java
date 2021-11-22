@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestRacketFit {
-
     static Logger logger = LogManager.getLogger(TestRacketFit.class);
 
     public static void main(String[] args) {
@@ -71,6 +70,5 @@ public class TestRacketFit {
         // optim.displayCurveFit();
 
         optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

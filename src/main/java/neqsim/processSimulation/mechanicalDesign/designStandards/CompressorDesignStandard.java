@@ -7,7 +7,6 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class CompressorDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     private double compressorFactor = 0.11;
@@ -15,7 +14,8 @@ public class CompressorDesignStandard extends DesignStandard {
     public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -28,7 +28,6 @@ public class CompressorDesignStandard extends DesignStandard {
                         compressorFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -61,5 +60,4 @@ public class CompressorDesignStandard extends DesignStandard {
     public void setCompressorFactor(double compressorFactor) {
         this.compressorFactor = compressorFactor;
     }
-
 }

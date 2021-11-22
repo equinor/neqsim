@@ -16,18 +16,15 @@ import org.apache.logging.log4j.*;
  * @author esol @version
  */
 public class HeatOfVaporization {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HeatOfVaporization.class);
 
     /**
      * Creates new TPflash
      */
-    public HeatOfVaporization() {
-    }
+    public HeatOfVaporization() {}
 
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemSrkCPAstatoil(288.15000000, 0.001);//
         testSystem.addComponent("TEG", 1);
         testSystem.createDatabase(true);
@@ -43,6 +40,5 @@ public class HeatOfVaporization {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

@@ -15,9 +15,7 @@ import neqsim.thermo.system.SystemUNIFACpsrk;
  */
 public class TestBinaryHVfitToActivityUNIFAC implements Cloneable {
 
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

@@ -8,8 +8,7 @@ import org.apache.commons.lang.ArrayUtils;
 import java.util.stream.Collectors;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 
-public class CompressorResponse{
-
+public class CompressorResponse {
     public String name = "test";
 
     public Double suctionTemperature;
@@ -28,12 +27,10 @@ public class CompressorResponse{
     public Double massflow;
     public Integer speed;
 
-    public CompressorResponse(){
-
-    }
+    public CompressorResponse() {}
 
 
-    public CompressorResponse(Compressor inputCompressor){
+    public CompressorResponse(Compressor inputCompressor) {
         name = inputCompressor.getName();
         molarMass = inputCompressor.getInStream().getFluid().getMolarMass();
         suctionMassDensity = inputCompressor.getInStream().getFluid().getDensity("kg/m3");
@@ -46,12 +43,12 @@ public class CompressorResponse{
         dischargeTemperature = inputCompressor.getOutStream().getTemperature("C");
         dischargePressure = inputCompressor.getOutStream().getPressure("bara");
         polytropicHead = inputCompressor.getPolytropicFluidHead();
-        polytropicEfficiency =inputCompressor.getPolytropicEfficiency();
+        polytropicEfficiency = inputCompressor.getPolytropicEfficiency();
         power = inputCompressor.getPower("kW");
         speed = inputCompressor.getSpeed();
-        if(inputCompressor.getAntiSurge().isActive()){
-            internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
-        }   
+        if (inputCompressor.getAntiSurge().isActive()) {
+            internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve()
+                    .getSurgeFlow(polytropicHead);
         }
-
     }
+}

@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class WettedWall_CO2_water {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -31,11 +30,11 @@ public class WettedWall_CO2_water {
         pipe.setInitialFlowPattern("annular");
 
         int numberOfLegs = 1, numberOfNodesInLeg = 500;
-        double[] legHeights = { 0, 0 };
-        double[] legPositions = { 0.0, 1.5 };
-        double[] pipeDiameters = { 0.02507588, 0.02507588 };
-        double[] outerTemperature = { 295.0, 295.0 };
-        double[] pipeWallRoughness = { 1.0e-5, 1.0e-5 };
+        double[] legHeights = {0, 0};
+        double[] legPositions = {0.0, 1.5};
+        double[] pipeDiameters = {0.02507588, 0.02507588};
+        double[] outerTemperature = {295.0, 295.0};
+        double[] pipeWallRoughness = {1.0e-5, 1.0e-5};
         pipe.setNumberOfLegs(numberOfLegs);
         pipe.setNumberOfNodesInLeg(numberOfNodesInLeg);
         pipe.setLegPositions(legPositions);

@@ -9,7 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class VSflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
@@ -94,7 +93,6 @@ public class VSflash extends Flash {
     public void run() {
         tpFlash.run();
         solveQ();
-
     }
 
     @Override
@@ -122,6 +120,5 @@ public class VSflash extends Flash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

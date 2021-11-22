@@ -9,11 +9,10 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * @author  esol
+ * @author esol
  * @version
  */
 public interface CompressorInterface extends ProcessEquipmentInterface {
-
     @Override
     public void run();
 

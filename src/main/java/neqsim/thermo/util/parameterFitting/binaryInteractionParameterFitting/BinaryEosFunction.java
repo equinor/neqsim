@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class BinaryEosFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     public BinaryEosFunction() {
@@ -61,5 +60,4 @@ public class BinaryEosFunction extends LevenbergMarquardtFunction {
                     .setBinaryInteractionParameter(0, 1, value[i]);
         }
     }
-
 }

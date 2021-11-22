@@ -13,7 +13,6 @@ import neqsim.processSimulation.processEquipment.valve.ValveInterface;
  */
 public class LNGtankfilling {
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 0.0), 1.02);
         double total1 = 9.5;

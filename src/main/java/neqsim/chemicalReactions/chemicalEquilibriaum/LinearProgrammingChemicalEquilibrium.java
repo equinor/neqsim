@@ -31,7 +31,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class LinearProgrammingChemicalEquilibrium
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     double[] xEts = null;
@@ -93,7 +92,6 @@ public class LinearProgrammingChemicalEquilibrium
 
     // Modified method by Procede
     public double[][] calcA() {
-
         int A_size =
                 components.length - operations.getReactionList().getChemicalReactionList().size();
         if (elements.length < (components.length

@@ -11,18 +11,17 @@ import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
  * @author esol
  */
 public class propaneMultiStageCoolingCycle {
-
     private static final long serialVersionUID = 1000;
 
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
         testSystem.addComponent("propane", 261759.0, "kg/hr");
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        neqsim.thermo.system.SystemInterface testSystemEthane = new neqsim.thermo.system.SystemPrEos((273.15 - 40.0),
-                15.00);
+        neqsim.thermo.system.SystemInterface testSystemEthane =
+                new neqsim.thermo.system.SystemPrEos((273.15 - 40.0), 15.00);
         testSystemEthane.addComponent("ethane", 130759.0, "kg/hr");
         testSystemEthane.createDatabase(true);
         testSystemEthane.setMixingRule(2);
@@ -33,7 +32,8 @@ public class propaneMultiStageCoolingCycle {
         // ThrottlingValve JTvalve1_et = new ThrottlingValve(stream_Ethane);
         // JTvalve1_et.setOutletPressure(5.0);
 
-        neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 60.00);
+        neqsim.thermo.system.SystemInterface testSystem2 =
+                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 60.00);
         testSystem2.addComponent("methane", 0.9);
         testSystem2.addComponent("ethane", 0.08);
         testSystem2.addComponent("propane", 0.1);
@@ -100,7 +100,8 @@ public class propaneMultiStageCoolingCycle {
 
         Stream heatEx22stream = new Stream(heatEx22.getOutStream(0));
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
 
         operations.add(stream_Ethane);
         operations.add(stream_1);
@@ -136,13 +137,11 @@ public class propaneMultiStageCoolingCycle {
         // heatExPropaneOut.displayResult();
 
         /*
-         * heatEx1.getOutStream(0).displayResult();
-         * heatEx1.getInStream(1).displayResult();
+         * heatEx1.getOutStream(0).displayResult(); heatEx1.getInStream(1).displayResult();
          * heatEx1.getOutStream(1).displayResult(); System.out.println("heatex duty " +
          * heatEx1.getDuty()); heatEx2.run(); heatEx2.getOutStream(0).displayResult();
-         * heatEx2.getInStream(1).displayResult();
-         * heatEx2.getOutStream(1).displayResult(); System.out.println("heatex duty " +
-         * heatEx2.getDuty());
+         * heatEx2.getInStream(1).displayResult(); heatEx2.getOutStream(1).displayResult();
+         * System.out.println("heatex duty " + heatEx2.getDuty());
          */
         // stream_3.displayResult();
         // compressor1.displayResult();
@@ -159,6 +158,5 @@ public class propaneMultiStageCoolingCycle {
         // System.out.println("cooler2 duty " + cooler2.getEnergyInput()/1.0e3 + " kW");
         // System.out.println("cooler3 duty " + cooler3.getEnergyInput()/1.0e3 + " kW");
         // System.out.println("heater duty " + heater.getEnergyInput());
-
     }
 }

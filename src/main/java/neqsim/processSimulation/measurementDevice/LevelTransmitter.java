@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author ESOL
  */
 public class LevelTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected Separator separator = null;

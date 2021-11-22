@@ -13,7 +13,6 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  */
 public class PipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.onePhaseFlowVisualization.OnePhaseFlowVisualization {
-
     private static final long serialVersionUID = 1000;
 
     double[][] pressurePoint = new double[10][10];
@@ -25,16 +24,17 @@ public class PipeFlowVisualization extends
     neqsim.dataPresentation.visAD.visAdInterface plot;
 
     /** Creates new PipeFlowVisualization */
-    public PipeFlowVisualization() {
-    }
+    public PipeFlowVisualization() {}
 
     public PipeFlowVisualization(int nodes, int timeSteps) {
         flowSystem = new neqsim.fluidMechanics.flowSystem.FlowSystemInterface[timeSteps];
-        flowNodes = new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.onePhasePipeFlowNodeVisualization.OnePhasePipeFlowNodeVisualization[timeSteps][nodes];
+        flowNodes =
+                new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.onePhasePipeFlowNodeVisualization.OnePhasePipeFlowNodeVisualization[timeSteps][nodes];
         absTime = new double[timeSteps];
         for (int i = 0; i < timeSteps; i++) {
             for (int j = 0; j < nodes; j++) {
-                flowNodes[i][j] = new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.onePhasePipeFlowNodeVisualization.OnePhasePipeFlowNodeVisualization();
+                flowNodes[i][j] =
+                        new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.onePhasePipeFlowNodeVisualization.OnePhasePipeFlowNodeVisualization();
             }
         }
         System.out.println("nodes " + nodes);
@@ -42,13 +42,14 @@ public class PipeFlowVisualization extends
     }
 
     @Override
-	public void setPoints() {
+    public void setPoints() {
         pressurePoint = new double[time][flowNodes[0].length];
         temperaturePoint = new double[time][flowNodes[0].length];
         velocityPoint = new double[time][flowNodes[0].length];
         xPlace = new double[flowNodes[0].length];
         timeArray = new double[time];
-        bulkComposition = new double[flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+        bulkComposition =
+                new double[flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
 
         for (int j = 0; j < time; j++) {
             timeArray[j] = absTime[j];
@@ -86,15 +87,19 @@ public class PipeFlowVisualization extends
 
             if (pressurePoint.length > 1) {
                 System.out.println("3D plot ");
-                plot = new neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]", "title[2]");
-                ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160, points[0].length, 10, 20,
-                        points.length);
+                plot = new neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]",
+                        "title[2]");
+                ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160,
+                        points[0].length, 10, 20, points.length);
                 ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setZvals(points);
             } else {
                 System.out.println("2D plot ");
-                plot = new neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]", "title[2]");
-                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setLineXYVals(xPlace, points[0]);
-                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace, points[0]);
+                plot = new neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]",
+                        "title[2]");
+                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot)
+                        .setLineXYVals(xPlace, points[0]);
+                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace,
+                        points[0]);
             }
         } catch (Exception e) {
             System.out.println(e.toString());
@@ -103,7 +108,7 @@ public class PipeFlowVisualization extends
     }
 
     @Override
-	public void displayResult(String name) {
+    public void displayResult(String name) {
         double[][] points = new double[1][1];
         setPoints();
 
@@ -125,15 +130,19 @@ public class PipeFlowVisualization extends
 
             if (pressurePoint.length > 1) {
                 System.out.println("3D plot ");
-                plot = new neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]", "title[2]");
-                ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160, points[0].length, 10, 20,
-                        points.length);
+                plot = new neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]",
+                        "title[2]");
+                ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160,
+                        points[0].length, 10, 20, points.length);
                 ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setZvals(points);
             } else {
                 System.out.println("2D plot ");
-                plot = new neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]", "title[2]");
-                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setLineXYVals(xPlace, points[0]);
-                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace, points[0]);
+                plot = new neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]",
+                        "title[2]");
+                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot)
+                        .setLineXYVals(xPlace, points[0]);
+                ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace,
+                        points[0]);
             }
             plot.init();
         } catch (Exception e) {
@@ -143,9 +152,10 @@ public class PipeFlowVisualization extends
     }
 
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         calcPoints(name);
-        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D();
+        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D file =
+                new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF3D.NetCdf3D();
         file.setOutputFileName(name);
         file.setXvalues(timeArray, "time", "sec");
         file.setYvalues(xPlace, "length", "meter");
@@ -159,5 +169,4 @@ public class PipeFlowVisualization extends
         }
         file.createFile();
     }
-
 }

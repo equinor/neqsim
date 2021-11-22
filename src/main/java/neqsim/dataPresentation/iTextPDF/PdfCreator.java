@@ -11,7 +11,6 @@ package neqsim.dataPresentation.iTextPDF;
  * @author ESOL
  */
 public class PdfCreator {
-
     private static final long serialVersionUID = 1000;
     // Rectangle pageSize = new Rectangle(144, 720);
     // Document document = new Document(pageSize);
@@ -28,7 +27,8 @@ public class PdfCreator {
                 docName = System.getProperty("NeqSim.home") + "/work/neqsimResults.pdf";
             }
 
-            com.lowagie.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(docName));
+            com.lowagie.text.pdf.PdfWriter.getInstance(document,
+                    new java.io.FileOutputStream(docName));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,5 +54,4 @@ public class PdfCreator {
             e.printStackTrace();
         }
     }
-
 }

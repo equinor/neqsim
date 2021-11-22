@@ -13,29 +13,26 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TPflashMethanolWaterPropane {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
     /**
      * Creates new TPflash
      */
-    public TPflashMethanolWaterPropane() {
-    }
+    public TPflashMethanolWaterPropane() {}
 
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemSrkCPA(300, 10.01325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         /*
-         * testSystem.addComponent("methane", 150.0e-2);
-         * testSystem.addComponent("propane", 150.0e-3);
-         * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
+         * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane",
+         * 150.0e-3); testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
          * 0.5);
          * 
          * testSystem.createDatabase(true); testSystem.setMixingRule(10);

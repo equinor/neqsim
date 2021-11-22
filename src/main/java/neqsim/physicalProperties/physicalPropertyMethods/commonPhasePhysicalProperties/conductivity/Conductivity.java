@@ -12,7 +12,6 @@ abstract class Conductivity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
@@ -38,5 +37,4 @@ abstract class Conductivity extends
 
         return properties;
     }
-
 }

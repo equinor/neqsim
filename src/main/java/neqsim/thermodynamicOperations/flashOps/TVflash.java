@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class TVflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Vspec = 0;

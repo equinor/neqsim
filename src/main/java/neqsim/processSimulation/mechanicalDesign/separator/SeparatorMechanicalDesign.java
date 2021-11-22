@@ -20,7 +20,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     double wallThickness = 0.0;
@@ -34,7 +33,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     @Override
     public void readDesignSpecifications() {
-
         super.readDesignSpecifications();
         if (getDesignStandard().containsKey("material plate design codes")) {
             ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
@@ -70,12 +68,10 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
             System.out.println("no separator process design specified......");
             return;
         }
-
     }
 
     @Override
     public void displayResults() {
-
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
@@ -286,5 +282,4 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
-
 }

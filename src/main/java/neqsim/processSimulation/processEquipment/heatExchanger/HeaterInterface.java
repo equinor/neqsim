@@ -11,7 +11,6 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
  * @version
  */
 public interface HeaterInterface {
-
     public void setName(String name);
 
     public String getName();

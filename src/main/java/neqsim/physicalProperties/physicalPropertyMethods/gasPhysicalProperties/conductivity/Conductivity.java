@@ -13,25 +13,25 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-abstract class Conductivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
+abstract class Conductivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
     double conductivity = 0;
 
     /** Creates new Conductivity */
-    public Conductivity() {
-    }
+    public Conductivity() {}
 
-    public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
+    public Conductivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Conductivity properties = null;
 
         try {
@@ -42,5 +42,4 @@ abstract class Conductivity
 
         return properties;
     }
-
 }

@@ -18,12 +18,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class TestTwuCoon {
-
     static Logger logger = LogManager.getLogger(TestTwuCoon.class);
 
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

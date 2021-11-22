@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestChungFit {
-
     static Logger logger = LogManager.getLogger(TestChungFit.class);
 
     public static void main(String[] args) {
@@ -30,7 +29,6 @@ public class TestChungFit {
                                                                                           // ComponentName='MDEA*'");
 
         try {
-
             while (dataSet.next()) {
                 ChungFunction function = new ChungFunction();
                 double guess[] = {0.3211};
@@ -64,6 +62,5 @@ public class TestChungFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

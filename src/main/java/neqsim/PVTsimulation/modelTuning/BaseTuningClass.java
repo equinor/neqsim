@@ -7,7 +7,6 @@ import neqsim.PVTsimulation.simulation.SimulationInterface;
  * @author esol
  */
 public class BaseTuningClass implements TuningInterface {
-
     private static final long serialVersionUID = 1000;
 
     private SimulationInterface simulation = null;

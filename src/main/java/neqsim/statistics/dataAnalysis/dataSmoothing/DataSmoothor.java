@@ -9,11 +9,10 @@ package neqsim.statistics.dataAnalysis.dataSmoothing;
 import Jama.*;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class DataSmoothor {
-
     private static final long serialVersionUID = 1000;
 
     double[] nonSmoothedNumbers, smoothedNumbers, cCoef;
@@ -24,8 +23,7 @@ public class DataSmoothor {
     double sum = 0, fac = 0;
 
     /** Creates new DataSmoothor */
-    public DataSmoothor() {
-    }
+    public DataSmoothor() {}
 
     public DataSmoothor(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m) {
         this.nonSmoothedNumbers = new double[nonSmoothedNumbers.length];
@@ -45,7 +43,8 @@ public class DataSmoothor {
     }
 
     public void findCoefs() {
-        if (nonSmoothedNumbers.length < (nl + nr + 1) || nl < 0 || nr < 0 || ld > m || nl + nr < m) {
+        if (nonSmoothedNumbers.length < (nl + nr + 1) || nl < 0 || nr < 0 || ld > m
+                || nl + nr < m) {
             System.err.println("Wrong input to DataSmoothor!");
         }
 
@@ -101,7 +100,6 @@ public class DataSmoothor {
             cCoef[kk] = sum;
         }
         // new Matrix(cCoef,1).print(10,2);
-
     }
 
     public void setSmoothedNumbers() {
@@ -109,7 +107,8 @@ public class DataSmoothor {
             smoothedNumbers[i] = 0;
             smoothedNumbers[i] = cCoef[0] * nonSmoothedNumbers[i];
             for (int j = 0; j < nl; j++) {
-                smoothedNumbers[i] += cCoef[nonSmoothedNumbers.length - 1 - j] * nonSmoothedNumbers[i - j - 1];
+                smoothedNumbers[i] +=
+                        cCoef[nonSmoothedNumbers.length - 1 - j] * nonSmoothedNumbers[i - j - 1];
             }
             for (int j = 0; j < nr; j++) {
                 smoothedNumbers[i] += cCoef[j + 1] * nonSmoothedNumbers[i + j - 1];
@@ -122,7 +121,7 @@ public class DataSmoothor {
     }
 
     public static void main(String args[]) {
-        double[] numbers = { 10, 11, 12, 13, 14, 15, 15.5, 15, 19, 14, 14, 13, 12, 12, 11, 10, 9, 8 };
+        double[] numbers = {10, 11, 12, 13, 14, 15, 15.5, 15, 19, 14, 14, 13, 12, 12, 11, 10, 9, 8};
         DataSmoothor test = new DataSmoothor(numbers, 3, 3, 0, 4);
         Matrix data = new Matrix(test.getSmoothedNumbers(), 1);
         data.print(10, 2);

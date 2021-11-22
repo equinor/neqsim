@@ -11,7 +11,6 @@ import java.sql.Statement;
  */
 public class AspenIP21Database
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected Connection databaseConnection = null;
@@ -19,7 +18,6 @@ public class AspenIP21Database
     private Statement statement = null;
 
     public AspenIP21Database() {
-
         try {
             if (dataBaseType.equals("Karsto")) {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor()
@@ -35,7 +33,6 @@ public class AspenIP21Database
             setStatement(databaseConnection.createStatement());
         } catch (Exception ex) {
             System.out.println("SQLException " + ex.getMessage());
-
         }
     }
 
@@ -90,7 +87,6 @@ public class AspenIP21Database
         ResultSet dataSet = database.getResultSet("Karsto", "....'");
         try {
             while (dataSet.next()) {
-
                 System.out.println("dataset " + dataSet.getString(4));
                 System.out.println("dataset value " + dataSet.getDouble("..."));
             }

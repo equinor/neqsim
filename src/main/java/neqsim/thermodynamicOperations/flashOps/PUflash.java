@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class PUflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Uspec = 0;
@@ -76,5 +75,4 @@ public class PUflash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

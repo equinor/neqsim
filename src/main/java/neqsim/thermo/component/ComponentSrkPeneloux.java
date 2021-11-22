@@ -13,23 +13,22 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
  * @version
  */
 public class ComponentSrkPeneloux extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
-    public ComponentSrkPeneloux() {
-    }
+    public ComponentSrkPeneloux() {}
 
     public ComponentSrkPeneloux(double moles) {
         numberOfMoles = moles;
     }
 
-    public ComponentSrkPeneloux(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentSrkPeneloux(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
-        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-                / criticalPressure;
+        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
+                * criticalTemperature / criticalPressure;
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         // double volCorr = getVolumeCorrection() / 1.0e5 * 0.0;
         // b -= volCorr;
@@ -39,19 +38,18 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         // atractiveParameter = new AtractiveTermSchwartzentruber(this);
         setAtractiveParameter(new AtractiveTermSrk(this));
 
-        double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
-                -0.1611763157 };
+        double[] surfTensInfluenceParamtemp =
+                {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
-    public ComponentSrkPeneloux(int number, double TC, double PC, double M, double a, double moles) {
+    public ComponentSrkPeneloux(int number, double TC, double PC, double M, double a,
+            double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
     @Override
-	public Object clone() {
-
+    public Object clone() {
         ComponentSrkPeneloux clonedComponent = null;
         try {
             clonedComponent = (ComponentSrkPeneloux) super.clone();
@@ -63,12 +61,13 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     }
 
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (ionicCharge != 0) {
             return 0.0;
         }
@@ -81,9 +80,8 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     }
 
     @Override
-	public double calcb() {
+    public double calcb() {
         double volCorr = getVolumeCorrection();
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure - volCorr;
     }
-
 }

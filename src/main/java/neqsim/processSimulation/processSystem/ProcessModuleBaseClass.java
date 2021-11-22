@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public abstract class ProcessModuleBaseClass implements ModuleInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String preferedThermodynamicModel = "", moduleName = "";
@@ -120,9 +119,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
         return getThermoSystem();
     }
 
-    public void setSpecification(String specificationName, double value) {
-
-    }
+    public void setSpecification(String specificationName, double value) {}
 
     /**
      * @return the specification
@@ -156,9 +153,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     }
 
     @Override
-    public void setPressure(double pressure) {
-
-    }
+    public void setPressure(double pressure) {}
 
     @Override
     public double getEntropyProduction(String unit) {
@@ -176,9 +171,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     }
 
     @Override
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
     @Override
     public String getConditionAnalysisMessage() {

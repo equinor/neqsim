@@ -11,7 +11,6 @@ abstract class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
@@ -28,7 +27,6 @@ abstract class Diffusivity extends
         binaryDiffusionCoeffisients = new double[liquidPhase.getPhase()
                 .getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
-
     }
 
     @Override

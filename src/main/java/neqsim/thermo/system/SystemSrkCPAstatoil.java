@@ -12,16 +12,14 @@ import neqsim.thermo.phase.PhaseSrkCPAs;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the CPA-EOS of Equinor
- * equation of state
+ * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state
  */
 public class SystemSrkCPAstatoil extends SystemSrkCPAs {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     // SystemSrkEos clonedSystem;
@@ -56,10 +54,10 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     /**
      * Constructor of a fluid object using the CPA-EoS version of Equinor
      *
-     * @param T          The temperature in unit Kelvin
-     * @param P          The pressure in unit bara (absolute pressure)
-     * @param solidCheck a boolean variable specifying if solid phase check and
-     *                   calculation should be done
+     * @param T The temperature in unit Kelvin
+     * @param P The pressure in unit bara (absolute pressure)
+     * @param solidCheck a boolean variable specifying if solid phase check and calculation should
+     *        be done
      */
     public SystemSrkCPAstatoil(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
@@ -90,7 +88,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemSrkCPAstatoil clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPAstatoil) super.clone();
@@ -104,5 +102,4 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
         //
         return clonedSystem;
     }
-
 }

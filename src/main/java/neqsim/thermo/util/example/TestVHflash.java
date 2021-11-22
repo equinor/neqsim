@@ -13,27 +13,26 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestVHflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestVHflash.class);
 
     /** Creates new TPflash */
-    public TestVHflash() {
-    }
+    public TestVHflash() {}
 
     public static void main(String args[]) {
-
         double pressureInTank = 1.01325; // Pa
         double temperatureInTank = 293.15;
         double totalMolesInTank = 136000 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
         double molefractionNitrogenInTank = 0.95;
 
         double molesInjectedLNG = 200000.0;
-        double molesInjecedVacumBreakerGas = 18 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
+        double molesInjecedVacumBreakerGas =
+                18 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
 
         SystemInterface testSystem = new SystemSrkEos(temperatureInTank, pressureInTank);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -50,7 +49,8 @@ public class TestVHflash {
 
         SystemInterface testSystem3 = new SystemSrkEos(temperatureInTank, pressureInTank);
         ThermodynamicOperations testOps3 = new ThermodynamicOperations(testSystem3);
-        testSystem3.addComponent("methane", totalMolesInTank * (1.0 - molefractionNitrogenInTank) + molesInjectedLNG);
+        testSystem3.addComponent("methane",
+                totalMolesInTank * (1.0 - molefractionNitrogenInTank) + molesInjectedLNG);
         testSystem3.addComponent("nitrogen", totalMolesInTank * molefractionNitrogenInTank);
         testSystem3.createDatabase(true);
         testSystem3.setMixingRule(2);
@@ -73,41 +73,46 @@ public class TestVHflash {
             // logger.info("Cp " +
             // testSystem.getPhase(0).getCp()/testSystem.getPhase(0).getNumberOfMolesInPhase());
 
-//
-            logger.info("Volume Nitrogen " + testSystem.getPhase(0).getMolarMass() * testSystem.getNumberOfMoles()
-                    / testSystem.getPhase(0).getPhysicalProperties().getDensity());
-            logger.info("Volume Liquid Methane " + testSystem2.getPhase(0).getMolarMass()
-                    * testSystem2.getNumberOfMoles() / testSystem2.getPhase(0).getPhysicalProperties().getDensity());
-            logger.info("Volume Nitrogen from vacum breaker system " + testSystem4.getPhase(0).getMolarMass()
-                    * testSystem4.getNumberOfMoles() / testSystem4.getPhase(0).getPhysicalProperties().getDensity());
-//
-            testOps3.VHflash(testSystem.getVolume(), testSystem.getEnthalpy() + testSystem2.getEnthalpy());
+            //
+            logger.info("Volume Nitrogen "
+                    + testSystem.getPhase(0).getMolarMass() * testSystem.getNumberOfMoles()
+                            / testSystem.getPhase(0).getPhysicalProperties().getDensity());
+            logger.info("Volume Liquid Methane "
+                    + testSystem2.getPhase(0).getMolarMass() * testSystem2.getNumberOfMoles()
+                            / testSystem2.getPhase(0).getPhysicalProperties().getDensity());
+            logger.info("Volume Nitrogen from vacum breaker system "
+                    + testSystem4.getPhase(0).getMolarMass() * testSystem4.getNumberOfMoles()
+                            / testSystem4.getPhase(0).getPhysicalProperties().getDensity());
+            //
+            testOps3.VHflash(testSystem.getVolume(),
+                    testSystem.getEnthalpy() + testSystem2.getEnthalpy());
             testSystem3.display();
-//            logger.info("total number of moles " + testSystem3.getTotalNumberOfMoles() );
+            // logger.info("total number of moles " + testSystem3.getTotalNumberOfMoles() );
         } catch (Exception e) {
             logger.error(e.toString());
         }
-//        logger.info("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
+        // logger.info("JT " + testSystem.getPhase(0).getJouleThomsonCoefficient());
         // logger.info("wt%MEG " +
         // testSystem.getPhase(1).getComponent("MEG").getMolarMass()*testSystem.getPhase(1).getComponent("MEG").getx()/testSystem.getPhase(1).getMolarMass());
-//        logger.info("fug" +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
+        // logger.info("fug"
+        // +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
     }
 }
-//        testSystem = testSystem.setModel("GERG-water");
-//        testSystem.setMixingRule(8);
+// testSystem = testSystem.setModel("GERG-water");
+// testSystem.setMixingRule(8);
 //
-//        testSystem = testSystem.autoSelectModel();
-//        testSystem.autoSelectMixingRule();
-//          testSystem.setMultiPhaseCheck(true);
-//        testOps.setSystem(testSystem);
+// testSystem = testSystem.autoSelectModel();
+// testSystem.autoSelectMixingRule();
+// testSystem.setMultiPhaseCheck(true);
+// testOps.setSystem(testSystem);
 //
-//        logger.info("new model name " + testSystem.getModelName());
-//        try{
-//            testOps.TPflash();
-//            testSystem.display();
-//        }
-//        catch(Exception e){
-//            logger.info(e.toString());
-//        }
-//    }
-//}
+// logger.info("new model name " + testSystem.getModelName());
+// try{
+// testOps.TPflash();
+// testSystem.display();
+// }
+// catch(Exception e){
+// logger.info(e.toString());
+// }
+// }
+// }

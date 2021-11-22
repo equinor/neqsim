@@ -10,7 +10,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 abstract class HuronVidalFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
 
@@ -63,6 +62,5 @@ abstract class HuronVidalFunction extends LevenbergMarquardtFunction {
             ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
                     .setHValphaParameter(1, 0, value);
         }
-
     }
 }

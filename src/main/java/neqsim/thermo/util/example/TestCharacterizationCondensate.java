@@ -16,15 +16,13 @@ import org.apache.logging.log4j.*;
  * @author esol @version
  */
 public class TestCharacterizationCondensate {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCharacterizationCondensate.class);
 
     /**
      * Creates new TPflash
      */
-    public TestCharacterizationCondensate() {
-    }
+    public TestCharacterizationCondensate() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 50.0);
@@ -71,7 +69,7 @@ public class TestCharacterizationCondensate {
         // testSystem.addPlusFraction("C11", 1.44, 231.0 / 1000, 0.87);
         testSystem.setHeavyTBPfractionAsPlusFraction();
         testSystem.getCharacterization().characterisePlusFraction();
-//testSystem.setHydrateCheck(true);
+        // testSystem.setHydrateCheck(true);
         testSystem.createDatabase(true);
         logger.info("start benchmark TPflash......");
         long time = System.currentTimeMillis();
@@ -85,7 +83,7 @@ public class TestCharacterizationCondensate {
         try {
             testOps.TPflash();
             // testOps.hydrateFormationTemperature();
-//            testOps.dewPointTemperatureFlash();
+            // testOps.dewPointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString());
         }
@@ -97,7 +95,7 @@ public class TestCharacterizationCondensate {
         try {
             testOps.TPflash();
             // testOps.hydrateFormationTemperature();
-//            testOps.dewPointTemperatureFlash();
+            // testOps.dewPointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString());
         }
@@ -113,11 +111,10 @@ public class TestCharacterizationCondensate {
          * System.out.println("molar mass "
          * +testSystem.getPhase(0).getComponent("PC4_PC").getMolarMass() );
          * 
-         * testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4,
-         * 0.01, 0.01, 0.02, 0.02, 0.01 ,0.01, 0.01, 0.01 ,0.01, 0.01, 0.2 }); try {
-         * testOps.TPflash(); // testOps.hydrateFormationTemperature(); //
-         * testOps.dewPointTemperatureFlash(); } catch (Exception e) {
-         * logger.error(e.toString()); } testSystem.display();
+         * testSystem.setMolarCompositionOfPlusFluid(new double[]{0.02, 0.005, 0.4, 0.01, 0.01,
+         * 0.02, 0.02, 0.01 ,0.01, 0.01, 0.01 ,0.01, 0.01, 0.2 }); try { testOps.TPflash(); //
+         * testOps.hydrateFormationTemperature(); // testOps.dewPointTemperatureFlash(); } catch
+         * (Exception e) { logger.error(e.toString()); } testSystem.display();
          */
     }
 }

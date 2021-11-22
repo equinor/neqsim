@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class SaturateWithWater extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SaturateWithWater.class);
 
@@ -26,7 +25,6 @@ public class SaturateWithWater extends QfuncFlash {
 
     @Override
     public void run() {
-
         if (!system.getPhase(0).hasComponent("water")) {
             system.addComponent("water", system.getTotalNumberOfMoles());
             system.createDatabase(true);

@@ -16,24 +16,23 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public interface MixerInterface extends ProcessEquipmentInterface {
-
     @Override
-	public void run();
+    public void run();
 
     public void addStream(StreamInterface newStream);
 
     public Stream getOutStream();
 
     @Override
-	public void setName(String name);
+    public void setName(String name);
 
     public void replaceStream(int i, StreamInterface newStream);
 
     @Override
-	public String getName();
+    public String getName();
 
     @Override
-	public SystemInterface getThermoSystem();
+    public SystemInterface getThermoSystem();
 
     public void runTransient();
 }

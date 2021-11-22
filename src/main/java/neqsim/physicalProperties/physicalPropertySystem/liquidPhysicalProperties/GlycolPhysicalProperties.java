@@ -18,12 +18,10 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new GlycolPhysicalProperties */
-    public GlycolPhysicalProperties() {
-    }
+    public GlycolPhysicalProperties() {}
 
     public GlycolPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {

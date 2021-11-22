@@ -13,7 +13,6 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * @version
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
-
     double getHcpatot();
 
     int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2);

@@ -10,7 +10,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  */
 public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     Stream inletStream;
@@ -34,27 +33,27 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public void run() {
-    	boolean changeBack = false;
+    public void run() {
+        boolean changeBack = false;
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
-        if(multiPhase && !thermoSystem.doMultiPhaseCheck()) {
-        	thermoSystem.setMultiPhaseCheck(true);  
-        	changeBack = true;
+        if (multiPhase && !thermoSystem.doMultiPhaseCheck()) {
+            thermoSystem.setMultiPhaseCheck(true);
+            changeBack = true;
         }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.saturateWithWater();
         thermoSystem.init(3);
-        if(changeBack) {
-        	thermoSystem.setMultiPhaseCheck(false);        
+        if (changeBack) {
+            thermoSystem.setMultiPhaseCheck(false);
         }
         outStream.setThermoSystem(thermoSystem);
     }
 
-	public boolean isMultiPhase() {
-		return multiPhase;
-	}
+    public boolean isMultiPhase() {
+        return multiPhase;
+    }
 
-	public void setMultiPhase(boolean multiPhase) {
-		this.multiPhase = multiPhase;
-	}
+    public void setMultiPhase(boolean multiPhase) {
+        this.multiPhase = multiPhase;
+    }
 }

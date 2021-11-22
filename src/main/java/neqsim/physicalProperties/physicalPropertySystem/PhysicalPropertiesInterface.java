@@ -8,14 +8,14 @@ package neqsim.physicalProperties.physicalPropertySystem;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface PhysicalPropertiesInterface extends Cloneable {
-
     public double getPureComponentViscosity(int i);
 
-    public void setMixingRule(neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
+    public void setMixingRule(
+            neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface mixingRule);
 
     public neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface getMixingRule();
 

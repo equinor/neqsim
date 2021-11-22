@@ -12,12 +12,11 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author esol
  */
 public class propaneCoolingCycle {
-
     private static final long serialVersionUID = 1000;
 
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.700);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.700);
         testSystem.addComponent("propane", 4759.0, "kg/hr");
         testSystem.createDatabase(true);
 
@@ -52,7 +51,8 @@ public class propaneCoolingCycle {
         heater.setSpecification("out stream");
         heater.setOutStream(stream_1);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
 
         operations.add(JTvalve);
@@ -76,12 +76,11 @@ public class propaneCoolingCycle {
         JTvalve.getOutStream().displayResult();
         stream_2.displayResult();
 
-        System.out.println("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW " + " compressor temperature "
-                + compressor1.getOutTemperature());
+        System.out.println("compressor work" + compressor1.getEnergy() / 1.0e3 + " kW "
+                + " compressor temperature " + compressor1.getOutTemperature());
         // System.out.println("compressor isentropic ef " +
         // compressor1.getIsentropicEfficiency());
         System.out.println("cooler duty " + cooler.getEnergyInput() / 1.0e3 + " kW");
         System.out.println("heater duty " + heater.getEnergyInput() / 1.0e3 + " kW");
-
     }
 }

@@ -8,7 +8,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class ChungFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     public ChungFunction() {

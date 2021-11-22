@@ -13,17 +13,16 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestGEHenry {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestGEHenry.class);
 
     /** Creates new TPflash */
-    public TestGEHenry() {
-    }
+    public TestGEHenry() {}
 
     public static void main(String args[]) {
         //
@@ -46,5 +45,4 @@ public class TestGEHenry {
         }
         testSystem.display();
     }
-
 }

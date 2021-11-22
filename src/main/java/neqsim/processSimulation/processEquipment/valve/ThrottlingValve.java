@@ -17,7 +17,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String name = new String();
@@ -37,8 +36,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     /**
      * Creates new ThrottelValve
      */
-    public ThrottlingValve() {
-    }
+    public ThrottlingValve() {}
 
     public ThrottlingValve(StreamInterface inletStream) {
         setInletStream(inletStream);
@@ -54,12 +52,12 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
     @Override
-	public void setInletStream(StreamInterface inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -67,22 +65,22 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     }
 
     @Override
-	public double getOutletPressure() {
+    public double getOutletPressure() {
         return this.pressure;
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
     @Override
-	public double getInletPressure() {
+    public double getInletPressure() {
         return inletStream.getThermoSystem().getPressure();
     }
 
     @Override
-	public void setPressure(double pressure) {
+    public void setPressure(double pressure) {
         setOutletPressure(pressure);
     }
 
@@ -91,7 +89,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     }
 
     @Override
-	public void setOutletPressure(double pressure) {
+    public void setOutletPressure(double pressure) {
         this.pressure = pressure;
         getOutStream().getThermoSystem().setPressure(pressure, pressureUnit);
     }
@@ -103,13 +101,12 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     }
 
     @Override
-	public StreamInterface getOutStream() {
+    public StreamInterface getOutStream() {
         return outStream;
     }
 
     @Override
-	public void run() {
-
+    public void run() {
         // System.out.println("valve running..");
         // outStream.setSpecification(inletStream.getSpecification());
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -128,7 +125,8 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         }
         // System.out.println("enthalpy inn.." + enthalpy);
         // thermoOps.PHflash(enthalpy, 0);
-        if (isIsoThermal() || Math.abs(pressure - inletStream.getThermoSystem().getPressure()) < 1e-6) {
+        if (isIsoThermal()
+                || Math.abs(pressure - inletStream.getThermoSystem().getPressure()) < 1e-6) {
             thermoOps.TPflash();
         } else {
             thermoOps.PHflash(enthalpy, 0);
@@ -140,14 +138,17 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         // inletStream.getThermoSystem().getDensity());
 
         if (!valveCvSet) {
-            Cv = inletStream.getThermoSystem().getTotalNumberOfMoles() / (getPercentValveOpening() / 100.0
-                    * Math.sqrt(
-                            (inletStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
+            Cv = inletStream.getThermoSystem().getTotalNumberOfMoles()
+                    / (getPercentValveOpening() / 100.0
+                            * Math.sqrt((inletStream.getThermoSystem().getPressure()
+                                    - outStream.getThermoSystem().getPressure())
                                     / thermoSystem.getDensity()));
         }
-        molarFlow = getCv() * getPercentValveOpening() / 100.0
-                * Math.sqrt((inletStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-                        / thermoSystem.getDensity());
+        molarFlow =
+                getCv() * getPercentValveOpening() / 100.0
+                        * Math.sqrt((inletStream.getThermoSystem().getPressure()
+                                - outStream.getThermoSystem().getPressure())
+                                / thermoSystem.getDensity());
         if (Math.abs(pressure - inletStream.getThermoSystem().getPressure()) < 1e-6) {
             molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
         }
@@ -161,27 +162,28 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         outStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
         outStream.getThermoSystem().init(3);
         // outStream.run();
-//        Cv = inletStream.getThermoSystem().getTotalNumberOfMoles()/Math.sqrt(inletStream.getPressure()-outStream.getPressure());
-//        molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
+        // Cv =
+        // inletStream.getThermoSystem().getTotalNumberOfMoles()/Math.sqrt(inletStream.getPressure()-outStream.getPressure());
+        // molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display(getName());
     }
-    
+
     @Override
-    public String[][] getResultTable(){
-    	return thermoSystem.getResultTable();
+    public String[][] getResultTable() {
+        return thermoSystem.getResultTable();
     }
-    
+
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         runController(dt);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -198,16 +200,18 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         }
         outStream.setThermoSystem(thermoSystem);
         // if(getPercentValveOpening()<99){
-        molarFlow = getCv() * getPercentValveOpening() / 100.0
-                * Math.sqrt((inletStream.getThermoSystem().getPressure() - outStream.getThermoSystem().getPressure())
-                        / thermoSystem.getDensity());
+        molarFlow =
+                getCv() * getPercentValveOpening() / 100.0
+                        * Math.sqrt((inletStream.getThermoSystem().getPressure()
+                                - outStream.getThermoSystem().getPressure())
+                                / thermoSystem.getDensity());
         // System.out.println("molar flow " + molarFlow);
         // System.out.println("Cv " + getCv());
         // System.out.println("density " + inletStream.getThermoSystem().getDensity());
-//
+        //
         // 8 } else {
         // molarFlow=inletStream.getThermoSystem().getTotalNumberOfMoles();
-//        }
+        // }
 
         inletStream.getThermoSystem().setTotalNumberOfMoles(molarFlow);
         inletStream.getThermoSystem().init(1);
@@ -240,23 +244,23 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     }
 
     @Override
-	public double getCv() {
+    public double getCv() {
         return Cv;
     }
 
     @Override
-	public void setCv(double Cv) {
+    public void setCv(double Cv) {
         this.Cv = Cv;
         valveCvSet = true;
     }
 
     @Override
-	public double getPercentValveOpening() {
+    public double getPercentValveOpening() {
         return percentValveOpening;
     }
 
     @Override
-	public void setPercentValveOpening(double percentValveOpening) {
+    public void setPercentValveOpening(double percentValveOpening) {
         this.percentValveOpening = percentValveOpening;
     }
 
@@ -269,24 +273,25 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     }
 
     @Override
-	public boolean isIsoThermal() {
+    public boolean isIsoThermal() {
         return isoThermal;
     }
 
     @Override
-	public void setIsoThermal(boolean isoThermal) {
+    public void setIsoThermal(boolean isoThermal) {
         this.isoThermal = isoThermal;
     }
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         outStream.getThermoSystem().init(3);
         inletStream.getThermoSystem().init(3);
-        return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
+        return outStream.getThermoSystem().getEntropy(unit)
+                - inletStream.getThermoSystem().getEntropy(unit);
     }
 
     @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double sourrondingTemperature) {
         outStream.getThermoSystem().init(3);
         inletStream.getThermoSystem().init(3);
         return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)

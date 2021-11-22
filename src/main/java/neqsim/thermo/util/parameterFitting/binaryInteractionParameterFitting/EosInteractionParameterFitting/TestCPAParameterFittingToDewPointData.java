@@ -17,14 +17,12 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestCPAParameterFittingToDewPointData {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPAParameterFittingToDewPointData.class);
 
     public TestCPAParameterFittingToDewPointData() {}
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

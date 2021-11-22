@@ -18,12 +18,10 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class WaterPhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new WaterPhysicalProperties */
-    public WaterPhysicalProperties() {
-    }
+    public WaterPhysicalProperties() {}
 
     public WaterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {

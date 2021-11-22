@@ -13,7 +13,6 @@ import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
  * @version
  */
 public interface MeasurementDeviceInterface extends java.io.Serializable {
-
     public void displayResult();
 
     public String getName();

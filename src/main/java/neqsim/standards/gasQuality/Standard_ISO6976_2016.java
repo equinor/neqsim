@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class Standard_ISO6976_2016 extends Standard_ISO6976 {
-
     private static final long serialVersionUID = 1000;
 
     // metering conditions
@@ -30,8 +29,10 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     double[] bsqrt0, bsqrt15, bsqrt20, bsqrt60F;
     double[] Hsup0, Hsup15, Hsup20, Hsup25, Hsup60F;
     double[] Hinf0, Hinf15, Hinf20, Hinf25, Hinf60F;
-    double HsupIdeal0 = 0.0, HsupIdeal15 = 0.0, HsupIdeal20 = 0.0, HsupIdeal25 = 0.0, HsupIdeal60F = 0.0;
-    double HinfIdeal0 = 0.0, HinfIdeal15 = 0.0, HinfIdeal20 = 0.0, HinfIdeal25 = 0.0, HinfIdeal60F = 0.0;
+    double HsupIdeal0 = 0.0, HsupIdeal15 = 0.0, HsupIdeal20 = 0.0, HsupIdeal25 = 0.0,
+            HsupIdeal60F = 0.0;
+    double HinfIdeal0 = 0.0, HinfIdeal15 = 0.0, HinfIdeal20 = 0.0, HinfIdeal25 = 0.0,
+            HinfIdeal60F = 0.0;
     static Logger logger = LogManager.getLogger(Standard_ISO6976_2016.class);
 
     /**
@@ -40,7 +41,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     public Standard_ISO6976_2016() {
         name = "Standard_ISO6976_2016";
         componentsNotDefinedByStandard = new ArrayList<String>();
-        standardDescription = "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016";
+        standardDescription =
+                "Calculation of calorific values, density, relative density and Wobbe index from composition based on ISO6976 version 2016";
     }
 
     /**
@@ -75,32 +77,39 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         Hinf25 = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         Hinf60F = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
         try {
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
 
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-
                 try {
-                    dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
-                            + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
+                    dataSet = database.getResultSet(
+                            ("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
+                                    + this.thermoSystem.getPhase(0).getComponent(i).getName()
+                                    + "'"));
                     dataSet.next();
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
-
                 } catch (Exception e) {
                     try {
                         dataSet.close();
-                        if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("inert")) {
+                        if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
+                                .equals("inert")) {
                             dataSet = database.getResultSet(
                                     ("SELECT * FROM iso6976constants2016 WHERE ComponentName='nitrogen'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("HC")) {
+                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
+                                .equals("HC")) {
                             dataSet = database.getResultSet(
                                     ("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("alcohol")
-                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("glycol")) {
+                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
+                                .equals("alcohol")
+                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
+                                        .equals("glycol")) {
                             dataSet = database.getResultSet(
                                     ("SELECT * FROM iso6976constants2016 WHERE ComponentName='methanol'"));
-                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("TPB")
-                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType().equals("plus")) {
+                        } else if (this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
+                                .equals("TPB")
+                                || this.thermoSystem.getPhase(0).getComponent(i).getComponentType()
+                                        .equals("plus")) {
                             dataSet = database.getResultSet(
                                     ("SELECT * FROM iso6976constants2016 WHERE ComponentName='n-heptane'"));
                         } else {
@@ -112,11 +121,10 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
                     } catch (Exception er) {
                         logger.error(er.toString());
                     }
-                    componentsNotDefinedByStandard
-                            .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
+                    componentsNotDefinedByStandard.add(
+                            "this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
                     logger.info("added component not specified by ISO6976constants2016 "
                             + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
-
                 }
 
                 carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -146,16 +154,15 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
             dataSet.close();
             database.getConnection().close();
-
         } catch (Exception e) {
             String err = e.toString();
             logger.error(err);
         }
-
     }
 
-    public Standard_ISO6976_2016(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
-            double energyReferenceTemperaturedegC, String calculationType) {
+    public Standard_ISO6976_2016(SystemInterface thermoSystem,
+            double volumetricReferenceTemperaturedegC, double energyReferenceTemperaturedegC,
+            String calculationType) {
         this(thermoSystem);
         this.referenceType = calculationType;
         volRefT = volumetricReferenceTemperaturedegC;
@@ -186,7 +193,6 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         HinfIdeal60F = 0.0;
 
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-
             Mmix += thermoSystem.getPhase(0).getComponent(i).getz() * M[i];
 
             Zmixtemp0 += thermoSystem.getPhase(0).getComponent(i).getz() * bsqrt0[i];
@@ -212,7 +218,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         Zmix15 -= Math.pow(Zmixtemp15, 2.0);
         Zmix60F -= Math.pow(Zmixtemp60F, 2.0);
         Zmix20 -= Math.pow(Zmixtemp20, 2.0);
-        molRefm3 = volRefP * 1.0e5 * 1.0 / (R * (getVolRefT() + 273.15) * getValue("CompressionFactor"));
+        molRefm3 = volRefP * 1.0e5 * 1.0
+                / (R * (getVolRefT() + 273.15) * getValue("CompressionFactor"));
         // System.out.println("molRefm3 " + molRefm3);
     }
 
@@ -308,7 +315,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         if (returnParameter.equals("RelativeDensity")) {
             return relativeDens;
         }
-        if (returnParameter.equals("InferiorWobbeIndex") || returnParameter.equals("SuperiorWobbeIndex")) {
+        if (returnParameter.equals("InferiorWobbeIndex")
+                || returnParameter.equals("SuperiorWobbeIndex")) {
             returnValue /= Math.sqrt(relativeDens);
         }
         if (returnParameter.equals("DensityIdeal")) {
@@ -344,5 +352,4 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     /**
      * @return the energyRefT
      */
-
 }

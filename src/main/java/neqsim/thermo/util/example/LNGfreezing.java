@@ -6,7 +6,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 public class LNGfreezing {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LNGfreezing.class);
 

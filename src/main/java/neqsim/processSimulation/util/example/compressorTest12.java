@@ -4,14 +4,14 @@ import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class compressorTest12 {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(265, 49.6);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos(265, 49.6);
         testSystem.addComponent("methane", 92);
         testSystem.addComponent("ethane", 4.4);
         testSystem.addComponent("propane", 0.9);
@@ -49,6 +49,5 @@ public class compressorTest12 {
         pre.run();
         ka501.run();
         ka501.solveEfficiency(t);
-
     }
 }

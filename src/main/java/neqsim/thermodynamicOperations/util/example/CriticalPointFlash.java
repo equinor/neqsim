@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  */
 public class CriticalPointFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
 

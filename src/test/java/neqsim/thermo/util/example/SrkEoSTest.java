@@ -16,7 +16,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class SrkEoSTest {
-
     static SystemInterface thermoSystem = null;
 
 
@@ -81,7 +80,4 @@ public class SrkEoSTest {
 
         assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
     }
-
-
-
 }

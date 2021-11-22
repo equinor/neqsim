@@ -8,7 +8,6 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPHflash.class);
     int neq = 0, iter = 0;
@@ -145,7 +144,6 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     }
 
     public void init() {
-
         double temp = system.getBeta();
 
         for (int i = 0; i < numberOfComponents; i++) {
@@ -203,5 +201,4 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         init();
         return iter;
     }
-
 }

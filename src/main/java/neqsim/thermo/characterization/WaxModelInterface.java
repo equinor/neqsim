@@ -4,7 +4,6 @@ package neqsim.thermo.characterization;
  * @author ESOL
  */
 public interface WaxModelInterface extends java.io.Serializable, Cloneable {
-
     public void addTBPWax();
 
     public Object clone();

@@ -33,7 +33,6 @@ public class NewtonSolveABCD implements java.io.Serializable {
     }
 
     public void setfvec() {
-
         for (int i = 0; i < characterizeClass.getLength(); i++) {
             fvec.set(i, 0,
                     Math.log(characterizeClass.getTBPfractions(i)) - characterizeClass.getCoef(0)
@@ -94,7 +93,6 @@ public class NewtonSolveABCD implements java.io.Serializable {
     }
 
     public void solve() {
-
         do {
             iter++;
             setfvec();

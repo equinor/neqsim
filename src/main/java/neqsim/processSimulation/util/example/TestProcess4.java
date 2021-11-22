@@ -4,16 +4,14 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class TestProcess4 {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 28.0),
-                90.0);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 28.0), 90.0);
         testSystem.addComponent("methane", 79.034);
         testSystem.addComponent("ethane", 7.102);
         testSystem.addComponent("propane", 5.121);
@@ -21,7 +19,7 @@ public class TestProcess4 {
         testSystem.addComponent("nitrogen", 0.727);
         // testSystem.addComponent("nC10", 2.502);
         testSystem.addComponent("water", 51.0);
-//        testSystem.addComponent("TEG", 5.98);
+        // testSystem.addComponent("TEG", 5.98);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(10);
 
@@ -40,7 +38,8 @@ public class TestProcess4 {
 
         Stream liquidStream = new Stream(separator.getLiquidOutStream());
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         // operations.add(valve_1);

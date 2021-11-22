@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 @Disabled
 public class ElectrolyteCPAEosTest extends ModelBaseTest {
-
     private static final long serialVersionUID = 1000;
 
 
@@ -30,9 +29,7 @@ public class ElectrolyteCPAEosTest extends ModelBaseTest {
         thermoSystem.setMixingRule(1);
     }
 
-    public static void tearDown() {
-
-    }
+    public static void tearDown() {}
 
     @Test
     public void testTPflash() {
@@ -47,5 +44,4 @@ public class ElectrolyteCPAEosTest extends ModelBaseTest {
         assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
                 thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
     }
-
 }

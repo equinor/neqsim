@@ -12,5 +12,4 @@ package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling;
  * @version
  */
 public interface FileWriterInterface {
-
 }

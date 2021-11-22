@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class OffshoreProcess {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -19,7 +18,8 @@ public class OffshoreProcess {
      */
     public static void main(String args[]) {
         double fakt = 1000.0 / 3600.0;
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 - 4.3), 90.2);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 - 4.3), 90.2);
         testSystem.addComponent("CO2", (152.6119 + 3513.5) * fakt);
         testSystem.addComponent("nitrogen", (9.8305 + 765 + 6882) * fakt);
         testSystem.addComponent("methane", (2799.24 + 109822.0) * fakt);
@@ -91,11 +91,11 @@ public class OffshoreProcess {
         pipe.setOutputFileName("c:/tempAsgard.nc");
         pipe.setInitialFlowPattern("annular");
         int numberOfLegs = 1, numberOfNodesInLeg = 120;
-        double[] legHeights = { 0, 0 };
-        double[] legPositions = { 0.0, 74.0 };
-        double[] pipeDiameters = { 1.02507588, 1.02507588 };
-        double[] outerTemperature = { 275.0, 275.0 };
-        double[] pipeWallRoughness = { 1e-5, 1e-5 };
+        double[] legHeights = {0, 0};
+        double[] legPositions = {0.0, 74.0};
+        double[] pipeDiameters = {1.02507588, 1.02507588};
+        double[] outerTemperature = {275.0, 275.0};
+        double[] pipeWallRoughness = {1e-5, 1e-5};
         pipe.setNumberOfLegs(numberOfLegs);
         pipe.setNumberOfNodesInLeg(numberOfNodesInLeg);
         pipe.setLegPositions(legPositions);
@@ -107,7 +107,8 @@ public class OffshoreProcess {
         pipe.setEquilibriumMassTransfer(false);
         pipe.setEquilibriumHeatTransfer(false);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);

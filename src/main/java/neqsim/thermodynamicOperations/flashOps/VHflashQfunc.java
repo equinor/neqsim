@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class VHflashQfunc extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VHflashQfunc.class);
 
@@ -37,7 +36,6 @@ public class VHflashQfunc extends Flash {
     }
 
     public double calcdQdTT() {
-
         double dQdTT = -system.getCp()
                 / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
                 - calcdQdT() / system.getTemperature();
@@ -90,7 +88,6 @@ public class VHflashQfunc extends Flash {
         // logger.info("internaleng: " + system.getInternalEnergy());
         // logger.info("volume: " + system.getVolume());
         solveQ();
-
     }
 
     @Override

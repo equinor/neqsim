@@ -6,7 +6,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 public class SimpleFlowLine extends ProcessEquipmentBaseClass {
-
     protected StreamInterface inStream;
     private StreamInterface outStream;
     private double height = 100.0;
@@ -25,12 +24,12 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return getOutStream().getThermoSystem();
     }
 
     @Override
-	public void run() {
+    public void run() {
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
@@ -43,16 +42,14 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
          * double density = fluidIn.getDensity("kg/m3");
          * 
          * double deltaP =
-         * density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
-         * 0e5;
+         * density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1. 0e5;
          * 
          * System.out.println("density " +density + " delta P " + deltaP);
          * 
          * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
          * fluidIn.setTemperature(outletTemperature);
          * 
-         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn);
-         * ops.TPflash();
+         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
          * 
          * getOutStream().setFluid(fluidIn);
          */

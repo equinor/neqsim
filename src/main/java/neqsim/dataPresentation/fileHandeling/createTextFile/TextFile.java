@@ -9,7 +9,6 @@ import java.io.FileWriter;
  * @version
  */
 public class TextFile implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/example.txt";
@@ -73,5 +72,4 @@ public class TextFile implements java.io.Serializable {
         }
         System.out.println("writing data to file: " + fileName + " ... ok");
     }
-
 }

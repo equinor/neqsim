@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class BaseContract implements ContractInterface {
-
     private static final long serialVersionUID = 1000;
 
     private String[][] resultTable = new String[50][9];
@@ -35,13 +34,12 @@ public class BaseContract implements ContractInterface {
     private int specificationsNumber = 0;
 
     /** Creates a new instance of BaseContract */
-    public BaseContract() {
-    }
+    public BaseContract() {}
 
     public BaseContract(SystemInterface system) {
         StandardInterface standard = new Draft_ISO18453(system);
-        spesifications[0] = new ContractSpecification("", "", "", "water dew point specification", standard, 0, 0,
-                "degC", 0, 0, 0, "");
+        spesifications[0] = new ContractSpecification("", "", "", "water dew point specification",
+                standard, 0, 0, "degC", 0, 0, 0, "");
     }
 
     public BaseContract(SystemInterface system, String terminal, String country) {
@@ -50,18 +48,22 @@ public class BaseContract implements ContractInterface {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         try {
-            dataSet = database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='" + terminal + "'"
-                    + " AND COUNTRY='" + country + "'");
+            dataSet =
+                    database.getResultSet("SELECT * FROM gascontractspecifications WHERE TERMINAL='"
+                            + terminal + "'" + " AND COUNTRY='" + country + "'");
             while (dataSet.next()) {
                 numb++;
                 StandardInterface method = getMethod(system, dataSet.getString("METHOD"));
                 spesifications[numb - 1] = getSpecification(method, dataSet.getString("NAME"),
-                        dataSet.getString("SPECIFICATION"), dataSet.getString("COUNTRY"), dataSet.getString("TERMINAL"),
+                        dataSet.getString("SPECIFICATION"), dataSet.getString("COUNTRY"),
+                        dataSet.getString("TERMINAL"),
                         Double.parseDouble(dataSet.getString("MINVALUE")),
-                        Double.parseDouble(dataSet.getString("MAXVALUE")), dataSet.getString("UNIT"),
+                        Double.parseDouble(dataSet.getString("MAXVALUE")),
+                        dataSet.getString("UNIT"),
                         Double.parseDouble(dataSet.getString("ReferenceTmeasurement")),
                         Double.parseDouble(dataSet.getString("ReferenceTcombustion")),
-                        Double.parseDouble(dataSet.getString("ReferencePbar")), dataSet.getString("Comments"));
+                        Double.parseDouble(dataSet.getString("ReferencePbar")),
+                        dataSet.getString("Comments"));
                 System.out.println("specification added..." + numb);
             }
         } catch (Exception e) {
@@ -117,16 +119,17 @@ public class BaseContract implements ContractInterface {
         return null;
     }
 
-    public ContractSpecification getSpecification(StandardInterface method, String specificationName,
-            String specificationName2, String country, String terminal, double minValue, double maxValue, String unit,
-            double referenceTemperature, double referenceTemperatureComb, double referencePressure, String comments) {
-        return new ContractSpecification(specificationName, specificationName2, country, terminal, method, minValue,
-                maxValue, unit, referenceTemperature, referenceTemperatureComb, referencePressure, comments);
-
+    public ContractSpecification getSpecification(StandardInterface method,
+            String specificationName, String specificationName2, String country, String terminal,
+            double minValue, double maxValue, String unit, double referenceTemperature,
+            double referenceTemperatureComb, double referencePressure, String comments) {
+        return new ContractSpecification(specificationName, specificationName2, country, terminal,
+                method, minValue, maxValue, unit, referenceTemperature, referenceTemperatureComb,
+                referencePressure, comments);
     }
 
     @Override
-	public void runCheck() {
+    public void runCheck() {
         int j = 0;
         resultTable = new String[specificationsNumber][12];
         for (int i = 0; i < specificationsNumber; i++) {
@@ -149,25 +152,27 @@ public class BaseContract implements ContractInterface {
                 getResultTable()[j][5] = Double.toString(spesifications[i].getMaxValue());
                 getResultTable()[j][6] = spesifications[i].getUnit();
                 getResultTable()[j][7] = spesifications[i].getStandard().getName();
-                getResultTable()[j][8] = Double.toString(spesifications[i].getReferenceTemperatureMeasurement());
-                getResultTable()[j][9] = Double.toString(spesifications[i].getReferenceTemperatureCombustion());
+                getResultTable()[j][8] =
+                        Double.toString(spesifications[i].getReferenceTemperatureMeasurement());
+                getResultTable()[j][9] =
+                        Double.toString(spesifications[i].getReferenceTemperatureCombustion());
                 getResultTable()[j][10] = Double.toString(spesifications[i].getReferencePressure());
                 getResultTable()[j][11] = spesifications[i].getComments();
                 j++;
-
             }
         }
     }
 
     @Override
-	public void display() {
-        JFrame dialog = new JFrame("Specification check against sales specifications: " + getContractName());
+    public void display() {
+        JFrame dialog = new JFrame(
+                "Specification check against sales specifications: " + getContractName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "Specification", "Value", "Country", "Terminal", "Minimum", "Maximum", "Unit", "Method",
-                "Reference temperature measurement", "Reference temperature of combustion", "Reference pressure",
-                "Comments" };
+        String[] names = {"Specification", "Value", "Country", "Terminal", "Minimum", "Maximum",
+                "Unit", "Method", "Reference temperature measurement",
+                "Reference temperature of combustion", "Reference pressure", "Comments"};
         JTable Jtab = new JTable(getResultTable(), names);
         JScrollPane scrollpane = new JScrollPane(Jtab);
         dialogContentPane.add(scrollpane);
@@ -176,7 +181,7 @@ public class BaseContract implements ContractInterface {
     }
 
     @Override
-	public void setContract(String name) {
+    public void setContract(String name) {
         waterDewPointTemperature = -12.0;
         waterDewPointSpecPressure = 70.0;
     }
@@ -188,19 +193,18 @@ public class BaseContract implements ContractInterface {
      *
      */
     @Override
-	public double getWaterDewPointTemperature() {
+    public double getWaterDewPointTemperature() {
         return waterDewPointTemperature;
     }
 
     /**
      * Setter for property waterDewPointTemperature.
      * 
-     * @param waterDewPointTemperature New value of property
-     *                                 waterDewPointTemperature.
+     * @param waterDewPointTemperature New value of property waterDewPointTemperature.
      *
      */
     @Override
-	public void setWaterDewPointTemperature(double waterDewPointTemperature) {
+    public void setWaterDewPointTemperature(double waterDewPointTemperature) {
         this.waterDewPointTemperature = waterDewPointTemperature;
     }
 
@@ -211,49 +215,48 @@ public class BaseContract implements ContractInterface {
      *
      */
     @Override
-	public double getWaterDewPointSpecPressure() {
+    public double getWaterDewPointSpecPressure() {
         return waterDewPointSpecPressure;
     }
 
     /**
      * Setter for property waterDewPointSpecPressure.
      * 
-     * @param waterDewPointSpecPressure New value of property
-     *                                  waterDewPointSpecPressure.
+     * @param waterDewPointSpecPressure New value of property waterDewPointSpecPressure.
      *
      */
     @Override
-	public void setWaterDewPointSpecPressure(double waterDewPointSpecPressure) {
+    public void setWaterDewPointSpecPressure(double waterDewPointSpecPressure) {
         this.waterDewPointSpecPressure = waterDewPointSpecPressure;
     }
 
     @Override
-	public int getSpecificationsNumber() {
+    public int getSpecificationsNumber() {
         return specificationsNumber;
     }
 
     @Override
-	public void setSpecificationsNumber(int specificationsNumber) {
+    public void setSpecificationsNumber(int specificationsNumber) {
         this.specificationsNumber = specificationsNumber;
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return resultTable;
     }
 
     @Override
-	public void setResultTable(String[][] resultTable) {
+    public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 
     @Override
-	public String getContractName() {
+    public String getContractName() {
         return contractName;
     }
 
     @Override
-	public void setContractName(String contractName) {
+    public void setContractName(String contractName) {
         this.contractName = contractName;
     }
 }

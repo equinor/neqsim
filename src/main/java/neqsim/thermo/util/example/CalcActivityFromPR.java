@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemPCSAFT;
  * @author esol
  */
 public class CalcActivityFromPR {
-
     private static final long serialVersionUID = 1000;
 
     public static void main(String[] args) {
@@ -22,6 +21,5 @@ public class CalcActivityFromPR {
         // System.out.println("activity coefficient " +
         // testSystem.getPhase(1).getActivityCoefficient(1,1));
         testSystem.display();
-
     }
 }

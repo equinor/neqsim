@@ -7,11 +7,9 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class MaterialPlateDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
-    public MaterialPlateDesignStandard() {
-    }
+    public MaterialPlateDesignStandard() {}
 
     public MaterialPlateDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
@@ -39,25 +37,30 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     int divisionClassNumber = 1;
     private double divisionClass = 425;
 
-    public void readMaterialDesignStandard(String name, String specNo, String grade, int divClassNo) {
+    public void readMaterialDesignStandard(String name, String specNo, String grade,
+            int divClassNo) {
         materialName = name;
         specificationNumber = specNo;
         divisionClassNumber = divClassNo;
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='" + name
-                        + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
+                dataSet = database
+                        .getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
+                                + name + "' AND grade='" + grade + "' AND specificationNumber='"
+                                + specNo + "'"));
                 while (dataSet.next()) {
                     if (divClassNo == 1) {
-                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
+                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1")))
+                                * 0.00689475729; // MPa
                     } else {
-                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
+                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2")))
+                                * 0.00689475729; // MPa
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -76,5 +79,4 @@ public class MaterialPlateDesignStandard extends DesignStandard {
             }
         }
     }
-
 }

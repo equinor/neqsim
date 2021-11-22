@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimTechnicalDesignDatabase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
      * @return the createTemporaryTables
      */
@@ -51,7 +50,6 @@ public class NeqSimTechnicalDesignDatabase
      * Creates new testPointbase
      */
     public NeqSimTechnicalDesignDatabase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -60,7 +58,6 @@ public class NeqSimTechnicalDesignDatabase
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
@@ -178,12 +175,10 @@ public class NeqSimTechnicalDesignDatabase
 
     public Statement getStatement() {
         return statement;
-
     }
 
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**
@@ -214,8 +209,5 @@ public class NeqSimTechnicalDesignDatabase
         connectionString = aConnectionString;
     }
 
-    public static void main(String[] args) {
-
-    }
-
+    public static void main(String[] args) {}
 }

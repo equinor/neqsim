@@ -5,16 +5,14 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class threePhaseSeparation_1 {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 25.0),
-                50.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkCPAs((273.15 + 25.0), 50.00);
         testSystem.addComponent("methane", 10.00);
         testSystem.addComponent("n-heptane", 1.0);
         testSystem.addComponent("water", 1.0);
@@ -35,7 +33,8 @@ public class threePhaseSeparation_1 {
         Stream stream_4 = new Stream(separator.getWaterOutStream());
         stream_4.setName("water from separator");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         operations.add(stream_2);
@@ -49,16 +48,17 @@ public class threePhaseSeparation_1 {
         stream_2.getThermoSystem().display();
         ThermodynamicOperations ops = new ThermodynamicOperations(stream_2.getThermoSystem());
         double volume = stream_2.getThermoSystem().getVolume();
-        stream_2.getThermoSystem().setTemperature(stream_2.getThermoSystem().getTemperature() - 10.0);
+        stream_2.getThermoSystem()
+                .setTemperature(stream_2.getThermoSystem().getTemperature() - 10.0);
         ops.TVflash(volume);
         stream_2.getThermoSystem().display();
 
         stream_3.getThermoSystem().display();
         ThermodynamicOperations ops2 = new ThermodynamicOperations(stream_3.getThermoSystem());
         volume = stream_3.getThermoSystem().getVolume();
-        stream_3.getThermoSystem().setTemperature(stream_3.getThermoSystem().getTemperature() - 10.0);
+        stream_3.getThermoSystem()
+                .setTemperature(stream_3.getThermoSystem().getTemperature() - 10.0);
         ops2.TVflash(volume);
         stream_3.getThermoSystem().display();
-
     }
 }

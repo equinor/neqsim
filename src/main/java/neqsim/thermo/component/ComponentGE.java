@@ -15,7 +15,6 @@ import org.apache.logging.log4j.*;
  * @version
  */
 abstract class ComponentGE extends Component implements ComponentGEInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected double gamma = 0, gammaRefCor = 0;
@@ -24,29 +23,33 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     static Logger logger = LogManager.getLogger(ComponentGE.class);
 
     /** Creates new ComponentGE */
-    public ComponentGE() {
-    }
+    public ComponentGE() {}
 
     public ComponentGE(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
     @Override
-	public double fugcoef(PhaseInterface phase) {
-        logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+    public double fugcoef(PhaseInterface phase) {
+        logger.info("fug coef "
+                + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
         if (referenceStateType.equals("solvent")) {
-            fugasityCoeffisient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
+            fugasityCoeffisient =
+                    gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
             gammaRefCor = gamma;
         } else {
             double activinf = 1.0;
             if (phase.hasComponent("water")) {
                 int waternumb = phase.getComponent("water").getComponentNumber();
-                activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
+                activinf = gamma / ((PhaseGE) phase)
+                        .getActivityCoefficientInfDilWater(componentNumber, waternumb);
             } else {
                 activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
             }
-            fugasityCoeffisient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();// gamma*
-                                                                                                        // benyttes ikke
+            fugasityCoeffisient =
+                    activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();// gamma*
+                                                                                          // benyttes
+                                                                                          // ikke
             gammaRefCor = activinf;
         }
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
@@ -70,7 +73,8 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         int numberOfComponents = phase.getNumberOfComponents();
 
         if (referenceStateType.equals("solvent")) {
-            dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature) * getAntoineVaporPressuredT(temperature);
+            dfugdt = dlngammadt + 1.0 / getAntoineVaporPressure(temperature)
+                    * getAntoineVaporPressuredT(temperature);
             logger.info("check this dfug dt - antoine");
         } else {
             dfugdt = dlngammadt + getHenryCoefdT(temperature);
@@ -79,32 +83,32 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     }
 
     @Override
-	public double getGamma() {
+    public double getGamma() {
         return gamma;
     }
 
     @Override
-	public double getlnGamma() {
+    public double getlnGamma() {
         return lngamma;
     }
 
     @Override
-	public double getlnGammadt() {
+    public double getlnGammadt() {
         return dlngammadt;
     }
 
     @Override
-	public double getlnGammadtdt() {
+    public double getlnGammadtdt() {
         return dlngammadtdt;
     }
 
     @Override
-	public double getlnGammadn(int k) {
+    public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
     @Override
-	public void setlnGammadn(int k, double val) {
+    public void setlnGammadn(int k, double val) {
         dlngammadn[k] = val;
     }
 
@@ -115,8 +119,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
      *
      */
     @Override
-	public double getGammaRefCor() {
+    public double getGammaRefCor() {
         return gammaRefCor;
     }
-
 }

@@ -16,7 +16,6 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version
  */
 public class AtractiveTermBaseClass implements AtractiveTermInterface {
-
     private static final long serialVersionUID = 1000;
 
     private ComponentEosInterface component = null;
@@ -26,9 +25,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
     static Logger logger = LogManager.getLogger(AtractiveTermBaseClass.class);
 
-    public AtractiveTermBaseClass() {
-
-    }
+    public AtractiveTermBaseClass() {}
 
     /** Creates new AtractiveTermBaseClass */
     public AtractiveTermBaseClass(ComponentEosInterface component) {
@@ -107,5 +104,4 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
     void setComponent(ComponentEosInterface component) {
         this.component = component;
     }
-
 }

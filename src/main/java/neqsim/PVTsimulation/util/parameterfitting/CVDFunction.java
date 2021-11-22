@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class CVDFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;

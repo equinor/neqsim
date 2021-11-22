@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public abstract class BaseOperation implements OperationInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface systemThermo = null;;
@@ -45,9 +44,7 @@ public abstract class BaseOperation implements OperationInterface {
     public void printToFile(String name) {}
 
     @Override
-    public void createNetCdfFile(String name) {
-
-    }
+    public void createNetCdfFile(String name) {}
 
     @Override
     public double[][] getPoints(int i) {
@@ -55,7 +52,5 @@ public abstract class BaseOperation implements OperationInterface {
     }
 
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

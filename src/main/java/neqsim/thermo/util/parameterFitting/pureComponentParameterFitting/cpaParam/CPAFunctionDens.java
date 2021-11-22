@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
  * @version
  */
 public class CPAFunctionDens extends CPAFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionDens.class);
 

@@ -6,7 +6,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 public class HydrateFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFlash.class);
 
@@ -22,9 +21,8 @@ public class HydrateFlash {
         // testSystem.addComponent("ethane", 3.0);
         // testSystem.addComponent("propane", 1.0);
         /*
-         * testSystem.addComponent("propane", 1.88); testSystem.addComponent("i-butane",
-         * 0.08); testSystem.addComponent("n-butane", 0.12);
-         * testSystem.addComponent("n-pentane", 1.64);
+         * testSystem.addComponent("propane", 1.88); testSystem.addComponent("i-butane", 0.08);
+         * testSystem.addComponent("n-butane", 0.12); testSystem.addComponent("n-pentane", 1.64);
          * testSystem.addComponent("n-heptane", 1.64);
          */
 
@@ -108,9 +106,9 @@ public class HydrateFlash {
             // testOps.TPflash();
             // testOps.calcWAT();
             // testOps.TPSolidflash();
-//            testOps.dewPointTemperatureFlash();
-//            testOps.waterDewPointTemperatureFlash();
-//            testOps.hydrateFormationTemperature(0);
+            // testOps.dewPointTemperatureFlash();
+            // testOps.waterDewPointTemperatureFlash();
+            // testOps.hydrateFormationTemperature(0);
 
             // testOps.TPflash();
             // testOps.dewPointTemperatureFlash();
@@ -118,7 +116,6 @@ public class HydrateFlash {
             // testOps.bubblePointPressureFlash(false);
             // testOps.hydrateFormationTemperature(1);
             // testOps.waterPrecipitationTemperature();
-
         } catch (Exception e) {
             logger.error(e.toString(), e);
         }
@@ -142,22 +139,21 @@ public class HydrateFlash {
         // System.out.println("activity coef water " +
         // testSystem.getPhase(1).getActivityCoefficientSymetric(1));
         // int n = testSystem.getNumberOfPhases()-1;
-//        double megwtfrac = testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
-//        System.out.println("wt % MEG " + megwtfrac*100);
+        // double megwtfrac =
+        // testSystem.getPhase(n).getComponent("MEG").getMolarMass()*testSystem.getPhase(n).getComponent("MEG").getx()/testSystem.getPhase(n).getMolarMass();
+        // System.out.println("wt % MEG " + megwtfrac*100);
         /*
          * SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.0 - 12, 60.0);
          * testSystem2.addComponent("methane", 1.0 -
-         * testSystem.getPhase(0).getComponent("water").getx());
-         * testSystem2.addComponent("water",
-         * testSystem.getPhase(0).getComponent("water").getx());
-         * testSystem2.createDatabase(true);
+         * testSystem.getPhase(0).getComponent("water").getx()); testSystem2.addComponent("water",
+         * testSystem.getPhase(0).getComponent("water").getx()); testSystem2.createDatabase(true);
          *
          * testSystem2.setMixingRule(7); testSystem2.init(0); testSystem2.init(1);
-         * ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
-         * try { testOps2.waterDewPointTemperatureFlash();
+         * ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2); try {
+         * testOps2.waterDewPointTemperatureFlash();
          *
-         * } catch (Exception e) { e.printStackTrace();
-         * System.out.println(e.toString()); } testSystem2.display();
+         * } catch (Exception e) { e.printStackTrace(); System.out.println(e.toString()); }
+         * testSystem2.display();
          *
          */
     }

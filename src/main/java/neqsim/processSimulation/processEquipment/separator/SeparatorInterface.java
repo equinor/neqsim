@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public interface SeparatorInterface {
-
     public void setName(String name);
 
     public String getName();

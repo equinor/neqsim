@@ -6,13 +6,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class Well implements java.io.Serializable {
-
     private StreamInterface stream = null;
     private String name;
     double x, y, z;
 
-    public Well() {
-    }
+    public Well() {}
 
     public Well(String name) {
         this.setName(name);
@@ -34,7 +32,8 @@ public class Well implements java.io.Serializable {
         ops.TPflash();
         double GOR = Double.NaN;
         if (locStream.hasPhaseType("gas") && locStream.hasPhaseType("oil")) {
-            GOR = locStream.getPhase("gas").getVolume("m3") / locStream.getPhase("oil").getVolume("m3");
+            GOR = locStream.getPhase("gas").getVolume("m3")
+                    / locStream.getPhase("oil").getVolume("m3");
         }
         return GOR;
     }

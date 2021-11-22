@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
-
     private static final long serialVersionUID = 1000;
 
     ArrayList<UNIFACgroup> unifacGroups = new ArrayList<UNIFACgroup>();

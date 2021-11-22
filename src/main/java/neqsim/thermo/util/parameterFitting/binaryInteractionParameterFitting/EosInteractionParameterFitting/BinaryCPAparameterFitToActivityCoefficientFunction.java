@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  */
 public class BinaryCPAparameterFitToActivityCoefficientFunction
         extends EosInteractionParameterFittingFunction {
-
     private static final long serialVersionUID = 1000;
 
     public BinaryCPAparameterFitToActivityCoefficientFunction() {}

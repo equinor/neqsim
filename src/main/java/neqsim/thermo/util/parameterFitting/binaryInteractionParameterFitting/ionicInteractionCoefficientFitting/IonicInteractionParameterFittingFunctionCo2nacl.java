@@ -11,7 +11,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version
  */
 public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
@@ -66,7 +65,5 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijT1Parameter(Naplusnumb, CO2Numb, value);
         }
-
     }
-
 }

@@ -16,15 +16,13 @@ import neqsim.thermodynamicOperations.BaseOperation;
  * @author ESOL
  */
 public class ChemicalEquilibrium extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ChemicalEquilibrium.class);
 
     SystemInterface system;
 
     /** Creates a new instance of ChemicalEquilibrium */
-    public ChemicalEquilibrium() {
-    }
+    public ChemicalEquilibrium() {}
 
     public ChemicalEquilibrium(SystemInterface system) {
         this.system = system;
@@ -35,8 +33,8 @@ public class ChemicalEquilibrium extends BaseOperation {
         double chemdev = 0;
         int iter = 1;
         if (system.isChemicalSystem()) {
-            double oldHeat = system.getChemicalReactionOperations().getReactionList().reacHeat(system.getPhase(1),
-                    "HCO3-");
+            double oldHeat = system.getChemicalReactionOperations().getReactionList()
+                    .reacHeat(system.getPhase(1), "HCO3-");
             do {
                 iter++;
                 for (int phase = 1; phase < system.getNumberOfPhases(); phase++) {
@@ -51,12 +49,13 @@ public class ChemicalEquilibrium extends BaseOperation {
                     system.getChemicalReactionOperations().solveChemEq(phase);
 
                     for (int i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {
-                        chemdev += Math.abs(xchem[i] - system.getPhases()[phase].getComponents()[i].getx());
+                        chemdev += Math.abs(
+                                xchem[i] - system.getPhases()[phase].getComponents()[i].getx());
                     }
                 }
             } while (Math.abs(chemdev) > 1e-4 && iter < 100);
-            double newHeat = system.getChemicalReactionOperations().getReactionList().reacHeat(system.getPhase(1),
-                    "HCO3-");
+            double newHeat = system.getChemicalReactionOperations().getReactionList()
+                    .reacHeat(system.getPhase(1), "HCO3-");
             system.getChemicalReactionOperations().setDeltaReactionHeat(newHeat - oldHeat);
         }
         if (iter > 50) {
@@ -70,12 +69,10 @@ public class ChemicalEquilibrium extends BaseOperation {
     }
 
     @Override
-    public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
     @Override
-    public void createNetCdfFile(String name) {
-    }
+    public void createNetCdfFile(String name) {}
 
     @Override
     public double[][] getPoints(int i) {

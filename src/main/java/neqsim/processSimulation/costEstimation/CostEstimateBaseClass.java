@@ -9,15 +9,12 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * @author ESOL
  */
 public class CostEstimateBaseClass implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     ProcessSystem procesSystem = null;
     private double CAPEXperWeight = 1000.0; // KNOK/tones
 
-    public CostEstimateBaseClass() {
-
-    }
+    public CostEstimateBaseClass() {}
 
     public CostEstimateBaseClass(ProcessSystem procesSystem) {
         this.procesSystem = procesSystem;

@@ -10,7 +10,6 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope2.class);
 
@@ -57,7 +56,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
             fvec.setEntry(i, 0, u.getEntry(i, 0)
                     + Math.log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
                             / system.getPhase(1).getComponents()[i].getFugasityCoeffisient()));
-
         }
         double fsum = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -246,7 +244,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
             u.setEntry(j, 0, xcoef.getEntry(0, 0) + sny * (xcoef.getEntry(1, 0)
                     + sny * (xcoef.getEntry(2, 0) + sny * xcoef.getEntry(3, 0))));
             logger.info("u" + j + " " + Math.exp(u.getEntry(j, 0)));
-
         }
         uold = u.copy();
 
@@ -310,7 +307,6 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
             // system.setPhaseType(1,1);
             return;
         } else if ((xlnkmax < 1.5 && testcrit != 1) && (np != ic03p && !etterCP)) {
-
             logger.info("hei fra her");
             testcrit = 1;
             xg = Xgij.getSubMatrix(numb, numb, 0, 3);

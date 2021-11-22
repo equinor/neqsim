@@ -5,7 +5,6 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 
 public abstract class OnePhaseFlowSystem extends FlowSystem {
-
     private static final long serialVersionUID = 1000;
 
     // public FluidMechanicsInterface[] flowNode;

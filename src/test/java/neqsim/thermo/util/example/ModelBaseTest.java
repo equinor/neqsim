@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 @Disabled
 public class ModelBaseTest {
-
     private static final long serialVersionUID = 1000;
 
     static SystemInterface thermoSystem = null;
@@ -24,9 +23,7 @@ public class ModelBaseTest {
     public static void setUp() {}
 
     @AfterAll
-    public static void tearDown() {
-
-    }
+    public static void tearDown() {}
 
     @Test
     public void testInit0() {
@@ -35,7 +32,6 @@ public class ModelBaseTest {
         } catch (Exception success) {
             fail("Error running init0");
         }
-
     }
 
     @Test
@@ -111,7 +107,4 @@ public class ModelBaseTest {
         fugTest = new neqsim.thermo.ThermodynamicModelTest(thermoSystem);
         assertTrue(fugTest.checkFugasityCoeffisientsDn());
     }
-
-
-
 }

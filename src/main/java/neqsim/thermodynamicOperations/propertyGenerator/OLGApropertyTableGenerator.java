@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropertyTableGenerator.class);
 
@@ -29,7 +28,6 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
     public OLGApropertyTableGenerator(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
-
     }
 
     public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
@@ -66,7 +64,6 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
     // thermoOps.ge
     @Override
     public void run() {
-
         // calcPhaseEnvelope();
         ROG = new double[pressures.length][temperatures.length];
         ROL = new double[pressures.length][temperatures.length];
@@ -99,17 +96,14 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
                 thermoSystem.initPhysicalProperties();
 
                 if (thermoSystem.hasPhaseType("gas")) {
-
                     // set gas properties
                 }
 
                 if (thermoSystem.hasPhaseType("oil")) {
-
                     // set oil properties
                 }
 
                 if (thermoSystem.hasPhaseType("aqueous")) {
-
                     // set aqueous properties
                 }
 
@@ -199,6 +193,5 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
             } catch (Exception ex) {
             }
         }
-
     }
 }

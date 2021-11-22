@@ -12,9 +12,7 @@ import neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Bin
  * @version
  */
 public class TestBinaryEosParameterFit {
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         BinaryEosFunction function = new BinaryEosFunction();
 

@@ -23,7 +23,6 @@ import visad.util.ContourWidget;
  * @version
  */
 public class visAd3DPlot extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private RealType longitude, latitude, temperature, isotemperature;
@@ -77,19 +76,15 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
-
         z_samples = vals;
     }
 
     @Override
     public void init() throws RemoteException, VisADException {
-
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
-
             for (int r = 0; r < NROWS; r++) {
-
                 flat_samples[0][c * NROWS + r] = (float) z_samples[c][r];
             }
         }
@@ -166,7 +161,6 @@ public class visAd3DPlot extends visAdBaseClass {
     }
 
     public static void main(String[] args) throws RemoteException, VisADException {
-
         visAd3DPlot test = new visAd3DPlot("long", "alt", "height");
         test.setXYvals(0, 10, 4, 0, 10, 4);
 
@@ -174,7 +168,5 @@ public class visAd3DPlot extends visAdBaseClass {
 
         test.setZvals(z);
         test.init();
-
     }
-
 }

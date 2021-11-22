@@ -12,5 +12,4 @@ package neqsim.thermo.component.repulsiveEosTerm;
  * @version
  */
 public interface RepulsiveTermInterface {
-
 }

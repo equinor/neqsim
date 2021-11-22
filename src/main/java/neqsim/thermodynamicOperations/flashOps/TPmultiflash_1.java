@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class TPmultiflash_1 extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflash_1.class);
 
@@ -137,7 +136,6 @@ public class TPmultiflash_1 extends TPflash {
             calcE();
             setXY();
             system.init(1);
-
         } while (ans.norm2() > 1e-6);
     }
 
@@ -290,5 +288,4 @@ public class TPmultiflash_1 extends TPflash {
             }
         }
     }
-
 }

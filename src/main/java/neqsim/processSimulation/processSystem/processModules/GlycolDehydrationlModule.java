@@ -17,7 +17,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author ESOL
  */
 public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface gasStreamToAbsorber = null, strippingGas = null,
@@ -110,7 +109,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
             calcDesign();
         }
         getOperations().run();
-
     }
 
     @Override
@@ -252,7 +250,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         if (specificationName.equals("regenerationPressure")) {
             regenerationPressure = value;
         }
-
     }
 
     public double calcGlycolConcentration(double y0) {
@@ -467,7 +464,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
         ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).displayResult();
         // TEGplant.getOutputStream("condenserStripper").displayResult();
-
     }
 
     public double getFlashPressure() {

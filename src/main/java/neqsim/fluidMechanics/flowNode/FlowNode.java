@@ -21,7 +21,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.util.DoubleCloneable;
 
 public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected double distanceToCenterOfNode = 0, lengthOfNode = 0, veticalPositionOfNode = 0;

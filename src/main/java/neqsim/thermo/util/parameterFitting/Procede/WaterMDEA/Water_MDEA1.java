@@ -17,7 +17,6 @@ import org.apache.logging.log4j.*;
  * @author agrawalnj
  */
 public class Water_MDEA1 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Water_MDEA1.class);
 
@@ -29,7 +28,6 @@ public class Water_MDEA1 {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
         FileOutputStream outfile;
         PrintStream p;
         try {
@@ -44,7 +42,6 @@ public class Water_MDEA1 {
         double x = 0;
 
         for (x = 0.85; x <= 1; x += 0.010) {
-
             SystemInterface testSystem = new SystemSrkSchwartzentruberEos(temperature, pressure);
             testSystem.addComponent("water", x);
             testSystem.addComponent("MDEA", 1 - x);
@@ -87,9 +84,7 @@ public class Water_MDEA1 {
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());
             }
-
-        }
-        logger.info("Finished");
-
+}
+}
     }
 }

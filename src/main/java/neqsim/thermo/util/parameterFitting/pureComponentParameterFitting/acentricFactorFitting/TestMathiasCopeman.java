@@ -17,11 +17,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class TestMathiasCopeman {
-
     static Logger logger = LogManager.getLogger(TestMathiasCopeman.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

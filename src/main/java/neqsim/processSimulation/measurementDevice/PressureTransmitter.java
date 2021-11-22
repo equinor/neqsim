@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  */
 public class PressureTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -35,5 +34,4 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
     public double getMeasuredValue() {
         return stream.getThermoSystem().getPressure();
     }
-
 }

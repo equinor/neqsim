@@ -9,7 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  */
 public class SlimTubeSim extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface inectionGasSystem = null;
@@ -22,18 +21,19 @@ public class SlimTubeSim extends BasePVTsimulation {
     }
 
     @Override
-	public void run() {
+    public void run() {
         slimTubeNodeSystem = new SystemInterface[numberOfSlimTubeNodes + 1];
 
         double totalReferenceNodeVolumeAtStadardConditions = 0;
         getThermoSystem().setPressure(1.01325);
         getThermoSystem().setTemperature(288.15);
         thermoOps.TPflash();
-        totalReferenceNodeVolumeAtStadardConditions = getThermoSystem().getPhase(0).getVolume() * numberOfSlimTubeNodes;
+        totalReferenceNodeVolumeAtStadardConditions =
+                getThermoSystem().getPhase(0).getVolume() * numberOfSlimTubeNodes;
 
         if (getThermoSystem().getNumberOfPhases() > 1) {
-            totalReferenceNodeVolumeAtStadardConditions = getThermoSystem().getPhase(1).getVolume()
-                    * numberOfSlimTubeNodes;
+            totalReferenceNodeVolumeAtStadardConditions =
+                    getThermoSystem().getPhase(1).getVolume() * numberOfSlimTubeNodes;
         }
 
         getThermoSystem().setPressure(getPressure());
@@ -90,12 +90,14 @@ public class SlimTubeSim extends BasePVTsimulation {
                     gasfactor = 1.0;
                 }
 
-                double[] removeMoles = new double[slimTubeNodeSystem[0].getPhase(0).getNumberOfComponents()];
+                double[] removeMoles =
+                        new double[slimTubeNodeSystem[0].getPhase(0).getNumberOfComponents()];
 
                 if (slimTubeNodeSystem[i].getNumberOfPhases() > 1) {
                     for (int k = 0; k < slimTubeNodeSystem[i].getPhase(liquidPhaseNumber)
                             .getNumberOfComponents(); k++) {
-                        double moles = slimTubeNodeSystem[i].getPhase(0).getComponent(k).getNumberOfMolesInPhase();
+                        double moles = slimTubeNodeSystem[i].getPhase(0).getComponent(k)
+                                .getNumberOfMolesInPhase();
                         removeMoles[k] += gasfactor * moles;
                     }
                 }
@@ -104,8 +106,8 @@ public class SlimTubeSim extends BasePVTsimulation {
                 if (liquidExcessVolume > 0) {
                     for (int k = 0; k < slimTubeNodeSystem[i].getPhase(liquidPhaseNumber)
                             .getNumberOfComponents(); k++) {
-                        double moles = slimTubeNodeSystem[i].getPhase(liquidPhaseNumber).getComponent(k)
-                                .getNumberOfMolesInPhase();
+                        double moles = slimTubeNodeSystem[i].getPhase(liquidPhaseNumber)
+                                .getComponent(k).getNumberOfMolesInPhase();
                         removeMoles[k] += moles * liqfactor;
                     }
                 }
@@ -115,14 +117,16 @@ public class SlimTubeSim extends BasePVTsimulation {
                     sum += removeMoles[comp];
                 }
 
-                for (int k = 0; k < slimTubeNodeSystem[i].getPhase(liquidPhaseNumber).getNumberOfComponents(); k++) {
+                for (int k = 0; k < slimTubeNodeSystem[i].getPhase(liquidPhaseNumber)
+                        .getNumberOfComponents(); k++) {
                     slimTubeNodeSystem[i + 1].addComponent(k, removeMoles[k]);
                     slimTubeNodeSystem[i].addComponent(k, -removeMoles[k]);
                 }
                 slimOps0.setSystem(slimTubeNodeSystem[i]);
                 slimOps0.TPflash();
                 System.out.println("node " + i + " delta volume end "
-                        + (slimTubeNodeSystem[i].getVolume() - standardNodeVolume) + " add moles " + sum);
+                        + (slimTubeNodeSystem[i].getVolume() - standardNodeVolume) + " add moles "
+                        + sum);
                 slimOps1.setSystem(slimTubeNodeSystem[i + 1]);
                 slimOps1.TPflash();
 
@@ -136,37 +140,36 @@ public class SlimTubeSim extends BasePVTsimulation {
             slimTubeNodeSystem[numberOfSlimTubeNodes].setPressure(1.01325);
             slimOps1.TPflash();
 
-            double totalAccumulatedVolumeAtStadardConditions = slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(0)
-                    .getVolume();
+            double totalAccumulatedVolumeAtStadardConditions =
+                    slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(0).getVolume();
 
             if (slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfPhases() > 1) {
-                totalAccumulatedVolumeAtStadardConditions = slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1)
-                        .getVolume();
+                totalAccumulatedVolumeAtStadardConditions =
+                        slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume();
             }
 
             System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions
                     + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
-            System.out.println("oil recovery ratio"
-                    + totalAccumulatedVolumeAtStadardConditions / totalReferenceNodeVolumeAtStadardConditions);
-
+            System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions
+                    / totalReferenceNodeVolumeAtStadardConditions);
         }
 
         slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
         slimTubeNodeSystem[numberOfSlimTubeNodes].setPressure(1.01325);
         slimOps1.TPflash();
 
-        double totalAccumulatedVolumeAtStadardConditions = slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(0)
-                .getVolume();
+        double totalAccumulatedVolumeAtStadardConditions =
+                slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(0).getVolume();
 
         if (slimTubeNodeSystem[numberOfSlimTubeNodes].getNumberOfPhases() > 1) {
-            totalAccumulatedVolumeAtStadardConditions = slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1)
-                    .getVolume();
+            totalAccumulatedVolumeAtStadardConditions =
+                    slimTubeNodeSystem[numberOfSlimTubeNodes].getPhase(1).getVolume();
         }
 
         System.out.println("accumulated VOlume " + totalAccumulatedVolumeAtStadardConditions
                 + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
-        System.out.println("oil recovery ratio"
-                + totalAccumulatedVolumeAtStadardConditions / totalReferenceNodeVolumeAtStadardConditions);
+        System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions
+                / totalReferenceNodeVolumeAtStadardConditions);
 
         for (int i = 0; i < numberOfSlimTubeNodes; i++) {
             slimTubeNodeSystem[i].display();
@@ -207,7 +210,6 @@ public class SlimTubeSim extends BasePVTsimulation {
         sepSim.setPressure(380.0);
         sepSim.setNumberOfSlimTubeNodes(40);
         sepSim.run();
-
     }
 
     /**

@@ -13,7 +13,6 @@ import neqsim.standards.StandardInterface;
  * @author ESOL
  */
 public class ContractSpecification {
-
     private static final long serialVersionUID = 1000;
 
     StandardInterface standard = null;
@@ -28,12 +27,12 @@ public class ContractSpecification {
     private String unit = "", comments = "";
 
     /** Creates a new instance of ContractSpecification */
-    public ContractSpecification() {
-    }
+    public ContractSpecification() {}
 
     public ContractSpecification(String name, String description, String country, String terminal,
-            StandardInterface standard, double minValue, double maxValue, String unit, double referenceTemperature,
-            double referenceTemperatureComb, double referencePressure, String comments) {
+            StandardInterface standard, double minValue, double maxValue, String unit,
+            double referenceTemperature, double referenceTemperatureComb, double referencePressure,
+            String comments) {
         this.name = name;
         this.country = country;
         this.terminal = terminal;
@@ -165,8 +164,7 @@ public class ContractSpecification {
     }
 
     /**
-     * @param referenceTemperatureCombustion the referenceTemperatureCombustion to
-     *                                       set
+     * @param referenceTemperatureCombustion the referenceTemperatureCombustion to set
      */
     public void setReferenceTemperatureCombustion(double referenceTemperatureCombustion) {
         this.referenceTemperatureCombustion = referenceTemperatureCombustion;
@@ -199,5 +197,4 @@ public class ContractSpecification {
     public void setTerminal(String terminal) {
         this.terminal = terminal;
     }
-
 }

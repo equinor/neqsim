@@ -16,7 +16,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version
  */
 public class EnhancementFactorNumeric extends EnhancementFactor {
-
     private static final long serialVersionUID = 1000;
 
     public EnhancementFactorNumeric() {
@@ -38,12 +37,13 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
         nonReactiveInterface.createSystem();
         nonReactiveInterface.solve();
         reactiveInterface.solve();
-        for (int i = 0; i < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); i++) {
-            for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
+        for (int i = 0; i < fluidBoundary.getBulkSystem().getPhases()[phase]
+                .getNumberOfComponents(); i++) {
+            for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase]
+                    .getNumberOfComponents(); j++) {
                 // enhancementFactor[1].set(i,j,0);
                 // System.out.println("num enhancement " + enhancementFactor[1].get(i,j));
             }
         }
-
     }
 }

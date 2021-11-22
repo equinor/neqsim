@@ -13,7 +13,6 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version
  */
 public class AtractiveTermUMRPRU extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new AtractiveTermSrk */
@@ -26,7 +25,7 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         AtractiveTermUMRPRU atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermUMRPRU) super.clone();
@@ -38,7 +37,7 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
     }
 
     @Override
-	public void init() {
+    public void init() {
         m = (0.384401 + 1.52276 * getComponent().getAcentricFactor()
                 - 0.213808 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
                 + 0.034616 * Math.pow(getComponent().getAcentricFactor(), 3.0)

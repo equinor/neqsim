@@ -15,7 +15,6 @@ public class TPflashGR {
 
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-
         // String[] components = new String[]{"water", "nitrogen", "CO2", "methane",
         // "ethane", "propane", "i-butane","n-butane","i-pentane", "n-pentane",
         // "CHCmp_1", "CHCmp_2", "CHCmp_3", "CHCmp_4"

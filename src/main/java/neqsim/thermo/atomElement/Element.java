@@ -25,7 +25,6 @@ public class Element implements ThermodynamicConstantsInterface {
     public Element() {}
 
     public Element(String name) {
-
         ArrayList<String> names = new ArrayList<String>();
         ArrayList<String> stocCoef = new ArrayList<String>();
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -67,5 +66,4 @@ public class Element implements ThermodynamicConstantsInterface {
     public double[] getElementCoefs() {
         return coefArray;
     }
-
 }

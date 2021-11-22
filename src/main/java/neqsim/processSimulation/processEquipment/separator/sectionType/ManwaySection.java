@@ -8,7 +8,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  */
 public class ManwaySection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     public ManwaySection(String type, Separator sep) {
@@ -22,7 +21,7 @@ public class ManwaySection extends SeparatorSection {
     }
 
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         return 1.0;
     }
 }

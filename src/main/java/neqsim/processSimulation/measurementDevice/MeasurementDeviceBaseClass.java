@@ -7,7 +7,6 @@ import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
  * @author ESOL
  */
 public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**

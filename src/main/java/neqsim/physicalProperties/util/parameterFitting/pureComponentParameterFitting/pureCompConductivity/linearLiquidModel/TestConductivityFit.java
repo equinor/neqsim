@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestConductivityFit {
-
     static Logger logger = LogManager.getLogger(TestConductivityFit.class);
 
     public static void main(String[] args) {
@@ -32,7 +31,6 @@ public class TestConductivityFit {
         // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
         try {
-
             logger.info("adding....");
             while (dataSet.next()) {
                 ConductivityFunction function = new ConductivityFunction();
@@ -77,6 +75,5 @@ public class TestConductivityFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

@@ -7,7 +7,6 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class GasScrubberDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     double gasLoadFactor = 0.11;
@@ -19,7 +18,8 @@ public class GasScrubberDesignStandard extends DesignStandard {
     public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -41,13 +41,11 @@ public class GasScrubberDesignStandard extends DesignStandard {
                         designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
             // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

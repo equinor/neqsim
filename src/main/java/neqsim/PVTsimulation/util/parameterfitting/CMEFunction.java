@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class CMEFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -21,7 +20,6 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     }
 
     public void calcSaturationConditions(SystemInterface system) {
-
         do {
             system.setPressure(system.getPressure() + 10.0);
             thermoOps.TPflash();

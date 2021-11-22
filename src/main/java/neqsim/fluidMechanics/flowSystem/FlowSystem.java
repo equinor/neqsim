@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public abstract class FlowSystem implements FlowSystemInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeInterface[] flowNode;
@@ -77,7 +76,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
         totalNumberOfNodes = this.calcTotalNumberOfNodes();
         System.out.println("total number of nodes : " + totalNumberOfNodes);
-
     }
 
     @Override
@@ -300,7 +298,6 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
                 flowNode[i].setInterphaseModelType(0);
             }
             flowNode[i].getFluidBoundary().setMassTransferCalc(false);
-
         }
     }
 

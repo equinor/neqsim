@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author esol
  */
 public class TuneToSaturation extends BaseTuningClass {
-
     private static final long serialVersionUID = 1000;
 
     public TuneToSaturation(SimulationInterface simulation) {
@@ -82,6 +81,5 @@ public class TuneToSaturation extends BaseTuningClass {
             System.out.println("pressure " + getSimulation().getThermoSystem().getPressure() + "dp "
                     + dp + " molarmass" + plusMolarMass);
         }
-
     }
 }

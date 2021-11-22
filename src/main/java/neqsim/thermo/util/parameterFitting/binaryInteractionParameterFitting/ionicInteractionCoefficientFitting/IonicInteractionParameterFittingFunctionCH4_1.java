@@ -7,7 +7,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
  */
 public class IonicInteractionParameterFittingFunctionCH4_1
         extends IonicInteractionParameterFittingFunctionCH4 {
-
     private static final long serialVersionUID = 1000;
 
 
@@ -24,5 +23,4 @@ public class IonicInteractionParameterFittingFunctionCH4_1
         }
         return system.getPressure() * system.getPhase(0).getComponent(1).getx();
     }
-
 }

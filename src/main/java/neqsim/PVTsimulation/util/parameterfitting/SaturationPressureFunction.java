@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class SaturationPressureFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;

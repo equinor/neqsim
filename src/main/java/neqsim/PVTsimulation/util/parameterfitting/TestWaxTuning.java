@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class TestWaxTuning {
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         try {
@@ -48,7 +47,6 @@ public class TestWaxTuning {
                 function.setInitialGuess(guess);
                 sample.setThermodynamicSystem(tempSystem);
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             System.out.println("database error" + e);
@@ -62,6 +60,5 @@ public class TestWaxTuning {
         optim.setSampleSet(sampleSet);
         // optim.solve();
         optim.displayCurveFit();
-
     }
 }

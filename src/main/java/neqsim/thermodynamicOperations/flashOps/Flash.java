@@ -16,7 +16,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
  * @version
  */
 abstract class Flash extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Flash.class);
 
@@ -141,7 +140,6 @@ abstract class Flash extends BaseOperation {
 
                 if ((iterations <= maxiterations - 10)
                         || !system.isImplementedCompositionDeriativesofFugacity()) {
-
                     clonedSystem.init(1, j);
                     fNormOld = fNorm;
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -227,7 +225,6 @@ abstract class Flash extends BaseOperation {
                 }
                 // logger.info("fnorm " + f.norm1() + " err " + error[j] + " iterations " +
                 // iterations + " phase " + j);
-
             } while ((f.norm1() > 1e-6 && iterations < maxiterations) || (iterations % 7) == 0
                     || iterations < 3);
             // (error[j]<oldErr && oldErr<oldOldErr) &&
@@ -321,7 +318,6 @@ abstract class Flash extends BaseOperation {
             if (solidCheck && !system.doMultiPhaseCheck()) {
                 this.solidPhaseFlash();
             }
-
         } else {
             try {
                 system.calcBeta();
@@ -418,14 +414,12 @@ abstract class Flash extends BaseOperation {
                 // solidPhaseFlash();
                 // solid-vapor flash
             }
-
         } else {
             // system.setPhaseIndex(system.getNumberOfPhases() - 1,
             // system.getNumberOfPhases() - 1);
             system.setNumberOfPhases(system.getNumberOfPhases() - 1);
             // logger.info("no solid phase will form..");
         }
-
     }
 
     @Override
@@ -445,7 +439,5 @@ abstract class Flash extends BaseOperation {
     }
 
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

@@ -14,11 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class NeqStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
-    public NeqStream() {
-    }
+    public NeqStream() {}
 
     public NeqStream(SystemInterface thermoSystem) {
         super(thermoSystem);
@@ -33,8 +31,7 @@ public class NeqStream extends Stream {
     }
 
     @Override
-	public Object clone() {
-
+    public Object clone() {
         NeqStream clonedStream = null;
 
         try {
@@ -49,7 +46,7 @@ public class NeqStream extends Stream {
     }
 
     @Override
-	public void run() {
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
@@ -62,5 +59,4 @@ public class NeqStream extends Stream {
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());
     }
-
 }

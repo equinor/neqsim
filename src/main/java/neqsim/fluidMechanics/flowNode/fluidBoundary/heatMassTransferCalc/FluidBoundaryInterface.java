@@ -69,5 +69,4 @@ public interface FluidBoundaryInterface extends Cloneable {
     public void useFiniteFluxCorrection(boolean finiteFluxCorrection);
 
     public void useFiniteFluxCorrection(boolean finiteFluxCorrection, int phase);
-
 }

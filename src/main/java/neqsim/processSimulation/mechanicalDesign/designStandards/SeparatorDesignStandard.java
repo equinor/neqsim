@@ -8,7 +8,6 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
  * @author esol
  */
 public class SeparatorDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -31,7 +30,8 @@ public class SeparatorDesignStandard extends DesignStandard {
 
     public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -53,7 +53,6 @@ public class SeparatorDesignStandard extends DesignStandard {
                                 + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -98,8 +97,8 @@ public class SeparatorDesignStandard extends DesignStandard {
 
     public double getLiquidRetentionTime(String name, MechanicalDesign equipmentInn) {
         double retTime = 90.0;
-        double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem().getPhase(1)
-                .getPhysicalProperties().getDensity() / 1000.0;
+        double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem()
+                .getPhase(1).getPhysicalProperties().getDensity() / 1000.0;
 
         // select correct residensetime from database
         // to be implmented

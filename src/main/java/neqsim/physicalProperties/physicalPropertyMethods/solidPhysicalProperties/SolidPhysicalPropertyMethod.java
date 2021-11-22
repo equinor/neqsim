@@ -7,7 +7,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalPropertie
  */
 public class SolidPhysicalPropertyMethod
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {
-
     private static final long serialVersionUID = 1000;
 
     protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase;

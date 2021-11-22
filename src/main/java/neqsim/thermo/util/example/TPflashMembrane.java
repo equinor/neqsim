@@ -13,17 +13,16 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TPflashMembrane {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflashMembrane.class);
 
     /** Creates new TPflash */
-    public TPflashMembrane() {
-    }
+    public TPflashMembrane() {}
 
     public static void main(String args[]) {
         // SystemInterface testSystem2 = (SystemInterface)
@@ -49,13 +48,12 @@ public class TPflashMembrane {
         testSystem.allowPhaseShift(false);
 
         try {
-            String[] comps = { "CO2" };
+            String[] comps = {"CO2"};
             testOps.dTPflash(comps);
             // testOps.TPflash();
             testSystem.display();
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

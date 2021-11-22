@@ -13,12 +13,10 @@ import java.io.*;
  * @author ESOL
  */
 public class SerializationManager {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a new instance of SerializationManager */
-    public SerializationManager() {
-    }
+    public SerializationManager() {}
 
     public static void save(Object obj, String name) {
         FileOutputStream fout = null;
@@ -28,7 +26,6 @@ public class SerializationManager {
             out = new ObjectOutputStream(fout);
             out.writeObject(obj);
             out.close();
-
         } catch (Exception e) {
             System.out.println(e.toString());
         }

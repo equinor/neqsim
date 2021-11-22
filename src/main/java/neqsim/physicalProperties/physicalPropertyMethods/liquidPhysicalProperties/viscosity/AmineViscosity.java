@@ -6,7 +6,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class AmineViscosity extends Viscosity {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new Conductivity */
@@ -32,5 +31,4 @@ public class AmineViscosity extends Viscosity {
         // System.out.println("visc " + Math.exp(logviscosity));
         return Math.exp(logviscosity);
     }
-
 }

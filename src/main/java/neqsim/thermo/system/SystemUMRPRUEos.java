@@ -7,7 +7,7 @@
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -15,7 +15,6 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the UMR-PRU equation of state
  */
 public class SystemUMRPRUEos extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
@@ -33,11 +32,12 @@ public class SystemUMRPRUEos extends SystemPrEos {
         setBmixType(1);
         modelName = "UMR-PRU-EoS";
         attractiveTermNumber = 1;
-        CapeOpenProperties11 = new String[] { "speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
-                "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
-                "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
-                "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy", "heatCapacityCp",
-                "heatCapacityCv", "density", "volume" };
+        CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
+                "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
+                "fugacityCoefficient", "logFugacityCoefficient",
+                "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
+                "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy",
+                "heatCapacityCp", "heatCapacityCv", "density", "volume"};
     }
 
     public SystemUMRPRUEos(double T, double P, boolean solidCheck) {
@@ -48,7 +48,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemUMRPRUEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUEos) super.clone();
@@ -64,5 +64,4 @@ public class SystemUMRPRUEos extends SystemPrEos {
         setImplementedPressureDeriativesofFugacity(true);
         setImplementedTemperatureDeriativesofFugacity(true);
     }
-
 }

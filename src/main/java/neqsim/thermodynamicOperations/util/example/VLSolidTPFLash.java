@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class VLSolidTPFLash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VLSolidTPFLash.class);
 

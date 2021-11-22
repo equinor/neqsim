@@ -15,7 +15,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class CO2waterPhysicalProperties
         extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 
@@ -41,5 +40,4 @@ public class CO2waterPhysicalProperties
         }
         return properties;
     }
-
 }

@@ -11,7 +11,6 @@ package neqsim.statistics.parameterFitting;
  * @version
  */
 public interface StatisticsInterface {
-
     public StatisticsBaseClass createNewRandomClass();
 
     public void solve();

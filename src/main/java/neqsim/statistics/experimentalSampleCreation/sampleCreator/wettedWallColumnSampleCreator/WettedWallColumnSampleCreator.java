@@ -22,20 +22,18 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
-
     private static final long serialVersionUID = 1000;
     WettedWallDataReader reader;
     DataSmoothor smoothor;
     double[] time, pressure, inletLiquidTemperature, outletLiquidTemperature, inletGasTemperature,
-            inletTotalGasFlowRate, inletLiquidFlowRate, co2SupplyRate, columnWallTemperature, dPdt, dNdt, dPdn, dNdtOld,
-            dnVdt;
+            inletTotalGasFlowRate, inletLiquidFlowRate, co2SupplyRate, columnWallTemperature, dPdt,
+            dNdt, dPdn, dNdtOld, dnVdt;
     double[] smoothedPressure, smoothedInletLiquidTemperature, smoothedOutletLiquidTemperature,
             smoothedInletGasTemperature, smoothedInletTotalGasFlowRate, smoothedInletLiquidFlowRate,
             smoothedCo2SupplyRate, smoothedColumnWallTemperature;
 
     /** Creates new WettedWallColumnSampleCreator */
-    public WettedWallColumnSampleCreator() {
-    }
+    public WettedWallColumnSampleCreator() {}
 
     public WettedWallColumnSampleCreator(String file) {
         reader = new WettedWallDataReader(file);
@@ -55,18 +53,25 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
         int i = 0;
         do {
             time[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime();
-            pressure[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getPressure();
-            inletLiquidTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getInletLiquidTemperature();
-            outletLiquidTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getOutletLiquidTemperature();
-            columnWallTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getColumnWallTemperature();
-            inletTotalGasFlowRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getInletTotalGasFlow();
-            co2SupplyRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getCo2SupplyFlow();
-            inletLiquidFlowRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getInletLiquidFlow();
+            pressure[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                    .getPressure();
+            inletLiquidTemperature[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletLiquidTemperature();
+            outletLiquidTemperature[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getOutletLiquidTemperature();
+            columnWallTemperature[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getColumnWallTemperature();
+            inletTotalGasFlowRate[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletTotalGasFlow();
+            co2SupplyRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                    .getCo2SupplyFlow();
+            inletLiquidFlowRate[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletLiquidFlow();
             i++;
         } while (i < reader.getSampleObjectList().size() - 1);
     }
@@ -132,7 +137,8 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
                 system.getPhases()[1].addMoles(1, -dNdt[i] * (time[i] - time[i - 1]));
                 system.init(1);
                 // her bor det komme en funksjon som finer nummeret til Co2!
-                dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1]) / (time[i + 1] - time[i - 1]);
+                dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1])
+                        / (time[i + 1] - time[i - 1]);
                 // dPdn[i] = system.getPhases()[1].getdPdn(1);
             }
 

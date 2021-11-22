@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  */
 public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -65,5 +64,4 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
     public void setMeasuredPhaseNumber(int measuredPhase) {
         this.measuredPhaseNumber = measuredPhase;
     }
-
 }

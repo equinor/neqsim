@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
  * @version
  */
 public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new SystemModifiedFurstElectrolyteEos */
@@ -39,7 +38,7 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemFurstElectrolyteEosMod2004 clonedSystem = null;
         try {
             clonedSystem = (SystemFurstElectrolyteEosMod2004) super.clone();
@@ -55,5 +54,4 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

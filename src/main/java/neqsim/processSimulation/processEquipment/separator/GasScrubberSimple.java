@@ -11,11 +11,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class GasScrubberSimple extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -83,7 +82,6 @@ public class GasScrubberSimple extends Separator {
 
     @Override
     public void run() {
-
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
@@ -117,11 +115,11 @@ public class GasScrubberSimple extends Separator {
         }
         System.out.println("Ktot " + (1.0 - Ktot));
         double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
-        double gasVel = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
+        double gasVel =
+                thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
         setLiquidCarryoverFraction(Ktot);
         return gasVel;
     }
 
-    public void runTransient() {
-    }
+    public void runTransient() {}
 }

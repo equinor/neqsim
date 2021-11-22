@@ -11,7 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class SolidFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
@@ -51,6 +50,5 @@ public class SolidFlash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

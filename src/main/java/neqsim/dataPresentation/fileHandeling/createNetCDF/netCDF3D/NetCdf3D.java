@@ -16,7 +16,6 @@ import ucar.nc2.*;
  * @version
  */
 public class NetCdf3D {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/temp/example.nc";
@@ -30,8 +29,7 @@ public class NetCdf3D {
     int zLength = 0;
 
     /** Creates new NetCdf */
-    public NetCdf3D() {
-    }
+    public NetCdf3D() {}
 
     public void setOutputFileName(String name) {
         fileName = name;
@@ -73,21 +71,18 @@ public class NetCdf3D {
             ncfile.addVariableAttribute(zName2[i], "units", "degC");
         }
 
-        ncfile.addVariable(latD.getName(), double.class, new Dimension[] { latD });
+        ncfile.addVariable(latD.getName(), double.class, new Dimension[] {latD});
         ncfile.addVariableAttribute(latD.getName(), "units", "degrees_north");
 
-        ncfile.addVariable(lonD.getName(), double.class, new Dimension[] { lonD });
+        ncfile.addVariable(lonD.getName(), double.class, new Dimension[] {lonD});
         ncfile.addVariableAttribute(lonD.getName(), "units", "degrees_east");
 
         ncfile.addGlobalAttribute("title", "Example Data");
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
-
             System.err.println("ERROR creating file");
-
         }
 
         try {
@@ -96,20 +91,14 @@ public class NetCdf3D {
             }
             ncfile.write(latD.getName(), Array.factory(xvalues));
             ncfile.write(lonD.getName(), Array.factory(yvalues));
-
         } catch (Exception e) {
-
             System.err.println("ERROR writing file");
-
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
-
 }

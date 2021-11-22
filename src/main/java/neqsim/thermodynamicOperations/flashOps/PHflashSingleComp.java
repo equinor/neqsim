@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class PHflashSingleComp extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Hspec = 0;

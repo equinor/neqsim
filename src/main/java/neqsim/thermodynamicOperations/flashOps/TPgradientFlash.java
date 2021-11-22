@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class TPgradientFlash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface localSystem = null, tempSystem = null;
@@ -35,7 +34,6 @@ public class TPgradientFlash extends Flash {
         Jac = new Matrix(system.getPhase(0).getNumberOfComponents(),
                 system.getPhase(0).getNumberOfComponents());
         fvec = new Matrix(system.getPhase(0).getNumberOfComponents(), 1);
-
     }
 
     public void setfvec() {
@@ -63,7 +61,6 @@ public class TPgradientFlash extends Flash {
                             * deltaT / tempSystem.getPhase(0).getTemperature()
                             / neqsim.thermo.ThermodynamicConstantsInterface.R
                             / tempSystem.getPhase(0).getTemperature());
-
         }
     }
 

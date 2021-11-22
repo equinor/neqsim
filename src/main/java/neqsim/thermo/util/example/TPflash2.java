@@ -11,22 +11,19 @@ import org.apache.logging.log4j.*;
  */
 
 /*
-*
-* @author esol @version
-*/
+ *
+ * @author esol @version
+ */
 public class TPflash2 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash2.class);
 
     /**
      * Creates new TPflash
      */
-    public TPflash2() {
-    }
+    public TPflash2() {}
 
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0, 1.01325);//
         testSystem.addComponent("nitrogen", 8.71604938);
         // testSystem.addComponent("oxygen", 22.71604938);
@@ -55,6 +52,5 @@ public class TPflash2 {
         // testSystem.init(1);
 
         testSystem.display();
-
     }
 }

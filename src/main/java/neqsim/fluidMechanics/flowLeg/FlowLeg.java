@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeInterface[] flowNode;
@@ -75,7 +74,6 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
     }
 
     public void setFlowNodeTypes() {
-
         nodeSelector.getFlowNodeType(flowNode);
 
         for (int i = 0; i < getNumberOfNodes(); i++) {

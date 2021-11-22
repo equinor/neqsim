@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class VapourPressureTTest {
-
     static SystemInterface thermoSystem = null;
 
 
@@ -40,7 +39,6 @@ public class VapourPressureTTest {
             thermoSystem.setTemperature(startTemp);
             testOps.dewPointTemperatureFlash(false);
             dewPointT = thermoSystem.getTemperature();
-
         } catch (Exception e) {
         }
 
@@ -54,7 +52,4 @@ public class VapourPressureTTest {
         testOps.saturateWithWater();
         assertTrue(thermoSystem.getPhase(0).hasComponent("water"));
     }
-
-
-
 }

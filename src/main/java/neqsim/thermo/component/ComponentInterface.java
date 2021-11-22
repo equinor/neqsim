@@ -11,11 +11,10 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable {
-
     public boolean isInert();
 
     public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation);
@@ -39,9 +38,9 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     /**
      * method to return flow rate of a component
      *
-     * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                  m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
-     * @return          flow rate in specified unit
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *        m3/hr, mole/sec, mole/min, mole/hr
+     * @return flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
 
@@ -57,7 +56,8 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     public int getOrginalNumberOfAssociationSites();
 
-    public void createComponent(String component_name, double moles, double molesInPhase, int compnumber);
+    public void createComponent(String component_name, double moles, double molesInPhase,
+            int compnumber);
 
     public double getRacketZCPA();
 
@@ -165,10 +165,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     public double getDiElectricConstantdT(double temperature);
 
-    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type);
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type);
 
-    public void Finit(PhaseInterface phase, double temperature, double pressure, double totalNumberOfMoles, double beta,
-            int numberOfComponents, int type);
+    public void Finit(PhaseInterface phase, double temperature, double pressure,
+            double totalNumberOfMoles, double beta, int numberOfComponents, int type);
 
     public double getx();
 
@@ -241,16 +242,14 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
     public double getSolidVaporPressure(double temperature);
 
     /**
-     * @param  temperature
-     * @return             ideal gas Cp for the component in the specific phase
-     *                     [J/molK]
+     * @param temperature
+     * @return ideal gas Cp for the component in the specific phase [J/molK]
      */
     public double getCp0(double temperature);
 
     /**
-     * @param  temperature
-     * @return             ideal gas Cv for the component in the specific phase
-     *                     [J/molK]
+     * @param temperature
+     * @return ideal gas Cv for the component in the specific phase [J/molK]
      */
     public double getCv0(double temperature);
 
@@ -352,11 +351,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     public double getPureComponentHeatOfVaporization(double temperature);
 
-    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure);
+    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure);
 
-    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
-            double pressure);
+    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure);
 
     public void setdfugdt(double val);
 

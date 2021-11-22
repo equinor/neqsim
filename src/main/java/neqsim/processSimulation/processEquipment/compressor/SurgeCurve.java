@@ -16,8 +16,7 @@ public class SurgeCurve implements java.io.Serializable {
     final WeightedObservedPoints flowFitter = new WeightedObservedPoints();
     PolynomialFunction flowFitterFunc = null;
 
-    public SurgeCurve() {
-    }
+    public SurgeCurve() {}
 
     public SurgeCurve(double[] flow, double[] head) {
         this.flow = flow;
@@ -40,8 +39,6 @@ public class SurgeCurve implements java.io.Serializable {
         // surge kurva er invariat i plottet trykkforhold mot redused flow
         // CCC bruker dP/ (over maaleblnde som representerer flow) dP/Ps - paa x-aksen
         // trykkforhold paa y-aksen (trykk ut/trykk inn)
-        //
-
     }
 
     public double getSurgeFlow(double head) {
@@ -57,7 +54,6 @@ public class SurgeCurve implements java.io.Serializable {
 
     public static void main(String[] args) {
         // TODO Auto-generated method stub
-
     }
 
     boolean isActive() {
@@ -67,5 +63,4 @@ public class SurgeCurve implements java.io.Serializable {
     void setActive(boolean isActive) {
         this.isActive = isActive;
     }
-
 }

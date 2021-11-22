@@ -12,7 +12,6 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * @author ESOL
  */
 public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;

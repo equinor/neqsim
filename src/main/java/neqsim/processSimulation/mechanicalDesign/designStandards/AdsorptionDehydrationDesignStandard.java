@@ -7,7 +7,6 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class AdsorptionDehydrationDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     private double molecularSieveWaterCapacity = 20;// %
@@ -15,7 +14,8 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
     public AdsorptionDehydrationDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -25,7 +25,8 @@ public class AdsorptionDehydrationDesignStandard extends DesignStandard {
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("MolecularSieve3AWaterCapacity")) {
-                        molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+                        molecularSieveWaterCapacity =
+                                Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
                 }
             } catch (Exception e) {

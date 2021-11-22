@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public interface ComponentEosInterface extends ComponentInterface {
-
     double aT(double temperature);
 
     public double diffaT(double temperature);
@@ -80,11 +79,15 @@ public interface ComponentEosInterface extends ComponentInterface {
 
     public double getdAdTdn();
 
-    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure);
 
-    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure);
 
-    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure);
 
-    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure);
+    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure);
 }

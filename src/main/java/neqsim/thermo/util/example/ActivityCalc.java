@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class ActivityCalc {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new ActivityCalc */
@@ -42,6 +41,5 @@ public class ActivityCalc {
 
         testSystem.display();
         System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
-
     }
 }

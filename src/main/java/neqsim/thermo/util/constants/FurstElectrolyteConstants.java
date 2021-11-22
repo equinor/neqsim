@@ -12,7 +12,6 @@ package neqsim.thermo.util.constants;
  * @version
  */
 public class FurstElectrolyteConstants implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,

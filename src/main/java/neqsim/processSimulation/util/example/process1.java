@@ -4,16 +4,14 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class process1 {
-
     private static final long serialVersionUID = 1000;
 
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 25.0),
-                50.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 25.0), 50.00);
         testSystem.addComponent("methane", 180.00);
         testSystem.addComponent("ethane", 10.00);
         testSystem.addComponent("propane", 1.00);
@@ -42,20 +40,22 @@ public class process1 {
 
         Stream stream_1 = new Stream("Stream1", testSystem);
 
-        neqsim.processSimulation.processEquipment.compressor.Compressor compr = new neqsim.processSimulation.processEquipment.compressor.Compressor(
-                stream_1);
+        neqsim.processSimulation.processEquipment.compressor.Compressor compr =
+                new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
         compr.setOutletPressure(80.0);
         compr.setOutTemperature(345.0);
         compr.setUsePolytropicCalc(true);
         // compr.setNumberOfCompresorCalcSteps(10);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(compr);
 
         operations.run();
         compr.displayResult();
-        System.out.println("polytropic head " + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
+        System.out.println(
+                "polytropic head " + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
         System.out.println("polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
         System.out.println("polytropic efficiency " + compr.getPolytropicEfficiency());
 

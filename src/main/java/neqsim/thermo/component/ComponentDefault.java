@@ -14,15 +14,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class ComponentDefault extends Component {
-
     private static final long serialVersionUID = 1000;
 
-    public ComponentDefault() {
-    }
+    public ComponentDefault() {}
 
     @Override
-	public double fugcoef(PhaseInterface phase) {
+    public double fugcoef(PhaseInterface phase) {
         return 0.0;
     }
-
 }

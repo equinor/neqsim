@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class SolidPhysicalProperties extends PhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     public SolidPhysicalProperties() {}

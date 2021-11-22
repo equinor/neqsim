@@ -13,17 +13,16 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestUNIFAC {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestUNIFAC.class);
 
     /** Creates new TPflash */
-    public TestUNIFAC() {
-    }
+    public TestUNIFAC() {}
 
     public static void main(String args[]) {
         //
@@ -58,11 +57,9 @@ public class TestUNIFAC {
             // testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString(), e);
-
         }
         testSystem.display();
         logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
         logger.info("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
     }
-
 }

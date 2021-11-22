@@ -4,7 +4,6 @@ import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularF
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode;
 
 public class FlowNodeSelector {
-
     private static final long serialVersionUID = 1000;
 
     public FlowNodeSelector() {}
@@ -43,5 +42,4 @@ public class FlowNodeSelector {
             }
         }
     }
-
 }

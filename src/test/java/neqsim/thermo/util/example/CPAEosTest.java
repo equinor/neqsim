@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class CPAEosTest {
-
     static SystemInterface thermoSystem = null;
 
 
@@ -70,7 +69,4 @@ public class CPAEosTest {
 
         assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
     }
-
-
-
 }

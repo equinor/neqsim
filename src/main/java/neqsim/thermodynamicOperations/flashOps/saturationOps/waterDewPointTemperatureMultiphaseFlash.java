@@ -10,23 +10,20 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(waterDewPointTemperatureMultiphaseFlash.class);
 
     /**
      * Creates new bubblePointFlash
      */
-    public waterDewPointTemperatureMultiphaseFlash() {
-    }
+    public waterDewPointTemperatureMultiphaseFlash() {}
 
     public waterDewPointTemperatureMultiphaseFlash(SystemInterface system) {
         super(system);
     }
 
     @Override
-	public void run() {
-
+    public void run() {
         ThermodynamicOperations TPflashOps = new ThermodynamicOperations(system);
         system.setMultiPhaseCheck(true);
         boolean hasAqueousPhase = false;
@@ -36,7 +33,8 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
             i++;
             TPflashOps.TPflash();
             if (system.hasPhaseType("aqueous")) {
-                dT = system.getPhaseOfType("aqueous").getComponent("water").getNumberOfMolesInPhase()
+                dT = system.getPhaseOfType("aqueous").getComponent("water")
+                        .getNumberOfMolesInPhase()
                         / system.getPhase(0).getComponent("water").getNumberOfmoles();
                 if (dT > 1.0) {
                     dT = 1.0;
@@ -52,10 +50,8 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         } while ((i < 350 && Math.abs(dT) > 1e-5));
         logger.info("i " + i);
         // system.display();
-
     }
 
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 }

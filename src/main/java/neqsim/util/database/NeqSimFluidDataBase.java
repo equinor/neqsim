@@ -19,7 +19,6 @@ import java.sql.Statement;
  */
 public class NeqSimFluidDataBase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     static boolean started = false;

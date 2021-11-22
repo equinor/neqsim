@@ -14,24 +14,24 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
-    public GrunbergNissanFunction() {
-    }
+    public GrunbergNissanFunction() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(1);
         system.initPhysicalProperties();
         return system.getPhases()[1].getPhysicalProperties().getViscosity() * 1e3;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-//        system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 0, 1);
-//        system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 1, 0);
+        // system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 0,
+        // 1);
+        // system.getPhases()[0].getPhysicalProperties().getMixingRule().setViscosityGij(value, 1,
+        // 0);
         system.getPhases()[1].getPhysicalProperties().getMixingRule().setViscosityGij(value, 1, 0);
         system.getPhase(1).getPhysicalProperties().getMixingRule().setViscosityGij(value, 0, 1);
     }

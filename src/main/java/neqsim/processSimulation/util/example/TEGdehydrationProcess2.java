@@ -14,13 +14,11 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 public class TEGdehydrationProcess2 {
-
     public static void main(String[] args) {
-
         // Create the input fluid to the TEG process and saturate it with water at
         // scrubber conditions
-        neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
-                10.00);
+        neqsim.thermo.system.SystemInterface feedGas =
+                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
         feedGas.addComponent("nitrogen", 1.03);
         feedGas.addComponent("CO2", 1.42);
         feedGas.addComponent("methane", 83.88);
@@ -44,8 +42,10 @@ public class TEGdehydrationProcess2 {
         StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil(dryFeedGas);
         Stream waterSaturatedFeedGas = new Stream(saturatedFeedGas.getOutStream());
         saturatedFeedGas.setName("water saturator");
-        neqsim.thermo.system.SystemInterface feedTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-        feedTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.98 });
+        neqsim.thermo.system.SystemInterface feedTEG =
+                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        feedTEG.setMolarComposition(
+                new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.98});
 
         Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
         TEGFeed.setFlowRate(6.1 * 1100.0, "kg/hr");
@@ -99,7 +99,7 @@ public class TEGdehydrationProcess2 {
         Heater sepregenGasCooler = new Heater(gasFromRegenerator);
         sepregenGasCooler.setOutTemperature(273.15 + 109.0);
         sepregenGasCooler.setOutPressure(1.23);
-//		sepregenGasCooler.setEnergyStream(richGLycolHeaterCondeser.getEnergyStream());
+        // sepregenGasCooler.setEnergyStream(richGLycolHeaterCondeser.getEnergyStream());
 
         Separator sepRegen = new Separator(sepregenGasCooler.getOutStream());
 
@@ -119,8 +119,10 @@ public class TEGdehydrationProcess2 {
 
         Stream hotLeanTEG = new Stream(regenerator2.getLiquidOutStream());
 
-        neqsim.thermo.system.SystemInterface stripGas = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-        stripGas.setMolarComposition(new double[] { 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 });
+        neqsim.thermo.system.SystemInterface stripGas =
+                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        stripGas.setMolarComposition(
+                new double[] {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
 
         Stream strippingGas = new Stream("stripGas", stripGas);
         strippingGas.setFlowRate(70.0, "kg/hr");
@@ -159,8 +161,10 @@ public class TEGdehydrationProcess2 {
         Stream leanTEGtoabs = new Stream(hotLeanTEGPump2.getOutStream());
         leanTEGtoabs.setName("lean TEG to absorber");
 
-        neqsim.thermo.system.SystemInterface pureTEG = (neqsim.thermo.system.SystemInterface) feedGas.clone();
-        pureTEG.setMolarComposition(new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
+        neqsim.thermo.system.SystemInterface pureTEG =
+                (neqsim.thermo.system.SystemInterface) feedGas.clone();
+        pureTEG.setMolarComposition(
+                new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
 
         Stream makeupTEG = new Stream("lean TEG to absorber", pureTEG);
         makeupTEG.setFlowRate(1e-6, "kg/hr");
@@ -181,7 +185,8 @@ public class TEGdehydrationProcess2 {
         Recycle resycleLeanTEG = new Recycle("lean TEG resycle");
         resycleLeanTEG.addStream(makeupMixer.getOutStream());
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(dryFeedGas);
         operations.add(saturatedFeedGas);
         operations.add(waterSaturatedFeedGas);
@@ -239,10 +244,9 @@ public class TEGdehydrationProcess2 {
         System.out.println("Energy reboiler 2 " + heaterToReboiler.getDuty());
 
         System.out.println("wt lean TEG after stripper "
-                + ((WaterStripperColumn) operations.getUnit("TEG stripper")).getSolventOutStream().getFluid()
-                        .getPhase("aqueous").getWtFrac("TEG"));
+                + ((WaterStripperColumn) operations.getUnit("TEG stripper")).getSolventOutStream()
+                        .getFluid().getPhase("aqueous").getWtFrac("TEG"));
 
         operations.save("c:/temp/TEGprocessSimple.neqsim");
     }
-
 }

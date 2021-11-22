@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class SeparatorTest extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -23,10 +22,8 @@ public class SeparatorTest extends BasePVTsimulation {
     }
 
     public void setSeparatorConditions(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
-
     }
 
     public void runCalc() {
@@ -98,11 +95,10 @@ public class SeparatorTest extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
 
         SeparatorTest sepSim = new SeparatorTest(tempSystem);
-        double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
-        double[] pres = { 500, 400, 200, 100, 50.0, 5.0, 1.01325 };
+        double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
+        double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setSeparatorConditions(temps, pres);
         sepSim.runCalc();
-
     }
 
     /**

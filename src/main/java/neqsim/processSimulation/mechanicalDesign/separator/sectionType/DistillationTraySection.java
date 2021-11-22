@@ -7,7 +7,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  */
 public class DistillationTraySection extends SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     public DistillationTraySection(SeparatorSection separatorSection) {
@@ -16,7 +15,6 @@ public class DistillationTraySection extends SepDesignSection {
 
     @Override
     public void calcDesign() {
-
         double vesselDiameter =
                 separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
         if (vesselDiameter <= 616) {

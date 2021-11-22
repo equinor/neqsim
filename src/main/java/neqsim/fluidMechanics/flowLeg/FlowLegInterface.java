@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public interface FlowLegInterface {
-
     public void setThermoSystem(SystemInterface thermoSystem);
 
     public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry);
@@ -47,5 +46,4 @@ public interface FlowLegInterface {
             double endHeatTransferCoefficient);
 
     public void setFlowPattern(String flowPattern);
-
 }

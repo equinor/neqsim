@@ -12,19 +12,17 @@ import org.apache.logging.log4j.*;
  */
 
 /*
-*
-* @author esol @version
-*/
+ *
+ * @author esol @version
+ */
 public class TPflash1 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash1.class);
 
     /**
      * Creates new TPflash
      */
-    public TPflash1() {
-    }
+    public TPflash1() {}
 
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
@@ -60,7 +58,5 @@ public class TPflash1 {
         // System.out.print("liquid enthalpy " +
         // testSystem.getPhase(1).getEnthalpy("kJ/kg"));
         testSystem.display();
-
     }
-
 }

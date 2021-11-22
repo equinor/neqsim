@@ -17,11 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestRackettZ {
-
     static Logger logger = LogManager.getLogger(TestRackettZ.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

@@ -12,9 +12,7 @@ import neqsim.thermo.system.SystemPrEos;
  * @version
  */
 public class TestCharacterisation {
-
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
 
         CharacterisationFunction function = new CharacterisationFunction();

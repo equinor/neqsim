@@ -6,7 +6,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 public class TestFluidIssues {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestFluidIssues.class);
 
@@ -14,7 +13,6 @@ public class TestFluidIssues {
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         double[][] points;
 
         // SystemInterface testSystem = new SystemSrkEos(303.15, 10.01325);

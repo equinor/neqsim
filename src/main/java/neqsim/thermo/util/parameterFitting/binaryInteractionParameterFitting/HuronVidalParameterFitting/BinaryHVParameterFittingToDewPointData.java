@@ -10,7 +10,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToDewPointData.class);
 
@@ -33,7 +32,6 @@ public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
             } else {
                 thermoOps.freezingPointTemperatureFlash();
             }
-
         } catch (Exception e) {
             logger.error("err dew pont");
         }

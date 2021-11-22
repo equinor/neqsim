@@ -11,7 +11,6 @@ import java.text.DecimalFormat;
  * @version
  */
 public class dataHandeling {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new dataRepresentation */
@@ -83,7 +82,6 @@ public class dataHandeling {
     }
 
     public void printToFile(double[][] points, String filename) {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.####E0");
@@ -105,7 +103,5 @@ public class dataHandeling {
             String err = e.toString();
             System.out.println(err);
         }
-
     }
-
 }

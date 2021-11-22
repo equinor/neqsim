@@ -13,7 +13,7 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             thermoOps.TPflash();
@@ -26,7 +26,7 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             system.getPhases()[0].getComponents()[0].setCpB(value);
@@ -45,5 +45,4 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
             system.getPhases()[1].getComponents()[0].setCpD(value);
         }
     }
-
 }

@@ -14,7 +14,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class TSFlash extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
@@ -77,9 +76,7 @@ public class TSFlash extends QfuncFlash {
         return nyTemp;
     }
 
-    public void onPhaseSolve() {
-
-    }
+    public void onPhaseSolve() {}
 
     @Override
     public void run() {
@@ -107,6 +104,5 @@ public class TSFlash extends QfuncFlash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

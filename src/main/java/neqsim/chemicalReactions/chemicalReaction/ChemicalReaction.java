@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     String[] names, reactantNames, productNames;
@@ -34,7 +33,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
             double activationEnergy, double refT) {
-
         /*
          * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
          * 
@@ -213,7 +211,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         // tempNReacmatrix.print(10,2);
         // tempAProdmatrix.print(10,2);
         // tempAReacmatrix.print(10,2);
-
     }
 
     public void init(PhaseInterface phase) {
@@ -289,7 +286,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         }
 
         return test;
-
     }
 
     /**
@@ -370,5 +366,4 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     public void setName(java.lang.String name) {
         this.name = name;
     }
-
 }

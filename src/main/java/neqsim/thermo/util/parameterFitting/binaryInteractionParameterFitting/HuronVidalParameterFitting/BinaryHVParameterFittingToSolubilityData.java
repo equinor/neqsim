@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
  * @version
  */
 public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToSolubilityData.class);
 
@@ -26,7 +25,6 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
 
     @Override
     public double calcValue(double[] dependentValues) {
-
         if (type == 1) {
             thermoOps.TPflash();
             // system.display();

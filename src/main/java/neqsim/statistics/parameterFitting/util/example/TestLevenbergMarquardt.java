@@ -11,7 +11,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class TestLevenbergMarquardt {
-
     private static final long serialVersionUID = 1000;
 
     public TestLevenbergMarquardt() {}

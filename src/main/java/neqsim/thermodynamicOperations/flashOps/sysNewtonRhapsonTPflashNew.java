@@ -5,7 +5,6 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -50,7 +49,6 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
             fvec.set(i, 0, u.get(i, 0)
                     + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
-
         }
 
         double fsum = 0.0;

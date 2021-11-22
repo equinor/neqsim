@@ -24,7 +24,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned,
@@ -72,7 +71,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
-
     }
 
     public void addStream(StreamInterface newStream) {
@@ -225,7 +223,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                 * getSeparatorLength();
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
                 * getInternalDiameter() * getSeparatorLength();
-
     }
 
     public void setTempPres(double temp, double pres) {
@@ -323,7 +320,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
                 / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
-
     }
 
     public double getDeRatedGasLoadFactor() {
@@ -448,7 +444,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
             try {
                 getLiquidOutStream().getThermoSystem().init(3);
             } catch (Exception e) {
-
             }
         }
         if (thermoSystem.hasPhaseType("gas")) {
@@ -475,7 +470,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
-
         //
         double exergy = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {

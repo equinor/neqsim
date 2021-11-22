@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public interface ProcessEquipmentInterface extends Runnable, java.io.Serializable {
-
     @Override
     public void run();
 
@@ -70,5 +69,4 @@ public interface ProcessEquipmentInterface extends Runnable, java.io.Serializabl
     public double getExergyChange(String unit, double sourrondingTemperature);
 
     public String[][] getResultTable();
-
 }

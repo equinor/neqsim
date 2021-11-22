@@ -17,11 +17,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestParameterFittingToSolubilityDataEinar {
-
     static Logger logger = LogManager.getLogger(TestParameterFittingToSolubilityDataEinar.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

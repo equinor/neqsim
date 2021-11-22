@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public interface ComponentCPAInterface extends ComponentEosInterface {
-
     public double[] getXsite();
 
     public double[] getXsiteOld();

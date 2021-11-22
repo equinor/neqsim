@@ -17,12 +17,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestMathiasCopemanToDewPoint {
-
     static Logger logger = LogManager.getLogger(TestMathiasCopemanToDewPoint.class);
 
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

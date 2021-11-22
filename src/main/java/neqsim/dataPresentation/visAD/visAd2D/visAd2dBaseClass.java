@@ -13,11 +13,10 @@ import visad.*;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- * @author  esol
+ * @author esol
  * @version
  */
 public class visAd2dBaseClass extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new visAd2dBaseClass */
@@ -77,7 +76,8 @@ public class visAd2dBaseClass extends visAdBaseClass {
         }
     }
 
-    public void setLineXYVals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
+    public void setLineXYVals(double[] xvals, double[] yvals)
+            throws RemoteException, VisADException {
         y_line_samples = new float[1][yvals.length];
         x_line_samples = new float[1][xvals.length];
 
@@ -93,16 +93,15 @@ public class visAd2dBaseClass extends visAdBaseClass {
     }
 
     /*
-     * public void setContinousXVals(double[] vals)throws RemoteException,
-     * VisADException{ System.arraycopy(vals,0,xy_samples[0],0,vals.length); }
+     * public void setContinousXVals(double[] vals)throws RemoteException, VisADException{
+     * System.arraycopy(vals,0,xy_samples[0],0,vals.length); }
      * 
-     * public void setContinousYVals(double[] vals)throws RemoteException,
-     * VisADException{ System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
+     * public void setContinousYVals(double[] vals)throws RemoteException, VisADException{
+     * System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
      */
 
     @Override
     public void init() throws RemoteException, VisADException {
-
         index_set = new Integer1DSet(index, xy_samples[0].length);
 
         points_ff = new FlatField(func_i_tuple, index_set);
@@ -140,11 +139,13 @@ public class visAd2dBaseClass extends visAdBaseClass {
         points_ref.setData(points_ff);
         line_ref.setData(line_ff);
 
-        ConstantMap[] pointsMap = { new ConstantMap(1.0f, Display.Red), new ConstantMap(0.0f, Display.Green),
-                new ConstantMap(0.0f, Display.Blue), new ConstantMap(4.5f, Display.PointSize) };
+        ConstantMap[] pointsMap = {new ConstantMap(1.0f, Display.Red),
+                new ConstantMap(0.0f, Display.Green), new ConstantMap(0.0f, Display.Blue),
+                new ConstantMap(4.5f, Display.PointSize)};
 
-        ConstantMap[] lineMap = { new ConstantMap(0.0f, Display.Red), new ConstantMap(0.0f, Display.Green),
-                new ConstantMap(1.0f, Display.Blue), new ConstantMap(1.5f, Display.LineWidth) };
+        ConstantMap[] lineMap = {new ConstantMap(0.0f, Display.Red),
+                new ConstantMap(0.0f, Display.Green), new ConstantMap(1.0f, Display.Blue),
+                new ConstantMap(1.5f, Display.LineWidth)};
 
         // display.addReference(points_ref, pointsMap);
         display.addReference(line_ref, lineMap);
@@ -160,7 +161,7 @@ public class visAd2dBaseClass extends visAdBaseClass {
     public static void main(String[] args) throws RemoteException, VisADException {
         visAd2dBaseClass plot = new visAd2dBaseClass("long", "alt");
 
-        double[][] z = { { 0, 0.5, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{0, 0.5, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         plot.setXYVals(z[0], z[1]);
         plot.setLineXYVals(z[0], z[3]);

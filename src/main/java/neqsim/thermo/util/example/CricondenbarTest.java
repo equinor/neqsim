@@ -10,7 +10,6 @@ import org.apache.logging.log4j.*;
  * @author ESOL
  */
 public class CricondenbarTest {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CricondenbarTest.class);
 
@@ -34,8 +33,7 @@ public class CricondenbarTest {
         try {
             // testSystem.setTemperature(250.0);
             testOps.calcCricondenBar();
-//8            testOps.TPflash();
-
+            // 8 testOps.TPflash();
         } catch (Exception e) {
             logger.error(e.toString());
         }

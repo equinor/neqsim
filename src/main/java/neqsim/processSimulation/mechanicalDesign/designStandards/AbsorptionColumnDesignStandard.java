@@ -7,7 +7,6 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class AbsorptionColumnDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     private double molecularSieveWaterCapacity = 20;// %
@@ -25,7 +24,8 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("MolecularSieve3AWaterCapacity")) {
-                        molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+                        molecularSieveWaterCapacity =
+                                Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
                 }
             } catch (Exception e) {

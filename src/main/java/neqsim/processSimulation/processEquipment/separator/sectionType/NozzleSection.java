@@ -8,7 +8,6 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
  * @author esol
  */
 public class NozzleSection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     public NozzleSection(String type, Separator sep) {
@@ -22,7 +21,7 @@ public class NozzleSection extends SeparatorSection {
     }
 
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         return 1.0;
     }
 }

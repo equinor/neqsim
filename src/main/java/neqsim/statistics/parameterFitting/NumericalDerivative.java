@@ -7,11 +7,10 @@
 package neqsim.statistics.parameterFitting;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class NumericalDerivative implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     final static double CON = 1.4;
@@ -21,14 +20,13 @@ public class NumericalDerivative implements java.io.Serializable {
     final static double SAFE = 2.0;
 
     /** Creates new NumericalDerivative */
-    public NumericalDerivative() {
-    }
+    public NumericalDerivative() {}
 
-    public static double calcDerivative(StatisticsBaseClass system, int sampleNumber, int parameterNumber) {
-
+    public static double calcDerivative(StatisticsBaseClass system, int sampleNumber,
+            int parameterNumber) {
         double errt, fac, hh, ans, err;
-        double h = Math.abs(
-                system.getSampleSet().getSample(sampleNumber).getFunction().getFittingParams(parameterNumber)) / 1.0e3;
+        double h = Math.abs(system.getSampleSet().getSample(sampleNumber).getFunction()
+                .getFittingParams(parameterNumber)) / 1.0e3;
         if (h == 0.0) {
             System.out.println("h must be larger than 0!");
             System.out.println("setting it to 1.0e-10");
@@ -40,13 +38,14 @@ public class NumericalDerivative implements java.io.Serializable {
         // System.out.println("hh " + hh);
         double oldFittingParam1 = system.getSampleSet().getSample(sampleNumber).getFunction()
                 .getFittingParams(parameterNumber);
-        system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-                oldFittingParam1 + hh);
+        system.getSampleSet().getSample(sampleNumber).getFunction()
+                .setFittingParams(parameterNumber, oldFittingParam1 + hh);
         double val1 = system.calcValue(system.getSample(sampleNumber));
-        system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-                oldFittingParam1 - hh);
+        system.getSampleSet().getSample(sampleNumber).getFunction()
+                .setFittingParams(parameterNumber, oldFittingParam1 - hh);
         double val2 = system.calcValue(system.getSample(sampleNumber));
-        system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber, oldFittingParam1);
+        system.getSampleSet().getSample(sampleNumber).getFunction()
+                .setFittingParams(parameterNumber, oldFittingParam1);
 
         a[0][0] = (val1 - val2) / (2.0 * hh);
         ans = a[0][0];
@@ -57,23 +56,24 @@ public class NumericalDerivative implements java.io.Serializable {
 
             double oldFittingParam = system.getSampleSet().getSample(sampleNumber).getFunction()
                     .getFittingParams(parameterNumber);
-            system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-                    oldFittingParam + hh);
+            system.getSampleSet().getSample(sampleNumber).getFunction()
+                    .setFittingParams(parameterNumber, oldFittingParam + hh);
             val1 = system.calcValue(system.getSample(sampleNumber));
             // system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
             // oldFittingParam);
-            system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-                    oldFittingParam - hh);
+            system.getSampleSet().getSample(sampleNumber).getFunction()
+                    .setFittingParams(parameterNumber, oldFittingParam - hh);
             val2 = system.calcValue(system.getSample(sampleNumber));
-            system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber,
-                    oldFittingParam);
+            system.getSampleSet().getSample(sampleNumber).getFunction()
+                    .setFittingParams(parameterNumber, oldFittingParam);
 
             a[0][i] = (val1 - val2) / (2.0 * hh);
             fac = CON2;
             for (int j = 1; j <= i; j++) {
                 a[j][i] = (a[j - 1][i] * fac - a[j - 1][i - 1]) / (fac - 1.0);
                 fac = CON2 * fac;
-                errt = Math.max(Math.abs(a[j][i] - a[j - 1][i]), Math.abs(a[j][i] - a[j - 1][i - 1]));
+                errt = Math.max(Math.abs(a[j][i] - a[j - 1][i]),
+                        Math.abs(a[j][i] - a[j - 1][i - 1]));
                 // System.out.println("errt : " +errt);
 
                 if (errt <= err) {
@@ -87,7 +87,8 @@ public class NumericalDerivative implements java.io.Serializable {
                 break;
             }
         }
-        system.getSampleSet().getSample(sampleNumber).getFunction().setFittingParams(parameterNumber, oldFittingParam1);
+        system.getSampleSet().getSample(sampleNumber).getFunction()
+                .setFittingParams(parameterNumber, oldFittingParam1);
         // System.out.println("deriv " + ans);
         // System.out.println("err " + err);
         return ans;

@@ -17,7 +17,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class AmineFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AmineFlash.class);
 

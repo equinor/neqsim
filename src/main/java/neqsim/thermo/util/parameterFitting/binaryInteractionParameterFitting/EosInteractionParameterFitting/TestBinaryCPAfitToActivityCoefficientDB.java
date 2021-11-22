@@ -19,11 +19,9 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
-
     static Logger logger = LogManager.getLogger(TestBinaryCPAfitToActivityCoefficientDB.class);
-    
-    public static void main(String[] args) {
 
+    public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
         // inserting samples from database

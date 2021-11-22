@@ -2,7 +2,7 @@
  * bubblePointFlash.java
  *
  * Created on 14. oktober 2000, 16:
- 
+ * 
  */
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
@@ -16,7 +16,6 @@ import org.apache.logging.log4j.*;
 
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     public boolean noFreezeFlash = true;
     public int Niterations = 0;
@@ -28,8 +27,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
 
     /** Creates new bubblePointFlash */
-    public freezingPointTemperatureFlashTR() {
-    }
+    public freezingPointTemperatureFlashTR() {}
 
     public freezingPointTemperatureFlashTR(boolean Freeze) {
         noFreezeFlash = Freeze;
@@ -45,20 +43,19 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     }
 
     @Override
-	public void run() {
-
+    public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
         int iterations = 0, maxNumberOfIterations = 15000;
         double yold = 0, ytotal = 1;
         double deriv = 0, funk = 0, funkOld = 0, Testfunk = 0.00000000;
         double maxTemperature = 0, minTemperature = 1e6, oldTemperature = 0.0, newTemp = 0.0;
-        double SolidFug = 0.0, temp = 0.0, pres = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0, dfugdt = 0.0;
+        double SolidFug = 0.0, temp = 0.0, pres = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0,
+                dfugdt = 0.0;
         double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
 
         // for(int k=0;k<system.getPhases()[0].getNumberOfComponents();k++){
         for (int k = 0; k < 1; k++) {
-
             // if(system.getPhase(0).getComponent(k).fugcoef(system.getPhase(0))<9e4){//&&
             // system.getPhase(3).getComponent(k).doSolidCheck()){ // solidCheck variablen
             // er satt naar man kaller setSolidCheck Funksjonen som maa kjores faer du
@@ -69,7 +66,8 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
             }
 
             if (noFreezeFlash) {
-                system.setTemperature(system.getPhases()[0].getComponents()[k].getTriplePointTemperature());
+                system.setTemperature(
+                        system.getPhases()[0].getComponents()[k].getTriplePointTemperature());
                 logger.info("Starting at Triple point temperature "
                         + system.getPhase(0).getComponent(k).getComponentName());
             } else {
@@ -78,8 +76,8 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
             }
 
             // init reference system for vapor fugacity
-            SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(system.getTemperature(),
-                    system.getPressure());
+            SystemInterface testSystem2 =
+                    new SystemSrkSchwartzentruberEos(system.getTemperature(), system.getPressure());
             ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
             testSystem2.addComponent(system.getPhase(0).getComponent(k).getComponentName(), 1);
 
@@ -104,17 +102,20 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                 }
                 if (CCequation) {
                     Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
-                    dfugdt = Math.log((system.getPhase(0).getComponent(k).getCCsolidVaporPressuredT(temp)
-                            * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
+                    dfugdt = Math
+                            .log((system.getPhase(0).getComponent(k).getCCsolidVaporPressuredT(temp)
+                                    * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
                 } else {
                     Pvapsolid = system.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
-                    dfugdt = Math.log((system.getPhase(0).getComponent(k).getSolidVaporPressuredT(temp)
-                            * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
+                    dfugdt = Math
+                            .log((system.getPhase(0).getComponent(k).getSolidVaporPressuredT(temp)
+                                    * Math.exp(solvol / (R * temp) * (pres - Pvapsolid))) / pres);
                 }
                 // Pvapsolid = system.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
                 // legge in sjekk paa om soldens eksisterer i databasen.
 
-                soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
+                soldens = system.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp)
+                        * 1000;
 
                 logger.info("Solid density" + soldens);
 
@@ -137,8 +138,10 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                             / system.getPhases()[i].getComponents()[k].getFugasityCoeffisient();
                     deriv -= 0.01 * system.getPhases()[i].getBeta() * (SolidFug * SolVapFugCoeff
                             * Math.exp(system.getPhases()[i].getComponents()[k].getdfugdt()) * -1.0
-                            / Math.pow(system.getPhases()[i].getComponents()[k].getFugasityCoeffisient(), 2.0)
-                            + Math.exp(dfugdt) / system.getPhases()[i].getComponents()[k].getFugasityCoeffisient());
+                            / Math.pow(system.getPhases()[i].getComponents()[k]
+                                    .getFugasityCoeffisient(), 2.0)
+                            + Math.exp(dfugdt) / system.getPhases()[i].getComponents()[k]
+                                    .getFugasityCoeffisient());
                 }
                 if (iterations >= 2) {
                     deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
@@ -149,13 +152,17 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                 funkOld = funk;
 
                 if (oldTemperature < trpTemp + 1) {
-                    newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv;
+                    newTemp = system.getTemperature()
+                            + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv;
                 } else {
-                    newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk;
+                    newTemp = system.getTemperature()
+                            + 0.5 * (iterations / (10.0 + iterations)) * funk;
                 }
                 logger.info("newTEmp  " + newTemp);
                 if (newTemp > (trpTemp + 5)) {
-                    system.setTemperature(system.getPhases()[0].getComponents()[k].getTriplePointTemperature() + 0.4);
+                    system.setTemperature(
+                            system.getPhases()[0].getComponents()[k].getTriplePointTemperature()
+                                    + 0.4);
                 } else if (newTemp < 1) {
                     system.setTemperature(oldTemperature + 2);
                 }
@@ -193,8 +200,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     }
 
     @Override
-	public void printToFile(String name) {
-
+    public void printToFile(String name) {
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
             name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
         }
@@ -208,26 +214,22 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
             pr_writer.flush();
 
             for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-
                 // print line to output file
-                pr_writer.println(
-                        FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure() + ","
-                                + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + ","
-                                + Niterations);
+                pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k])
+                        + "," + system.getPressure() + ","
+                        + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz())
+                        + "," + Niterations);
                 pr_writer.flush();
             }
             pr_writer.close();
-
         } catch (SecurityException e) {
             logger.info("writeFile: caught security exception");
         } catch (IOException ioe) {
             logger.info("writeFile: caught i/o exception");
         }
-
     }
 
     public int getNiterations() {
         return Niterations;
     }
-
 }

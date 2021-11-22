@@ -7,18 +7,16 @@
 package neqsim.util.util;
 
 /**
- * @author  esol
+ * @author esol
  * @version
  */
 public class DoubleCloneable implements Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     double doubleValue;
 
     /** Creates new DoubleCloneable */
-    public DoubleCloneable() {
-    }
+    public DoubleCloneable() {}
 
     public DoubleCloneable(double val) {
         this.doubleValue = val;

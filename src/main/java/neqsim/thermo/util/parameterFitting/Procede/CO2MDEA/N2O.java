@@ -17,7 +17,6 @@ import org.apache.logging.log4j.*;
  * @author agrawalnj
  */
 public class N2O {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(N2O.class);
 
@@ -29,7 +28,6 @@ public class N2O {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-
         FileOutputStream outfile;
         PrintStream p;
         try {
@@ -79,9 +77,7 @@ public class N2O {
                 logger.error("Could not find file" + e.getMessage());
                 logger.error("Could not read from Patrick.txt" + e.getMessage());
             }
-
-        }
-        logger.info("Finished");
-
+}
+}
     }
 }

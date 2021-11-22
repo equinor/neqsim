@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
  * @version
  */
 public class FreezeSolidFunction extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
 
@@ -25,5 +24,4 @@ public class FreezeSolidFunction extends HuronVidalFunction {
         }
         return system.getTemperature();
     }
-
 }

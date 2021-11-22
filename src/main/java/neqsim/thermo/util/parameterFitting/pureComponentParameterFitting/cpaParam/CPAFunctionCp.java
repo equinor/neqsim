@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
  * @version
  */
 public class CPAFunctionCp extends CPAFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionCp.class);
 
@@ -49,5 +48,4 @@ public class CPAFunctionCp extends CPAFunction {
                 / (system.getPhase(phasetype).getNumberOfMolesInPhase()
                         * system.getPhase(phasetype).getMolarMass() * 1000);
     }
-
 }

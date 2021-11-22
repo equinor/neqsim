@@ -13,7 +13,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalPro
  */
 public class CommonPhysicalPropertyMethod
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {
-
     private static final long serialVersionUID = 1000;
 
     protected neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase;
@@ -26,11 +25,11 @@ public class CommonPhysicalPropertyMethod
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super();
         this.phase = phase;
-
     }
 
     @Override
-	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    public void setPhase(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         this.phase = phase;
     }
 }

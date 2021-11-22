@@ -11,11 +11,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
-
     /**
      * @return the gasQuality
      */
@@ -42,8 +41,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     /**
      * Creates new Stream
      */
-    public Stream() {
-    }
+    public Stream() {}
 
     public Stream(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
@@ -113,8 +111,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
             e.printStackTrace(System.err);
         }
         if (stream != null)
-            clonedSystem.setStream((Stream) stream.clone());
-        ;
+            clonedSystem.setStream((Stream) stream.clone());;
         clonedSystem.thermoSystem = (SystemInterface) getThermoSystem().clone();
         return clonedSystem;
     }
@@ -151,12 +148,15 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName) {
         if (phaseTypeName.equals("liquid")) {
             if (thermoSystem.hasPhaseType("oil") && thermoSystem.hasPhaseType("aqueous")) {
-                this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"),
-                        thermoSystem.getPhaseNumberOfPhase("aqueous"));
+                this.thermoSystem =
+                        thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"),
+                                thermoSystem.getPhaseNumberOfPhase("aqueous"));
             } else if (thermoSystem.hasPhaseType("oil")) {
-                this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"));
+                this.thermoSystem =
+                        thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"));
             } else if (thermoSystem.hasPhaseType("aqueous")) {
-                this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
+                this.thermoSystem =
+                        thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
             } else {
                 System.out.println("no phase of type " + phaseTypeName);
                 System.out.println("...returning empty system ");
@@ -233,7 +233,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
         }
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
-        if (stream != null && getThermoSystem().getNumberOfComponents() == 1 && getSpecification().equals("TP")) {
+        if (stream != null && getThermoSystem().getNumberOfComponents() == 1
+                && getSpecification().equals("TP")) {
             setSpecification("PH");
         }
         if (getSpecification().equals("TP")) {
@@ -259,7 +260,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
                 double gasEnthalpy = thermoSystem.getPhase(0).getEnthalpy();
                 double liquidEnthalpy = thermoSystem.getPhase(1).getEnthalpy();
 
-                double enthalpySpec = getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
+                double enthalpySpec =
+                        getGasQuality() * gasEnthalpy + (1.0 - getGasQuality()) * liquidEnthalpy;
                 thermoOps.PHflash(enthalpySpec);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -384,7 +386,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public Object getProperty(String propertyName, String unit, String phase, String component) {
         // getFluid().getProperties.containsKey(propertyName)) {
         // if(properties.containsKey(propertyName)) {
-
         // }
         // else
         return null;
@@ -392,7 +393,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     @Override
     public double GCV() {
-        Standard_ISO6976 standard = new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
+        Standard_ISO6976 standard =
+                new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
         standard.setReferenceType("molar");
         standard.calculate();
@@ -401,7 +403,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     @Override
     public double LCV() {
-        Standard_ISO6976 standard = new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
+        Standard_ISO6976 standard =
+                new Standard_ISO6976((SystemInterface) thermoSystem.clone(), 0, 15.55, "volume");
         standard.setReferenceState("real");
         standard.setReferenceType("molar");
         standard.calculate();
@@ -411,5 +414,4 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public void setStream(StreamInterface stream) {
         this.stream = stream;
     }
-
 }

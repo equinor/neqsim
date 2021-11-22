@@ -22,7 +22,6 @@ import visad.util.ContourWidget;
  * @version
  */
 public class surfaceFitPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType longitude, latitude, temperature, isotemperature;
@@ -43,7 +42,6 @@ public class surfaceFitPlot {
     /** Creates new visAdContourPlot */
     public surfaceFitPlot(String firstax, String secax, String zax)
             throws RemoteException, VisADException {
-
         latitude = RealType.getRealType(firstax);
         longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
@@ -61,7 +59,6 @@ public class surfaceFitPlot {
         domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS);
 
         set_samples = domain_set.getSamples(true);
-
     }
 
     /*
@@ -78,9 +75,7 @@ public class surfaceFitPlot {
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
-
             for (int r = 0; r < NROWS; r++) {
-
                 flat_samples[0][c * NROWS + r] = (float) z_samples[c][r];
             }
         }

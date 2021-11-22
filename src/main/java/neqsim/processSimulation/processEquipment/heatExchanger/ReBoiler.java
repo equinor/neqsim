@@ -12,11 +12,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ReBoiler extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -26,8 +25,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     private double reboilerDuty = 0.0;
 
     /** Creates new Heater */
-    public ReBoiler() {
-    }
+    public ReBoiler() {}
 
     public ReBoiler(StreamInterface inStream) {
         this.inStream = inStream;
@@ -66,8 +64,7 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
         System.out.println("out Temperature " + reboilerDuty);
     }
 
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     public double getReboilerDuty() {
         return reboilerDuty;
@@ -76,5 +73,4 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     public void setReboilerDuty(double reboilerDuty) {
         this.reboilerDuty = reboilerDuty;
     }
-
 }

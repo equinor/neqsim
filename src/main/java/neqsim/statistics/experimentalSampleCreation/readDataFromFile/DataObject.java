@@ -12,10 +12,8 @@ package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
  * @version
  */
 public class DataObject implements DataObjectInterface {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new DataReaderObject */
-    public DataObject() {
-    }
+    public DataObject() {}
 }

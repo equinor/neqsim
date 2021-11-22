@@ -16,7 +16,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class OLGApropertyTableGeneratorWaterEven
         extends neqsim.thermodynamicOperations.BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterEven.class);
 
@@ -44,7 +43,6 @@ public class OLGApropertyTableGeneratorWaterEven
     public OLGApropertyTableGeneratorWaterEven(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
-
     }
 
     public void setFileName(String name) {
@@ -86,7 +84,6 @@ public class OLGApropertyTableGeneratorWaterEven
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 // thermoOps.bubblePointPressureFlash(false);
@@ -104,7 +101,6 @@ public class OLGApropertyTableGeneratorWaterEven
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 // thermoOps.dewPointPressureFlashHC();
@@ -121,7 +117,6 @@ public class OLGApropertyTableGeneratorWaterEven
     public double[] calcBubT(double[] pressures) {
         double[] bubTemps = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
-
             thermoSystem.setPressure(pressures[i]);
             try {
                 // thermoOps.bubblePointTemperatureFlash();
@@ -147,7 +142,6 @@ public class OLGApropertyTableGeneratorWaterEven
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
             dens[i] = thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity();
-
         }
 
         thermoSystem.setTemperature(stdTemp);
@@ -157,7 +151,6 @@ public class OLGApropertyTableGeneratorWaterEven
 
         GOR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
         GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
-
     }
 
     public void calcRSWTOB() {
@@ -290,7 +283,6 @@ public class OLGApropertyTableGeneratorWaterEven
                     hasGasValues = true;
                     // set gas properties
                 } else {
-
                     if (continuousDerivativesExtrapolation && hasGasValues) {
                         do {
                             if (i > 1) {
@@ -321,7 +313,6 @@ public class OLGApropertyTableGeneratorWaterEven
                                 // props[k][i][j] = vall;
                                 // if(i>0 && props[k][i-1][j]>1e-10) props[k][i][j] =
                                 // props[k][i-1][j]*pressures[i]/pressures[i-1];
-
                             }
                             if (names[k].equals("GAS MASS FRACTION") && props[k][i][j] < 0) {
                                 props[k][i][j] = 0;
@@ -351,7 +342,6 @@ public class OLGApropertyTableGeneratorWaterEven
                  * logger.info("vall" + vall); } }
                  */
                 if (thermoSystem.hasPhaseType("oil") && acceptedFlash) {
-
                     int phaseNumb = thermoSystem.getPhaseNumberOfPhase("oil");
 
                     props[k][i][j] =
@@ -660,7 +650,6 @@ public class OLGApropertyTableGeneratorWaterEven
                         k++;
                     }
                 }
-
             }
         }
         logger.info("Finished TPflash...");
@@ -780,7 +769,6 @@ public class OLGApropertyTableGeneratorWaterEven
                     writer.write("\n");
                 }
             }
-
         } catch (IOException ex) {
             // report
         } finally {
@@ -789,7 +777,6 @@ public class OLGApropertyTableGeneratorWaterEven
             } catch (Exception ex) {
             }
         }
-
     }
 
     public void writeOLGAinpFile(String filename) {
@@ -1278,18 +1265,14 @@ public class OLGApropertyTableGeneratorWaterEven
             } catch (Exception ex) {
             }
         }
-
     }
 
     public void extrapolateTable() {
-
         for (int j = 0; j < temperatures.length; j++) {
             for (int i = 0; i < pressures.length; i++) {
                 if (!hasValue[26][i][j]) {
-
                 }
             }
         }
     }
-
 }

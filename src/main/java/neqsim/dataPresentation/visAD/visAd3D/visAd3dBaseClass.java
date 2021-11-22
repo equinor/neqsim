@@ -14,11 +14,8 @@ import neqsim.dataPresentation.visAD.visAdBaseClass;
  * @version
  */
 public class visAd3dBaseClass extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new visAd2dBaseClass */
-    public visAd3dBaseClass() {
-    }
-
+    public visAd3dBaseClass() {}
 }

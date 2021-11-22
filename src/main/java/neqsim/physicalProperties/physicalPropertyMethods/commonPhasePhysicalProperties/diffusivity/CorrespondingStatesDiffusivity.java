@@ -6,7 +6,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalPro
  * @version
  */
 public class CorrespondingStatesDiffusivity extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
@@ -23,7 +22,6 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
 
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-
         if (phase.getPhase().getPhaseType() == 0) {
             binaryDiffusionCoeffisients[i][j] = 1.0e-4 * 9.89e-8
                     * Math.pow(phase.getViscosity() * 1e3, -0.907)
@@ -44,5 +42,4 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
             return binaryDiffusionCoeffisients[i][j];
         }
     }
-
 }

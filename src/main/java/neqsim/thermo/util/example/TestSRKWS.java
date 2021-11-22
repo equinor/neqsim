@@ -13,17 +13,16 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestSRKWS {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSRKWS.class);
 
     /** Creates new TPflash */
-    public TestSRKWS() {
-    }
+    public TestSRKWS() {}
 
     public static void main(String args[]) {
         //
@@ -56,5 +55,4 @@ public class TestSRKWS {
         testSystem.display();
         logger.info(testSystem.getTemperature() - 273.15);
     }
-
 }

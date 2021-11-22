@@ -13,23 +13,23 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-public class Density
-        extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
-
+public class Density extends
+        neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
     /** Creates new Density */
-    public Density() {
-    }
+    public Density() {}
 
-    public Density(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+    public Density(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         this.liquidPhase = liquidPhase;
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Density properties = null;
 
         try {
@@ -45,8 +45,7 @@ public class Density
      * Returns the density of the phase. Unit: kg/m^3
      */
     @Override
-	public double calcDensity() {
-
+    public double calcDensity() {
         double tempVar = 0.0;
         if (liquidPhase.getPhase().useVolumeCorrection()) {
             for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -57,7 +56,7 @@ public class Density
             }
         }
         // System.out.println("density correction tempvar " + tempVar);
-        return 1.0 / (liquidPhase.getPhase().getMolarVolume() - tempVar) * liquidPhase.getPhase().getMolarMass()
-                * 1.0e5;
+        return 1.0 / (liquidPhase.getPhase().getMolarVolume() - tempVar)
+                * liquidPhase.getPhase().getMolarMass() * 1.0e5;
     }
 }

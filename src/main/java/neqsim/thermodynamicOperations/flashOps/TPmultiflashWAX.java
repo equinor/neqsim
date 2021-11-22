@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class TPmultiflashWAX extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
 
@@ -167,7 +166,6 @@ public class TPmultiflashWAX extends TPflash {
             if (updateFugacities) {
                 system.init(1);
             }
-
         } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
     }
 

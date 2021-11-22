@@ -7,7 +7,6 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author ESOL
  */
 public class PipelineDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     double safetyFactor = 1.0;
@@ -20,7 +19,8 @@ public class PipelineDesignStandard extends DesignStandard {
         // double jointEfficiency =
         // equipment.getJointEfficiencyStandard().getJEFactor();
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -32,13 +32,10 @@ public class PipelineDesignStandard extends DesignStandard {
                     if (specName.equals("safetyFactor")) {
                         safetyFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
-
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

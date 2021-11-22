@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     public EosInteractionParameterFittingFunction() {

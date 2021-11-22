@@ -3,15 +3,12 @@ package neqsim.fluidMechanics.geometryDefinitions.stirredCell;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
 public class StirredCell extends GeometryDefinition {
-
     private static final long serialVersionUID = 1000;
 
-    public StirredCell() {
-    }
+    public StirredCell() {}
 
     public StirredCell(double diameter) {
         super(diameter);
-
     }
 
     public StirredCell(double diameter, double roughness) {

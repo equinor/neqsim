@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestGrunbergNissanFit {
-
     static Logger logger = LogManager.getLogger(TestGrunbergNissanFit.class);
 
     public static void main(String[] args) {
@@ -73,6 +72,5 @@ public class TestGrunbergNissanFit {
         optim.displayCurveFit();
         // optim.displayCurveFit();
         optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

@@ -12,20 +12,19 @@ import org.apache.logging.log4j.*;
  */
 
 /*
-*
-* @author  esol
-* @version
-*/
+ *
+ * @author esol
+ * 
+ * @version
+ */
 public class TestCondensate {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCondensate.class);
 
     /**
      * Creates new TPflash
      */
-    public TestCondensate() {
-    }
+    public TestCondensate() {}
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 1.01325);

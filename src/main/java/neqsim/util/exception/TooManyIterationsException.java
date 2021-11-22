@@ -6,7 +6,6 @@ package neqsim.util.exception;
  * @version
  */
 public class TooManyIterationsException extends neqsim.util.exception.ThermoException {
-
     private static final long serialVersionUID = 1000;
 
     /**

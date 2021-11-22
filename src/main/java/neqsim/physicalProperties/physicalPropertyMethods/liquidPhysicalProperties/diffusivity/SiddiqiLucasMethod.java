@@ -6,7 +6,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * @version
  */
 public class SiddiqiLucasMethod extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new Conductivity */
@@ -52,5 +51,4 @@ public class SiddiqiLucasMethod extends Diffusivity {
                 * liquidPhase.getPhase().getTemperature();
         return binaryDiffusionCoeffisients[i][j];
     }
-
 }

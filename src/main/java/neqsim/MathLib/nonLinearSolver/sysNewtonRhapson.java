@@ -4,7 +4,6 @@ import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 
 public class sysNewtonRhapson implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -25,8 +24,7 @@ public class sysNewtonRhapson implements java.io.Serializable {
     boolean etterCP = false;
     boolean etterCP2 = false;
 
-    public sysNewtonRhapson() {
-    }
+    public sysNewtonRhapson() {}
 
     /** Creates new nonlin */
     public sysNewtonRhapson(SystemInterface system, int numberOfPhases, int numberOfComponents) {
@@ -47,9 +45,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
 
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
-            fvec.set(i, 0, u.get(i, 0) + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                    / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
-
+            fvec.set(i, 0, u.get(i, 0)
+                    + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                            / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
         }
         double fsum = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -67,12 +65,12 @@ public class sysNewtonRhapson implements java.io.Serializable {
         int speceqmin = 0;
 
         for (int i = 0; i < numberOfComponents; i++) {
-            if (system.getPhases()[0].getComponents()[i].getTC() > system.getPhases()[0].getComponents()[speceq]
-                    .getTC()) {
+            if (system.getPhases()[0].getComponents()[i]
+                    .getTC() > system.getPhases()[0].getComponents()[speceq].getTC()) {
                 speceq = system.getPhases()[0].getComponents()[i].getComponentNumber();
             }
-            if (system.getPhases()[0].getComponents()[i].getTC() < system.getPhases()[0].getComponents()[speceq]
-                    .getTC()) {
+            if (system.getPhases()[0].getComponents()[i]
+                    .getTC() < system.getPhases()[0].getComponents()[speceq].getTC()) {
                 speceqmin = system.getPhases()[0].getComponents()[i].getComponentNumber();
             }
         }
@@ -82,7 +80,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
         dTmax = avscp * 3;
         dPmax = avscp * 1.5;
         System.out.println("dTmax: " + dTmax + "  dPmax: " + dPmax);
-
     }
 
     public void findSpecEq() {
@@ -93,7 +90,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
                 speceq2 = i;
                 max = Math.abs(u.get(i, 0) - uold.get(i, 0) / uold.get(i, 0));
             }
-
         }
         // System.out.println("spec eq: " + speceq2);
     }
@@ -107,12 +103,12 @@ public class sysNewtonRhapson implements java.io.Serializable {
         int nofc = numberOfComponents;
         for (int i = 0; i < numberOfComponents; i++) {
             dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponents()[i].getx()
-                    * system.getPhases()[1].getComponents()[i].getx() / system.getPhases()[0].getComponents()[i].getz();
+                    * system.getPhases()[1].getComponents()[i].getx()
+                    / system.getPhases()[0].getComponents()[i].getz();
             dyidlnk[i] = system.getPhases()[1].getComponents()[i].getx()
                     + system.getPhases()[0].getComponents()[i].getK() * dxidlnk[i];
             // System.out.println("dxidlnk("+i+") "+dxidlnk[i]);
             // System.out.println("dyidlnk("+i+") "+dyidlnk[i]);
-
         }
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -149,11 +145,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
         system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0)));
         system.calc_x_y();
         system.init(3);
-
     }
 
     public void calcInc(int np) {
-
         // u.print(0,10);
         // fvec.print(0,10);
         // Jac.print(0,10);
@@ -219,7 +213,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
                 // System.out.println("ds2 : " + ds);
 
                 // Here we find the next point from the polynomial.
-
             }
         }
     }
@@ -235,8 +228,8 @@ public class sysNewtonRhapson implements java.io.Serializable {
             }
             xcoef = a.solve(xg.transpose());
             double sny = ds + s.get(0, 3);
-            u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
-
+            u.set(j, 0, xcoef.get(0, 0)
+                    + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
         }
         uold = u.copy();
         // s.print(0,10);
@@ -296,11 +289,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
             system.setPhaseType(0, 1);
             system.setPhaseType(1, 0);
             return;
-
         }
 
         else if ((xlnkmax < avscp && testcrit != 1) && (np != ic03p && !etterCP)) {
-
             // System.out.println("hei fra her");
             testcrit = 1;
             xg = Xgij.getMatrix(numb, numb, 0, 3);
@@ -342,7 +333,6 @@ public class sysNewtonRhapson implements java.io.Serializable {
         if (testcrit == 1) {
             testcrit = -3;
         }
-
     }
 
     public int getNpCrit() {
@@ -379,10 +369,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
 
     public static void main(String args[]) {
         /*
-         * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new
-         * double[]{0.4,0.4}; test.setx(constants); while (test.nonsol()>1.0e-8) {
-         * constants=test.getx(); System.out.println(constants[0]+" "+constants[1]); }
-         * test.nonsol(); constants=test.getf();
-         * System.out.println(constants[0]+" "+constants[1]); System.exit(0);
+         * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
+         * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
+         * System.out.println(constants[0]+" "+constants[1]); } test.nonsol();
+         * constants=test.getf(); System.out.println(constants[0]+" "+constants[1]); System.exit(0);
          */ }
 }

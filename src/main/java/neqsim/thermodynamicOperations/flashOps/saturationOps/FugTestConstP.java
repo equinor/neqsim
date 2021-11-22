@@ -13,14 +13,14 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
-//import dataPresentation.
+// import dataPresentation.
 /**
  *
  * @author esol
  * @version
  */
-public class FugTestConstP extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
-
+public class FugTestConstP extends constantDutyTemperatureFlash
+        implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FugTestConstP.class);
     public double temp = 0.0, pres = 0.0;
@@ -31,8 +31,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
     public boolean compNameGiven = false;
 
     /** Creates new FugTestdT */
-    public FugTestConstP() {
-    }
+    public FugTestConstP() {}
 
     public FugTestConstP(SystemInterface system) {
         this.testSystem = system;
@@ -55,7 +54,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
     }
 
     @Override
-	public void run() {
+    public void run() {
         double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0, dfugdt = 0.0;
         double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
         boolean CCequation = true;
@@ -83,13 +82,16 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                     }
                     // Vapor pressure estiamtion
                     if (CCequation) {
-                        Pvapsolid = testSystem.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
+                        Pvapsolid = testSystem.getPhase(0).getComponent(k)
+                                .getCCsolidVaporPressure(temp);
                         logger.info("pvap solid CC " + Pvapsolid);
                     } else {
-                        Pvapsolid = testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
+                        Pvapsolid =
+                                testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
                         logger.info("pvap solid Antonie " + Pvapsolid);
                     }
-                    soldens = testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
+                    soldens = testSystem.getPhase(0).getComponent(k)
+                            .getPureComponentSolidDensity(temp) * 1000;
                     if (soldens > 2000) {
                         soldens = 1000;
                     }
@@ -102,7 +104,8 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                     testOps.TPflash();
                     testOps2.TPflash();
 
-                    SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient();
+                    SolVapFugCoeff =
+                            testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient();
 
                     Fug[3][i] = testSystem.getPhase(0).getFugacity(k);
                     Fug[1][i] = SolidFug * SolVapFugCoeff;
@@ -114,21 +117,21 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                     // lagre data i fil
 
                     // if(Math.abs(Fugrel[1][i]-1)<0.01)testSystem.display();
-
                 } // end iterasjons lokke
 
                 String[] title = new String[2];
                 title[0] = "Solid Fugacity";
                 title[1] = "Fluid Fugacity";
 
-                graph2b graffug = new graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
-                        "Temperature [K]", "Fugacity [bar]");
+                graph2b graffug =
+                        new graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
+                                "Temperature [K]", "Fugacity [bar]");
                 graffug.setVisible(true);
                 String[] title2 = new String[1];
                 title2[0] = "Solid/Fluid";
 
-                graph2b grafvapor = new graph2b(Fugrel, title2, compName + " Fugacity Ratio", "Temperature [K]",
-                        "Fsolid/Ffluid");
+                graph2b grafvapor = new graph2b(Fugrel, title2, compName + " Fugacity Ratio",
+                        "Temperature [K]", "Fsolid/Ffluid");
                 grafvapor.setVisible(true);
             } // end solidcheck lokke
         } // end komponent lokke
@@ -137,25 +140,25 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
     public void PrintToFile(String FileName) {
         String myFile = "/java/fugcoeff_C02_ N2.dat";
 
-//           try {
-//               FileWriter file_writer = new FileWriter(myFile, true);
-//               PrintWriter pr_writer = new PrintWriter(file_writer);
-//
-//                // print line to output file
-//                pr_writer.println( testSystem.getPhases()[0].getComponents()[k].getComponentName()+"  " + java.lang.Double.toString(Fug[0+k*6][i])+"    "+java.lang.Double.toString(Fug[1+k*6][i])+"   "+java.lang.Double.toString(Fug[3+k*6][i]) +"   "+ java.lang.Double.toString(Fug[5+k*6][i]) );
-//                pr_writer.flush(); 
-//                pr_writer.close();
-//         
-//            logger.error("Successful attempt to write to " + myFile);
-//            }
-//            catch (SecurityException e) {
-//            logger.error("writeFile: caught security exception");
-//            }
-//            catch (IOException ioe) {
-//	    logger.error("writeFile: caught i/o exception");            
-//            }
-//              
-
+        // try {
+        // FileWriter file_writer = new FileWriter(myFile, true);
+        // PrintWriter pr_writer = new PrintWriter(file_writer);
+        //
+        // // print line to output file
+        // pr_writer.println( testSystem.getPhases()[0].getComponents()[k].getComponentName()+" " +
+        // java.lang.Double.toString(Fug[0+k*6][i])+" "+java.lang.Double.toString(Fug[1+k*6][i])+"
+        // "+java.lang.Double.toString(Fug[3+k*6][i]) +" "+ java.lang.Double.toString(Fug[5+k*6][i])
+        // );
+        // pr_writer.flush();
+        // pr_writer.close();
+        //
+        // logger.error("Successful attempt to write to " + myFile);
+        // }
+        // catch (SecurityException e) {
+        // logger.error("writeFile: caught security exception");
+        // }
+        // catch (IOException ioe) {
+        // logger.error("writeFile: caught i/o exception");
+        // }
     }
-
 }// end Class

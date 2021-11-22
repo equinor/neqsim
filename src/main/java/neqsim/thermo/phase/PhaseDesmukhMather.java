@@ -16,7 +16,6 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class PhaseDesmukhMather extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double GE = 0.0;
@@ -31,13 +30,16 @@ public class PhaseDesmukhMather extends PhaseGE {
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentDesmukhMather(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentDesmukhMather(componentName, moles, molesInPhase, compNumber);
     }
 
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase, double beta) {
+    public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase,
+            double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
         if (initType != 0) {
             phaseTypeName = phase == 0 ? "liquid" : "gas";
@@ -47,7 +49,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     }
 
     @Override
-	public void setMixingRule(int type) {
+    public void setMixingRule(int type) {
         super.setMixingRule(type);
         this.aij = new double[numberOfComponents][numberOfComponents];
         this.bij = new double[numberOfComponents][numberOfComponents];
@@ -66,13 +68,15 @@ public class PhaseDesmukhMather extends PhaseGE {
                     } else {
                         int templ = l, tempk = k;
                         // database = new util.database.NeqSimDataBase();
-                        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
-                                + component_name + "' AND comp2='" + getComponents()[l].getComponentName()
-                                + "') OR (comp1='" + getComponents()[l].getComponentName() + "' AND comp2='"
-                                + component_name + "')");
+                        java.sql.ResultSet dataSet = database
+                                .getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
+                                        + "' AND comp2='" + getComponents()[l].getComponentName()
+                                        + "') OR (comp1='" + getComponents()[l].getComponentName()
+                                        + "' AND comp2='" + component_name + "')");
                         dataSet.next();
 
-                        if (dataSet.getString("comp1").trim().equals(getComponents()[l].getComponentName())) {
+                        if (dataSet.getString("comp1").trim()
+                                .equals(getComponents()[l].getComponentName())) {
                             templ = k;
                             tempk = l;
                         }
@@ -119,43 +123,45 @@ public class PhaseDesmukhMather extends PhaseGE {
     }
 
     @Override
-	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure, int phasetype) {
         GE = 0;
         for (int i = 0; i < numberOfComponents; i++) {
-            GE += phase.getComponents()[i].getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-                    .getGamma(phase, numberOfComponents, temperature, pressure, phasetype));
+            GE += phase.getComponents()[i].getx()
+                    * Math.log(((ComponentDesmukhMather) componentArray[i]).getGamma(phase,
+                            numberOfComponents, temperature, pressure, phasetype));
         }
         // System.out.println("ge " + GE);
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
     @Override
-	public double getGibbsEnergy() {
+    public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
     @Override
-	public double getExessGibbsEnergy() {
+    public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
         // pressure, phaseType);
         return GE;
     }
 
     @Override
-	public double getActivityCoefficient(int k, int p) {
+    public double getActivityCoefficient(int k, int p) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 
     @Override
-	public double getActivityCoefficient(int k) {
+    public double getActivityCoefficient(int k) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 
     public double getIonicStrength() {
         double ionStrength = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
-            ionStrength += getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
+            ionStrength += getComponent(i).getMolality(this)
+                    * Math.pow(getComponent(i).getIonicCharge(), 2.0);
             // getComponent(i).getMolarity(this)*Math.pow(getComponent(i).getIonicCharge(),2.0);
         }
         return 0.5 * ionStrength;
@@ -181,7 +187,8 @@ public class PhaseDesmukhMather extends PhaseGE {
         double molesMass = 0.0, moles = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             if (getComponent(i).getReferenceStateType().equals("solvent")) {
-                molesMass += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+                molesMass +=
+                        getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
                 moles = getComponent(i).getNumberOfMolesInPhase();
             }
         }

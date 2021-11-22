@@ -21,7 +21,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -173,7 +172,6 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
 
     @Override
     public void displayResult() {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
@@ -330,7 +328,6 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     public static void main(String[] args) {
-
         // Create the input fluid to the TEG process and saturate it with water at
         // scrubber conditions
         neqsim.thermo.system.SystemInterface feedGas =
@@ -401,8 +398,6 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         System.out.println("Pump duty " + pump1.getDuty() / 1E3 + " kW");
         System.out.println(
                 "Pump outlet temperature " + pump1.getOutStream().getTemperature("C") + " C");
-
-
     }
 
     public void setSpeed(double speed) {

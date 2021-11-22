@@ -20,7 +20,6 @@ public class TestClassicAcentricPlusDens_1 {
     static Logger logger = LogManager.getLogger(TestClassicAcentricPlusDens_1.class);
 
     public static void main(String[] args) {
-
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
         // inserting samples from database

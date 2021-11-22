@@ -12,23 +12,21 @@ import org.apache.logging.log4j.*;
  */
 
 /*
-*
-* @author  esol
-* @version
-*/
+ *
+ * @author esol
+ * 
+ * @version
+ */
 public class ReadFluidData {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
     /**
      * Creates new TPflash
      */
-    public ReadFluidData() {
-    }
+    public ReadFluidData() {}
 
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);//
         // testSystem.addComponent("nitrogen", 12.681146444);
         testSystem.addComponent("methane", 90.681146444);
@@ -56,6 +54,5 @@ public class ReadFluidData {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

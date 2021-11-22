@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestParachorFit {
-
     static Logger logger = LogManager.getLogger(TestParachorFit.class);
 
     public static void main(String[] args) {
@@ -68,6 +67,5 @@ public class TestParachorFit {
         optim.displayCurveFit();
 
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class QfuncFlash extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(QfuncFlash.class);
 
@@ -65,5 +64,4 @@ public class QfuncFlash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

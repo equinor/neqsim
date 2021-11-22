@@ -15,33 +15,29 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version
  */
 public class OnePhasePipeLine extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new OnePhasePipeLine */
-    public OnePhasePipeLine() {
-    }
+    public OnePhasePipeLine() {}
 
     public OnePhasePipeLine(Stream inStream) {
         super(inStream);
         pipe = new PipeFlowSystem();
     }
 
-    public void createSystem() {
-
-    }
+    public void createSystem() {}
 
     @Override
-	public void run() {
+    public void run() {
         super.run();
         pipe.solveSteadyState(10);
-        //pipe.print();
+        // pipe.print();
         // pipe.getDisplay().createNetCdfFile(fileName);
         outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     }
 
     @Override
-	public void runTransient() {
+    public void runTransient() {
         super.runTransient();
     }
 }

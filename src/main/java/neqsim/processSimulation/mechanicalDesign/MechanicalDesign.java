@@ -23,7 +23,6 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  * @author esol
  */
 public class MechanicalDesign implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -182,13 +181,11 @@ public class MechanicalDesign implements java.io.Serializable {
             setCompanySpecificDesignStandards("default");
         }
         readDesignSpecifications();
-
     }
 
     public void setDesign() {
         System.out.println("reading design paramters for: " + processEquipment.getName());
         readDesignSpecifications();
-
     }
 
     /**
@@ -283,7 +280,6 @@ public class MechanicalDesign implements java.io.Serializable {
         this.companySpecificDesignStandards = companySpecificDesignStandards;
 
         if (companySpecificDesignStandards.equals("StatoilTR")) {
-
             getDesignStandard().put("pressure vessel design code",
                     new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
             getDesignStandard().put("separator process design",
@@ -327,7 +323,6 @@ public class MechanicalDesign implements java.io.Serializable {
                     new JointEfficiencyPlateStandard("Statoil_TR1414", this));
             getDesignStandard().put("material pipe design codes",
                     new MaterialPipeDesignStandard("Statoil_TR1414", this));
-
         }
         hasSetCompanySpecificDesignStandards = true;
     }
@@ -662,7 +657,6 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     public void displayResults() {
-
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
@@ -708,5 +702,4 @@ public class MechanicalDesign implements java.io.Serializable {
     public UnitCostEstimateBaseClass getCostEstimate() {
         return costEstimate;
     }
-
 }

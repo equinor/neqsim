@@ -13,24 +13,24 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestCharacterizationCondensate1 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCharacterizationCondensate1.class);
 
     /**
      * Creates new TPflash
      */
-    public TestCharacterizationCondensate1() {
-    }
+    public TestCharacterizationCondensate1() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 30, 50);
         // SystemInterface testSystem = new SystemSrkCPAs(293.65, 79.3);
-        testSystem.getCharacterization().setTBPModel("PedersenSRK");// (RiaziDaubert PedersenPR PedersenSRK
+        testSystem.getCharacterization().setTBPModel("PedersenSRK");// (RiaziDaubert PedersenPR
+                                                                    // PedersenSRK
         testSystem.getCharacterization().setPlusFractionModel("heavyOil");
         // testSystem.getCharacterization().setTBPModel("PedersenSRK");//(RiaziDaubert
         // PedersenPR PedersenSRK
@@ -44,12 +44,10 @@ public class TestCharacterizationCondensate1 {
         // testSystem.addComponent("PC-C9", 0.096);
         // testSystem.addComponent("PC-C10", 0.04);
         /*
-         * testSystem.addComponent("PC-C11", 0.031); testSystem.addComponent("PC-C12",
-         * 0.025); testSystem.addComponent("PC-C13", 0.02);
-         * testSystem.addComponent("PC-C14", 0.016);
-         * testSystem.addComponent("PC-C15-C16", 0.023);
-         * testSystem.addComponent("PC-C17-C18", 0.014);
-         * testSystem.addComponent("PC-C19-C22", 0.015);
+         * testSystem.addComponent("PC-C11", 0.031); testSystem.addComponent("PC-C12", 0.025);
+         * testSystem.addComponent("PC-C13", 0.02); testSystem.addComponent("PC-C14", 0.016);
+         * testSystem.addComponent("PC-C15-C16", 0.023); testSystem.addComponent("PC-C17-C18",
+         * 0.014); testSystem.addComponent("PC-C19-C22", 0.015);
          * testSystem.addComponent("PC-C23-C58", 0.01);
          */
         testSystem.addPlusFraction("C7", 5, 100.0 / 1000.0, 0.72);
@@ -79,11 +77,12 @@ public class TestCharacterizationCondensate1 {
             testOps.TPflash();
             testSystem.display();
             // testOps.hydrateFormationTemperature();
-//            testOps.dewPointTemperatureFlash();
+            // testOps.dewPointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString());
         }
-        System.out.println("activity coeffisient " + testSystem.getPhase(1).getActivityCoefficient(1));
+        System.out.println(
+                "activity coeffisient " + testSystem.getPhase(1).getActivityCoefficient(1));
         testSystem.display();
         ((PhaseEosInterface) testSystem.getPhase(0)).displayInteractionCoefficients("");
         testSystem.getPhase(0).getComponent(1).getAcentricFactor();

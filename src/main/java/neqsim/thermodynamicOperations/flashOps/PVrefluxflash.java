@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class PVrefluxflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     Flash tpFlash;
@@ -68,7 +67,6 @@ public class PVrefluxflash extends Flash {
             // System.out.println("temp " + system.getTemperature() + " err " + err + "
             // volfor " + system.getPhase(refluxPhase).getVolume() / system.getVolume());
         } while (Math.abs(dt) > 1e-8 && Math.abs(f_func) > 1e-6 && iter < 1000);
-
     }
 
     @Override

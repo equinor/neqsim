@@ -11,7 +11,6 @@ import neqsim.thermo.component.ComponentHydrate;
  * @version
  */
 public class HydrateFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFunction.class);
 
@@ -73,7 +72,5 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
             ((ComponentHydrate) system.getPhase(4).getComponent(0))
                     .setSphericalCoreRadiusHydrate(value);
         }
-        //
-
     }
 }

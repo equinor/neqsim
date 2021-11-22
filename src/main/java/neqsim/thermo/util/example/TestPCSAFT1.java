@@ -6,24 +6,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /*
- * TPflash.java
- *b
- * Created on 27. september 2001, 09:43
+ * TPflash.java b Created on 27. september 2001, 09:43
  */
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestPCSAFT1 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestPCSAFT1.class);
 
     /** Creates new TPflash */
-    public TestPCSAFT1() {
-    }
+    public TestPCSAFT1() {}
 
     public static void main(String args[]) {
         double pressure = 0.0;
@@ -41,15 +38,16 @@ public class TestPCSAFT1 {
         // "23-dim-C4", "2-m-C5", "3-m-C5", "n-hexane"};//, "n-heptane", "c-C6",
         // "benzene", "n-octane", "c-C7", "toluene", "c-C8"};
 
-        String[] componentName = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane", "n-butane",
-                "22-dim-C3", "iC5", "n-pentane", "22-dim-C4", "c-C5", "23-dim-C4", "2-m-C5", "3-m-C5", "n-hexane" };
+        String[] componentName = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
+                "n-butane", "22-dim-C3", "iC5", "n-pentane", "22-dim-C4", "c-C5", "23-dim-C4",
+                "2-m-C5", "3-m-C5", "n-hexane"};
 
-        double[] compositions = { 1.6298, 0.3207, 93.2144, 3.7328, 0.5654, 0.2906, 0.0653, 0.0042, 0.0483, 0.0167,
-                0.0042, 0.0092, 0.0065, 0.0165, 0.0089, 0.0038, };
+        double[] compositions = {1.6298, 0.3207, 93.2144, 3.7328, 0.5654, 0.2906, 0.0653, 0.0042,
+                0.0483, 0.0167, 0.0042, 0.0092, 0.0065, 0.0165, 0.0089, 0.0038,};
 
-        double[] uncertcompositions = { 0.0655, 0.0240, 1.061, 0.2144, 0.0968, 0.0217, 0.0353, 0.0011, 0.011, 0.007,
-                0.0005, 0.0011, 0.0008, 0.0028, 0.0015, 0.0035, 0.0021, 0.006, 0.0025, 0.0003, 0.0022, 0.0014, 0.0001,
-                0.0002, 0.0007 };
+        double[] uncertcompositions = {0.0655, 0.0240, 1.061, 0.2144, 0.0968, 0.0217, 0.0353,
+                0.0011, 0.011, 0.007, 0.0005, 0.0011, 0.0008, 0.0028, 0.0015, 0.0035, 0.0021, 0.006,
+                0.0025, 0.0003, 0.0022, 0.0014, 0.0001, 0.0002, 0.0007};
         double[] runcompositions = new double[componentName.length];
         SystemInterface testSystem = new SystemSrkEos(273.14, pressure);
         // SystemInterface testSystem = new SystemPCSAFT(273.14, pressure);
@@ -57,8 +55,10 @@ public class TestPCSAFT1 {
         testSystem = new SystemSrkEos(testSystem.getTemperature(), pres);
 
         for (int i = 0; i < componentName.length; i++) {
-            double newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
-            newVar = cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
+            double newVar =
+                    cern.jet.random.Normal.staticNextDouble(compositions[i], uncertcompositions[i]);
+            newVar = cern.jet.random.Normal.staticNextDouble(compositions[i],
+                    uncertcompositions[i]);
             runcompositions[i] = compositions[i] + 0 * newVar;
             testSystem.addComponent(componentName[i], runcompositions[i]);
         }
@@ -79,18 +79,17 @@ public class TestPCSAFT1 {
             pres += 1.0;
             testSystem.setPressure(pres);
             // for (int k = 0; k < 1; k++) {
-
             try {
                 // testOps.dewPointTemperatureFlash();
                 testOps.calcPTphaseEnvelope(false);
                 testOps.displayResult();
                 // testSystem.display();
-                logger.info("pressure " + testSystem.getPressure() + " dew point " + testSystem.getTemperature());
+                logger.info("pressure " + testSystem.getPressure() + " dew point "
+                        + testSystem.getTemperature());
             } catch (Exception e) {
                 logger.error(e.toString(), e);
             }
             // }
         }
-
     }
 }

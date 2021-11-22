@@ -6,7 +6,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
  * @version
  */
 public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;

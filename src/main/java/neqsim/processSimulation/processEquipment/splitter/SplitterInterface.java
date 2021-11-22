@@ -17,7 +17,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public interface SplitterInterface extends ProcessEquipmentInterface {
     @Override
-	public void setName(String name);
+    public void setName(String name);
 
     public void setSplitNumber(int i);
 
@@ -26,6 +26,5 @@ public interface SplitterInterface extends ProcessEquipmentInterface {
     public Stream getSplitStream(int i);
 
     @Override
-	public String getName();
-
+    public String getName();
 }

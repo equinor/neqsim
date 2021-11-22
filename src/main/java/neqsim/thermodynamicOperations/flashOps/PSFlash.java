@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class PSFlash extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
@@ -99,9 +98,7 @@ public class PSFlash extends QfuncFlash {
         return nyTemp;
     }
 
-    public void onPhaseSolve() {
-
-    }
+    public void onPhaseSolve() {}
 
     @Override
     public void run() {

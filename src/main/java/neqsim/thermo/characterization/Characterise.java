@@ -84,7 +84,6 @@ public class Characterise implements java.io.Serializable, Cloneable {
     public void characterisePlusFraction() {
         system.init(0);
         if (plusFractionModel.hasPlusFraction()) {
-
             if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
                 logger.error(
                         "plus fraction molar mass too heavy for " + plusFractionModel.getName());

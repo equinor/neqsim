@@ -12,7 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
@@ -34,7 +33,6 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
             logger.error(e.toString());
         }
         return system.getPressure();
-
     }
 
     @Override
@@ -88,5 +86,4 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
          */
         // }
     }
-
 }

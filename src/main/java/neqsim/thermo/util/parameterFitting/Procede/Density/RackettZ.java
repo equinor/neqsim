@@ -10,7 +10,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class RackettZ extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
 
@@ -37,5 +36,4 @@ public class RackettZ extends LevenbergMarquardtFunction {
             system.getPhases()[1].getComponents()[0].setRacketZ(value);
         }
     }
-
 }

@@ -5,7 +5,6 @@ package neqsim.MathLib.generalMath;
  * @version
  */
 public class GeneralMath implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new newtonRhapson */

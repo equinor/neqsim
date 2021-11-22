@@ -13,11 +13,9 @@ public class TVPexample {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TVPexample.class);
 
-    public TVPexample() {
-    };
+    public TVPexample() {};
 
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemSrkEos(275.15 + 37.7778, 1.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testSystem.addComponent("methane", 0.1);
@@ -43,7 +41,5 @@ public class TVPexample {
             logger.error("Exception thrown in bubble point flash");
         }
         testSystem.display();
-
     }
-
 }

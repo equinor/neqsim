@@ -5,7 +5,6 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 
 public abstract class TwoPhaseFlowSystem extends FlowSystem {
-
     private static final long serialVersionUID = 1000;
     // FlowNodeInterface[] test = new AnnularFlow[100];
     // public FluidMechanicsInterface[] flowNode;

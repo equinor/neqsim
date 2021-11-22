@@ -13,7 +13,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @author ESOL
  */
 public class PipelineMechanicalDeisgn extends MechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     double innerDiameter = 1.0;
@@ -25,7 +24,6 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
 
     @Override
     public void readDesignSpecifications() {
-
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("material pipe design codes")) {
@@ -41,7 +39,6 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         } else {
             System.out.println("no pressure vessel code standard specified......");
         }
-
     }
 
     @Override
@@ -91,7 +88,6 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
     }
 
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
         testSystem.addComponent("methane", 600e3, "kg/hr");
@@ -122,6 +118,5 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         operations.getSystemMechanicalDesign().runDesignCalculation();
         operations.getSystemMechanicalDesign().setDesign();
         operations.run();
-
     }
 }

@@ -16,7 +16,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class OLGApropertyTableGeneratorKeywordFormat
         extends neqsim.thermodynamicOperations.BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorKeywordFormat.class);
 
@@ -81,7 +80,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.bubblePointPressureFlash(false);
@@ -99,7 +97,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.dewPointPressureFlash();
@@ -117,7 +114,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         double[] bubT = new double[pressures.length];
         bubTLOG = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
-
             thermoSystem.setPressure(pressures[i]);
             try {
                 thermoOps.bubblePointTemperatureFlash();
@@ -132,7 +128,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     public void initCalc() {
-
         double standgasdens, standliqdens, TC, PC;
 
         molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -141,12 +136,10 @@ public class OLGApropertyTableGeneratorKeywordFormat
         components = new String[thermoSystem.getPhase(0).getNumberOfComponents()];
 
         for (int i = 0; i < molfracs.length; i++) {
-
             molfracs[i] = thermoSystem.getPhase(0).getComponent(i).getz();
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
             dens[i] = thermoSystem.getPhase(0).getComponent(i).getNormalLiquidDensity();
-
         }
 
         thermoSystem.setTemperature(stdTemp);
@@ -160,12 +153,10 @@ public class OLGApropertyTableGeneratorKeywordFormat
 
         stdGasDens = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         stdLiqDens = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-
     }
 
     @Override
     public void run() {
-
         logger.info("Start creating arrays");
 
         nProps = 18;
@@ -490,6 +481,5 @@ public class OLGApropertyTableGeneratorKeywordFormat
             } catch (Exception ex) {
             }
         }
-
     }
 }

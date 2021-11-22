@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class IonicInteractionParameterFittingFunction_1
         extends IonicInteractionParameterFittingFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_1.class);
 
@@ -27,5 +26,4 @@ public class IonicInteractionParameterFittingFunction_1
         }
         return system.getPressure();
     }
-
 }

@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.util.DoubleCloneable;
 
 public interface FlowNodeInterface extends Cloneable {
-
     public SystemInterface getBulkSystem();
 
     public FluidBoundaryInterface getFluidBoundary();

@@ -15,12 +15,10 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version
  */
 public class TwoPhasePipeLine extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new TwoPhasePipeLine */
-    public TwoPhasePipeLine() {
-    }
+    public TwoPhasePipeLine() {}
 
     public TwoPhasePipeLine(Stream inStream) {
         super(inStream);
@@ -32,15 +30,13 @@ public class TwoPhasePipeLine extends Pipeline {
         pipe = new TwoPhasePipeFlowSystem();
     }
 
-    public void createSystem() {
-    }
+    public void createSystem() {}
 
     @Override
-	public void run() {
+    public void run() {
         super.run();
         pipe.solveSteadyState(2);
         pipe.print();
         pipe.getDisplay().createNetCdfFile(fileName);
     }
-
 }

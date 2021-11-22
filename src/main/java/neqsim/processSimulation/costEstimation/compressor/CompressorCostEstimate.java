@@ -8,7 +8,6 @@ import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanical
  * @author ESOL
  */
 public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     public CompressorCostEstimate(CompressorMechanicalDesign mechanicalEquipment) {
@@ -16,7 +15,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
     }
 
     @Override
-	public double getTotaltCost() {
+    public double getTotaltCost() {
         CompressorMechanicalDesign sepMecDesign = (CompressorMechanicalDesign) mechanicalEquipment;
 
         sepMecDesign.getWeightTotal();

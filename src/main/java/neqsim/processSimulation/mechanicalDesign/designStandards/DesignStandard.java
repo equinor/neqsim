@@ -6,15 +6,12 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
  * @author esol
  */
 public class DesignStandard implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     public MechanicalDesign equipment = null;
     public String standardName = "";
 
-    public DesignStandard() {
-
-    }
+    public DesignStandard() {}
 
     public DesignStandard(String name, MechanicalDesign equipmentInn) {
         equipment = equipmentInn;

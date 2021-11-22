@@ -9,7 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -69,5 +68,4 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     public void setReferencePressure(double referencePressure) {
         this.referencePressure = referencePressure;
     }
-
 }

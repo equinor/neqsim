@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public abstract class Standard implements StandardInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String name = "Base Standard";
@@ -31,37 +30,36 @@ public abstract class Standard implements StandardInterface {
     private String referenceState = "real"; // "ideal"real
 
     /** Creates a new instance of Standard */
-    public Standard() {
-    }
+    public Standard() {}
 
     public Standard(SystemInterface thermoSyst) {
         thermoSystem = thermoSyst;
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
     @Override
-	public void setThermoSystem(SystemInterface thermoSystem) {
+    public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
     @Override
-	public void setSalesContract(String name) {
+    public void setSalesContract(String name) {
         if (name.equals("baseContract")) {
             salesContract = new BaseContract();
         }
     }
 
     @Override
-	public void setSalesContract(ContractInterface salesContract) {
+    public void setSalesContract(ContractInterface salesContract) {
         this.salesContract = salesContract;
     }
 
     @Override
-	public ContractInterface getSalesContract() {
+    public ContractInterface getSalesContract() {
         return salesContract;
     }
 
@@ -72,7 +70,7 @@ public abstract class Standard implements StandardInterface {
      *
      */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
@@ -93,7 +91,7 @@ public abstract class Standard implements StandardInterface {
      *
      */
     @Override
-	public String getStandardDescription() {
+    public String getStandardDescription() {
         return standardDescription;
     }
 
@@ -108,7 +106,7 @@ public abstract class Standard implements StandardInterface {
     }
 
     @Override
-	public String[][] createTable(String name) {
+    public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);
 
         thermoSystem.createTable(name);
@@ -117,7 +115,7 @@ public abstract class Standard implements StandardInterface {
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
         String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
 
         for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
@@ -135,10 +133,10 @@ public abstract class Standard implements StandardInterface {
             for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
                 table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
-                table[j + 1][i + 1] = nf
-                        .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponents()[j].getx(), buf,
-                                test)
-                        .toString();
+                table[j + 1][i + 1] = nf.format(
+                        thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponents()[j]
+                                .getx(),
+                        buf, test).toString();
                 table[j + 1][4] = "[-]";
             }
         }
@@ -148,12 +146,12 @@ public abstract class Standard implements StandardInterface {
     }
 
     @Override
-	public void display(String name) {
+    public void display(String name) {
         JDialog dialog = new JDialog(new JFrame(), "Standard-Report");
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         String[][] table = createTable(name);
         JTable Jtab = new JTable(table, names);
         JScrollPane scrollpane = new JScrollPane(Jtab);
@@ -163,12 +161,12 @@ public abstract class Standard implements StandardInterface {
     }
 
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return resultTable;
     }
 
     @Override
-	public void setResultTable(String[][] resultTable) {
+    public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 
@@ -185,5 +183,4 @@ public abstract class Standard implements StandardInterface {
     public void setReferenceState(String referenceState) {
         this.referenceState = referenceState;
     }
-
 }

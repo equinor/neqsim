@@ -13,7 +13,6 @@ import org.apache.logging.log4j.*;
 
 public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlash.class);
 
@@ -25,8 +24,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
     /**
      * Creates new bubblePointFlash
      */
-    public freezingPointTemperatureFlash() {
-    }
+    public freezingPointTemperatureFlash() {}
 
     public freezingPointTemperatureFlash(SystemInterface system) {
         super(system);
@@ -47,7 +45,8 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
             // logger.info("Cheking all the components " + k);
             if (system.getPhase(0).getComponent(k).doSolidCheck()) {
                 ops.TPflash(false);
-                SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+                SolidFugCoeff =
+                        system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
                 funk = system.getPhase(0).getComponent(k).getz();
                 for (int i = 0; i < system.getNumberOfPhases(); i++) {
                     funk -= system.getPhase(i).getBeta() * SolidFugCoeff
@@ -59,7 +58,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
     }
 
     @Override
-	public void run() {
+    public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iterations = 0, maxNumberOfIterations = 100;
         double deriv = 0, funk = 0, funkOld = 0;
@@ -91,7 +90,8 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                     iterations++;
                     oldPhaseType = system.getPhase(0).getPhaseType();
                     ops.TPflash(false);
-                    SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
+                    SolidFugCoeff =
+                            system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
                     funk = system.getPhase(0).getComponent(k).getz();
                     for (int i = 0; i < system.getNumberOfPhases(); i++) {
                         funk -= system.getPhase(i).getBeta() * SolidFugCoeff
@@ -104,7 +104,8 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                         deriv = funk * 100.0;
                     }
                     if (Math.abs(funk / deriv) > 10.0) {
-                        // deriv = Math.signum(deriv) * Math.abs(funk) * (10.0 / (1.0 * iterations));
+                        // deriv = Math.signum(deriv) * Math.abs(funk) * (10.0 / (1.0 *
+                        // iterations));
                     }
 
                     logger.info("phase type " + system.getPhase(0).getPhaseType());
@@ -124,7 +125,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                     maxTemperature = oldTemperature;
                 }
             } // end if
-
         } // end for lokke
 
         if (SolidForms) {
@@ -134,7 +134,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
     }
 
     public void printToFile(String name, String[] FCompNames, double[] FCompTemp) {
-
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
             name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
         }
@@ -148,21 +147,18 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
             pr_writer.flush();
 
             for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-
                 // print line to output file
-                pr_writer.println(
-                        FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure() + ","
-                                + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()) + ","
-                                + Niterations);
+                pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k])
+                        + "," + system.getPressure() + ","
+                        + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz())
+                        + "," + Niterations);
                 pr_writer.flush();
             }
             pr_writer.close();
-
         } catch (SecurityException e) {
             logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {
             logger.error("writeFile: caught i/o exception");
         }
-
     }
 }

@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @author ESOL
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
-
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties =
             null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties =
@@ -22,9 +21,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
     private static final long serialVersionUID = 1000;
 
-    public PhysicalPropertyHandler() {
-
-    }
+    public PhysicalPropertyHandler() {}
 
     public void setPhysicalProperties(PhaseInterface phase, int type) {
         switch (type) {
@@ -106,7 +103,6 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         gasPhysicalProperties.setMixingRule(mixingRule);
         oilPhysicalProperties.setMixingRule(mixingRule);
         aqueousPhysicalProperties.setMixingRule(mixingRule);
-
     }
 
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperty(

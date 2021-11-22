@@ -9,15 +9,13 @@ import org.apache.logging.log4j.*;
  * @author ESOL
  */
 public class SolidComplexFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexFunction.class);
 
-    public SolidComplexFunction() {
-    }
+    public SolidComplexFunction() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.calcSolidComlexTemperature("TEG", "water");
         } catch (Exception e) {
@@ -29,7 +27,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             SolidComplexTemperatureCalc.HrefComplex = value;

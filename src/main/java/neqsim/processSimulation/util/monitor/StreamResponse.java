@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class StreamResponse {
-
     public String name;
     public Fluid fluid;
 
@@ -19,22 +18,18 @@ public class StreamResponse {
     public Double massflow;
 
 
-    public StreamResponse(){
-
-    }
+    public StreamResponse() {}
 
 
-    public StreamResponse(StreamInterface inputStream){
+    public StreamResponse(StreamInterface inputStream) {
         name = inputStream.getName();
         fluid = new Fluid(inputStream.getFluid());
-        
+
         molarMass = inputStream.getFluid().getMolarMass();
-        massDensity =  inputStream.getFluid().getDensity("kg/m3");
-        massflow =  inputStream.getFluid().getFlowRate("kg/hr");
-        volumeFlow =  inputStream.getFluid().getFlowRate("m3/hr");
+        massDensity = inputStream.getFluid().getDensity("kg/m3");
+        massflow = inputStream.getFluid().getFlowRate("kg/hr");
+        volumeFlow = inputStream.getFluid().getFlowRate("m3/hr");
     }
 
-    public void print(){
-    }
-
+    public void print() {}
 }

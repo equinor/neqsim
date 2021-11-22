@@ -33,7 +33,7 @@ public class Hydrocyclone extends Separator {
     }
 
     @Override
-	public void setInletStream(StreamInterface inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -50,7 +50,7 @@ public class Hydrocyclone extends Separator {
     }
 
     @Override
-	public void run() {
+    public void run() {
         inletStreamMixer.run();
         thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
 
@@ -78,10 +78,10 @@ public class Hydrocyclone extends Separator {
         } else {
             gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
         }
-//        //gasOutStream.run();
-//
-////        liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
-////        liquidOutStream.setThermoSystem(liquidSystem);
+        // //gasOutStream.run();
+        //
+        //// liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
+        //// liquidOutStream.setThermoSystem(liquidSystem);
         if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
             liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");
             liquidOutStream.getFluid().init(2);
@@ -94,17 +94,14 @@ public class Hydrocyclone extends Separator {
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display("from here " + getName());
-
     }
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
-    public void runTransient() {
-    }
-
+    public void runTransient() {}
 }

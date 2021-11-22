@@ -15,7 +15,6 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author ESOL
  */
 public class TestSeparationTrain {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -137,5 +136,4 @@ public class TestSeparationTrain {
         // operations.displayResult();
         // liquidOutHeater.getOutStream().getThermoSystem().display();
     }
-
 }

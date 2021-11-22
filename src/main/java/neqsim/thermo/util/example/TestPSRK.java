@@ -13,17 +13,16 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestPSRK {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestPSRK.class);
 
     /** Creates new TPflash */
-    public TestPSRK() {
-    }
+    public TestPSRK() {}
 
     public static void main(String args[]) {
         //

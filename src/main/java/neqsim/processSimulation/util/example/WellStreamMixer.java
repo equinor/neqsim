@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class WellStreamMixer {
-
     private static final long serialVersionUID = 1000;
 
     public static void main(String[] args) {
@@ -36,15 +35,15 @@ public class WellStreamMixer {
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
 
-        testSystem.setMolarComposition(
-                new double[] { 1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21, 0.19, 0.28, 5.0, 1.0, 1.0, 0, 0 });
+        testSystem.setMolarComposition(new double[] {1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21,
+                0.19, 0.28, 5.0, 1.0, 1.0, 0, 0});
 
         neqsim.thermo.system.SystemInterface testSystem2 = (SystemInterface) testSystem.clone();
         testSystem2.createDatabase(true);
         testSystem2.setMixingRule(2);
         testSystem2.setMultiPhaseCheck(true);
-        testSystem2.setMolarComposition(
-                new double[] { 1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21, 0.19, 0.28, 5.0, 0.0, 0.0, 1, 1 });
+        testSystem2.setMolarComposition(new double[] {1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21,
+                0.19, 0.28, 5.0, 0.0, 0.0, 1, 1});
 
         // testSystem.renameComponent("nitrogen", "nitrogen_well1");
         // testSystem.setComponentNameTagOnNormalComponents("_well1");
@@ -67,7 +66,8 @@ public class WellStreamMixer {
         Stream mixerdStream = new Stream(wellStramMixer.getOutStream());
         mixerdStream.setName("mixed stream");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(wellStream_1);
         operations.add(wellStream_2);
         operations.add(wellStramMixer);
@@ -78,6 +78,5 @@ public class WellStreamMixer {
         // wellStream_1.displayResult();
         // wellStream_2.displayResult();
         mixerdStream.displayResult();
-
     }
 }

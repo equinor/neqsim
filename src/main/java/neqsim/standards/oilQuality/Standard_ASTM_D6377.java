@@ -7,7 +7,6 @@ import neqsim.thermo.system.SystemInterface;
  * @author ESOL
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
     String unit = "bara";
     double RVP = 1.0;
@@ -27,7 +26,6 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
             e.printStackTrace();
         }
         RVP = this.thermoSystem.getPressure();
-
     }
 
     @Override

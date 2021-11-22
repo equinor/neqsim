@@ -12,7 +12,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version
  */
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
@@ -161,7 +160,5 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
                     .setBinaryInteractionParameter(CO2Numb, CH4Numb, value);
         }
-
     }
-
 }

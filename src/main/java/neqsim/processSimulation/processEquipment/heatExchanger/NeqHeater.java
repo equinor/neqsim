@@ -11,11 +11,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class NeqHeater extends Heater {
-
     private static final long serialVersionUID = 1000;
 
     StreamInterface outStream;
@@ -24,8 +23,7 @@ public class NeqHeater extends Heater {
     double dH = 0.0;
 
     /** Creates new Heater */
-    public NeqHeater() {
-    }
+    public NeqHeater() {}
 
     public NeqHeater(Stream inStream) {
         this.inStream = inStream;

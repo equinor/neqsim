@@ -12,10 +12,10 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version
  */
-public class Conductivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
+public class Conductivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
@@ -25,16 +25,16 @@ public class Conductivity
     /**
      * Creates new Conductivity
      */
-    public Conductivity() {
-    }
+    public Conductivity() {}
 
-    public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+    public Conductivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
         pureComponentConductivity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Conductivity properties = null;
 
         try {
@@ -47,7 +47,7 @@ public class Conductivity
     }
 
     @Override
-	public double calcConductivity() {
+    public double calcConductivity() {
         double tempVar = 0, tempVar2 = 0;
 
         calcPureComponentConductivity();
@@ -58,12 +58,16 @@ public class Conductivity
             tempVar = 0;
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
                 tempVar2 = Math
-                        .pow(1.0 + Math.sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
+                        .pow(1.0 + Math
+                                .sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
                                 * Math.pow(liquidPhase.getPhase().getComponents()[j].getMolarMass()
-                                        / liquidPhase.getPhase().getComponents()[i].getMolarMass(), 0.25),
+                                        / liquidPhase.getPhase().getComponents()[i].getMolarMass(),
+                                        0.25),
                                 2.0)
-                        / Math.pow(8.0 * (1.0 + liquidPhase.getPhase().getComponents()[i].getMolarMass()
-                                / liquidPhase.getPhase().getComponents()[j].getMolarMass()), 0.5);
+                        / Math.pow(8.0
+                                * (1.0 + liquidPhase.getPhase().getComponents()[i].getMolarMass()
+                                        / liquidPhase.getPhase().getComponents()[j].getMolarMass()),
+                                0.5);
                 tempVar += liquidPhase.getPhase().getComponents()[j].getx() * tempVar2;
             }
             double wigthFraci = liquidPhase.getPhase().getWtFrac(i);
@@ -79,7 +83,8 @@ public class Conductivity
     public void calcPureComponentConductivity() {
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             // pure component conductivity
-            pureComponentConductivity[i] = liquidPhase.getPhase().getComponents()[i].getLiquidConductivityParameter(0)
+            pureComponentConductivity[i] = liquidPhase.getPhase().getComponents()[i]
+                    .getLiquidConductivityParameter(0)
                     + liquidPhase.getPhase().getComponents()[i].getLiquidConductivityParameter(1)
                             * liquidPhase.getPhase().getTemperature()
                     + liquidPhase.getPhase().getComponents()[i].getLiquidConductivityParameter(2)

@@ -8,7 +8,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public abstract class BaseFunction implements FunctionInterface {
-
     private static final long serialVersionUID = 1000;
 
     public double[] params = null;
@@ -110,5 +109,4 @@ public abstract class BaseFunction implements FunctionInterface {
     public void setBounds(double[][] bounds) {
         this.bounds = bounds;
     }
-
 }

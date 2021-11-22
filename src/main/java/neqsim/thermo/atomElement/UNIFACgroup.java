@@ -11,7 +11,6 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * @version
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
-
     /**
      * @return the QMixdN
      */
@@ -50,7 +49,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     public UNIFACgroup() {}
 
     public UNIFACgroup(int groupNumber, int temp) {
-
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         try {
             java.sql.ResultSet dataSet = null;

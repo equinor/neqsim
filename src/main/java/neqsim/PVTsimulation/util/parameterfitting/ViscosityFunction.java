@@ -9,7 +9,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -44,6 +43,5 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
 
         ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties()
                 .getViscosityModel()).setTBPviscosityCorrection(value);
-
     }
 }

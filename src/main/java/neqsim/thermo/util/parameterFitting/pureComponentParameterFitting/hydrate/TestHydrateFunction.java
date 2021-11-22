@@ -17,12 +17,10 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestHydrateFunction {
-
     static Logger logger = LogManager.getLogger(TestHydrateFunction.class);
 
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

@@ -62,7 +62,6 @@ import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGenerat
  * @version
  */
 public class ThermodynamicOperations implements java.io.Serializable, Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     private Thread thermoOperationThread = new Thread();
@@ -420,7 +419,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in bubblePointTemperatureFlash() - could not find solution - possible no bubble point exists");
         }
-
     }
 
     public void freezingPointTemperatureFlash() throws Exception {
@@ -604,7 +602,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             opsTemp.TPflash();
             systemTemp.display();
             systemTemp = systemTemp.phaseToSystem(0);
-
         }
 
         opsTemp = new ThermodynamicOperations(systemTemp);
@@ -648,7 +645,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     public void hydrateFormationTemperature(double initialTemperatureGuess) throws Exception {
-
         system.setTemperature(initialTemperatureGuess);
         operation = new HydrateFormationTemperatureFlash(system);
         for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
@@ -693,7 +689,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
         // logger.info("Hydrate structure " + (((ComponentHydrate)
         // system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
-
     }
 
     public void hydrateEquilibriumLine(double minimumPressure, double maximumPressure)
@@ -707,7 +702,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     public void calcCricoP(double[] cricondenBar, double[] cricondenBarX, double[] cricondenBarY) {
-
         double phasefraction = 1.0 - 1e-10;
 
         operation = new CricondenBarFlash(system, fileName, phasefraction, cricondenBar,
@@ -718,7 +712,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     public void calcCricoT(double[] cricondenTherm, double[] cricondenThermX,
             double[] cricondenThermY) {
-
         double phasefraction = 1.0 - 1e-10;
 
         operation = new CricondenThermFlash(system, fileName, phasefraction, cricondenTherm,
@@ -782,7 +775,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in bubblePointPressureFlash() - could not find solution - possible no dew point exists");
         }
-
     }
 
     public void constantPhaseFractionPressureFlash(double fraction) throws Exception {
@@ -889,7 +881,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in dewPointTemperatureFlash() - could not find solution - possible no dew point exists");
         }
-
     }
 
     public void dewPointTemperatureFlash(boolean derivatives) throws Exception {
@@ -904,7 +895,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in dewPointTemperatureFlash() - could not find solution - possible no dew point exists");
         }
-
     }
 
     public void dewPointPressureFlashHC() throws Exception {
@@ -1157,7 +1147,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         operation = new calcIonicComposition(system, phaseNumber);
         getOperation().run();
         resultTable = getOperation().getResultTable();
-
     }
 
     public void flash(String flashType, double spec1, double spec2, String unitSpec1,

@@ -6,7 +6,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * @version
  */
 public class CO2water extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new Conductivity */

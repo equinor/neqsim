@@ -16,7 +16,6 @@ import neqsim.statistics.parameterFitting.StatisticsInterface;
  * @version
  */
 public class MonteCarloSimulation {
-
     private static final long serialVersionUID = 1000;
     StatisticsInterface baseStatClass;
     StatisticsInterface[] statClasses;
@@ -64,5 +63,4 @@ public class MonteCarloSimulation {
         Matrix report = new Matrix(reportMatrix);// .print(10,2);
         report.print(10, 17);
     }
-
 }

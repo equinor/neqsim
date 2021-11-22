@@ -16,7 +16,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @author ESOL
  */
 public class TestSolidComplexFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSolidComplexFunction.class);
 

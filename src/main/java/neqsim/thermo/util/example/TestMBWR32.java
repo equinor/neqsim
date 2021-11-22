@@ -13,19 +13,18 @@ import org.apache.logging.log4j.*;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestMBWR32 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestMBWR32.class);
 
     /**
      * Creates new TPflash
      */
-    public TestMBWR32() {
-    }
+    public TestMBWR32() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemBWRSEos(298.15, 0.101);

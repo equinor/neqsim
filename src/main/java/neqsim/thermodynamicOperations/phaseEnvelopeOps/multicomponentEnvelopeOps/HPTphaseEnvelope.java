@@ -22,7 +22,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class HPTphaseEnvelope extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
 
     double[][] points = new double[10][10];
@@ -56,7 +55,6 @@ public class HPTphaseEnvelope extends BaseOperation {
 
     @Override
     public void run() {
-
         int np = 0;
 
         for (int i = 0; i < 10; i++) {

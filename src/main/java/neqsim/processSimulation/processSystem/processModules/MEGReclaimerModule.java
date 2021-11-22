@@ -14,7 +14,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author ESOL
  */
 public class MEGReclaimerModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface streamToReclaimer = null, streamToWaterRemoval = null,
@@ -120,7 +119,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
 
         streamToWaterRemoval = flashSeparator.getGasOutStream();
-
     }
 
     @Override
@@ -133,7 +131,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
     }
 
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
 
@@ -153,7 +150,6 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
         reclaimer.run();
         // reclaimer.displayResult();
-
     }
 
     @Override
@@ -165,5 +161,4 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
     public void setDesign() {
         // set design is done here //
     }
-
 }

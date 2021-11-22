@@ -13,10 +13,10 @@ import org.apache.logging.log4j.*;
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
-public class Viscosity
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
-
+public class Viscosity extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
 
@@ -25,15 +25,15 @@ public class Viscosity
     /**
      * Creates new Viscosity class
      */
-    public Viscosity() {
-    }
+    public Viscosity() {}
 
-    public Viscosity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    public Viscosity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Viscosity properties = null;
 
         try {
@@ -46,18 +46,15 @@ public class Viscosity
     }
 
     @Override
-	public double calcViscosity() {
-
+    public double calcViscosity() {
         double viscosity = NaN;
         return viscosity;
     }
 
-    public void calcPureComponentViscosity() {
-
-    }
+    public void calcPureComponentViscosity() {}
 
     @Override
-	public double getPureComponentViscosity(int i) {
+    public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 

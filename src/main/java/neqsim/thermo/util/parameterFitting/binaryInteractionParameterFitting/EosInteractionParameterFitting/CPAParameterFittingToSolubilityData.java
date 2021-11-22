@@ -10,7 +10,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * @version
  */
 public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;
@@ -56,7 +55,6 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
                     .setBinaryInteractionParameterij(0, 1, value);
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
                     .setBinaryInteractionParameterij(0, 1, value);
-
         }
         if (i == 0) {
             ((PhaseEosInterface) system.getPhases()[0]).getMixingRule()
@@ -149,6 +147,5 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
             ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
                     .setHValphaParameter(1, 0, value);
         }
-
     }
 }

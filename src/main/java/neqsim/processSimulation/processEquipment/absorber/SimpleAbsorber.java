@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version
  */
 public class SimpleAbsorber extends Separator implements AbsorberInterface {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;

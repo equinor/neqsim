@@ -16,7 +16,6 @@ import ucar.nc2.*;
  * @version
  */
 public class NetCdf implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/temp/example.nc";
@@ -27,8 +26,7 @@ public class NetCdf implements java.io.Serializable {
     NetcdfFileWriteable ncfile;
 
     /** Creates new NetCdf */
-    public NetCdf() {
-    }
+    public NetCdf() {}
 
     public void setOutputFileName(String name) {
         fileName = name;
@@ -64,43 +62,32 @@ public class NetCdf implements java.io.Serializable {
         ncfile.addVariableAttribute("T", "long_name", "surface temperature");
         ncfile.addVariableAttribute("T", "units", "degC");
 
-        ncfile.addVariable(latD.getName(), double.class, new Dimension[] { latD });
+        ncfile.addVariable(latD.getName(), double.class, new Dimension[] {latD});
         ncfile.addVariableAttribute(latD.getName(), "units", "degrees_north");
 
-        ncfile.addVariable(lonD.getName(), double.class, new Dimension[] { lonD });
+        ncfile.addVariable(lonD.getName(), double.class, new Dimension[] {lonD});
         ncfile.addVariableAttribute(lonD.getName(), "units", "degrees_east");
 
         ncfile.addGlobalAttribute("title", "Example Data");
 
         try {
-
             ncfile.create();
-
         } catch (IOException e) {
-
             System.err.println("ERROR creating file");
-
         }
 
         try {
-
             ncfile.write("T", Array.factory(zvalues));
             ncfile.write(latD.getName(), Array.factory(xvalues));
             ncfile.write(lonD.getName(), Array.factory(yvalues));
-
         } catch (Exception e) {
-
             System.err.println("ERROR writing file");
-
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
-
 }

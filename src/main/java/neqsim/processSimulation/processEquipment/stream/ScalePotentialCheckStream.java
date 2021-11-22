@@ -10,11 +10,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ScalePotentialCheckStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
@@ -54,7 +53,8 @@ public class ScalePotentialCheckStream extends Stream {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
         }
         if (stream != null) {
-            reactiveThermoSystem = this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
+            reactiveThermoSystem =
+                    this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
         }
 
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
@@ -69,5 +69,4 @@ public class ScalePotentialCheckStream extends Stream {
     public void displayResult() {
         reactiveThermoSystem.display(name);
     }
-
 }

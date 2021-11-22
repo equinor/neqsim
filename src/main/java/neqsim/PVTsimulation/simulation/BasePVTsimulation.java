@@ -9,14 +9,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author esol
  */
 public class BasePVTsimulation implements SimulationInterface {
-
     private static final long serialVersionUID = 1000;
 
     private SystemInterface thermoSystem = null;
     private SystemInterface baseThermoSystem = null;
     public ThermodynamicOperations thermoOps = null;
     private double pressure;
-    public double[] pressures = { 381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3 };
+    public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
     public double temperature = 289.0;
     double[][] experimentalData = null;
     double saturationVolume = 0, saturationPressure = 0;
@@ -41,21 +40,20 @@ public class BasePVTsimulation implements SimulationInterface {
      * @return the thermoSystem
      */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
     @Override
-	public void run() {
+    public void run() {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-
     }
 
     /**
      * @return the baseThermoSystem
      */
     @Override
-	public SystemInterface getBaseThermoSystem() {
+    public SystemInterface getBaseThermoSystem() {
         return baseThermoSystem;
     }
 
@@ -63,7 +61,7 @@ public class BasePVTsimulation implements SimulationInterface {
      * @param thermoSystem the thermoSystem to set
      */
     @Override
-	public void setThermoSystem(SystemInterface thermoSystem) {
+    public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
@@ -113,7 +111,7 @@ public class BasePVTsimulation implements SimulationInterface {
      * @return the optimizer
      */
     @Override
-	public LevenbergMarquardt getOptimizer() {
+    public LevenbergMarquardt getOptimizer() {
         return optimizer;
     }
 
@@ -123,5 +121,4 @@ public class BasePVTsimulation implements SimulationInterface {
     public double getZsaturation() {
         return Zsaturation;
     }
-
 }

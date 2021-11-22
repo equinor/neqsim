@@ -12,12 +12,11 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
 import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironmentBaseClass;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public abstract class GeometryDefinition
         implements GeometryDefinitionInterface, neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -55,16 +54,15 @@ public abstract class GeometryDefinition
     protected PackingInterface packing = null;
     /** Creates new GeometryDefinition */
 
-    public double diameter = 0, radius = 0, innerSurfaceRoughness = 0.000005, nodeLength = 0, area = 0,
-            relativeRoughnes = 0;
+    public double diameter = 0, radius = 0, innerSurfaceRoughness = 0.000005, nodeLength = 0,
+            area = 0, relativeRoughnes = 0;
     public double[] layerConductivity, layerThickness;
 
     public Wall wall = new Wall();
 
     private SurroundingEnvironment surroundingEnvironment = new SurroundingEnvironmentBaseClass();
 
-    public GeometryDefinition() {
-    }
+    public GeometryDefinition() {}
 
     public GeometryDefinition(double diameter) {
         this.diameter = diameter;
@@ -165,8 +163,7 @@ public abstract class GeometryDefinition
     }
 
     @Override
-    public void setPackingType(int i) {
-    }
+    public void setPackingType(int i) {}
 
     @Override
     public void setPackingType(String name, String material, int size) {

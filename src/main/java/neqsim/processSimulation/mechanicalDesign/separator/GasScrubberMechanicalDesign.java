@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.separator.sectionType.Separator
  * @author esol
  */
 public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
@@ -20,7 +19,6 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     @Override
     public void readDesignSpecifications() {
-
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("gas scrubber process design")) {
@@ -33,7 +31,6 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         } else {
             System.out.println("no separator process design specified......");
         }
-
     }
 
     @Override
@@ -130,5 +127,4 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...
     }
-
 }

@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeInterface flowNode;
@@ -193,7 +192,6 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
                             .get(bulkSystem.getPhases()[phase].getNumberOfComponents() - 1, 0))
                             / sum);
         }
-
     }
 
     public void calcNonIdealCorrections(int phase) {

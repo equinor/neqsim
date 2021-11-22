@@ -14,14 +14,12 @@ package neqsim.MathLib.generalMath;
  * @version
  */
 public class TDMAsolve implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new TDMAsolve */
     public TDMAsolve() {}
 
     public static double[] solve(double a[], double b[], double c[], double r[]) {
-
         int length = a.length;
         double[] u = new double[length];
         double bet = 0;
@@ -41,5 +39,4 @@ public class TDMAsolve implements java.io.Serializable {
         }
         return u;
     }
-
 }

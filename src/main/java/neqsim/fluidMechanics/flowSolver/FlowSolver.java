@@ -7,11 +7,10 @@
 package neqsim.fluidMechanics.flowSolver;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public abstract class FlowSolver implements FlowSolverInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected int numberOfVelocityNodes = 0;
@@ -21,12 +20,10 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
     protected int solverType = 0;
 
     /** Creates new FlowSolver */
-    public FlowSolver() {
-    }
+    public FlowSolver() {}
 
     @Override
-    public void solve() {
-    }
+    public void solve() {}
 
     @Override
     public void setDynamic(boolean ans) {
@@ -51,6 +48,5 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
     }
 
     @Override
-    public void solveTDMA() {
-    }
+    public void solveTDMA() {}
 }

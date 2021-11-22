@@ -14,7 +14,6 @@ import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
  * @author ESOL
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
-
     /**
      * @param condenserTemperature the condenserTemperature to set
      */
@@ -112,7 +111,6 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
-
     }
 
     @Override
@@ -140,7 +138,6 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     }
 
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos(273.15 - 20, 1);
         testSystem.addComponent("propane", 0.30);

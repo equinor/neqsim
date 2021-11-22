@@ -17,12 +17,10 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version
  */
 public class TestBinaryHVParameterFittingToSolubilityData {
-
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData.class);
 
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

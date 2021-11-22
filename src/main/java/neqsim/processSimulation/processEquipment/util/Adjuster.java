@@ -14,11 +14,10 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.util.example.PhaseEnvelope;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
@@ -34,28 +33,28 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
     /** Creates new staticMixer */
-    public Adjuster() {
-    }
+    public Adjuster() {}
 
     public Adjuster(String name) {
         super(name);
     }
 
-    public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment, String adjstedVariable) {
+    public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
+            String adjstedVariable) {
         this.adjustedEquipment = adjustedEquipment;
         this.adjustedVarialble = adjstedVariable;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-            String targetUnit) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
+            double targetValue, String targetUnit) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.targetValue = targetValue;
         this.targetUnit = targetUnit;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-            String targetUnit, String targetPhase) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
+            double targetValue, String targetUnit, String targetPhase) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.targetValue = targetValue;
@@ -63,8 +62,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         this.targetPhase = targetPhase;
     }
 
-    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable, double targetValue,
-            String targetUnit, String targetPhase, String targetComponent) {
+    public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
+            double targetValue, String targetUnit, String targetPhase, String targetComponent) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
         this.targetValue = targetValue;
@@ -88,13 +87,16 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         }
 
         double targetValueCurrent = 0.0;
-        if (targetVariable.equals("mass fraction") && !targetPhase.equals("") && !targetComponent.equals("")) {
+        if (targetVariable.equals("mass fraction") && !targetPhase.equals("")
+                && !targetComponent.equals("")) {
             targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPhase(targetPhase)
                     .getWtFrac(targetComponent);
         } else if (targetVariable.equals("gasVolumeFlow")) {
-            targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
+            targetValueCurrent =
+                    ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
         } else if (targetVariable.equals("pressure")) {
-            targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPressure(targetUnit);
+            targetValueCurrent =
+                    ((Stream) targetEquipment).getThermoSystem().getPressure(targetUnit);
         } else {
             targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
         }
@@ -112,17 +114,21 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
         if (iterations < 2) {
             if (adjustedVarialble.equals("mass flow")) {
-                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation, "kg/hr");
+                ((Stream) adjustedEquipment).getThermoSystem()
+                        .setTotalFlowRate(inputValue + deviation, "kg/hr");
             } else {
-                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation, "mol/sec");
+                ((Stream) adjustedEquipment).getThermoSystem()
+                        .setTotalFlowRate(inputValue + deviation, "mol/sec");
             }
         } else {
             double derivate = (error - oldError) / (inputValue - oldInputValue);
             double newVal = error / derivate;
             if (adjustedVarialble.equals("mass flow")) {
-                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal, "kg/hr");
+                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
+                        "kg/hr");
             } else {
-                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal, "mol/sec");
+                ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
+                        "mol/sec");
             }
         }
 
@@ -138,9 +144,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     @Override
-    public void displayResult() {
-
-    }
+    public void displayResult() {}
 
     public double getTolerance() {
         return tolerance;
@@ -169,7 +173,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     public static void main(String[] args) {
         // test code for adjuster...
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
         testSystem.addComponent("methane", 1000.00);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -179,7 +184,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         adjuster1.setAdjustedVariable(stream_1, "molarFlow");
         adjuster1.setTargetVariable(stream_1, "gasVolumeFlow", 10.0, "MSm3/day", "");
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(adjuster1);
 
@@ -193,5 +199,4 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     public void setActivateWhenLess(boolean activateWhenLess) {
         this.activateWhenLess = activateWhenLess;
     }
-
 }

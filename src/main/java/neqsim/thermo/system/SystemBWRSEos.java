@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,11 +20,10 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemBWRSEos extends SystemEos {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
-    double[][] TBPfractionCoefs = { { 163.12, 86.052, 0.43475, -1877.4, 0.0 },
-            { -0.13408, 2.5019, 208.46, -3987.2, 1.0 }, { 0.7431, 0.004812, 0.009671, -3.7e-6, 0.0 } };
+    double[][] TBPfractionCoefs = {{163.12, 86.052, 0.43475, -1877.4, 0.0},
+            {-0.13408, 2.5019, 208.46, -3987.2, 1.0}, {0.7431, 0.004812, 0.009671, -3.7e-6, 0.0}};
 
     // SystemSrkEos clonedSystem;
     public SystemBWRSEos() {
@@ -81,7 +80,7 @@ public class SystemBWRSEos extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemBWRSEos clonedSystem = null;
         try {
             clonedSystem = (SystemBWRSEos) super.clone();
@@ -96,5 +95,4 @@ public class SystemBWRSEos extends SystemEos {
 
         return clonedSystem;
     }
-
 }

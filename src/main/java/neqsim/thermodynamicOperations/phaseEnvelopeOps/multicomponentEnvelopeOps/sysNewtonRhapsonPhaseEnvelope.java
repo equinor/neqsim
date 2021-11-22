@@ -7,7 +7,6 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPhaseEnvelope.class);
 
@@ -85,7 +84,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     }
 
     public void setfvec() {
-
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0,
                     u.get(i, 0) + system.getPhase(0).getComponents()[i].getLogFugasityCoeffisient()
@@ -227,7 +225,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         double[] dyidlnk = new double[numberOfComponents];
         double tempJ = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
-
             dxidlnk[i] = -system.getPhase(1).getComponents()[i].getz()
                     * Math.pow(system.getPhase(0).getComponents()[i].getK() * system.getBeta() + 1.0
                             - system.getBeta(), -2.0)
@@ -244,7 +241,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
                                                     * system.getPhase(0).getComponents()[i].getK(),
                                     2.0)
                             * system.getBeta() * system.getPhase(0).getComponents()[i].getK();
-
         }
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -309,7 +305,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             Xgij.setMatrix(0, numberOfComponents + 1, np - 1, np - 1, u.copy());
             u.plusEquals(dxds.times(ds));
             specVal = u.get(speceq, 0);
-
         } else {
             // for the rest of the points use as spec eq the most sensitive variable
             int speceqOld = speceq;
@@ -407,7 +402,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
             // calculate next u
             calcInc2(np);
-
         }
         // since you are calculating the next point the previous iterations should be
         // zero
@@ -416,7 +410,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     }
 
     public void calcInc2(int np) {
-
         // Here we calcualte the estimate of the next point from the polynomial.
         for (int i = 0; i < 4; i++) {
             a.set(i, 0, 1.0);
@@ -473,7 +466,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
                 }
                 u.set(j, 0, xcoef.get(0, 0) + sny
                         * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
-
             }
         } catch (Exception e) {
             logger.error("error", e);
@@ -552,7 +544,6 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
                 norm = dx.norm2();
                 dxOldNorm = norm;
             }
-
         } while (norm > 1.e-5);
 
         init();

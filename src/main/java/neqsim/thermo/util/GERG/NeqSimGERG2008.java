@@ -1,6 +1,6 @@
 package neqsim.thermo.util.GERG;
 
- 
+
 /**
  *
  * @author esol
@@ -19,16 +19,13 @@ public class NeqSimGERG2008 {
     double[] notNormalizedGERGComposition = new double[21 + 1];
     PhaseInterface phase = null;
 
-    public NeqSimGERG2008() {
-
-    }
+    public NeqSimGERG2008() {}
 
     public NeqSimGERG2008(PhaseInterface phase) {
         this.setPhase(phase);
         if (Double.isNaN(GERG2008.RGERG) || GERG2008.RGERG == 0) {
             GERG2008.SetupGERG();
         }
-
     }
 
     public double getMolarDensity(PhaseInterface phase) {
@@ -70,8 +67,8 @@ public class NeqSimGERG2008 {
         doubleW D = new doubleW(0.0);
         StringW strW = new StringW("");
         double pressure = phase.getPressure() * 100.0;
-        neqsim.thermo.util.GERG.GERG2008.DensityGERG(flag, phase.getTemperature(), pressure, normalizedGERGComposition,
-                D, ierr, herr);
+        neqsim.thermo.util.GERG.GERG2008.DensityGERG(flag, phase.getTemperature(), pressure,
+                normalizedGERGComposition, D, ierr, herr);
         return D.val;
     }
 
@@ -87,18 +84,18 @@ public class NeqSimGERG2008 {
 
         for (int i = 0; i < properties.length; i++) {
             switch (properties[i]) {
-            case "density":
-                returnProperties[i] = allProperties[0];
-                break;
-            case "Cp":
-                returnProperties[i] = allProperties[1];
-                break;
-            case "Cv":
-                returnProperties[i] = allProperties[2];
-                break;
-            case "soundSpeed":
-                returnProperties[i] = allProperties[3];
-                break;
+                case "density":
+                    returnProperties[i] = allProperties[0];
+                    break;
+                case "Cp":
+                    returnProperties[i] = allProperties[1];
+                    break;
+                case "Cv":
+                    returnProperties[i] = allProperties[2];
+                    break;
+                case "soundSpeed":
+                    returnProperties[i] = allProperties[3];
+                    break;
             }
         }
         return returnProperties;
@@ -125,109 +122,107 @@ public class NeqSimGERG2008 {
         double dens = getMolarDensity();
         // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
         // arg7);
-        GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd, d2pdd2, d2pdtd,
-                dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
-        double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val,
-                s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
+        GERG2008.PropertiesGERG(phase.getTemperature(), dens, normalizedGERGComposition, p, z, dpdd,
+                d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt, kappa, A);
+        double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val,
+                dpdt.val, u.val, h.val, s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
         return properties;
     }
 
     public void setPhase(PhaseInterface phase) {
         this.phase = phase;
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
-
             String componentName = phase.getComponent(i).getComponentName();
 
             switch (componentName) {
-            case "methane":
-                notNormalizedGERGComposition[1] = phase.getComponent(i).getx();
-                break;
-            case "nitrogen":
-                notNormalizedGERGComposition[2] = phase.getComponent(i).getx();
-                break;
-            case "CO2":
-                notNormalizedGERGComposition[3] = phase.getComponent(i).getx();
-                break;
-            case "ethane":
-                notNormalizedGERGComposition[4] = phase.getComponent(i).getx();
-                break;
-            case "propane":
-                notNormalizedGERGComposition[5] = phase.getComponent(i).getx();
-                break;
-            case "i-butane":
-                notNormalizedGERGComposition[6] = phase.getComponent(i).getx();
-                break;
-            case "n-butane":
-                notNormalizedGERGComposition[7] = phase.getComponent(i).getx();
-                break;
-            case "i-pentane":
-                notNormalizedGERGComposition[8] = phase.getComponent(i).getx();
-                break;
-            case "n-pentane":
-                notNormalizedGERGComposition[9] = phase.getComponent(i).getx();
-                break;
-            case "n-hexane":
-                notNormalizedGERGComposition[10] = phase.getComponent(i).getx();
-                break;
-            case "n-heptane":
-                notNormalizedGERGComposition[11] = phase.getComponent(i).getx();
-                break;
-            case "n-octane":
-                notNormalizedGERGComposition[12] = phase.getComponent(i).getx();
-                break;
-            case "n-nonane":
-                notNormalizedGERGComposition[13] = phase.getComponent(i).getx();
-                break;
-            case "nC10":
-                notNormalizedGERGComposition[14] = phase.getComponent(i).getx();
-                break;
-            case "hydrogen":
-                notNormalizedGERGComposition[15] = phase.getComponent(i).getx();
-                break;
-            case "oxygen":
-                notNormalizedGERGComposition[16] = phase.getComponent(i).getx();
-                break;
-            case "CO":
-                notNormalizedGERGComposition[17] = phase.getComponent(i).getx();
-                break;
-            case "water":
-                notNormalizedGERGComposition[18] = phase.getComponent(i).getx();
-                break;
-            case "H2S":
-                notNormalizedGERGComposition[19] = phase.getComponent(i).getx();
-                break;
-            case "helium":
-                notNormalizedGERGComposition[20] = phase.getComponent(i).getx();
-                break;
-            case "argon":
-                notNormalizedGERGComposition[21] = phase.getComponent(i).getx();
-                break;
+                case "methane":
+                    notNormalizedGERGComposition[1] = phase.getComponent(i).getx();
+                    break;
+                case "nitrogen":
+                    notNormalizedGERGComposition[2] = phase.getComponent(i).getx();
+                    break;
+                case "CO2":
+                    notNormalizedGERGComposition[3] = phase.getComponent(i).getx();
+                    break;
+                case "ethane":
+                    notNormalizedGERGComposition[4] = phase.getComponent(i).getx();
+                    break;
+                case "propane":
+                    notNormalizedGERGComposition[5] = phase.getComponent(i).getx();
+                    break;
+                case "i-butane":
+                    notNormalizedGERGComposition[6] = phase.getComponent(i).getx();
+                    break;
+                case "n-butane":
+                    notNormalizedGERGComposition[7] = phase.getComponent(i).getx();
+                    break;
+                case "i-pentane":
+                    notNormalizedGERGComposition[8] = phase.getComponent(i).getx();
+                    break;
+                case "n-pentane":
+                    notNormalizedGERGComposition[9] = phase.getComponent(i).getx();
+                    break;
+                case "n-hexane":
+                    notNormalizedGERGComposition[10] = phase.getComponent(i).getx();
+                    break;
+                case "n-heptane":
+                    notNormalizedGERGComposition[11] = phase.getComponent(i).getx();
+                    break;
+                case "n-octane":
+                    notNormalizedGERGComposition[12] = phase.getComponent(i).getx();
+                    break;
+                case "n-nonane":
+                    notNormalizedGERGComposition[13] = phase.getComponent(i).getx();
+                    break;
+                case "nC10":
+                    notNormalizedGERGComposition[14] = phase.getComponent(i).getx();
+                    break;
+                case "hydrogen":
+                    notNormalizedGERGComposition[15] = phase.getComponent(i).getx();
+                    break;
+                case "oxygen":
+                    notNormalizedGERGComposition[16] = phase.getComponent(i).getx();
+                    break;
+                case "CO":
+                    notNormalizedGERGComposition[17] = phase.getComponent(i).getx();
+                    break;
+                case "water":
+                    notNormalizedGERGComposition[18] = phase.getComponent(i).getx();
+                    break;
+                case "H2S":
+                    notNormalizedGERGComposition[19] = phase.getComponent(i).getx();
+                    break;
+                case "helium":
+                    notNormalizedGERGComposition[20] = phase.getComponent(i).getx();
+                    break;
+                case "argon":
+                    notNormalizedGERGComposition[21] = phase.getComponent(i).getx();
+                    break;
 
-            default:
-                double molarMass = phase.getComponent(i).getMolarMass();
-                if (molarMass > 44.096759796142 / 1000.0 && molarMass < 58.1236991882324 / 1000.0)
-                    notNormalizedGERGComposition[7] += phase.getComponent(i).getx();
-                if (molarMass > 58.1236991882324 / 1000.0 && molarMass < 72.15064 / 1000.0)
-                    notNormalizedGERGComposition[8] += phase.getComponent(i).getx();
-                if (molarMass > 72.15064 / 1000.0 && molarMass < 86.2 / 1000.0)
-                    notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
-                if (molarMass > 86.2 / 1000.0 && molarMass < 100.204498291016 / 1000.0)
-                    notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
-                if (molarMass > 100.204498291016 / 1000.0 && molarMass < 107.0 / 1000.0)
-                    notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
-                if (molarMass > 107.0 / 1000.0 && molarMass < 121.0 / 1000.0)
-                    notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
-                if (molarMass > 121.0 / 1000.0)
-                    notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
-                break;
-            }
-            ;
+                default:
+                    double molarMass = phase.getComponent(i).getMolarMass();
+                    if (molarMass > 44.096759796142 / 1000.0
+                            && molarMass < 58.1236991882324 / 1000.0)
+                        notNormalizedGERGComposition[7] += phase.getComponent(i).getx();
+                    if (molarMass > 58.1236991882324 / 1000.0 && molarMass < 72.15064 / 1000.0)
+                        notNormalizedGERGComposition[8] += phase.getComponent(i).getx();
+                    if (molarMass > 72.15064 / 1000.0 && molarMass < 86.2 / 1000.0)
+                        notNormalizedGERGComposition[10] += phase.getComponent(i).getx();
+                    if (molarMass > 86.2 / 1000.0 && molarMass < 100.204498291016 / 1000.0)
+                        notNormalizedGERGComposition[11] += phase.getComponent(i).getx();
+                    if (molarMass > 100.204498291016 / 1000.0 && molarMass < 107.0 / 1000.0)
+                        notNormalizedGERGComposition[12] += phase.getComponent(i).getx();
+                    if (molarMass > 107.0 / 1000.0 && molarMass < 121.0 / 1000.0)
+                        notNormalizedGERGComposition[13] += phase.getComponent(i).getx();
+                    if (molarMass > 121.0 / 1000.0)
+                        notNormalizedGERGComposition[14] += phase.getComponent(i).getx();
+                    break;
+            };
         }
         normalizeComposition();
     }
 
     public void normalizeComposition() {
-
         double result = 0;
         for (double value : notNormalizedGERGComposition) {
             result += value;
@@ -238,20 +233,19 @@ public class NeqSimGERG2008 {
     }
 
     public static void main(String[] args) {
-//test HitHub
+        // test HitHub
         SystemInterface fluid1 = new SystemSrkEos();
         fluid1.addComponent("methane", 10.0);
         fluid1.addComponent("hydrogen", 90.0);
-//				fluid1.addComponent("CO2", 1.0);
-//	fluid1.addComponent("ethane", 10.0);
-//		fluid1.addComponent("propane", 3.0);
-//		fluid1.addComponent("n-butane", 1.0);
-//		fluid1.addComponent("oxygen", 1.0);
+        // fluid1.addComponent("CO2", 1.0);
+        // fluid1.addComponent("ethane", 10.0);
+        // fluid1.addComponent("propane", 3.0);
+        // fluid1.addComponent("n-butane", 1.0);
+        // fluid1.addComponent("oxygen", 1.0);
         /*
-         * fluid1.addComponent("n-butane", 0.006304); fluid1.addComponent("i-butane",
-         * 0.003364); fluid1.addComponent("n-pentane", 0.001005);
-         * fluid1.addComponent("i-pentane", 0.000994); fluid1.addComponent("n-hexane",
-         * 0.000369); fluid1.addComponent("n-heptane", 0.000068);
+         * fluid1.addComponent("n-butane", 0.006304); fluid1.addComponent("i-butane", 0.003364);
+         * fluid1.addComponent("n-pentane", 0.001005); fluid1.addComponent("i-pentane", 0.000994);
+         * fluid1.addComponent("n-hexane", 0.000369); fluid1.addComponent("n-heptane", 0.000068);
          * fluid1.addComponent("n-octane", 0.000008);
          */
         // fluid//1.addComponent("ethane", 5.0);
@@ -266,7 +260,7 @@ public class NeqSimGERG2008 {
         System.out.println("density GERG " + fluid1.getPhase(0).getDensity_GERG2008());
 
         NeqSimGERG2008 test = new NeqSimGERG2008(fluid1.getPhase("gas"));
-        //fluid1.getPhase("gas").getProperties_GERG2008();
+        // fluid1.getPhase("gas").getProperties_GERG2008();
         System.out.println("density " + test.getDensity());
         System.out.println("pressure " + test.getPressure());
         // System.out.println("properties " + test.propertiesGERG());
@@ -286,6 +280,5 @@ public class NeqSimGERG2008 {
         System.out.println("Gibbs energy [J/mol]:            " + properties[12]);
         System.out.println("Joule-Thomson coefficient [K/kPa]:            " + properties[13]);
         System.out.println("Isentropic exponent:           " + properties[14]);
-
     }
 }

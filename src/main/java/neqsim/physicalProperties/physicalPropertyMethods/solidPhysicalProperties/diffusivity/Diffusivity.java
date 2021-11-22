@@ -16,7 +16,6 @@ public class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
@@ -33,7 +32,6 @@ public class Diffusivity extends
         binaryDiffusionCoeffisients = new double[solidPhase.getPhase()
                 .getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[solidPhase.getPhase().getNumberOfComponents()];
-
     }
 
     @Override
@@ -58,14 +56,11 @@ public class Diffusivity extends
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-
         return binaryDiffusionCoeffisients;
     }
 
     @Override
-    public void calcEffectiveDiffusionCoeffisients() {
-
-    }
+    public void calcEffectiveDiffusionCoeffisients() {}
 
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {

@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version
  */
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
@@ -131,5 +130,4 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
                     .setHVDijParameter(MDEANumb, CO2Numb, value);
         }
     }
-
 }

@@ -15,20 +15,19 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the SRK EoS and Pitzer for
- * liquids
+ * This class defines a thermodynamic system using the SRK EoS and Pitzer for liquids
  */
 public class SystemDuanSun extends SystemEos {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     // SystemSrkEos clonedSystem;
-    protected String[] CapeOpenProperties11 = { "molecularWeight", "fugacityCoefficient", "logFugacityCoefficient" };
+    protected String[] CapeOpenProperties11 =
+            {"molecularWeight", "fugacityCoefficient", "logFugacityCoefficient"};
 
     public SystemDuanSun() {
         super();
@@ -38,7 +37,6 @@ public class SystemDuanSun extends SystemEos {
         for (int i = 1; i < numberOfPhases; i++) {
             phaseArray[i] = new PhaseDuanSun();
         }
-
     }
 
     public SystemDuanSun(double T, double P) {
@@ -82,7 +80,7 @@ public class SystemDuanSun extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         SystemDuanSun clonedSystem = null;
         try {
             clonedSystem = (SystemDuanSun) super.clone();
@@ -105,12 +103,9 @@ public class SystemDuanSun extends SystemEos {
         try {
             ThermodynamicOperations testOps = new ThermodynamicOperations(fluid1);
             testOps.TPflash();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }
         fluid1.display();
-
     }
-
 }

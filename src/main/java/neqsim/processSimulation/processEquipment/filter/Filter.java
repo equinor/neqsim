@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class Filter extends ProcessEquipmentBaseClass {
-
     private double deltaP = 0.01;
     protected StreamInterface outStream;
     protected StreamInterface inStream;
@@ -20,7 +19,7 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public void run() {
+    public void run() {
         SystemInterface system = (SystemInterface) inStream.getThermoSystem().clone();
         if (Math.abs(getDeltaP()) > 1e-10) {
             system.setPressure(inStream.getPressure() - getDeltaP());
@@ -51,7 +50,7 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     @Override
-	public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
+    public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
         double deltaP = inStream.getPressure("bara") - outStream.getPressure("bara");
         Cv = Math.sqrt(deltaP) / inStream.getFlowRate("kg/hr");
     }

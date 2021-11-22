@@ -12,11 +12,8 @@ package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling;
  * @version
  */
 public class FileWriterBaseClass implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new WriteToFileBaseClass */
-    public FileWriterBaseClass() {
-    }
-
+    public FileWriterBaseClass() {}
 }

@@ -12,11 +12,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false, setOutPressure = false;
@@ -34,8 +33,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     /**
      * Creates new Heater
      */
-    public Heater() {
-    }
+    public Heater() {}
 
     public Heater(StreamInterface inStream) {
         this.inStream = inStream;
@@ -213,7 +211,8 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         outStream.run();
         outStream.getFluid().init(3);
 
-        entrop += outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+        entrop += outStream.getThermoSystem().getEntropy(unit)
+                - inStream.getThermoSystem().getEntropy(unit);
 
         return entrop;
     }
@@ -231,7 +230,5 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
                 - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
 
         return entrop;
-
     }
-
 }

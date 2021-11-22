@@ -14,7 +14,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBo
  * @version
  */
 public class EnhancementFactorAlg extends EnhancementFactor {
-
     private static final long serialVersionUID = 1000;
 
     public EnhancementFactorAlg() {
@@ -26,13 +25,15 @@ public class EnhancementFactorAlg extends EnhancementFactor {
     }
 
     @Override
-	public void calcEnhancementVec(int phase) {
+    public void calcEnhancementVec(int phase) {
         double hatta = 0.0;
-        for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
-            if (fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getName().equals("CO2")
-                    && phase == 1) {
-                enhancementVec[j] = fluidBoundary.getBulkSystem().getChemicalReactionOperations().solveKinetics(phase,
-                        fluidBoundary.getInterphaseSystem().getPhase(phase), j);
+        for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase]
+                .getNumberOfComponents(); j++) {
+            if (fluidBoundary.getBulkSystem().getPhases()[phase].getComponent(j).getName()
+                    .equals("CO2") && phase == 1) {
+                enhancementVec[j] =
+                        fluidBoundary.getBulkSystem().getChemicalReactionOperations().solveKinetics(
+                                phase, fluidBoundary.getInterphaseSystem().getPhase(phase), j);
                 // System.out.println("enh " + enhancementVec[j]);
                 hatta = Math
                         .sqrt(enhancementVec[j] * fluidBoundary.getBulkSystem().getPhases()[phase]
@@ -40,14 +41,15 @@ public class EnhancementFactorAlg extends EnhancementFactor {
                         / fluidBoundary.getEffectiveMassTransferCoefficient(phase, j);
                 hattaNumber[j] = hatta;
                 // System.out.println("hatta " + hatta);
-                double phi = fluidBoundary.getBulkSystem().getChemicalReactionOperations().getKinetics()
-                        .getPhiInfinite();
+                double phi = fluidBoundary.getBulkSystem().getChemicalReactionOperations()
+                        .getKinetics().getPhiInfinite();
                 // System.out.println("phi " + phi);
                 if (hatta > 2.0) {
-                    enhancementVec[j] = 1.0 + (phi - 1.0) * (1.0 - Math.exp(-(hatta - 1.0) / (phi - 1.0)));
+                    enhancementVec[j] =
+                            1.0 + (phi - 1.0) * (1.0 - Math.exp(-(hatta - 1.0) / (phi - 1.0)));
                 } else {
-                    enhancementVec[j] = 1.0
-                            + (phi - 1.0) * (1.0 - Math.exp(-1.0 / (phi - 1.0))) * Math.exp(1.0 - 2.0 / hatta);
+                    enhancementVec[j] = 1.0 + (phi - 1.0) * (1.0 - Math.exp(-1.0 / (phi - 1.0)))
+                            * Math.exp(1.0 - 2.0 / hatta);
                 }
                 // System.out.println("enh " +enhancementVec[j] );
             } else {

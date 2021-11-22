@@ -29,7 +29,6 @@ public class LumpingModel implements java.io.Serializable {
      */
     public class StandardLumpingModel
             implements LumpingModelInterface, Cloneable, java.io.Serializable {
-
         public StandardLumpingModel() {}
 
         @Override
@@ -203,12 +202,10 @@ public class LumpingModel implements java.io.Serializable {
      * @version 1.0
      */
     public class PVTLumpingModel extends StandardLumpingModel {
-
         public PVTLumpingModel() {}
 
         @Override
         public void generateLumpedComposition(Characterise charac) {
-
             double weightFrac = 0.0;
             double weightTot = 0.0;
             double molFracTot = 0.0;
@@ -310,7 +307,5 @@ public class LumpingModel implements java.io.Serializable {
             return new PVTLumpingModel();
         } else
             return new StandardLumpingModel();
-
     }
-
 }

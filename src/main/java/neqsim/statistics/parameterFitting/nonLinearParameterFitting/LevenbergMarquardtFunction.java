@@ -8,7 +8,6 @@ import neqsim.statistics.parameterFitting.BaseFunction;
  * @version
  */
 public class LevenbergMarquardtFunction extends BaseFunction {
-
     private static final long serialVersionUID = 1000;
 
     public LevenbergMarquardtFunction() {}

@@ -16,7 +16,6 @@ public class TestCp {
     static Logger logger = LogManager.getLogger(TestCp.class);
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -61,6 +60,5 @@ public class TestCp {
         optim.setSampleSet(sampleSet);
 
         optim.solve();
-
     }
 }

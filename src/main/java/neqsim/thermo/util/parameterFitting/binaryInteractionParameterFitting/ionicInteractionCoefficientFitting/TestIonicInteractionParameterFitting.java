@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestIonicInteractionParameterFitting {
-
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFitting.class);
 
 

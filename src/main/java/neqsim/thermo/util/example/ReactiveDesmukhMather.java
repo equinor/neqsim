@@ -16,12 +16,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class ReactiveDesmukhMather {
-
     private static final long serialVersionUID = 1000;
 
     /** Creates new TPflash */
-    public ReactiveDesmukhMather() {
-    }
+    public ReactiveDesmukhMather() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemDesmukhMather(290.0, 5.1);

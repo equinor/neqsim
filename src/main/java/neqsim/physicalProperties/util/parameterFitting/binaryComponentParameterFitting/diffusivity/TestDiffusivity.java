@@ -17,7 +17,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestDiffusivity {
-
     static Logger logger = LogManager.getLogger(TestDiffusivity.class);
 
     public static void main(String[] args) {
@@ -71,6 +70,5 @@ public class TestDiffusivity {
         // optim.runMonteCarloSimulation();
         optim.displayGraph();
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

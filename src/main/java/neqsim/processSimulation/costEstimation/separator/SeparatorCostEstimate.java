@@ -8,7 +8,6 @@ import neqsim.processSimulation.mechanicalDesign.separator.SeparatorMechanicalDe
  * @author ESOL
  */
 public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     public SeparatorCostEstimate(SeparatorMechanicalDesign mechanicalEquipment) {
@@ -16,7 +15,7 @@ public class SeparatorCostEstimate extends UnitCostEstimateBaseClass {
     }
 
     @Override
-	public double getTotaltCost() {
+    public double getTotaltCost() {
         SeparatorMechanicalDesign sepMecDesign = (SeparatorMechanicalDesign) mechanicalEquipment;
 
         sepMecDesign.getWeightTotal();

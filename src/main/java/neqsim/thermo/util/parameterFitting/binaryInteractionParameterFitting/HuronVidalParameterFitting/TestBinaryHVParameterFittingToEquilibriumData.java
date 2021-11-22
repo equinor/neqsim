@@ -17,13 +17,11 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class TestBinaryHVParameterFittingToEquilibriumData {
-
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData.class);
 
 
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -35,7 +33,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData {
         // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
         try {
-
             logger.info("adding....");
             while (dataSet.next()) {
                 BinaryHVParameterFittingToEquilibriumData function =

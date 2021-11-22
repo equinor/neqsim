@@ -11,7 +11,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class CPAFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunction.class);
 
@@ -86,6 +85,5 @@ public class CPAFunction extends LevenbergMarquardtFunction {
             system.getPhases()[0].getComponents()[0].setVolumeCorrectionT_CPA(value);
             system.getPhases()[1].getComponents()[0].setVolumeCorrectionT_CPA(value);
         }
-
     }
 }

@@ -10,7 +10,6 @@ import org.apache.logging.log4j.*;
  * @author esol //
  */
 public class TestDiffusionCoefficient {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestDiffusionCoefficient.class);
 
@@ -33,24 +32,30 @@ public class TestDiffusionCoefficient {
         }
 
         System.out.println("binary diffusion coefficient water in nitrogen gas "
-                + testSystem.getPhase("gas").getPhysicalProperties().getDiffusionCoefficient("water", "nitrogen")
+                + testSystem.getPhase("gas").getPhysicalProperties()
+                        .getDiffusionCoefficient("water", "nitrogen")
                 + " m2/sec");
-        System.out.println("binary diffusion coefficient nitrogen in liquid n-heptane "
-                + testSystem.getPhase("oil").getPhysicalProperties().getDiffusionCoefficient("nitrogen", "n-heptane")
-                + " m2/sec");
+        System.out
+                .println(
+                        "binary diffusion coefficient nitrogen in liquid n-heptane "
+                                + testSystem.getPhase("oil").getPhysicalProperties()
+                                        .getDiffusionCoefficient("nitrogen", "n-heptane")
+                                + " m2/sec");
         System.out.println("binary diffusion coefficient nitrogen in water "
-                + testSystem.getPhase("aqueous").getPhysicalProperties().getDiffusionCoefficient("nitrogen", "water")
+                + testSystem.getPhase("aqueous").getPhysicalProperties()
+                        .getDiffusionCoefficient("nitrogen", "water")
                 + " m2/sec");
 
-        System.out.println("effective diffusion coefficient water in gas "
-                + testSystem.getPhase("gas").getPhysicalProperties().getEffectiveDiffusionCoefficient("water")
+        System.out.println("effective diffusion coefficient water in gas " + testSystem
+                .getPhase("gas").getPhysicalProperties().getEffectiveDiffusionCoefficient("water")
                 + " m2/sec");
         System.out.println("effective diffusion coefficient nitrogen in liquid n-heptane "
-                + testSystem.getPhase("oil").getPhysicalProperties().getEffectiveDiffusionCoefficient("nitrogen")
+                + testSystem.getPhase("oil").getPhysicalProperties()
+                        .getEffectiveDiffusionCoefficient("nitrogen")
                 + " m2/sec");
         System.out.println("effective diffusion coefficient nitrogen in water "
-                + testSystem.getPhase("aqueous").getPhysicalProperties().getEffectiveDiffusionCoefficient("nitrogen")
+                + testSystem.getPhase("aqueous").getPhysicalProperties()
+                        .getEffectiveDiffusionCoefficient("nitrogen")
                 + " m2/sec");
-
     }
 }

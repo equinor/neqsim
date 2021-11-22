@@ -19,7 +19,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 public class Kinetics implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     protected ChemicalReactionOperations operations;
     double phiInfinite = 0.0;

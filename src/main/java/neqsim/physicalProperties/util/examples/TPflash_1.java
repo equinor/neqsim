@@ -12,20 +12,19 @@ import org.apache.logging.log4j.*;
  */
 
 /*
-*
-* @author  esol
-* @version
-*/
+ *
+ * @author esol
+ * 
+ * @version
+ */
 public class TPflash_1 {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash_1.class);
 
     /**
      * Creates new TPflash
      */
-    public TPflash_1() {
-    }
+    public TPflash_1() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 55, 100.0);

@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class TVflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TVflash.class);
 
