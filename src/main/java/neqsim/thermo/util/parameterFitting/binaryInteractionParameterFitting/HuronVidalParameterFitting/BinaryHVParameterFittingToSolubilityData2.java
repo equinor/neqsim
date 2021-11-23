@@ -10,7 +10,6 @@ public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunctio
 
     int phase = 1;
 
-
     public BinaryHVParameterFittingToSolubilityData2() {}
 
     public BinaryHVParameterFittingToSolubilityData2(int phase) {

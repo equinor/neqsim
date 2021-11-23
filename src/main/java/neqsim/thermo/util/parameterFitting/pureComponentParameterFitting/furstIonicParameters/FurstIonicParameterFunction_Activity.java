@@ -11,7 +11,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 public class FurstIonicParameterFunction_Activity extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-
     public FurstIonicParameterFunction_Activity() {
         // params = new double[3];
     }

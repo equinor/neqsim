@@ -1,6 +1,5 @@
 package neqsim.thermo.util.example;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,7 +17,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class SrkEoSTest {
     static SystemInterface thermoSystem = null;
 
-
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -29,7 +27,6 @@ public class SrkEoSTest {
         thermoSystem.createDatabase(true);
         thermoSystem.setMixingRule(2);
     }
-
 
     @Test
     public void testTPflash() {

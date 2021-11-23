@@ -13,7 +13,6 @@ public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AcentricFunctionScwartzentruber.class);
 
-
     public AcentricFunctionScwartzentruber() {
         params = new double[3];
     }

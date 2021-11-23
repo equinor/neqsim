@@ -22,7 +22,6 @@ import org.apache.logging.log4j.*;
  */
 public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         implements PhaseCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     public CPAMixing cpaSelect = new CPAMixing();
@@ -786,7 +785,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public double molarVolume2(double pressure, double temperature, double A, double B,
             int phasetype) throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double[][] calcRootVolFinder = calcRootVolFinder();
@@ -913,7 +911,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public double molarVolume(double pressure, double temperature, double A, double B,
             int phasetype) throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // if (pressure > 1000) {
@@ -943,7 +940,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         int iterations = 0;
 
         do {
-
             iterations++;
             volInit();
             gcpa = calc_g();
@@ -1049,7 +1045,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public double molarVolumeChangePhase(double pressure, double temperature, double A, double B,
             int phasetype) throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         // double BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
         // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
         // temperature * R);

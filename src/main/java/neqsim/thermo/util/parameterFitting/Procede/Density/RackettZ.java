@@ -12,7 +12,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 public class RackettZ extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-
     public RackettZ() {
         params = new double[1];
     }

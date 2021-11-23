@@ -15,7 +15,6 @@ public class IonicInteractionParameterFittingFunctionCo2nacl extends LevenbergMa
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionCo2nacl.class);
 
-
     public IonicInteractionParameterFittingFunctionCo2nacl() {}
 
     @Override

@@ -88,7 +88,6 @@ abstract class Phase implements PhaseInterface {
             int compNumber) {
         ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
 
-
         try {
             for (int i = 0; i < numberOfComponents; i++) {
                 if (!componentArray[i].getName().equals(componentName)) {
@@ -1791,7 +1790,6 @@ abstract class Phase implements PhaseInterface {
 
     @Override
     public void setMixingRuleGEModel(String name) {}
-
 
     /**
      * Getter for property phaseTypeName.

@@ -1,6 +1,5 @@
 package neqsim.thermo.util.GERG;
 
-
 /**
  *
  * @author esol

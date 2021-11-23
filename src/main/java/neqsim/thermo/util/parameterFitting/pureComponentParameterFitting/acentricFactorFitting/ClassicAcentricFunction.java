@@ -13,7 +13,6 @@ public class ClassicAcentricFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ClassicAcentricFunction.class);
 
-
     public ClassicAcentricFunction() {}
 
     @Override

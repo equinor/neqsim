@@ -17,9 +17,7 @@ public class StreamResponse {
     public Double massDensity;
     public Double massflow;
 
-
     public StreamResponse() {}
-
 
     public StreamResponse(StreamInterface inputStream) {
         name = inputStream.getName();

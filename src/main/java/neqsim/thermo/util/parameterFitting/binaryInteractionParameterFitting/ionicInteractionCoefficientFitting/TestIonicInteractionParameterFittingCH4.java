@@ -19,7 +19,6 @@ import neqsim.util.database.NeqSimDataBase;
 public class TestIonicInteractionParameterFittingCH4 {
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingCH4.class);
 
-
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

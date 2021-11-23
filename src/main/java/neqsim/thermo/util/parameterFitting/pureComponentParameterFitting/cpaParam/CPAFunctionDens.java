@@ -14,7 +14,6 @@ public class CPAFunctionDens extends CPAFunction {
 
     int phasetype = 1;
 
-
     public CPAFunctionDens() {}
 
     public CPAFunctionDens(int phase) {

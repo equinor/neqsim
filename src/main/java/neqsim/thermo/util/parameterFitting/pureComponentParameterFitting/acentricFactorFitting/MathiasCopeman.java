@@ -13,7 +13,6 @@ public class MathiasCopeman extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(MathiasCopeman.class);
 
-
     public MathiasCopeman() {
         params = new double[3];
     }

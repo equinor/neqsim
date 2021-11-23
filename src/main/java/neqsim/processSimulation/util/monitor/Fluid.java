@@ -69,7 +69,6 @@ public class Fluid {
 
         tempFluid.setMixingRule(2);
 
-
         return tempFluid;
     }
 

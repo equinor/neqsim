@@ -13,7 +13,6 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunction.class);
 
-
     public AntoineSolidFunction() {
         params = new double[2];
     }

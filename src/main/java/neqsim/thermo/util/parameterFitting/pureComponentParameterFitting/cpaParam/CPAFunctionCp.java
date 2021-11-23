@@ -14,7 +14,6 @@ public class CPAFunctionCp extends CPAFunction {
 
     int phasetype = 1;
 
-
     public CPAFunctionCp() {}
 
     public CPAFunctionCp(int phase) {

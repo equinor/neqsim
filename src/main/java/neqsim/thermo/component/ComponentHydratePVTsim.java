@@ -1,8 +1,3 @@
-/*
- * Class.java
- *
- * Created on 19. november 2001, 11:43
- */
 package neqsim.thermo.component;
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -24,7 +19,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     public ComponentHydratePVTsim() {}
 
-    public ComponentHydratePVTsim(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentHydratePVTsim(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -35,15 +31,18 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 logger.info("reading hydrate parameters ..............");
                 try {
                     if (NeqSimDataBase.createTemporaryTables()) {
-                        dataSet = database.getResultSet(("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
                     } else {
-                        dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
-}
+                        dataSet = database.getResultSet(
+                                ("SELECT * FROM comp WHERE name='" + component_name + "'"));
+                    }
                     dataSet.next();
                 } catch (Exception e) {
                     dataSet.close();
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(
+                            ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 Ak[0][0] = Double.parseDouble(dataSet.getString("HydrateA1Small"));
@@ -55,8 +54,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 Bk[1][0] = Double.parseDouble(dataSet.getString("HydrateB2Small"));
                 Ak[1][1] = Double.parseDouble(dataSet.getString("HydrateA2Large"));
                 Bk[1][1] = Double.parseDouble(dataSet.getString("HydrateB2Large"));
-} catch (Exception e) {
-}
+            } catch (Exception e) {
             } finally {
                 try {
                     dataSet.close();
@@ -67,8 +65,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 }
             }
         }
-
-}
+    }
 
     @Override
     public double fugcoef(PhaseInterface phase) {
@@ -77,7 +74,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     }
 
     @Override
-	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
+    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
 
         int stableStructure = 0;
@@ -88,7 +85,8 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             refPhase.setPressure(pres);
             refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
 
-            double refWaterFugacityCoef = Math.log(refPhase.getComponent("water").fugcoef(refPhase));
+            double refWaterFugacityCoef =
+                    Math.log(refPhase.getComponent("water").fugcoef(refPhase));
 
             double dhf = 6010.0, tmi = 273.15, dcp = 37.29;
 
@@ -102,12 +100,12 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             double K2 = 3.4619E-7;
 
             double K3 = -0.2637E-10;
-            VM = 1E-6 * 19.6522
-                    * (1 + K1 * (temp - tmi) + K2 * Math.pow((temp - tmi), 2) + K3 * Math.pow((temp - tmi), 3));
+            VM = 1E-6 * 19.6522 * (1 + K1 * (temp - tmi) + K2 * Math.pow((temp - tmi), 2)
+                    + K3 * Math.pow((temp - tmi), 3));
 
             double LNFUG_ICE = LNFUG_ICEREF + (VM * 100000 * (pres - 1.0) / (R * temp));
             fugasityCoeffisient = Math.exp(LNFUG_ICE);
-} else {
+        } else {
             for (int structure = 0; structure < 2; structure++) {
                 hydrateStructure = structure;
 
@@ -116,13 +114,14 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     refPhase.setPressure(pres);
                     refPhase.init(refPhase.getNumberOfMolesInPhase(), 1, 3, 0, 1.0);
 
-                    double refWaterFugacity = refPhase.getComponent("water").fugcoef(refPhase) * pres;
+                    double refWaterFugacity =
+                            refPhase.getComponent("water").fugcoef(refPhase) * pres;
 
                     double alphaWater = reffug[getComponentNumber()];
 
                     double wateralphaRef = Math.log(refWaterFugacity / alphaWater);
-                    logger.info("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater + " refFug "
-                            + refWaterFugacity);
+                    logger.info("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater
+                            + " refFug " + refWaterFugacity);
 
                     double val = 0.0;
 
@@ -134,71 +133,73 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                         tempy = 0.0;
 
                         for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-                            double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType,
-                                    phase);
+                            double tee = ((ComponentHydrate) phase.getComponent(j))
+                                    .calcYKI(hydrateStructure, cavType, phase);
                             tempy += tee;
-}
-}
+                        }
                     }
                     logger.info("val " + val + " structure " + hydrateStructure);
-                    logger.info("emty " + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
+                    logger.info("emty "
+                            + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
                     // tempfugcoef = refWaterFugacity * Math.exp(val + calcDeltaChemPot(phase,
                     // numberOfComps, temp, pres, hydrateStruct) + wateralphaRef) / (pres);
-                    fugasityCoeffisient = alphaWater * Math.exp(
-                            val + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure) + wateralphaRef)
-                            / pres;
+                    fugasityCoeffisient = alphaWater * Math.exp(val
+                            + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure)
+                            + wateralphaRef) / pres;
 
                     if (fugasityCoeffisient < maxFug) {
                         maxFug = fugasityCoeffisient;
 
                         stableStructure = hydrateStructure;
-}
+                    }
                 } else {
                     fugasityCoeffisient = 1e50;
-}
+                }
             }
             fugasityCoeffisient = maxFug;
-}logFugasityCoeffisient=Math.log(fugasityCoeffisient);hydrateStructure=stableStructure;
+        }
+        logFugasityCoeffisient = Math.log(fugasityCoeffisient);
+        hydrateStructure = stableStructure;
 
-    return fugasityCoeffisient;
-
-}
+        return fugasityCoeffisient;
+    }
 
     @Override
-	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
+    public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
-}
+        }
         double yki = calcCKI(stucture, cavityType, phase) * reffug[componentNumber];
 
         double temp = 1.0;
 
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
             if (phase.getComponent(i).isHydrateFormer()) {
-                temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase) * reffug[i];
-}
-//            System.out.println("reffug " +  reffug[i]);
-//            System.out.println("temp " + temp);
+                temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType,
+                        phase) * reffug[i];
+            }
+            // System.out.println("reffug " + reffug[i]);
+            // System.out.println("temp " + temp);
         }
-//        System.out.println("YKI " +  yki/temp);
-//        System.out.println("fug " +  yki/temp);
+        // System.out.println("YKI " + yki/temp);
+        // System.out.println("fug " + yki/temp);
         return yki / temp;
-// }
-// else return 0.0;
-}
+        // }
+        // else return 0.0;
+    }
 
     @Override
-	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
+    public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         // this is equation 8.8
         if (componentName.equals("water")) {
             return 0.0;
-}
+        }
         return Ak[stucture][cavityType] / (phase.getTemperature())
                 * Math.exp(Bk[stucture][cavityType] / (phase.getTemperature()));
-}
+    }
 
-    public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp, double pres,
-            int hydrateStruct) {
+    public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp,
+            double pres, int hydrateStruct) {
         double dGf = 0.0, dHf = 0.0;
 
         double Cp = 0;
@@ -213,17 +214,19 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             Cp = -39.16;
             molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 4.6e-6;
-} else {
+        } else {
             dGf = 883.0;
             dHf = -5201.0;
             Cp = -39.16;
             molarvolume = getMolarVolumeHydrate(hydrateStruct, temp);
             deltaMolarVolume = 5.0e-6;
-}
+        }
         double T0 = 273.15;
 
         // dHf -= Cp * (temp - T0);
-        return dGf / R / T0 - (-1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0) + Cp / R * Math.log(temp / T0)
-                + Cp * T0 / R * (1.0 / temp - 1.0 / T0)) + deltaMolarVolume / R / (temp) * (pres * 1e5);
+        return dGf / R / T0
+                - (-1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0) + Cp / R * Math.log(temp / T0)
+                        + Cp * T0 / R * (1.0 / temp - 1.0 / T0))
+                + deltaMolarVolume / R / (temp) * (pres * 1e5);
     }
 }

@@ -5,7 +5,6 @@ import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 public class HXResponse {
     public String name = "test";
 
-
     public Double feedTemperature1;
     public Double dischargeTemperature1;
     public Double HXthermalEfectiveness;
@@ -13,10 +12,7 @@ public class HXResponse {
     public Double feedTemperature2;
     public Double dischargeTemperature2;
 
-
-
     public HXResponse() {}
-
 
     public HXResponse(HeatExchanger inputHeatExchenger) {
         name = inputHeatExchenger.getName();

@@ -16,7 +16,6 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
-
     public IonicInteractionParameterFittingFunctionCH4() {}
 
     @Override

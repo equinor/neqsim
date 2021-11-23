@@ -12,13 +12,11 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 public class SeparatorResponse {
     public String name;
 
-
     public Double gasLoadFactor;
     public Double massflow;
     public Fluid gasFluid, oilFluid;
 
     public SeparatorResponse() {}
-
 
     public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
         name = inputSeparator.getName();

@@ -1,6 +1,5 @@
 package neqsim.thermo.util.example;
 
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -16,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class VapourPressureTTest {
     static SystemInterface thermoSystem = null;
-
 
     @BeforeAll
     public static void setUp() {

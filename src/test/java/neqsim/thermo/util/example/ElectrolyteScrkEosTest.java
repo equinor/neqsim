@@ -5,7 +5,6 @@
  */
 package neqsim.thermo.util.example;
 
-
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -18,8 +17,6 @@ import org.junit.jupiter.api.Disabled;
 @Disabled
 public class ElectrolyteScrkEosTest extends ModelBaseTest {
     private static final long serialVersionUID = 1000;
-
-
 
     @BeforeAll
     public static void setUp() {

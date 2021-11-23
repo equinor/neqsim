@@ -20,8 +20,6 @@ class FlashGasTest {
     static double[] fractions2 = new double[] {0.054, 0.454, 1.514, 0, 89.92, 5.324, 1.535, 0.232,
             0.329, 0.094, 0.107, 0.437};
 
-
-
     static double[] P_bar = new double[] {1, 10, 100, 200, 1, 10, 100, 200, 1, 10, 100, 200};
     static double[] T_C = new double[] {15, 15, 15, 15, 30, 30, 30, 30, 150, 150, 150, 150};
 

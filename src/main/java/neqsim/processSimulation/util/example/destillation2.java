@@ -28,7 +28,6 @@ public class destillation2 {
         feedGas.setTemperature(30.0, "C");
         feedGas.setPressure(50.0, "bara");
 
-
         neqsim.thermo.system.SystemInterface TEGliq2 =
                 (neqsim.thermo.system.SystemInterface) testSystem.clone();
         TEGliq2.setMolarComposition(new double[] {0.0, 0.001, 1.0});

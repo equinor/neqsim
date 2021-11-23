@@ -1,6 +1,5 @@
 package neqsim.thermo.util.example;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -16,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 @Disabled
 public class ElectrolyteCPAEosTest extends ModelBaseTest {
     private static final long serialVersionUID = 1000;
-
 
     @BeforeAll
     public static void setUp() {

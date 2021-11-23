@@ -15,7 +15,6 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
-
     public SystemUMRPRUMCEosNew() {
         super();
         setBmixType(1);
@@ -27,8 +26,6 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
         modelName = "UMR-PRU-MC-EoS_new";
         attractiveTermNumber = 13;
     }
-
-
 
     public SystemUMRPRUMCEosNew(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);

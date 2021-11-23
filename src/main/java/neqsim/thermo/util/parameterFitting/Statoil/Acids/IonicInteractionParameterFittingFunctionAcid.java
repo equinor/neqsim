@@ -16,7 +16,6 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionAcid.class);
 
-
     public IonicInteractionParameterFittingFunctionAcid() {}
 
     public IonicInteractionParameterFittingFunctionAcid(int phase, int type) {

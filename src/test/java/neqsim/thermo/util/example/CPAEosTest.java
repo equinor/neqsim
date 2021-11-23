@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class CPAEosTest {
     static SystemInterface thermoSystem = null;
 
-
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemSrkCPAstatoil(298.0, 10.0);
@@ -26,7 +25,6 @@ public class CPAEosTest {
         thermoSystem.createDatabase(true);
         thermoSystem.setMixingRule(10);
     }
-
 
     @Ignore
     public void testTPflash() {

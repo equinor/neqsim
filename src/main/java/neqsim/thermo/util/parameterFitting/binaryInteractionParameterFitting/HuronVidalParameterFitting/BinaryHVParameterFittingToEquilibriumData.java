@@ -11,7 +11,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
 public class BinaryHVParameterFittingToEquilibriumData extends HuronVidalFunction {
     private static final long serialVersionUID = 1000;
 
-
     public BinaryHVParameterFittingToEquilibriumData() {
         params = new double[2];
     }

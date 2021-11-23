@@ -11,7 +11,6 @@ public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunctio
     int phase = 1;
     int type = 1;
 
-
     public BinaryWSParameterFittingToSolubilityData() {}
 
     public BinaryWSParameterFittingToSolubilityData(int phase, int type) {

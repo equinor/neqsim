@@ -29,7 +29,6 @@ public class CompressorResponse {
 
     public CompressorResponse() {}
 
-
     public CompressorResponse(Compressor inputCompressor) {
         name = inputCompressor.getName();
         molarMass = inputCompressor.getInStream().getFluid().getMolarMass();

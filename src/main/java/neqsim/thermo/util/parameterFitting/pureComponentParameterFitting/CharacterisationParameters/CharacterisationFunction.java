@@ -13,7 +13,6 @@ public class CharacterisationFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CharacterisationFunction.class);
 
-
     public CharacterisationFunction() {
         params = new double[1];
     }

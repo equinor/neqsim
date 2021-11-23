@@ -11,7 +11,6 @@ import neqsim.processSimulation.processEquipment.pump.Pump;
 public class PumpResponse {
     public String name = "test";
 
-
     public Double suctionTemperature;
     public Double dischargeTemperature;
     public Double suctionPressure;
@@ -29,7 +28,6 @@ public class PumpResponse {
     public Integer speed;
 
     public PumpResponse() {}
-
 
     public PumpResponse(Pump inputPump) {
         name = inputPump.getName();

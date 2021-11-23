@@ -17,7 +17,6 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_MDEA.class);
 
-
     public BinaryHVParameterFittingFunction_MDEA() {}
 
     public BinaryHVParameterFittingFunction_MDEA(int phase, int type) {

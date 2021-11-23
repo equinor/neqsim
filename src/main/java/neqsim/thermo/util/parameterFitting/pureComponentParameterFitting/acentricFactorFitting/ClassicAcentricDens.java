@@ -14,7 +14,6 @@ public class ClassicAcentricDens extends ClassicAcentricFunction {
 
     int phasetype = 1;
 
-
     public ClassicAcentricDens() {}
 
     public ClassicAcentricDens(int phase) {

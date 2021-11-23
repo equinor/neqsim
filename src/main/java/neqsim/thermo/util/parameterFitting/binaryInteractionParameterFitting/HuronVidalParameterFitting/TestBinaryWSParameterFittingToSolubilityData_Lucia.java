@@ -20,7 +20,6 @@ public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
     static Logger logger =
             LogManager.getLogger(TestBinaryWSParameterFittingToSolubilityData_Lucia.class);
 
-
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

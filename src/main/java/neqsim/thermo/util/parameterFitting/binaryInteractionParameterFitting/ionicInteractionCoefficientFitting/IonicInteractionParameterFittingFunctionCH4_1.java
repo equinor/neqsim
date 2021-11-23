@@ -9,7 +9,6 @@ public class IonicInteractionParameterFittingFunctionCH4_1
         extends IonicInteractionParameterFittingFunctionCH4 {
     private static final long serialVersionUID = 1000;
 
-
     public IonicInteractionParameterFittingFunctionCH4_1() {}
 
     @Override

@@ -15,7 +15,6 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
 
-
     public IonicInteractionParameterFittingFunctionPiperazine() {}
 
     @Override

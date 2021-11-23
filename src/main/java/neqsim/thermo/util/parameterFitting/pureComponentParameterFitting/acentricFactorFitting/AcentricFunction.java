@@ -13,7 +13,6 @@ public class AcentricFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AcentricFunction.class);
 
-
     public AcentricFunction() {
         params = new double[1];
     }

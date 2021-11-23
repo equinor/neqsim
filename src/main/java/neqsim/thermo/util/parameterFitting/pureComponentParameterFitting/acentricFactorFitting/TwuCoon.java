@@ -13,7 +13,6 @@ public class TwuCoon extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TwuCoon.class);
 
-
     public TwuCoon() {
         params = new double[3];
     }

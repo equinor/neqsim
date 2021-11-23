@@ -14,7 +14,6 @@ public class HydrateFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFunction.class);
 
-
     public HydrateFunction() {
         // params = new double[3];
     }

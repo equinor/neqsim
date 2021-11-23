@@ -16,7 +16,6 @@ public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
     int phase = 1;
     int type = 1;
 
-
     public BinaryHVParameterFittingToDewPointData() {}
 
     public BinaryHVParameterFittingToDewPointData(int phase, int type) {

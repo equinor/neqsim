@@ -8,7 +8,6 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
 public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVidalFunction {
     private static final long serialVersionUID = 1000;
 
-
     public BinaryHVparameterFitToActivityCoefficientFunction() {}
 
     @Override

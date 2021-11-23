@@ -17,7 +17,6 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_CH4.class);
 
-
     public BinaryHVParameterFittingFunction_CH4() {}
 
     public BinaryHVParameterFittingFunction_CH4(int phase, int type) {

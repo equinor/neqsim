@@ -12,7 +12,6 @@ import neqsim.thermo.phase.PhaseEosInterface;
 abstract class HuronVidalFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
-
     public HuronVidalFunction() {}
 
     @Override
