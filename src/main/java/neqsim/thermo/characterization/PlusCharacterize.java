@@ -55,13 +55,13 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             try {
                 if (system.getPhase(0).getComponent(i).isIsTBPfraction()) {
-                    Integer firstPlusNumber = new Integer(0);
+                    Integer firstPlusNumber = Integer.valueOf(0);
                     if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4)
                             .equals("_")) {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i)
+                        firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i)
                                 .getComponentName().substring(1, 3));
                     } else {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i)
+                        firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i)
                                 .getComponentName().substring(1, 2));
                     }
                     if (plusCompNumber < firstPlusNumber.intValue()) {
@@ -91,13 +91,13 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             try {
                 if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
-                    Integer firstPlusNumber = new Integer(0);
+                    Integer firstPlusNumber = Integer.valueOf(0);
                     if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4)
                             .equals("_")) {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i)
+                        firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i)
                                 .getComponentName().substring(1, 3));
                     } else {
-                        firstPlusNumber = new Integer(system.getPhase(0).getComponent(i)
+                        firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i)
                                 .getComponentName().substring(1, 2));
                     }
                     if (firstPlusFractionNumber < firstPlusNumber.intValue()) {

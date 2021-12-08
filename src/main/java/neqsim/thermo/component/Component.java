@@ -2306,4 +2306,30 @@ abstract class Component implements ComponentInterface {
             throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
         }
     }
+    
+    /**
+     * method to return total flow rate of component
+     *
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *        m3/hr, mole/sec, mole/min, mole/hr
+     * @return flow rate in specified unit
+     */
+    @Override
+    public double getTotalFlowRate(String flowunit) {
+        if (flowunit.equals("kg/sec")) {
+            return numberOfMoles * getMolarMass();
+        } else if (flowunit.equals("kg/min")) {
+            return numberOfMoles * getMolarMass() * 60.0;
+        } else if (flowunit.equals("kg/hr")) {
+            return numberOfMoles * getMolarMass() * 3600.0;
+        } else if (flowunit.equals("mole/sec")) {
+            return numberOfMoles;
+        } else if (flowunit.equals("mole/min")) {
+            return numberOfMoles * 60.0;
+        } else if (flowunit.equals("mole/hr")) {
+            return numberOfMoles * 3600.0;
+        } else {
+            throw new RuntimeException("failed.. unit: " + flowunit + " not suported");
+        }
+    }
 }
