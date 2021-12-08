@@ -109,7 +109,7 @@
 		<dependency>
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
-			<version>8.0.23</version>
+			<version>8.0.27</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/edu.ucar/netcdf4 -->
 		<dependency>
@@ -135,7 +135,7 @@
 		<dependency>
 			<groupId>io.airlift</groupId>
 			<artifactId>units</artifactId>
-			<version>0.134</version>
+			<version>1.6</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.wisc.ssec</groupId>
@@ -219,6 +219,25 @@
 				<artifactId>ejml-core</artifactId>
 				<version>0.40</version>
 			</plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.7</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                 </execution>
+                  <execution>
+                       <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 		</plugins>
 	</build>
 	<distributionManagement>
