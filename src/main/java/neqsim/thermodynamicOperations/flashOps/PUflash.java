@@ -55,6 +55,7 @@ public class PUflash extends Flash {
             tpFlash.run();
             erorOld = error;
             error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
+            //System.out.println("error " + error);
             // System.out.println("temperature " + system.getTemperature() + " " +
             // iterations);
         } while (error > 1e-8 && iterations < 500);
@@ -65,9 +66,9 @@ public class PUflash extends Flash {
     @Override
     public void run() {
         tpFlash.run();
-        // System.out.println("enthalpy start: " + system.getEnthalpy());
+        // System.out.println("internal energy start: " + system.getInternalEnergy());
         solveQ();
-
+        //System.out.println("internal energy end: " + system.getInternalEnergy());
         // System.out.println("enthalpy: " + system.getEnthalpy());
         // System.out.println("Temperature: " + system.getTemperature());
     }
