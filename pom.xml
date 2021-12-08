@@ -120,7 +120,7 @@
 		<dependency>
 			<groupId>org.ojalgo</groupId>
 			<artifactId>ojalgo</artifactId>
-			<version>44.0.0</version>
+			<version>48.4.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
