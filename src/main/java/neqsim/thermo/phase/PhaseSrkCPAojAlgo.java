@@ -1,8 +1,9 @@
 /*
- * PhaseSrkEos.java
+ * PhaseSrkCPAojAlgo.java
  *
  * Created on 3. juni 2000, 14:38
  */
+
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentCPAInterface;
@@ -12,13 +13,11 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
 import org.apache.logging.log4j.*;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.SparseStore;
-import org.ojalgo.matrix.store.PrimitiveDenseStore;
-import org.ojalgo.matrix.BasicMatrix;
-import org.ojalgo.matrix.PrimitiveMatrix;
+import org.ojalgo.matrix.Primitive64Matrix;
+import org.ojalgo.matrix.Primitive64Matrix.Factory;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface {
@@ -48,7 +47,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
                                                                                       // DenseMatrix64F(getTotalNumberOfAccociationSites(),
                                                                                       // 1);
     MatrixStore<Double> hessianInvers2 = null;
-    final BasicMatrix.Factory<PrimitiveMatrix> mtrxFactory = PrimitiveMatrix.FACTORY;
+    final Factory mtrxFactory = Primitive64Matrix.FACTORY;
 
     static Logger logger = LogManager.getLogger(PhaseSrkCPAojAlgo.class);
 
@@ -59,16 +58,16 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     // hessianMatrix = null, hessianInvers = null, KlkVMatrix = null;
     // DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;//new
     // DenseMatrix64F(getTotalNumberOfAccociationSites(), 1);
-    /**
-     * Creates new PhaseSrkEos
-     */
 
+    /**
+     * Creates new PhaseSrkCPAojAlgo
+     */
     public PhaseSrkCPAojAlgo() {
         super();
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         PhaseSrkCPAojAlgo clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkCPAojAlgo) super.clone();
@@ -83,17 +82,16 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-	public void setMixingRule(int type) {
+    public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(1, this);
     }
 
+    // type = 0 start
+    // init type = 1 gi nye betingelser
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
+
         if (type == 0) {
             setTotalNumberOfAccociationSites(0);
             selfAccociationScheme = new int[numberOfComponents][0][0];
@@ -114,41 +112,41 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
 
             // had to remove if below - dont understand why.. Even
             // if (getTotalNumberOfAccociationSites() != oldTotalNumberOfAccociationSites) {
-            mVector2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
-            KlkMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            mVector2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+            KlkMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            KlkVMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            KlkVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            KlkVVMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            KlkVVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            KlkVVVMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            KlkVVVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            hessianMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            hessianMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            KlkTMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            KlkTMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            KlkTTMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            KlkTTMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            KlkTVMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(),
+            KlkTVMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(),
                     getTotalNumberOfAccociationSites());
-            corr2Matrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
-            corr3Matrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
-            corr4Matrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
+            corr2Matrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+            corr3Matrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+            corr4Matrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
             Klkni = new double[numberOfComponents][getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-            ksiMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
-            uMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
-            udotMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
+            ksiMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+            uMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
+            udotMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
             moleculeNumber = new int[getTotalNumberOfAccociationSites()];
             assSiteNumber = new int[getTotalNumberOfAccociationSites()];
             gvector = new double[getTotalNumberOfAccociationSites()][1];
-            udotTimesmMatrix2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
+            udotTimesmMatrix2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
             delta = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
             deltaNog = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
             deltadT = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
             deltadTdT = new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
-            QMatksiksiksi2 = SparseStore.PRIMITIVE.make(getTotalNumberOfAccociationSites(), 1);
+            QMatksiksiksi2 = SparseStore.PRIMITIVE64.make(getTotalNumberOfAccociationSites(), 1);
             // }
-            udotTimesmiMatrix2 = SparseStore.PRIMITIVE.make(getNumberOfComponents(),
+            udotTimesmiMatrix2 = SparseStore.PRIMITIVE64.make(getNumberOfComponents(),
                     getTotalNumberOfAccociationSites());
 
             oldTotalNumberOfAccociationSites = getTotalNumberOfAccociationSites();
@@ -250,7 +248,6 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         double gdv2 = gdv1 * gdv1;
         double gdv3 = gdv2 * gdv1;
         double totVol = getTotalVolume();
-        double Klk = 0.0;
         for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
             for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
                 KlkVMatrix2.set(i, j, KlkMatrix2.get(i, j) * gdv1);
@@ -379,10 +376,10 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             return;
         }
 
-        int assSites = 0;
+        // int assSites = 0;
         // if(true) return;
         for (int p = 0; p < numberOfComponents; p++) {
-            MatrixStore<Double> KiMatrix = PrimitiveDenseStore.FACTORY.rows(Klkni[p]);
+            // MatrixStore<Double> KiMatrix = PrimitiveDenseStore.FACTORY.rows(Klkni[p]);
             // MatrixStore<Double> KiMatrix = new SimpleMatrix(Klkni[p]);
             // KiMatrix.print(10,10);
 
@@ -418,58 +415,58 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             // tempMatrix5.print(10, 10);
             // System.out.println("dXdn ");
             // tempMatrix6.print(10, 10);
-            int temp2 = 0;
+            // int temp2 = 0;
             for (int compp = 0; compp < numberOfComponents; compp++) {
                 for (int kk = 0; kk < getComponent(compp).getNumberOfAssociationSites(); kk++) {
                     // ((ComponentCPAInterface) getComponent(compp)).setXsitedni(kk, p, -1.0 *
                     // tempMatrix6.get(temp2 + kk, 0));
                 }
-                temp2 += getComponent(compp).getNumberOfAssociationSites();
+                // temp2 += getComponent(compp).getNumberOfAssociationSites();
             }
-            assSites += getComponent(p).getNumberOfAssociationSites();
+            // assSites += getComponent(p).getNumberOfAssociationSites();
         }
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentSrkCPA(componentName, moles, molesInPhase, compNumber);
     }
 
     @Override
-	public double getF() {
+    public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
     @Override
-	public double dFdT() {
+    public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
     @Override
-	public double dFdTdV() {
+    public double dFdTdV() {
         return super.dFdTdV() + cpaon * dFCPAdTdV();
     }
 
     @Override
-	public double dFdV() {
+    public double dFdV() {
         double dv2 = dFCPAdV();
         return super.dFdV() + cpaon * dv2;
     }
 
     // @Override
     @Override
-	public double dFdVdV() {
+    public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
     @Override
-	public double dFdVdVdV() {
+    public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
     @Override
-	public double dFdTdT() {
+    public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
     }
 
@@ -601,9 +598,10 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             // return true;
         }
 
-        SparseStore<Double> mat1 = KlkMatrix2;
-        SparseStore<Double> mat2 = ksiMatrix2;
-// second order method not working correctly and not used t the moment b ecause of numerical stability
+        // SparseStore<Double> mat1 = KlkMatrix2;
+        // SparseStore<Double> mat2 = ksiMatrix2;
+        // second order method not working correctly and not used t the moment b ecause
+        // of numerical stability
         int temp = 0, iter = 0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
@@ -652,20 +650,19 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
 
             // ksiMatrix = new SimpleMatrix(ksi);
             // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
-            PrimitiveMatrix input = PrimitiveMatrix.FACTORY.rows(hessianMatrix2);
-            PrimitiveMatrix hessianInvers2 = null;
+            // PrimitiveMatrix input = PrimitiveMatrix.FACTORY.rows(hessianMatrix2);
+            // PrimitiveMatrix hessianInvers2;
             try {
-                hessianInvers2 = input.invert();
-
+                // hessianInvers2 = input.invert();
             } catch (Exception e) {
                 logger.error("error", e);
                 return false;
             }
 
-            MatrixStore<Double> corr2Matrix2 = mat1.multiply(mat2);
+            // MatrixStore<Double> corr2Matrix2 = mat1.multiply(mat2);
             // corr2Matrix2 = mat1.multiply(mat2);//gcpa)CommonOps_DDRM.mult(mat1, mat2,
             // corr2Matrix);
-            MatrixStore<Double> corr3Matrix = udotTimesmMatrix2.subtract(corr2Matrix2);
+            // MatrixStore<Double> corr3Matrix = udotTimesmMatrix2.subtract(corr2Matrix2);
             // PrimitiveMatrix corr4Matrix = hessianInvers2.multiply(corr3Matrix);
             // CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix,
             // corr3Matrix);
@@ -740,7 +737,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
      * @return Value of property hcpatot.
      */
     @Override
-	public double getHcpatot() {
+    public double getHcpatot() {
         return hcpatot;
     }
 
@@ -754,7 +751,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-	public double getGcpa() {
+    public double getGcpa() {
         return gcpa;
     }
 
@@ -770,10 +767,10 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             logger.error("error", e);
         }
         double BonVold = BonV;
-        double Btemp = 0, Dtemp = 0, h = 1, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
-        double d1 = 0, d2 = 0;
+        double Btemp = 0, h = 1;
+        // double Dtemp = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0, d1 = 0, d2 = 0;
         Btemp = getB();
-        Dtemp = getA();
+        // Dtemp = getA();
         setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
         for (int i = 0; i < 2000; i++) {
             BonVold = BonV;
@@ -828,7 +825,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-	public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
+    public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
@@ -949,7 +946,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
-// System.out.println("BonV: " + BonV + " "+"  itert: " +   iterations +" " +h + " " +dh + " B " + Btemp  + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
+        // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
+        // " +dh + " B " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
 
         if (Double.isNaN(getMolarVolume())) {
             throw new neqsim.util.exception.IsNaNException();
@@ -976,7 +974,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             BonV = 0.9999;
         }
         double BonVold = BonV;
-        double Btemp = 0, h = 0, dh = 0, gvvv = 0, fvvv = 0, dhh = 0;
+        double Btemp = 0, h = 0, dh = 0, dhh = 0;
+        // double gvvv = 0, fvvv = 0;
         double d1 = 0, d2 = 0;
         Btemp = getB();
         if (Btemp < 0) {
@@ -1074,7 +1073,8 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
         // (-pressure+R*temperature/getMolarVolume()-R*temperature*dFdV()));// + "
         // firstterm " + (R*temperature/molarVolume) + " second " +
         // R*temperature*dFdV());
-// System.out.println("BonV: " + BonV + " "+"  itert: " +   iterations +" " +h + " " +dh + " B " + Btemp  + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
+        // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
+        // " +dh + " B " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
         if (Double.isNaN(getMolarVolume())) {
             throw new neqsim.util.exception.IsNaNException();
             // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
@@ -1086,7 +1086,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-	public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+    public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
         Z = phase == 0 ? 1.0 : 1.0e-5;
@@ -1100,8 +1100,9 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
             A = calcA(this, temperature, pressure, numberOfComponents);
             B = calcB(this, temperature, pressure, numberOfComponents);
 
-            double dFdV = dFdV(), dFdVdV = dFdVdV(), dFdVdVdV = dFdVdVdV();
-            double factor1 = 1.0e0, factor2 = 1.0e0;
+            double dFdV = dFdV(), dFdVdV = dFdVdV();
+            // double dFdVdVdV = dFdVdVdV();
+            // double factor1 = 1.0e0, factor2 = 1.0e0;
             err = -R * temperature * dFdV + R * temperature / getMolarVolume() - pressure;
 
             // System.out.println("pressure " + -R * temperature * dFdV + " " + R *
@@ -1121,14 +1122,14 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
                 setMolarVolume(Z * R * temperature / pressure);
             }
 
-//     System.out.println("Z " + Z);
+            // System.out.println("Z " + Z);
         } while (Math.abs(err) > 1.0e-8 || iterations < 100);
         // System.out.println("Z " + Z);
         return getMolarVolume();
     }
 
     @Override
-	public double getGcpav() {
+    public double getGcpav() {
         return gcpav;
     }
 
@@ -1137,12 +1138,12 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-	public CPAMixingInterface getCpamix() {
+    public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
     @Override
-	public double calcPressure() {
+    public double calcPressure() {
         gcpa = calc_g();
         // lngcpa =
         // Math.log(gcpa);
@@ -1157,7 +1158,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
+    public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
             return selfAccociationScheme[comp1][site1][site2];
         } else {
@@ -1180,15 +1181,15 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
                 }
             }
         }
-        return result;
 
+        return result;
     }
 
     /**
      * @return the totalNumberOfAccociationSites
      */
     @Override
-	public int getTotalNumberOfAccociationSites() {
+    public int getTotalNumberOfAccociationSites() {
         return totalNumberOfAccociationSites;
     }
 
@@ -1196,7 +1197,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
      * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
      */
     @Override
-	public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
+    public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;
     }
 }
