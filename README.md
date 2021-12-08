@@ -35,7 +35,7 @@ An interactive demonstration of how to get started as a NeqSim developer is pres
 The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). All test have to be passed before merging to the master. Test code shuld be written for all new code added to the project.  
 
 Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
-Generate a coverage report using `mvn jacoco:prepare-agent test install jacoco:report`
+Generate a coverage report using `mvn jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
 
 ## Deployment
 
