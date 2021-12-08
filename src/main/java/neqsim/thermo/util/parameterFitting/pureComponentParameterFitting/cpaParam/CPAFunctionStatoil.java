@@ -1,13 +1,8 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,12 +14,11 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionStatoil.class);
 
-    /** Creates new Test */
-    public CPAFunctionStatoil() {
-    }
+
+    public CPAFunctionStatoil() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         // system.init(0);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -39,12 +33,12 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 0) {
             system.getPhase(0).getComponent(0).getAtractiveTerm().setm(value);
@@ -55,12 +49,12 @@ public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
         system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(i, value);
         system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(i, value);
 
-//        value = 0.0;
-//        for(int j=1;j<3;j++){
-//            system.getPhases()[0].getComponents()[0].setSchwartzentruberParams(j, value);
-//            system.getPhases()[1].getComponents()[0].setSchwartzentruberParams(j, value);
-//            system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(j, value);
-//            system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(j, value);
-//        }
+        // value = 0.0;
+        // for(int j=1;j<3;j++){
+        // system.getPhases()[0].getComponents()[0].setSchwartzentruberParams(j, value);
+        // system.getPhases()[1].getComponents()[0].setSchwartzentruberParams(j, value);
+        // system.getPhases()[0].getComponents()[0].getAtractiveTerm().setParameters(j, value);
+        // system.getPhases()[1].getComponents()[0].getAtractiveTerm().setParameters(j, value);
+        // }
     }
 }

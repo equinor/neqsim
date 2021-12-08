@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.fluidMechanics.flowNode;
 
 import java.awt.BorderLayout;
@@ -23,12 +7,10 @@ import java.awt.Font;
 import java.awt.Toolkit;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.InterphaseTransportCoefficientBaseClass;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.InterphaseTransportCoefficientInterface;
@@ -211,18 +193,25 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
             clonedSystem.velocityIn[i] = (DoubleCloneable) velocityIn[i].clone();
             clonedSystem.velocityOut[i] = (DoubleCloneable) velocityOut[i].clone();
         }
-        System.arraycopy(this.flowDirection, 0, clonedSystem.flowDirection, 0, this.flowDirection.length);
-        System.arraycopy(this.wallContactLength, 0, clonedSystem.wallContactLength, 0, this.wallContactLength.length);
+        System.arraycopy(this.flowDirection, 0, clonedSystem.flowDirection, 0,
+                this.flowDirection.length);
+        System.arraycopy(this.wallContactLength, 0, clonedSystem.wallContactLength, 0,
+                this.wallContactLength.length);
         System.arraycopy(this.interphaseFrictionFactor, 0, clonedSystem.interphaseFrictionFactor, 0,
                 this.interphaseFrictionFactor.length);
-        System.arraycopy(this.molarFlowRate, 0, clonedSystem.molarFlowRate, 0, this.molarFlowRate.length);
-        System.arraycopy(this.massFlowRate, 0, clonedSystem.massFlowRate, 0, this.massFlowRate.length);
+        System.arraycopy(this.molarFlowRate, 0, clonedSystem.molarFlowRate, 0,
+                this.molarFlowRate.length);
+        System.arraycopy(this.massFlowRate, 0, clonedSystem.massFlowRate, 0,
+                this.massFlowRate.length);
         System.arraycopy(this.volumetricFlowRate, 0, clonedSystem.volumetricFlowRate, 0,
                 this.volumetricFlowRate.length);
-        System.arraycopy(this.phaseFraction, 0, clonedSystem.phaseFraction, 0, this.phaseFraction.length);
+        System.arraycopy(this.phaseFraction, 0, clonedSystem.phaseFraction, 0,
+                this.phaseFraction.length);
         System.arraycopy(this.velocity, 0, clonedSystem.velocity, 0, this.velocity.length);
-        System.arraycopy(this.hydraulicDiameter, 0, clonedSystem.hydraulicDiameter, 0, this.hydraulicDiameter.length);
-        System.arraycopy(this.reynoldsNumber, 0, clonedSystem.reynoldsNumber, 0, this.reynoldsNumber.length);
+        System.arraycopy(this.hydraulicDiameter, 0, clonedSystem.hydraulicDiameter, 0,
+                this.hydraulicDiameter.length);
+        System.arraycopy(this.reynoldsNumber, 0, clonedSystem.reynoldsNumber, 0,
+                this.reynoldsNumber.length);
         System.arraycopy(this.wallFrictionFactor, 0, clonedSystem.wallFrictionFactor, 0,
                 this.wallFrictionFactor.length);
 
@@ -380,16 +369,19 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     public void setInterphaseModelType(int i) {
         if (i == 0) {
             // System.out.println("set equilibrium");
-            this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.equilibriumFluidBoundary.EquilibriumFluidBoundary(
-                    this);
+            this.fluidBoundary =
+                    new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.equilibriumFluidBoundary.EquilibriumFluidBoundary(
+                            this);
         } else {
             // System.out.println("set non equilibrium");
             if (bulkSystem.isChemicalSystem()) {
-                this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.ReactiveKrishnaStandartFilmModel(
-                        this);
+                this.fluidBoundary =
+                        new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.ReactiveKrishnaStandartFilmModel(
+                                this);
             } else {
-                this.fluidBoundary = new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
-                        this);
+                this.fluidBoundary =
+                        new neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel(
+                                this);
             }
         }
     }
@@ -413,12 +405,10 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     }
 
     @Override
-    public void calcFluxes() {
-    }
+    public void calcFluxes() {}
 
     @Override
-    public void setFluxes(double dn[]) {
-    }
+    public void setFluxes(double dn[]) {}
 
     @Override
     public double calcSherwoodNumber(double schmidtNumber, int phase) {
@@ -439,15 +429,18 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
 
     @Override
     public double getSchmidtNumber(int phase, int component1, int component2) {
-        return getBulkSystem().getPhase(phase).getPhysicalProperties().getDiffusionCoeffisient(component1, component2)
+        return getBulkSystem().getPhase(phase).getPhysicalProperties()
+                .getDiffusionCoeffisient(component1, component2)
                 / getBulkSystem().getPhase(phase).getPhysicalProperties().getKinematicViscosity();
     }
 
     @Override
     public double getEffectiveSchmidtNumber(int phase, int component) {
-        getBulkSystem().getPhase(phase).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
+        getBulkSystem().getPhase(phase).getPhysicalProperties()
+                .calcEffectiveDiffusionCoefficients();
         return getBulkSystem().getPhase(phase).getPhysicalProperties().getKinematicViscosity()
-                / getBulkSystem().getPhase(phase).getPhysicalProperties().getEffectiveDiffusionCoefficient(component);
+                / getBulkSystem().getPhase(phase).getPhysicalProperties()
+                        .getEffectiveDiffusionCoefficient(component);
     }
 
     @Override
@@ -461,8 +454,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     }
 
     @Override
-    public void updateMolarFlow() {
-    }
+    public void updateMolarFlow() {}
 
     @Override
     public double getPhaseFraction(int phase) {
@@ -495,8 +487,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     }
 
     @Override
-    public void increaseMolarRate(double moles) {
-    }
+    public void increaseMolarRate(double moles) {}
 
     @Override
     public double calcTotalHeatTransferCoefficient(int phase) {
@@ -504,16 +495,16 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
                 / getBulkSystem().getPhases()[phase].getNumberOfMolesInPhase()
                 * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()
                 / getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
-        double temp = 1.0
-                / (1.0 / interphaseTransportCoefficient.calcWallHeatTransferCoefficient(phase, prandtlNumber, this)
-                        + 1.0 / pipe.getWallHeatTransferCoefficient()
-                        + 1.0 / pipe.getSurroundingEnvironment().getHeatTransferCoefficient());
+        double temp = 1.0 / (1.0
+                / interphaseTransportCoefficient.calcWallHeatTransferCoefficient(phase,
+                        prandtlNumber, this)
+                + 1.0 / pipe.getWallHeatTransferCoefficient()
+                + 1.0 / pipe.getSurroundingEnvironment().getHeatTransferCoefficient());
         return temp;
     }
 
     @Override
-    public void setEnhancementType(int type) {
-    }
+    public void setEnhancementType(int type) {}
 
     @Override
     public void display() {
@@ -532,7 +523,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
         dialogContentPane.setLayout(new BorderLayout());
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         String[][] table = createTable(name);
         JTable Jtab = new JTable(table, names);
         JScrollPane scrollpane = new JScrollPane(Jtab);
@@ -545,8 +536,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     }
 
     @Override
-    public void update() {
-    }
+    public void update() {}
 
     /**
      * Getter for property operations.
@@ -608,79 +598,85 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
             for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
                 table[j + 1][0] = bulkSystem.getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
-                table[j + 1][i + 1] = nf
-                        .format(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getComponents()[j].getx(), buf, test)
-                        .toString();
+                table[j + 1][i + 1] = nf.format(
+                        bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getComponents()[j].getx(),
+                        buf, test).toString();
                 table[j + 1][4] = "[-] bulk";
             }
 
             for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-                table[j + bulkSystem.getPhases()[0].getNumberOfComponents()
-                        + 2][0] = getInterphaseSystem().getPhases()[0].getComponents()[j].getName();
+                table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
+                        getInterphaseSystem().getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
                 table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf.format(
-                        getInterphaseSystem().getPhase(getInterphaseSystem().getPhaseIndex(i)).getComponents()[j]
-                                .getx(),
+                        getInterphaseSystem().getPhase(getInterphaseSystem().getPhaseIndex(i))
+                                .getComponents()[j].getx(),
                         buf, test).toString();
-                table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[-] interface";
+                table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][4] =
+                        "[-] interface";
             }
 
             for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-                table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] = bulkSystem.getPhases()[0]
-                        .getComponents()[j].getName();
+                table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
+                        bulkSystem.getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
                 table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
                         .format(getFluidBoundary().getInterphaseMolarFlux(j), buf, test).toString();
-                table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[mol/sec*m^2]";
+                table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][4] =
+                        "[mol/sec*m^2]";
             }
             buf = new StringBuffer();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Reynolds Number";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
-                    .format(reynoldsNumber[i], buf, test).toString();
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] =
+                    nf.format(reynoldsNumber[i], buf, test).toString();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[-]";
 
             // Double.longValue(system.getPhase(phaseIndex[i]).getBeta());
 
             buf = new StringBuffer();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][0] = "Velocity";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][i + 1] = nf.format(velocity[i], buf, test)
-                    .toString();
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][i + 1] =
+                    nf.format(velocity[i], buf, test).toString();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 6][4] = "[m/sec]";
 
             buf = new StringBuffer();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Gas Heat Flux";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-                    .format(getFluidBoundary().getInterphaseHeatFlux(0), buf, test).toString();
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] =
+                    nf.format(getFluidBoundary().getInterphaseHeatFlux(0), buf, test).toString();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[J/sec*m^2]";
 
             buf = new StringBuffer();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Pressure";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = Double
-                    .toString(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getPressure());
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] =
+                    Double.toString(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getPressure());
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[bar]";
 
             buf = new StringBuffer();
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][0] = "Bulk Temperature";
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][0] =
+                    "Bulk Temperature";
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][i + 1] = Double
                     .toString(bulkSystem.getPhase(bulkSystem.getPhaseIndex(i)).getTemperature());
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 9][4] = "[K]";
 
             buf = new StringBuffer();
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][0] = "Interface Temperature";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] = Double
-                    .toString(getInterphaseSystem().getPhase(bulkSystem.getPhaseIndex(i)).getTemperature());
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][0] =
+                    "Interface Temperature";
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][i + 1] =
+                    Double.toString(getInterphaseSystem().getPhase(bulkSystem.getPhaseIndex(i))
+                            .getTemperature());
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 10][4] = "[K]";
 
             buf = new StringBuffer();
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][0] = "Interface Area";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] = nf
-                    .format(getInterphaseContactArea());
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][i + 1] =
+                    nf.format(getInterphaseContactArea());
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 11][4] = "[m^2]";
 
             buf = new StringBuffer();
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][0] = "Inner wall temperature";
-            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][i + 1] = Double
-                    .toString(pipe.getInnerWallTemperature());
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][0] =
+                    "Inner wall temperature";
+            table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][i + 1] =
+                    Double.toString(pipe.getInnerWallTemperature());
             table[3 * bulkSystem.getPhases()[0].getNumberOfComponents() + 12][4] = "K";
 
             buf = new StringBuffer();
@@ -694,7 +690,8 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     @Override
     public void write(String name, String filename, boolean newfile) {
         String[][] table = createTable(name);
-        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
+        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile file =
+                new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         if (newfile) {
             file.newFile(filename);
         }

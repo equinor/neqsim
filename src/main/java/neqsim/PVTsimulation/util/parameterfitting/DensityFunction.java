@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -18,15 +13,12 @@ public class DensityFunction extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
-    /**
-     * Creates new Test
-     */
     public DensityFunction() {
         params = new double[1];
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         thermoOps.TPflash();
         system.initPhysicalProperties();
@@ -36,8 +28,7 @@ public class DensityFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-
     }
 }

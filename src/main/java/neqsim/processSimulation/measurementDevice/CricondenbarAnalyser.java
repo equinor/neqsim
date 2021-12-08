@@ -1,12 +1,3 @@
-/*
- * TemperatureTransmitter.java
- *
- * Created on 6. juni 2006, 15:24
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package neqsim.processSimulation.measurementDevice;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -25,9 +16,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     protected static int numberOfStreams = 0;
     protected StreamInterface stream = null;
 
-    /** Creates a new instance of TemperatureTransmitter */
-    public CricondenbarAnalyser() {
-    }
+    public CricondenbarAnalyser() {}
 
     public CricondenbarAnalyser(StreamInterface stream) {
         this.stream = stream;
@@ -38,7 +27,7 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         try {
             // System.out.println("total water production [kg/dag]" +
             // stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()*stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass()*3600*24);
@@ -49,15 +38,15 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     }
 
     @Override
-	public double getMeasuredValue() {
+    public double getMeasuredValue() {
         return getMeasuredValue(unit);
     }
 
     @Override
-	public double getMeasuredValue(String unit) {
+    public double getMeasuredValue(String unit) {
         SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
         tempFluid.removeComponent("water");
-       ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
+        ThermodynamicOperations thermoOps = new ThermodynamicOperations(tempFluid);
         try {
             thermoOps.setRunAsThread(true);
             thermoOps.calcPTphaseEnvelope(false, 1.);
@@ -68,17 +57,18 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
         }
         return thermoOps.get("cricondenbar")[1];
     }
-    
-	public double getMeasuredValue2(String unit, double temp) {
+
+    public double getMeasuredValue2(String unit, double temp) {
         SystemInterface tempFluid = (SystemInterface) stream.getThermoSystem().clone();
         tempFluid.setTemperature(temp, "C");
         tempFluid.setPressure(10.0, "bara");
-        if(tempFluid.getPhase(0).hasComponent("water")) {
-        	tempFluid.removeComponent("water");
+        if (tempFluid.getPhase(0).hasComponent("water")) {
+            tempFluid.removeComponent("water");
         }
-        neqsim.PVTsimulation.simulation.SaturationPressure thermoOps = new neqsim.PVTsimulation.simulation.SaturationPressure(tempFluid);
+        neqsim.PVTsimulation.simulation.SaturationPressure thermoOps =
+                new neqsim.PVTsimulation.simulation.SaturationPressure(tempFluid);
         try {
-        	thermoOps.run();
+            thermoOps.run();
 
         } catch (Exception e) {
             e.printStackTrace();

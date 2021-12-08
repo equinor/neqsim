@@ -1,8 +1,3 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
@@ -21,9 +16,6 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     double saturationVolume = 0, saturationPressure = 0;
     double Zsaturation = 0;
 
-    /**
-     * Creates new Test
-     */
     public CMEFunction() {
         params = new double[3];
     }
@@ -46,8 +38,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
         /*
-         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-         * e.printStackTrace(); }
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
          */
         saturationVolume = system.getVolume();
         saturationPressure = system.getPressure();
@@ -55,7 +46,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
         molarMass = params[0];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -88,7 +79,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         int plusNumber = 0;
         for (int ii = 0; ii < system.getPhase(0).getNumberOfComponents(); ii++) {

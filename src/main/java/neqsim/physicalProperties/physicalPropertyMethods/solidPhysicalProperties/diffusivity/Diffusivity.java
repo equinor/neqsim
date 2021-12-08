@@ -9,12 +9,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
-public class Diffusivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
+public class Diffusivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
@@ -24,13 +25,13 @@ public class Diffusivity
 
     /** Creates new Conductivity */
 
-    public Diffusivity() {
-    }
+    public Diffusivity() {}
 
-    public Diffusivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    public Diffusivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
-        binaryDiffusionCoeffisients = new double[solidPhase.getPhase().getNumberOfComponents()][solidPhase.getPhase()
-                .getNumberOfComponents()];
+        binaryDiffusionCoeffisients = new double[solidPhase.getPhase()
+                .getNumberOfComponents()][solidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[solidPhase.getPhase().getNumberOfComponents()];
 
     }
@@ -47,7 +48,8 @@ public class Diffusivity
 
         properties.binaryDiffusionCoeffisients = this.binaryDiffusionCoeffisients.clone();
         for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
-            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0, properties.binaryDiffusionCoeffisients[i], 0,
+            System.arraycopy(this.binaryDiffusionCoeffisients[i], 0,
+                    properties.binaryDiffusionCoeffisients[i], 0,
                     solidPhase.getPhase().getNumberOfComponents());
         }
         return properties;
@@ -78,12 +80,12 @@ public class Diffusivity
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double nonIdealCorrection = 1.0;
-        return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non ideality factor
+        return binaryDiffusionCoeffisients[i][j] * nonIdealCorrection; // shuld be divided by non
+                                                                       // ideality factor
     }
 
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose
-                                                                       // Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

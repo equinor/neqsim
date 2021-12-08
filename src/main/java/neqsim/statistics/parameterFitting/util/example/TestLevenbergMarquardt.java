@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.statistics.parameterFitting.util.example;
 
 import java.util.ArrayList;
@@ -20,7 +14,6 @@ public class TestLevenbergMarquardt {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new TestAcentric */
     public TestLevenbergMarquardt() {}
 
     public static void main(String[] args) {

@@ -1,18 +1,13 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -23,14 +18,13 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
         implements ThermodynamicConstantsInterface {
 
     private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_Sleipner.class);
+    static Logger logger =
+            LogManager.getLogger(IonicInteractionParameterFittingFunction_Sleipner.class);
 
-    /** Creates new Test */
-    public IonicInteractionParameterFittingFunction_Sleipner() {
-    }
+    public IonicInteractionParameterFittingFunction_Sleipner() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
             // logger.info("pres " +
@@ -44,14 +38,15 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
-        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0, AcidNumb = 0, AcidnegNumb = 0;
+        int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3Numb = 0, WaterNumb = 0, AcidNumb = 0,
+                AcidnegNumb = 0;
         int j = 0;
         do {
             MDEAplusNumb = j;
@@ -85,7 +80,8 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
         do {
             AcidNumb = j;
             j++;
-        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName().equals("AceticAcid"));
+        } while (!system.getPhases()[1].getComponents()[j - 1].getComponentName()
+                .equals("AceticAcid"));
 
         j = 0;
         do {
@@ -119,19 +115,16 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
 
             /*
              * double a1 =
-             * ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).geta();
-             * double a2 =
-             * ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).geta();
+             * ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).geta(); double
+             * a2 = ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).geta();
              * double b1 =
-             * ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).getb();
-             * double b2 =
-             * ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).getb();
-             * double g11 = -a1/b1*Math.log(2); double g22 = -a2/b2*Math.log(2); double g12
-             * = -2*Math.sqrt(b1*b2)/(b1+b2)*Math.sqrt(g11*g22)*(1-(0.2)); double para0 =
-             * (g12-g22)/R; double para1 = (g12-g11)/R;
+             * ((ComponentEosInterface)system.getPhases()[1].getComponent(AcidNumb)).getb(); double
+             * b2 = ((ComponentEosInterface)system.getPhases()[1].getComponent(MDEANumb)).getb();
+             * double g11 = -a1/b1*Math.log(2); double g22 = -a2/b2*Math.log(2); double g12 =
+             * -2*Math.sqrt(b1*b2)/(b1+b2)*Math.sqrt(g11*g22)*(1-(0.2)); double para0 = (g12-g22)/R;
+             * double para1 = (g12-g11)/R;
              * 
-             * ((HVmixingRuleInterface)
-             * ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).
+             * ((HVmixingRuleInterface) ((PhaseEosInterface)system.getPhases()[0]).getMixingRule()).
              * setHValphaParameter(AcidNumb,MDEANumb,0); ((HVmixingRuleInterface)
              * ((PhaseEosInterface)system.getPhases()[1]).getMixingRule()).
              * setHValphaParameter(AcidNumb,MDEANumb,0); ((HVmixingRuleInterface)
@@ -153,10 +146,14 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
              * setHVDijTParameter(MDEANumb,AcidNumb,0);
              */}
         if (i == 2) {
-            double a1 = ((ComponentEosInterface) system.getPhases()[1].getComponent(AcidNumb)).geta();
-            double a2 = ((ComponentEosInterface) system.getPhases()[1].getComponent(MDEANumb)).geta();
-            double b1 = ((ComponentEosInterface) system.getPhases()[1].getComponent(AcidNumb)).getb();
-            double b2 = ((ComponentEosInterface) system.getPhases()[1].getComponent(MDEANumb)).getb();
+            double a1 =
+                    ((ComponentEosInterface) system.getPhases()[1].getComponent(AcidNumb)).geta();
+            double a2 =
+                    ((ComponentEosInterface) system.getPhases()[1].getComponent(MDEANumb)).geta();
+            double b1 =
+                    ((ComponentEosInterface) system.getPhases()[1].getComponent(AcidNumb)).getb();
+            double b2 =
+                    ((ComponentEosInterface) system.getPhases()[1].getComponent(MDEANumb)).getb();
             double g11 = -a1 / b1 * Math.log(2);
             double g22 = -a2 / b2 * Math.log(2);
             double g12 = -2 * Math.sqrt(b1 * b2) / (b1 + b2) * Math.sqrt(g11 * g22) * (1 - value);

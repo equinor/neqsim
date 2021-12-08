@@ -1,9 +1,3 @@
-/*
- * IterationException.java
- *
- * Created on 1. mai 2001, 12:56
- */
-
 package neqsim.util.exception;
 
 /**
@@ -18,12 +12,10 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
     /**
      * Creates new <code>IterationException</code> without detail message.
      */
-    public TooManyIterationsException() {
-    }
+    public TooManyIterationsException() {}
 
     /**
-     * Constructs an <code>IterationException</code> with the specified detail
-     * message.
+     * Constructs an <code>IterationException</code> with the specified detail message.
      * 
      * @param msg the detail message.
      */

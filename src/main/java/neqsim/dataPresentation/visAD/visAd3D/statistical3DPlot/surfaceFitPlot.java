@@ -1,9 +1,3 @@
-/*
- * visAdContourPlot.java
- *
- * Created on 7. november 2000, 17:51
- */
-
 package neqsim.dataPresentation.visAD.visAd3D.statistical3DPlot;
 
 import java.rmi.RemoteException;
@@ -24,7 +18,7 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.ContourWidget;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class surfaceFitPlot {
@@ -47,7 +41,8 @@ public class surfaceFitPlot {
     private ContourWidget contourWid;
 
     /** Creates new visAdContourPlot */
-    public surfaceFitPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
+    public surfaceFitPlot(String firstax, String secax, String zax)
+            throws RemoteException, VisADException {
 
         latitude = RealType.getRealType(firstax);
         longitude = RealType.getRealType(secax);
@@ -70,9 +65,9 @@ public class surfaceFitPlot {
     }
 
     /*
-     * public void setXYals(double[] xvals, double[] yvals) throws RemoteException,
-     * VisADException{ domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS,
-     * yMin, yMax, NCOLS); set_samples = domain_set.getSamples( true ); }
+     * public void setXYals(double[] xvals, double[] yvals) throws RemoteException, VisADException{
+     * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS); set_samples
+     * = domain_set.getSamples( true ); }
      */
 
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
@@ -152,8 +147,8 @@ public class surfaceFitPlot {
 
     public static void main(String[] args) throws RemoteException, VisADException {
         /*
-         * visAd3DPlot test = new visAd3DPlot("long", "alt", "height");
-         * test.setXYvals(0, 10, 4, 0, 10, 4);
+         * visAd3DPlot test = new visAd3DPlot("long", "alt", "height"); test.setXYvals(0, 10, 4, 0,
+         * 10, 4);
          * 
          * double[][] z = { {3,2,1,3,}, {2,6,4,1,},{1,3,2,1,}, {3,2,1,3,} };
          * 

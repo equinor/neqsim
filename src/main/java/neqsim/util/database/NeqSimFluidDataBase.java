@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.util.database;
 
 /*
@@ -21,17 +5,20 @@ package neqsim.util.database;
  *
  * Created on 1. november 2001, 08:56
  */
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
  * @author esol
- * @version The database is used for storing fluid info and recreating a fluid
- *          it uses the database neqsimfluiddatabase for storing fluid
- *          information
+ * @version The database is used for storing fluid info and recreating a fluid it uses the database
+ *          neqsimfluiddatabase for storing fluid information
  */
-public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimFluidDataBase
+        implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
@@ -73,8 +60,9 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
             } else {
                 dir = System.getProperty("NeqSim.home");
             }
-            return DriverManager.getConnection(
-                    "jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
+            return DriverManager
+                    .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir
+                            + "\\data\\" + database);
             // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
         }
     }
@@ -113,7 +101,8 @@ public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings,
 
     public static void main(String[] args) {
         NeqSimFluidDataBase database = new NeqSimFluidDataBase();
-        ResultSet dataSet = database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'");
+        ResultSet dataSet =
+                database.getResultSet("FluidDatabase", "SELECT * FROM comp where name='water'");
         try {
             dataSet.next();
             System.out.println("dataset " + dataSet.getString("molarmass"));

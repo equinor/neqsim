@@ -1,16 +1,11 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -22,12 +17,10 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
 
-    /** Creates new Test */
-    public IonicInteractionParameterFittingFunction_CO2() {
-    }
+    public IonicInteractionParameterFittingFunction_CO2() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.bubblePointPressureFlash(false);
         } catch (Exception e) {
@@ -37,12 +30,12 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
         int j = 0;
@@ -211,7 +204,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         do {
             MDEAplusNumb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("MDEAplus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("MDEAplus"));
         j = 0;
 
         do {
@@ -228,7 +222,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         do {
             HCO3numb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("HCO3minus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("HCO3minus"));
         j = 0;
         do {
             Waternumb = j;
@@ -295,7 +290,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         do {
             MDEAplusNumb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("MDEAplus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("MDEAplus"));
         j = 0;
 
         do {
@@ -312,7 +308,8 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         do {
             HCO3numb = j;
             j++;
-        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName().equals("HCO3minus"));
+        } while (!system.getPhases()[0].getComponents()[j - 1].getComponentName()
+                .equals("HCO3minus"));
         j = 0;
         do {
             Waternumb = j;

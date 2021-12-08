@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import java.sql.ResultSet;
@@ -27,7 +21,6 @@ public class TestEosInteractionParameterFitting {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestEosInteractionParameterFitting.class);
 
-    /** Creates new TestAcentric */
     public TestEosInteractionParameterFitting() {}
 
     public static void main(String[] args) {

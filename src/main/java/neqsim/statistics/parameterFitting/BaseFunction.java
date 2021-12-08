@@ -1,16 +1,10 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.statistics.parameterFitting;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public abstract class BaseFunction implements FunctionInterface {
@@ -23,8 +17,7 @@ public abstract class BaseFunction implements FunctionInterface {
     public SystemInterface system;
     public ThermodynamicOperations thermoOps;
 
-    public BaseFunction() {
-    }
+    public BaseFunction() {}
 
     @Override
     public Object clone() {
@@ -86,8 +79,7 @@ public abstract class BaseFunction implements FunctionInterface {
     public abstract void setFittingParams(int i, double value);
 
     @Override
-    public void setDatabaseParameters() {
-    }
+    public void setDatabaseParameters() {}
 
     /**
      * Getter for property bounds.

@@ -1,31 +1,9 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * PHflash.java
- *
- * Created on 8. mars 2001, 10:56
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class PUflash extends Flash {
@@ -35,9 +13,7 @@ public class PUflash extends Flash {
     double Uspec = 0;
     Flash tpFlash;
 
-    /** Creates new PHflash */
-    public PUflash() {
-    }
+    public PUflash() {}
 
     public PUflash(SystemInterface system, double Uspec) {
         this.system = system;

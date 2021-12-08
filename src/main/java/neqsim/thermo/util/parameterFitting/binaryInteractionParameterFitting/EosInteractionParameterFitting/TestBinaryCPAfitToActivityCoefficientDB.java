@@ -1,14 +1,11 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.statistics.parameterFitting.SampleSet;
 import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
@@ -23,19 +20,12 @@ import neqsim.util.database.NeqSimDataBase;
  */
 public class TestBinaryCPAfitToActivityCoefficientDB implements Cloneable {
 
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestBinaryCPAfitToActivityCoefficientDB.class);
-
-    /**
-     * Creates new TestAcentric
-     */
-    public TestBinaryCPAfitToActivityCoefficientDB() {}
-
+    
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
-
         // inserting samples from database
         NeqSimDataBase database = new NeqSimDataBase();
         ResultSet dataSet = database.getResultSet(

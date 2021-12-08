@@ -1,8 +1,4 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
+
 package neqsim.PVTsimulation.util.parameterfitting;
 
 import java.util.ArrayList;
@@ -18,14 +14,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version
  */
 public class TestSaturationPresFunction {
-
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * Creates new TestAcentric
-     */
-    public TestSaturationPresFunction() {}
-
     public static void main(String[] args) {
 
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

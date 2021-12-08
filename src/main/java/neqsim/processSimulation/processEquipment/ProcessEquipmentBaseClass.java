@@ -1,31 +1,11 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * ProcessEquipmentBaseClass.java
  *
  * Created on 6. juni 2006, 15:12
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 package neqsim.processSimulation.processEquipment;
 
 import java.util.HashMap;
-
 import neqsim.processSimulation.controllerDevice.ControllerDeviceInterface;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.stream.EnergyStream;
@@ -63,39 +43,37 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     @Override
-	public void run() {
-    }
+    public void run() {}
 
     @Override
-	public void runTransient(double dt) {
+    public void runTransient(double dt) {
         run();
     }
 
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return null;
     }
 
     @Override
-	public SystemInterface getFluid() {
+    public SystemInterface getFluid() {
         return getThermoSystem();
     }
 
     ;
 
     @Override
-	public void displayResult() {
-    }
+    public void displayResult() {}
 
     ;
 
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     @Override
-	public void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -107,11 +85,10 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     @Override
-	public void setRegulatorOutSignal(double signal) {
-    }
+    public void setRegulatorOutSignal(double signal) {}
 
     @Override
-	public void setController(ControllerDeviceInterface controller) {
+    public void setController(ControllerDeviceInterface controller) {
         this.controller = controller;
         hasController = true;
     }
@@ -121,7 +98,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     @Override
-	public ControllerDeviceInterface getController() {
+    public ControllerDeviceInterface getController() {
         return controller;
     }
 
@@ -129,7 +106,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
      * @return the mechanicalDesign
      */
     @Override
-	public MechanicalDesign getMechanicalDesign() {
+    public MechanicalDesign getMechanicalDesign() {
         return mechanicalDesign;
     }
 
@@ -144,7 +121,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
      * @return the specification
      */
     @Override
-	public String getSpecification() {
+    public String getSpecification() {
         return specification;
     }
 
@@ -152,17 +129,17 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
      * @param specification the specification to set
      */
     @Override
-	public void setSpecification(String specification) {
+    public void setSpecification(String specification) {
         this.specification = specification;
     }
 
     @Override
-	public String[][] reportResults() {
+    public String[][] reportResults() {
         return report;
     }
 
     @Override
-	public boolean solved() {
+    public boolean solved() {
         return true;
     }
 
@@ -184,44 +161,44 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     @Override
-	public double getPressure() {
+    public double getPressure() {
         return 1.0;
     }
 
     @Override
-	public void setPressure(double pressure) {
+    public void setPressure(double pressure) {
 
     }
 
     @Override
-	public double getEntropyProduction(String unit) {
+    public double getEntropyProduction(String unit) {
         return 0.0;
     }
 
     @Override
-	public double getMassBalance(String unit) {
+    public double getMassBalance(String unit) {
         return 0.0;
     }
 
     @Override
-	public double getExergyChange(String unit, double sourrondingTemperature) {
+    public double getExergyChange(String unit, double sourrondingTemperature) {
         return 0.0;
     }
 
     @Override
-	public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
 
     }
 
     public String conditionAnalysisMessage = "";
 
     @Override
-	public String getConditionAnalysisMessage() {
+    public String getConditionAnalysisMessage() {
         return conditionAnalysisMessage;
     }
-    
-    public String[][] getResultTable(){
-    	return null;
+
+    public String[][] getResultTable() {
+        return null;
     }
 
 }

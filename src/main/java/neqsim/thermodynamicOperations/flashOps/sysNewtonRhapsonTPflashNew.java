@@ -1,22 +1,6 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.thermodynamicOperations.flashOps;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
@@ -42,11 +26,11 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     boolean etterCP = false;
     boolean etterCP2 = false;
 
-    public sysNewtonRhapsonTPflashNew() {
-    }
+    public sysNewtonRhapsonTPflashNew() {}
 
     /** Creates new nonlin */
-    public sysNewtonRhapsonTPflashNew(SystemInterface system, int numberOfPhases, int numberOfComponents) {
+    public sysNewtonRhapsonTPflashNew(SystemInterface system, int numberOfPhases,
+            int numberOfComponents) {
         this.system = system;
         this.numberOfComponents = numberOfComponents;
         neq = numberOfComponents + 1;
@@ -63,8 +47,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
 
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
-            fvec.set(i, 0, u.get(i, 0) + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                    / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
+            fvec.set(i, 0, u.get(i, 0)
+                    + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
+                            / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()));
 
         }
 
@@ -90,20 +75,21 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
         int nofc = numberOfComponents;
         for (int i = 0; i < numberOfComponents; i++) {
             dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponents()[i].getx()
-                    * system.getPhases()[1].getComponents()[i].getx() / system.getPhases()[0].getComponents()[i].getz();
+                    * system.getPhases()[1].getComponents()[i].getx()
+                    / system.getPhases()[0].getComponents()[i].getz();
             dyidlnk[i] = system.getPhases()[1].getComponents()[i].getx()
                     + system.getPhases()[0].getComponents()[i].getK() * dxidlnk[i];
 
             dyidbeta[i] = (system.getPhases()[0].getComponents()[i].getK()
                     * system.getPhases()[0].getComponents()[i].getz()
                     * (1 - system.getPhases()[0].getComponents()[i].getK()))
-                    / Math.pow(
-                            1 - system.getBeta() + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(),
+                    / Math.pow(1 - system.getBeta()
+                            + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(),
                             2);
             dxidbeta[i] = (system.getPhases()[0].getComponents()[i].getz()
                     * (1 - system.getPhases()[0].getComponents()[i].getK()))
-                    / Math.pow(
-                            1 - system.getBeta() + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(),
+                    / Math.pow(1 - system.getBeta()
+                            + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(),
                             2);
 
             sumdyidbeta += dyidbeta[i];
