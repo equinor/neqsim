@@ -24,9 +24,7 @@ public class TextFile implements java.io.Serializable {
     }
 
     public void newFile(String name) {
-        try {
-            File outputFile = new File(name);
-            FileWriter out = new FileWriter(outputFile);
+        try (FileWriter out = new FileWriter(new File(name))) {
             out.write("");
         } catch (Exception e) {
             System.out.println(e.toString());
