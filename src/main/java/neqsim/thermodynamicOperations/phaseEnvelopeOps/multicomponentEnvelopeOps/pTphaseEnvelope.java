@@ -1,37 +1,17 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * pTphaseEnvelope.java
  *
- * Created on 14. oktober 2000, 21:59
- * Updated on May 2019, by Nefeli 
+ * Created on 14. oktober 2000, 21:59 Updated on May 2019, by Nefeli
  */
 
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import java.text.DecimalFormat;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
@@ -66,7 +46,7 @@ public class pTphaseEnvelope extends BaseOperation {
     double lnOldK[];
     double lnKwil[];
     double oldDeltalnK[], deltalnK[];
-    double tm[] = { 1, 1 };
+    double tm[] = {1, 1};
     double beta = 1e-5;
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
     JProgressBar monitor;
@@ -88,7 +68,7 @@ public class pTphaseEnvelope extends BaseOperation {
     int np = 0;
     // points[2] = new double[1000];
     int speceq = 0;
-    String[] navn = { "bubble point", "dew point", "bubble point", "dew point", "dew points" };
+    String[] navn = {"bubble point", "dew point", "bubble point", "dew point", "dew points"};
     int npfirst;
     int ncrfirst;
     double Tcfirst;
@@ -102,11 +82,10 @@ public class pTphaseEnvelope extends BaseOperation {
     double[] cricondenBarXfirst = new double[100];
     double[] cricondenBarYfirst = new double[100];
 
-    public pTphaseEnvelope() {
-    }
+    public pTphaseEnvelope() {}
 
-    public pTphaseEnvelope(SystemInterface system, String name, double phaseFraction, double lowPres,
-            boolean bubfirst) {
+    public pTphaseEnvelope(SystemInterface system, String name, double phaseFraction,
+            double lowPres, boolean bubfirst) {
         this.bubblePointFirst = bubfirst;
         if (name != null) {
             outputToFile = true;
@@ -139,9 +118,9 @@ public class pTphaseEnvelope extends BaseOperation {
             // afterwards it uses them to define the speceq of the first point
             // based on the desired first point, dew/bubble
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-				if(system.getComponent(i).getz()<1e-10) {
-					continue;
-				}
+                if (system.getComponent(i).getz() < 1e-10) {
+                    continue;
+                }
                 if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
                     if (bubblePointFirst == true && system.getPhase(0).getComponents()[speceq]
                             .getTC() > system.getPhase(0).getComponents()[i].getTC()) {
@@ -203,8 +182,8 @@ public class pTphaseEnvelope extends BaseOperation {
             system.setPressure(pres);
             system.setTemperature(temp);
 
-            sysNewtonRhapsonPhaseEnvelope nonLinSolver = new sysNewtonRhapsonPhaseEnvelope(system, 2,
-                    system.getPhase(0).getNumberOfComponents());
+            sysNewtonRhapsonPhaseEnvelope nonLinSolver = new sysNewtonRhapsonPhaseEnvelope(system,
+                    2, system.getPhase(0).getNumberOfComponents());
             startPres = system.getPressure();
             nonLinSolver.setu();
             for (np = 1; np < 9980; np++) {
@@ -294,7 +273,8 @@ public class pTphaseEnvelope extends BaseOperation {
                         nonLinSolver.npCrit = np;
                         system.invertPhaseTypes();
                         nonLinSolver.etterCP = true;
-                        // the critical point is found from interpolation plynimials based on K=1 of the
+                        // the critical point is found from interpolation plynimials based on K=1 of
+                        // the
                         // most or least volatile component
                         nonLinSolver.calcCrit();
                     }
@@ -340,10 +320,12 @@ public class pTphaseEnvelope extends BaseOperation {
                 // Keeps the calculated points
                 points[0][np - 1] = system.getTemperature();
                 points[1][np - 1] = system.getPressure();
-                pointsH[np - 1] = system.getPhase(1).getEnthalpy() / system.getPhase(1).getNumberOfMolesInPhase()
+                pointsH[np - 1] = system.getPhase(1).getEnthalpy()
+                        / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
                 pointsV[np - 1] = system.getPhase(1).getDensity();
-                pointsS[np - 1] = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+                pointsS[np - 1] = system.getPhase(1).getEntropy()
+                        / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
 
             }
@@ -574,10 +556,14 @@ public class pTphaseEnvelope extends BaseOperation {
         double PC = system.getPC();
 
         String title2 = "";
-        String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-        String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-        String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
-        String title5 = "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
+        String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
+        String title3 = "PH-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
+        String title4 = "Density-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
+        String title5 = "PS-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
 
         graph2b graph3 = new graph2b(pointsH2, navn, title3, "Enthalpy [kJ/kg]", "Pressure [bara]");
         graph3.setVisible(true);
@@ -589,7 +575,8 @@ public class pTphaseEnvelope extends BaseOperation {
         // graph4.saveFigure(util.util.FileSystemSettings.tempDir +
         // "NeqSimTempFig2.png");
 
-        graph2b graph5 = new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
+        graph2b graph5 =
+                new graph2b(pointsS2, navn, title5, "Entropy [kJ/kg*K]", "Pressure [bara]");
         graph5.setVisible(true);
         // graph5.saveFigure(util.util.FileSystemSettings.tempDir +
         // "NeqSimTempFig3.png");
@@ -600,16 +587,14 @@ public class pTphaseEnvelope extends BaseOperation {
         // "NeqSimTempFig1.png");
 
         /*
-         * JDialog dialog = new JDialog(); Container dialogContentPane =
-         * dialog.getContentPane(); dialogContentPane.setLayout(new FlowLayout());
-         * JFreeChartPanel chartPanel = graph4.getChartPanel();
-         * dialogContentPane.add(chartPanel); dialog.show();
+         * JDialog dialog = new JDialog(); Container dialogContentPane = dialog.getContentPane();
+         * dialogContentPane.setLayout(new FlowLayout()); JFreeChartPanel chartPanel =
+         * graph4.getChartPanel(); dialogContentPane.add(chartPanel); dialog.show();
          */
     }
 
     @Override
-    public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
@@ -633,7 +618,8 @@ public class pTphaseEnvelope extends BaseOperation {
         double TC = system.getTC();
         double PC = system.getPC();
 
-        String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC=" + String.valueOf(nf.format(PC));
+        String title = "PT-graph  TC=" + String.valueOf(nf.format(TC)) + " PC="
+                + String.valueOf(nf.format(PC));
 
         graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
         return graph2.getChart();
@@ -717,10 +703,10 @@ public class pTphaseEnvelope extends BaseOperation {
             return cricondenBarY;
         }
         if (name.equals("criticalPoint1")) {
-            return new double[] { system.getTC(), system.getPC() };
+            return new double[] {system.getTC(), system.getPC()};
         }
         if (name.equals("criticalPoint2")) {
-            return new double[] { 0, 0 };
+            return new double[] {0, 0};
         } else {
             return null;
         }
@@ -791,12 +777,14 @@ public class pTphaseEnvelope extends BaseOperation {
 
         try {
             if (beta <= 0.5) {
-                initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point get the lightest
+                initTc = system.getPhase(0).getComponents()[lc].getTC(); // closer to bubble point
+                                                                         // get the lightest
                                                                          // component
                 initPc = system.getPhase(0).getComponents()[lc].getPC();
                 initAc = system.getPhase(0).getComponents()[lc].getAcentricFactor();
             } else if (beta > 0.5) {
-                initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get the heaviest
+                initTc = system.getPhase(0).getComponents()[hc].getTC(); // closer to dew point get
+                                                                         // the heaviest
                                                                          // component
                 initPc = system.getPhase(0).getComponents()[hc].getPC();
                 initAc = system.getPhase(0).getComponents()[hc].getAcentricFactor();
@@ -811,21 +799,23 @@ public class pTphaseEnvelope extends BaseOperation {
                 initT = 0.;
                 dinitT = 0.;
                 for (int j = 0; j < numberOfComponents; j++) {
-                    Kwil[j] = system.getPhase(0).getComponents()[j].getPC() / P
-                            * Math.exp(5.373 * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
-                                    * (1. - system.getPhase(0).getComponents()[j].getTC() / Tstart));
+                    Kwil[j] = system.getPhase(0).getComponents()[j].getPC() / P * Math.exp(5.373
+                            * (1. + system.getPhase(0).getComponents()[j].getAcentricFactor())
+                            * (1. - system.getPhase(0).getComponents()[j].getTC() / Tstart));
                     // system.getPhases()[0].getComponents()[j].setK(Kwil[j]);
                 }
 
                 for (int j = 0; j < numberOfComponents; j++) {
                     if (beta < 0.5) {
                         initT = initT + system.getPhase(0).getComponents()[j].getz() * Kwil[j];
-                        dinitT = dinitT + system.getPhase(0).getComponents()[j].getz() * Kwil[j] * 5.373
+                        dinitT = dinitT + system.getPhase(0).getComponents()[j].getz() * Kwil[j]
+                                * 5.373
                                 * (1 + system.getPhase(0).getComponents()[j].getAcentricFactor())
                                 * system.getPhase(0).getComponents()[j].getTC() / (Tstart * Tstart);
                     } else {
                         initT = initT + system.getPhase(0).getComponents()[j].getz() / Kwil[j];
-                        dinitT = dinitT - system.getPhase(0).getComponents()[j].getz() / Kwil[j] * 5.373
+                        dinitT = dinitT - system.getPhase(0).getComponents()[j].getz() / Kwil[j]
+                                * 5.373
                                 * (1 + system.getPhase(0).getComponents()[j].getAcentricFactor())
                                 * system.getPhase(0).getComponents()[j].getTC() / (Tstart * Tstart);
                     }

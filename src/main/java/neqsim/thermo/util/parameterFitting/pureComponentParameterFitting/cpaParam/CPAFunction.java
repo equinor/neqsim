@@ -1,12 +1,9 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
+
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.cpaParam;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -21,11 +18,10 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     /**
      * Creates new Test
      */
-    public CPAFunction() {
-    }
+    public CPAFunction() {}
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         // system.setTemperature(dependentValues[0]);
         system.init(0);
         // system.setPressure(system.getPhases()[0].getComponents()[0].getAntoineVaporPressure(dependentValues[0]));
@@ -40,12 +36,12 @@ public class CPAFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public double calcTrueValue(double val) {
+    public double calcTrueValue(double val) {
         return val;
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
 
         // i += 5;

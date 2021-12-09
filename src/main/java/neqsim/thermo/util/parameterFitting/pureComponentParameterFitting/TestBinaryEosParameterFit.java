@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting;
 
 import neqsim.statistics.parameterFitting.SampleSet;
@@ -18,11 +12,6 @@ import neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Bin
  * @version
  */
 public class TestBinaryEosParameterFit {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new TestAcentric */
-    public TestBinaryEosParameterFit() {}
 
     public static void main(String[] args) {
 

@@ -1,9 +1,3 @@
-/*
- * Conductivity.java
- *
- * Created on 1. november 2000, 19:00
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity;
 
 /**
@@ -16,20 +10,22 @@ public class AmineViscosity extends Viscosity {
     private static final long serialVersionUID = 1000;
 
     /** Creates new Conductivity */
-    public AmineViscosity() {
-    }
+    public AmineViscosity() {}
 
-    public AmineViscosity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+    public AmineViscosity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
     }
 
     @Override
-	public double calcViscosity() {
+    public double calcViscosity() {
         super.calcViscosity();
         double wtFracA = liquidPhase.getPhase().getComponent("MDEA").getx()
-                * liquidPhase.getPhase().getComponent("MDEA").getMolarMass() / liquidPhase.getPhase().getMolarMass();
+                * liquidPhase.getPhase().getComponent("MDEA").getMolarMass()
+                / liquidPhase.getPhase().getMolarMass();
         wtFracA += liquidPhase.getPhase().getComponent("MDEA+").getx()
-                * liquidPhase.getPhase().getComponent("MDEA+").getMolarMass() / liquidPhase.getPhase().getMolarMass();
+                * liquidPhase.getPhase().getComponent("MDEA+").getMolarMass()
+                / liquidPhase.getPhase().getMolarMass();
         double viscA = -12.197 - 8.905 * wtFracA;
         double viscB = 1438.717 + 4218.749 * wtFracA;
         double logviscosity = viscA + viscB / liquidPhase.getPhase().getTemperature();// //N-sek/m2

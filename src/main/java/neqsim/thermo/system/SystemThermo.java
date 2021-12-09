@@ -1,16 +1,3 @@
-/*
- * a * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
 package neqsim.thermo.system;
 
 import java.awt.BorderLayout;
@@ -662,7 +649,12 @@ abstract class SystemThermo implements SystemInterface {
             return totalNumberOfMoles * getMolarMass();
         } else if (flowunit.equals("kg/min")) {
             return totalNumberOfMoles * getMolarMass() * 60.0;
-        } else if (flowunit.equals("Sm3/hr")) {
+        } 
+        else if (flowunit.equals("Sm3/sec")) {
+            return totalNumberOfMoles * ThermodynamicConstantsInterface.R
+                    * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
+        }
+        else if (flowunit.equals("Sm3/hr")) {
             return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
                     * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
         } else if (flowunit.equals("Sm3/day")) {
@@ -813,6 +805,148 @@ abstract class SystemThermo implements SystemInterface {
             // acs = TBPfractionModel.calcAcentricFactor(molarMass, density);
             // System.out.println("acentric " + acs);
             // 3.0/7.0*MathLib.generalMath.GeneralMath.log10(PC/1.01325)/(TC/TB-1.0)-1.0;
+            molarMass /= 1000.0;
+
+            for (int i = 0; i < refSystem.getNumberOfPhases(); i++) {
+                refSystem.getPhase(i).getComponent(0).setComponentName(componentName);
+                refSystem.getPhase(i).getComponent(0).setMolarMass(molarMass);
+                refSystem.getPhase(i).getComponent(0).setAcentricFactor(acs);
+                refSystem.getPhase(i).getComponent(0).setTC(TC);
+                refSystem.getPhase(i).getComponent(0).setPC(PC);
+                refSystem.getPhase(i).getComponent(0).setComponentType("TBPfraction");
+                refSystem.getPhase(i).getComponent(0).setIsTBPfraction(true);
+                if (characterization.getTBPModel().isCalcm()) {
+                    refSystem.getPhase(i).getComponent(0).getAtractiveTerm().setm(m);
+                    acs = refSystem.getPhase(i).getComponent(0).getAcentricFactor();
+                }
+            }
+
+            refSystem.setTemperature(273.15 + 15.0);
+            refSystem.setPressure(1.01325);
+            refSystem.init(1);
+            // refSystem.display();
+            racketZ = characterization.getTBPModel().calcRacketZ(refSystem, molarMass * 1000.0,
+                    density);
+
+            // System.out.println("vol ok");
+            // System.out.println("racketZ " + racketZ);
+            // penelouxC = (refSystem.getPhase(1).getMolarVolume() - molarMass/density*1e2);
+            // System.out.println("vol err " +
+            // penelouxC/refSystem.getPhase(1).getMolarVolume()*100);
+            // racketZ = TPBracketcoefs[0] -
+            // penelouxC/(TPBracketcoefs[1]*thermo.ThermodynamicConstantsInterface.R*refSystem.getPhase(1).getComponent(0).getTC()/(refSystem.getPhase(1).getComponent(0).getPC()));
+            refSystem.getPhase(0).getComponent(0).setRacketZ(racketZ);
+            // refSystem.init(1);
+            // refSystem.display();
+            // refSystem.getPhase(1).getComponent(0).setRacketZ(racketZ);
+            //
+            // // refSystem.setTemperature(273.15+80.0);
+            // // refSystem.setPressure(1.01325);
+            // // refSystem.init(1);
+            // //refSystem.initPhysicalProperties();
+            // // APIdens - refSystem.getPhase(1).getPhysicalProperties().getDensity();;
+            // //må sammenligne med API-standard for tetthet - og sette Penloux dt
+            //
+            //
+        } catch (Exception e) {
+            logger.error("error", e);
+        }
+
+        double critVol =
+                characterization.getTBPModel().calcCriticalVolume(molarMass * 1000, density);// 0.2918-0.0928*
+                                                                                             // acs)*8.314*TC/PC*10.0;
+        addComponent(componentName, numberOfMoles, TC, PC, acs);
+        double Kwatson = Math.pow(TB * 1.8, 1.0 / 3.0) / density;
+        // System.out.println("watson " + Kwatson);
+        double CF = Math.pow((12.8 - Kwatson) * (10.0 - Kwatson) / (10.0 * acs), 2.0);
+        double acsKeslerLee = acs;// characterization.getTBPModel().calcAcentricFactorKeslerLee(molarMass*1000.0,
+                                  // density);
+        double cpa = (-0.33886 + 0.02827 * Kwatson - 0.26105 * CF + 0.59332 * acsKeslerLee * CF)
+                * 4.18682 * molarMass * 1e3;
+        double cpb = (-(0.9291 - 1.1543 * Kwatson + 0.0368 * Kwatson * Kwatson) * 1e-4
+                + CF * (4.56 - 9.48 * acsKeslerLee) * 1e-4) * 4.18682 * molarMass * 1.8 * 1e3;
+        double cpc = (-1.6658e-7 + CF * (0.536 - 0.6828 * acsKeslerLee) * 1.0e-7) * 4.18682
+                * molarMass * 1.8 * 1.8 * 1.0e3;
+        double cpd = 0.0;
+
+        for (int i = 0; i < numberOfPhases; i++) {
+            getPhase(i).setAtractiveTerm(attractiveTermNumber);
+            getPhase(i).getComponent(componentName).setMolarMass(molarMass);
+            getPhase(i).getComponent(componentName).setComponentType("TBPfraction");
+            getPhase(i).getComponent(componentName).setNormalLiquidDensity(density);
+            getPhase(i).getComponent(componentName).setNormalBoilingPoint(TB - 273.15);
+            getPhase(i).getComponent(componentName)
+                    .setAcentricFactor(refSystem.getPhase(0).getComponent(0).getAcentricFactor());
+            getPhase(i).getComponent(componentName).setCriticalVolume(critVol);
+            getPhase(i).getComponent(componentName).setRacketZ(racketZ);
+            getPhase(i).getComponent(componentName).setRacketZCPA(racketZ);
+            getPhase(i).getComponent(componentName).setIsTBPfraction(true);
+            getPhase(i).getComponent(componentName).setParachorParameter(
+                    characterization.getTBPModel().calcParachorParameter(molarMass, density));// 59.3+2.34*molarMass*1000.0);//0.5003*thermo.ThermodynamicConstantsInterface.R*TC/PC*(0.25969-racketZ));
+            getPhase(i).getComponent(componentName).setCriticalViscosity(characterization
+                    .getTBPModel().calcCriticalViscosity(molarMass * 1000.0, density));// 7.94830*Math.sqrt(1e3*molarMass)*Math.pow(PC,2.0/3.0)/Math.pow(TC,
+                                                                                       // 1.0/6.0)*1e-7);
+            getPhase(i).getComponent(componentName).setTriplePointTemperature(374.5
+                    + 0.02617 * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
+                    - 20172.0 / (getPhase(i).getComponent(componentName).getMolarMass() * 1000.0));
+            getPhase(i).getComponent(componentName)
+                    .setHeatOfFusion(0.1426 / 0.238845
+                            * getPhase(i).getComponent(componentName).getMolarMass() * 1000.0
+                            * getPhase(i).getComponent(componentName).getTriplePointTemperature());
+            getPhase(i).getComponent(componentName)
+                    .setIdealGasEnthalpyOfFormation(-1462600 * molarMass - 47566.0);
+            // getPhase(i).getComponent(componentName).set
+
+            // System.out.println(" plusTC " + TC + " plusPC " + PC + " plusm " + m + "
+            // acslusm " + acs + " tb " + TB + " critvol " + critVol + " racketZ " + racketZ
+            // + " parachor " +
+            // getPhase(i).getComponent(componentName).getParachorParameter());
+            getPhase(i).getComponent(componentName).setCpA(cpa);
+            getPhase(i).getComponent(componentName).setCpB(cpb);
+            getPhase(i).getComponent(componentName).setCpC(cpc);
+            getPhase(i).getComponent(componentName).setCpD(cpd);
+        }
+    }
+    
+    /**
+     * method to add true boiling point fraction
+     *
+     * @param componentName selected name of the component to be added
+     * @param numberOfMoles number of moles to be added
+     * @param molarMass molar mass of the component in kg/mol
+     * @param density density of the component in g/cm3
+     */
+    @Override
+    public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
+            double density, double criticalTemperature, double criticalPressure, double acentricFactor) {
+        if (density < 0.0 || molarMass < 0.0) {
+            logger.error("Negative input molar mass or density.");
+            neqsim.util.exception.InvalidInputException e =
+                    new neqsim.util.exception.InvalidInputException();
+            throw new RuntimeException(e);
+
+        }
+
+        SystemInterface refSystem = null;
+        double TC = 0.0, PC = 0.0, m = 0.0, TB = 0.0, acs = 0.0;
+        double penelouxC = 0.0;
+        double racketZ = 0.0;
+        componentName = (componentName.split("_PC")[0]) + "_PC";// + getFluidName());
+
+        try {
+            refSystem = this.getClass().getDeclaredConstructor().newInstance();
+            refSystem.setTemperature(273.15 + 15.0);
+            refSystem.setPressure(1.01325);
+            refSystem.addComponent("default", 1.0, 273.15, 50.0, 0.1);
+            refSystem.init(0);
+            refSystem.setNumberOfPhases(1);
+            refSystem.setPhaseType(0, "liquid");
+            molarMass = 1000 * molarMass;
+            TC = criticalTemperature;//characterization.getTBPModel().calcTC(molarMass, density);
+            PC = criticalPressure;//characterization.getTBPModel().calcPC(molarMass, density);
+            m = characterization.getTBPModel().calcm(molarMass, density);
+            acs = acentricFactor;// acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass, density);
+            TB = characterization.getTBPModel().calcTB(molarMass, density);
             molarMass /= 1000.0;
 
             for (int i = 0; i < refSystem.getNumberOfPhases(); i++) {

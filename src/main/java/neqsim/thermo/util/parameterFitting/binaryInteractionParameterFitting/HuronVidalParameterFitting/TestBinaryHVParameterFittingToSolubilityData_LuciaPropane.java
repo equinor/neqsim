@@ -1,9 +1,3 @@
-/*
- * TestAcentric.java
- *
- * Created on 23. januar 2001, 22:08
- */
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 import java.sql.ResultSet;
@@ -23,13 +17,8 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * @version
  */
 public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData_LuciaPropane.class);
-
-    /** Creates new TestAcentric */
-    public TestBinaryHVParameterFittingToSolubilityData_LuciaPropane() {}
 
     public static void main(String[] args) {
 

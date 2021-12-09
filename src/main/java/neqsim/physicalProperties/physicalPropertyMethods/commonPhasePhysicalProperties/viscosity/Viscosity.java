@@ -1,13 +1,8 @@
-/*
- * Conductivity.java
- *
- * Created on 1. november 2000, 19:00
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity;
-//import physicalProperties.gasPhysicalProperties.*;
+// import physicalProperties.gasPhysicalProperties.*;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -16,17 +11,18 @@ import org.apache.logging.log4j.*;
  */
 abstract class Viscosity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
     public double[] pureComponentViscosity;
 
     /** Creates new Conductivity */
-    public Viscosity() {
-    }
+    public Viscosity() {}
 
-    public Viscosity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    public Viscosity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
         pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
     }
@@ -38,24 +34,27 @@ abstract class Viscosity extends
             if (phase.getPhase().getTemperature() > phase.getPhase().getComponents()[i].getTC()) {
                 pureComponentViscosity[i] = 5.0e-1;
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 1) {
-                pureComponentViscosity[i] = phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
+                pureComponentViscosity[i] = phase.getPhase().getComponents()[i]
+                        .getLiquidViscosityParameter(0)
                         * Math.pow(phase.getPhase().getTemperature(),
                                 phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1));
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 2) {
 
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 3) {
-                pureComponentViscosity[i] = Math.exp(phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
-                        + phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1)
-                                / phase.getPhase().getTemperature()
-                        + phase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)
-                                * phase.getPhase().getTemperature()
-                        + phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)
-                                * Math.pow(phase.getPhase().getTemperature(), 2));
+                pureComponentViscosity[i] =
+                        Math.exp(phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
+                                + phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1)
+                                        / phase.getPhase().getTemperature()
+                                + phase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)
+                                        * phase.getPhase().getTemperature()
+                                + phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)
+                                        * Math.pow(phase.getPhase().getTemperature(), 2));
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 4) {
                 pureComponentViscosity[i] = Math.pow(10,
                         phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
                                 * (1.0 / phase.getPhase().getTemperature()
-                                        - 1.0 / phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1)));// phase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)*phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)/phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)*Math.pow(phase.getPhase().getTemperature(),2));
+                                        - 1.0 / phase.getPhase().getComponents()[i]
+                                                .getLiquidViscosityParameter(1)));// phase.getPhase().getComponents()[i].getLiquidViscosityParameter(2)*phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)/phase.getPhase().getTemperature()+phase.getPhase().getComponents()[i].getLiquidViscosityParameter(3)*Math.pow(phase.getPhase().getTemperature(),2));
             } else {
                 // System.out.println("no pure component viscosity model defined for component "
                 // + phase.getPhase().getComponents()[i].getComponentName());
@@ -72,22 +71,24 @@ abstract class Viscosity extends
         if (TR > 1) {
             return 1.0;
         }
-        double deltaPr = (phase.getPhase().getPressure() - 0.0) / phase.getPhase().getComponent(i).getPC();
+        double deltaPr =
+                (phase.getPhase().getPressure() - 0.0) / phase.getPhase().getComponent(i).getPC();
         double A = 0.9991 - (4.674 * 1e-4 / (1.0523 * Math.pow(TR, -0.03877) - 1.0513));
         double D = (0.3257 / Math.pow((1.0039 - Math.pow(TR, 2.573)), 0.2906)) - 0.2086;
-        double C = -0.07921 + 2.1616 * TR - 13.4040 * TR * TR + 44.1706 * Math.pow(TR, 3) - 84.8291 * Math.pow(TR, 4)
-                + 96.1209 * Math.pow(TR, 5) - 59.8127 * Math.pow(TR, 6) + 15.6719 * Math.pow(TR, 7);
+        double C = -0.07921 + 2.1616 * TR - 13.4040 * TR * TR + 44.1706 * Math.pow(TR, 3)
+                - 84.8291 * Math.pow(TR, 4) + 96.1209 * Math.pow(TR, 5) - 59.8127 * Math.pow(TR, 6)
+                + 15.6719 * Math.pow(TR, 7);
         return (1.0 + D * Math.pow(deltaPr / 2.118, A))
                 / (1.0 + C * phase.getPhase().getComponent(i).getAcentricFactor() * deltaPr);
     }
 
     @Override
-	public double getPureComponentViscosity(int i) {
+    public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
     @Override
-	public Object clone() {
+    public Object clone() {
         Viscosity properties = null;
 
         try {

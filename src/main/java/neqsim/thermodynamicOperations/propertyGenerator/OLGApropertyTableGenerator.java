@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.thermodynamicOperations.propertyGenerator;
 
 import java.io.BufferedWriter;
@@ -21,9 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -57,7 +42,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
     }
 
-    public void setTemperatureRange(double minTemperature, double maxTemperature, int numberOfSteps) {
+    public void setTemperatureRange(double minTemperature, double maxTemperature,
+            int numberOfSteps) {
         temperatures = new double[numberOfSteps];
         temperatureLOG = new double[numberOfSteps];
         double step = (maxTemperature - minTemperature) / (numberOfSteps * 1.0);
@@ -77,9 +63,9 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         }
     }
 
-//thermoOps.ge
+    // thermoOps.ge
     @Override
-	public void run() {
+    public void run() {
 
         // calcPhaseEnvelope();
         ROG = new double[pressures.length][temperatures.length];
@@ -179,13 +165,13 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
     }
 
     @Override
-	public void displayResult() {
+    public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
         for (int i = 0; i < pressures.length; i++) {
             thermoSystem.setPressure(pressures[i]);
             for (int j = 0; j < temperatures.length; j++) {
-                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG " + ROG[i][j]
-                        + " ROL " + ROL[i][j]);
+                logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j]
+                        + " ROG " + ROG[i][j] + " ROL " + ROL[i][j]);
             }
         }
         writeOLGAinpFile("");
@@ -195,7 +181,8 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
         Writer writer = null;
 
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"));
+            writer = new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"));
             writer.write("PRESSURE= (");
             for (int i = 0; i < pressures.length; i++) {
                 thermoSystem.setPressure(pressures[i]);

@@ -1,34 +1,17 @@
 /*
- * Copyright 2018 ESOL.
+ * TPflash.java
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Created on 2. oktober 2000, 22:26
  */
-
-/*
-* TPflash.java
-*
-* Created on 2. oktober 2000, 22:26
-*/
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class TPflash extends Flash {
@@ -43,8 +26,7 @@ public class TPflash extends Flash {
     /**
      * Creates new TPflash
      */
-    public TPflash() {
-    }
+    public TPflash() {}
 
     public TPflash(SystemInterface system) {
         this.system = system;
@@ -72,14 +54,17 @@ public class TPflash extends Flash {
                 system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
             } else {
                 Kold = system.getPhase(0).getComponent(i).getK();
-                system.getPhase(0).getComponent(i).setK(system.getPhase(1).getComponent(i).getFugasityCoeffisient()
-                        / system.getPhase(0).getComponent(i).getFugasityCoeffisient() * presdiff);
+                system.getPhase(0).getComponent(i)
+                        .setK(system.getPhase(1).getComponent(i).getFugasityCoeffisient()
+                                / system.getPhase(0).getComponent(i).getFugasityCoeffisient()
+                                * presdiff);
                 if (Double.isNaN(system.getPhase(0).getComponent(i).getK())) {
                     system.getPhase(0).getComponent(i).setK(Kold);
                     system.init(1);
                 }
                 system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
-                deviation += Math.abs(Math.log(system.getPhase(0).getComponent(i).getK()) - Math.log(Kold));
+                deviation += Math
+                        .abs(Math.log(system.getPhase(0).getComponent(i).getK()) - Math.log(Kold));
             }
         }
 
@@ -125,7 +110,8 @@ public class TPflash extends Flash {
             if (system.getBeta() > 1.0 - betaTolerance || system.getBeta() < betaTolerance) {
                 system.setBeta(oldBeta);
             }
-            logger.info("temperature " + system.getTemperature() + " pressure " + system.getPressure());
+            logger.info(
+                    "temperature " + system.getTemperature() + " pressure " + system.getPressure());
             logger.error("error", e);
         }
 
@@ -203,13 +189,15 @@ public class TPflash extends Flash {
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
-            minGibsLogFugCoef[i] = system.getPhase(minGibbsPhase).getComponent(i).getLogFugasityCoeffisient();
+            minGibsLogFugCoef[i] =
+                    system.getPhase(minGibbsPhase).getComponent(i).getLogFugasityCoeffisient();
         }
 
         presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
         if (Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) > 1e-12) {
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                system.getPhase(0).getComponent(i).setK(system.getPhase(0).getComponent(i).getK() * presdiff);
+                system.getPhase(0).getComponent(i)
+                        .setK(system.getPhase(0).getComponent(i).getK() * presdiff);
                 system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
             }
         }
@@ -232,16 +220,19 @@ public class TPflash extends Flash {
         // This solves some problems when we have high volumes of water and heavy
         // hydrocarbons returning only one liquid phase (and this phase desolves all
         // gas)
-        if (system.getBeta() > (1.0 - betaTolerance * 1.1) || system.getBeta() < (betaTolerance * 1.1)) {
+        if (system.getBeta() > (1.0 - betaTolerance * 1.1)
+                || system.getBeta() < (betaTolerance * 1.1)) {
             system.setBeta(0.5);
             sucsSubs();
         }
 
         // Performs three iterations of successive substitution
         for (int k = 0; k < 3; k++) {
-            if (system.getBeta() < (1.0 - betaTolerance * 1.1) && system.getBeta() > (betaTolerance * 1.1)) {
+            if (system.getBeta() < (1.0 - betaTolerance * 1.1)
+                    && system.getBeta() > (betaTolerance * 1.1)) {
                 sucsSubs();
-                if ((system.getGibbsEnergy() - minimumGibbsEnergy) / Math.abs(minimumGibbsEnergy) < -1e-12) {
+                if ((system.getGibbsEnergy() - minimumGibbsEnergy)
+                        / Math.abs(minimumGibbsEnergy) < -1e-12) {
                     break;
                 }
             }
@@ -254,7 +245,8 @@ public class TPflash extends Flash {
         double tpdy = 1.0;
         double dgonRT = 1.0;
         boolean passedTests = false;
-        if (system.getBeta() > (1.0 - 1.1 * betaTolerance) || system.getBeta() < (1.1 * betaTolerance)) {
+        if (system.getBeta() > (1.0 - 1.1 * betaTolerance)
+                || system.getBeta() < (1.1 * betaTolerance)) {
             tpdx = 1.0;
             tpdy = 1.0;
             dgonRT = 1.0;
@@ -266,31 +258,36 @@ public class TPflash extends Flash {
             for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 tpdy += system.getPhase(0).getComponent(i).getx()
                         * (Math.log(system.getPhase(0).getComponent(i).getFugasityCoeffisient())
-                                + Math.log(system.getPhase(0).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                                - minGibsLogFugCoef[i]);
+                                + Math.log(system.getPhase(0).getComponents()[i].getx())
+                                - minGibsPhaseLogZ[i] - minGibsLogFugCoef[i]);
                 tpdx += system.getPhase(1).getComponent(i).getx()
                         * (Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
-                                + Math.log(system.getPhase(1).getComponents()[i].getx()) - minGibsPhaseLogZ[i]
-                                - minGibsLogFugCoef[i]);
+                                + Math.log(system.getPhase(1).getComponents()[i].getx())
+                                - minGibsPhaseLogZ[i] - minGibsLogFugCoef[i]);
             }
 
-            dgonRT = system.getPhase(0).getBeta() * tpdy + (1.0 - system.getPhase(0).getBeta()) * tpdx;
+            dgonRT = system.getPhase(0).getBeta() * tpdy
+                    + (1.0 - system.getPhase(0).getBeta()) * tpdx;
 
             if (dgonRT > 0) {
                 if (tpdx < 0) {
                     for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                         system.getPhase(0).getComponent(i)
-                                .setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugasityCoeffisient())
+                                .setK(Math.exp(Math.log(
+                                        system.getPhase(1).getComponent(i).getFugasityCoeffisient())
                                         - minGibsLogFugCoef[i]) * presdiff);
-                        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+                        system.getPhase(1).getComponent(i)
+                                .setK(system.getPhase(0).getComponent(i).getK());
                     }
                 } else if (tpdy < 0) {
                     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-                        system.getPhase(0).getComponents()[i].setK(Math
-                                .exp(minGibsLogFugCoef[i]
-                                        - Math.log(system.getPhase(0).getComponent(i).getFugasityCoeffisient()))
-                                * presdiff);
-                        system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
+                        system.getPhase(0).getComponents()[i]
+                                .setK(Math
+                                        .exp(minGibsLogFugCoef[i] - Math.log(system.getPhase(0)
+                                                .getComponent(i).getFugasityCoeffisient()))
+                                        * presdiff);
+                        system.getPhase(1).getComponent(i)
+                                .setK(system.getPhase(0).getComponent(i).getK());
                     }
                 } else {
                     passedTests = true;
@@ -302,7 +299,8 @@ public class TPflash extends Flash {
             if (system.checkStability()) {
                 if (stabilityCheck()) {
                     if (system.doMultiPhaseCheck()) {
-                        // logger.info("one phase flash is stable - checking multiphase flash.... ");
+                        // logger.info("one phase flash is stable - checking multiphase flash....
+                        // ");
                         TPmultiflash operation = new TPmultiflash(system, true);
                         operation.run();
                         // commented out by Even Solbraa 6/2-2012k
@@ -358,8 +356,8 @@ public class TPflash extends Flash {
                     } else {
                         sucsSubs();
                     }
-                } else if (iterations >= newtonLimit
-                        && Math.abs(system.getPhase(0).getPressure() - system.getPhase(1).getPressure()) < 1e-5) {
+                } else if (iterations >= newtonLimit && Math.abs(system.getPhase(0).getPressure()
+                        - system.getPhase(1).getPressure()) < 1e-5) {
                     if (iterations == newtonLimit) {
                         secondOrderSolver = new sysNewtonRhapsonTPflash(system, 2,
                                 system.getPhases()[0].getNumberOfComponents());
@@ -376,7 +374,8 @@ public class TPflash extends Flash {
                 gibbsEnergyOld = gibbsEnergy;
                 gibbsEnergy = system.getGibbsEnergy();
 
-                if ((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-3 && !system.isChemicalSystem()) {
+                if ((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-3
+                        && !system.isChemicalSystem()) {
                     resetK();
                     timeFromLastGibbsFail = 0;
                     // logger.info("gibbs decrease " + (gibbsEnergy - gibbsEnergyOld) /
@@ -405,7 +404,9 @@ public class TPflash extends Flash {
                     system.getChemicalReactionOperations().solveChemEq(phase, 1);
 
                     for (i = 0; i < system.getPhases()[phase].getNumberOfComponents(); i++) {
-                        chemdev += Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx()) / xchem[i];
+                        chemdev +=
+                                Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx())
+                                        / xchem[i];
                     }
 
                 }
@@ -413,7 +414,8 @@ public class TPflash extends Flash {
             }
             // logger.info("chemdev: " + chemdev + " iter: " + totiter);
             totiter++;
-        } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300) || (system.isChemicalSystem() && totiter < 2));
+        } while ((diffChem > 1e-6 && chemdev > 1e-6 && totiter < 300)
+                || (system.isChemicalSystem() && totiter < 2));
         if (system.isChemicalSystem()) {
             sucsSubs();
         }

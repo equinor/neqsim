@@ -1,20 +1,25 @@
-/*
- * visAdContourPlot.java
- *
- * Created on 7. november 2000, 17:51
- */
-
 package neqsim.dataPresentation.visAD.visAd3D;
 
 import java.rmi.RemoteException;
-import javax.swing.*;
+import javax.swing.JFrame;
 import neqsim.dataPresentation.visAD.visAdBaseClass;
-import visad.*;
+import visad.DataReferenceImpl;
+import visad.Display;
+import visad.DisplayImpl;
+import visad.FlatField;
+import visad.FunctionType;
+import visad.GraphicsModeControl;
+import visad.Linear2DSet;
+import visad.RealTupleType;
+import visad.RealType;
+import visad.ScalarMap;
+import visad.Set;
+import visad.VisADException;
 import visad.java3d.DisplayImplJ3D;
-import visad.util.*;
+import visad.util.ContourWidget;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class visAd3DPlot extends visAdBaseClass {
@@ -38,7 +43,8 @@ public class visAd3DPlot extends visAdBaseClass {
     private ContourWidget contourWid;
 
     /** Creates new visAdContourPlot */
-    public visAd3DPlot(String firstax, String secax, String zax) throws RemoteException, VisADException {
+    public visAd3DPlot(String firstax, String secax, String zax)
+            throws RemoteException, VisADException {
         latitude = RealType.getRealType(firstax);
         longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
@@ -64,8 +70,7 @@ public class visAd3DPlot extends visAdBaseClass {
          * 
          * for(int i=0;i<NCOLS){ for(int j=0;j<NROWS;j++){ numbs[j][i] = yvals[j] } }
          * 
-         * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax,
-         * NCOLS);
+         * domain_set = new Linear2DSet(domain_tuple, xMin, xMax, NROWS, yMin, yMax, NCOLS);
          * 
          * set_samples = domain_set.getSamples( true );
          */
@@ -165,7 +170,7 @@ public class visAd3DPlot extends visAdBaseClass {
         visAd3DPlot test = new visAd3DPlot("long", "alt", "height");
         test.setXYvals(0, 10, 4, 0, 10, 4);
 
-        double[][] z = { { 3, 2, 1, 3, }, { 2, 6, 4, 1, }, { 1, 3, 2, 1, }, { 3, 2, 1, 3, } };
+        double[][] z = {{3, 2, 1, 3,}, {2, 6, 4, 1,}, {1, 3, 2, 1,}, {3, 2, 1, 3,}};
 
         test.setZvals(z);
         test.init();

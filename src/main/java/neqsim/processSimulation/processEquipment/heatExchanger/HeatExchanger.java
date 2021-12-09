@@ -29,6 +29,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     double dH = 0.0;
     private double UAvalue = 500.0;
     double duty = 0.0;
+    private double hotColdDutyBalance = 1.0;
     boolean firstTime = true;
     public double guessOutTemperature = 273.15 + 130.0;
     int outStreamSpecificationNumber = 0;
@@ -231,6 +232,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
             testOps.PHflash(inStream[streamToSet].getThermoSystem().getEnthalpy() + dEntalphy, 0);
         }
         duty = dEntalphy;
+        hotColdDutyBalance = 1.0;
         // outStream[0].displayResult();
         // outStream[1].displayResult();
         // System.out.println("temperatur Stream 1 out " +
@@ -370,6 +372,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
                 .abs(outStream[1].getThermoSystem().getEnthalpy() - inStream[1].getThermoSystem().getEnthalpy());
         thermalEffectiveness = ((HeatExchanger) refExchanger).getThermalEffectiveness() * (duty1 + duty2) / 2.0
                 / Math.abs(((HeatExchanger) refExchanger).getDuty());
+        hotColdDutyBalance = duty1/duty2;
     }
 
     public void runConditionAnalysis() {
@@ -408,5 +411,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         } else
             return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
     }
+
+	public double getHotColdDutyBalance() {
+		return hotColdDutyBalance;
+	}
+
+	public void setHotColdDutyBalance(double hotColdDutyBalance) {
+		this.hotColdDutyBalance = hotColdDutyBalance;
+	}
 
 }

@@ -1,24 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
-* thermoOps.java
-*
-* Created on 2. oktober 2000, 20:27
-*/
 package neqsim.thermodynamicOperations;
 
 import java.awt.BorderLayout;
@@ -26,6 +5,8 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentHydrate;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.flashOps.CriticalPointFlash;
@@ -75,10 +56,9 @@ import neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps
 import neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves.pLoadingCurve2;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudents;
 import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGeneratorWaterStudentsPH;
-import org.apache.logging.log4j.*;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class ThermodynamicOperations implements java.io.Serializable, Cloneable {
@@ -97,8 +77,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     /**
      * Creates new thermoOps
      */
-    public ThermodynamicOperations() {
-    }
+    public ThermodynamicOperations() {}
 
     public ThermodynamicOperations(SystemInterface system) {
         this.system = system;
@@ -114,11 +93,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     /**
-     * Method to perform a flash at given temperature, pressure and specified volume
-     * The number of moles in the system are changed to match the specified volume.
+     * Method to perform a flash at given temperature, pressure and specified volume The number of
+     * moles in the system are changed to match the specified volume.
      *
      * @param volumeSpec is the specified volume
-     * @param unit       The unit as a string. units supported are m3, litre,
+     * @param unit The unit as a string. units supported are m3, litre,
      */
     public void TPVflash(double volumeSpec, String unit) {
         unit = "m3";
@@ -134,7 +113,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         if (flowRate < 1e-3) {
             system.setTotalFlowRate(1.0, "mol/sec");
         }
-        operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system, system.doSolidPhaseCheck());
+        operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system,
+                system.doSolidPhaseCheck());
         if (!isRunAsThread()) {
             getOperation().run();
         } else {
@@ -173,7 +153,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     public void chemicalEquilibrium() {
         if (system.isChemicalSystem()) {
-            operation = new neqsim.thermodynamicOperations.chemicalEquilibrium.ChemicalEquilibrium(system);
+            operation = new neqsim.thermodynamicOperations.chemicalEquilibrium.ChemicalEquilibrium(
+                    system);
             getOperation().run();
         }
     }
@@ -190,25 +171,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     /**
      * Method to perform a PH flash calculation
      *
-     * @param Hspec        is the enthalpy in the specified unit
-     * @param enthalpyUnit The unit as a string. units supported are J, J/mol, J/kg
-     *                     and kJ/kg
+     * @param Hspec is the enthalpy in the specified unit
+     * @param enthalpyUnit The unit as a string. units supported are J, J/mol, J/kg and kJ/kg
      */
     public void PHflash(double Hspec, String enthalpyUnit) {
         double conversionFactor = 1.0;
         switch (enthalpyUnit) {
-        case "J":
-            conversionFactor = 1.0;
-            break;
-        case "J/mol":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles();
-            break;
-        case "J/kg":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
-            break;
-        case "kJ/kg":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
-            break;
+            case "J":
+                conversionFactor = 1.0;
+                break;
+            case "J/mol":
+                conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+                break;
+            case "J/kg":
+                conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                break;
+            case "kJ/kg":
+                conversionFactor =
+                        1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                break;
         }
         PHflash(Hspec / conversionFactor);
     }
@@ -221,11 +202,37 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     public void PHflash(double Hspec) {
         this.PHflash(Hspec, 0);
     }
+    
 
-    public void PUflash(double Uspec) {
+    public void PUflash(double Uspec) {	
         operation = new neqsim.thermodynamicOperations.flashOps.PUflash(system, Uspec);
         getOperation().run();
     }
+    
+    public void PUflash(double Pspec, double Uspec, String unitPressure, String unitEnergy) {
+    	system.setPressure(Pspec, unitPressure); 
+    	PUflash(Uspec, unitEnergy);
+    }
+    
+    public void PUflash(double Uspec, String unitEnergy) {
+         double conversionFactorEntr = 1.0;
+         switch (unitEnergy) {
+             case "J":
+                 conversionFactorEntr = 1.0;
+                 break;
+             case "J/mol":
+                 conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+                 break;
+             case "J/kg":
+                 conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                 break;
+             case "kJ/kg":
+                 conversionFactorEntr =
+                         1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                 break;
+         }
+         PUflash(Uspec / conversionFactorEntr);
+      }
 
     public void PHflash2(double Hspec, int type) {
         operation = new PHflash(system, Hspec, type);
@@ -246,24 +253,24 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * Method to perform a PS flash calculation for a specified entropy and pressure
      *
      * @param Sspec is the entropy in the specified unit
-     * @param unit  The unit as a string. units supported are J/K, J/molK, J/kgK and
-     *              kJ/kgK
+     * @param unit The unit as a string. units supported are J/K, J/molK, J/kgK and kJ/kgK
      */
     public void PSflash(double Sspec, String unit) {
         double conversionFactor = 1.0;
         switch (unit) {
-        case "J/K":
-            conversionFactor = 1.0;
-            break;
-        case "J/molK":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles();
-            break;
-        case "J/kgK":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
-            break;
-        case "kJ/kgK":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactor = 1.0;
+                break;
+            case "J/molK":
+                conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+                break;
+            case "J/kgK":
+                conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                break;
+            case "kJ/kgK":
+                conversionFactor =
+                        1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                break;
         }
         PSflash(Sspec / conversionFactor);
     }
@@ -272,24 +279,24 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * Method to perform a TS flash calculation for a specified entropy and pressure
      *
      * @param Sspec is the entropy in the specified unit
-     * @param unit  The unit as a string. units supported are J/K, J/molK, J/kgK and
-     *              kJ/kgK
+     * @param unit The unit as a string. units supported are J/K, J/molK, J/kgK and kJ/kgK
      */
     public void TSflash(double Sspec, String unit) {
         double conversionFactor = 1.0;
         switch (unit) {
-        case "J/K":
-            conversionFactor = 1.0;
-            break;
-        case "J/molK":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles();
-            break;
-        case "J/kgK":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
-            break;
-        case "kJ/kgK":
-            conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactor = 1.0;
+                break;
+            case "J/molK":
+                conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+                break;
+            case "J/kgK":
+                conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                break;
+            case "kJ/kgK":
+                conversionFactor =
+                        1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                break;
         }
         TSflash(Sspec / conversionFactor);
     }
@@ -318,24 +325,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         double conversionFactorEntr = 1.0;
 
         switch (unitVol) {
-        case "m3":
-            conversionFactorV = 1.0e5;
-            break;
+            case "m3":
+                conversionFactorV = 1.0e5;
+                break;
         }
 
         switch (unitEntropy) {
-        case "J/K":
-            conversionFactorEntr = 1.0;
-            break;
-        case "J/molK":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
-            break;
-        case "J/kgK":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
-            break;
-        case "kJ/kgK":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactorEntr = 1.0;
+                break;
+            case "J/molK":
+                conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+                break;
+            case "J/kgK":
+                conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                break;
+            case "kJ/kgK":
+                conversionFactorEntr =
+                        1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                break;
         }
         VSflash(volume * conversionFactorV, entropy / conversionFactorEntr);
     }
@@ -348,9 +356,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     public void TVflash(double Vspec, String unit) {
         double conversionFactor = 1.0;
         switch (unit) {
-        case "m3":
-            conversionFactor = 1.0e5;
-            break;
+            case "m3":
+                conversionFactor = 1.0e5;
+                break;
         }
         TVflash(Vspec * conversionFactor);
     }
@@ -375,24 +383,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         double conversionFactorEntr = 1.0;
 
         switch (unitVol) {
-        case "m3":
-            conversionFactorV = 1.0e5;
-            break;
+            case "m3":
+                conversionFactorV = 1.0e5;
+                break;
         }
 
         switch (unitEnthalpy) {
-        case "J/K":
-            conversionFactorEntr = 1.0;
-            break;
-        case "J/mol":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
-            break;
-        case "J/kg":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
-            break;
-        case "kJ/kg":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactorEntr = 1.0;
+                break;
+            case "J/mol":
+                conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+                break;
+            case "J/kg":
+                conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                break;
+            case "kJ/kg":
+                conversionFactorEntr =
+                        1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                break;
         }
         VHflash(volume * conversionFactorV, enthalpy / conversionFactorEntr);
     }
@@ -402,24 +411,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         double conversionFactorEntr = 1.0;
 
         switch (unitVol) {
-        case "m3":
-            conversionFactorV = 1.0e5;
-            break;
+            case "m3":
+                conversionFactorV = 1.0e5;
+                break;
         }
 
         switch (unitEnergy) {
-        case "J/K":
-            conversionFactorEntr = 1.0;
-            break;
-        case "J/mol":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
-            break;
-        case "J/kg":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
-            break;
-        case "kJ/kg":
-            conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
-            break;
+            case "J/K":
+                conversionFactorEntr = 1.0;
+                break;
+            case "J/mol":
+                conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+                break;
+            case "J/kg":
+                conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                break;
+            case "kJ/kg":
+                conversionFactorEntr =
+                        1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                break;
         }
         VUflash(volume * conversionFactorV, energy / conversionFactorEntr);
     }
@@ -522,9 +532,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
     }
 
-    public void addIonToScaleSaturation(int phaseNumber, String scaleSaltName, String nameOfIonToBeAdded)
-            throws Exception {
-        operation = new addIonToScaleSaturation(system, phaseNumber, scaleSaltName, nameOfIonToBeAdded);
+    public void addIonToScaleSaturation(int phaseNumber, String scaleSaltName,
+            String nameOfIonToBeAdded) throws Exception {
+        operation =
+                new addIonToScaleSaturation(system, phaseNumber, scaleSaltName, nameOfIonToBeAdded);
         getOperation().run();
         resultTable = getOperation().getResultTable();
         if (Double.isNaN(system.getTemperature())) {
@@ -605,11 +616,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         for (int i = 0; i < temperature.length; i++) {
             /*
              * opsTemp = new ThermodynamicOperations(systemTemp);
-             * systemTemp.setTemperature(temperature[i]);
-             * systemTemp.setPressure(pressure[i]); systemTemp.init(0);
-             * systemTemp.display(); try { opsTemp.hydrateFormationTemperature(); } catch
-             * (Exception e) { logger.error("error",e); } systemTemp.display(); hydTemps[i]
-             * = systemTemp.getTemperature();
+             * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
+             * systemTemp.init(0); systemTemp.display(); try {
+             * opsTemp.hydrateFormationTemperature(); } catch (Exception e) {
+             * logger.error("error",e); } systemTemp.display(); hydTemps[i] =
+             * systemTemp.getTemperature();
              *
              */
             opsTemp = new ThermodynamicOperations(systemTemp);
@@ -650,12 +661,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         return system.getTemperature();
     }
 
-    public void hydrateInhibitorConcentration(String inhibitorName, double hydEqTemperature) throws Exception {
+    public void hydrateInhibitorConcentration(String inhibitorName, double hydEqTemperature)
+            throws Exception {
         operation = new HydrateInhibitorConcentrationFlash(system, inhibitorName, hydEqTemperature);
         operation.run();
     }
 
-    public void hydrateInhibitorConcentrationSet(String inhibitorName, double wtfrac) throws Exception {
+    public void hydrateInhibitorConcentrationSet(String inhibitorName, double wtfrac)
+            throws Exception {
         operation = new HydrateInhibitorwtFlash(system, inhibitorName, wtfrac);
         operation.run();
     }
@@ -709,7 +722,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     }
 
-    public void hydrateEquilibriumLine(double minimumPressure, double maximumPressure) throws Exception {
+    public void hydrateEquilibriumLine(double minimumPressure, double maximumPressure)
+            throws Exception {
         operation = new HydrateEquilibriumLine(system, minimumPressure, maximumPressure);
         if (!isRunAsThread()) {
             getOperation().run();
@@ -722,17 +736,19 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
         double phasefraction = 1.0 - 1e-10;
 
-        operation = new CricondenBarFlash(system, fileName, phasefraction, cricondenBar, cricondenBarX, cricondenBarY);
+        operation = new CricondenBarFlash(system, fileName, phasefraction, cricondenBar,
+                cricondenBarX, cricondenBarY);
 
         getOperation().run();
     }
 
-    public void calcCricoT(double[] cricondenTherm, double[] cricondenThermX, double[] cricondenThermY) {
+    public void calcCricoT(double[] cricondenTherm, double[] cricondenThermX,
+            double[] cricondenThermY) {
 
         double phasefraction = 1.0 - 1e-10;
 
-        operation = new CricondenThermFlash(system, fileName, phasefraction, cricondenTherm, cricondenThermX,
-                cricondenThermY);
+        operation = new CricondenThermFlash(system, fileName, phasefraction, cricondenTherm,
+                cricondenThermX, cricondenThermY);
 
         getOperation().run();
     }
@@ -757,7 +773,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
 
         for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
-            ((ComponentHydrate) system.getPhases()[4].getComponent(i)).setHydrateStructure(structure - 1);
+            ((ComponentHydrate) system.getPhases()[4].getComponent(i))
+                    .setHydrateStructure(structure - 1);
         }
         if (!isRunAsThread()) {
             getOperation().run();
@@ -844,7 +861,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
     }
 
-    public void dewPointMach(String componentName, String specification, double spec) throws Exception {
+    public void dewPointMach(String componentName, String specification, double spec)
+            throws Exception {
         int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
 
         double dn = 0;
@@ -868,14 +886,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
                 // logger.info("new temperature " + newTemperature);
                 double oldMoles = system.getPhase(0).getComponent(componentName).getNumberOfmoles();
                 if (iterations > 1) {
-                    system.addComponent(componentName, -(iterations / (30.0 + iterations)) * (newTemperature - spec)
-                            / ((newTemperature - oldTemperature) / dn));
+                    system.addComponent(componentName, -(iterations / (30.0 + iterations))
+                            * (newTemperature - spec) / ((newTemperature - oldTemperature) / dn));
                 } else {
                     system.addComponent(componentName, system.getNumberOfMoles() / 1.0e6);
                 }
                 dn = system.getPhase(0).getComponent(componentName).getNumberOfmoles() - oldMoles;
                 oldTemperature = newTemperature;
-            } while (Math.abs(dn / system.getPhase(0).getComponent(componentName).getNumberOfmoles()) > 1e-9
+            } while (Math.abs(
+                    dn / system.getPhase(0).getComponent(componentName).getNumberOfmoles()) > 1e-9
                     || iterations < 5 || iterations > 105);
 
             dewPointTemperatureFlash();
@@ -888,8 +907,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     public void dewPointTemperatureFlash() throws Exception {
-        constantDutyFlashInterface operation = new neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperatureFlash(
-                system);
+        constantDutyFlashInterface operation =
+                new neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperatureFlash(
+                        system);
         operation.run();
         if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
             throw new neqsim.util.exception.IsNaNException(
@@ -899,8 +919,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     public void dewPointTemperatureFlash(boolean derivatives) throws Exception {
-        constantDutyFlashInterface operation = new neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperatureFlash(
-                system);
+        constantDutyFlashInterface operation =
+                new neqsim.thermodynamicOperations.flashOps.saturationOps.dewPointTemperatureFlash(
+                        system);
         if (derivatives) {
             operation = new dewPointTemperatureFlashDer(system);
         }
@@ -1001,22 +1022,25 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         getOperation().run();
     }
 
-    public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres, double maxPres,
-            int pressureSteps, String filename, int TABtype) {
+    public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres,
+            double maxPres, int pressureSteps, String filename, int TABtype) {
         operation = new OLGApropertyTableGeneratorWaterStudents(system);
         ((OLGApropertyTableGeneratorWaterStudents) operation).setFileName(filename);
-        ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres, pressureSteps);
-        ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp, temperatureSteps);
+        ((OLGApropertyTableGeneratorWaterStudents) operation).setPressureRange(minPres, maxPres,
+                pressureSteps);
+        ((OLGApropertyTableGeneratorWaterStudents) operation).setTemperatureRange(minTemp, maxTemp,
+                temperatureSteps);
         getOperation().run();
     }
 
-    public void OLGApropTablePH(double minEnthalpy, double maxEnthalpy, int enthalpySteps, double minPres,
-            double maxPres, int pressureSteps, String filename, int TABtype) {
+    public void OLGApropTablePH(double minEnthalpy, double maxEnthalpy, int enthalpySteps,
+            double minPres, double maxPres, int pressureSteps, String filename, int TABtype) {
         operation = new OLGApropertyTableGeneratorWaterStudentsPH(system);
         ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setFileName(filename);
-        ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setPressureRange(minPres, maxPres, pressureSteps);
-        ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setEnthalpyRange(minEnthalpy, maxEnthalpy,
-                enthalpySteps);
+        ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setPressureRange(minPres, maxPres,
+                pressureSteps);
+        ((OLGApropertyTableGeneratorWaterStudentsPH) operation).setEnthalpyRange(minEnthalpy,
+                maxEnthalpy, enthalpySteps);
         getOperation().run();
     }
 
@@ -1046,7 +1070,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     public String[][] getDataPoints() {
-        String[][] str = new String[getOperation().getPoints(0).length][getOperation().getPoints(0)[0].length];
+        String[][] str = new String[getOperation()
+                .getPoints(0).length][getOperation().getPoints(0)[0].length];
         for (int i = 0; i < getOperation().getPoints(0).length; i++) {
             for (int j = 0; j < getOperation().getPoints(0)[0].length; j++) {
                 str[i][j] = Double.toString(getOperation().getPoints(0)[i][j]);
@@ -1161,7 +1186,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
 
     }
 
-    public void flash(String flashType, double spec1, double spec2, String unitSpec1, String unitSpec2) {
+    public void flash(String flashType, double spec1, double spec2, String unitSpec1,
+            String unitSpec2) {
         if (flashType.equals("TP")) {
             system.setTemperature(spec1, unitSpec1);
             system.setPressure(spec2, unitSpec2);

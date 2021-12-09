@@ -1,24 +1,9 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.thermo.characterization;
 
-import Jama.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 public class NewtonSolveABCD implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -31,8 +16,7 @@ public class NewtonSolveABCD implements java.io.Serializable {
     double[] calcTPBfraction = null;
     static Logger logger = LogManager.getLogger(NewtonSolveABCD.class);
 
-    public NewtonSolveABCD() {
-    }
+    public NewtonSolveABCD() {}
 
     public NewtonSolveABCD(SystemInterface system, TBPCharacterize characterizeClass) {
         // this.system = system;
@@ -51,19 +35,25 @@ public class NewtonSolveABCD implements java.io.Serializable {
     public void setfvec() {
 
         for (int i = 0; i < characterizeClass.getLength(); i++) {
-            fvec.set(i, 0, Math.log(characterizeClass.getTBPfractions(i)) - characterizeClass.getCoef(0)
-                    - characterizeClass.getCoef(1) * (i + characterizeClass.getFirstPlusFractionNumber()));
+            fvec.set(i, 0,
+                    Math.log(characterizeClass.getTBPfractions(i)) - characterizeClass.getCoef(0)
+                            - characterizeClass.getCoef(1)
+                                    * (i + characterizeClass.getFirstPlusFractionNumber()));
         }
 
         for (int i = characterizeClass.getLength(); i < 2 * characterizeClass.getLength(); i++) {
-            fvec.set(i, 0, characterizeClass.getTBPdens(i - characterizeClass.getLength())
-                    - characterizeClass.getCoef(2) - characterizeClass.getCoef(3) * Math
-                            .log((i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength())));
+            fvec.set(i, 0,
+                    characterizeClass.getTBPdens(i - characterizeClass.getLength())
+                            - characterizeClass.getCoef(2)
+                            - characterizeClass.getCoef(3)
+                                    * Math.log((i + characterizeClass.getFirstPlusFractionNumber()
+                                            - characterizeClass.getLength())));
         }
 
         for (int i = 0; i < characterizeClass.getLength(); i++) {
-            calcTPBfraction[i] = Math.exp(characterizeClass.getCoef(0)
-                    + characterizeClass.getCoef(1) * (i + characterizeClass.getFirstPlusFractionNumber()));
+            calcTPBfraction[i] =
+                    Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1)
+                            * (i + characterizeClass.getFirstPlusFractionNumber()));
         }
         characterizeClass.setCalcTBPfractions(calcTPBfraction);
     }
@@ -93,8 +83,8 @@ public class NewtonSolveABCD implements java.io.Serializable {
                 if (j == 2) {
                     tempJ = -1.0;
                 } else if (j == 3) {
-                    tempJ = -Math
-                            .log(i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength());
+                    tempJ = -Math.log(i + characterizeClass.getFirstPlusFractionNumber()
+                            - characterizeClass.getLength());
                 } else {
                     tempJ = 0.0;
                 }

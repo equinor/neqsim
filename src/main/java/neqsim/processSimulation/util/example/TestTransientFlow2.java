@@ -1,12 +1,3 @@
-/*
- * TestTransientFlow.java
- *
- * Created on 8. oktober 2006, 13:13
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.controllerDevice.ControllerDeviceBaseClass;
@@ -21,16 +12,10 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author ESOL
  */
 public class TestTransientFlow2 {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates a new instance of TestTransientFlow */
-    public TestTransientFlow2() {
-    }
-
     public static void main(String args[]) {
 
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
         testSystem.addComponent("methane", 0.900);
         testSystem.addComponent("ethane", 0.100);
         testSystem.addComponent("n-heptane", 1.00);
@@ -44,7 +29,7 @@ public class TestTransientFlow2 {
 
         Separator separator_1 = new Separator();
         separator_1.addStream(valve_1.getOutStream());
-//        
+        //
         ThrottlingValve valve_2 = new ThrottlingValve(separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(1.0);
         valve_2.setPercentValveOpening(50);
@@ -65,7 +50,8 @@ public class TestTransientFlow2 {
         flowController.setControllerSetPoint(1.0);
         flowController.setControllerParameters(0.7, 300.0, 0.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(valve_1);
         operations.add(separator_1);
@@ -83,16 +69,16 @@ public class TestTransientFlow2 {
         operations.setTimeStep(5.0);
         for (int i = 0; i < 460; i++) {
 
-            System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
-                    + valve_1.getPercentValveOpening() + " pressure " + separator_1.getGasOutStream().getPressure());
+            System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+                    + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
+                    + separator_1.getGasOutStream().getPressure());
             operations.runTransient();
         }
 
         operations.displayResult();
         System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
                 + valve_1.getPercentValveOpening());
-//
-//          operations.displayResult();
 
+        // operations.displayResult();
     }
 }

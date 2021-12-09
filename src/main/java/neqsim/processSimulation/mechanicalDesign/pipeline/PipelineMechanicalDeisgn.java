@@ -1,19 +1,3 @@
-/*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package neqsim.processSimulation.mechanicalDesign.pipeline;
 
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
@@ -40,18 +24,20 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
     }
 
     @Override
-	public void readDesignSpecifications() {
+    public void readDesignSpecifications() {
 
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("material pipe design codes")) {
-            ((MaterialPipeDesignStandard) getDesignStandard().get("material pipe design codes")).getDesignFactor();
+            ((MaterialPipeDesignStandard) getDesignStandard().get("material pipe design codes"))
+                    .getDesignFactor();
         }
         if (getDesignStandard().containsKey("pipeline design codes")) {
             System.out.println("pressure vessel code standard: "
                     + getDesignStandard().get("pipeline design codes").getStandardName());
-            wallThickness = ((PipelineDesignStandard) getDesignStandard().get("pipeline design codes"))
-                    .calcPipelineWallThickness();
+            wallThickness =
+                    ((PipelineDesignStandard) getDesignStandard().get("pipeline design codes"))
+                            .calcPipelineWallThickness();
         } else {
             System.out.println("no pressure vessel code standard specified......");
         }
@@ -59,12 +45,14 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
     }
 
     @Override
-	public void calcDesign() {
+    public void calcDesign() {
         super.calcDesign();
 
         Pipeline pipeline = (Pipeline) getProcessEquipment();
 
-        double flow = ((AdiabaticPipe) getProcessEquipment()).getOutStream().getThermoSystem().getVolume() / 1e5;
+        double flow =
+                ((AdiabaticPipe) getProcessEquipment()).getOutStream().getThermoSystem().getVolume()
+                        / 1e5;
 
         double innerArea = Math.PI * innerDiameter * innerDiameter / 4.0;
 
@@ -73,7 +61,8 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
 
         // ASME/ANSI Code B31.8
         if (designStandardCode.equals("ANSI/ASME Standard B31.8")) {
-            wallThickness = ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign().getMaxOperationPressure()
+            wallThickness = ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
+                    .getMaxOperationPressure()
                     * innerDiameter
                     / (2.0 * ((AdiabaticPipe) getProcessEquipment()).getMechanicalDesign()
                             .getMaterialPipeDesignStandard().getDesignFactor()
@@ -103,7 +92,8 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
 
     public static void main(String args[]) {
 
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);
         testSystem.addComponent("methane", 600e3, "kg/hr");
         testSystem.addComponent("ethane", 7.00e3, "kg/hr");
         testSystem.addComponent("propane", 12.0e3, "kg/hr");
@@ -122,7 +112,8 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         pipe.getMechanicalDesign().setMinOperationPressure(50.0);
         pipe.getMechanicalDesign().setMaxDesignGassVolumeFlow(100.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipe);
 

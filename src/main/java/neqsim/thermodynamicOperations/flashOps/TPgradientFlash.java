@@ -1,20 +1,4 @@
 /*
- * Copyright 2018 ESOL.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
  * TPgradientFlash.java
  *
  * Created on 8. mars 2001, 10:56
@@ -25,7 +9,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  even solbraa
+ * @author even solbraa
  * @version
  */
 public class TPgradientFlash extends Flash {
@@ -42,14 +26,14 @@ public class TPgradientFlash extends Flash {
     Matrix uold;
 
     /** Creates new TPgradientFlash */
-    public TPgradientFlash() {
-    }
+    public TPgradientFlash() {}
 
     public TPgradientFlash(SystemInterface system, double height, double temperature) {
         this.system = system;
         this.temperature = temperature;
         this.height = height;
-        Jac = new Matrix(system.getPhase(0).getNumberOfComponents(), system.getPhase(0).getNumberOfComponents());
+        Jac = new Matrix(system.getPhase(0).getNumberOfComponents(),
+                system.getPhase(0).getNumberOfComponents());
         fvec = new Matrix(system.getPhase(0).getNumberOfComponents(), 1);
 
     }
@@ -58,19 +42,23 @@ public class TPgradientFlash extends Flash {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             fvec.set(i, 0, Math
                     .log(localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                            * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
+                            * localSystem.getPhases()[0].getComponents()[i].getx()
+                            * localSystem.getPressure())
                     - Math.log(tempSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                            * tempSystem.getPhases()[0].getComponents()[i].getx() * tempSystem.getPressure())
+                            * tempSystem.getPhases()[0].getComponents()[i].getx()
+                            * tempSystem.getPressure())
                     - tempSystem.getPhases()[0].getComponents()[i].getMolarMass()
                             * neqsim.thermo.ThermodynamicConstantsInterface.gravity * deltaHeight
-                            / neqsim.thermo.ThermodynamicConstantsInterface.R / tempSystem.getPhase(0).getTemperature()
+                            / neqsim.thermo.ThermodynamicConstantsInterface.R
+                            / tempSystem.getPhase(0).getTemperature()
                     + tempSystem.getPhases()[0].getComponents()[i].getMolarMass()
                             * (tempSystem.getPhases()[0].getEnthalpy()
                                     / tempSystem.getPhases()[0].getNumberOfMolesInPhase()
                                     / tempSystem.getPhase(0).getMolarMass()
                                     - tempSystem.getPhases()[0].getComponents()[i]
                                             .getEnthalpy(tempSystem.getPhase(0).getTemperature())
-                                            / tempSystem.getPhases()[0].getComponent(i).getNumberOfMolesInPhase()
+                                            / tempSystem.getPhases()[0].getComponent(i)
+                                                    .getNumberOfMolesInPhase()
                                             / tempSystem.getPhase(0).getComponent(i).getMolarMass())
                             * deltaT / tempSystem.getPhase(0).getTemperature()
                             / neqsim.thermo.ThermodynamicConstantsInterface.R
@@ -90,9 +78,10 @@ public class TPgradientFlash extends Flash {
                 dij = i == j ? 1.0 : 0.0;// Kroneckers delta
                 tempJ = 1.0
                         / (localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                                * localSystem.getPhases()[0].getComponents()[i].getx() * localSystem.getPressure())
-                        * (localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient() * dij
-                                * localSystem.getPressure()
+                                * localSystem.getPhases()[0].getComponents()[i].getx()
+                                * localSystem.getPressure())
+                        * (localSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+                                * dij * localSystem.getPressure()
                                 + localSystem.getPhases()[0].getComponents()[i].getdfugdx(j)
                                         * localSystem.getPhases()[0].getComponents()[i].getx()
                                         * localSystem.getPressure());

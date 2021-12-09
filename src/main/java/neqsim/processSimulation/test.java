@@ -15,8 +15,5 @@ public class test {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new test */
-    public test() {
-    }
-
+    public test() {}
 }

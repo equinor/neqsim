@@ -1,11 +1,3 @@
-/*
- * LNGfilling.java
- *
- * Created on 6. september 2006, 14:46
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -16,16 +8,10 @@ import neqsim.processSimulation.processEquipment.tank.Tank;
  * @author ESOL
  */
 public class LNGfilling2 {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates a new instance of LNGfilling */
-    public LNGfilling2() {
-    }
-
     public static void main(String args[]) {
 
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 - 150.3), 1.02);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 - 150.3), 1.02);
         testSystem.addComponent("nitrogen", 0.1e-6);
         testSystem.addComponent("methane", 90e-6);
         testSystem.addComponent("ethane", 5e-6);
@@ -36,8 +22,8 @@ public class LNGfilling2 {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        neqsim.thermodynamicOperations.ThermodynamicOperations ops = new neqsim.thermodynamicOperations.ThermodynamicOperations(
-                testSystem);
+        neqsim.thermodynamicOperations.ThermodynamicOperations ops =
+                new neqsim.thermodynamicOperations.ThermodynamicOperations(testSystem);
         ops.TPflash();
         testSystem.display();
 
@@ -48,7 +34,8 @@ public class LNGfilling2 {
 
         Stream liqstream = tank.getLiquidOutStream();
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(tank);
         operations.add(liqstream);
@@ -62,6 +49,5 @@ public class LNGfilling2 {
 
         operations.runTransient();
         // operations.displayResult();
-
     }
 }

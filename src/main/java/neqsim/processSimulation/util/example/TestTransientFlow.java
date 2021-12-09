@@ -2,9 +2,6 @@
  * TestTransientFlow.java
  *
  * Created on 8. oktober 2006, 13:13
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
  */
 
 package neqsim.processSimulation.util.example;
@@ -26,20 +23,20 @@ public class TestTransientFlow {
     private static final long serialVersionUID = 1000;
 
     /** Creates a new instance of TestTransientFlow */
-    public TestTransientFlow() {
-    }
+    public TestTransientFlow() {}
 
     public static void main(String args[]) {
 
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
         testSystem.addComponent("methane", 0.900);
         testSystem.addComponent("ethane", 0.100);
         testSystem.addComponent("n-heptane", 1.00);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
 
-        neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0),
-                10.00);
+        neqsim.thermo.system.SystemInterface testSystem2 =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
         testSystem2.addComponent("methane", 1.1);
         testSystem2.addComponent("ethane", 0.10001);
         testSystem2.addComponent("n-heptane", 0.001);
@@ -58,7 +55,7 @@ public class TestTransientFlow {
         Separator separator_1 = new Separator();
         separator_1.addStream(valve_1.getOutStream());
         separator_1.addStream(purgeValve.getOutStream());
-//        
+        //
         ThrottlingValve valve_2 = new ThrottlingValve(separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(5.0);
         valve_2.setPercentValveOpening(50);
@@ -81,7 +78,8 @@ public class TestTransientFlow {
         separatorLevelController.setControllerSetPoint(0.3);
         separatorLevelController.setControllerParameters(1.0, 300.0, 10.0);
 
-        PressureTransmitter separatorPressureTransmitter = new PressureTransmitter(separator_1.getGasOutStream());
+        PressureTransmitter separatorPressureTransmitter =
+                new PressureTransmitter(separator_1.getGasOutStream());
         separatorPressureTransmitter.setUnit("bar");
         separatorPressureTransmitter.setMaximumValue(10.0);
         separatorPressureTransmitter.setMinimumValue(1.0);
@@ -92,7 +90,8 @@ public class TestTransientFlow {
         separatorPressureController.setControllerSetPoint(7.0);
         separatorPressureController.setControllerParameters(1.0, 300.0, 10.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(valve_1);
 
@@ -121,9 +120,8 @@ public class TestTransientFlow {
          * separator_1.getLiquidLevel()+ " PRESSURE " +
          * separator_1.getGasOutStream().getPressure()); }
          * 
-         * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){
-         * operations.runTransient(); System.out.println("liquid level " +
-         * separator_1.getLiquidLevel()+ " PRESSURE " +
+         * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){ operations.runTransient();
+         * System.out.println("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
          * separator_1.getGasOutStream().getPressure()); } operations.displayResult();
          * 
          * operations.displayResult();

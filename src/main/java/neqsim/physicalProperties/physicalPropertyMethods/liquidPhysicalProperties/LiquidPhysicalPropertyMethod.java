@@ -1,9 +1,3 @@
-/*
- * GasPhysicalProperties.java
- *
- * Created on 29. oktober 2000, 16:18
- */
-
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties;
 
 /**
@@ -29,7 +23,8 @@ public class LiquidPhysicalPropertyMethod
     }
 
     @Override
-	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
+    public void setPhase(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         this.liquidPhase = phase;
     }
 }

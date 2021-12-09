@@ -1,13 +1,8 @@
-/*
- * Test.java
- *
- * Created on 22. januar 2001, 22:59
- */
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.AntoineParameter;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -19,13 +14,13 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunction.class);
 
-    /** Creates new Test */
+
     public AntoineSolidFunction() {
         params = new double[2];
     }
 
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             thermoOps.freezingPointTemperatureFlash();
@@ -36,7 +31,7 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     }
 
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             system.getPhases()[0].getComponents()[0].setAntoineASolid(value);
