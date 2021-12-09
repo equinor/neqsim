@@ -51,10 +51,7 @@ public class TextFile implements java.io.Serializable {
         System.out.println("length " + values.length);
         System.out.println("length2 " + values[0].length);
 
-        try {
-            File outputFile = new File(fileName);
-            FileWriter out = new FileWriter(outputFile, true);
-
+        try (FileWriter out = new FileWriter(new File(fileName), true)) {
             for (int i = 0; i < values.length; i++) {
                 for (int j = 0; j < values[0].length; j++) {
                     if (values[i][j] != null) {
@@ -65,11 +62,9 @@ public class TextFile implements java.io.Serializable {
                 out.write("\n");
             }
             out.flush();
-            out.close();
         } catch (Exception e) {
             System.err.println("error writing file: " + e.toString());
         }
         System.out.println("writing data to file: " + fileName + " ... ok");
     }
-
 }

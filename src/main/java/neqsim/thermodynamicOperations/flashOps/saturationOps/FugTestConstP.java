@@ -1,19 +1,15 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
-//import dataPresentation.
+
 /**
  *
  * @author esol
@@ -56,13 +52,14 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
 
     @Override
 	public void run() {
-        double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0, dfugdt = 0.0;
+        double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0;
+        // double dfugdt = 0.0;
         double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
         boolean CCequation = true;
         double[][] Fug = new double[4][20];
         double[][] Fugrel = new double[2][20];
-        int vapPhase = 0;
-        double Xivapor;
+        // int vapPhase = 0;
+        // double Xivapor;
 
         for (int k = 0; k < testSystem.getPhases()[0].getNumberOfComponents(); k++) {
             if (testSystem.getPhase(0).getComponent(k).doSolidCheck()) {
@@ -135,27 +132,25 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
     } // end run
 
     public void PrintToFile(String FileName) {
-        String myFile = "/java/fugcoeff_C02_ N2.dat";
-
-//           try {
-//               FileWriter file_writer = new FileWriter(myFile, true);
-//               PrintWriter pr_writer = new PrintWriter(file_writer);
-//
-//                // print line to output file
-//                pr_writer.println( testSystem.getPhases()[0].getComponents()[k].getComponentName()+"  " + java.lang.Double.toString(Fug[0+k*6][i])+"    "+java.lang.Double.toString(Fug[1+k*6][i])+"   "+java.lang.Double.toString(Fug[3+k*6][i]) +"   "+ java.lang.Double.toString(Fug[5+k*6][i]) );
-//                pr_writer.flush(); 
-//                pr_writer.close();
-//         
-//            logger.error("Successful attempt to write to " + myFile);
-//            }
-//            catch (SecurityException e) {
-//            logger.error("writeFile: caught security exception");
-//            }
-//            catch (IOException ioe) {
-//	    logger.error("writeFile: caught i/o exception");            
-//            }
-//              
-
+        // String myFile = "/java/fugcoeff_C02_ N2.dat";
+        // try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))){
+        // // print line to output file
+        // pr_writer.println(
+        // testSystem.getPhases()[0].getComponents()[k].getComponentName()+" " +
+        // java.lang.Double.toString(Fug[0+k*6][i])+"
+        // "+java.lang.Double.toString(Fug[1+k*6][i])+"
+        // "+java.lang.Double.toString(Fug[3+k*6][i]) +" "+
+        // java.lang.Double.toString(Fug[5+k*6][i]) );
+        // pr_writer.flush();
+        // pr_writer.close();
+        //
+        // logger.error("Successful attempt to write to " + myFile);
+        // }
+        // catch (SecurityException e) {
+        // logger.error("writeFile: caught security exception");
+        // }
+        // catch (IOException ioe) {
+        // logger.error("writeFile: caught i/o exception");
+        // }
     }
-
-}// end Class
+}

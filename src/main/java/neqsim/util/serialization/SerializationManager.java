@@ -22,14 +22,8 @@ public class SerializationManager {
     }
 
     public static void save(Object obj, String name) {
-        FileOutputStream fout = null;
-        ObjectOutputStream out = null;
-        try {
-            fout = new FileOutputStream(name);
-            out = new ObjectOutputStream(fout);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name))) {
             out.writeObject(obj);
-            out.close();
-
         } catch (Exception e) {
             System.out.println(e.toString());
         }

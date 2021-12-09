@@ -3747,14 +3747,8 @@ abstract class SystemThermo implements SystemInterface {
 
     @Override
     public void save(String name) {
-        FileOutputStream fout = null;
-        ObjectOutputStream out = null;
-        try {
-            fout = new FileOutputStream(name);
-            out = new ObjectOutputStream(fout);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name))) {
             out.writeObject(this);
-            out.close();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }
@@ -3773,13 +3767,9 @@ abstract class SystemThermo implements SystemInterface {
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                ByteArrayInputStream bais;
-                ObjectInputStream ins;
-                bais = new ByteArrayInputStream(rs.getBytes("FLUID"));
-                ins = new ObjectInputStream(bais);
-
-                tempSystem = (SystemThermo) ins.readObject();
-                ins.close();
+                try (ObjectInputStream ins = new ObjectInputStream(new ByteArrayInputStream(rs.getBytes("FLUID")))) {
+                    tempSystem = (SystemThermo) ins.readObject();
+                }
             }
         } catch (Exception e) {
             logger.error("error", e);
@@ -3862,11 +3852,9 @@ abstract class SystemThermo implements SystemInterface {
     public void saveObjectToFile(String filePath, String fluidName) {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
             out.writeObject(this);
-            out.close();
         } catch (Exception e) {
             logger.error(e.toString());
         }
-        // database.execute("INSERT INTO fluid_blobdb VALUES ('1'," + sqlString + ")");
     }
 
     @Override

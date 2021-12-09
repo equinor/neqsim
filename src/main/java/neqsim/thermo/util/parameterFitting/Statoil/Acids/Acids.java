@@ -4,8 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -39,7 +41,6 @@ public class Acids {
             outfile = new FileOutputStream(
                     "C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt");
             p = new PrintStream(outfile);
-            p.close();
         } catch (IOException e) {
             logger.error("Could not find file");
         }
@@ -50,7 +51,6 @@ public class Acids {
             outfile1 = new FileOutputStream(
                     "C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt");
             p1 = new PrintStream(outfile1);
-            p1.close();
         } catch (IOException e) {
             logger.error("Could not find file");
         }
@@ -187,7 +187,6 @@ public class Acids {
                                 * testSystem.getPhase(0).getComponent(CO2Numb).getx()
                         + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " "
                         + nOH + " " + nHAc + " " + nAcn);
-                p.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file " + e.getMessage());
             }
@@ -198,7 +197,6 @@ public class Acids {
                 p1 = new PrintStream(outfile1);
                 p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " "
                         + aMDEAp + " " + aCO3 + " " + aOH + " " + aHAc + " " + aAcn);
-                p1.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());
             }

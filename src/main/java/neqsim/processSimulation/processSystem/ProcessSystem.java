@@ -356,9 +356,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             signalDB[timeStepNumber][3 * i + 2] =
                     Double.toString(measurementDevices.get(i).getMeasuredValue());
             signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
-
         }
-
     }
 
     public int size() {
@@ -405,12 +403,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     public void save(String filePath) {
-        ObjectOutputStream out = null;
-        try {
-            FileOutputStream fout = new FileOutputStream(filePath, false);
-            out = new ObjectOutputStream(fout);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
             out.writeObject(this);
-            out.close();
             logger.info("process file saved to:  " + filePath);
         } catch (Exception e) {
             logger.error(e.toString());
@@ -593,5 +587,4 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * 
      * public Report getReport(){ return this.new Report(); }
      */
-
 }

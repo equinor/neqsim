@@ -1,15 +1,19 @@
 package neqsim.thermo.util.example;
 /*
- * TPflash.java
+ * ReactiveTPflash2.java
  *
  * Created on 27. september 2001, 09:43
  */
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -17,11 +21,9 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class ReactiveTPflash2 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ReactiveTPflash2.class);
 
-    /** Creates new TPflash */
+    /** Creates new ReactiveTPflash2 */
     public ReactiveTPflash2() {
     }
 
@@ -29,11 +31,7 @@ public class ReactiveTPflash2 {
 
         SystemInterface testSystem = new SystemFurstElectrolyteEos(373.15, 10.0);
 
-        try {
-
-            // Opening a file
-            File outputFile = new File("c:/temp/Wt50T25P10.txt");
-            FileWriter out = new FileWriter(outputFile);
+        try (FileWriter out = new FileWriter(new File("c:/temp/Wt50T25P10.txt"))) {
             out.write("wt% = 50, T = 40 C and P = 10 bar" + "\n");
             out.write("\n");
             out.write("wt% MDEA" + "\t\t" + "x_H2O(l)" + "\t\t\t" + "x_MDEA(l)" + "\t\t\t" + "x_CO2(l)" + "\t\t\t"
@@ -112,15 +110,10 @@ public class ReactiveTPflash2 {
                         + testSystem.getPhase(0).getComponent("methane").getx());
                 out.write("\n");
             } // end for-loop
-
-            // Closing the file
             out.flush();
-            out.close();
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
-//
 //        for(int i=0;i<23;i++){
 //            try{
 //                ops.bubblePointPressureFlash(false);

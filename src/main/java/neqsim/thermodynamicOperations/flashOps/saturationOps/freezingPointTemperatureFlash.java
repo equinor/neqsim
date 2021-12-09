@@ -5,11 +5,16 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import java.io.*;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
@@ -39,12 +44,13 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
 
     public double calcFunc() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
-        double deriv = 0, funk = 0, funkOld = 0;
+        // double deriv = 0, funkOld = 0;
+        double funk = 0;
         double SolidFugCoeff = 0.0;
         int numbComponents = system.getPhases()[0].getNumberOfComponents();
 
         for (int k = 0; k < numbComponents; k++) {
-            // logger.info("Cheking all the components " + k);
+            // logger.info("Checking all the components " + k);
             if (system.getPhase(0).getComponent(k).doSolidCheck()) {
                 ops.TPflash(false);
                 SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
@@ -85,11 +91,11 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                 newTemp = 0.0;
                 iterations = 0;
                 funk = 0.0;
-                int oldPhaseType = 0;
+                // int oldPhaseType = 0;
                 maxNumberOfIterations = 100;
                 do {
                     iterations++;
-                    oldPhaseType = system.getPhase(0).getPhaseType();
+                    // oldPhaseType = system.getPhase(0).getPhaseType();
                     ops.TPflash(false);
                     SolidFugCoeff = system.getPhases()[3].getComponent(k).fugcoef(system.getPhases()[3]);
                     funk = system.getPhase(0).getComponent(k).getz();
@@ -141,9 +147,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
 
         String myFile = "/java/" + name + ".frz";
 
-        try {
-            FileWriter file_writer = new FileWriter(myFile, true);
-            PrintWriter pr_writer = new PrintWriter(file_writer);
+        try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))) {
             pr_writer.println("name,freezeT,freezeP,z,iterations");
             pr_writer.flush();
 
@@ -156,13 +160,10 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                                 + Niterations);
                 pr_writer.flush();
             }
-            pr_writer.close();
-
         } catch (SecurityException e) {
             logger.error("writeFile: caught security exception");
         } catch (IOException ioe) {
             logger.error("writeFile: caught i/o exception");
         }
-
     }
 }
