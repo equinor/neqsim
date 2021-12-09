@@ -32,32 +32,25 @@ public class VUflash {
         testSystem.addComponent("methane", 11.0);
         // testSystem.addComponent("ethane", 4.0);
         // testSystem.addComponent("n-heptane", 10.5);
-        //testSystem.addComponent("water", 10.5);
+        testSystem.addComponent("water", 10.5);
         // testSystem.addComponent("TEG", 0.000000);
         // testSystem.setMultiPhaseCheck(true);
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
-        testSystem.init(0);
-        testSystem.setTemperature(80.0, "C");
-        testSystem.setPressure(78.65, "bara");
-        testSystem.setTotalFlowRate(4.0, "Am3/sec");
-        //testSystem.setMultiPhaseCheck(true);
+        testSystem.setMultiPhaseCheck(true);
 
-       // testSystem.init(0);
+        testSystem.init(0);
         testSystem.display();
-       
         try {
             testOps.TPflash();
             testSystem.display();
-            System.out.println(testSystem.getVolume("m3"));
-            double internalEnergyStart = testSystem.getInternalEnergy("J/sec");
-            testOps.PUflash(testSystem.getInternalEnergy() + 1.47e6);
-//            logger.info("Volume " + testSystem.getVolume() * 1.1 + " internalEnergy " + testSystem.getInternalEnergy());
+
+            logger.info("Volume " + testSystem.getVolume() * 1.1 + " internalEnergy " + testSystem.getInternalEnergy());
             // testSystem.setPressure(5);
             // testOps.PHflash(testSystem.getEnthalpy(), 0);
-  //          testOps.VUflash(testSystem.getVolume() * 1.1, testSystem.getInternalEnergy());
+            testOps.VUflash(testSystem.getVolume() * 1.1, testSystem.getInternalEnergy());
             logger.info("Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
-System.out.println(testSystem.getVolume("m3"));
+
             testSystem.display();
         } catch (Exception e) {
             logger.error(e.toString());
