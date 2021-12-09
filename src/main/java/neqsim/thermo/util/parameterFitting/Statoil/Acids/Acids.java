@@ -2,7 +2,6 @@ package neqsim.thermo.util.parameterFitting.Statoil.Acids;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,22 +11,13 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 /**
  *
  * @author agrawalnj
  */
 public class Acids {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Acids.class);
 
-    /**
-     * Creates a new instance of Sleipneracetate
-     */
     public Acids() {}
 
     /**
@@ -35,26 +25,6 @@ public class Acids {
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream(
-                    "C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt");
-            p = new PrintStream(outfile);
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
-        FileOutputStream outfile1;
-        PrintStream p1;
-        try {
-            outfile1 = new FileOutputStream(
-                    "C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt");
-            p1 = new PrintStream(outfile1);
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         int j;
         int AcidNumb = 0, AcnNumb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0,
                 MDEAHpNumb = 0, CO3Numb = 0, OHNumb;
@@ -178,10 +148,8 @@ public class Acids {
             aHAc = testSystem.getPhase(1).getActivityCoefficient(AcidNumb, WaterNumb);
             aAcn = testSystem.getPhase(1).getActivityCoefficient(AcnNumb, WaterNumb);
 
-            try {
-                outfile = new FileOutputStream(
-                        "C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt", true);
-                p = new PrintStream(outfile);
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/Statoil.txt", true))) {
                 p.println(loading + " "
                         + testSystem.getPressure()
                                 * testSystem.getPhase(0).getComponent(CO2Numb).getx()
@@ -191,11 +159,9 @@ public class Acids {
                 logger.error("Could not find file " + e.getMessage());
             }
 
-            try {
-                outfile1 = new FileOutputStream(
-                        "C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt", true);
-                p1 = new PrintStream(outfile1);
-                p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " "
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/Documents and Settings/agrawalnj/Desktop/Statoil/activity.txt", true))) {
+                p.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " "
                         + aMDEAp + " " + aCO3 + " " + aOH + " " + aHAc + " " + aAcn);
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());
