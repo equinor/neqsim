@@ -45,7 +45,7 @@ public class TPflashCAPEOPEN {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
         testSystem.setMultiPhaseCheck(true);
-
+        testSystem.readObject(3469);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         testOps.TPflash();
@@ -66,6 +66,7 @@ public class TPflashCAPEOPEN {
         testSystem.setPhaseType(0, "liquid");
         testSystem.init(3);
         testSystem.initPhysicalProperties();
-
+        
+        testSystem.saveFluid(3469);
     }
 }
