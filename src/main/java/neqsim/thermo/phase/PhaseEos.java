@@ -5,11 +5,12 @@
  */
 package neqsim.thermo.phase;
 
-import neqsim.MathLib.nonLinearSolver.newtonRhapson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
