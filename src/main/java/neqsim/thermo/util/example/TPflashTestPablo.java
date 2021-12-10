@@ -9,15 +9,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 * @author esol @version
 */
 public class TPflashTestPablo {
-
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * Creates new TPflash
-     */
-    public TPflashTestPablo() {
-    }
-
     public static void main(String[] args) {
         SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 35.0, 90.0);
         fluid.addComponent("water", 0.0078);

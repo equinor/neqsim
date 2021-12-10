@@ -1,15 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
 *
@@ -17,18 +12,9 @@ import org.apache.logging.log4j.*;
 * @version
 */
 public class ReadFluidData {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public ReadFluidData() {
-    }
-
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);//
         // testSystem.addComponent("nitrogen", 12.681146444);
         testSystem.addComponent("methane", 90.681146444);
