@@ -78,7 +78,7 @@ public class SystemPrDanesh extends SystemPrEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemPrDanesh clone() {
         SystemPrDanesh clonedSystem = null;
         try {
             clonedSystem = (SystemPrDanesh) super.clone();

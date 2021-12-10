@@ -5,10 +5,12 @@
  */
 package neqsim.standards.gasQuality;
 
-import java.text.*;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
 import java.util.ArrayList;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.thermo.system.SystemInterface;
 
@@ -130,7 +132,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
                             .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
                     // logger.info("added component not specified by ISO6976 " +
                     // this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
-
                 }
 
                 carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -164,7 +165,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
             System.out.println(err);
         }
         // logger.info("ok adding components in " + getName());
-
     }
 
     public Standard_ISO6976(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
@@ -197,7 +197,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         HinfIdeal60F = 0.0;
 
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-
             Mmix += thermoSystem.getPhase(0).getComponent(i).getz() * M[i];
 
             Zmixtemp0 += thermoSystem.getPhase(0).getComponent(i).getz() * bsqrt0[i];
@@ -369,7 +368,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
         String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        // String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
         table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
 
         for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
@@ -462,7 +461,6 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 14][0] = "Reference Temperature Volume";
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 14][i + 1] = Double.toString(getVolRefT());
             table[thermoSystem.getPhases()[0].getNumberOfComponents() + 14][4] = "[C]";
-
         }
 
         resultTable = table;
@@ -569,5 +567,4 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     public void setReferenceType(String referenceType) {
         this.referenceType = referenceType;
     }
-
 }

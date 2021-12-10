@@ -56,8 +56,7 @@ abstract class Phase implements PhaseInterface {
     public Phase(Phase phase) {}
 
     @Override
-    public Object clone() {
-
+    public Phase clone() {
         Phase clonedPhase = null;
 
         try {
@@ -89,7 +88,6 @@ abstract class Phase implements PhaseInterface {
     public void removeComponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
         ArrayList<ComponentInterface> temp = new ArrayList<ComponentInterface>();
-
 
         try {
             for (int i = 0; i < numberOfComponents; i++) {

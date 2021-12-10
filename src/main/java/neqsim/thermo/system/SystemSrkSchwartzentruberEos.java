@@ -39,7 +39,7 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemSrkSchwartzentruberEos clone() {
         SystemSrkSchwartzentruberEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkSchwartzentruberEos) super.clone();
@@ -54,5 +54,4 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

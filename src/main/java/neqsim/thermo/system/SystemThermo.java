@@ -179,7 +179,7 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     @Override
-    public Object clone() {
+    public SystemThermo clone() {
         SystemThermo clonedSystem = null;
         try {
             clonedSystem = (SystemThermo) super.clone();
@@ -412,8 +412,6 @@ abstract class SystemThermo implements SystemInterface {
 
     @Override
     public void setAllComponentsInPhase(int phase) {
-        // init(0);
-        // double molesInPhase = 0;
         for (int k = 0; k < numberOfPhases; k++) {
             for (int i = 0; i < numberOfComponents; i++) {
                 if (phase != k) {

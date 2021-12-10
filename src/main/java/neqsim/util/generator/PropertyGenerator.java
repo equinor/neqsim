@@ -1,11 +1,9 @@
 package neqsim.util.generator;
 
 import java.util.HashMap;
-// import org.apache.spark.sql.Dataset;
-// import org.apache.spark.sql.Row;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-// import org.apache.spark.sql.SparkSession;
 
 public class PropertyGenerator {
 
@@ -326,8 +324,5 @@ public class PropertyGenerator {
     }
 
     static void main(String[] args) {
-        // TODO Auto-generated method stub
-
     }
-
 }

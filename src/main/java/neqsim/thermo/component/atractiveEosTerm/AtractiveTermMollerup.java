@@ -29,7 +29,7 @@ public class AtractiveTermMollerup extends AtractiveTermBaseClass {
     }
 
     @Override
-	public Object clone() {
+    public AtractiveTermMollerup clone() {
         AtractiveTermMollerup atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermMollerup) super.clone();

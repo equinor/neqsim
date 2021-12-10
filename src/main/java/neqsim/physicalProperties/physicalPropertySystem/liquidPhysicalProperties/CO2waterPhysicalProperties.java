@@ -31,7 +31,7 @@ public class CO2waterPhysicalProperties
     }
 
     @Override
-    public Object clone() {
+    public CO2waterPhysicalProperties clone() {
         CO2waterPhysicalProperties properties = null;
 
         try {

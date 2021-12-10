@@ -25,7 +25,7 @@ public class DoubleCloneable implements Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public DoubleCloneable clone() {
         DoubleCloneable clonedSystem = null;
         try {
             clonedSystem = (DoubleCloneable) super.clone();
