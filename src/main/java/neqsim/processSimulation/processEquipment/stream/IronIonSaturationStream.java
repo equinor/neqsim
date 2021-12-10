@@ -37,7 +37,7 @@ public class IronIonSaturationStream extends Stream {
     }
 
     @Override
-    public Object clone() {
+    public IronIonSaturationStream clone() {
         IronIonSaturationStream clonedSystem = null;
         try {
             clonedSystem = (IronIonSaturationStream) super.clone();

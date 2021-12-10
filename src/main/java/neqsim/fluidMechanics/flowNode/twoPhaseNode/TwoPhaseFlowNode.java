@@ -31,7 +31,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     @Override
-	public Object clone() {
+    public TwoPhaseFlowNode clone() {
         TwoPhaseFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFlowNode) super.clone();

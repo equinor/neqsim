@@ -46,7 +46,7 @@ public class ComponentTST extends ComponentEos {
     }
 
     @Override
-	public Object clone() {
+    public ComponentTST clone() {
 
         ComponentTST clonedComponent = null;
         try {

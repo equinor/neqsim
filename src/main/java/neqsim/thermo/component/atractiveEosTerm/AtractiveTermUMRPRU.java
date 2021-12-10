@@ -26,7 +26,7 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
     }
 
     @Override
-	public Object clone() {
+    public AtractiveTermUMRPRU clone() {
         AtractiveTermUMRPRU atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermUMRPRU) super.clone();

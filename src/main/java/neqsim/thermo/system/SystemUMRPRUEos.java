@@ -48,7 +48,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemUMRPRUEos clone() {
         SystemUMRPRUEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUEos) super.clone();

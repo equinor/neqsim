@@ -35,7 +35,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public StratifiedFlowNode clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();

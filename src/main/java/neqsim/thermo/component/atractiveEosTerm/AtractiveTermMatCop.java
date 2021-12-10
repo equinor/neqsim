@@ -40,7 +40,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
     }
 
     @Override
-	public Object clone() {
+    public AtractiveTermMatCop clone() {
         AtractiveTermMatCop atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermMatCop) super.clone();

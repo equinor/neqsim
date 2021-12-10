@@ -37,7 +37,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public StratifiedFlowNode clone() {
         StratifiedFlowNode clonedSystem = null;
         try {
             clonedSystem = (StratifiedFlowNode) super.clone();

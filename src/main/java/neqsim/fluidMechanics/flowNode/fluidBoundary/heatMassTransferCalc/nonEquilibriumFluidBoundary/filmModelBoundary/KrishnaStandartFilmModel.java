@@ -50,7 +50,7 @@ public class KrishnaStandartFilmModel extends
     }
 
     @Override
-    public Object clone() {
+    public KrishnaStandartFilmModel clone() {
         KrishnaStandartFilmModel clonedSystem = null;
 
         try {

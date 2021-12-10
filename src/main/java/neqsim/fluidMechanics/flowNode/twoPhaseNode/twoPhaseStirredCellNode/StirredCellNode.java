@@ -57,7 +57,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public StirredCellNode clone() {
         StirredCellNode clonedSystem = null;
         try {
             clonedSystem = (StirredCellNode) super.clone();

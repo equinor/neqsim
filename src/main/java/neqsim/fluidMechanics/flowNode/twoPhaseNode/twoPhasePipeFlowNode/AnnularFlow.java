@@ -41,7 +41,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public AnnularFlow clone() {
         AnnularFlow clonedSystem = null;
         try {
             clonedSystem = (AnnularFlow) super.clone();

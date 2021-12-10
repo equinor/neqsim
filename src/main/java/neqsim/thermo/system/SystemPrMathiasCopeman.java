@@ -39,7 +39,7 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemPrMathiasCopeman clone() {
         SystemPrMathiasCopeman clonedSystem = null;
         try {
             clonedSystem = (SystemPrMathiasCopeman) super.clone();

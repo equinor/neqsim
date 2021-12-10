@@ -99,7 +99,7 @@ public class ChemicalReactionOperations
     }
 
     @Override
-    public Object clone() {
+    public ChemicalReactionOperations clone() {
         ChemicalReactionOperations clonedSystem = null;
         try {
             clonedSystem = (ChemicalReactionOperations) super.clone();

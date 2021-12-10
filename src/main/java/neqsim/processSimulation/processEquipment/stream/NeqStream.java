@@ -33,7 +33,7 @@ public class NeqStream extends Stream {
     }
 
     @Override
-	public Object clone() {
+    public NeqStream clone() {
 
         NeqStream clonedStream = null;
 

@@ -162,7 +162,7 @@ public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConsta
     }
 
     @Override
-    public Object clone() {
+    public FlowNode clone() {
         FlowNode clonedSystem = null;
         try {
             clonedSystem = (FlowNode) super.clone();
