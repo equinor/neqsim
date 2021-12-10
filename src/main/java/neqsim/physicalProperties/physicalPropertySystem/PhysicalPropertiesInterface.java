@@ -59,7 +59,7 @@ public interface PhysicalPropertiesInterface extends Cloneable {
 
     public void init(PhaseInterface phase, String type);
 
-    public Object clone();
+    public PhysicalPropertiesInterface clone();
 
     public void setBinaryDiffusionCoefficientMethod(int i);
 

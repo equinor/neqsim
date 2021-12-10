@@ -5,9 +5,10 @@
  */
 package neqsim.physicalProperties.physicalPropertySystem;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * @author Even Solbraa
@@ -56,7 +57,7 @@ public abstract class PhysicalProperties
     }
 
     @Override
-    public Object clone() {
+    public PhysicalProperties clone() {
         PhysicalProperties properties = null;
 
         try {

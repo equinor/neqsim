@@ -32,7 +32,7 @@ public class SampleSet implements Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public SampleSet clone() {
         SampleSet clonedSet = null;
         try {
             clonedSet = (SampleSet) super.clone();

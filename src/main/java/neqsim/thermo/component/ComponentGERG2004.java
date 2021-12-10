@@ -34,7 +34,8 @@ public class ComponentGERG2004 extends ComponentEos {
     }
 
     @Override
-    public Object clone() {
+    public ComponentGERG2004 clone() {
+
         ComponentGERG2004 clonedComponent = null;
         try {
             clonedComponent = (ComponentGERG2004) super.clone();

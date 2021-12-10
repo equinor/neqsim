@@ -2,7 +2,6 @@ package neqsim.thermo.characterization;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -20,7 +19,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public WaxCharacterise clone() {
         WaxCharacterise clonedSystem = null;
         try {
             clonedSystem = (WaxCharacterise) super.clone();
@@ -37,7 +36,7 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         double[] parameterWaxTriplePointTemperature = new double[1];
 
         @Override
-        public Object clone() {
+        public WaxBaseModel clone() {
             WaxBaseModel clonedSystem = null;
             try {
                 clonedSystem = (WaxBaseModel) super.clone();

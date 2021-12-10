@@ -49,7 +49,8 @@ public class ComponentPCSAFT extends ComponentSrk {
     }
 
     @Override
-    public Object clone() {
+    public ComponentPCSAFT clone() {
+
         ComponentPCSAFT clonedComponent = null;
         try {
             clonedComponent = (ComponentPCSAFT) super.clone();

@@ -6,7 +6,8 @@
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.viscosity;
 
 import static java.lang.Double.NaN;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -33,7 +34,7 @@ public class Viscosity extends
     }
 
     @Override
-    public Object clone() {
+    public Viscosity clone() {
         Viscosity properties = null;
 
         try {

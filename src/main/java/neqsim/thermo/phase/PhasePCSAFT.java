@@ -5,9 +5,10 @@
  */
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -61,7 +62,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public PhasePCSAFT clone() {
         PhasePCSAFT clonedPhase = null;
         try {
             clonedPhase = (PhasePCSAFT) super.clone();

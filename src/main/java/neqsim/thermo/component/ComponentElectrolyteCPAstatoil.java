@@ -34,7 +34,8 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
     }
 
     @Override
-    public Object clone() {
+    public ComponentElectrolyteCPAstatoil clone() {
+
         ComponentElectrolyteCPAstatoil clonedComponent = null;
         try {
             clonedComponent = (ComponentElectrolyteCPAstatoil) super.clone();

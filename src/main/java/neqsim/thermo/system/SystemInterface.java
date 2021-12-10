@@ -377,9 +377,20 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
     public String[] getCompNames();
 
-    public String[] getCompFormulaes();
-
-    public double getWtFraction(int phaseNumber);
+	/**
+	 * method to add true boiling point fraction
+	 *
+	 * @param componentName selected name of the component to be added
+	 * @param numberOfMoles number of moles to be added
+	 * @param molarMass     molar mass of the component in kg/mol
+	 * @param density       density of the component in g/cm3
+	 */
+	public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density);
+	 
+    public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
+            double density, double criticalTemperature, double criticalPressure, double acentricFactor);
+	 
+	public void addPlusFraction(String componentName, double numberOfMoles, double molarMass, double density);
 
     public boolean isMultiphaseWaxCheck();
 
@@ -707,7 +718,160 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
     public InterphasePropertiesInterface getInterphaseProperties();
 
-    public double initBeta();
+	public void setPhaseType(int phaseToChange, int newPhaseType);
+
+	public void setNumberOfPhases(int number);
+
+	public double getTC();
+
+	public double getPC();
+
+	public void setTC(double TC);
+
+	public void setPC(double PC);
+
+	public PhaseInterface[] getPhases();
+
+	public int getNumberOfPhases();
+
+	public double getGibbsEnergy();
+
+	/**
+	 * method to return internal energy (U) in unit J
+	 *
+	 * @return internal energy in unit Joule (J)
+	 */
+	public double getInternalEnergy();
+
+	public double getHelmholtzEnergy();
+
+	public ComponentInterface getComponent(String name);
+
+	public ComponentInterface getComponent(int number);
+
+	public double getNumberOfMoles();
+
+    public SystemInterface clone();
+
+	/**
+	 * method to set mixing rule used for the fluid
+	 *
+	 * @param type The type of mixing rule to be used for the fluid. 1 - classic
+	 *             mixing rule with all kij set to zero 2 -classic mixing rule with
+	 *             kij from NeqSim database 3- classic mixing rule with temperature
+	 *             dependent kij 4- Huron Vidal mixing rule with parameters from
+	 *             NeqSim database 7 -classic mixing rule with kij of CPA from
+	 *             NeqSim Database 9 -classicmixing rule with temperature dependent
+	 *             kij of CPA from NeqSim database 10-classic mixing rule with
+	 *             temperature and composition dependent kij of CPA from NeqSim
+	 *             database
+	 */
+	public void setMixingRule(int type);
+
+	public String[] getComponentNames();
+
+	public double getdVdPtn();
+
+	public double getdVdTpn();
+
+	/**
+	 * method to return specific heat capacity (Cp)
+	 *
+	 * @return Cp in unit J/K
+	 */
+	public double getCp();
+
+	/**
+	 * method to return specific heat capacity (Cp) in a given unit
+	 *
+	 * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
+	 *              kJ/kgK
+	 * @return      Cp in specified unit
+	 */
+	public double getCp(String unit);
+
+	/**
+	 * method to return heat capacity ratio/adiabatic index/Poisson constant
+	 *
+	 * @return kappa
+	 */
+	public double getKappa();
+
+	public void replacePhase(int repPhase, PhaseInterface newPhase);
+
+	public PhaseInterface getGasPhase();
+
+	public PhaseInterface getLiquidPhase();
+
+	/**
+	 * method to return compressibility factor of a fluid compressibility factor is
+	 * defined in EoS from PV=ZnRT where V is total volume of fluid
+	 *
+	 * @return compressibility factor Z
+	 */
+	public double getZ();
+
+	/**
+	 * method to return viscosity of a fluid
+	 *
+	 * @return viscosity in unit kg/msec
+	 */
+	public double getViscosity();
+
+	/**
+	 * method to return viscosity in a given unit
+	 *
+	 * @param  unit The unit as a string. Supported units are kg/msec, cP
+	 *              (centipoise)
+	 * @return      viscosity in specified unit
+	 */
+	public double getViscosity(String unit);
+
+	/**
+	 * method to return thermal conductivity
+	 *
+	 * @return     conductivity in unit W/mK
+	 * @deprecated use {@link #getThermalConductivity()} instead.
+	 */
+	@Deprecated
+	public double getConductivity();
+
+	/**
+	 * method to return thermal conductivity in a given unit
+	 *
+	 * @param      unit The unit as a string. Supported units are W/mK, W/cmK
+	 * @return          conductivity in specified unit
+	 * @deprecated      use {@link #getThermalConductivity(String unit)} instead.
+	 */
+	@Deprecated
+	public double getConductivity(String unit);
+
+	/**
+	 * method to return thermal conductivity
+	 *
+	 * @return conductivity in unit W/mK
+	 */
+	public double getThermalConductivity();
+
+	/**
+	 * method to return thermal conductivity in a given unit
+	 *
+	 * @param  unit The unit as a string. Supported units are W/mK, W/cmK
+	 * @return      conductivity in specified unit
+	 */
+	public double getThermalConductivity(String unit);
+
+	/**
+	 * method to return interfacial tension between two phases
+	 *
+	 * @param  phase1 phase type of phase1 as string (valid phases are gas, oil,
+	 *                aqueous)
+	 * @param  phase2 phase type of phase2 as string (valid phases are gas, oil,
+	 *                aqueous)
+	 * @return        interfacial tension with unit N/m. If one or both phases does
+	 *                not exist - the method will return NaN
+	 */
+	public double getInterfacialTension(String phase1, String phase2);
 
     public void init_x_y();
 

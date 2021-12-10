@@ -7,7 +7,6 @@ package neqsim.physicalProperties.interfaceProperties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.AdsorptionInterface;
 import neqsim.physicalProperties.interfaceProperties.solidAdsorption.PotentialTheoryAdsorption;
 import neqsim.physicalProperties.interfaceProperties.surfaceTension.FirozabadiRamleyInterfaceTension;
@@ -50,7 +49,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     @Override
-    public Object clone() {
+    public InterfaceProperties clone() {
         InterfaceProperties clonedSystem = null;
         try {
             // clonedSystem = (InterfaceProperties) suclone();

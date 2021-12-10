@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -354,12 +356,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     public void writeOLGAinpFile(String filename) {
-        Writer writer = null;
-
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-                    "C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
-                    "utf-8"));
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
+                "utf-8"))) {
 
             writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO"
                     + ",\\" + "\n");
@@ -475,11 +474,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
             }
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
     }
 }

@@ -20,8 +20,7 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 This project uses Google Java style formatting rules. 
 
-For Visual Studio Code:
-
+For Visual Studio Code:  
 Install Language Support for Java(TM) by Red Hat and add following settings to settings.json
  ```   
     "[java]": {
@@ -29,6 +28,5 @@ Install Language Support for Java(TM) by Red Hat and add following settings to s
         "editor.formatOnSave": true,
     },
     "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-//     "java.format.settings.url": "./eclipse-formatter.xml",
     "java.saveActions.organizeImports": true
 ```

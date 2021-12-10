@@ -21,7 +21,7 @@ public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
     public PhysicalPropertyMethod() {}
 
     @Override
-    public Object clone() {
+    public PhysicalPropertyMethod clone() {
         PhysicalPropertyMethod properties = null;
 
         try {

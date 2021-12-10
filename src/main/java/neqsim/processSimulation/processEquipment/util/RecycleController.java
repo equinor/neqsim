@@ -87,7 +87,6 @@ public class RecycleController implements java.io.Serializable {
     }
 
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
     }
 
     public int getCurrentPriorityLevel() {

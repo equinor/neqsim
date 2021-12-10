@@ -5,11 +5,12 @@
  */
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentPCSAFTa;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -36,7 +37,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     }
 
     @Override
-    public Object clone() {
+    public PhasePCSAFTa clone() {
         PhasePCSAFTa clonedPhase = null;
         try {
             clonedPhase = (PhasePCSAFTa) super.clone();

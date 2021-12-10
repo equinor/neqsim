@@ -54,7 +54,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public DropletFlowNode clone() {
         DropletFlowNode clonedSystem = null;
         try {
             clonedSystem = (DropletFlowNode) super.clone();

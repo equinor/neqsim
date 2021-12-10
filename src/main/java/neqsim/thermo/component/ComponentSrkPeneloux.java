@@ -49,7 +49,8 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     }
 
     @Override
-    public Object clone() {
+    public ComponentSrkPeneloux clone() {
+
         ComponentSrkPeneloux clonedComponent = null;
         try {
             clonedComponent = (ComponentSrkPeneloux) super.clone();

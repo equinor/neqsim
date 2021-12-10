@@ -99,7 +99,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     }
 
     @Override
-    public Object clone() {
+    public FluidBoundary clone() {
         FluidBoundary clonedSystem = null;
 
         try {

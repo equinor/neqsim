@@ -68,7 +68,8 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
     }
 
     @Override
-    public Object clone() {
+    public ComponentPCSAFTa clone() {
+
         ComponentPCSAFTa clonedComponent = null;
         try {
             clonedComponent = (ComponentPCSAFTa) super.clone();

@@ -25,7 +25,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
     }
 
     @Override
-    public Object clone() {
+    public PhaseSrkCPAs clone() {
         PhaseSrkCPAs clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkCPAs) super.clone();

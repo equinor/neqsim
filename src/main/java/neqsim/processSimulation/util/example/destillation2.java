@@ -1,14 +1,9 @@
 package neqsim.processSimulation.util.example;
 
-import neqsim.processSimulation.processEquipment.distillation.Condenser;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.distillation.Reboiler;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class destillation2 {
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
@@ -27,11 +22,10 @@ public class destillation2 {
         feedGas.setFlowRate(5.0, "MSm3/day");
         feedGas.setTemperature(30.0, "C");
         feedGas.setPressure(50.0, "bara");
-
-        neqsim.thermo.system.SystemInterface TEGliq2 =
-                (neqsim.thermo.system.SystemInterface) testSystem.clone();
-        TEGliq2.setMolarComposition(new double[] {0.0, 0.001, 1.0});
-
+        
+        neqsim.thermo.system.SystemInterface TEGliq2 = (neqsim.thermo.system.SystemInterface) testSystem.clone();
+        TEGliq2.setMolarComposition(new double[] { 0.0, 0.001, 1.0});
+        
         Stream TEGliq = new Stream("TEG liq", TEGliq2);
         TEGliq.setFlowRate(5000.0, "kg/hr");
         TEGliq.setTemperature(30.0, "C");
@@ -50,6 +44,5 @@ public class destillation2 {
 
         column.getGasOutStream().displayResult();
         column.getLiquidOutStream().displayResult();
-
     }
 }

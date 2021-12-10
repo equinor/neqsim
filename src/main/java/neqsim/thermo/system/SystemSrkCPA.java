@@ -74,7 +74,7 @@ public class SystemSrkCPA extends SystemSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkCPA clone() {
         SystemSrkCPA clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPA) super.clone();

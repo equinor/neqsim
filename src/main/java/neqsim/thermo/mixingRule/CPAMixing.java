@@ -7,7 +7,6 @@ package neqsim.thermo.mixingRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -34,7 +33,7 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     public CPAMixing() {}
 
     @Override
-    public Object clone() {
+    public CPAMixing clone() {
         CPAMixing clonedSystem = null;
         try {
             clonedSystem = (CPAMixing) super.clone();

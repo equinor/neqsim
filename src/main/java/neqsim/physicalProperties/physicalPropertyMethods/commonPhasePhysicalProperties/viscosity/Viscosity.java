@@ -85,7 +85,7 @@ abstract class Viscosity extends
     }
 
     @Override
-    public Object clone() {
+    public Viscosity clone() {
         Viscosity properties = null;
 
         try {

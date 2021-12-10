@@ -87,8 +87,6 @@ public class ChemEq implements java.io.Serializable {
         this.A_matrix = A_matrix;
     }
 
-    // public void
-
     public void chemSolve() {
         n_t = 0;
 
@@ -256,7 +254,6 @@ public class ChemEq implements java.io.Serializable {
         }
 
         // beregner b
-
         double[][] nAr = new double[n_mol.length][1];
 
         for (i = 0; i < n_mol.length; i++) {

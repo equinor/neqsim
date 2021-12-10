@@ -61,11 +61,15 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
         this.compName = compName;
     }
 
-    public void setRelativeMoleFractionReduction(String compName, double moleFracRatio) {
-        moleFractionReduction = true;
-        moleFractionReductionRatio = moleFracRatio;
-        this.compName = compName;
-    }
+		if (unit.equals("litre/MSm^3")) {
+			//System.out.println("density .." + thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity());
+			this.moleFrac = rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
+					/ thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
+		} else {
+			//System.out.println("error ..unit not defined..");
+		}
+		this.compName = compName;
+	}
 
     @Override
     public void run() {
@@ -86,8 +90,26 @@ public class MoleFractionControllerUtil extends ProcessEquipmentBaseClass {
         outStream.setThermoSystem(thermoSystem);
     }
 
-    @Override
-    public void displayResult() {
-        thermoSystem.display(getName());
-    }
+	@Override
+	public void run() {
+		//System.out.println("MoleFractionContollerUtil running..");
+		thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
+		if (thermoSystem.getPhase(0).hasComponent(compName)) {
+			thermoOps = new ThermodynamicOperations(thermoSystem);
+			thermoSystem.init(1);
+			double deltaFrac = moleFrac - thermoSystem.getPhase(0).getComponent(compName).getz();
+			if (moleFractionReduction) {
+				deltaFrac = (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
+			}
+			double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
+			thermoSystem.addComponent(compName, molesChange);// deltaFrac*thermoSystem.getTotalNumberOfMoles());
+			thermoOps.TPflash();
+		}
+		outStream.setThermoSystem(thermoSystem);
+	}
+
+	@Override
+	public void displayResult() {
+		thermoSystem.display(getName());
+	}
 }

@@ -9,12 +9,10 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
-
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import Jama.Matrix;
 import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
 
@@ -47,7 +45,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     public StatisticsBaseClass() {}
 
     @Override
-    public Object clone() {
+    public StatisticsBaseClass clone() {
         StatisticsBaseClass clonedClass = null;
         try {
             clonedClass = (StatisticsBaseClass) super.clone();

@@ -1,19 +1,17 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
-import java.io.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
-// import dataPresentation.
 /**
  *
  * @author esol
@@ -27,8 +25,8 @@ public class FreezeOut extends constantDutyTemperatureFlash
     public String[] FCompNames = new String[10];
     public boolean noFreezeFlash = true;
 
-    /** Creates new FugTest2 */
-    public FreezeOut() {}
+    public FreezeOut() {
+    }
 
     public FreezeOut(SystemInterface system) {
         super(system);
@@ -39,8 +37,8 @@ public class FreezeOut extends constantDutyTemperatureFlash
         SystemInterface testSystem = system;
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-        double[][] Fug = new double[12][35];
-        double[][] Fugrel = new double[2][40];
+        // double[][] Fug = new double[12][35];
+        // double[][] Fugrel = new double[2][40];
         int iterations = 0;
         double newTemp = 0, OldTemp = 0;
         double FugRatio;
@@ -193,9 +191,7 @@ public class FreezeOut extends constantDutyTemperatureFlash
 
         String myFile = "/java/" + name + ".frz";
 
-        try {
-            FileWriter file_writer = new FileWriter(myFile, true);
-            PrintWriter pr_writer = new PrintWriter(file_writer);
+        try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))) {
             pr_writer.println("name,freezeT,freezeP,z,iterations");
             pr_writer.flush();
 
@@ -213,4 +209,4 @@ public class FreezeOut extends constantDutyTemperatureFlash
             logger.error("writeFile: caught i/o exception");
         }
     }
-}// end Class
+}

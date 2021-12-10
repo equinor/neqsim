@@ -30,7 +30,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
     }
 
     @Override
-    public Object clone() {
+    public Diffusivity clone() {
         Diffusivity properties = null;
 
         try {

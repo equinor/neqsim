@@ -39,7 +39,7 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
     }
 
     @Override
-    public Object clone() {
+    public AtractiveTermBaseClass clone() {
         AtractiveTermBaseClass atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermBaseClass) super.clone();

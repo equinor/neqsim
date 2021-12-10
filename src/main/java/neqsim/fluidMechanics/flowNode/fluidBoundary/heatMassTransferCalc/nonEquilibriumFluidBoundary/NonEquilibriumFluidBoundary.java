@@ -1,6 +1,6 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -71,7 +71,7 @@ public abstract class NonEquilibriumFluidBoundary
     }
 
     @Override
-    public Object clone() {
+    public NonEquilibriumFluidBoundary clone() {
         NonEquilibriumFluidBoundary clonedSystem = null;
 
         try {

@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.util;
 
 import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
-import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -20,10 +19,10 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	String unitT = "C", unitP = "bara";
 
 	/**
-	 * Creates a new instance of MultiPhaseMeter
-	 */
+     * Creates a new instance of GORfitter
+     */
 	public GORfitter() {
-		name = "GOR fitter";
+        this.name = "GOR fitter";
 	}
 
 	public GORfitter(StreamInterface stream) {
@@ -167,6 +166,6 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	}
 
 	public void setGOR(double gOR) {
-		GOR = gOR;
+        this.GOR = gOR;
 	}
 }

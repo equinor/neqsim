@@ -91,7 +91,8 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     }
 
     @Override
-    public Object clone() {
+    public ComponentSrkCPA clone() {
+
         ComponentSrkCPA clonedComponent = null;
         try {
             clonedComponent = (ComponentSrkCPA) super.clone();

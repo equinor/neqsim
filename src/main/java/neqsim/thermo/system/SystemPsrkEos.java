@@ -38,7 +38,7 @@ public class SystemPsrkEos extends SystemSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemPsrkEos clone() {
         SystemPsrkEos clonedSystem = null;
         try {
             clonedSystem = (SystemPsrkEos) super.clone();

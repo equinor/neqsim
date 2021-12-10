@@ -2,31 +2,24 @@ package neqsim.thermo.util.parameterFitting.Procede.CH4CO2WaterMDEA;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.ResultSet;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
-
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 
 /**
  *
  * @author agrawalnj
  */
 public class CO2_MDEA_methane {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2_MDEA_methane.class);
 
-    /** Creates a new instance of Sleipneracetate */
     public CO2_MDEA_methane() {}
 
     /**
@@ -34,17 +27,6 @@ public class CO2_MDEA_methane {
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt");
-            p = new PrintStream(outfile);
-            // p.println("");
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         int i = 0, j, CH4Numb = 0, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0,
                 MDEAHpNumb = 0;
         int iter = 0;
@@ -198,9 +180,7 @@ public class CO2_MDEA_methane {
 
                 // System.out.println("Bias dev. "+aad);
 
-                try {
-                    outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
-                    p = new PrintStream(outfile);
+                try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                     // p.println(ID+" "+pressure+" "+pressureCO2+" "+" "+testSystem.getPressure()+"
                     // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx()+"
                     // "+testSystem.getPhase(1).getComponent(CH4Numb).getx()+" "+iter);
@@ -209,22 +189,14 @@ public class CO2_MDEA_methane {
                                     * testSystem.getPhase(0).getComponent(CO2Numb).getx());
                     // p.println(ID+" "+pressure+" "+" "+testSystem.getPressure()+"
                     // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
-                    p.close();
                 } catch (FileNotFoundException e) {
                     logger.error("Could not find file" + e.getMessage());
                     logger.error("Could not read from Patrick.txt" + e.getMessage());
                 }
             }
-
-            // }
         } catch (Exception e) {
             logger.error("database error " + e);
         }
-
-        // }
-        // }
-        // }
-        // }
         logger.info("Finished");
     }
 }

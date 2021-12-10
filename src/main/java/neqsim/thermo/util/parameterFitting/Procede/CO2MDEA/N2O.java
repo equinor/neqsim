@@ -1,26 +1,23 @@
 package neqsim.thermo.util.parameterFitting.Procede.CO2MDEA;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 
 /**
  *
  * @author agrawalnj
  */
 public class N2O {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(N2O.class);
 
-    /** Creates a new instance of Sleipneracetate */
     public N2O() {
     }
 
@@ -28,15 +25,6 @@ public class N2O {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt");
-            p = new PrintStream(outfile);
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
         double temperature = 313;
         double wt, x;
         wt = 0.4;
@@ -67,17 +55,14 @@ public class N2O {
             double awater = testSystem.getPhase(1).getActivityCoefficient(1);
             logger.info(aCO2);
 
-            try {
-                outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
-                p = new PrintStream(outfile);
+            try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                 p.println(temperature + " " + testSystem.getPressure() * testSystem.getPhase(0).getComponent(0).getx()
                         + " " + aCO2 + " " + aMDEA + " " + awater);
-                p.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file" + e.getMessage());
                 logger.error("Could not read from Patrick.txt" + e.getMessage());
             }
-}
-}
+        }
+        logger.info("Finished");
     }
 }

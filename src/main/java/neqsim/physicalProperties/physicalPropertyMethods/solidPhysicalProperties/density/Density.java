@@ -6,7 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.density;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -29,7 +30,7 @@ public class Density extends
     }
 
     @Override
-    public Object clone() {
+    public Density clone() {
         Density properties = null;
 
         try {

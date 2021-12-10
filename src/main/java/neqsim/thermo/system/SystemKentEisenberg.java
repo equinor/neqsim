@@ -76,7 +76,7 @@ public class SystemKentEisenberg extends SystemEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemKentEisenberg clone() {
         SystemKentEisenberg clonedSystem = null;
         try {
             clonedSystem = (SystemKentEisenberg) super.clone();

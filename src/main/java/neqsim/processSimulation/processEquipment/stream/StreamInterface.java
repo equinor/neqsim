@@ -47,7 +47,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     @Override
     public double getPressure();
 
-    public Object clone();
+    public StreamInterface clone();
 
     public void flashStream();
 

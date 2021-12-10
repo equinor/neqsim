@@ -76,7 +76,7 @@ public class SystemUNIFACpsrk extends SystemEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemUNIFACpsrk clone() {
         SystemUNIFACpsrk clonedSystem = null;
         try {
             clonedSystem = (SystemUNIFACpsrk) super.clone();

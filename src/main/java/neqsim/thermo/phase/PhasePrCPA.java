@@ -34,7 +34,7 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     }
 
     @Override
-    public Object clone() {
+    public PhasePrCPA clone() {
         PhasePrCPA clonedPhase = null;
         try {
             clonedPhase = (PhasePrCPA) super.clone();

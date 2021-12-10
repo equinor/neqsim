@@ -6,7 +6,8 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity;
 
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -31,7 +32,7 @@ abstract class Conductivity extends
     }
 
     @Override
-    public Object clone() {
+    public Conductivity clone() {
         Conductivity properties = null;
 
         try {

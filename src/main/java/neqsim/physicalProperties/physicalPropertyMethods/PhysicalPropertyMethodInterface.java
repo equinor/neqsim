@@ -11,7 +11,7 @@ package neqsim.physicalProperties.physicalPropertyMethods;
  * @version
  */
 public interface PhysicalPropertyMethodInterface extends Cloneable, java.io.Serializable {
-    public Object clone();
+    public PhysicalPropertyMethodInterface clone();
 
     public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase);
 

@@ -1,7 +1,6 @@
 package neqsim.processSimulation.processEquipment.distillation;
 
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -67,13 +66,15 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         super.run();
         temperature = mixedStream.getTemperature();
     }
-
-    public void TPflash() {}
+    
+    public void TPflash() {
+    }
 
     @Override
     public void run() {
         double enthalpy = 0.0;
-        double flowRate = ((Stream) streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
+        // double flowRate = ((Stream)
+        // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
         // ((Stream) streams.get(0)).getThermoSystem().display();
         SystemInterface thermoSystem2 = (SystemInterface) streams.get(0).getThermoSystem().clone();
 

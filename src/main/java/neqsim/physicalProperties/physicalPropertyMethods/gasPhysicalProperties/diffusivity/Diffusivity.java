@@ -31,7 +31,7 @@ public class Diffusivity extends
     }
 
     @Override
-    public Object clone() {
+    public Diffusivity clone() {
         Diffusivity properties = null;
 
         try {

@@ -3,7 +3,8 @@ package neqsim.processSimulation.processEquipment.compressor;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SurgeCurve implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -53,7 +54,6 @@ public class SurgeCurve implements java.io.Serializable {
     }
 
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
     }
 
     boolean isActive() {

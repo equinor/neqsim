@@ -6,7 +6,7 @@
 
 package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.statistics.parameterFitting.StatisticsBaseClass;
 
 /**
@@ -30,7 +30,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     @Override
-    public Object clone() {
+    public LevenbergMarquardt clone() {
         LevenbergMarquardt clonedClass = null;
         try {
             clonedClass = (LevenbergMarquardt) super.clone();

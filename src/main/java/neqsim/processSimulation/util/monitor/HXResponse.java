@@ -11,6 +11,8 @@ public class HXResponse {
 
     public Double feedTemperature2;
     public Double dischargeTemperature2;
+    
+    public Double dutyBalance;
 
     public HXResponse() {}
 
@@ -24,5 +26,7 @@ public class HXResponse {
         dischargeTemperature2 = inputHeatExchenger.getOutStream(1).getTemperature("C");
 
         HXthermalEfectiveness = inputHeatExchenger.getThermalEffectiveness();
+        
+        dutyBalance = inputHeatExchenger.getHotColdDutyBalance();
     }
 }

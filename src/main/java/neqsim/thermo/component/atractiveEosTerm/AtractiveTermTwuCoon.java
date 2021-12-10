@@ -34,7 +34,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
     // }
 
     @Override
-    public Object clone() {
+    public AtractiveTermTwuCoon clone() {
         AtractiveTermTwuCoon atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermTwuCoon) super.clone();

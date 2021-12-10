@@ -2,10 +2,11 @@ package neqsim.thermo.util.parameterFitting.Procede.Density;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
@@ -14,25 +15,12 @@ import neqsim.thermo.system.SystemInterface;
  * @author agrawalnj
  */
 public class density {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(density.class);
 
-    /** Creates a new instance of Sleipneracetate */
     public density() {}
 
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt");
-            p = new PrintStream(outfile);
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         double n1, n2, n3, x1, x2, x3, total;
         double MDEAwt = 0.44;
         double loading = 0.0;
@@ -62,15 +50,11 @@ public class density {
             testSystem.init(1);
             testSystem.initPhysicalProperties();
 
-            try {
-                outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
-                p = new PrintStream(outfile);
+            try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                 p.println(loading + " "
                         + testSystem.getPhase(1).getPhysicalProperties().getDensity() / 1000);
-                p.close();
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file");
-
                 logger.error("Could not write to Patrick.txt" + e.getMessage());
             }
         }

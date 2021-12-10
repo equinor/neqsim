@@ -81,7 +81,7 @@ public class SystemTSTEos extends SystemEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemTSTEos clone() {
         SystemTSTEos clonedSystem = null;
         try {
             clonedSystem = (SystemTSTEos) super.clone();

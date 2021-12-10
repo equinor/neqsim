@@ -21,7 +21,7 @@ public class PhaseSolidComplex extends PhaseSolid {
     }
 
     @Override
-    public Object clone() {
+    public PhaseSolidComplex clone() {
         PhaseSolidComplex clonedPhase = null;
         try {
             clonedPhase = (PhaseSolidComplex) super.clone();

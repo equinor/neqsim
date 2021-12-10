@@ -22,7 +22,7 @@ public class AtractiveTermTwu extends AtractiveTermSrk {
     }
 
     @Override
-    public Object clone() {
+    public AtractiveTermTwu clone() {
         AtractiveTermTwu atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermTwu) super.clone();

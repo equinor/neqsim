@@ -28,7 +28,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
     }
 
     @Override
-    public Object clone() {
+    public PhaseElectrolyteCPAstatoil clone() {
         PhaseElectrolyteCPAstatoil clonedPhase = null;
         try {
             clonedPhase = (PhaseElectrolyteCPAstatoil) super.clone();

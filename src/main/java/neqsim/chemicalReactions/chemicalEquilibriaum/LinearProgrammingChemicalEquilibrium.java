@@ -45,7 +45,8 @@ public class LinearProgrammingChemicalEquilibrium
     /** Creates new LinearProgrammingChemicalEquilibrium */
     public LinearProgrammingChemicalEquilibrium() {}
 
-    public LinearProgrammingChemicalEquilibrium(double[] chemRefPot,
+    @SuppressWarnings("unchecked")
+	public LinearProgrammingChemicalEquilibrium(double[] chemRefPot,
             ComponentInterface[] components, String[] elements,
             ChemicalReactionOperations operations, int phase) {
         this.operations = operations;

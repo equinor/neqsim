@@ -49,7 +49,7 @@ public interface GeometryDefinitionInterface extends Cloneable {
 
     public GeometryDefinitionInterface getGeometry();
 
-    public Object clone();
+    public GeometryDefinitionInterface clone();
 
     public double getInnerWallTemperature();
 
