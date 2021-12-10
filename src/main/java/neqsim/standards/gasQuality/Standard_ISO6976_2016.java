@@ -79,13 +79,11 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             java.sql.ResultSet dataSet = null;
 
             for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
-
                 try {
                     dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
                             + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
                     dataSet.next();
                     M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
-
                 } catch (Exception e) {
                     try {
                         dataSet.close();
