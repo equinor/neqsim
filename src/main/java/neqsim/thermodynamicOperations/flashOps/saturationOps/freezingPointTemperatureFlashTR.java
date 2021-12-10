@@ -1,17 +1,12 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:
- * 
- */
-
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
@@ -29,8 +24,8 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     public boolean CCequation = true;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
 
-    /** Creates new bubblePointFlash */
-    public freezingPointTemperatureFlashTR() {}
+    public freezingPointTemperatureFlashTR() {
+    }
 
     public freezingPointTemperatureFlashTR(boolean Freeze) {
         noFreezeFlash = Freeze;
@@ -49,9 +44,11 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
-        int iterations = 0, maxNumberOfIterations = 15000;
-        double yold = 0, ytotal = 1;
-        double deriv = 0, funk = 0, funkOld = 0, Testfunk = 0.00000000;
+        int iterations = 0;
+        // int maxNumberOfIterations = 15000;
+        // double yold = 0, ytotal = 1;
+        double deriv = 0, funk = 0, funkOld = 0;
+        // double Testfunk = 0.00000000;
         double maxTemperature = 0, minTemperature = 1e6, oldTemperature = 0.0, newTemp = 0.0;
         double SolidFug = 0.0, temp = 0.0, pres = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0,
                 dfugdt = 0.0;
@@ -188,7 +185,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
             }
             if (system.getTemperature() > maxTemperature) {
                 maxTemperature = system.getTemperature();
-                Testfunk = funk;
+                // Testfunk = funk;
             }
         }
         // }
@@ -210,9 +207,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
 
         String myFile = "/java/" + name + ".frz";
 
-        try {
-            FileWriter file_writer = new FileWriter(myFile, true);
-            PrintWriter pr_writer = new PrintWriter(file_writer);
+        try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))) {
             pr_writer.println("name,freezeT,freezeP,z,iterations");
             pr_writer.flush();
 
@@ -224,7 +219,6 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
                         + "," + Niterations);
                 pr_writer.flush();
             }
-            pr_writer.close();
         } catch (SecurityException e) {
             logger.info("writeFile: caught security exception");
         } catch (IOException ioe) {

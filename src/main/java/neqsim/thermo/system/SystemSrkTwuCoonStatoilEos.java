@@ -24,7 +24,7 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkTwuCoonStatoilEos clone() {
         SystemSrkTwuCoonStatoilEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkTwuCoonStatoilEos) super.clone();

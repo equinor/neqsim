@@ -15,7 +15,6 @@ import neqsim.thermo.phase.PhaseSrkCPAsOld;
  */
 public class SystemSrkCPAs extends SystemSrkCPA {
     private static final long serialVersionUID = 1000;
-    private int testVar2 = 5;
 
     /** Creates a thermodynamic system using the SRK equation of state. */
     // SystemSrkEos clonedSystem;
@@ -64,7 +63,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkCPAs clone() {
         SystemSrkCPAs clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPAs) super.clone();

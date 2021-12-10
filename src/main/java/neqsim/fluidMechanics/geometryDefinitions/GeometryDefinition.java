@@ -77,7 +77,7 @@ public abstract class GeometryDefinition
     }
 
     @Override
-    public Object clone() {
+    public GeometryDefinitionInterface clone() {
         GeometryDefinitionInterface clonedGeometry = null;
         try {
             clonedGeometry = (GeometryDefinition) super.clone();

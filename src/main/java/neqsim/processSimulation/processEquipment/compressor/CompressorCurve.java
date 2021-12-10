@@ -21,5 +21,6 @@ public class CompressorCurve implements java.io.Serializable {
         this.polytropicEfficiency = polytropicEfficiency;
     }
 
-    public static void main(String[] args) {}
+    public static void main(String[] args) {
+    }
 }

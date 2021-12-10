@@ -79,7 +79,7 @@ public class SystemPCSAFTa extends SystemSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemPCSAFTa clone() {
         SystemPCSAFTa clonedSystem = null;
         try {
             clonedSystem = (SystemPCSAFTa) super.clone();

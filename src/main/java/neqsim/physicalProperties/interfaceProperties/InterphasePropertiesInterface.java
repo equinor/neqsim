@@ -21,7 +21,7 @@ public interface InterphasePropertiesInterface extends Cloneable {
 
     public void setSolidAdsorbentMaterial(String material);
 
-    public Object clone();
+    public InterphasePropertiesInterface clone();
 
     public double getSurfaceTension(int i, int j);
 

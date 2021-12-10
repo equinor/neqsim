@@ -50,7 +50,7 @@ public class ComponentSrk extends ComponentEos {
     }
 
     @Override
-    public Object clone() {
+    public ComponentSrk clone() {
         ComponentSrk clonedComponent = null;
         try {
             clonedComponent = (ComponentSrk) super.clone();

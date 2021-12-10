@@ -15,8 +15,6 @@ import java.util.StringTokenizer;
  * @version
  */
 public class DataReader implements DataReaderInterface {
-    private static final long serialVersionUID = 1000;
-
     protected String fileName;
     protected ArrayList sampleObjectList = new ArrayList();
 
@@ -36,8 +34,7 @@ public class DataReader implements DataReaderInterface {
         String path = "c:/logdata/" + this.fileName + ".log";
         System.out.println(path);
 
-        try {
-            RandomAccessFile file = new RandomAccessFile(path, "r");
+        try (RandomAccessFile file = new RandomAccessFile(path, "r")) {
             long filepointer = 0;
             long length = file.length();
             for (int i = 0; i < 6; i++) {

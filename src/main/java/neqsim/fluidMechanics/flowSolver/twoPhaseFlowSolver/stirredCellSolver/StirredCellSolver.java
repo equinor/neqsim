@@ -61,7 +61,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
     }
 
     @Override
-    public Object clone() {
+    public TwoPhaseFixedStaggeredGridSolver clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();

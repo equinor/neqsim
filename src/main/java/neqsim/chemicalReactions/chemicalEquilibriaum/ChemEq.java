@@ -254,7 +254,6 @@ public class ChemEq implements java.io.Serializable {
         }
 
         // beregner b
-
         double[][] nAr = new double[n_mol.length][1];
 
         for (i = 0; i < n_mol.length; i++) {

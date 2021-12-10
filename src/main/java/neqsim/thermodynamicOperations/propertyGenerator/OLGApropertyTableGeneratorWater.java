@@ -5,10 +5,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+
 import org.apache.commons.math3.analysis.interpolation.BicubicInterpolatingFunction;
 import org.apache.commons.math3.analysis.interpolation.BicubicInterpolator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -858,8 +860,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
     }
 
     public void writeOLGAinpFile2(String filename) {
-        Writer writer = null;
-
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
          * FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/javacode_ROG55.txt" ),
@@ -869,10 +869,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try {
-            writer = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"));
-
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
 
             writer.write(pressures.length + "   " + temperatures.length + "    " + RSWTOB + "\n");
@@ -943,17 +940,10 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
             }
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
     }
 
     public void writeOLGAinpFile(String filename) {
-        Writer writer = null;
-
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
          * FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/javacode_ROG55.txt" ),
@@ -963,10 +953,7 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try {
-            writer = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(filename), "utf-8"));
-
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
 
             writer.write(pressures.length + "   " + temperatures.length + "    " + RSWTOB + "\n");
@@ -1419,7 +1406,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
                 }
                 writer.write("\n");
             }
-            writer.close();
             /*
              * for (int k = 0; k < nProps; k++) { if (names[k] == null) { continue; }
              * logger.info("Writing variable: " + names[k]); writer.write(names[k] + " (" + units[k]
@@ -1431,11 +1417,6 @@ public class OLGApropertyTableGeneratorWater extends neqsim.thermodynamicOperati
              */
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
     }
 

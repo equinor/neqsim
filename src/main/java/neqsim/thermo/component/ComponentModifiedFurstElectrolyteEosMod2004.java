@@ -25,8 +25,58 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
         /** Creates new ComponentModifiedFurstElectrolyteEosMod2004 */
         public ComponentModifiedFurstElectrolyteEosMod2004() {}
 
-        public ComponentModifiedFurstElectrolyteEosMod2004(double moles) {
-                numberOfMoles = moles;
+    /** Creates new ComponentModifiedFurstElectrolyteEosMod2004 */
+    public ComponentModifiedFurstElectrolyteEosMod2004() {
+    }
+
+    public ComponentModifiedFurstElectrolyteEosMod2004(double moles) {
+        numberOfMoles = moles;
+    }
+
+    public ComponentModifiedFurstElectrolyteEosMod2004(String component_name, double moles, double molesInPhase,
+            int compnumber) {
+        super(component_name, moles, molesInPhase, compnumber);
+        ionicCoVolume = this.getIonicDiameter();
+        if (ionicCharge != 0) {
+            setIsIon(true);
+        }
+        b = ionicCharge != 0
+                ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
+                        * Math.pow(getIonicDiameter(), 3.0)
+                        + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[1]) * 1e5
+                : b;
+        a = ionicCharge != 0 ? 1.0e-35 : a;
+        setAtractiveParameter(new neqsim.thermo.component.atractiveEosTerm.AtractiveTermSchwartzentruber(this));
+        lennardJonesMolecularDiameter = ionicCharge != 0
+                ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10
+                : lennardJonesMolecularDiameter;
+
+        // if(ionicCharge>0) stokesCationicDiameter = stokesCationicDiameter/3.0;
+    }
+
+    public ComponentModifiedFurstElectrolyteEosMod2004(int number, double TC, double PC, double M, double a,
+            double moles) {
+        super(number, TC, PC, M, a, moles);
+    }
+
+    public void initFurstParam() {
+        b = ionicCharge != 0
+                ? (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[0]
+                        * Math.pow(getIonicDiameter(), 3.0)
+                        + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParams[1]) * 1e5
+                : b;
+        lennardJonesMolecularDiameter = ionicCharge != 0
+                ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10
+                : lennardJonesMolecularDiameter;
+    }
+
+    @Override
+    public ComponentModifiedFurstElectrolyteEosMod2004 clone() {
+        ComponentModifiedFurstElectrolyteEosMod2004 clonedComponent = null;
+        try {
+            clonedComponent = (ComponentModifiedFurstElectrolyteEosMod2004) super.clone();
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
         }
 
         public ComponentModifiedFurstElectrolyteEosMod2004(String component_name, double moles,

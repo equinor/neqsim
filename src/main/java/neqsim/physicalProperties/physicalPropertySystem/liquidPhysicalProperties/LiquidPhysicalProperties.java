@@ -46,7 +46,7 @@ public class LiquidPhysicalProperties
     }
 
     @Override
-    public Object clone() {
+	public LiquidPhysicalProperties clone() {
         LiquidPhysicalProperties properties = null;
 
         try {

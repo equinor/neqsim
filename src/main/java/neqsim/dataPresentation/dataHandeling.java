@@ -86,10 +86,8 @@ public class dataHandeling {
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.####E0");
 
-        try {
-            DataOutputStream rt = new DataOutputStream(new BufferedOutputStream(
-                    new FileOutputStream(new File("c:/temp/" + filename))));
-
+        try (DataOutputStream rt = new DataOutputStream(
+                new BufferedOutputStream(new FileOutputStream(new File("c:/temp/" + filename))))) {
             for (int i = 0; i < points.length; i++) {
                 for (int j = 0; j < points[i].length; j++) {
                     rt.writeBytes(nf.format(points[i][j]) + "\t");
@@ -98,7 +96,6 @@ public class dataHandeling {
                     }
                 }
             }
-            rt.close();
         } catch (Exception e) {
             String err = e.toString();
             System.out.println(err);

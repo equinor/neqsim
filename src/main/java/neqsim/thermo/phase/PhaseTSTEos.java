@@ -26,7 +26,7 @@ public class PhaseTSTEos extends PhaseEos {
     }
 
     @Override
-    public Object clone() {
+    public PhaseTSTEos clone() {
         PhaseTSTEos clonedPhase = null;
         try {
             clonedPhase = (PhaseTSTEos) super.clone();

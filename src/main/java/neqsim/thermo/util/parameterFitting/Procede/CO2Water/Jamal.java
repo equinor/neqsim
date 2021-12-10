@@ -2,44 +2,29 @@ package neqsim.thermo.util.parameterFitting.Procede.CO2Water;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 
 /**
  *
  * @author agrawalnj
  */
 public class Jamal {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Jamal.class);
 
-    /** Creates a new instance of Sleipneracetate */
-    public Jamal() {}
+    public Jamal() {
+    }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt");
-            p = new PrintStream(outfile);
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
         double temperature, x, pressure;
 
         for (temperature = 278; temperature <= 500; temperature += 5) {
@@ -62,15 +47,11 @@ public class Jamal {
 
             // System.out.println(testSystem.getPressure()*testSystem.getPhase(0).getComponent(0).getx());
 
-            try {
-                outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
-                p = new PrintStream(outfile);
-                p.println(temperature + " " + testSystem.getPressure()
-                        * testSystem.getPhase(0).getComponent(0).getx() / x);
-                p.close();
+            try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
+                p.println(temperature + " "
+                        + testSystem.getPressure() * testSystem.getPhase(0).getComponent(0).getx() / x);
             } catch (FileNotFoundException e) {
                 logger.error("Could not find file");
-
                 logger.error("Could not read from Patrick.txt" + e.getMessage());
             }
 

@@ -40,7 +40,6 @@ public class SurgeCurve implements java.io.Serializable {
         // surge kurva er invariat i plottet trykkforhold mot redused flow
         // CCC bruker dP/ (over maaleblnde som representerer flow) dP/Ps - paa x-aksen
         // trykkforhold paa y-aksen (trykk ut/trykk inn)
-        //
     }
 
     public double getSurgeFlow(double head) {
@@ -54,7 +53,8 @@ public class SurgeCurve implements java.io.Serializable {
             return false;
     }
 
-    public static void main(String[] args) {}
+    public static void main(String[] args) {
+    }
 
     boolean isActive() {
         return isActive;

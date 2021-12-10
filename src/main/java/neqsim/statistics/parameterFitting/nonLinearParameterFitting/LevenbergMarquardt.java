@@ -30,7 +30,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     @Override
-    public Object clone() {
+    public LevenbergMarquardt clone() {
         LevenbergMarquardt clonedClass = null;
         try {
             clonedClass = (LevenbergMarquardt) super.clone();

@@ -22,7 +22,7 @@ public class PhaseWax extends PhaseSolid {
     }
 
     @Override
-    public Object clone() {
+    public PhaseWax clone() {
         PhaseWax clonedPhase = null;
         try {
             clonedPhase = (PhaseWax) super.clone();

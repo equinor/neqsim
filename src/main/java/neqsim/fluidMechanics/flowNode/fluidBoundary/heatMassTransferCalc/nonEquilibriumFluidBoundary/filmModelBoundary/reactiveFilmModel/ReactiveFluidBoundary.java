@@ -1,6 +1,6 @@
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel;
 import neqsim.thermo.system.SystemInterface;
@@ -58,7 +58,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     }
 
     @Override
-    public Object clone() {
+    public ReactiveFluidBoundary clone() {
         ReactiveFluidBoundary clonedSystem = null;
 
         try {

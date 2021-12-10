@@ -53,7 +53,7 @@ public class GasPhysicalProperties
     }
 
     @Override
-    public Object clone() {
+    public GasPhysicalProperties clone() {
         GasPhysicalProperties properties = null;
 
         try {

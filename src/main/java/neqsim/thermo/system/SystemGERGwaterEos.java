@@ -77,7 +77,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemGERGwaterEos clone() {
         SystemGERGwaterEos clonedSystem = null;
         try {
             clonedSystem = (SystemGERGwaterEos) super.clone();

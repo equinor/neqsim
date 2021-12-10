@@ -6,8 +6,9 @@
 
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -28,7 +29,7 @@ public class Density extends GasPhysicalPropertyMethod implements
     }
 
     @Override
-    public Object clone() {
+    public Density clone() {
         Density properties = null;
 
         try {

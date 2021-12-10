@@ -103,7 +103,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     }
 
     @Override
-    public Object clone() {
+    public Stream clone() {
         Stream clonedSystem = null;
         try {
             clonedSystem = (Stream) super.clone();

@@ -20,5 +20,6 @@ public class PumpCurve implements java.io.Serializable {
         this.efficiency = efficiency;
     }
 
-    public static void main(String[] args) {}
+    public static void main(String[] args) {
+    }
 }

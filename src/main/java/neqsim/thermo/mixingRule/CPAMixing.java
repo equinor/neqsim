@@ -7,7 +7,6 @@ package neqsim.thermo.mixingRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
@@ -20,6 +19,35 @@ import neqsim.util.database.NeqSimDataBase;
  * @version
  */
 public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
+
+    private static final long serialVersionUID = 1000;
+    static Logger logger = LogManager.getLogger(CPAMixing.class);
+
+    int[][] assosSchemeType = null; // 0- ER - 1 - CR1
+    double[][] cpaBetaCross = null;
+    double[][] cpaEpsCross = null;
+    final int[] charge4C = { 1, 1, -1, -1 };
+    final int[] charge1A = { -1 };
+    final int[] charge2A = { -1, -1 };
+    final int[] charge2B = { 1, -1 };
+
+    public CPAMixing() {
+    }
+
+    @Override
+    public CPAMixing clone() {
+        CPAMixing clonedSystem = null;
+        try {
+            clonedSystem = (CPAMixing) super.clone();
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
+        }
+
+        return clonedSystem;
+    }
+
+    public class CPA_Radoch_base implements CPAMixingInterface {
+
         private static final long serialVersionUID = 1000;
         static Logger logger = LogManager.getLogger(CPAMixing.class);
 

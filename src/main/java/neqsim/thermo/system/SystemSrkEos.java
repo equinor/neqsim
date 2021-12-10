@@ -93,7 +93,7 @@ public class SystemSrkEos extends SystemEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkEos clone() {
         SystemSrkEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkEos) super.clone();

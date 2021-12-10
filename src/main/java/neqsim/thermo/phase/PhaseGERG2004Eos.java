@@ -32,7 +32,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
     }
 
     @Override
-    public Object clone() {
+    public PhaseGERG2004Eos clone() {
         PhaseGERG2004Eos clonedPhase = null;
         try {
             clonedPhase = (PhaseGERG2004Eos) super.clone();

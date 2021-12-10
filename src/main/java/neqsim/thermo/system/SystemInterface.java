@@ -438,11 +438,12 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 	 * @param molarMass molar mass of the component in kg/mol
 	 * @param density density of the component in g/cm3
 	 */
-	public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
-			double density);
-
-	public void addPlusFraction(String componentName, double numberOfMoles, double molarMass,
-			double density);
+	public void addTBPfraction(String componentName, double numberOfMoles, double molarMass, double density);
+	 
+    public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
+            double density, double criticalTemperature, double criticalPressure, double acentricFactor);
+	 
+	public void addPlusFraction(String componentName, double numberOfMoles, double molarMass, double density);
 
 	public void addSalt(String componentName, double value);
 
@@ -785,7 +786,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
 	public double getNumberOfMoles();
 
-	public Object clone();
+    public SystemInterface clone();
 
 	/**
 	 * method to set mixing rule used for the fluid

@@ -86,7 +86,8 @@ public class RecycleController implements java.io.Serializable {
         priorityArray.clear();
     }
 
-    public static void main(String[] args) {}
+    public static void main(String[] args) {
+    }
 
     public int getCurrentPriorityLevel() {
         return currentPriorityLevel;

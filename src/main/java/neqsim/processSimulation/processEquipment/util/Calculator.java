@@ -1,6 +1,7 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
+
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;;
@@ -14,7 +15,8 @@ public class Calculator extends ProcessEquipmentBaseClass {
         super(name);
     }
 
-    public static void main(String[] args) {}
+    public static void main(String[] args) {
+    }
 
     public void addInputVariable(ProcessEquipmentInterface unit) {
         inputVariable.add(unit);

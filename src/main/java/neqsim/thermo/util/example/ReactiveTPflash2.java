@@ -1,9 +1,16 @@
 package neqsim.thermo.util.example;
+/*
+ * ReactiveTPflash2.java
+ *
+ * Created on 27. september 2001, 09:43
+ */
 
 import java.io.File;
 import java.io.FileWriter;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -16,13 +23,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class ReactiveTPflash2 {
     static Logger logger = LogManager.getLogger(ReactiveTPflash2.class);
 
+    /** Creates new ReactiveTPflash2 */
+    public ReactiveTPflash2() {
+    }
+
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(373.15, 10.0);
 
-        try {
-            // Opening a file
-            File outputFile = new File("c:/temp/Wt50T25P10.txt");
-            FileWriter out = new FileWriter(outputFile);
+        try (FileWriter out = new FileWriter(new File("c:/temp/Wt50T25P10.txt"))) {
             out.write("wt% = 50, T = 40 C and P = 10 bar" + "\n");
             out.write("\n");
             out.write("wt% MDEA" + "\t\t" + "x_H2O(l)" + "\t\t\t" + "x_MDEA(l)" + "\t\t\t"
@@ -102,24 +110,20 @@ public class ReactiveTPflash2 {
                         + testSystem.getPhase(0).getComponent("methane").getx());
                 out.write("\n");
             } // end for-loop
-
-            // Closing the file
             out.flush();
-            out.close();
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
-        // for(int i=0;i<23;i++){
-        // try{
-        // ops.bubblePointPressureFlash(false);
-        // // testSystem.display();
-        // //ops.TPflash();
-        // } catch(Exception e){}
-
-        // System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " +
-        // testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());
-        // testSystem.addComponent("CO2", 0.05*(6.45+1.78));
-        // }
+//        for(int i=0;i<23;i++){
+//            try{
+//                ops.bubblePointPressureFlash(false);
+//               // testSystem.display();
+//                //ops.TPflash();
+//            } catch(Exception e){}
+//
+//
+//            System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " + testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());
+//            testSystem.addComponent("CO2", 0.05*(6.45+1.78));
+//        }
     }
 }

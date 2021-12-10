@@ -45,7 +45,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     public StatisticsBaseClass() {}
 
     @Override
-    public Object clone() {
+    public StatisticsBaseClass clone() {
         StatisticsBaseClass clonedClass = null;
         try {
             clonedClass = (StatisticsBaseClass) super.clone();

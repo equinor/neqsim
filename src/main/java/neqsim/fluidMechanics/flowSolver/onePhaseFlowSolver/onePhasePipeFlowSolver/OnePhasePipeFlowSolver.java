@@ -6,7 +6,7 @@
 
 package neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.onePhasePipeFlowSolver;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
 
 /**
@@ -54,7 +54,7 @@ public class OnePhasePipeFlowSolver
     }
 
     @Override
-    public Object clone() {
+    public OnePhasePipeFlowSolver clone() {
         OnePhasePipeFlowSolver clonedSystem = null;
         try {
             clonedSystem = (OnePhasePipeFlowSolver) super.clone();

@@ -89,7 +89,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
     }
 
     @Override
-    public Object clone() {
+    public ComponentElectrolyteCPA clone() {
+
         ComponentElectrolyteCPA clonedComponent = null;
         try {
             clonedComponent = (ComponentElectrolyteCPA) super.clone();

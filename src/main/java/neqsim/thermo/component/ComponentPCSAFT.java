@@ -32,8 +32,35 @@ public class ComponentPCSAFT extends ComponentSrk {
          * Creates new System_SRK_EOS Ev liten fil ja.
          */
 
-        public ComponentPCSAFT() {
-                super();
+    /**
+     * Creates new System_SRK_EOS Ev liten fil ja.
+     */
+
+    public ComponentPCSAFT() {
+        super();
+    }
+
+    public ComponentPCSAFT(double moles) {
+        numberOfMoles = moles;
+    }
+
+    public ComponentPCSAFT(String component_name, double moles, double molesInPhase, int compnumber) {
+        super(component_name, moles, molesInPhase, compnumber);
+
+    }
+
+    public ComponentPCSAFT(int number, double TC, double PC, double M, double a, double moles) {
+        super(number, TC, PC, M, a, moles);
+    }
+
+    @Override
+    public ComponentPCSAFT clone() {
+
+        ComponentPCSAFT clonedComponent = null;
+        try {
+            clonedComponent = (ComponentPCSAFT) super.clone();
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
         }
 
         public ComponentPCSAFT(double moles) {

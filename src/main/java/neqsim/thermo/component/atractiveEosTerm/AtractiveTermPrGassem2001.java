@@ -18,9 +18,20 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
 
         protected double A = 2.0, B = 0.836, C = 0.134, D = 0.508, E = -0.0467;
 
-        /** Creates new AtractiveTermSrk */
-        public AtractiveTermPrGassem2001(ComponentEosInterface component) {
-                super(component);
+    protected double A = 2.0, B = 0.836, C = 0.134, D = 0.508, E = -0.0467;
+
+    /** Creates new AtractiveTermSrk */
+    public AtractiveTermPrGassem2001(ComponentEosInterface component) {
+        super(component);
+    }
+
+    @Override
+    public AtractiveTermPrGassem2001 clone() {
+        AtractiveTermPrGassem2001 atractiveTerm = null;
+        try {
+            atractiveTerm = (AtractiveTermPrGassem2001) super.clone();
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
         }
 
         @Override

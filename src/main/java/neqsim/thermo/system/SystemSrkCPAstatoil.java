@@ -88,7 +88,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkCPAstatoil clone() {
         SystemSrkCPAstatoil clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPAstatoil) super.clone();

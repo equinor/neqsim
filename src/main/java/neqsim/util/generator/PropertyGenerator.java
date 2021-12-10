@@ -1,11 +1,9 @@
 package neqsim.util.generator;
 
 import java.util.HashMap;
-// import org.apache.spark.sql.Dataset;
-// import org.apache.spark.sql.Row;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-// import org.apache.spark.sql.SparkSession;
 
 public class PropertyGenerator {
     double[] temperatures, pressures;
@@ -318,5 +316,6 @@ public class PropertyGenerator {
         return 0.0;
     }
 
-    static void main(String[] args) {}
+    static void main(String[] args) {
+    }
 }

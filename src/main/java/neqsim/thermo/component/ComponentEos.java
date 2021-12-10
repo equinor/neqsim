@@ -7,7 +7,6 @@ package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermCPAstatoil;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermGERG;
@@ -63,7 +62,8 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     }
 
     @Override
-    public Object clone() {
+    public ComponentEos clone() {
+
         ComponentEos clonedComponent = null;
         try {
             clonedComponent = (ComponentEos) super.clone();

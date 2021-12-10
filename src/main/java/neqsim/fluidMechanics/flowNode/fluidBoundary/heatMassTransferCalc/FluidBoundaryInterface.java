@@ -55,7 +55,7 @@ public interface FluidBoundaryInterface extends Cloneable {
 
     public double getEffectiveMassTransferCoefficient(int phase, int i);
 
-    public Object clone();
+    public FluidBoundaryInterface clone();
 
     public boolean useThermodynamicCorrections(int phase);
 

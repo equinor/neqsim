@@ -76,7 +76,7 @@ public class SystemDesmukhMather extends SystemEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemDesmukhMather clone() {
         SystemDesmukhMather clonedSystem = null;
         try {
             clonedSystem = (SystemDesmukhMather) super.clone();

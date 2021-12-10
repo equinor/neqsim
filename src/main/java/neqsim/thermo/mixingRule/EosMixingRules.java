@@ -7,14 +7,11 @@ package neqsim.thermo.mixingRule;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
@@ -56,7 +53,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     public EosMixingRules() {}
 
     @Override
-    public Object clone() {
+    public EosMixingRules clone() {
         EosMixingRules clonedSystem = null;
         try {
             clonedSystem = (EosMixingRules) super.clone();
@@ -361,7 +358,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
 
         @Override
-        public Object clone() {
+        public ClassicVdW clone() {
             ClassicVdW clonedSystem = null;
             try {
                 clonedSystem = (ClassicVdW) super.clone();
@@ -541,7 +538,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
 
         @Override
-        public Object clone() {
+        public ClassicSRK clone() {
             ClassicSRK clonedSystem = null;
             try {
                 clonedSystem = (ClassicSRK) super.clone();
@@ -651,7 +648,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
 
         @Override
-        public Object clone() {
+        public ClassicSRKT clone() {
             ClassicSRKT clonedSystem = null;
             try {
                 clonedSystem = (ClassicSRKT) super.clone();
@@ -957,7 +954,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
 
         @Override
-        public Object clone() {
+        public ClassicSRKT clone() {
             ClassicSRKT clonedSystem = null;
             try {
                 clonedSystem = (ClassicSRKT) super.clone();

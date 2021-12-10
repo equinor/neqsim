@@ -38,7 +38,7 @@ public class SystemSrkMathiasCopeman extends SystemSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkMathiasCopeman clone() {
         SystemSrkMathiasCopeman clonedSystem = null;
         try {
             clonedSystem = (SystemSrkMathiasCopeman) super.clone();

@@ -201,11 +201,37 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     public void PHflash(double Hspec) {
         this.PHflash(Hspec, 0);
     }
+    
 
-    public void PUflash(double Uspec) {
+    public void PUflash(double Uspec) {	
         operation = new neqsim.thermodynamicOperations.flashOps.PUflash(system, Uspec);
         getOperation().run();
     }
+    
+    public void PUflash(double Pspec, double Uspec, String unitPressure, String unitEnergy) {
+    	system.setPressure(Pspec, unitPressure); 
+    	PUflash(Uspec, unitEnergy);
+    }
+    
+    public void PUflash(double Uspec, String unitEnergy) {
+         double conversionFactorEntr = 1.0;
+         switch (unitEnergy) {
+             case "J":
+                 conversionFactorEntr = 1.0;
+                 break;
+             case "J/mol":
+                 conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles();
+                 break;
+             case "J/kg":
+                 conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+                 break;
+             case "kJ/kg":
+                 conversionFactorEntr =
+                         1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+                 break;
+         }
+         PUflash(Uspec / conversionFactorEntr);
+      }
 
     public void PHflash2(double Hspec, int type) {
         operation = new PHflash(system, Hspec, type);

@@ -1,6 +1,7 @@
 package processSimulation.processEquipment.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -63,5 +64,5 @@ class Compressor {
 		processOps.run();
 		System.out.println("compressor power " + compressor1.getPower() / 1e6 + " MW");
 		assertEquals(compressor1.getPower() / 1e6, 4.5621157449685);
-	}
+    }
 }

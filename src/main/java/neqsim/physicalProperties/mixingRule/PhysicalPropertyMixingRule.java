@@ -7,7 +7,6 @@ package neqsim.physicalProperties.mixingRule;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
@@ -28,7 +27,7 @@ public class PhysicalPropertyMixingRule
     public PhysicalPropertyMixingRule() {}
 
     @Override
-    public Object clone() {
+    public PhysicalPropertyMixingRule clone() {
         PhysicalPropertyMixingRule mixRule = null;
 
         try {

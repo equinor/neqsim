@@ -57,7 +57,7 @@ public abstract class PhysicalProperties
     }
 
     @Override
-    public Object clone() {
+    public PhysicalProperties clone() {
         PhysicalProperties properties = null;
 
         try {

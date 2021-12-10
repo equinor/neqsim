@@ -45,7 +45,8 @@ public class ComponentPR extends ComponentEos {
     }
 
     @Override
-    public Object clone() {
+    public ComponentPR clone() {
+
         ComponentPR clonedComponent = null;
         try {
             clonedComponent = (ComponentPR) super.clone();

@@ -49,7 +49,7 @@ public class SampleValue implements Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public SampleValue clone() {
         SampleValue clonedValue = null;
         try {
             clonedValue = (SampleValue) super.clone();

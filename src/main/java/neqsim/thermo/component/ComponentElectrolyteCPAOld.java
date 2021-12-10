@@ -5,9 +5,10 @@
  */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -81,7 +82,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
 
     @Override
-    public Object clone() {
+    public ComponentElectrolyteCPAOld clone() {
+
         ComponentElectrolyteCPAOld clonedComponent = null;
         try {
             clonedComponent = (ComponentElectrolyteCPAOld) super.clone();

@@ -26,7 +26,7 @@ abstract class Conductivity extends
     }
 
     @Override
-    public Object clone() {
+    public Conductivity clone() {
         Conductivity properties = null;
 
         try {

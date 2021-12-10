@@ -19,10 +19,29 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         private double a = -0.201158, b = 0.141599, c = 2.29528, d = -0.660145, e = 0.500315,
                         f = 2.63165;
 
-        /** Creates new AtractiveTermSrk */
-        public AtractiveTermTwuCoon(ComponentEosInterface component) {
-                super(component);
-                m = component.getAcentricFactor();
+    private double a = -0.201158, b = 0.141599, c = 2.29528, d = -0.660145, e = 0.500315, f = 2.63165;
+
+    /** Creates new AtractiveTermSrk */
+    public AtractiveTermTwuCoon(ComponentEosInterface component) {
+        super(component);
+        m = component.getAcentricFactor();
+    }
+
+    /** Creates new AtractiveTermSrk */
+//    public AtractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
+//        this(component);
+//        System.arraycopy(params,0,this.parameters,0,params.length);
+//       // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
+//       // d = 1-1.0/d;
+//    }
+
+    @Override
+    public AtractiveTermTwuCoon clone() {
+        AtractiveTermTwuCoon atractiveTerm = null;
+        try {
+            atractiveTerm = (AtractiveTermTwuCoon) super.clone();
+        } catch (Exception e) {
+            logger.error("Cloning failed.", e);
         }
 
         /** Creates new AtractiveTermSrk */

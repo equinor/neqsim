@@ -55,7 +55,7 @@ abstract class Phase implements PhaseInterface {
     public Phase(Phase phase) {}
 
     @Override
-    public Object clone() {
+    public Phase clone() {
         Phase clonedPhase = null;
 
         try {

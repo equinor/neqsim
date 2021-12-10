@@ -28,10 +28,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     // Class methods
 
     @Override
-    public Object clone() {
-        Object clonedPhase = null;
+    public PhaseEos clone() {
+        PhaseEos clonedPhase = null;
         try {
-            clonedPhase = super.clone();
+            clonedPhase = (PhaseEos) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }

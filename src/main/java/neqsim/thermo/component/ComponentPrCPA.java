@@ -68,7 +68,8 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
     }
 
     @Override
-    public Object clone() {
+    public ComponentPrCPA clone() {
+
         ComponentPrCPA clonedComponent = null;
         try {
             clonedComponent = (ComponentPrCPA) super.clone();

@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -428,13 +430,10 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     }
 
     public void writeOLGAinpFile(String filename) {
-        Writer writer = null;
-
-        try {
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-                    "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
-                    "utf-8"));
-
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(
+                        "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
+                "utf-8"))) {
             writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = THREE"
                     + ",\\" + "\n");
             writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
@@ -551,11 +550,6 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
             }
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
     }
 }
