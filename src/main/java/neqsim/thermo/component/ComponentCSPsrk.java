@@ -39,7 +39,7 @@ public class ComponentCSPsrk extends ComponentSrk {
     }
 
     @Override
-	public Object clone() {
+    public ComponentCSPsrk clone() {
 
         ComponentCSPsrk clonedComponent = null;
         try {

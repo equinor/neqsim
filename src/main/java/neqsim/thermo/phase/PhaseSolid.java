@@ -23,7 +23,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public PhaseSolid clone() {
         PhaseSolid clonedPhase = null;
         try {
             clonedPhase = (PhaseSolid) super.clone();

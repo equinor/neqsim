@@ -5,8 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -697,7 +699,6 @@ public class OLGApropertyTableGeneratorWaterEven
     }
 
     public void writeOLGAinpFile2(String filename) {
-        Writer writer = null;
 
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
@@ -708,12 +709,9 @@ public class OLGApropertyTableGeneratorWaterEven
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try {
-            writer = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream("C:/temp/temp.tab"), "utf-8"));
-
+        try (Writer writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream("C:/temp/temp.tab"), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
-
             writer.write(pressures.length + "   " + temperatures.length + "    " + RSWTOB + "\n");
             int Pcounter = 0;
             for (int i = 0; i < pressures.length; i++) {
@@ -780,21 +778,12 @@ public class OLGApropertyTableGeneratorWaterEven
                     writer.write("\n");
                 }
             }
-
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
-
     }
 
     public void writeOLGAinpFile(String filename) {
-        Writer writer = null;
-
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
          * FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/javacode_ROG55.txt" ),
@@ -804,10 +793,7 @@ public class OLGApropertyTableGeneratorWaterEven
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try {
-            writer = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"));
-
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
 
             writer.write(pressures.length + "   " + temperatures.length + "    " + RSWTOB + "\n");
@@ -1272,13 +1258,7 @@ public class OLGApropertyTableGeneratorWaterEven
              */
         } catch (IOException ex) {
             // report
-        } finally {
-            try {
-                writer.close();
-            } catch (Exception ex) {
-            }
         }
-
     }
 
     public void extrapolateTable() {

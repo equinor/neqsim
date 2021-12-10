@@ -38,7 +38,7 @@ public class PhaseHydrate extends Phase {
     }
 
     @Override
-	public Object clone() {
+    public PhaseHydrate clone() {
         PhaseHydrate clonedPhase = null;
         try {
             clonedPhase = (PhaseHydrate) super.clone();

@@ -1,21 +1,16 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
-
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashOld.class);
 
-    /** Creates new bubblePointFlash */
     public freezingPointTemperatureFlashOld() {
     }
 
@@ -27,8 +22,9 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
 	public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
-        int iterations = 0, maxNumberOfIterations = 15000;
-        double yold = 0, ytotal = 1;
+        int iterations = 0;
+        // int maxNumberOfIterations = 15000;
+        // double yold = 0, ytotal = 1;
         double deriv = 0, funk = 0, funkOld = 0;
         double maxTemperature = 0, minTemperature = 1e6, oldTemperature = 0.0;
         for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
@@ -96,5 +92,4 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
     @Override
 	public void printToFile(String name) {
     }
-
 }

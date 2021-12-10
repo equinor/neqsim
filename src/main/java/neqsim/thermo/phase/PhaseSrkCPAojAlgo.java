@@ -6,15 +6,16 @@
 
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.ojalgo.matrix.Primitive64Matrix;
+import org.ojalgo.matrix.Primitive64Matrix.Factory;
+import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.matrix.store.SparseStore;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.logging.log4j.*;
-import org.ojalgo.matrix.store.MatrixStore;
-import org.ojalgo.matrix.store.SparseStore;
-import org.ojalgo.matrix.Primitive64Matrix;
-import org.ojalgo.matrix.Primitive64Matrix.Factory;
 
 /**
  * @author  Even Solbraa
@@ -67,7 +68,7 @@ public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface 
     }
 
     @Override
-    public Object clone() {
+    public PhaseSrkCPAojAlgo clone() {
         PhaseSrkCPAojAlgo clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkCPAojAlgo) super.clone();

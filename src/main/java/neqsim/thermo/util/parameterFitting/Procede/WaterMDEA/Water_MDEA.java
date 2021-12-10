@@ -2,31 +2,24 @@ package neqsim.thermo.util.parameterFitting.Procede.WaterMDEA;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.ResultSet;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
-
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 
 /**
  *
  * @author agrawalnj
  */
 public class Water_MDEA {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Water_MDEA.class);
 
-    /** Creates a new instance of Sleipneracetate */
     public Water_MDEA() {}
 
     /**
@@ -34,16 +27,6 @@ public class Water_MDEA {
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/water_MDEA.txt");
-            p = new PrintStream(outfile);
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         double pressure = 1;
         double temperature = 25 + 273.16;
         double x1, x2;
@@ -79,9 +62,8 @@ public class Water_MDEA {
                 double hm = testSystem.getPhase(1).getEnthalpy();
                 logger.info(hm);
 
-                try {
-                    outfile = new FileOutputStream("C:/java/NeqSimSource/water_MDEA.txt", true);
-                    p = new PrintStream(outfile);
+                try (PrintStream p = new PrintStream(
+                        new FileOutputStream("C:/java/NeqSimSource/water_MDEA.txt", true))) {
                     p.println(ID + " " + pressure + " " + testSystem.getPressure());
                 } catch (FileNotFoundException e) {
                     logger.error("Could not find file", e);
@@ -90,12 +72,6 @@ public class Water_MDEA {
         } catch (Exception e) {
             logger.error("database error" + e);
         }
-
-        // }
-        // }
-        // }
-        // }
-
         logger.info("Finished");
     }
 }

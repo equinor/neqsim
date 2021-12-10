@@ -1,11 +1,5 @@
 package neqsim.processSimulation.util.monitor;
 
-import java.util.LinkedList;
-import java.util.Arrays;
-import java.util.List;
-import neqsim.thermo.system.SystemInterface;
-import org.apache.commons.lang.ArrayUtils;
-import java.util.stream.Collectors;
 import neqsim.processSimulation.processEquipment.pump.Pump;
 
 public class PumpResponse {
@@ -29,8 +23,7 @@ public class PumpResponse {
     public Double massflow;
     public Integer speed;
 
-    public PumpResponse(){
-
+    public PumpResponse() {
     }
 
 
@@ -54,6 +47,5 @@ public class PumpResponse {
         //if(inputCompressor.getAntiSurge().isActive()){
         //    internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
         //}   
-        }
-
     }
+}

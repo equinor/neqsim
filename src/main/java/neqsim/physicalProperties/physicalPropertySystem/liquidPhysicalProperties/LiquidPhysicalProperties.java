@@ -5,10 +5,11 @@
  */
 package neqsim.physicalProperties.physicalPropertySystem.liquidPhysicalProperties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.density.Density;
 import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity.SiddiqiLucasMethod;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -44,7 +45,7 @@ public class LiquidPhysicalProperties extends neqsim.physicalProperties.physical
     }
 
     @Override
-	public Object clone() {
+	public LiquidPhysicalProperties clone() {
         LiquidPhysicalProperties properties = null;
 
         try {

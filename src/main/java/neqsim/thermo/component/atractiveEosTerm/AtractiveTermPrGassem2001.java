@@ -25,7 +25,7 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
     }
 
     @Override
-	public Object clone() {
+    public AtractiveTermPrGassem2001 clone() {
         AtractiveTermPrGassem2001 atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermPrGassem2001) super.clone();

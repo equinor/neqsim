@@ -28,7 +28,7 @@ public class PipeData extends GeometryDefinition {
     }
 
     @Override
-    public Object clone() {
+    public PipeData clone() {
         PipeData clonedPipe = null;
         try {
             clonedPipe = (PipeData) super.clone();

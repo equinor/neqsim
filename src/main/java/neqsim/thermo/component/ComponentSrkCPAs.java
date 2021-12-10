@@ -35,7 +35,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     }
 
     @Override
-	public Object clone() {
+    public ComponentSrkCPAs clone() {
 
         ComponentSrkCPAs clonedComponent = null;
         try {

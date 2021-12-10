@@ -45,7 +45,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public Characterise clone() {
         Characterise clonedSystem = null;
         try {
             clonedSystem = (Characterise) super.clone();

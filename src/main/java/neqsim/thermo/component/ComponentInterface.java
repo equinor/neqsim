@@ -317,7 +317,7 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
     public double getGibbsEnergy(double temperature, double pressure);
 
-    public Object clone();
+    public ComponentInterface clone();
 
     public double getDebyeDipoleMoment();
 

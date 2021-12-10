@@ -36,7 +36,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public TwoPhaseTrayTowerFlowNode clone() {
         TwoPhaseTrayTowerFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseTrayTowerFlowNode) super.clone();

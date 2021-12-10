@@ -79,7 +79,7 @@ public class SystemGERG2004Eos extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemGERG2004Eos clone() {
         SystemGERG2004Eos clonedSystem = null;
         try {
             clonedSystem = (SystemGERG2004Eos) super.clone();

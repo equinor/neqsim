@@ -5,8 +5,10 @@
  */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -37,7 +39,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 } catch (Exception e) {
-                    logger.info("noo parameters in tempcomp -- trying comp.. " + component_name);
+                    logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
                     dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }

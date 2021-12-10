@@ -65,7 +65,7 @@ public class ReactorData extends GeometryDefinition {
     }
 
     @Override
-    public Object clone() {
+    public ReactorData clone() {
         ReactorData clonedPipe = null;
         try {
             clonedPipe = (ReactorData) super.clone();

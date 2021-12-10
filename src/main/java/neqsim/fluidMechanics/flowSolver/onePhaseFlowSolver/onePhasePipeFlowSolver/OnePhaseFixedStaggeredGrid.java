@@ -58,7 +58,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     }
 
     @Override
-	public Object clone() {
+    public OnePhaseFixedStaggeredGrid clone() {
         OnePhaseFixedStaggeredGrid clonedSystem = null;
         try {
             clonedSystem = (OnePhaseFixedStaggeredGrid) super.clone();

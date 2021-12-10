@@ -81,7 +81,7 @@ public class SystemBWRSEos extends SystemEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemBWRSEos clone() {
         SystemBWRSEos clonedSystem = null;
         try {
             clonedSystem = (SystemBWRSEos) super.clone();
@@ -96,5 +96,4 @@ public class SystemBWRSEos extends SystemEos {
 
         return clonedSystem;
     }
-
 }
