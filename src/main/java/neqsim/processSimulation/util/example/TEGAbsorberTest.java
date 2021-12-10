@@ -10,14 +10,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class TEGAbsorberTest {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
                 (273.15 + 20.0), 80.00);
         testSystem.addComponent("methane", 120.00);

@@ -9,7 +9,6 @@ import neqsim.processSimulation.processEquipment.tank.Tank;
  */
 public class LNGfilling2 {
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 - 150.3), 1.02);
         testSystem.addComponent("nitrogen", 0.1e-6);

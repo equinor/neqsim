@@ -14,11 +14,7 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author esol
  */
 public class propaneTwoStageCoolingCycle {
-
-    private static final long serialVersionUID = 1000;
-
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
         // testSystem.addComponent("ethane", 10.0, "kg/hr");
         testSystem.addComponent("propane", 4759.0, "kg/hr");
@@ -67,15 +63,11 @@ public class propaneTwoStageCoolingCycle {
         operations.add(stream_1);
         operations.add(JTvalve1);
         operations.add(medPresSep);
-
         operations.add(JTvalve2);
-
         operations.add(lowHStream);
-
         operations.add(cooler2);
         operations.add(stream_3);
         operations.add(lowHStream2);
-
         operations.add(compressor1);
         operations.add(propMixer);
         operations.add(compressor2);
@@ -126,6 +118,5 @@ public class propaneTwoStageCoolingCycle {
         System.out.println("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
         System.out.println("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");
         // System.out.println("heater duty " + heater.getEnergyInput());
-
     }
 }

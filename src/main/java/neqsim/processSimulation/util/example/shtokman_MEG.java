@@ -6,14 +6,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class shtokman_MEG {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0),
                 130.00);
         testSystem.addComponent("methane", 1.0);

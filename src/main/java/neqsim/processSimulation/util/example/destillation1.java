@@ -7,14 +7,10 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class destillation1 {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 63.0), 16.00);
         // testSystem.addComponent("methane", 1.00);
         testSystem.addComponent("ethane", 0.002);

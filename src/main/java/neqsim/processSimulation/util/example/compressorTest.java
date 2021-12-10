@@ -9,14 +9,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class compressorTest {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
         testSystem.addComponent("CO2", 1800.00);
         testSystem.addComponent("water", 1200.0);
@@ -52,6 +48,5 @@ public class compressorTest {
         operations.run();
 
         operations.displayResult();
-
     }
 }
