@@ -2,7 +2,6 @@ package neqsim.processSimulation.processSystem;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 /*
@@ -12,9 +11,11 @@ import java.io.ObjectOutputStream;
  */
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.processSimulation.conditionMonitor.ConditionMonitor;
 import neqsim.processSimulation.costEstimation.CostEstimateBaseClass;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
@@ -51,9 +52,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     private CostEstimateBaseClass costEstimator = null;
     static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
-    /**
-     * Creates new thermoOps
-     */
     public ProcessSystem() {
         systemMechanicalDesign = new SystemMechanicalDesign(this);
         costEstimator = new CostEstimateBaseClass(this);
@@ -89,7 +87,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             } else if (getUnitOperations().get(i).getName().equals(name)) {
                 return getUnitOperations().get(i);
             }
-
         }
         return null;
     }
@@ -125,7 +122,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             } else if (getUnitOperations().get(i).getName().equals(name)) {
                 return i;
             }
-
         }
         return 0;
     }
@@ -242,7 +238,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     public void run() {
         boolean isConverged = true;
         boolean hasResycle = false;
-        boolean hasAdjuster = false;
+        // boolean hasAdjuster = false;
         int iter = 0;
 
         // Initializing recycle controller
@@ -253,7 +249,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
                 recycleController.addRecycle((Recycle) unitOperations.get(i));
             }
             if (unitOperations.get(i).getClass().getSimpleName().equals("Adjuster")) {
-                hasAdjuster = true;
+                // hasAdjuster = true;
             }
         }
         recycleController.init();
@@ -266,7 +262,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
                     try {
                         ((Runnable) unitOperations.get(i)).run();
                     } catch (Exception e) {
-                        String error = e.getMessage();
+                        // String error = e.getMessage();
                         e.printStackTrace();
                     }
                 if (unitOperations.get(i).getClass().getSimpleName().equals("Recycle")
@@ -274,7 +270,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
                     try {
                         ((Runnable) unitOperations.get(i)).run();
                     } catch (Exception e) {
-                        String error = e.getMessage();
+                        // String error = e.getMessage();
+                        e.printStackTrace();
                     }
                 }
             }
@@ -359,9 +356,7 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             signalDB[timeStepNumber][3 * i + 2] =
                     Double.toString(measurementDevices.get(i).getMeasuredValue());
             signalDB[timeStepNumber][3 * i + 3] = measurementDevices.get(i).getUnit();
-
         }
-
     }
 
     public int size() {
@@ -373,7 +368,6 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     public void displayResult() {
-
         try {
             thisThread.join();
         } catch (Exception e) {
@@ -405,19 +399,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
                 System.out.println(
                         "Online value: " + measurementDevices.get(i).getOnlineSignal().getValue()
                                 + " " + measurementDevices.get(i).getOnlineSignal().getUnit());
-
         }
     }
 
     public void save(String filePath) {
-
-        ObjectOutputStream out = null;
-        InputStream in = null;
-        try {
-            FileOutputStream fout = new FileOutputStream(filePath, false);
-            out = new ObjectOutputStream(fout);
+        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
             out.writeObject(this);
-            out.close();
             logger.info("process file saved to:  " + filePath);
         } catch (Exception e) {
             logger.error(e.toString());
@@ -426,13 +413,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     public static ProcessSystem open(String filePath) {
-
-        FileInputStream streamIn = null;
-        InputStream in = null;
         ProcessSystem tempSystem = null;
-        try {
-            streamIn = new FileInputStream(filePath);
-            ObjectInputStream objectinputstream = new ObjectInputStream(streamIn);
+        try (ObjectInputStream objectinputstream = new ObjectInputStream(new FileInputStream(filePath))) {
             tempSystem = (ProcessSystem) objectinputstream.readObject();
             // logger.info("process file open ok: " + filePath);
         } catch (Exception e) {
@@ -605,5 +587,4 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
      * 
      * public Report getReport(){ return this.new Report(); }
      */
-
 }

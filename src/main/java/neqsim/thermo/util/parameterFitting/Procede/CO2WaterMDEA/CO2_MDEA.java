@@ -2,31 +2,24 @@ package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.ResultSet;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
-
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 
 /**
  *
  * @author agrawalnj
  */
 public class CO2_MDEA {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2_MDEA.class);
 
-    /** Creates a new instance of Sleipneracetate */
     public CO2_MDEA() {}
 
     /**
@@ -34,17 +27,6 @@ public class CO2_MDEA {
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt");
-            p = new PrintStream(outfile);
-            // p.println("");
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         int i = 0, j, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0;
         double ID, pressure, temperature, x1, x2, x3, bias;
 
@@ -131,12 +113,9 @@ public class CO2_MDEA {
                 // WaterNumb));
                 // logger.info("Pressure CO2
                 // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
-                try {
-                    outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
-                    p = new PrintStream(outfile);
+                try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                     p.println(ID + " " + pressure + " " + testSystem.getPressure()
                             * testSystem.getPhase(0).getComponent(CO2Numb).getx());
-                    p.close();
                 } catch (FileNotFoundException e) {
                     logger.error("Could not find file" + e.getMessage());
                 }
