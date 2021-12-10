@@ -29,7 +29,7 @@ public class PhaseSrkEos extends PhaseEos {
     }
 
     @Override
-	public Object clone() {
+    public PhaseSrkEos clone() {
         PhaseSrkEos clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkEos) super.clone();

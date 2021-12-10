@@ -8,7 +8,6 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
 
 /**
@@ -63,7 +62,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     }
 
     @Override
-    public Object clone() {
+    public PhaseModifiedFurstElectrolyteEos clone() {
         PhaseModifiedFurstElectrolyteEos clonedPhase = null;
         try {
             clonedPhase = (PhaseModifiedFurstElectrolyteEos) super.clone();

@@ -20,7 +20,7 @@ public abstract class BaseFunction implements FunctionInterface {
     public BaseFunction() {}
 
     @Override
-    public Object clone() {
+    public BaseFunction clone() {
         BaseFunction clonedClass = null;
         try {
             clonedClass = (BaseFunction) super.clone();

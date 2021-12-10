@@ -28,10 +28,10 @@ public class AtractiveTermPrDelft1998 extends AtractiveTermPr1978 {
     }
 
     @Override
-	public Object clone() {
-        AtractiveTermPr atractiveTerm = null;
+    public AtractiveTermPrDelft1998 clone() {
+        AtractiveTermPrDelft1998 atractiveTerm = null;
         try {
-            atractiveTerm = (AtractiveTermPr) super.clone();
+            atractiveTerm = (AtractiveTermPrDelft1998) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }

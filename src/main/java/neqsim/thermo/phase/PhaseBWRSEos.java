@@ -6,8 +6,9 @@
 
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentBWRS;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -29,7 +30,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public PhaseBWRSEos clone() {
         PhaseBWRSEos clonedPhase = null;
         try {
             clonedPhase = (PhaseBWRSEos) super.clone();

@@ -39,7 +39,7 @@ public class SystemSrkTwuCoonEos extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemSrkTwuCoonEos clone() {
         SystemSrkTwuCoonEos clonedSystem = null;
         try {
             clonedSystem = (SystemSrkTwuCoonEos) super.clone();

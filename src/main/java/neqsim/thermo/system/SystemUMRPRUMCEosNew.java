@@ -30,14 +30,12 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
         attractiveTermNumber = 13;
     }
 
-
-
     public SystemUMRPRUMCEosNew(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
     }
 
     @Override
-	public Object clone() {
+    public SystemUMRPRUMCEos clone() {
         SystemUMRPRUMCEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUMCEosNew) super.clone();
@@ -47,5 +45,4 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
         return clonedSystem;
     }
-
 }

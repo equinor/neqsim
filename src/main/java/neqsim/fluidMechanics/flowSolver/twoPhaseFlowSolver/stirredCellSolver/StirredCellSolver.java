@@ -6,7 +6,7 @@
 
 package neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.stirredCellSolver;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhaseFixedStaggeredGridSolver;
 import neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.twoPhasePipeFlowSolver.TwoPhasePipeFlowSolver;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
@@ -60,7 +60,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
     }
 
     @Override
-	public Object clone() {
+    public TwoPhaseFixedStaggeredGridSolver clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
         try {
             clonedSystem = (TwoPhaseFixedStaggeredGridSolver) super.clone();

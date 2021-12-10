@@ -68,7 +68,7 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     }
 
     @Override
-    public Object clone() {
+    public ComponentModifiedFurstElectrolyteEos clone() {
         ComponentModifiedFurstElectrolyteEos clonedComponent = null;
         try {
             clonedComponent = (ComponentModifiedFurstElectrolyteEos) super.clone();

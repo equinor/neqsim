@@ -5,8 +5,9 @@
  */
 package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -47,7 +48,7 @@ public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPro
     }
 
     @Override
-	public Object clone() {
+    public GasPhysicalProperties clone() {
         GasPhysicalProperties properties = null;
 
         try {

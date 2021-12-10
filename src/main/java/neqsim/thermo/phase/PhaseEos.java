@@ -5,11 +5,11 @@
  */
 package neqsim.thermo.phase;
 
-import neqsim.MathLib.nonLinearSolver.newtonRhapson;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -29,10 +29,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     // Class methods
 
     @Override
-    public Object clone() {
-    	Object clonedPhase = null;
+    public PhaseEos clone() {
+        PhaseEos clonedPhase = null;
         try {
-            clonedPhase = super.clone();
+            clonedPhase = (PhaseEos) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }

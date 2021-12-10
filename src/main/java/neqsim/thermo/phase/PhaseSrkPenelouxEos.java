@@ -20,11 +20,10 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
     /** Creates new PhaseSrkEos */
     public PhaseSrkPenelouxEos() {
         super();
-
     }
 
     @Override
-	public Object clone() {
+    public PhaseSrkPenelouxEos clone() {
         PhaseSrkPenelouxEos clonedPhase = null;
         try {
             clonedPhase = (PhaseSrkPenelouxEos) super.clone();

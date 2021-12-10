@@ -20,7 +20,7 @@ public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
     }
 
     @Override
-    public Object clone() {
+    public LevenbergMarquardtAbsDev clone() {
         LevenbergMarquardtAbsDev clonedClass = null;
         try {
             clonedClass = (LevenbergMarquardtAbsDev) super.clone();
