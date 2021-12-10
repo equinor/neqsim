@@ -25,7 +25,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     }
 
     @Override
-	public Object clone() {
+    public onePhasePipeFlowNode clone() {
         onePhasePipeFlowNode clonedSystem = null;
         try {
             clonedSystem = (onePhasePipeFlowNode) super.clone();

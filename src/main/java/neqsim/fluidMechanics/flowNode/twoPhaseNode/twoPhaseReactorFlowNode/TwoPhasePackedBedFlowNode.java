@@ -35,7 +35,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public TwoPhasePackedBedFlowNode clone() {
         TwoPhasePackedBedFlowNode clonedSystem = null;
         try {
             clonedSystem = (TwoPhasePackedBedFlowNode) super.clone();

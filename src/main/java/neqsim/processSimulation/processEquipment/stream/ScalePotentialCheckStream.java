@@ -37,7 +37,7 @@ public class ScalePotentialCheckStream extends Stream {
     }
 
     @Override
-    public Object clone() {
+    public ScalePotentialCheckStream clone() {
         ScalePotentialCheckStream clonedSystem = null;
         try {
             clonedSystem = (ScalePotentialCheckStream) super.clone();

@@ -7,7 +7,6 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
@@ -30,10 +29,10 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     // Class methods
 
     @Override
-    public Object clone() {
-    	Object clonedPhase = null;
+    public PhaseEos clone() {
+        PhaseEos clonedPhase = null;
         try {
-            clonedPhase = super.clone();
+            clonedPhase = (PhaseEos) super.clone();
         } catch (Exception e) {
             logger.error("Cloning failed.", e);
         }

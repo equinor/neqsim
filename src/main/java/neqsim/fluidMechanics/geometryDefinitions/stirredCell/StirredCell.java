@@ -24,7 +24,7 @@ public class StirredCell extends GeometryDefinition {
     }
 
     @Override
-    public Object clone() {
+    public StirredCell clone() {
         StirredCell clonedPipe = null;
         try {
             clonedPipe = (StirredCell) super.clone();

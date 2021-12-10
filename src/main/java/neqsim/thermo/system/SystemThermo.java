@@ -177,7 +177,7 @@ abstract class SystemThermo implements SystemInterface {
     }
 
     @Override
-    public Object clone() {
+    public SystemThermo clone() {
         SystemThermo clonedSystem = null;
         try {
             clonedSystem = (SystemThermo) super.clone();

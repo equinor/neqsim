@@ -64,7 +64,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
     }
 
     @Override
-    public Object clone() {
+    public SystemSrkCPAs clone() {
         SystemSrkCPAs clonedSystem = null;
         try {
             clonedSystem = (SystemSrkCPAs) super.clone();

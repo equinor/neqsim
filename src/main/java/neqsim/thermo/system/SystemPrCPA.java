@@ -73,7 +73,7 @@ public class SystemPrCPA extends SystemPrEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemPrCPA clone() {
         SystemPrCPA clonedSystem = null;
         try {
             clonedSystem = (SystemPrCPA) super.clone();

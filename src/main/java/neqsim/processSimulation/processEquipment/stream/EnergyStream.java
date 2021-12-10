@@ -8,7 +8,7 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     }
 
     @Override
-    public Object clone() {
+    public EnergyStream clone() {
         EnergyStream clonedStream = null;
         try {
             clonedStream = (EnergyStream) super.clone();

@@ -49,7 +49,7 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemUMRPRUMCEos clone() {
         SystemUMRPRUMCEos clonedSystem = null;
         try {
             clonedSystem = (SystemUMRPRUMCEos) super.clone();

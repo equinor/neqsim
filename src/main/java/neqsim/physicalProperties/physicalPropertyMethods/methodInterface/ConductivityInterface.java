@@ -12,5 +12,5 @@ public interface ConductivityInterface extends ThermodynamicConstantsInterface,
     public double calcConductivity();
 
     @Override
-    public Object clone();
+    public ConductivityInterface clone();
 }

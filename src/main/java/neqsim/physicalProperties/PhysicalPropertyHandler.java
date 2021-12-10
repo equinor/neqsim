@@ -130,7 +130,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
 
     @Override
-    public Object clone() {
+    public PhysicalPropertyHandler clone() {
         PhysicalPropertyHandler clonedHandler = null;
 
         try {

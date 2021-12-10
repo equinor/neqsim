@@ -31,5 +31,5 @@ public interface AtractiveTermInterface extends Cloneable, java.io.Serializable 
 
     public void setParameters(int i, double val);
 
-    public Object clone();
+    public AtractiveTermInterface clone();
 }

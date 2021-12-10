@@ -5,12 +5,13 @@
  */
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentElectrolyteCPA;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -41,7 +42,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos imp
     }
 
     @Override
-	public Object clone() {
+    public PhaseElectrolyteCPAOld clone() {
         PhaseElectrolyteCPAOld clonedPhase = null;
         try {
             clonedPhase = (PhaseElectrolyteCPAOld) super.clone();

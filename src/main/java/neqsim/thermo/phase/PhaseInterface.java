@@ -468,7 +468,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
     public double getGibbsEnergy();
 
-    public Object clone();
+    public PhaseInterface clone();
 
     /**
      * method to get temperature

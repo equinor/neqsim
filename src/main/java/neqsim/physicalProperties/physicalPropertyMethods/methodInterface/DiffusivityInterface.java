@@ -23,5 +23,5 @@ public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
     public void calcEffectiveDiffusionCoeffisients();
 
     @Override
-    public Object clone();
+    public DiffusivityInterface clone();
 }

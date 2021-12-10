@@ -44,7 +44,7 @@ public class ComponentRK extends ComponentEos {
     }
 
     @Override
-	public Object clone() {
+    public ComponentRK clone() {
 
         ComponentRK clonedComponent = null;
         try {
