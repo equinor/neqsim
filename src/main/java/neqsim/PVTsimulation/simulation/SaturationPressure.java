@@ -53,7 +53,6 @@ public class SaturationPressure extends BasePVTsimulation {
         saturationPressure = calcSaturationPressure();
     }
 
-    @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
@@ -82,10 +81,9 @@ public class SaturationPressure extends BasePVTsimulation {
         SimulationInterface satPresSim = new SaturationPressure(tempSystem);
         satPresSim.run();
         satPresSim.getThermoSystem().display();
-
-        double saturationPressure = 350.0;
-        double saturationTemperature = 273.15 + 80;
         /*
+         * double saturationPressure = 350.0;
+         * double saturationTemperature = 273.15 + 80;
          * 
          * TuningInterface tuning = new TuneToSaturation(satPresSim);
          * tuning.setSaturationConditions(saturationTemperature, saturationPressure); tuning.run();

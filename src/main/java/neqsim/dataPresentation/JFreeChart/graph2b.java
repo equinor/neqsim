@@ -16,8 +16,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 /**
- *
- * @author Even Solbraa
+ * @author  Even Solbraa
  * @version
  */
 public class graph2b extends javax.swing.JFrame {
@@ -166,12 +165,12 @@ public class graph2b extends javax.swing.JFrame {
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
-			public void windowClosing(java.awt.event.WindowEvent evt) {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
                 exitForm(evt);
             }
 
             @Override
-			public void windowClosed(java.awt.event.WindowEvent evt) {
+            public void windowClosed(java.awt.event.WindowEvent evt) {
                 exit(evt);
             }
         });
@@ -195,19 +194,19 @@ public class graph2b extends javax.swing.JFrame {
     }// GEN-LAST:event_buttonclick
 
     public CategoryDataset createCategoryDataSource() {
-
-        Number[][] data = new Integer[][] { { new Integer(10), new Integer(4), new Integer(15), new Integer(14) },
-                { new Integer(5), new Integer(7), new Integer(14), new Integer(3) },
-                { new Integer(6), new Integer(17), new Integer(12), new Integer(7) },
-                { new Integer(7), new Integer(15), new Integer(11), new Integer(0) },
-                { new Integer(8), new Integer(6), new Integer(10), new Integer(9) },
-                { new Integer(9), new Integer(8), new Integer(8), new Integer(6) },
-                { new Integer(10), new Integer(9), new Integer(7), new Integer(7) },
-                { new Integer(11), new Integer(13), new Integer(9), new Integer(9) },
-                { new Integer(3), new Integer(7), new Integer(11), new Integer(10) } };
-
+        /*
+        Number[][] data = new Integer[][] {
+                { Integer.valueOf(10), Integer.valueOf(4), Integer.valueOf(15), Integer.valueOf(14) },
+                { Integer.valueOf(5), Integer.valueOf(7), Integer.valueOf(14), Integer.valueOf(3) },
+                { Integer.valueOf(6), Integer.valueOf(17), Integer.valueOf(12), Integer.valueOf(7) },
+                { Integer.valueOf(7), Integer.valueOf(15), Integer.valueOf(11), Integer.valueOf(0) },
+                { Integer.valueOf(8), Integer.valueOf(6), Integer.valueOf(10), Integer.valueOf(9) },
+                { Integer.valueOf(9), Integer.valueOf(8), Integer.valueOf(8), Integer.valueOf(6) },
+                { Integer.valueOf(10), Integer.valueOf(9), Integer.valueOf(7), Integer.valueOf(7) },
+                { Integer.valueOf(11), Integer.valueOf(13), Integer.valueOf(9), Integer.valueOf(9) },
+                { Integer.valueOf(3), Integer.valueOf(7), Integer.valueOf(11), Integer.valueOf(10) } };
+        */
         return null;// new DefaultCategoryDataset(data);
-
     }
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_jButton1ActionPerformed
@@ -234,7 +233,6 @@ public class graph2b extends javax.swing.JFrame {
      * Getter for property chart.
      * 
      * @return Value of property chart.
-     *
      */
     public JFreeChart getChart() {
         return chart;
@@ -244,7 +242,6 @@ public class graph2b extends javax.swing.JFrame {
      * Setter for property chart.
      * 
      * @param chart New value of property chart.
-     *
      */
     public void setChart(JFreeChart chart) {
         this.chart = chart;
@@ -257,5 +254,4 @@ public class graph2b extends javax.swing.JFrame {
     private javax.swing.JTextPane jTextPane1;
     private javax.swing.JPanel jPanel1;
     // End of variables declaration//GEN-END:variables
-
 }

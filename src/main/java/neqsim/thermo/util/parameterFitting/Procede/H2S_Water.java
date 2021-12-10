@@ -1,28 +1,22 @@
 package neqsim.thermo.util.parameterFitting.Procede;
 
 import java.sql.ResultSet;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
-
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 
 /**
  *
  * @author agrawalnj
  */
 public class H2S_Water {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(H2S_Water.class);
 
-    /** Creates a new instance of Sleipneracetate */
     public H2S_Water() {}
 
     /**

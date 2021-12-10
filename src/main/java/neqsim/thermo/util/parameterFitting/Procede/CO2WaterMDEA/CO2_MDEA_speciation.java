@@ -2,30 +2,22 @@ package neqsim.thermo.util.parameterFitting.Procede.CO2WaterMDEA;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * Sleipneracetate.java
- *
- * Created on August 6, 2004, 11:41 AM
- */
 /**
  *
  * @author agrawalnj
  */
 public class CO2_MDEA_speciation {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2_MDEA_speciation.class);
 
-    /**
-     * Creates a new instance of Sleipneracetate
-     */
     public CO2_MDEA_speciation() {}
 
     /**
@@ -33,26 +25,6 @@ public class CO2_MDEA_speciation {
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
-        FileOutputStream outfile;
-        PrintStream p;
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt");
-            p = new PrintStream(outfile);
-            p.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
-        FileOutputStream outfile1;
-        PrintStream p1;
-        try {
-            outfile1 = new FileOutputStream("C:/java/NeqSimSource/activity.txt");
-            p1 = new PrintStream(outfile1);
-            p1.close();
-        } catch (IOException e) {
-            logger.error("Could not find file");
-        }
-
         int i = 0, j, CO2Numb = 0, WaterNumb = 0, MDEANumb = 0, HCO3Numb = 0, MDEAHpNumb = 0,
                 CO3Numb = 0, OHNumb = 0;
         double nCO2, nMDEA, nHCO3, nCO3, nMDEAp, nOH;
@@ -159,27 +131,20 @@ public class CO2_MDEA_speciation {
         aOH = testSystem.getPhase(1).getActivityCoefficient(OHNumb, WaterNumb);
         aCO3 = testSystem.getPhase(1).getActivityCoefficient(CO3Numb, WaterNumb);
 
-        try {
-            outfile = new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true);
-            p = new PrintStream(outfile);
+        try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
             p.println(loading + " " + testSystem.getPressure() + " "
                     + testSystem.getPressure() * testSystem.getPhase(0).getComponent(CO2Numb).getx()
                     + " " + nCO2 + " " + nMDEA + " " + nHCO3 + " " + nMDEAp + " " + nCO3 + " "
                     + nOH);
             // p.println(loading+" "+testSystem.getPressure()+"
             // "+testSystem.getPressure()*testSystem.getPhase(0).getComponent(CO2Numb).getx());
-            p.close();
         } catch (FileNotFoundException e) {
             logger.error("Could not find file");
-
             logger.error("Could not read from Patrick.txt" + e.getMessage());
         }
-        try {
-            outfile1 = new FileOutputStream("C:/java/NeqSimSource/activity.txt", true);
-            p1 = new PrintStream(outfile1);
-            p1.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " "
+        try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/activity.txt", true))) {
+            p.println(loading + " " + awater + " " + aCO2 + " " + aMDEA + " " + aHCO3 + " "
                     + aMDEAp + " " + aCO3 + " " + aOH);
-            p1.close();
         } catch (FileNotFoundException e) {
             logger.error("Could not find file");
             logger.error("Could not read from Patrick.txt" + e.getMessage());
@@ -190,8 +155,6 @@ public class CO2_MDEA_speciation {
         } else {
             loading += 0.1;
         }
-
-        // }
         logger.info("Finished");
     }
 }

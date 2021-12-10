@@ -35,7 +35,7 @@ public class EquilibriumStream extends Stream {
     }
 
     @Override
-	public Object clone() {
+    public EquilibriumStream clone() {
         EquilibriumStream clonedStream = null;
 
         try {

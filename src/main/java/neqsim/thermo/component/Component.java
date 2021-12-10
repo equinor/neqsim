@@ -426,7 +426,7 @@ abstract class Component implements ComponentInterface {
     }
 
     @Override
-    public Object clone() {
+    public Component clone() {
 
         Component clonedComponent = null;
         try {

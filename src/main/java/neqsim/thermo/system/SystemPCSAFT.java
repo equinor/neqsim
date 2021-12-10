@@ -5,10 +5,11 @@
  */
 package neqsim.thermo.system;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePCSAFTRahmat;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import org.apache.logging.log4j.*;
 
 /**
  *
@@ -83,7 +84,7 @@ public class SystemPCSAFT extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemPCSAFT clone() {
         SystemPCSAFT clonedSystem = null;
         try {
             clonedSystem = (SystemPCSAFT) super.clone();

@@ -77,7 +77,7 @@ public class SystemCSPsrkEos extends SystemSrkEos {
     }
 
     @Override
-	public Object clone() {
+    public SystemCSPsrkEos clone() {
         SystemCSPsrkEos clonedSystem = null;
         try {
             clonedSystem = (SystemCSPsrkEos) super.clone();
@@ -87,5 +87,4 @@ public class SystemCSPsrkEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

@@ -53,7 +53,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     }
 
     @Override
-    public Object clone() {
+    public BubbleFlowNode clone() {
         BubbleFlowNode clonedSystem = null;
         try {
             clonedSystem = (BubbleFlowNode) super.clone();

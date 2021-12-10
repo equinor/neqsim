@@ -12,5 +12,5 @@ public interface ViscosityInterface
     public double getPureComponentViscosity(int i);
 
     @Override
-    public Object clone();
+    public ViscosityInterface clone();
 }

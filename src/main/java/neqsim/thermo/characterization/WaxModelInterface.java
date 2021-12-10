@@ -7,7 +7,7 @@ public interface WaxModelInterface extends java.io.Serializable, Cloneable {
 
     public void addTBPWax();
 
-    public Object clone();
+    public WaxModelInterface clone();
 
     public void setWaxParameters(double[] parameters);
 

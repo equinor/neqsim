@@ -49,7 +49,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
     }
 
     @Override
-	public Object clone() {
+    public AtractiveTermCPAstatoil clone() {
         AtractiveTermCPAstatoil atractiveTerm = null;
         try {
             atractiveTerm = (AtractiveTermCPAstatoil) super.clone();

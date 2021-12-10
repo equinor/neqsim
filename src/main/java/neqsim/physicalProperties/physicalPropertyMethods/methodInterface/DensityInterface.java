@@ -12,5 +12,5 @@ public interface DensityInterface extends ThermodynamicConstantsInterface,
     public double calcDensity();
 
     @Override
-    public Object clone();
+    public DensityInterface clone();
 }

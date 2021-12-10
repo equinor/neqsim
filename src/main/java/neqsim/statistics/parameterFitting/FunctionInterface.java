@@ -29,7 +29,7 @@ public interface FunctionInterface extends Cloneable {
 
     public void setInitialGuess(double[] guess);
 
-    public Object clone();
+    public FunctionInterface clone();
 
     public void setThermodynamicSystem(SystemInterface system);
 
