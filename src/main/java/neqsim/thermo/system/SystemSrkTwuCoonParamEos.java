@@ -54,5 +54,4 @@ public class SystemSrkTwuCoonParamEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

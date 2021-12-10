@@ -54,5 +54,4 @@ public class SystemSrkSchwartzentruberEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

@@ -19,5 +19,5 @@ public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
 
     public void initMixingRules(PhaseInterface phase);
 
-    public Object clone();
+    public PhysicalPropertyMixingRuleInterface clone();
 }

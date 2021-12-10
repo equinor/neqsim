@@ -820,7 +820,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
 	public double getNumberOfMoles();
 
-	public Object clone();
+    public SystemInterface clone();
 
 	/**
 	 * method to set mixing rule used for the fluid

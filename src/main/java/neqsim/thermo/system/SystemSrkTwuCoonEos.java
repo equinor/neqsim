@@ -54,5 +54,4 @@ public class SystemSrkTwuCoonEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }
