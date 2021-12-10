@@ -36,7 +36,7 @@ abstract class Component implements ComponentInterface {
     protected double dqPuredT = 0, dqPuredTdT = 0;
     private double racketZCPA = 0;
     private double criticalCompressibilityFactor = 0.0;
-    private double volumeCorrectionT = 0.0, volumeCorrectionT_CPA = 0.0;
+    private double volumeCorrectionConst=0.0, volumeCorrectionT = 0.0, volumeCorrectionT_CPA = 0.0;
     protected double criticalPressure, criticalTemperature, molarMass, acentricFactor,
             numberOfMoles = 0.0, numberOfMolesInPhase = 0.0, normalLiquidDensity = 0;
     protected double reducedPressure, reducedTemperature, fugasityCoeffisient,
@@ -667,8 +667,8 @@ abstract class Component implements ComponentInterface {
     }
 
     @Override
-    public double getVolumeCorrection() {
-        return 0;
+    public double getVolumeCorrectionConst() {
+        return volumeCorrectionConst;
     }
 
     @Override
@@ -2241,6 +2241,17 @@ abstract class Component implements ComponentInterface {
     @Override
     public double getVolumeCorrectionT() {
         return volumeCorrectionT;
+    }
+    
+    public double getVolumeCorrection() {
+    	return 0.0;
+    }
+    /**
+     * @param volumeCorrection the volumeCorrectionT to set
+     */
+    @Override
+    public void setVolumeCorrectionConst(double getVolumeCorrectionConst) {
+    	this.volumeCorrectionConst = getVolumeCorrectionConst;
     }
 
     /**
