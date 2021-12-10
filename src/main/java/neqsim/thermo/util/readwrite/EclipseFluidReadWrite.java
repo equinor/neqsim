@@ -39,7 +39,7 @@ public class EclipseFluidReadWrite {
 
 			while ((st = br.readLine()) != null) {
 				// System.out.println("EOS " +EOS );
-				if (st.strip().equals("EOS")) {
+				if (st.trim().equals("EOS")) {
 					EOS = br.readLine().replace("/", "");
 					if (EOS.contains("SRK")) {
 						fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 100.01325);
