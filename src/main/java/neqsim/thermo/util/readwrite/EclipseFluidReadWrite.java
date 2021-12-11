@@ -1,5 +1,6 @@
 package neqsim.thermo.util.readwrite;
 
+import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.util.example.ModelTest;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
@@ -18,9 +19,9 @@ public class EclipseFluidReadWrite {
 	static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
 	public static SystemInterface read(String inputFile) {
 		neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 1.01325);
-		double[][] kij;
-		try {
 
+		double[][] kij = null;
+		try {
 			File file = new File(inputFile);
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String st;
@@ -35,6 +36,7 @@ public class EclipseFluidReadWrite {
 			ArrayList<Double> VCRIT = new ArrayList<Double>();
 			ArrayList<Double> PARACHOR = new ArrayList<Double>();
 			ArrayList<Double> ZI = new ArrayList<Double>();
+			ArrayList<Double> BIC = new ArrayList<Double>();
 			String EOS;
 
 			while ((st = br.readLine()) != null) {
@@ -131,12 +133,14 @@ public class EclipseFluidReadWrite {
 				}
 				if (st.equals("BIC")) {
 					int numb = 0;
-					kij = new double[ZI.size()][ZI.size()]; 
+					//kij = new double[ZI.size()][ZI.size()]; 
+					kij = new double[names.size()][names.size()];
 					while ((st = br.readLine().replace("/", "")) != null) {
 						numb++;
 						if (st.startsWith("--")) {
 							break;
 						}
+						
 						//String[] arr = st.replace(" ","").split(" ");
 						String[] arr = st.split("  ");
 						if (arr.length==1) {
@@ -144,22 +148,54 @@ public class EclipseFluidReadWrite {
 						}
 						List<String> list = Arrays.asList(arr);
 						for(int i=0;i<arr.length-1;i++) {
-							kij[numb-1][i] = Double.parseDouble(arr[i+1]);
-							kij[i][numb-1] = kij[numb-1][i] ;
+							BIC.add(Double.parseDouble(arr[i+1]));
+							kij[numb][i] = Double.parseDouble(arr[i+1]);
+							kij[i][numb] = kij[numb][i];
+							//kij[numb-1][i] = Double.parseDouble(arr[i+1]);
+							//kij[i][numb-1] = kij[numb-1][i] ;
 						}
+						//numb++;
 						Double.parseDouble(arr[1]);
-						System.out.println(list.size());	
-						System.out.println(st);						
+						//System.out.println(list.size());	
+						//System.out.println(st);						
 						//BIC.add(Double.parseDouble(st));
 					}
+					
+					/*
+					numb =0;
+					
+					for (int i = 0; i < names.size(); i++) {
+						for (int j = i; j < names.size(); j++) {
+							if(i==j) continue;
+							//System.out.println("ij " + i + " " + j+ " " + BIC.get(numb));
+							System.out.println("ij " + i + " " + j+ " " + kij[i][j] );
+							//kij[i][j] = BIC.get(numb);	
+							//kij[j][i] = kij[i][j];
+							numb++;
+						}
+					}
+					*/
 				}
 			}
 			for (int counter = 0; counter < names.size(); counter++) {
 				String name = "methane";
-				if (TC.get(counter) < 00.0) {
+				if (name.equals("C1") || TC.get(counter) < 00.0) {
 					name = "methane";
 					fluid.addComponent(name, ZI.get(counter));
-				} else if (TC.get(counter) >= 00.0) {
+				} 
+				else if(name.equals("C2") || TC.get(counter) < 00.0) {
+					name = "ethane";
+					fluid.addComponent(name, ZI.get(counter));
+				}
+				else if(name.equals("C3") || TC.get(counter) < 00.0) {
+					name = "propane";
+					fluid.addComponent(name, ZI.get(counter));
+				}
+				else if(name.equals("CO2") || TC.get(counter) < 00.0) {
+					name = "CO2";
+					fluid.addComponent(name, ZI.get(counter));
+				}
+				else if (TC.get(counter) >= 00.0) {
 					name = names.get(counter);
 					fluid.addTBPfraction(name, ZI.get(counter),MW.get(counter) / 1000.0, 0.9);
 					name = name+"_PC";
@@ -187,6 +223,15 @@ public class EclipseFluidReadWrite {
 			fluid.setMixingRule(2);
 			fluid.useVolumeCorrection(true);
 			fluid.init(0);
+			for (int i = 0; i < names.size(); i++) {
+				for (int j = i; j < names.size(); j++) {
+					for(int phase=0;phase<fluid.getMaxNumberOfPhases();phase++) {
+						((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule().setBinaryInteractionParameter(i, j, kij[i][j]);
+						((PhaseEosInterface) fluid.getPhase(phase)).getMixingRule().setBinaryInteractionParameter(j, i, kij[i][j]);
+					}	
+				}
+			}
+			
 			// fluid.display();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -196,7 +241,7 @@ public class EclipseFluidReadWrite {
 
 	public static void main(String[] args) throws Exception {
 		neqsim.thermo.system.SystemInterface fluid = EclipseFluidReadWrite.read(
-				"C:\\\\Users\\\\esol\\\\OneDrive - Equinor\\\\programming\\\\neqsim\\\\src\\\\main\\\\java\\\\neqsim\\\\thermo\\\\util\\\\readwrite\\\\examplefile.txt");
+				"C:\\\\Users\\\\esol\\\\OneDrive - Equinor\\\\programming\\\\neqsim\\\\src\\\\main\\\\java\\\\neqsim\\\\thermo\\\\util\\\\readwrite\\\\examplefileMet.txt");
 
 		ThermodynamicOperations flash = new ThermodynamicOperations(fluid);// System.out.println(st);
 		flash.TPflash();
