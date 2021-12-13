@@ -5,14 +5,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 public class shtokman {
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkCPAs((273.15 + 35.0), 135.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 35.0),
+                135.00);
 
         // testSystem.addComponent("MEG", 30.0);
         testSystem.addComponent("CO2", 10.44);

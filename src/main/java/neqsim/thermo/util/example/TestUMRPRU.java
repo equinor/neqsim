@@ -1,28 +1,17 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
  * @author esol @version
  */
 public class TestUMRPRU {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestUMRPRU.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public TestUMRPRU() {}
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 3.5, 33.0);

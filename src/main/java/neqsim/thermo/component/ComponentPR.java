@@ -73,9 +73,16 @@ public class ComponentPR extends ComponentEos {
         return .077803333 * R * criticalTemperature / criticalPressure;
     }
 
+    
     @Override
-    public double getVolumeCorrection() {
-        if (Math.abs(this.getRacketZ()) < 1e-10) {
+	public double getVolumeCorrection() {
+    	 if (ionicCharge != 0) {
+             return 0.0;
+         }
+    	 if(Math.abs(getVolumeCorrectionConst())>1.0e-10) {
+    		 return getVolumeCorrectionConst()*b;
+         }
+    	else if (Math.abs(this.getRacketZ()) < 1e-10) {
             racketZ = 0.29056 - 0.08775 * getAcentricFactor();
         }
         return 0.50033 * (0.25969 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;

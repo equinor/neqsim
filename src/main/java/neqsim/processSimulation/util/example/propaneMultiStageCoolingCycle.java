@@ -1,21 +1,18 @@
 package neqsim.processSimulation.util.example;
 
+import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 
 /**
  *
  * @author esol
  */
 public class propaneMultiStageCoolingCycle {
-    private static final long serialVersionUID = 1000;
-
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
         testSystem.addComponent("propane", 261759.0, "kg/hr");
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);

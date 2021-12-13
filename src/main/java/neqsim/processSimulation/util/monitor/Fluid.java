@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.monitor;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 import neqsim.thermo.system.SystemInterface;
 
 public class Fluid {
@@ -12,7 +12,10 @@ public class Fluid {
     public Double massDensity;
     public Double massflow;
 
-    public Map<String, Double> compProp;
+    public Map <String, Double> compProp;
+ 
+    public Map<String, Map<String, Double>> definedComponent;
+    public Map<String, Map<String, Double>> oilComponent;
 
     public Map<String, Map> definedComponent;
     public Map<String, Map> oilComponent;
@@ -72,5 +75,6 @@ public class Fluid {
         return tempFluid;
     }
 
-    public void print() {}
+    public void print(){
+    }
 }

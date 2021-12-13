@@ -2,11 +2,11 @@ package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
+import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
+import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
 
 public class MEGinjection {
     public static void main(String[] args) {

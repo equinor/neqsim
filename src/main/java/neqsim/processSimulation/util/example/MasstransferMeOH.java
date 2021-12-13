@@ -2,9 +2,9 @@ package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.mixer.StaticPhaseMixer;
+import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 
 public class MasstransferMeOH {
     public static void main(String[] args) {

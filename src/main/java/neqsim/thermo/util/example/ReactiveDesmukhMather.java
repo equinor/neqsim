@@ -4,23 +4,12 @@ import neqsim.thermo.system.SystemDesmukhMather;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
-
 /**
  *
  * @author esol
  * @version
  */
 public class ReactiveDesmukhMather {
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new TPflash */
-    public ReactiveDesmukhMather() {}
-
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemDesmukhMather(290.0, 5.1);
 

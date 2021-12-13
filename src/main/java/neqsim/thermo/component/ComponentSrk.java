@@ -72,6 +72,9 @@ public class ComponentSrk extends ComponentEos {
         if (ionicCharge != 0) {
             return 0.0;
         }
+        if(Math.abs(getVolumeCorrectionConst())>1.0e-10) {
+        	return getVolumeCorrectionConst()*b;
+        }
         if (Math.abs(this.getRacketZ()) < 1e-10) {
             racketZ = 0.29056 - 0.08775 * getAcentricFactor();
         }

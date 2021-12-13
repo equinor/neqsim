@@ -1,15 +1,10 @@
 package neqsim.physicalProperties.util.examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
@@ -18,13 +13,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TPflash_1 {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash_1.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public TPflash_1() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 55, 100.0);

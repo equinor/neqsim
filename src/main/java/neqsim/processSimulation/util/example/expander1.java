@@ -3,14 +3,12 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class expander1 {
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 120.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0),
+                120.00);
         testSystem.addComponent("methane", 180.00);
         testSystem.addComponent("ethane", 10.00);
         testSystem.addComponent("propane", 1.00);

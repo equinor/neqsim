@@ -5,23 +5,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
-
-/*
  *
  * @author esol @version
  */
 public class TestUniSimsFlash {
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * Creates new TPflash
-     */
-    public TestUniSimsFlash() {}
-
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 15.01325);//
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 15.0, 25.0);//

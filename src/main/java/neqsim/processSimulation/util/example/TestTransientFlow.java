@@ -19,11 +19,6 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author ESOL
  */
 public class TestTransientFlow {
-    private static final long serialVersionUID = 1000;
-
-    /** Creates a new instance of TestTransientFlow */
-    public TestTransientFlow() {}
-
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);

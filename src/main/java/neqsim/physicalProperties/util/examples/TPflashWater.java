@@ -1,15 +1,10 @@
 package neqsim.physicalProperties.util.examples;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
@@ -18,13 +13,8 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TPflashWater {
-    private static final long serialVersionUID = 1000;
-    static Logger logger = LogManager.getLogger(TPflashWater.class);
 
-    /**
-     * Creates new TPflash
-     */
-    public TPflashWater() {}
+    static Logger logger = LogManager.getLogger(TPflashWater.class);
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 40.0, 100.01325);

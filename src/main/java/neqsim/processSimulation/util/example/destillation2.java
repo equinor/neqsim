@@ -8,8 +8,7 @@ public class destillation2 {
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);
         testSystem.addComponent("methane", 1.00);
         testSystem.addComponent("water", 100e-6);
         testSystem.addComponent("TEG", 0.0);

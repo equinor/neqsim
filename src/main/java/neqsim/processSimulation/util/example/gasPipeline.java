@@ -6,8 +6,6 @@ import neqsim.processSimulation.processEquipment.pipeline.OnePhasePipeLine;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class gasPipeline {
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */

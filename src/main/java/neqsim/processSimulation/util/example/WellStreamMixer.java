@@ -11,8 +11,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class WellStreamMixer {
-    private static final long serialVersionUID = 1000;
-
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(354.2, 120.0);
 

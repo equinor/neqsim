@@ -1,28 +1,17 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
  * @author esol @version
  */
 public class TPflash1 {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash1.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public TPflash1() {}
 
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
@@ -38,7 +27,7 @@ public class TPflash1 {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         // testOps.TPflash();
-        long time = System.currentTimeMillis();
+        // long time = System.currentTimeMillis();
         // testOps.TPflash();
         for (int i = 0; i < 1; i++) {
             // testOps.TPflash();

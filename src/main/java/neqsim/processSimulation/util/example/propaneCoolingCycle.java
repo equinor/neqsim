@@ -12,11 +12,8 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author esol
  */
 public class propaneCoolingCycle {
-    private static final long serialVersionUID = 1000;
-
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.700);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.700);
         testSystem.addComponent("propane", 4759.0, "kg/hr");
         testSystem.createDatabase(true);
 

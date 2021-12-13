@@ -1,15 +1,11 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemBWRSEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
@@ -18,13 +14,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TestMBWR32 {
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestMBWR32.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public TestMBWR32() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemBWRSEos(298.15, 0.101);
