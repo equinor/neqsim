@@ -35,13 +35,21 @@ public class OnshoreMEGprocess {
                 feedGas.setMixingRule(10);
                 feedGas.setMultiPhaseCheck(true);
 
-                Stream dryFeedGas = new Stream("feed gas", feedGas);
-                dryFeedGas.setFlowRate(10.5, "MSm3/day");
-                dryFeedGas.setTemperature(6.0, "C");
-                dryFeedGas.setPressure(53.0, "bara");
-
-                StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil(dryFeedGas);
-                saturatedFeedGas.setName("water saturator");
+    public static void main(String[] args) {
+        neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
+                10.00);
+        feedGas.addComponent("nitrogen", 0.4);
+        feedGas.addComponent("CO2", 0.00042);
+        feedGas.addComponent("methane", 99.0);
+        feedGas.addComponent("ethane", 0.07);
+        feedGas.addComponent("propane", 0.054);
+        feedGas.addComponent("i-butane", 0.0054);
+        feedGas.addComponent("n-butane", 0.0084);
+        feedGas.addComponent("water", 0.0);
+        feedGas.addComponent("MEG", 0);
+        feedGas.createDatabase(true);
+        feedGas.setMixingRule(10);
+        feedGas.setMultiPhaseCheck(true);
 
                 Stream waterSaturatedFeedGas = new Stream(saturatedFeedGas.getOutStream());
                 waterSaturatedFeedGas.setName("water saturated feed gas");
@@ -293,17 +301,30 @@ public class OnshoreMEGprocess {
                 System.out.println("column glycol pre heater temperature "
                                 + columnPreHeater.getOutStream(1).getTemperature("C"));
 
-                // presRedValve4.getOutStream().displayResult();
-                gasToFlare.displayResult();
-                waterToSea.displayResult();
-                System.out.println("lean MEG wt% " + column.getLiquidOutStream().getFluid()
-                                .getPhase("aqueous").getWtFrac("MEG") * 100.0);
-                System.out.println("hydrate temperature 1 "
-                                + (inletGasCooler.getOutStream().getHydrateEquilibriumTemperature()
-                                                - 273.15)
-                                + " wt% MEG " + inletGasCooler.getOutStream().getFluid()
-                                                .getPhase("aqueous").getWtFrac("MEG") * 100.0);
+        System.out.println("MEG flow rate " + richMEGstream.getFluid().getFlowRate("kg/hr"));
+        System.out.println("MEG feed to column rate " + presRedValve4.getOutStream().getFluid().getFlowRate("kg/hr"));
 
-                operations.save("c:/temp/MEGdehydrationProcess.neqsim");
-        }
+        System.out.println("MEG flow rate " + resycleLeanMEG.getFluid().getFlowRate("kg/hr"));
+        System.out.println("Reboiler duty [kW] " + ((Reboiler) column.getReboiler()).getDuty() / 1.0e3);
+        System.out.println("Condenser duty [kW] " + ((Condenser) column.getCondenser()).getDuty() / 1.0e3);
+        System.out.println("wt% lean MEG  " + MEGFeed.getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+        // System.out.println("heat ex out temperature " +
+        // heatEx.getOutStream(0).getTemperature("C"));
+        System.out.println("cold gas temperature " + coldGasFromSep.getTemperature("C"));
+        System.out
+                .println("column glycol pre heater temperature " + columnPreHeater.getOutStream(0).getTemperature("C"));
+        System.out
+                .println("column glycol pre heater temperature " + columnPreHeater.getOutStream(1).getTemperature("C"));
+
+        // presRedValve4.getOutStream().displayResult();
+        gasToFlare.displayResult();
+        waterToSea.displayResult();
+        System.out.println(
+                "lean MEG wt% " + column.getLiquidOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+        System.out.println("hydrate temperature 1 "
+                + (inletGasCooler.getOutStream().getHydrateEquilibriumTemperature() - 273.15) + " wt% MEG "
+                + inletGasCooler.getOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
+
+        operations.save("c:/temp/MEGdehydrationProcess.neqsim");
+    }
 }

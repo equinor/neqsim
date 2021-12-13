@@ -1,9 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
  *
@@ -70,7 +71,6 @@ public class TestPCSAFT1 {
         for (int p = 0; p < 1; p++) {
             pres += 1.0;
             testSystem.setPressure(pres);
-            // for (int k = 0; k < 1; k++) {
             try {
                 // testOps.dewPointTemperatureFlash();
                 testOps.calcPTphaseEnvelope(false);
@@ -81,7 +81,6 @@ public class TestPCSAFT1 {
             } catch (Exception e) {
                 logger.error(e.toString(), e);
             }
-            // }
         }
     }
 }

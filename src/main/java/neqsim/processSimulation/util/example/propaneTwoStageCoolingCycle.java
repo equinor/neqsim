@@ -14,21 +14,12 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author esol
  */
 public class propaneTwoStageCoolingCycle {
-        public static void main(String args[]) {
-                neqsim.thermo.system.SystemInterface testSystem =
-                                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
-                // testSystem.addComponent("ethane", 10.0, "kg/hr");
-                testSystem.addComponent("propane", 4759.0, "kg/hr");
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(2);
-
-                Stream stream_1 = new Stream("Stream1", testSystem);
-                stream_1.setSpecification("bubT");
-
-                ThrottlingValve JTvalve1 = new ThrottlingValve(stream_1);
-                JTvalve1.setOutletPressure(3.0);
-
-                Separator medPresSep = new Separator(JTvalve1.getOutStream());
+    public static void main(String args[]) {
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
+        // testSystem.addComponent("ethane", 10.0, "kg/hr");
+        testSystem.addComponent("propane", 4759.0, "kg/hr");
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(2);
 
                 ThrottlingValve JTvalve2 = new ThrottlingValve(medPresSep.getLiquidOutStream());
                 JTvalve2.setOutletPressure(1.11325);
@@ -70,48 +61,19 @@ public class propaneTwoStageCoolingCycle {
 
                 operations.add(lowHStream);
 
-                operations.add(cooler2);
-                operations.add(stream_3);
-                operations.add(lowHStream2);
-
-                operations.add(compressor1);
-                operations.add(propMixer);
-                operations.add(compressor2);
-                operations.add(cooler3);
-
-                // operations.add(compressor1);
-                // operations.add(heater);
-
-                operations.run();
-                operations.run();
-                ThrottlingValve JTvalve3 = new ThrottlingValve(medPresSep.getLiquidOutStream());
-                JTvalve3.setOutletPressure(2.03981146);
-                JTvalve3.run();
-                JTvalve3.getOutStream().displayResult();
-                // JTvalve1.getOutStream().displayResult();
-                // JTvalve2.getOutStream().displayResult();
-                // medPresSep.displayResult();
-                // stream_3.run();
-                // stream_3.displayResult();
-                // medPresSep.getLiquidOutStream().displayResult();
-                // JTvalve2.getOutStream().displayResult();
-
-                // lowHStream.displayResult();
-                // lowHStream2.displayResult();
-                // medPresSep.displayResult();
-                // medPresSep.getLiquidOutStream().displayResult();
-                // stream_3.displayResult();
-                // compressor1.displayResult();
-                // propMixer.getOutStream().displayResult();
-                // cooler2.getFluid().display();
-                // cooler2.run();
-                // cooler3.displayResult();
-                // JTvalve.displayResult();
-                // compressor1.displayResult();
-                // stream_2.displayResult();
-                // operations.displayResult();
-                System.out.println("compressor1 work" + compressor1.getEnergy() / 1.0e3 + " kW");
-                System.out.println("compressor2 work" + compressor2.getEnergy() / 1.0e3 + " kW");
+        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        operations.add(stream_1);
+        operations.add(JTvalve1);
+        operations.add(medPresSep);
+        operations.add(JTvalve2);
+        operations.add(lowHStream);
+        operations.add(cooler2);
+        operations.add(stream_3);
+        operations.add(lowHStream2);
+        operations.add(compressor1);
+        operations.add(propMixer);
+        operations.add(compressor2);
+        operations.add(cooler3);
 
                 // System.out.println("compressor isentropic ef " +
                 // compressor1.getIsentropicEfficiency());
@@ -125,8 +87,33 @@ public class propaneTwoStageCoolingCycle {
                 System.out.println("delta enthalpy " + (stream_3.getFluid().getEnthalpy()
                                 - JTvalve2.getOutStream().getFluid().getEnthalpy()));
 
-                System.out.println("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
-                System.out.println("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");
-                // System.out.println("heater duty " + heater.getEnergyInput());
-        }
+        // lowHStream.displayResult();
+        // lowHStream2.displayResult();
+        // medPresSep.displayResult();
+        // medPresSep.getLiquidOutStream().displayResult();
+        // stream_3.displayResult();
+        // compressor1.displayResult();
+        // propMixer.getOutStream().displayResult();
+        // cooler2.getFluid().display();
+        // cooler2.run();
+        // cooler3.displayResult();
+        // JTvalve.displayResult();
+        // compressor1.displayResult();
+        // stream_2.displayResult();
+        // operations.displayResult();
+        System.out.println("compressor1 work" + compressor1.getEnergy() / 1.0e3 + " kW");
+        System.out.println("compressor2 work" + compressor2.getEnergy() / 1.0e3 + " kW");
+
+        // System.out.println("compressor isentropic ef " +
+        // compressor1.getIsentropicEfficiency());
+        System.out.println("cooler2 mass flow " + cooler2.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+        System.out.println("cooler3 mass flow " + cooler3.getOutStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+
+        System.out.println("delta enthalpy "
+                + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutStream().getFluid().getEnthalpy()));
+
+        System.out.println("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
+        System.out.println("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");
+        // System.out.println("heater duty " + heater.getEnergyInput());
+    }
 }

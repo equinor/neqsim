@@ -9,8 +9,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class TestMechanicalDesign {
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
         testSystem.addComponent("methane", 5e6, "Sm3/day");
         testSystem.addComponent("water", 3000, "kg/hr");
 

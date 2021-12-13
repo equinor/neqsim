@@ -2,11 +2,11 @@ package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
+import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
+import neqsim.processSimulation.processEquipment.splitter.Splitter;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
-import neqsim.processSimulation.processEquipment.splitter.Splitter;
 
 public class MEGinjection {
         public static void main(String[] args) {
@@ -33,16 +33,29 @@ public class MEGinjection {
                 feedGas.setMixingRule(10);
                 feedGas.setMultiPhaseCheck(true);
 
-                Stream feedGasStream = new Stream("feed fluid", feedGas);
-                feedGasStream.run();
-                feedGasStream.setFlowRate(11.23, "MSm3/day");
-                feedGasStream.setTemperature(50.0, "C");
-                feedGasStream.setPressure(55.00, "bara");
-
-                neqsim.thermo.system.SystemInterface feedMEG =
-                                (neqsim.thermo.system.SystemInterface) feedGas.clone();
-                feedMEG.setMolarComposition(new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.1, 0.9});
+    public static void main(String[] args) {
+        // Create the input fluid to the TEG process and saturate it with water at
+        // scrubber conditions
+        neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
+                10.00);
+        feedGas.addComponent("nitrogen", 1.03);
+        feedGas.addComponent("CO2", 1.42);
+        feedGas.addComponent("methane", 83.88);
+        feedGas.addComponent("ethane", 8.07);
+        feedGas.addComponent("propane", 3.54);
+        feedGas.addComponent("i-butane", 0.54);
+        feedGas.addComponent("n-butane", 0.84);
+        feedGas.addComponent("i-pentane", 0.21);
+        feedGas.addComponent("n-pentane", 0.19);
+        feedGas.addComponent("n-hexane", 0.28);
+        feedGas.addComponent("n-heptane", 1.28);
+        feedGas.addComponent("n-octane", 1.28);
+        feedGas.addComponent("n-nonane", 2.28);
+        feedGas.addComponent("water", 2.0);
+        feedGas.addComponent("MEG", 0.0);
+        feedGas.createDatabase(true);
+        feedGas.setMixingRule(10);
+        feedGas.setMultiPhaseCheck(true);
 
                 Stream MEGFeed = new Stream("lean MEG feed stream", feedMEG);
                 MEGFeed.setFlowRate(1000.0, "kg/hr");

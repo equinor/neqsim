@@ -25,9 +25,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
         public void setVolumeCorrectionT(double volumeCorrectionT);
 
-        public String getCASnumber();
+    public void setVolumeCorrectionT(double volumeCorrectionT);
+    
+    public double getVolumeCorrectionConst();
 
-        public double getPureComponentCpLiquid(double temperature);
+    public String getCASnumber();
+    
+    public void setVolumeCorrectionConst(double volumeCorrection);
 
         public double getPureComponentCpSolid(double temperature);
 
@@ -173,11 +177,11 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
         public void setTC(double val);
 
-        public void setPC(double val);
-
-        public double getDiElectricConstantdTdT(double temperature);
-
-        public double getIdealGasAbsoluteEntropy();
+    public void setTC(double val);
+    
+    public void setPC(double val);
+    
+    public double getDiElectricConstantdTdT(double temperature);
 
         public double getDiElectricConstantdT(double temperature);
 

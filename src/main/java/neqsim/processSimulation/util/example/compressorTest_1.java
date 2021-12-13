@@ -4,24 +4,10 @@ import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class compressorTest_1 {
-        /**
-         * This method is just meant to test the thermo package.
-         */
-        public static void main(String args[]) {
-                neqsim.thermo.system.SystemInterface testSystem =
-                                new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 20.0),
-                                                10.00);
-                testSystem.addComponent("nitrogen", 0.8);
-                testSystem.addComponent("oxygen", 2.0);
-                // testSystem.addComponent("water", 0.2);
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(9);
-
-                Stream stream_1 = new Stream("Stream1", testSystem);
-
-                Compressor comp_1 = new Compressor("compressor", stream_1);
-                comp_1.setOutletPressure(40.0);
-                comp_1.setUsePolytropicCalc(true);
+    /**
+     * This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]) {
 
                 comp_1.setPolytropicEfficiency(0.74629255);
 

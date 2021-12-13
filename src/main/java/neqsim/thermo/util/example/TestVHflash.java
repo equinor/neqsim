@@ -1,43 +1,24 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
  *
- * @author esol
- * 
+ * @author  esol
  * @version
  */
 public class TestVHflash {
-        static Logger logger = LogManager.getLogger(TestVHflash.class);
+    static Logger logger = LogManager.getLogger(TestVHflash.class);
 
-        public static void main(String args[]) {
-                double pressureInTank = 1.01325; // Pa
-                double temperatureInTank = 293.15;
-                double totalMolesInTank =
-                                136000 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
-                double molefractionNitrogenInTank = 0.95;
-
-                double molesInjectedLNG = 200000.0;
-                double molesInjecedVacumBreakerGas =
-                                18 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
-
-                SystemInterface testSystem = new SystemSrkEos(temperatureInTank, pressureInTank);
-                ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
-                testSystem.addComponent("methane",
-                                totalMolesInTank * (1.0 - molefractionNitrogenInTank));
-                testSystem.addComponent("nitrogen", totalMolesInTank * molefractionNitrogenInTank);
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(2);
-
-                SystemInterface testSystem2 = new SystemSrkEos(273.15 - 165.0, pressureInTank);
-                ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
-                testSystem2.addComponent("methane", molesInjectedLNG);
-                testSystem2.createDatabase(true);
-                testSystem2.setMixingRule(2);
+    public static void main(String args[]) {
+        double pressureInTank = 1.01325; // Pa
+        double temperatureInTank = 293.15;
+        double totalMolesInTank = 136000 * pressureInTank * 1.0e5 / 8.314 / temperatureInTank;
+        double molefractionNitrogenInTank = 0.95;
 
                 SystemInterface testSystem3 = new SystemSrkEos(temperatureInTank, pressureInTank);
                 ThermodynamicOperations testOps3 = new ThermodynamicOperations(testSystem3);

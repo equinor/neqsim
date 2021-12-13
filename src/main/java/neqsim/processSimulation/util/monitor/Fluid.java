@@ -1,7 +1,7 @@
 package neqsim.processSimulation.util.monitor;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 import neqsim.thermo.system.SystemInterface;
 
 public class Fluid {
@@ -15,8 +15,8 @@ public class Fluid {
 
     public Map <String, Double> compProp;
  
-    public Map <String, Map> definedComponent;
-    public Map <String, Map> oilComponent;
+    public Map<String, Map<String, Double>> definedComponent;
+    public Map<String, Map<String, Double>> oilComponent;
 
     public Fluid(){
         this.definedComponent = new HashMap<>();
@@ -64,11 +64,9 @@ public class Fluid {
 
         tempFluid.setMixingRule(2);
 
-
         return tempFluid;
     }
 
     public void print(){
     }
-
 }

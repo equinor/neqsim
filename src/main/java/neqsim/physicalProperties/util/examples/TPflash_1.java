@@ -7,11 +7,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- *
- * @author esol
- * 
- * @version
- */
+*
+* @author  esol
+* @version
+*/
 public class TPflash_1 {
     static Logger logger = LogManager.getLogger(TPflash_1.class);
 

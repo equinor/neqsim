@@ -1,34 +1,21 @@
 package neqsim.processSimulation.util.example;
 
+import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 
 /**
  *
  * @author esol
  */
 public class propaneMultiStageCoolingCycle {
-        public static void main(String args[]) {
-                neqsim.thermo.system.SystemInterface testSystem =
-                                new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
-                testSystem.addComponent("propane", 261759.0, "kg/hr");
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(2);
-
-                neqsim.thermo.system.SystemInterface testSystemEthane =
-                                new neqsim.thermo.system.SystemPrEos((273.15 - 40.0), 15.00);
-                testSystemEthane.addComponent("ethane", 130759.0, "kg/hr");
-                testSystemEthane.createDatabase(true);
-                testSystemEthane.setMixingRule(2);
-
-                Stream stream_Ethane = new Stream("Stream1", testSystemEthane);
-                // stream_Ethane.setSpecification("bubT");
-
-                // ThrottlingValve JTvalve1_et = new ThrottlingValve(stream_Ethane);
-                // JTvalve1_et.setOutletPressure(5.0);
+    public static void main(String args[]) {
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 15.00);
+        testSystem.addComponent("propane", 261759.0, "kg/hr");
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(2);
 
                 neqsim.thermo.system.SystemInterface testSystem2 =
                                 new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 60.00);
@@ -134,27 +121,39 @@ public class propaneMultiStageCoolingCycle {
                 // JTvalve1.displayResult();
                 // heatExPropaneOut.displayResult();
 
-                /*
-                 * heatEx1.getOutStream(0).displayResult(); heatEx1.getInStream(1).displayResult();
-                 * heatEx1.getOutStream(1).displayResult(); System.out.println("heatex duty " +
-                 * heatEx1.getDuty()); heatEx2.run(); heatEx2.getOutStream(0).displayResult();
-                 * heatEx2.getInStream(1).displayResult(); heatEx2.getOutStream(1).displayResult();
-                 * System.out.println("heatex duty " + heatEx2.getDuty());
-                 */
-                // stream_3.displayResult();
-                // compressor1.displayResult();
-                // cooler3.displayResult();
-                // JTvalve.displayResult();
-                // compressor1.displayResult();
-                // stream_2.displayResult();
-                // operations.displayResult();
-                // System.out.println("compressor work" + compressor1.getEnergy()/1.0e3 + "
-                // kW");
-                // System.out.println("compressor isentropic ef " +
-                // compressor1.getIsentropicEfficiency());
-                // System.out.println("cooler duty " + cooler.getEnergyInput()/1.0e3 + " kW");
-                // System.out.println("cooler2 duty " + cooler2.getEnergyInput()/1.0e3 + " kW");
-                // System.out.println("cooler3 duty " + cooler3.getEnergyInput()/1.0e3 + " kW");
-                // System.out.println("heater duty " + heater.getEnergyInput());
-        }
+        // heatEx1.run();
+
+        coldGasFromPropaneCooler.displayResult();
+        heatEx22stream.getFluid().display();
+        JTvalve2.getOutStream().getFluid().display();
+        stream_22.getFluid().display();
+
+        // JTvalve1.displayResult();
+        // heatExPropaneOut.displayResult();
+
+        /*
+         * heatEx1.getOutStream(0).displayResult();
+         * heatEx1.getInStream(1).displayResult();
+         * heatEx1.getOutStream(1).displayResult(); System.out.println("heatex duty " +
+         * heatEx1.getDuty()); heatEx2.run(); heatEx2.getOutStream(0).displayResult();
+         * heatEx2.getInStream(1).displayResult();
+         * heatEx2.getOutStream(1).displayResult(); System.out.println("heatex duty " +
+         * heatEx2.getDuty());
+         */
+        // stream_3.displayResult();
+        // compressor1.displayResult();
+        // cooler3.displayResult();
+        // JTvalve.displayResult();
+        // compressor1.displayResult();
+        // stream_2.displayResult();
+        // operations.displayResult();
+        // System.out.println("compressor work" + compressor1.getEnergy()/1.0e3 + "
+        // kW");
+        // System.out.println("compressor isentropic ef " +
+        // compressor1.getIsentropicEfficiency());
+        // System.out.println("cooler duty " + cooler.getEnergyInput()/1.0e3 + " kW");
+        // System.out.println("cooler2 duty " + cooler2.getEnergyInput()/1.0e3 + " kW");
+        // System.out.println("cooler3 duty " + cooler3.getEnergyInput()/1.0e3 + " kW");
+        // System.out.println("heater duty " + heater.getEnergyInput());
+    }
 }

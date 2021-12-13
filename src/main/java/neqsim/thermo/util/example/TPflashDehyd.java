@@ -1,10 +1,11 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
  *
@@ -14,8 +15,8 @@ public class TPflashDehyd {
     static Logger logger = LogManager.getLogger(TPflashDehyd.class);
 
     public static void main(String[] args) {
-        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);
-        SystemInterface testSystem2 = new SystemSrkEos(298, 10);
+        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
+        SystemInterface testSystem2 = new SystemSrkEos(298, 10);//
         testSystem2 = testSystem2.readObject(30);
         // testSystem2.addComponent("methane", 1.0, "kg/sec");
         // testSystem2.addComponent("ethane", 0.1, "kg/sec");

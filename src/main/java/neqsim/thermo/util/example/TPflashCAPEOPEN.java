@@ -5,13 +5,13 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- *
- * @author esol @version
- */
+*
+* @author esol @version
+*/
 public class TPflashCAPEOPEN {
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 15.01325);
-        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 88.8);
+        SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 15.01325);//
+        // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 25.0, 88.8);//
         testSystem.addComponent("nitrogen", 1.681146444);
         testSystem.addComponent("CO2", 2.185242497);
         testSystem.addComponent("methane", 78.0590685);

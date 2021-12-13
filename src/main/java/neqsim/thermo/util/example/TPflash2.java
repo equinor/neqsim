@@ -1,18 +1,20 @@
 package neqsim.thermo.util.example;
 
-import neqsim.thermo.system.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
- *
- * @author esol @version
- */
+*
+* @author esol @version
+*/
 public class TPflash2 {
     static Logger logger = LogManager.getLogger(TPflash2.class);
 
     public static void main(String[] args) {
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0, 1.01325);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0, 1.01325);//
         testSystem.addComponent("nitrogen", 8.71604938);
         // testSystem.addComponent("oxygen", 22.71604938);
         testSystem.addComponent("water", 110.234567901);

@@ -10,30 +10,17 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class TEGAbsorberTest {
-        /**
-         * This method is just meant to test the thermo package.
-         */
-        public static void main(String args[]) {
-                neqsim.thermo.system.SystemSrkEos testSystem =
-                                new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
-                                                (273.15 + 20.0), 80.00);
-                testSystem.addComponent("methane", 120.00);
-                testSystem.addComponent("water", 0.1);
-                testSystem.addComponent("TEG", 1e-10);
-                testSystem.createDatabase(true);
-                testSystem.setMixingRule(2);
-
-                neqsim.thermo.system.SystemSrkEos testSystem2 =
-                                new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
-                                                (273.15 + 20.0), 80.00);
-                testSystem2.addComponent("methane", 1e-10);
-                testSystem2.addComponent("water", 1e-9);
-                testSystem2.addComponent("TEG", 0.10);
-                testSystem2.setMixingRule(2);
-
-                Stream fluidStreamIn = new Stream("stream to scrubber", testSystem);
-
-                Separator gasScrubber = new GasScrubberSimple("gasInletScrubber", fluidStreamIn);
+    /**
+     * This method is just meant to test the thermo package.
+     */
+    public static void main(String args[]) {
+        neqsim.thermo.system.SystemSrkEos testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(
+                (273.15 + 20.0), 80.00);
+        testSystem.addComponent("methane", 120.00);
+        testSystem.addComponent("water", 0.1);
+        testSystem.addComponent("TEG", 1e-10);
+        testSystem.createDatabase(true);
+        testSystem.setMixingRule(2);
 
                 Stream gasToAbsorber = new Stream(gasScrubber.getGasOutStream());
                 gasToAbsorber.setName("gas from scrubber");

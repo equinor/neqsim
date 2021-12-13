@@ -7,11 +7,10 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- *
- * @author esol
- * 
- * @version
- */
+*
+* @author  esol
+* @version
+*/
 public class TestCondensate {
     static Logger logger = LogManager.getLogger(TestCondensate.class);
 

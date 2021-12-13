@@ -6,11 +6,6 @@ import neqsim.thermo.system.SystemBWRSEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * TestMBWR32.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *

@@ -7,12 +7,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- * TestCharacterizationCPA.java
- *
- * Created on 27. september 2001, 09:43
- */
-
-/*
  *
  * @author esol
  * 

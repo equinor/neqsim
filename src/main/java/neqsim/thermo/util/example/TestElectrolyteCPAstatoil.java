@@ -7,12 +7,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- * TestElectrolyteCPAstatoil.java
- *
- * Created on 27. september 2001, 09:43
- */
-
-/*
  *
  * @author esol
  * 

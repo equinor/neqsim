@@ -7,10 +7,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
- * TestPCSAFT1_1.java b Created on 27. september 2001, 09:43
- */
-
-/*
  *
  * @author esol
  * 

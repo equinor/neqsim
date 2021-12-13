@@ -1,21 +1,21 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
- *
- * @author esol
- * 
- * @version
- */
+*
+* @author  esol
+* @version
+*/
 public class ReadFluidData {
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
     public static void main(String args[]) {
-        SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);
+        SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);//
         // testSystem.addComponent("nitrogen", 12.681146444);
         testSystem.addComponent("methane", 90.681146444);
         testSystem.addComponent("CO2", 12.185242497);

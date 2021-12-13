@@ -11,8 +11,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public class testGasScrubber {
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem =
-                new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
+        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);
         testSystem.addComponent("methane", 600e3, "kg/hr");
         testSystem.addComponent("ethane", 7.00e3, "kg/hr");
         testSystem.addComponent("propane", 12.0e3, "kg/hr");
