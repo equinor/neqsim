@@ -1,15 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /**
  *
@@ -17,13 +12,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class FreezingPoint {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezingPoint.class);
-
-    /** Creates new TPflash */
-    public FreezingPoint() {
-    }
 
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(260.15,19.00);
@@ -34,10 +23,10 @@ public class FreezingPoint {
         ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
 
         testSystem.addComponent("methane", 0.00882);
-//        testSystem.addComponent("ethane",0.0836);
-//        testSystem.addComponent("propane",0.0176);
-//         testSystem.addComponent("i-butane",1.0-0.882-0.0836-0.0176);
-//          testSystem.addComponent("n-butane",0.00576);
+        // testSystem.addComponent("ethane",0.0836);
+        // testSystem.addComponent("propane",0.0176);
+        // testSystem.addComponent("i-butane",1.0-0.882-0.0836-0.0176);
+        // testSystem.addComponent("n-butane",0.00576);
         // testSystem.addComponent("n-heptane",10.0);
         testSystem.addComponent("methanol", 40, "kg/min");
         testSystem.addComponent("water", 60, "kg/min");

@@ -9,14 +9,10 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
 public class processCO2MDEA {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 10.01325);
 
         testSystem.addComponent("methane", 0.061152181, 0);

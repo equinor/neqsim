@@ -19,9 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class OffshoreProcess3 {
-
-	private static final long serialVersionUID = 1000;
-
 	public static void main(String[] args) {
 		neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(354.2, 120.0);
 
@@ -348,7 +345,6 @@ public class OffshoreProcess3 {
 		System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
 
 		System.out.println("exergy change " + operations.getExergyChange("J"));
-		System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
-
+        System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
 	}
 }

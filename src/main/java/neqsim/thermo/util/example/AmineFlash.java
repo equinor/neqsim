@@ -6,25 +6,13 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 /**
  *
  * @author esol
  * @version
  */
 public class AmineFlash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AmineFlash.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public AmineFlash() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50, 1.01325);
