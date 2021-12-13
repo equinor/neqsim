@@ -21,7 +21,6 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 public class OnshoreMEGprocess {
 
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
                 10.00);
         feedGas.addComponent("nitrogen", 0.4);
@@ -286,7 +285,5 @@ public class OnshoreMEGprocess {
                 + inletGasCooler.getOutStream().getFluid().getPhase("aqueous").getWtFrac("MEG") * 100.0);
 
         operations.save("c:/temp/MEGdehydrationProcess.neqsim");
-
     }
-
 }

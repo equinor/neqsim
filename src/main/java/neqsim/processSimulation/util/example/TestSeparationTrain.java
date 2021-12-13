@@ -15,14 +15,6 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  * @author ESOL
  */
 public class TestSeparationTrain {
-
-    private static final long serialVersionUID = 1000;
-
-    /**
-     * Creates a new instance of TestSlugcatcher
-     */
-    public TestSeparationTrain() {}
-
     public static void main(String args[]) {
         double inletPressure = 15.00; // bar
         double inletTemperatuure = 273.15 + 50.0; // K
@@ -137,5 +129,4 @@ public class TestSeparationTrain {
         // operations.displayResult();
         // liquidOutHeater.getOutStream().getThermoSystem().display();
     }
-
 }

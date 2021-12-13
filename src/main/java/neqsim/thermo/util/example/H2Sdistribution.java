@@ -1,15 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *l
- * Created on 27. september 2001, 09:43
- */
 
 /**
  *
@@ -17,15 +12,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class H2Sdistribution {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(H2Sdistribution.class);
-
-    /**
-     * Creates new TPflash
-     */
-    public H2Sdistribution() {
-    }
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemElectrolyteCPAstatoil(308.3, 32.8);

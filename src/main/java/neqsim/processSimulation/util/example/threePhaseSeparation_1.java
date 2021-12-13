@@ -5,14 +5,10 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class threePhaseSeparation_1 {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 25.0),
                 50.00);
         testSystem.addComponent("methane", 10.00);
@@ -59,6 +55,5 @@ public class threePhaseSeparation_1 {
         stream_3.getThermoSystem().setTemperature(stream_3.getThermoSystem().getTemperature() - 10.0);
         ops2.TVflash(volume);
         stream_3.getThermoSystem().display();
-
     }
 }

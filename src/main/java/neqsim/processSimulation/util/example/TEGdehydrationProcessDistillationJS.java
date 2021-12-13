@@ -3,22 +3,19 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.measurementDevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.processSimulation.processEquipment.absorber.SimpleTEGAbsorber;
 import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
-import neqsim.processSimulation.processEquipment.distillation.Condenser;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
-import neqsim.processSimulation.processEquipment.distillation.Reboiler;
 import neqsim.processSimulation.processEquipment.filter.Filter;
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.pump.Pump;
+import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Calculator;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
-import neqsim.processSimulation.processSystem.ProcessSystem;
-import neqsim.processSimulation.processEquipment.separator.Separator;
 
 public class TEGdehydrationProcessDistillationJS {
 	/**
@@ -147,8 +144,7 @@ public class TEGdehydrationProcessDistillationJS {
 	 */
 	public double coldTEGpumpIsentropicEfficiency = 0.75;
 
-	public TEGdehydrationProcessDistillationJS() {
-
+    public TEGdehydrationProcessDistillationJS() {
 	}
 
 	public neqsim.processSimulation.processSystem.ProcessSystem getProcess() {

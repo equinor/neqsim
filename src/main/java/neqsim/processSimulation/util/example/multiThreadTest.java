@@ -11,9 +11,6 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 public class multiThreadTest {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */

@@ -1,15 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
-
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
 
 /*
  *
@@ -17,16 +12,9 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TestUNIFAC {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestUNIFAC.class);
 
-    /** Creates new TPflash */
-    public TestUNIFAC() {
-    }
-
     public static void main(String args[]) {
-        //
         SystemInterface testSystem = new SystemPsrkEos(273.15 + 120.0, 0.15);
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15 + 25.0,
         // 1.01325301325);

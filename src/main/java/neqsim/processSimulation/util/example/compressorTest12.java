@@ -4,9 +4,6 @@ import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class compressorTest12 {
-
-    private static final long serialVersionUID = 1000;
-
     /**
      * This method is just meant to test the thermo package.
      */
@@ -49,6 +46,5 @@ public class compressorTest12 {
         pre.run();
         ka501.run();
         ka501.solveEfficiency(t);
-
     }
 }

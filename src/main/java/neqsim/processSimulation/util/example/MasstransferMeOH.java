@@ -2,14 +2,13 @@ package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.processEquipment.mixer.StaticMixer;
 import neqsim.processSimulation.processEquipment.mixer.StaticPhaseMixer;
+import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
-import neqsim.processSimulation.processEquipment.separator.GasScrubber;
 
 public class MasstransferMeOH {
 
     public static void main(String[] args) {
-
         // Create the input fluid to the TEG process and saturate it with water at
         // scrubber conditions
         neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0,
@@ -78,6 +77,5 @@ public class MasstransferMeOH {
         // mainMixer.getFluid().display();
         // scrubber.getGasOutStream().displayResult();
         System.out.println("hydt " + gasFromScrubber.getHydrateEquilibriumTemperature());
-
     }
 }
