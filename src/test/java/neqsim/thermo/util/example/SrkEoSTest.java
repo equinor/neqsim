@@ -3,6 +3,7 @@ package neqsim.thermo.util.example;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -33,6 +34,7 @@ public class SrkEoSTest {
         assertEquals(thermoSystem.getNumberOfPhases(), 2);
     }
 
+    @Disabled
     @Test
     public void testSaturateWIthWater() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
