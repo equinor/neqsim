@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  */
 public class PhaseEnvelope2 {
-    static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(PhaseEnvelope2.class);
 
     /**
      * @param args
