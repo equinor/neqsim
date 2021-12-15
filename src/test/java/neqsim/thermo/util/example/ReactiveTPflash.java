@@ -41,8 +41,10 @@ public class ReactiveTPflash {
         testSystem.init(0);
         testSystem.init(1);
         // testSystem.init(1);
-//        System.out.println("wt% MDEA " + 100*testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()/(testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()+testSystem.getPhase(1).getComponent("water").getx()*testSystem.getPhase(1).getComponent("water").getMolarMass()));
-//        System.out.println("wt% Piperazine " + testSystem.getPhase(1).getComponent("Piperazine").getx()*testSystem.getPhase(1).getComponent("Piperazine").getMolarMass()/testSystem.getPhase(1).getMolarMass());
+        // System.out.println("wt% MDEA " +
+        // 100*testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()/(testSystem.getPhase(1).getComponent("MDEA").getx()*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()+testSystem.getPhase(1).getComponent("water").getx()*testSystem.getPhase(1).getComponent("water").getMolarMass()));
+        // System.out.println("wt% Piperazine " +
+        // testSystem.getPhase(1).getComponent("Piperazine").getx()*testSystem.getPhase(1).getComponent("Piperazine").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
         try {
             // testSystem.getChemicalReactionOperations().solveChemEq(1, 0);
@@ -56,18 +58,19 @@ public class ReactiveTPflash {
         testSystem.display();
         System.out.println("pH " + testSystem.getPhase(1).getpH());
         logger.info("pH " + testSystem.getPhase(1).getpH());
-        logger.info("activity coefficiet water " + testSystem.getPhase("aqueous").getActivityCoefficient(2));
-//        
-//        for(int i=0;i<23;i++){
-//            try{
-//                ops.bubblePointPressureFlash(false);
-//               // testSystem.display();
-//                //ops.TPflash();
-//            } catch(Exception e){}
-//            
-//            
-//            System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " + testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());
-//            testSystem.addComponent("CO2", 0.05*(6.45+1.78));
-//        }
+        logger.info("activity coefficiet water "
+                + testSystem.getPhase("aqueous").getActivityCoefficient(2));
+
+        // for(int i=0;i<23;i++){
+        // try{
+        // ops.bubblePointPressureFlash(false);
+        // // testSystem.display();
+        // //ops.TPflash();
+        // } catch(Exception e){}
+        //
+        // System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " +
+        // testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());
+        // testSystem.addComponent("CO2", 0.05*(6.45+1.78));
+        // }
     }
 }

@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class TVPexample {
     static Logger logger = LogManager.getLogger(TVPexample.class);
 
-    public TVPexample() {};
-
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(275.15 + 37.7778, 1.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

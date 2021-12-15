@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-// import neqsim.thermo.util.example.PhaseEnvelope;
 
 /**
  * @author Even Solbraa

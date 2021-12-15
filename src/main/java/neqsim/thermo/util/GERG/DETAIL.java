@@ -6,7 +6,6 @@ package neqsim.thermo.util.GERG;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
-// import java.lang.Math.*;
 
 /**
  * @author esol

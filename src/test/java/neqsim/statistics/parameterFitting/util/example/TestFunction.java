@@ -8,8 +8,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class TestFunction extends LevenbergMarquardtFunction {
-    public TestFunction() {}
-
     @Override
     public double calcValue(double[] dependentValues) {
         return 3.0 * params[0] * params[1] - 2.0 * params[0] * dependentValues[0]

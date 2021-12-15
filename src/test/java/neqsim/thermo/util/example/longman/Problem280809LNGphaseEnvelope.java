@@ -13,8 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 public class Problem280809LNGphaseEnvelope {
     static Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
-    public Problem280809LNGphaseEnvelope() {}
-
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemGERG2004Eos(230, 50.00);
         testSystem.addComponent("methane", 0.80);
