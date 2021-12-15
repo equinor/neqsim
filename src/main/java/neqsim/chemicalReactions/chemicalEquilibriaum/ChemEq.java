@@ -3,7 +3,6 @@ package neqsim.chemicalReactions.chemicalEquilibriaum;
 import Jama.Matrix;
 
 public class ChemEq implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int NSPEC = 10, NELE = 3;
     double R = 8.3143, G_min = 0;

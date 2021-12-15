@@ -1,12 +1,10 @@
 package neqsim.thermo.util.example;
 
-
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
-// import junit.framework.TestCase;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -15,9 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class VapourPressureTTest {
-
     static SystemInterface thermoSystem = null;
-
 
     @BeforeAll
     public static void setUp() {
@@ -27,7 +23,6 @@ public class VapourPressureTTest {
         thermoSystem.setMixingRule(2);
     }
 
-    @Disabled
     @Test
     public void testDewBubblePointT() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -54,7 +49,4 @@ public class VapourPressureTTest {
         testOps.saturateWithWater();
         assertTrue(thermoSystem.getPhase(0).hasComponent("water"));
     }
-
-
-
 }
