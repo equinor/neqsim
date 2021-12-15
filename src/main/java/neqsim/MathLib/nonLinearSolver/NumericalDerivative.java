@@ -10,7 +10,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public class NumericalDerivative implements java.io.Serializable {
@@ -24,14 +24,15 @@ public class NumericalDerivative implements java.io.Serializable {
     final static double SAFE = 2;
 
     /** Creates new NumericalDerivative */
-    public NumericalDerivative() {
-    }
+    public NumericalDerivative() {}
 
-    public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase, int numberOfComponents,
-            double temperature, double pressure) {
+    public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase,
+            int numberOfComponents, double temperature, double pressure) {
 
-        double errt, fac, hh, ans = 0.00001, err = 0.0000000001;
-        double h = pressure / 50;
+
+        double ans = 00001;
+        // double errt, fac, hh, err = 0.0000000001;
+        // double h = pressure / 50;
         //
         // if(h==0.0){System.out.println("h must be larger than 0!");}
         // double[][] a = new double[NTAB][NTAB];
@@ -71,11 +72,12 @@ public class NumericalDerivative implements java.io.Serializable {
         return ans;
     }
 
-    public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase, int numberOfComponents,
-            double temperature, double pressure, int phasetype) {
+    public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,
+            int numberOfComponents, double temperature, double pressure, int phasetype) {
 
-        double errt, fac, hh, ans = 0.000001, err = 0.00000000000001;
-        double h = temperature / 50;
+        double ans = 0.000001;
+        // double errt, fac, hh, err = 0.00000000000001;
+        // double h = temperature / 50;
         //
         // if(h==0.0){System.out.println("h must be larger than 0!");}
         // double[][] a = new double[NTAB][NTAB];
