@@ -1,4 +1,4 @@
-package neqsim.statistics.monteCaroloSimulation.util.example;
+package neqsim.statistics.monteCarloSimulation.util.example;
 
 import java.util.ArrayList;
 import neqsim.statistics.parameterFitting.SampleSet;

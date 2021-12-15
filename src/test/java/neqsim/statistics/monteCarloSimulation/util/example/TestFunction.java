@@ -1,4 +1,4 @@
-package neqsim.statistics.monteCaroloSimulation.util.example;
+package neqsim.statistics.monteCarloSimulation.util.example;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
@@ -8,9 +8,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class TestFunction extends LevenbergMarquardtFunction {
-
-    private static final long serialVersionUID = 1000;
-
     @Override
     public double calcValue(double[] dependentValues) {
         return 3.0 * params[0] * params[1] - 2.0 * params[0] * dependentValues[0]
