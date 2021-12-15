@@ -8,7 +8,6 @@ public class HeatExchanger {
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
         testSystem.addComponent("methane", 120.00);

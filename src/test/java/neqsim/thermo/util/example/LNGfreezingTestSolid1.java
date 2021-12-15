@@ -1,13 +1,12 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class LNGfreezingTestSolid1 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LNGfreezingTestSolid1.class);
 
     public static void main(String args[]) {
@@ -16,12 +15,12 @@ public class LNGfreezingTestSolid1 {
         // testSystem.addComponent("nitrogen", 0.379);
         testSystem.addComponent("methane", 99.9);
         testSystem.addComponent("benzene", 0.1);
-//        testSystem.addComponent("n-hexane", 2.0);
+        // testSystem.addComponent("n-hexane", 2.0);
         // testSystem.addComponent("propane", 10);
         // testSystem.addComponent("benzene", 0.083);
         // testSystem.addComponent("ethane", 2.359);
         // testSystem.addComponent("propane", 3.1);
-//        testSystem.addComponent("i-butane", 0.504);
+        // testSystem.addComponent("i-butane", 0.504);
         // testSystem.addComponent("n-butane", 0.85);
         // testSystem.addComponent("i-pentane", 0.323);
         // testSystem.addComponent("n-pentane", 0.231);

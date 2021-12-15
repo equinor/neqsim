@@ -11,8 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class OLGApropGenerator {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropGenerator.class);
 
     public static void main(String args[]) {

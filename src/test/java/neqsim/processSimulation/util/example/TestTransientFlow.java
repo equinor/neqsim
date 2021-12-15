@@ -20,7 +20,6 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
  */
 public class TestTransientFlow {
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
         testSystem.addComponent("methane", 0.900);

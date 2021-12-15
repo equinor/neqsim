@@ -1,13 +1,12 @@
 package neqsim.thermo.util.example.longman;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class Problem280809LNGfreezing {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Problem280809LNGfreezing.class);
 
     public static void main(String args[]) {
@@ -26,15 +25,15 @@ public class Problem280809LNGfreezing {
         testSystem.createDatabase(true);
         // testSystem.setMixingRule(2);
         // testSystem.setSolidPhaseCheck("benzene");
-//        testSystem.setSolidPhaseCheck("CO2");
+        // testSystem.setSolidPhaseCheck("CO2");
         testSystem.init(0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         try {
             testOps.TPflash();
             testSystem.display();
             // testOps.bubblePointPressureFlash(false);
-//           testOps.freezingPointTemperatureFlash();
-//           testSystem.display();
+            // testOps.freezingPointTemperatureFlash();
+            // testSystem.display();
         } catch (Exception e) {
             logger.error("error", e);
         }

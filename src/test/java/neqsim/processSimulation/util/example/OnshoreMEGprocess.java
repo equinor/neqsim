@@ -19,7 +19,6 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 public class OnshoreMEGprocess {
-
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface feedGas =
                 new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);

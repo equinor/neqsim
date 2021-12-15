@@ -11,8 +11,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class MEGwaterComplexFlash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(MEGwaterComplexFlash.class);
 
     public static void main(String args[]) {
@@ -31,7 +29,6 @@ public class MEGwaterComplexFlash {
         // +Math.log(testSystem.getPhase(1).getComponent("TEG").getFugasityCoefficient()));
         testSystem.setSolidPhaseCheck("water");
         // testSystem.setMultiPhaseCheck(true);
-        double entdiff = 0;
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         try {

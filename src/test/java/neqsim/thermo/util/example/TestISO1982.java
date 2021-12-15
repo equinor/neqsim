@@ -6,23 +6,21 @@
 
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
  * @author ESOL
  */
 public class TestISO1982 {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestISO1982.class);
 
     /** Creates a new instance of TestISO1982 */
-    public TestISO1982() {
-    }
+    public TestISO1982() {}
 
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(290.15, 30.00);

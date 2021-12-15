@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestUNIFAC {
@@ -52,5 +53,4 @@ public class TestUNIFAC {
         logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
         logger.info("gibbs " + testSystem.getPhase(1).getGibbsEnergy());
     }
-
 }

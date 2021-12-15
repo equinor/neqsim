@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestCharacterizationCPA {
@@ -117,5 +118,4 @@ public class TestCharacterizationCPA {
 
         testSystem.display();
     }
-
 }

@@ -15,12 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class ActivityCalc {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new ActivityCalc */
-    public ActivityCalc() {}
-
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42, 1.01325);
 

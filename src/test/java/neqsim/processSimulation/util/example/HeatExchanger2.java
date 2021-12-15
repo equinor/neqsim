@@ -13,8 +13,8 @@ public class HeatExchanger2 {
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 60.0), 20.00);
         testSystem.addComponent("methane", 120.00);
         testSystem.addComponent("ethane", 120.0);
         testSystem.addComponent("n-heptane", 30.0);
@@ -41,7 +41,8 @@ public class HeatExchanger2 {
         resyc.addStream(valv1.getOutStream());
         resyc.setOutletStream(stream_Cold);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_Hot);
         operations.add(heatEx);
         operations.add(sep);

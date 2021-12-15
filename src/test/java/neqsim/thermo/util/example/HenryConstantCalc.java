@@ -16,13 +16,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 public class HenryConstantCalc {
-
-    private static final long serialVersionUID = 1000;
-
-    /** Creates new ActivityCalc */
-    public HenryConstantCalc() {
-    }
-
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemElectrolyteCPA(273.15 + 40.0, 10.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
@@ -40,7 +33,6 @@ public class HenryConstantCalc {
             testSystem.display();
             // testOps.hydrateFormationTemperature(0);
         } catch (Exception e) {
-
         }
 
         // testSystem.getChemicalReactionOperations().solveChemEq(1);
@@ -50,10 +42,10 @@ public class HenryConstantCalc {
         // testSystem.calcHenrysConstant("CO2"));//
         // System.out.println("activity MDEA " +
         // testSystem.getPhase(1).getActivityCoefficient(0));
-//        double meanact2 = testSystem.getPhase(1).getMeanIonicActivity(0,1);
-//        System.out.println("mean ionic-activity: " + meanact2);
-//        double osm = testSystem.getPhase(1).getOsmoticCoefficientOfWater();
-//        System.out.println("osm: " + osm);
+        // double meanact2 = testSystem.getPhase(1).getMeanIonicActivity(0,1);
+        // System.out.println("mean ionic-activity: " + meanact2);
+        // double osm = testSystem.getPhase(1).getOsmoticCoefficientOfWater();
+        // System.out.println("osm: " + osm);
         testSystem.display();
     }
 }

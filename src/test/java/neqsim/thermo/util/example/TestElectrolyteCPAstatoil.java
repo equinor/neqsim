@@ -8,14 +8,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestElectrolyteCPAstatoil {
     static Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
 
     public static void main(String args[]) {
-
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 4.0, 100);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 10.0, 3.0);
         // SystemInterface testSystem = new
@@ -55,7 +55,9 @@ public class TestElectrolyteCPAstatoil {
         // testSystem.getPhase(1).getMeanIonicActivity(2, 3));
         // System.out.println("Osmotic coefficient " +
         // testSystem.getPhase(1).getOsmoticCoefficientOfWater());
-        logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
-        logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
+        logger.info(
+                "water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("water activity coefficient "
+                + testSystem.getPhase(1).getActivityCoefficient(1, 2));
     }
 }

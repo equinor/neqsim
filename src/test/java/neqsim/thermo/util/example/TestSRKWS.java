@@ -8,7 +8,8 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestSRKWS {
@@ -43,5 +44,4 @@ public class TestSRKWS {
         testSystem.display();
         logger.info(testSystem.getTemperature() - 273.15);
     }
-
 }

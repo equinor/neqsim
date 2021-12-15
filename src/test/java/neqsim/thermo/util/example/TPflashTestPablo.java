@@ -60,7 +60,6 @@ public class TPflashTestPablo {
             testOps4.TPflash();
             newstream.display();
         } catch (Exception e) {
-
         }
 
         newstream.addFluid(oilstream);

@@ -1,9 +1,10 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /*
  * PhaseEnvelope.java
@@ -17,13 +18,7 @@ import org.apache.logging.log4j.*;
  * @version
  */
 public class TestGERGwater {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestGERGwater.class);
-
-    /** Creates new PhaseEnvelope */
-    public TestGERGwater() {
-    }
 
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemGERGwaterEos(273.15-20.0, 100.0);
@@ -37,7 +32,7 @@ public class TestGERGwater {
         testSystem.addComponent("CO2", 2.6);
         testSystem.addComponent("nitrogen", 0.6);
         // testSystem.addComponent("ethane", 0.08);
-//        testSystem.addComponent("propane", 0.02);
+        // testSystem.addComponent("propane", 0.02);
         testSystem.addComponent("water", 178.3e-4);
 
         testSystem.createDatabase(true);

@@ -8,14 +8,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
  *
- * @author  esol
+ * @author esol
+ * 
  * @version
  */
 public class TestCSPsrk {
     static Logger logger = LogManager.getLogger(TestCSPsrk.class);
 
     public static void main(String args[]) {
-
         SystemInterface testSystem = new SystemCSPsrkEos(158, 5.662);
         // SystemInterface testSystem = new SystemSrkEos(110.0, 1.262);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

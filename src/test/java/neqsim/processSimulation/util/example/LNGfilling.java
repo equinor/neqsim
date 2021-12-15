@@ -15,7 +15,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  */
 public class LNGfilling {
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 - 163.0), 1.000);
         testSystem.addComponent("methane", 0.6);

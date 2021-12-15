@@ -8,7 +8,6 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 class CompressorTest {
-
     static neqsim.thermo.system.SystemInterface testSystem = null;
 
     double pressure_inlet = 85.0;

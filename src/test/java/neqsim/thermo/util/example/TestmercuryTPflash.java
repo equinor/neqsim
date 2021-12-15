@@ -14,7 +14,6 @@ public class TestmercuryTPflash {
     static Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
 
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemSrkTwuCoonStatoilEos(273.15 - 172.0, 1.0);
 
         testSystem.addComponent("nitrogen", 2.97007999748152e-002);
@@ -38,8 +37,9 @@ public class TestmercuryTPflash {
             logger.error(e.toString());
         }
         // ((PhaseEosInterface)testSystem.getPhase(0)).displayInteractionCoefficients("");
-        System.out.println(
-                "vapour pressure " + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
-        System.out.println("Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
+        System.out.println("vapour pressure "
+                + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
+        System.out.println("Ttrip "
+                + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
     }
 }

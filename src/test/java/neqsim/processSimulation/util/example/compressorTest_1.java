@@ -8,7 +8,6 @@ public class compressorTest_1 {
      * This method is just meant to test the thermo package.
      */
     public static void main(String args[]) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 20.0), 10.00);
         testSystem.addComponent("nitrogen", 0.8);

@@ -1,25 +1,21 @@
 package neqsim.thermo.util.example.longman;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  *
  * @author lozhang
  */
 public class Problem280809LNGphaseEnvelope {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
-    public Problem280809LNGphaseEnvelope() {
-
-    }
+    public Problem280809LNGphaseEnvelope() {}
 
     public static void main(String[] args) {
-
         SystemInterface testSystem = new SystemGERG2004Eos(230, 50.00);
         testSystem.addComponent("methane", 0.80);
         testSystem.addComponent("ethane", 0.05);
@@ -34,7 +30,6 @@ public class Problem280809LNGphaseEnvelope {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
         try {
-
             testOps.calcPTphaseEnvelope(true);// 0.05, 0.000005);
             testOps.displayResult();
 

@@ -1,13 +1,12 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 public class LNGFlash {
-
-    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LNGFlash.class);
 
     public static void main(String args[]) {
@@ -16,7 +15,7 @@ public class LNGFlash {
         testSystem.addComponent("methane", 110.02);
         // testSystem.addComponent("n-pentane", 1e-10);
         testSystem.addComponent("n-hexane", 1.00001);
-//testSystem.addTBPfraction("C7", 0.1, 86.0/1000.0, 0.7);
+        // testSystem.addTBPfraction("C7", 0.1, 86.0/1000.0, 0.7);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -39,7 +38,7 @@ public class LNGFlash {
             // testSystem.setMolarComposition(new double[] {0.1,0.1,0.1});
             // testOps.TPflash();
             // testOps.dewPointTemperatureFlash();
-//           testSystem.display();
+            // testSystem.display();
             // testOps.freezingPointTemperatureFlash();
             // testOps.calcWAT();
 
@@ -49,10 +48,9 @@ public class LNGFlash {
         /*
          * testSystem.reset(); testSystem.addComponent("methane", 1.0);
          * testSystem.addComponent("n-hexane", 0.000000009); testOps = new
-         * ThermodynamicOperations(testSystem); try { testOps.TPflash(); //
-         * testSystem.display(); // testOps.freezingPointTemperatureFlash(); //
-         * testOps.calcWAT(); testSystem.display(); } catch (Exception e) {
-         * logger.error("error",e); } }
+         * ThermodynamicOperations(testSystem); try { testOps.TPflash(); // testSystem.display(); //
+         * testOps.freezingPointTemperatureFlash(); // testOps.calcWAT(); testSystem.display(); }
+         * catch (Exception e) { logger.error("error",e); } }
          * 
          * 
          */

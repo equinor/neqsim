@@ -8,9 +8,6 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version
  */
 public class TestFunction extends LevenbergMarquardtFunction {
-
-    private static final long serialVersionUID = 1000;
-
     public TestFunction() {}
 
     @Override

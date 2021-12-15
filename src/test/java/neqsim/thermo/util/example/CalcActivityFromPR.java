@@ -8,9 +8,6 @@ import neqsim.thermo.system.SystemPCSAFT;
  * @author esol
  */
 public class CalcActivityFromPR {
-
-    private static final long serialVersionUID = 1000;
-
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemPCSAFT(150.0, 10.0);
         testSystem.addComponent("methane", 1.0);
@@ -22,6 +19,5 @@ public class CalcActivityFromPR {
         // System.out.println("activity coefficient " +
         // testSystem.getPhase(1).getActivityCoefficient(1,1));
         testSystem.display();
-
     }
 }
