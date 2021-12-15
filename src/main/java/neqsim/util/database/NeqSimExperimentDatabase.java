@@ -213,9 +213,4 @@ public class NeqSimExperimentDatabase
     public static void setConnectionString(String aConnectionString) {
         connectionString = aConnectionString;
     }
-
-    public static void main(String[] args) {
-
-    }
-
 }
