@@ -13,9 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class CPAEosTest {
-
     static SystemInterface thermoSystem = null;
-
 
     @BeforeAll
     public static void setUp() {

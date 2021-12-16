@@ -1,10 +1,8 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity;
 
-// import physicalProperties.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-// import physicalProperties.gasPhysicalProperties.*;
 /**
  *
  * @author Even Solbraa

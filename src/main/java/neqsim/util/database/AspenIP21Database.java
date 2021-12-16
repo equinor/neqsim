@@ -90,7 +90,6 @@ public class AspenIP21Database
         ResultSet dataSet = database.getResultSet("Karsto", "....'");
         try {
             while (dataSet.next()) {
-
                 System.out.println("dataset " + dataSet.getString(4));
                 System.out.println("dataset value " + dataSet.getDouble("..."));
             }

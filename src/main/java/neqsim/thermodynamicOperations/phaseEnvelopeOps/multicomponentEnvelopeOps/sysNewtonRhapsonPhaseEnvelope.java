@@ -143,7 +143,7 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
             if (testVal > max2) {
                 speceq2 = i;
-                double specVal2 = u.get(i, 0);
+                // double specVal2 = u.get(i, 0);
                 max2 = testVal;
             }
         }
@@ -333,8 +333,8 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
             // check for critical point
 
             // check density
-            double densV = system.getPhase(0).getDensity();
-            double densL = system.getPhase(1).getDensity();
+            // double densV = system.getPhase(0).getDensity();
+            // double densL = system.getPhase(1).getDensity();
             // check the proximity to the critical point by addind the lnKs and finding the
             // highest
             double Kvallc = system.getPhase(0).getComponent(lc).getx()
@@ -570,11 +570,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
              */
         }
 
-        try {
-            Matrix utest = u.copy();
-        } catch (Exception e0) {
-            double nef = 0.;
-        }
+        /*
+         * try { Matrix utest = u.copy(); } catch (Exception e0) { double nef = 0.; }
+         */
     }
 
     public static void main(String args[]) {

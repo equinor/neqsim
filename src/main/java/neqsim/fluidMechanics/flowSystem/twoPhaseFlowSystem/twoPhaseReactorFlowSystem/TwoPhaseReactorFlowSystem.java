@@ -2,7 +2,6 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhaseReactorFlowS
 
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization;
 
-// import guiAuto.*;
 
 public class TwoPhaseReactorFlowSystem
         extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {

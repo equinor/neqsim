@@ -13,7 +13,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class SrkOilCharacterizationTest {
-
     static SystemInterface thermoSystem = null;
 
     @BeforeAll
@@ -32,7 +31,6 @@ public class SrkOilCharacterizationTest {
         thermoSystem.addComponent("water", 1.0);
         thermoSystem.createDatabase(true);
         thermoSystem.setMixingRule(2);
-
     }
 
     @Test
@@ -74,5 +72,4 @@ public class SrkOilCharacterizationTest {
         double entropy2 = thermoSystem.getEntropy();
         assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
     }
-
 }
