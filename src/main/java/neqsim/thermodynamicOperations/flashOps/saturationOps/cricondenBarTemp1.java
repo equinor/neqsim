@@ -1,10 +1,10 @@
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
-import Jama.*;
-import neqsim.physicalProperties.util.examples.TPflash;
+import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
-public class cricondenBarTemp1 extends TPflash implements java.io.Serializable {
+public class cricondenBarTemp1 implements java.io.Serializable {
+
     private static final long serialVersionUID = 1000;
 
     int neq = 0, iter = 0;
@@ -26,7 +26,6 @@ public class cricondenBarTemp1 extends TPflash implements java.io.Serializable {
 
     public cricondenBarTemp1() {}
 
-    /** Creates new nonlin */
     public cricondenBarTemp1(SystemInterface system) {
         this.system = system;
         this.numberOfComponents = system.getPhase(0).getNumberOfComponents();
@@ -62,8 +61,9 @@ public class cricondenBarTemp1 extends TPflash implements java.io.Serializable {
         Jac.timesEquals(0.0);
         double dij = 0.0;
 
-        double tempJ = 0.0, sumdyidbeta = 0, sumdxidbeta = 0;
-        int nofc = numberOfComponents;
+        double tempJ = 0.0;
+        // double sumdyidbeta = 0, sumdxidbeta = 0;
+        // int nofc = numberOfComponents;
 
         for (int i = 0; i < numberOfComponents; i++) {
             for (int j = 0; j < numberOfComponents; j++) {
@@ -102,6 +102,7 @@ public class cricondenBarTemp1 extends TPflash implements java.io.Serializable {
                             / system.getPhases()[1].getComponents()[i].getx());
             system.getPhases()[1].getComponents()[i]
                     .setK(system.getPhases()[0].getComponents()[i].getK());
+
         }
 
         system.init(3);

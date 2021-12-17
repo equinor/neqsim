@@ -1,21 +1,16 @@
 package neqsim.processSimulation.util.example;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import org.junit.jupiter.api.Disabled;
 
-@Disabled
 class process1Test {
     static neqsim.thermo.system.SystemInterface testSystem;
     static neqsim.processSimulation.processSystem.ProcessSystem operations;
 
     @BeforeAll
-    @Disabled
     public static void setUp() {
         testSystem = new neqsim.thermo.system.SystemSrkCPA((273.15 + 25.0), 50.00);
         testSystem.addComponent("methane", 180.00);

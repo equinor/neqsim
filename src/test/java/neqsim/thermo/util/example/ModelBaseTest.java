@@ -14,8 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 @Disabled
 public class ModelBaseTest {
-    private static final long serialVersionUID = 1000;
-
     static SystemInterface thermoSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
 

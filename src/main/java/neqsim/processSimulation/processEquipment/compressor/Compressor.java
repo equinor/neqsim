@@ -1,16 +1,15 @@
-/*
- * ThrottelValve.java
- *
- * Created on 22. august 2001, 17:20
- */
 package neqsim.processSimulation.processEquipment.compressor;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
-
-import org.apache.logging.log4j.*;
-
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -513,6 +512,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
 
     @Override
     public void displayResult() {
+
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");

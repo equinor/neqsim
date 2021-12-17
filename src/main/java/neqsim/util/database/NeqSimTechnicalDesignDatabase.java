@@ -208,6 +208,4 @@ public class NeqSimTechnicalDesignDatabase
     public static void setConnectionString(String aConnectionString) {
         connectionString = aConnectionString;
     }
-
-    public static void main(String[] args) {}
 }

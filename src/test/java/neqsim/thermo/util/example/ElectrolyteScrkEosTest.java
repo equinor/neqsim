@@ -1,14 +1,9 @@
-/*
- * SrkTest.java JUnit based test
- *
- * Created on 27. september 2003, 19:51
- */
 package neqsim.thermo.util.example;
 
-import neqsim.thermo.system.SystemFurstElectrolyteEos;
-
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
+import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
 /**
  *
@@ -16,8 +11,6 @@ import org.junit.jupiter.api.Disabled;
  */
 @Disabled
 public class ElectrolyteScrkEosTest extends ModelBaseTest {
-    private static final long serialVersionUID = 1000;
-
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemFurstElectrolyteEos(298.15, 1.01325);
@@ -28,5 +21,6 @@ public class ElectrolyteScrkEosTest extends ModelBaseTest {
         thermoSystem.setMixingRule(1);
     }
 
+    @AfterAll
     public static void tearDown() {}
 }

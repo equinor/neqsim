@@ -1,21 +1,12 @@
-/*
- * pTphaseEnvelope.java
- *
- * Created on 14. oktober 2000, 21:59
- */
-
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.reactiveCurves;
 
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.dataPresentation.JFreeChart.graph2b;
 import neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D;
 import neqsim.thermo.system.SystemInterface;
@@ -130,7 +121,6 @@ public class pLoadingCurve2 extends BaseOperation {
         double PC = system.getPC();
         logger.info("tc : " + TC + "  PC : " + PC);
         String[] navn = {"CO2 fugacity", "", "", ""};
-        String title2 = "";
         String title = "CO2 vapour pressure";
 
         graph2b graph2 = new graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");
