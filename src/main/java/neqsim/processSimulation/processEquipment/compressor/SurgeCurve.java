@@ -53,9 +53,6 @@ public class SurgeCurve implements java.io.Serializable {
             return false;
     }
 
-    public static void main(String[] args) {
-    }
-
     boolean isActive() {
         return isActive;
     }

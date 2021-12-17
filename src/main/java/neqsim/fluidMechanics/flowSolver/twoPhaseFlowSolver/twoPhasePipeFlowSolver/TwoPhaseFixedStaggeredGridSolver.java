@@ -807,7 +807,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                     * pipe.getNode(i).getInterphaseContactLength(phase)
                     * (pipe.getNode(i).getGeometry().getNodeLength()
                             / pipe.getNode(i).getVelocity(phase));
-            double SP = 0;// -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+            // double SP = 0;//
+            // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
             a[i] = Math.max(Fw, 0);
             c[i] = Math.max(-Fe, 0);
@@ -837,7 +838,8 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                 * pipe.getNode(i).getInterphaseContactLength(phase)
                 * (pipe.getNode(i).getGeometry().getNodeLength()
                         / pipe.getNode(i).getVelocity(phase));
-        double SP = 0;// -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
+        // double SP = 0;//
+        // -pipe.getNode(i).getGeometry().getArea()*4.0*12.0/(pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
         if (dynamic) {
             oldComp[phase][i] = 1.0 / timeStep * pipe.getNode(i).getArea(phase)
@@ -1019,7 +1021,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                                 }
                                 System.out.println("diff molfrac: "
                                         + diffMatrix.norm2() / solMolFracMatrix[phase][p].norm2());
-                                Matrix dmat = new Matrix(xNew[phase][p], 1);
+                                // Matrix dmat = new Matrix(xNew[phase][p], 1);
                                 // dmat.print(10,10);
                                 initComposition(phase, p);
                             } while (diff > 1e-12 && iter < 10);

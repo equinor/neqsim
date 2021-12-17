@@ -1,10 +1,6 @@
-/*
- * SrkTest.java JUnit based test
- *
- * Created on 27. september 2003, 19:51
- */
 package neqsim.thermo.util.example;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
@@ -25,5 +21,6 @@ public class ElectrolyteScrkEosTest extends ModelBaseTest {
         thermoSystem.setMixingRule(1);
     }
 
+    @AfterAll
     public static void tearDown() {}
 }

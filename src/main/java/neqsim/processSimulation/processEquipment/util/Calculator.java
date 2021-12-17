@@ -1,10 +1,9 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
-import neqsim.processSimulation.processEquipment.stream.Stream;;
+import neqsim.processSimulation.processEquipment.stream.Stream;
 
 public class Calculator extends ProcessEquipmentBaseClass {
     ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
@@ -13,9 +12,6 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     public Calculator(String name) {
         super(name);
-    }
-
-    public static void main(String[] args) {
     }
 
     public void addInputVariable(ProcessEquipmentInterface unit) {
@@ -42,7 +38,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
             }
         }
 
-        //System.out.println("make up MEG " + sum);
+        // System.out.println("make up MEG " + sum);
         outputVariable.getFluid().setTotalFlowRate(sum, "kg/hr");
         try {
             ((Stream) outputVariable).setFlowRate(sum, "kg/hr");

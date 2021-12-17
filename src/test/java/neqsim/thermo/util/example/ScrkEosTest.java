@@ -1,14 +1,13 @@
 package neqsim.thermo.util.example;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 
 /**
  *
  * @author ESOL
  */
-@Disabled
+
 public class ScrkEosTest extends ModelBaseTest {
     @BeforeAll
     public static void setUp() {

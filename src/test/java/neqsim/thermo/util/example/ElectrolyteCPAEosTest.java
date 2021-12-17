@@ -1,7 +1,7 @@
 package neqsim.thermo.util.example;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -26,8 +26,10 @@ public class ElectrolyteCPAEosTest extends ModelBaseTest {
         thermoSystem.setMixingRule(1);
     }
 
+    @AfterAll
     public static void tearDown() {}
 
+    @Disabled
     @Test
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);

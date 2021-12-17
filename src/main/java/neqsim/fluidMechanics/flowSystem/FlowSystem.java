@@ -57,9 +57,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     public void flowLegInit() {
-        int numb = 0;
         for (int i = 0; i < numberOfFlowLegs; i++) {
-            numb += numberOfNodesInLeg[i];
             this.flowLeg[i].setThermoSystem(thermoSystem);
             this.flowLeg[i].setEquipmentGeometry(equipmentGeometry[i]);
             this.flowLeg[i].setNumberOfNodes(numberOfNodesInLeg[i]);

@@ -1,7 +1,6 @@
 package neqsim.util.generator;
 
 import java.util.HashMap;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
@@ -314,8 +313,5 @@ public class PropertyGenerator {
      */
     public double getValue(String propertyName) {
         return 0.0;
-    }
-
-    static void main(String[] args) {
     }
 }

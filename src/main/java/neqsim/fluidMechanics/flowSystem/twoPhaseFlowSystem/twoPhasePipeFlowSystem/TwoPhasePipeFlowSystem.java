@@ -1,6 +1,5 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem;
 
-// import guiAuto.*;
 public class TwoPhasePipeFlowSystem
         extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
     private static final long serialVersionUID = 1000;

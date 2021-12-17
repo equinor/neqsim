@@ -31,6 +31,7 @@ public class ChemEq implements java.io.Serializable {
     double[][] matrix;
 
     public ChemEq() {
+
         for (int i = 0; i < 10; i++) {
             chem_ref[i] += Math.log(P);
         }
@@ -334,10 +335,5 @@ public class ChemEq implements java.io.Serializable {
             System.out.println(
                     " SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
         }
-    }
-
-    public static void main(String args[]) {
-        ChemEq testSystem = new ChemEq();
-        testSystem.solve();
     }
 }

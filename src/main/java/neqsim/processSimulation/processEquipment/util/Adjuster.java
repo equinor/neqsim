@@ -7,11 +7,9 @@ package neqsim.processSimulation.processEquipment.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
-import neqsim.thermo.util.example.PhaseEnvelope;
 
 /**
  * @author Even Solbraa
@@ -30,7 +28,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     int iterations = 0;
     private boolean activateWhenLess = false;
 
-    static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+    static Logger logger = LogManager.getLogger(Adjuster.class);
 
     /** Creates new staticMixer */
     public Adjuster() {}

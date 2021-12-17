@@ -53,9 +53,11 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
 
         phaseFraction[0] = 1.0 - 1.0e-10;
         phaseFraction[1] = 1.0 - phaseFraction[0];
-        double f = 0, df = 0, fOld = 0, betaOld = 0;
+        double f = 0, fOld = 0, betaOld = 0;
         int iterations = 0;
         double step = 100.0;
+
+        // double df
 
         do {
             iterations++;
@@ -79,14 +81,14 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
                     * (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                             - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
                     * gravity * inclination;
-            df = -Fl - Fg
-                    + (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-                            - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
-                            * gravity * inclination
-                    - Math.pow(phaseFraction[0], 2.0) * (bulkSystem.getPhases()[1]
-                            .getPhysicalProperties().getDensity()
-                            - bulkSystem.getPhases()[0].getPhysicalProperties().getDensity())
-                            * gravity * inclination;
+            /*
+             * df = -Fl - Fg + (bulkSystem.getPhases()[1].getPhysicalProperties().getDensity() -
+             * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) gravity * inclination
+             * - Math.pow(phaseFraction[0], 2.0) * (bulkSystem.getPhases()[1]
+             * .getPhysicalProperties().getDensity() -
+             * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()) gravity *
+             * inclination;
+             */
 
             if (f > 0) {
                 phaseFraction[0] += (betaOld - phaseFraction[0]);
@@ -209,6 +211,7 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
 
     @Override
     public void update() {
+
         double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);// getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
                                                                          // getPrandtlNumber(0),
                                                                          // this) *
