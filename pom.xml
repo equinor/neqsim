@@ -8,7 +8,7 @@
 	<version>${revision}${sha1}${changelist}</version>
 
 	<properties>
-		<revision>2.3.0</revision>
+		<revision>2.2.2</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<sha1 />
@@ -178,7 +178,7 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<finalName>NeqSim</finalName>
+							<finalName>neqsim-${revision}-SHADED</finalName>
 						</configuration>
 					</execution>
 				</executions>
