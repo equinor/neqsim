@@ -14,7 +14,11 @@ import org.apache.logging.log4j.*;
  * <p>GTSurfaceTensionFullGT class.</p>
  *
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  * @author John C. Morud <john.c.morud@sintef.no>
+ * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  * @brief Solving for the surface tension by direct Newton method.
  * @todo Make use of binary interaction parameter for the influence parameter

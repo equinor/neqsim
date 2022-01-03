@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentEosInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface ComponentEosInterface extends ComponentInterface {
 

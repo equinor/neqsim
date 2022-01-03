@@ -15,6 +15,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * <p>Adjuster class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
 

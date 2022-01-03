@@ -33,14 +33,14 @@ public class Wall implements WallInterface {
     private ArrayList<MaterialLayer> wallMaterialLayers = new ArrayList<MaterialLayer>();
     private double heatTransferCoefficient = 10.0;
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addMaterialLayer(MaterialLayer layer) {
         wallMaterialLayers.add(layer);
         heatTransferCoefficient = calcHeatTransferCoefficient();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public MaterialLayer getWallMaterialLayer(int i) {
         return wallMaterialLayers.get(i);

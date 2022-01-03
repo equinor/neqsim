@@ -11,6 +11,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * <p>PhaseCPAInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
 

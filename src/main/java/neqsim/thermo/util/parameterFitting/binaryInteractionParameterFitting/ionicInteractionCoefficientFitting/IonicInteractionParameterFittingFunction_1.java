@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
  * <p>IonicInteractionParameterFittingFunction_1 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_1
         extends IonicInteractionParameterFittingFunction {

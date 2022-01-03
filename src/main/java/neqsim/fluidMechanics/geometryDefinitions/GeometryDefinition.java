@@ -15,6 +15,7 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
  * <p>Abstract GeometryDefinition class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class GeometryDefinition
         implements GeometryDefinitionInterface, neqsim.thermo.ThermodynamicConstantsInterface {

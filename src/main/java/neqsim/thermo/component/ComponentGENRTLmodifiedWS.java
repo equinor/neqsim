@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGENRTLmodifiedWS class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
 
@@ -35,19 +36,19 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getlnGammadt() {
         return dlngammadt;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] WSalpha, double[][] WSgij, double[][] intparam, String[][] mixRule) {

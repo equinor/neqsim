@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>EosInteractionParameterFittingFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
 

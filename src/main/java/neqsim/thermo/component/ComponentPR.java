@@ -11,6 +11,7 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
  * <p>ComponentPR class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentPR extends ComponentEos {
 
@@ -83,26 +84,26 @@ public class ComponentPR extends ComponentEos {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calca() {
         return .45724333333 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         return .077803333 * R * criticalTemperature / criticalPressure;
     }
 
     
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
     	 if (ionicCharge != 0) {
@@ -147,7 +148,7 @@ public class ComponentPR extends ComponentEos {
         return dqPuredTdT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();

@@ -10,6 +10,7 @@ package neqsim.fluidMechanics.util.fluidMechanicsDataHandeling;
  * <p>FileWriterBaseClass class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FileWriterBaseClass implements java.io.Serializable {
 

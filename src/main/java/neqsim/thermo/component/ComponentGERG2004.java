@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGERG2004 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGERG2004 extends ComponentEos {
 
@@ -72,50 +73,50 @@ public class ComponentGERG2004 extends ComponentEos {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         return 0.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calca() {
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
 
         return fugasityCoeffisient;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         return 1;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         return 1;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         return 1;

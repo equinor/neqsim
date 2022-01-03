@@ -10,6 +10,7 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * <p>RachigRingPacking class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class RachigRingPacking extends Packing {
 

@@ -22,6 +22,7 @@ import visad.util.ContourWidget;
  * <p>visAd3DPlot class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class visAd3DPlot extends visAdBaseClass {
 

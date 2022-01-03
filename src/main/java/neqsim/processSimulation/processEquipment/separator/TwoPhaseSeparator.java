@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>TwoPhaseSeparator class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class TwoPhaseSeparator extends Separator {
 

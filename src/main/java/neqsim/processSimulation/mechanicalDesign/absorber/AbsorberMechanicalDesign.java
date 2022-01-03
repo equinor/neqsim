@@ -32,7 +32,7 @@ public class AbsorberMechanicalDesign extends MechanicalDesign {
         super(equipment);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void readDesignSpecifications() {
 
@@ -70,7 +70,7 @@ public class AbsorberMechanicalDesign extends MechanicalDesign {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
         super.calcDesign();
@@ -157,7 +157,7 @@ public class AbsorberMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
@@ -165,7 +165,7 @@ public class AbsorberMechanicalDesign extends MechanicalDesign {
         // this method will be implemented to set calculated design...
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getOuterDiameter() {
         return outerDiameter;

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.*;
  * <p>PhaseDesmukhMather class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseDesmukhMather extends PhaseGE {
 
@@ -33,14 +34,14 @@ public class PhaseDesmukhMather extends PhaseGE {
         super();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentDesmukhMather(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase, double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
@@ -51,7 +52,7 @@ public class PhaseDesmukhMather extends PhaseGE {
         Z = pressure * getMolarVolume() / (R * temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -155,7 +156,7 @@ public class PhaseDesmukhMather extends PhaseGE {
         return bij[i][j];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -168,13 +169,13 @@ public class PhaseDesmukhMather extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
@@ -182,13 +183,13 @@ public class PhaseDesmukhMather extends PhaseGE {
         return GE;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getActivityCoefficient(int k, int p) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getActivityCoefficient(int k) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();

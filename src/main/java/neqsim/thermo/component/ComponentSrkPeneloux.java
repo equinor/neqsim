@@ -11,6 +11,7 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
  * <p>ComponentSrkPeneloux class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentSrkPeneloux extends ComponentSrk {
 
@@ -89,13 +90,13 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         if (ionicCharge != 0) {
@@ -109,7 +110,7 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         double volCorr = getVolumeCorrection();

@@ -39,7 +39,7 @@ public class Viscosity
         pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public Viscosity clone() {
         Viscosity properties = null;
@@ -53,7 +53,7 @@ public class Viscosity
         return properties;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
         double tempVar = 0, tempVar2 = 0;
@@ -129,7 +129,7 @@ public class Viscosity
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];

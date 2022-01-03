@@ -165,7 +165,7 @@ public class BaseContract implements ContractInterface {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void runCheck() {
         int j = 0;
@@ -200,7 +200,7 @@ public class BaseContract implements ContractInterface {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void display() {
         JFrame dialog = new JFrame("Specification check against sales specifications: " + getContractName());
@@ -217,7 +217,7 @@ public class BaseContract implements ContractInterface {
         dialog.setVisible(true);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setContract(String name) {
         waterDewPointTemperature = -12.0;
@@ -264,37 +264,37 @@ public class BaseContract implements ContractInterface {
         this.waterDewPointSpecPressure = waterDewPointSpecPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public int getSpecificationsNumber() {
         return specificationsNumber;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setSpecificationsNumber(int specificationsNumber) {
         this.specificationsNumber = specificationsNumber;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String[][] getResultTable() {
         return resultTable;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getContractName() {
         return contractName;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setContractName(String contractName) {
         this.contractName = contractName;

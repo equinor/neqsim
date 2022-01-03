@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentSrkPeneloux;
  * <p>PhaseSrkPenelouxEos class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseSrkPenelouxEos extends PhaseSrkEos {
 
@@ -37,7 +38,7 @@ public class PhaseSrkPenelouxEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);

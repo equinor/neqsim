@@ -85,7 +85,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         setAtractiveTerm(1);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         if ((aCPA > 1.0e-10) && cpaon == 1) {
@@ -109,13 +109,13 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calca() {
         if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
@@ -124,7 +124,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         return a;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         if ((numberOfAssociationSites != 0 || Math.abs(aCPA) > 1e-6) && cpaon == 1) {
@@ -133,7 +133,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         return b;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setAtractiveTerm(int i) {
         super.setAtractiveTerm(i);
@@ -142,7 +142,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
@@ -153,19 +153,19 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         return Fsup + cpaon * Fcpa;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
@@ -228,7 +228,7 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
         this.xsite = xsite;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;

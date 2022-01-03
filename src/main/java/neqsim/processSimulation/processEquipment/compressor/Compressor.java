@@ -21,6 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Compressor class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
 

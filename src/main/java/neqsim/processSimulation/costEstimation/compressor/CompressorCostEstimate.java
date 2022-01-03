@@ -22,7 +22,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
         super(mechanicalEquipment);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getTotaltCost() {
         CompressorMechanicalDesign sepMecDesign = (CompressorMechanicalDesign) mechanicalEquipment;

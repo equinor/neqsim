@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermMatCop class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermMatCop extends AtractiveTermSrk {
 
@@ -57,14 +58,14 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         super.init();
         parameters[0] = m;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -73,7 +74,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {
@@ -84,7 +85,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -98,7 +99,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -120,7 +121,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {
@@ -130,7 +131,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {

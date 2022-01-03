@@ -15,6 +15,7 @@ import neqsim.thermo.component.ComponentInterface;
  * <p>ReferencePotComparator class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ReferencePotComparator implements Comparator, java.io.Serializable {
 

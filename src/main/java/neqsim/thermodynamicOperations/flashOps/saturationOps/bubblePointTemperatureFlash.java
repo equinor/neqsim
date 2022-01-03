@@ -34,7 +34,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -90,7 +90,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

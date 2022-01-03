@@ -13,6 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>ScalePotentialCheckStream class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class ScalePotentialCheckStream extends Stream {
 

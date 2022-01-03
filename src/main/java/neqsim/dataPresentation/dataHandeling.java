@@ -10,6 +10,7 @@ import java.text.DecimalFormat;
  * <p>dataHandeling class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class dataHandeling {
 

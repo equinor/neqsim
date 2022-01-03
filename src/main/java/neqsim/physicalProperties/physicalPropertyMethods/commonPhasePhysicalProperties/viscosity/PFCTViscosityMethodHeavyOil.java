@@ -48,7 +48,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
         this.calcPureComponentViscosity();

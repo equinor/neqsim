@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentSolid;
  * <p>Abstract PhaseSolid class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public abstract class PhaseSolid extends PhaseSrkEos {
 
@@ -36,7 +37,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -47,14 +48,14 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         phaseTypeName = "solid";
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSolid(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getEnthalpy() {
         double fusionHeat = 0.0;

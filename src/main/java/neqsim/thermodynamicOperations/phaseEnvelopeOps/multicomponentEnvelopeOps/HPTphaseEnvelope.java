@@ -21,6 +21,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>HPTphaseEnvelope class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class HPTphaseEnvelope extends BaseOperation {
 

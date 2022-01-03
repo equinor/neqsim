@@ -12,6 +12,7 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwu;
  * <p>ComponentTST class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentTST extends ComponentEos {
 
@@ -81,25 +82,25 @@ public class ComponentTST extends ComponentEos {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calca() {
         return .427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         return .086641 * R * criticalTemperature / criticalPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         if (this.getRacketZ() < 1e-10) {

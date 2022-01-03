@@ -40,13 +40,13 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
         return pipeline;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public SystemInterface getThermoSystem() {
         return getOutStream().getThermoSystem();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         pipeline.run();

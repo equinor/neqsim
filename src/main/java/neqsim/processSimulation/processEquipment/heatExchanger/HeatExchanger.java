@@ -16,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>HeatExchanger class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class HeatExchanger extends Heater implements HeatExchangerInterface {
 

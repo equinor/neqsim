@@ -13,6 +13,7 @@ import org.apache.logging.log4j.*;
  * <p>ThermodynamicModelTest class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;

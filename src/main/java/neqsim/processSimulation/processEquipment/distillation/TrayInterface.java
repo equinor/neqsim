@@ -11,7 +11,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  */
 public interface TrayInterface extends ProcessEquipmentInterface {
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run();
 
@@ -22,11 +22,11 @@ public interface TrayInterface extends ProcessEquipmentInterface {
      */
     public void addStream(StreamInterface newStream);
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setName(String name);
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getName();
 

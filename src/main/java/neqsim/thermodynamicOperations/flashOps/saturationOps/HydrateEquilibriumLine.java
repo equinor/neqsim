@@ -30,7 +30,7 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
         maxPressure = maxPres;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -56,7 +56,7 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[][] getPoints(int i) {
         return hydratePoints;

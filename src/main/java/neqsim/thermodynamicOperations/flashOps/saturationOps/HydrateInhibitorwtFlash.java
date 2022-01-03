@@ -52,7 +52,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         system = null;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -113,7 +113,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         // system.display();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

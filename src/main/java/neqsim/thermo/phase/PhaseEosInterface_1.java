@@ -12,10 +12,11 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  * <p>PhaseEosInterface_1 interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface PhaseEosInterface_1 extends PhaseInterface {
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	double getMolarVolume();
 

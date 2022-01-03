@@ -10,6 +10,7 @@ import neqsim.thermo.system.SystemPrEos;
  * <p>TestCharacterisation class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCharacterisation {
 

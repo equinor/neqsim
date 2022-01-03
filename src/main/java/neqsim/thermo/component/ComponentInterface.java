@@ -14,6 +14,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentInterface interface.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable {
 

@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermPrGassem2001 class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
 
@@ -41,14 +42,14 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
                 - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         // System.out.println("alpha gassem");
@@ -57,13 +58,13 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
                         + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         return getComponent().geta() * alpha(temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         return 1.0 / getComponent().getTC() * alpha(temperature)
@@ -77,7 +78,7 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
                                         + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor() - 1.0));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         // not implemented dubble derivative
@@ -89,13 +90,13 @@ public class AtractiveTermPrGassem2001 extends AtractiveTermPr {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         return getComponent().geta() * diffalphaT(temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);

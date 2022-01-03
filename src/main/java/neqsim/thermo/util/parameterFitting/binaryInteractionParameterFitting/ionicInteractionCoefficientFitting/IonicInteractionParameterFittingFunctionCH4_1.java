@@ -4,6 +4,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.io
  * <p>IonicInteractionParameterFittingFunctionCH4_1 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCH4_1
         extends IonicInteractionParameterFittingFunctionCH4 {

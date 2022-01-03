@@ -14,6 +14,7 @@ import org.apache.logging.log4j.*;
  * <p>GTSurfaceTensionSimple class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GTSurfaceTensionSimple extends SurfaceTension {
 

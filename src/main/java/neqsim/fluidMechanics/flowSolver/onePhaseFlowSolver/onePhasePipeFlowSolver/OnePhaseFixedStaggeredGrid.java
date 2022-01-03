@@ -12,6 +12,7 @@ import neqsim.MathLib.generalMath.TDMAsolve;
  * <p>OnePhaseFixedStaggeredGrid class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -636,7 +637,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solveTDMA() {
         double d[];

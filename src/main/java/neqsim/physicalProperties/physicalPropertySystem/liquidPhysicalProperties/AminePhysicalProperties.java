@@ -16,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>AminePhysicalProperties class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AminePhysicalProperties extends LiquidPhysicalProperties {
 

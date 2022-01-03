@@ -17,6 +17,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>Kinetics class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class Kinetics implements java.io.Serializable {
 

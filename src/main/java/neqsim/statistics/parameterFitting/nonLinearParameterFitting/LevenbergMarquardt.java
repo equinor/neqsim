@@ -13,6 +13,7 @@ import neqsim.statistics.parameterFitting.StatisticsBaseClass;
  * <p>LevenbergMarquardt class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
 
@@ -45,7 +46,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         return clonedClass;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         chiSquare = calcChiSquare();
@@ -55,7 +56,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         alpha = calcAlphaMatrix();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solve() {
         setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());

@@ -12,6 +12,7 @@ import neqsim.thermo.util.JNI.GERG2004EOS;
  * <p>PhaseGERG2004Eos class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGERG2004Eos extends PhaseEos {
 
@@ -47,7 +48,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
@@ -69,7 +70,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
         IPHASE = phase == 0 ? -1 : -2;
@@ -130,49 +131,49 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         return gibbsEnergy;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getJouleThomsonCoefficient() {
         return JTcoef;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getEnthalpy() {
         return enthalpy;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getEntropy() {
         return entropy;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getInternalEnergy() {
         return internalEnery;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getCp() {
         return CpGERG;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getCv() {
         return CvGERG;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {

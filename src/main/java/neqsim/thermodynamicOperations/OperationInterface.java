@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>OperationInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface OperationInterface extends Runnable, java.io.Serializable {
     /**

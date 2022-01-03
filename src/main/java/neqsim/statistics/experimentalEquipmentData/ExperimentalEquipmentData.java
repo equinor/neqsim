@@ -10,6 +10,7 @@ package neqsim.statistics.experimentalEquipmentData;
  * <p>ExperimentalEquipmentData class.</p>
  *
  * @author  even solbraa
+ * @version $Id: $Id
  */
 public class ExperimentalEquipmentData {
 

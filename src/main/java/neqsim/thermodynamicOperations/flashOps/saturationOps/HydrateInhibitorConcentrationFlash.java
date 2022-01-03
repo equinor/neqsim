@@ -50,7 +50,7 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
         system = null;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -91,7 +91,7 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
         } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

@@ -10,6 +10,7 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * <p>PallRingPacking class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class PallRingPacking extends Packing {
 

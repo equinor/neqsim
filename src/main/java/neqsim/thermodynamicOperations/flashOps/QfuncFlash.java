@@ -8,6 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>QfuncFlash class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class QfuncFlash extends Flash {
 

@@ -21,6 +21,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * <p>PhaseSrkCPAojAlgo class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseSrkCPAojAlgo extends PhaseSrkEos implements PhaseCPAInterface {
 

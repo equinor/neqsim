@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>LGTSurfaceTension class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class LGTSurfaceTension extends SurfaceTension {
 

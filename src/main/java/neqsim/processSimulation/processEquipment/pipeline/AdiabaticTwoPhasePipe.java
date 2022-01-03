@@ -17,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>AdiabaticTwoPhasePipe class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class AdiabaticTwoPhasePipe extends Pipeline {
 

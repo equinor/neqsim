@@ -84,7 +84,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
         initChungPureComponentViscosity();
@@ -185,7 +185,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
                         * (Math.exp(2.0 * bigGamma - 2.0) - 1.0);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
@@ -220,7 +220,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity implements neqsim.t
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void tuneModel(double val, double temperature, double pressure) {
         double calcVisc = 0;

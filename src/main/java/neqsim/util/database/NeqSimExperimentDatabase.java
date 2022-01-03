@@ -45,6 +45,7 @@ public class NeqSimExperimentDatabase
     public static String dataBasePath = "";
     /** Constant <code>username=""</code> */
     /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
     public static String username = "", password = "";
     static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
     private static boolean createTemporaryTables = false;

@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestCPAParameterFittingToSolubilityGlycolHC class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCPAParameterFittingToSolubilityGlycolHC {
 

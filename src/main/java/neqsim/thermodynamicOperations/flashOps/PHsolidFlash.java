@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>PHsolidFlash class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class PHsolidFlash extends Flash {
 

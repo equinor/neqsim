@@ -10,6 +10,7 @@ package neqsim.thermo.util.constants;
  * <p>FurstElectrolyteConstants class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FurstElectrolyteConstants implements java.io.Serializable {
 

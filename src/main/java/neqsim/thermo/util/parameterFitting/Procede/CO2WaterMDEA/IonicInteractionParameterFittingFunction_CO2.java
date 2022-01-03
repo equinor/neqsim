@@ -9,6 +9,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * <p>IonicInteractionParameterFittingFunction_CO2 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarquardtFunction {
 

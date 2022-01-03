@@ -4,6 +4,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
  * <p>BinaryHVParameterFittingToSolubilityData2 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunction {
 

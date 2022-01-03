@@ -12,6 +12,7 @@ import neqsim.thermodynamicOperations.OperationInterface;
  * <p>constantDutyFlashInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface constantDutyFlashInterface extends OperationInterface {
     /**

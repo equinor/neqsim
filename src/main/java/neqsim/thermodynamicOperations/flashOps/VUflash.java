@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>VUflash class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class VUflash extends Flash {
 

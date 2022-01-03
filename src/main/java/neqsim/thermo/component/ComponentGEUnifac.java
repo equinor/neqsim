@@ -16,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGEUnifac class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
 

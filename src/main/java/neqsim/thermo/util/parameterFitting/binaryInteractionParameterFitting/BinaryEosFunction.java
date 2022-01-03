@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>BinaryEosFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryEosFunction extends LevenbergMarquardtFunction {
 

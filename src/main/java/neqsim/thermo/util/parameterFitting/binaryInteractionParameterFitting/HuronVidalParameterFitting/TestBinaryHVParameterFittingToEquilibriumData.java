@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestBinaryHVParameterFittingToEquilibriumData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVParameterFittingToEquilibriumData {
 

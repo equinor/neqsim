@@ -16,6 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>NeqGasScrubber class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class NeqGasScrubber extends Separator {
 

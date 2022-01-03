@@ -6,6 +6,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>PUflash class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class PUflash extends Flash {
 

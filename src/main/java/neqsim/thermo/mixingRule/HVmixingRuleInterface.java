@@ -10,6 +10,7 @@ package neqsim.thermo.mixingRule;
  * <p>HVmixingRuleInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface HVmixingRuleInterface extends EosMixingRulesInterface {
 

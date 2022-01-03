@@ -35,7 +35,7 @@ public class WATcalc extends constantDutyTemperatureFlash {
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         double sumx = 0.0;
@@ -81,7 +81,7 @@ public class WATcalc extends constantDutyTemperatureFlash {
         system.init(3);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

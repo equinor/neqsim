@@ -20,6 +20,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestBinaryHVParameterFitting_MDEA class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVParameterFitting_MDEA {
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFitting_MDEA.class);

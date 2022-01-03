@@ -49,7 +49,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcConductivity() {
 

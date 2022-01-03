@@ -10,6 +10,7 @@ package neqsim.util.exception;
  * <p>InvalidInputException class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class InvalidInputException extends neqsim.util.exception.ThermoException {
 

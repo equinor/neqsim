@@ -7,6 +7,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>CMEFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CMEFunction extends LevenbergMarquardtFunction {
 

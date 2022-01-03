@@ -33,7 +33,7 @@ public class dewPointPressureFlash extends constantDutyTemperatureFlash {
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -110,7 +110,7 @@ public class dewPointPressureFlash extends constantDutyTemperatureFlash {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

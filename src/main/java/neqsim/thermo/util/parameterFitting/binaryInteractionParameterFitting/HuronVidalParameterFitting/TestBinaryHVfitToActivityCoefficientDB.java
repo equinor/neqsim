@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestBinaryHVfitToActivityCoefficientDB class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
 

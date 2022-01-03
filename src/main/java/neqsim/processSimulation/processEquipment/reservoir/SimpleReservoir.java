@@ -17,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>SimpleReservoir class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
 

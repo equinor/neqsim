@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermPr1978 class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermPr1978 extends AtractiveTermPr {
 
@@ -46,7 +47,7 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         if (getComponent().getAcentricFactor() > 0.49) {

@@ -10,6 +10,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>VHflashQfunc class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class VHflashQfunc extends Flash {
 

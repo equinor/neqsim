@@ -39,7 +39,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
         name = "gas cromotography";
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calculate() {
         thermoSystem.init(0);
@@ -47,7 +47,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         unit = returnUnit;
@@ -61,19 +61,19 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         return thermoSystem.getPhase(0).getComponent(componentName).getz();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         return unit;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return true;

@@ -54,25 +54,25 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         // solver = new newtonRhapson();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public EosMixingRulesInterface getMixingRule() {
         return mixRule;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayInteractionCoefficients(String intType) {
         mixSelect.displayInteractionCoefficients(intType, this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(double moles) {
         super.addcomponent(moles);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -167,14 +167,14 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         mixRule = mixSelect.getMixingRule(type, this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRuleGEModel(String name) {
         mixRule.setMixingRuleGEModel(name);
         mixSelect.setMixingRuleGEModel(name);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void resetMixingRule(int type) {
         mixingRuleDefined = true;
@@ -277,7 +277,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -373,14 +373,14 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPressureRepulsive() {
         double presrep = R * temperature / (getMolarVolume() - getb());
         return presrep;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPressureAtractive() {
         double presrep = R * temperature / (getMolarVolume() - getb());
@@ -390,27 +390,27 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return presatr;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public java.lang.String getMixingRuleName() {
         return mixRule.getMixingRuleName();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         loc_A = mixRule.calcA(phase, temperature, pressure, numbcomp);
         return loc_A;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         loc_B = mixRule.calcB(phase, temperature, pressure, numbcomp);
         return loc_B;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return mixRule.calcAi(compNumb, phase, temperature, pressure, numbcomp);
@@ -444,39 +444,39 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return loc_ATT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return mixRule.calcAiT(compNumb, phase, temperature, pressure, numbcomp);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
         return mixRule.calcAij(compNumb, j, phase, temperature, pressure, numbcomp);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcBij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
         return mixRule.calcBij(compNumb, j, phase, temperature, pressure, numbcomp);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return mixRule.calcBi(compNumb, phase, temperature, pressure, numbcomp);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return calcA(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase / numberOfMolesInPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return calcB(phase, temperature, pressure, numbcomp) / numberOfMolesInPhase;
@@ -490,75 +490,75 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return loc_B / numberOfMolesInPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getA() {
         return loc_A;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getB() {
         return loc_B;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getAT() {
         return loc_AT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getATT() {
         return loc_ATT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getAresTV() {
         return getF() * R * temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGresTP() {
         return getAresTV() + pressure * numberOfMolesInPhase * getMolarVolume()
                 - numberOfMolesInPhase * R * temperature * (1.0 + Math.log(Z));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSresTV() {
         return (-temperature * dFdT() - getF()) * R;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSresTP() {
         return getSresTV() + numberOfMolesInPhase * R * Math.log(Z);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getHresTP() {
         return getAresTV() + temperature * getSresTV() + pressure * numberOfMolesInPhase * getMolarVolume()
                 - numberOfMolesInPhase * R * temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getHresdP() {
         return getVolume() + temperature * getdPdTVn() / getdPdVTn();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getCvres() {
         return (-temperature * temperature * dFdTdT() - 2.0 * temperature * dFdT()) * R;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getCpres() {
 
@@ -585,38 +585,38 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return -1.0 / getCp() * (getMolarVolume() * numberOfMolesInPhase + temperature * getdPdTVn() / getdPdVTn());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getdPdTVn() {
         return -R * temperature * dFdTdV() + pressure / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getdPdVTn() {
         return -R * temperature * dFdVdV()
                 - numberOfMolesInPhase * R * temperature / Math.pow(numberOfMolesInPhase * getMolarVolume(), 2.0);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getdPdrho() {
         return getdPdVTn() * getdVdrho() * 1e5;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getdrhodP() {
         return 1.0 / getdPdrho();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getdrhodT() {
         return -getdPdTVn() / getdPdrho();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getdrhodN() {
         return this.getMolarMass();
@@ -631,7 +631,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return -1.0 * numberOfMolesInPhase * this.getMolarMass() / Math.pow(this.getDensity(), 2.0);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getg() {
         return g;
@@ -674,62 +674,62 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return -numberOfMolesInPhase * getg() - getA() / temperature * getf_loc();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double F() {
         return getF();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double Fn() {
         return -getg();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FT() {
         return getA() * getf_loc() / (temperature * temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FV() {
         return -numberOfMolesInPhase * gV() - getA() / temperature * fv();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FD() {
         return -getf_loc() / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FB() {
         return -numberOfMolesInPhase * gb() - getA() / temperature * fb();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double gb() {
         return -1.0 / (numberOfMolesInPhase * molarVolume - loc_B);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fb() {
         return -(f_loc + numberOfMolesInPhase * molarVolume * fv()) / loc_B;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double gV() {
         return getb() / (molarVolume * (numberOfMolesInPhase * molarVolume - loc_B));
         // 1/(numberOfMolesInPhase*getMolarVolume()-getB())-1/(numberOfMolesInPhase*getMolarVolume());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fv() {
         return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * loc_B)
@@ -738,67 +738,67 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     ////// NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
     ////// numberOfComponents, double temperature, double pressure, int phasetype){
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FnV() {
         return -gV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FnB() {
         return -gb();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FTT() {
         return -2.0 / temperature * FT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FBT() {
         return getA() * fb() / temperature / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FDT() {
         return getf_loc() / temperature / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FBV() {
         return -numberOfMolesInPhase * gBV() - getA() * fBV() / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FBB() {
         return -numberOfMolesInPhase * gBB() - getA() * fBB() / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FDV() {
         return -fv() / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FBD() {
         return -fb() / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FTV() {
         return getA() * fv() / temperature / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double FVV() {
         return -numberOfMolesInPhase * gVV() - getA() * fVV() / temperature;
@@ -813,7 +813,7 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return -numberOfMolesInPhase * gVVV() - getA() * fVVV() / temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double gVV() {
         double val1 = numberOfMolesInPhase * getMolarVolume();
@@ -832,21 +832,21 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return 2.0 / (val2 * val2 * val2) - 2.0 / (val1 * val1 * val1);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double gBV() {
         double val = numberOfMolesInPhase * getMolarVolume() - getB();
         return 1.0 / (val * val);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double gBB() {
         double val = numberOfMolesInPhase * getMolarVolume() - getB();
         return -1.0 / (val * val);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fVV() {
         double val1 = (numberOfMolesInPhase * molarVolume + delta1 * loc_B);
@@ -865,37 +865,37 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return 1.0 / (R * getB() * (delta1 - delta2)) * (2.0 / (val1 * val1 * val1) - 2.0 / (val2 * val2 * val2));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fBV() {
         return -(2.0 * fv() + numberOfMolesInPhase * molarVolume * fVV()) / getB();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fBB() {
         return -(2.0 * fb() + numberOfMolesInPhase * molarVolume * fBV()) / getB();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdT() {
         return FT() + FD() * getAT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdV() {
         return FV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdV() {
         return FTV() + FDV() * getAT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         return FVV();
@@ -910,19 +910,19 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return FVVV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdT() {
         return FTT() + 2.0 * FDT() * getAT() + FD() * getATT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcPressure() {
         return -R * temperature * dFdV() + getNumberOfMolesInPhase() * R * temperature / getTotalVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcPressuredV() {
         return -R * temperature * dFdVdV()
@@ -1156,28 +1156,28 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return matrix;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(int i) {
         return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(), temperature,
                 pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdN(int i, int j) {
         return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(), temperature,
                 pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdV(int i) {
         return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(), temperature,
                 pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdT(int i) {
         return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(), temperature,

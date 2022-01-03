@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>FugTestConstP class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FugTestConstP extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
@@ -68,7 +69,7 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
         this.testOps2 = new ThermodynamicOperations(testSystem2);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0;

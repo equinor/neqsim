@@ -12,6 +12,7 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
  * <p>InterphasePropertiesInterface interface.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public interface InterphasePropertiesInterface extends Cloneable {
 

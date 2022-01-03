@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentSolid class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ComponentSolid extends ComponentSrk {
 

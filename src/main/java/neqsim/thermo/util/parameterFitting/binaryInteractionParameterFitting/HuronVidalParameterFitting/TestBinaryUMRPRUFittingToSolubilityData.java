@@ -16,6 +16,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestBinaryUMRPRUFittingToSolubilityData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryUMRPRUFittingToSolubilityData {
 

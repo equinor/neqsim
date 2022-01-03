@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>EosMixingRulesInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface EosMixingRulesInterface extends Cloneable {
 

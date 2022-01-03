@@ -36,7 +36,7 @@ public class VaneSection extends SeparatorSection {
         setName(name);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();

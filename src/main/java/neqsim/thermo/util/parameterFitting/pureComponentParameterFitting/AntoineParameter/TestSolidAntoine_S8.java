@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestSolidAntoine_S8 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestSolidAntoine_S8 {
 

@@ -35,7 +35,7 @@ abstract class ComponentGEUniquacmodifiedHV extends ComponentGEUniquac {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {

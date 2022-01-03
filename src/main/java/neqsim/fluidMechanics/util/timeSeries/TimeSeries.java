@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>TimeSeries class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class TimeSeries implements java.io.Serializable {
 

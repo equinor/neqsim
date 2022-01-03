@@ -51,7 +51,7 @@ public class Hydrocyclone extends Separator {
         addStream(inletStream);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
@@ -79,7 +79,7 @@ public class Hydrocyclone extends Separator {
         return liquidOutStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         inletStreamMixer.run();
@@ -124,14 +124,14 @@ public class Hydrocyclone extends Separator {
         liquidOutStream.run();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayResult() {
         thermoSystem.display("from here " + getName());
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getName() {
         return name;

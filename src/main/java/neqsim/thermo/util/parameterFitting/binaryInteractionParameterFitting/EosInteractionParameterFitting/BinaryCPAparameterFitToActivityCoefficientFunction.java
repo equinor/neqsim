@@ -6,6 +6,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>BinaryCPAparameterFitToActivityCoefficientFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryCPAparameterFitToActivityCoefficientFunction
         extends EosInteractionParameterFittingFunction {

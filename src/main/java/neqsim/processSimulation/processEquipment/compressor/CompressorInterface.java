@@ -12,6 +12,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * <p>CompressorInterface interface.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public interface CompressorInterface extends ProcessEquipmentInterface {
 

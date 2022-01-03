@@ -15,6 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Heater class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
 

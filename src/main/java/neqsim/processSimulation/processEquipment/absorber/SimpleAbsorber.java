@@ -9,6 +9,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>SimpleAbsorber class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleAbsorber extends Separator implements AbsorberInterface {
 

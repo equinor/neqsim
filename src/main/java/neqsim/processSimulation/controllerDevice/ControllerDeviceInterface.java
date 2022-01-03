@@ -12,6 +12,7 @@ import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
  * <p>ControllerDeviceInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface ControllerDeviceInterface extends java.io.Serializable {
     /**

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
  * <p>Diffusivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod

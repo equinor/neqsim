@@ -9,6 +9,7 @@ package neqsim.thermo.phase;
  * <p>PhaseSolidComplex class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class PhaseSolidComplex extends PhaseSolid {
 
@@ -34,7 +35,7 @@ public class PhaseSolidComplex extends PhaseSolid {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start

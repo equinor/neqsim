@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>FluidBoundaryNode class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
 

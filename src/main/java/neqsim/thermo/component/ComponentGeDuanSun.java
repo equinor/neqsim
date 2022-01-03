@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGeDuanSun class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGeDuanSun extends ComponentGE {
 
@@ -32,7 +33,7 @@ public class ComponentGeDuanSun extends ComponentGE {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
@@ -268,7 +269,7 @@ public class ComponentGeDuanSun extends ComponentGE {
      * 
      * }
      */
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());

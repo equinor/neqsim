@@ -14,6 +14,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * <p>FluidBoundarySolver class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FluidBoundarySolver implements FluidBoundarySolverInterface {
 
@@ -184,7 +185,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
         c[i] = -c[i];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getMolarFlux(int componentNumber) {
         double temp = 1.0;
@@ -199,7 +200,7 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
                 / boundary.getNodeLength();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solve() {
         double d[];

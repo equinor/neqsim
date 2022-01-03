@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>SeparatorInterface interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface SeparatorInterface {
 

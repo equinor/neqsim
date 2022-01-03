@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * <p>TestViscosityFit class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestViscosityFit {
     static Logger logger = LogManager.getLogger(TestViscosityFit.class);

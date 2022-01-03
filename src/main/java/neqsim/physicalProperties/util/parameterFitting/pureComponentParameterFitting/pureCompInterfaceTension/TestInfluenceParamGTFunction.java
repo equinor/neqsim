@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestInfluenceParamGTFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestInfluenceParamGTFunction {
     static Logger logger = LogManager.getLogger(TestInfluenceParamGTFunction.class);

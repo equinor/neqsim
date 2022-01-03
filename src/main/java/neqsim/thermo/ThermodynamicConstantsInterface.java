@@ -10,6 +10,7 @@ package neqsim.thermo;
  * <p>ThermodynamicConstantsInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface ThermodynamicConstantsInterface extends java.io.Serializable {
     /** Constant <code>R=8.3144621</code> */

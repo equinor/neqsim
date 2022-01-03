@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
  * <p>CPAFunctionDens class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAFunctionDens extends CPAFunction {
 

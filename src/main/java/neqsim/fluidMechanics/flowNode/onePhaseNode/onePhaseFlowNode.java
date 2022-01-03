@@ -51,7 +51,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
         return clonedSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void increaseMolarRate(double moles) {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -63,7 +63,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
         initFlowCalc();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void initFlowCalc() {
         initBulkSystem();
@@ -75,7 +75,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
         this.init();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void updateMolarFlow() {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -110,7 +110,7 @@ public abstract class onePhaseFlowNode extends FlowNode {
         return reynoldsNumber[0];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         super.init();

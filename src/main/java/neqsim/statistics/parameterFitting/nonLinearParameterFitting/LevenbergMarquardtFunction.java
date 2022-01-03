@@ -6,6 +6,7 @@ import neqsim.statistics.parameterFitting.BaseFunction;
  * <p>LevenbergMarquardtFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class LevenbergMarquardtFunction extends BaseFunction {
 

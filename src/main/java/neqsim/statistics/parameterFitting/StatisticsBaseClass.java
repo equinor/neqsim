@@ -20,6 +20,7 @@ import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
  * <p>Abstract StatisticsBaseClass class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
 

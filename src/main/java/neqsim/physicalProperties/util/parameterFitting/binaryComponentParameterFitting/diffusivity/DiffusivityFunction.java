@@ -6,6 +6,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>DiffusivityFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class DiffusivityFunction extends LevenbergMarquardtFunction {
 

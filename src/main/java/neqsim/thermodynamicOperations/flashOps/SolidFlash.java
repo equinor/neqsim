@@ -9,6 +9,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>SolidFlash class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SolidFlash extends TPflash {
 

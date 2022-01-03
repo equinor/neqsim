@@ -12,6 +12,7 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
  * <p>GeometryDefinitionInterface interface.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public interface GeometryDefinitionInterface extends Cloneable {
 

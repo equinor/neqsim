@@ -10,6 +10,7 @@ package neqsim.dataPresentation;
  * <p>userInterface class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class userInterface implements java.io.Serializable {
 

@@ -33,7 +33,7 @@ public class constantDutyPressureFlash extends constantDutyFlash {
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -87,18 +87,18 @@ public class constantDutyPressureFlash extends constantDutyFlash {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public SystemInterface getThermoSystem() {
         return system;

@@ -12,6 +12,7 @@ import neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData;
  * <p>WettedWallColumnData class.</p>
  *
  * @author  even solbraa
+ * @version $Id: $Id
  */
 public class WettedWallColumnData extends ExperimentalEquipmentData {
     private static final long serialVersionUID = 1000;

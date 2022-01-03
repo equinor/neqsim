@@ -35,7 +35,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -105,7 +105,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
         // logger.info("max freezing temp " + maxTemperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

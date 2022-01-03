@@ -12,6 +12,7 @@ import org.apache.logging.log4j.*;
  * <p>ComponentHydrateKluda class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ComponentHydrateKluda extends Component {
 
@@ -72,7 +73,7 @@ public class ComponentHydrateKluda extends Component {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());

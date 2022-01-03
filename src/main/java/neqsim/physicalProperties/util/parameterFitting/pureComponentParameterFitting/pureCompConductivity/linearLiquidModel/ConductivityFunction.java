@@ -5,8 +5,8 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 /**
 /**
  *
- *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ConductivityFunction extends LevenbergMarquardtFunction {
 

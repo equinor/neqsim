@@ -14,6 +14,7 @@ import neqsim.thermo.component.ComponentPCSAFT;
  * <p>PhasePCSAFT class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhasePCSAFT extends PhaseSrkEos {
 
@@ -70,14 +71,14 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentPCSAFT(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -680,7 +681,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         * F2dispZHCdVdV));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getF() {
 //        System.out.println("F-HC " + useHS*F_HC_SAFT());
@@ -691,7 +692,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdV() {
 //        System.out.println("N-saft " + getNSAFT());
@@ -703,7 +704,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return (useHS * dF_HC_SAFTdV() + useDISP1 * dF_DISP1_SAFTdV() + useDISP2 * dF_DISP2_SAFTdV()) * 1.0e-5;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         return (useHS * dF_HC_SAFTdVdV() + useDISP1 * dF_DISP1_SAFTdVdV() + useDISP2 * dF_DISP2_SAFTdVdV()) * 1.0e-10;
@@ -966,7 +967,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {

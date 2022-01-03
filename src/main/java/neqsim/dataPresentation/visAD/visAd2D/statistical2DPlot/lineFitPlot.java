@@ -28,6 +28,7 @@ import visad.java2d.DisplayImplJ2D;
  * <p>lineFitPlot class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class lineFitPlot {
 

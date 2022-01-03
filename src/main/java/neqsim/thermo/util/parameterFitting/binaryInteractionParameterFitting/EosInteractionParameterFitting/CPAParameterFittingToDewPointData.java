@@ -10,6 +10,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>CPAParameterFittingToDewPointData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunction {
 

@@ -7,6 +7,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>ViscosityFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
 

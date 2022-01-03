@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>NeqHeater class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class NeqHeater extends Heater {
 

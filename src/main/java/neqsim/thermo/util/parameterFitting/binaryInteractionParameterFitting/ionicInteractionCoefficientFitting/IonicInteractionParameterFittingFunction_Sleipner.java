@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * <p>IonicInteractionParameterFittingFunction_Sleipner class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_Sleipner extends LevenbergMarquardtFunction
         implements ThermodynamicConstantsInterface {

@@ -10,6 +10,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * <p>UNIFACgroup class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
 
@@ -412,6 +413,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     /**
      * Getter for property QComp.
      *
+     * @return Value of property QComp.
+     * @return Value of property QComp.
+     * @return Value of property QComp.
+     * @return Value of property QComp.
      * @return Value of property QComp.
      * @return Value of property QComp.
      */

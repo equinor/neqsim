@@ -10,6 +10,7 @@ package neqsim.util.exception;
  * <p>IsNaNException class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IsNaNException extends neqsim.util.exception.ThermoException {
 

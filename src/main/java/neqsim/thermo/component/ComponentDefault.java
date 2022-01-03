@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentDefault class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentDefault extends Component {
 
@@ -23,7 +24,7 @@ public class ComponentDefault extends Component {
     public ComponentDefault() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         return 0.0;

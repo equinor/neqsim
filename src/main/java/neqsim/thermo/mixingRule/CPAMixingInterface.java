@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>CPAMixingInterface interface.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public interface CPAMixingInterface extends java.io.Serializable {
     // public double calcXi(int siteNumber, int compnumb, PhaseInterface phase,

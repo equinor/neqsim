@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentPCSAFTa class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInterface {
 
@@ -116,13 +117,13 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
@@ -133,19 +134,19 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return Fsup + cpaon * Fcpa;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
@@ -193,14 +194,14 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdVdXi(int site, PhaseInterface phase) {
         return 1.0 / (2.0 * phase.getTotalVolume())
                 * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
@@ -209,13 +210,13 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         return xi + getNumberOfMolesInPhase() / 2.0 * calc_lngi(phase);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
         return 0.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdXi(int site, PhaseInterface phase) {
         return 0.0;
@@ -264,25 +265,25 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         this.xsite = xsite;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsitedV() {
         return this.xsitedV;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedV(int i, double xsitedV) {
         this.xsitedV[i] = xsitedV;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsiteOld() {
         return this.xsiteOld;
@@ -297,36 +298,36 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
         this.xsiteOld = xsiteOld;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsiteOld(int i, double xsiteOld) {
         this.xsiteOld[i] = xsiteOld;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsitedT() {
         return this.xsitedT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedT(int i, double xsitedT) {
         this.xsitedT[i] = xsitedT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsitedTdT() {
         return null;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedTdT(int i, double xsitedT) {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedni(int xnumb, int compnumb, double val) {
         xsitedni[xnumb][compnumb] = val;

@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentWax class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ComponentWax extends ComponentSolid {
 
@@ -49,7 +50,7 @@ public class ComponentWax extends ComponentSolid {
         return fugcoef2(phase1);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef2(PhaseInterface phase1) {
         try {

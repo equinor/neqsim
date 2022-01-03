@@ -13,6 +13,7 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataObject;
  * <p>WettedWallColumnDataObject class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class WettedWallColumnDataObject extends DataObject {
 

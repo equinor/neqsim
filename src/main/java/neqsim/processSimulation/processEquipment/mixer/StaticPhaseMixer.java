@@ -14,11 +14,15 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class StaticPhaseMixer extends StaticMixer {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for StaticPhaseMixer.</p>
+     */
     public StaticPhaseMixer() {}
 
     /**

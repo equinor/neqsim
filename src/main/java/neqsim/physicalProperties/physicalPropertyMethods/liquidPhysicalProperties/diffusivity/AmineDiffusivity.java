@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
  * <p>AmineDiffusivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class AmineDiffusivity extends SiddiqiLucasMethod {
 

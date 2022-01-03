@@ -10,6 +10,7 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * <p>Packing class.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public class Packing implements PackingInterface {
 

@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentSrkCPAs class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentSrkCPAs extends ComponentSrkCPA {
 
@@ -76,7 +77,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * }
      */
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_lngi(PhaseInterface phase) {
         return 0.475 * getBi() / (phase.getTotalVolume() - 0.475 * phase.getB());
@@ -87,14 +88,14 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * nbeti = nbet / phase.getB() * getBi(); return dlngdb * nbeti; }
      */
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_lngidV(PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         return -0.475 * getBi() / (temp * temp);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();

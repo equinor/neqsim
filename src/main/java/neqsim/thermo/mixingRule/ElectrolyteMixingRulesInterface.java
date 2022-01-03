@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ElectrolyteMixingRulesInterface interface.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public interface ElectrolyteMixingRulesInterface extends java.io.Serializable {
 

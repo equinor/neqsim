@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>PhaseCSPsrkEos class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseCSPsrkEos extends PhaseSrkEos {
 
@@ -55,7 +56,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
@@ -63,7 +64,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         ((ComponentCSPsrk) componentArray[compNumber]).setRefPhaseBWRS(this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -91,28 +92,28 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         } while (Math.abs((oldtemp - refBWRSPhase.getTemperature()) / oldtemp) > 1e-8);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getF() {
         return f_scale_mix * refBWRSPhase.getF() / refBWRSPhase.getNumberOfMolesInPhase()
                 * refBWRSPhase.getTemperature() / getTemperature();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdV() {
         return (f_scale_mix * refBWRSPhase.dFdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix)
                 * refBWRSPhase.getTemperature() / getTemperature();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         return (f_scale_mix * refBWRSPhase.dFdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix
                 / h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdVdV() {
         return (f_scale_mix * refBWRSPhase.dFdVdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix
@@ -211,7 +212,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         this.refBWRSPhase = refBWRSPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {

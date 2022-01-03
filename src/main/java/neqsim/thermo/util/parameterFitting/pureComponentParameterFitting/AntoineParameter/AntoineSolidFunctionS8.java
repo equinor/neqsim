@@ -8,6 +8,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>AntoineSolidFunctionS8 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
 

@@ -27,6 +27,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>SimpleTEGAbsorber class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleTEGAbsorber extends SimpleAbsorber {
 

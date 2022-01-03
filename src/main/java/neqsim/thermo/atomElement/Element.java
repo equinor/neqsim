@@ -15,6 +15,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * <p>Element class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Element implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;

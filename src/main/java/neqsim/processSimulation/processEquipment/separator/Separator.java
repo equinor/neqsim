@@ -23,6 +23,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Separator class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
 

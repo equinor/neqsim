@@ -187,7 +187,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         energyRefT = energyReferenceTemperaturedegC;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calculate() {
         Zmix0 = 1.0;
@@ -237,7 +237,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         // System.out.println("molRefm3 " + molRefm3);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("GCV")) {
@@ -353,13 +353,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         if (returnParameter.equals("CompressionFactor")) {
@@ -369,13 +369,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return true;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);

@@ -35,7 +35,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         costEstimate = new CompressorCostEstimate(this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void readDesignSpecifications() {
 
@@ -52,7 +52,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayResults() {
 
@@ -110,7 +110,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         dialog.setVisible(true);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
         super.calcDesign();
@@ -209,7 +209,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
@@ -217,7 +217,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         // this method will be implemented to set calculated design...
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getOuterDiameter() {
         return outerDiameter;

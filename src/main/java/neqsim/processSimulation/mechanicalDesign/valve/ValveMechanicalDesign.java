@@ -38,7 +38,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
         costEstimate = new ValveCostEstimate(this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void readDesignSpecifications() {
 
@@ -54,7 +54,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
         super.calcDesign();
@@ -68,7 +68,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
         valveWeight = valveCvMax * 100.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayResults() {
 

@@ -16,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>SimpleTPoutPipeline class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleTPoutPipeline extends Pipeline {
 

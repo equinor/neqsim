@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentElectrolyteCPAstatoil class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
 

@@ -19,7 +19,7 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
     public PipeFlowSystem() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void createSystem() {
         thermoSystem.init(0);
@@ -39,7 +39,7 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         this.setNodes();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
@@ -52,7 +52,7 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solveSteadyState(int solverType) { // should set solve-type: int 1-bare masse og impuls 2 energi og
                                                    // impuls 3 energi impuls og komponenter
@@ -75,7 +75,7 @@ public class PipeFlowSystem extends neqsim.fluidMechanics.flowSystem.onePhaseFlo
         display.setNextData(this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solveTransient(int solverType) {
         getTimeSeries().init(this);

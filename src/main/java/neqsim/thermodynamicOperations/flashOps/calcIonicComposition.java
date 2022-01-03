@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>calcIonicComposition class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class calcIonicComposition extends Flash {
 

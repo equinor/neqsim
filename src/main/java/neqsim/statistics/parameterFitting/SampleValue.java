@@ -13,6 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>SampleValue class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
 

@@ -4,6 +4,7 @@ package neqsim.util.exception;
  * <p>TooManyIterationsException class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TooManyIterationsException extends neqsim.util.exception.ThermoException {
 

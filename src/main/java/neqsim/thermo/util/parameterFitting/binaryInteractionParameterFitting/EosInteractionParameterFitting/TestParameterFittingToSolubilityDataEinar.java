@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestParameterFittingToSolubilityDataEinar class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestParameterFittingToSolubilityDataEinar {
 

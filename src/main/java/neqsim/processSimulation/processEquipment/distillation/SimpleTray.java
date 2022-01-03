@@ -36,7 +36,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setHeatInput(double heatinp) {
         this.heatInput = heatinp;
@@ -60,7 +60,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         return enthalpy;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
@@ -92,7 +92,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
     public void TPflash() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         double enthalpy = 0.0;
@@ -143,7 +143,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         setTemperature(mixedStream.getTemperature());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void runTransient() {
     }
@@ -175,7 +175,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         return temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setPressure(double pres) {
         trayPressure = pres;
@@ -187,7 +187,7 @@ public class SimpleTray extends neqsim.processSimulation.processEquipment.mixer.
         this.temperature = temperature;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double guessTemperature() {
         if (Double.isNaN(temperature)) {

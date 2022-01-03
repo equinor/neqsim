@@ -10,6 +10,7 @@ package neqsim.MathLib.nonLinearSolver;
  * <p>newtonRhapson class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class newtonRhapson implements java.io.Serializable {
 

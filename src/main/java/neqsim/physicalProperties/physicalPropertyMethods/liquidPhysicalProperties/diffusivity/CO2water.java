@@ -4,6 +4,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * <p>CO2water class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CO2water extends Diffusivity {
 

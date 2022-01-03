@@ -7,6 +7,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Abstract BaseFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class BaseFunction implements FunctionInterface {
 

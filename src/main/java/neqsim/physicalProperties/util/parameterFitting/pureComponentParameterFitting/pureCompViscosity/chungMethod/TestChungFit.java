@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestChungFit class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestChungFit {
 

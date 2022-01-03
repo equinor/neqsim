@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Stream class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
 

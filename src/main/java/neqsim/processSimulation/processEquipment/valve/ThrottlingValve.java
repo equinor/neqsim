@@ -15,6 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>ThrottlingValve class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveInterface {
 
@@ -70,13 +71,13 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         setInletStream(inletStream);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setName(String name) {
         this.name = name;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -85,25 +86,25 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         outStream = new Stream(thermoSystem);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getOutletPressure() {
         return this.pressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getInletPressure() {
         return inletStream.getThermoSystem().getPressure();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setPressure(double pressure) {
         setOutletPressure(pressure);
@@ -119,7 +120,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         setOutletPressure(pressure, unit);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setOutletPressure(double pressure) {
         this.pressure = pressure;
@@ -138,13 +139,13 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         getOutStream().getThermoSystem().setPressure(pressure, pressureUnit);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public StreamInterface getOutStream() {
         return outStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -203,7 +204,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
 //        molarFlow = inletStream.getThermoSystem().getTotalNumberOfMoles();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayResult() {
         thermoSystem.display(getName());
@@ -215,13 +216,13 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     	return thermoSystem.getResultTable();
     }
     
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getName() {
         return name;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void runTransient(double dt) {
         runController(dt);
@@ -286,26 +287,26 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getCv() {
         return Cv;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setCv(double Cv) {
         this.Cv = Cv;
         valveCvSet = true;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPercentValveOpening() {
         return percentValveOpening;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setPercentValveOpening(double percentValveOpening) {
         this.percentValveOpening = percentValveOpening;
@@ -329,19 +330,19 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         this.valveCvSet = valveCvSet;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public boolean isIsoThermal() {
         return isoThermal;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setIsoThermal(boolean isoThermal) {
         this.isoThermal = isoThermal;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getEntropyProduction(String unit) {
         outStream.getThermoSystem().init(3);
@@ -349,7 +350,7 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
         return outStream.getThermoSystem().getEntropy(unit) - inletStream.getThermoSystem().getEntropy(unit);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExergyChange(String unit, double sourrondingTemperature) {
         outStream.getThermoSystem().init(3);

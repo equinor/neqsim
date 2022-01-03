@@ -10,6 +10,7 @@ package neqsim.thermo;
  * <p>ThermodynamicModelSettings interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface ThermodynamicModelSettings extends java.io.Serializable {
     /** Constant <code>phaseFractionMinimumLimit=1e-12</code> */

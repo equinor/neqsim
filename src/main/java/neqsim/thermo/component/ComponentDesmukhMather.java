@@ -13,6 +13,7 @@ import org.apache.logging.log4j.*;
  * <p>ComponentDesmukhMather class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentDesmukhMather extends ComponentGE {
 
@@ -74,7 +75,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
@@ -120,7 +121,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         return gamma;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         // System.out.println("fug coef " +
@@ -153,7 +154,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         return lngamma;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getMolality(PhaseInterface phase) {
         return getNumberOfMolesInPhase() / ((PhaseDesmukhMather) phase).getSolventWeight();

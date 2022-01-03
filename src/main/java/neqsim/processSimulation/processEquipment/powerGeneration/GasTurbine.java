@@ -100,7 +100,7 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         // System.out.println("compressor running..");

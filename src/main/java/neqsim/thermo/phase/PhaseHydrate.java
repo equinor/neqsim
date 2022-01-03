@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentHydratePVTsim;
  * <p>PhaseHydrate class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class PhaseHydrate extends Phase {
 
@@ -55,7 +56,7 @@ public class PhaseHydrate extends Phase {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -71,7 +72,7 @@ public class PhaseHydrate extends Phase {
         // return 1.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
@@ -90,7 +91,7 @@ public class PhaseHydrate extends Phase {
         // molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -100,7 +101,7 @@ public class PhaseHydrate extends Phase {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void resetMixingRule(int type) {
     }

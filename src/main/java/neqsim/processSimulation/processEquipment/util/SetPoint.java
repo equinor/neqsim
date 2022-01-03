@@ -16,6 +16,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * <p>SetPoint class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
 

@@ -21,6 +21,7 @@ import visad.util.ContourWidget;
  * <p>surfaceFitPlot class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class surfaceFitPlot {
 

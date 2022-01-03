@@ -130,7 +130,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calculate() {
 
@@ -233,25 +233,25 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         // System.out.println("LNG density " + LNGdensity);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         return LNGdensity;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         return LNGdensity;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         return densityUnit;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return true;

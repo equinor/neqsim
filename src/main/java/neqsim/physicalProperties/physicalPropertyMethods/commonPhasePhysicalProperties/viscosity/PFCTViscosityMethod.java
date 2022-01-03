@@ -44,7 +44,7 @@ public class PFCTViscosityMethod extends Viscosity {
         referenceSystem.init(0);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
 
@@ -112,7 +112,7 @@ public class PFCTViscosityMethod extends Viscosity {
         return viscosity;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPureComponentViscosity(int i) {
         return 0;

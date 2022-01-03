@@ -16,6 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>GlycolPhysicalProperties class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
 

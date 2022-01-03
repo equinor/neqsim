@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentGEInterface;
  * <p>PhaseGEUniquacmodifiedHV class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
@@ -24,7 +25,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
         super();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
@@ -32,7 +33,7 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
         // moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {

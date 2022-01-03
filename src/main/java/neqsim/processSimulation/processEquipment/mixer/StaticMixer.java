@@ -13,6 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>StaticMixer class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class StaticMixer extends Mixer {
 

@@ -34,7 +34,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -123,7 +123,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * <p>FurstIonicParameterFunction_Density class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunction {
 

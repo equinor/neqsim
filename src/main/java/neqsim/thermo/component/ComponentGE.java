@@ -41,7 +41,7 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
@@ -101,37 +101,37 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         return dfugdt;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma() {
         return gamma;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getlnGamma() {
         return lngamma;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getlnGammadt() {
         return dlngammadt;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getlnGammadtdt() {
         return dlngammadtdt;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setlnGammadn(int k, double val) {
         dlngammadn[k] = val;

@@ -14,6 +14,7 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * <p>FlowSystemVisualization class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FlowSystemVisualization implements FlowSystemVisualizationInterface {
 
@@ -49,7 +50,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         System.out.println("times " + time);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setNextData(FlowSystemInterface system) {
         flowSystem[time] = system;
@@ -61,7 +62,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         // System.out.println("time " + time);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setNextData(FlowSystemInterface system, double abstime) {
         flowSystem[time] = system;
@@ -72,7 +73,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         time++;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void createNetCdfFile(String name) {
         System.out.println("ok...");
@@ -83,12 +84,12 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setPoints() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayResult(String name) {
     }

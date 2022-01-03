@@ -9,6 +9,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * <p>IonicInteractionParameterFittingFunctionAcid class.</p>
  *
  * @author Neeraj
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarquardtFunction {
 

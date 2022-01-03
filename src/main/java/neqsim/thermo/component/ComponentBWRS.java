@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentBWRS class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentBWRS extends ComponentSrk {
 
@@ -123,7 +124,7 @@ public class ComponentBWRS extends ComponentSrk {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
@@ -185,7 +186,7 @@ public class ComponentBWRS extends ComponentSrk {
         BEdTdT[5] = 0.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
         // System.out.println("Fref " +

@@ -14,6 +14,7 @@ import neqsim.thermo.component.ComponentBWRS;
  * <p>PhaseBWRSEos class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseBWRSEos extends PhaseSrkEos {
 
@@ -44,7 +45,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
@@ -53,7 +54,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         ((ComponentBWRS) componentArray[compNumber]).setRefPhaseBWRS(this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -364,7 +365,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getF() {
         // System.out.println("F " + getFpol()*1e3+ " "+ getFexp()*1e3 + " super " +
@@ -396,7 +397,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         return (fold - fnew) / (2 * dn);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdT() {
 
@@ -418,7 +419,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         // return (getFpoldT()+getFexpdT())*1e3;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdT() {
         double dv = temperature / 1000.0;
@@ -433,7 +434,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         return (fold - fnew) / (2 * dv);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdV() {
         double dv = getMolarVolume() / 1000.0;
@@ -447,7 +448,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         return (fold - fnew) / (2 * dv);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdV() {
         // double dv = molarVolume/1000.0;
@@ -467,7 +468,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         return (getFpoldV() + getFexpdV()) * 1e3 * 1e-5;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         double dv = getMolarVolume() / 1000.0;
@@ -489,7 +490,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     // return getFpoldVdVdV();
     // }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {

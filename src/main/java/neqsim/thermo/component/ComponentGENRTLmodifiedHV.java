@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGENRTLmodifiedHV class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
@@ -34,7 +35,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {

@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGEUnifacPSRK class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
@@ -65,7 +66,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
                 + 2.0 * ((PhaseGEUnifac) phase).getCij(i, j) * phase.getTemperature();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
@@ -135,7 +136,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         getUnifacGroup(k).setLnGammaMixdT(tempGammaMix);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {

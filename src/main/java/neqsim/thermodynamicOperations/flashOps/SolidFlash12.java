@@ -15,6 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>SolidFlash12 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SolidFlash12 extends TPflash {
 

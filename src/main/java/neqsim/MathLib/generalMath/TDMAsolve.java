@@ -12,6 +12,7 @@ package neqsim.MathLib.generalMath;
  * <p>TDMAsolve class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TDMAsolve implements java.io.Serializable {
 

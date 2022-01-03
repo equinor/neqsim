@@ -8,6 +8,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>MathiasCopeman class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class MathiasCopeman extends LevenbergMarquardtFunction {
 

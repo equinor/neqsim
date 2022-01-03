@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhasePCSAFT;
  * <p>ComponentPCSAFT class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentPCSAFT extends ComponentSrk {
 
@@ -85,14 +86,14 @@ public class ComponentPCSAFT extends ComponentSrk {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         setdSAFTi(getSigmaSAFTi() * (1.0 - 0.12 * Math.exp(-3.0 * getEpsikSAFT() / temperature)));
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
@@ -117,7 +118,7 @@ public class ComponentPCSAFT extends ComponentSrk {
         // System.out.println("fugasity " + getFugasityCoefficient());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
 //        System.out.println("term getF " + ((PhasePCSAFT)phase).getF()/phase.getNumberOfMolesInPhase());

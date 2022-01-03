@@ -15,6 +15,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>LiquidPhysicalProperties class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class LiquidPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
@@ -54,7 +55,7 @@ public class LiquidPhysicalProperties extends neqsim.physicalProperties.physical
         densityCalc = new Density(this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public LiquidPhysicalProperties clone() {
         LiquidPhysicalProperties properties = null;

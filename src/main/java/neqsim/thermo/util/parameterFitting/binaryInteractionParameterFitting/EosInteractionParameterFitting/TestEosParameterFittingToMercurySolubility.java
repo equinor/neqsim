@@ -16,6 +16,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * <p>TestEosParameterFittingToMercurySolubility class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestEosParameterFittingToMercurySolubility {
     static Logger logger = LogManager.getLogger(TestEosParameterFittingToMercurySolubility.class);

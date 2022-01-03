@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * <p>ComponentModifiedFurstElectrolyteEos class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
 

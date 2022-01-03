@@ -82,7 +82,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         return clonedSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setfvecMassTrans() {
         double sumx = 0, sumy = 0;
@@ -120,7 +120,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setfvecMassTrans2() {
         double sumx = 0.0, sumy = 0.0;
@@ -194,7 +194,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // Matrix fluxY = totalMassTransferCoefficientMatrix[1]
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setJacMassTrans() {
         double dij = 0, tempJ = 0;
@@ -259,7 +259,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setJacMassTrans2() {
         double dij = 0, tempJ = 0;
@@ -349,7 +349,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // totalMassTransferCoefficientMatrix[0].print(20,20);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setuMassTrans() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
@@ -365,7 +365,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void updateMassTrans() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
@@ -380,7 +380,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcMolFractionDifference() {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfMolecularComponents() - 1; i++) {
@@ -391,7 +391,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcHeatTransferCoeffisients(int phase) {
         prandtlNumber[phase] = getBulkSystem().getPhases()[phase].getCp()
@@ -401,7 +401,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
                 .calcInterphaseHeatTransferCoefficient(phase, prandtlNumber[phase], flowNode);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcHeatTransferCorrection(int phase) {
         double temp = 0;
@@ -412,26 +412,26 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         heatTransferCorrection[phase] = temp;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void initMassTransferCalc() {
         super.initMassTransferCalc();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         calcMolFractionDifference();
         super.init();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void heatTransSolve() {
         double f = 0;
@@ -464,7 +464,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void massTransSolve() {
         int iter = 0;
@@ -490,7 +490,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // uMassTrans.print(30,30);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] calcFluxes() {
         double sum = 0.0;
@@ -520,7 +520,7 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         return nFlux.transpose().getArray()[0];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solve() {
         int iterOuter = 0;

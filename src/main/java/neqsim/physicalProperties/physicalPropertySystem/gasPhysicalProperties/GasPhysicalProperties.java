@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>GasPhysicalProperties class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 

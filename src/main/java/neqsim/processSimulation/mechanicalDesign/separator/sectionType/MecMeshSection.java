@@ -21,7 +21,7 @@ public class MecMeshSection extends SepDesignSection {
         super(separatorSection);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
         double vesselDiameter = separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;

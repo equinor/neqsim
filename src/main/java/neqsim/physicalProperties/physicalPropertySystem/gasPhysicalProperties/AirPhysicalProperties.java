@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>AirPhysicalProperties class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AirPhysicalProperties extends GasPhysicalProperties {
 

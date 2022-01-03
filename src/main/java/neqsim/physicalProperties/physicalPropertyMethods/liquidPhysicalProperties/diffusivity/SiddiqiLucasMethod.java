@@ -4,6 +4,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * <p>SiddiqiLucasMethod class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SiddiqiLucasMethod extends Diffusivity {
 

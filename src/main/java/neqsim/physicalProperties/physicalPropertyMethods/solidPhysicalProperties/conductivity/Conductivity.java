@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
  * <p>Conductivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Conductivity
         extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
@@ -51,7 +52,7 @@ public class Conductivity
         return properties;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcConductivity() {
         // using default value of parafin wax

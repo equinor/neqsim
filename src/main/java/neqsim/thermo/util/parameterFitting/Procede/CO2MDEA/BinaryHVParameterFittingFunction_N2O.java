@@ -10,6 +10,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>BinaryHVParameterFittingFunction_N2O class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunction {
 

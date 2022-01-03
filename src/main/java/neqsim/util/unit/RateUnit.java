@@ -14,6 +14,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * <p>RateUnit class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class RateUnit extends neqsim.util.unit.BaseUnit {
 
@@ -38,13 +39,13 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
         this.boilp = boilp;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSIvalue() {
         return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String tounit) {
         return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.*;
  * <p>ParachorFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ParachorFunction extends LevenbergMarquardtFunction {
 
@@ -25,7 +26,7 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
         params = new double[1];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         system.init(3);
@@ -38,7 +39,7 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

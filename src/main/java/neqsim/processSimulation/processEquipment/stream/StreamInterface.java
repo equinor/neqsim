@@ -12,10 +12,11 @@ import neqsim.thermo.system.SystemInterface;
  * <p>StreamInterface interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface StreamInterface extends ProcessEquipmentInterface {
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public SystemInterface getThermoSystem();
 
@@ -55,7 +56,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      */
     public double getTemperature(String unit);
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setName(String name);
 
@@ -113,7 +114,7 @@ public interface StreamInterface extends ProcessEquipmentInterface {
      */
     public double getMolarRate();
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPressure();
 

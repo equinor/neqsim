@@ -16,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>FreezeOut class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FreezeOut extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
@@ -40,7 +41,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         SystemInterface testSystem = system;
@@ -187,7 +188,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
         // this.printToFile("FrzOut");
     } // end Main
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
 

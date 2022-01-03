@@ -10,6 +10,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties;
  * <p>GasPhysicalPropertyMethod class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class GasPhysicalPropertyMethod
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {
@@ -59,7 +60,7 @@ public class GasPhysicalPropertyMethod
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         this.gasPhase = phase;

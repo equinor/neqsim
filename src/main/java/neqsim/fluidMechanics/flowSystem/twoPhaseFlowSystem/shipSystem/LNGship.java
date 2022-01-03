@@ -81,7 +81,7 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void createSystem() {
         getThermoSystem().init(0);
@@ -115,12 +115,12 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solveSteadyState(int solverType) {
         try {
@@ -133,7 +133,7 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         logger.info("temperature start " + getThermoSystem().getTemperature());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solveTransient(int type) {
         SystemInterface tempThermoSystem = (SystemInterface) getThermoSystem().clone();

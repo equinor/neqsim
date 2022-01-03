@@ -7,6 +7,7 @@ import java.io.FileWriter;
  * <p>TextFile class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class TextFile implements java.io.Serializable {
 

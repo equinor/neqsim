@@ -10,6 +10,7 @@ package neqsim.thermo.phase;
  * <p>PhaseGEInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface PhaseGEInterface {
 

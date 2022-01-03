@@ -9,6 +9,7 @@ import neqsim.thermo.phase.PhaseGEUnifac;
  * <p>UMRPRUFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class UMRPRUFunction extends LevenbergMarquardtFunction {
 

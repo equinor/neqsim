@@ -39,7 +39,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
         logger.info("ok ");
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         double ksp = 0.0;
@@ -123,7 +123,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

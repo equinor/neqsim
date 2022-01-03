@@ -9,6 +9,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
  * <p>ChungConductivityMethod class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ChungConductivityMethod extends Conductivity {
 
@@ -33,7 +34,7 @@ public class ChungConductivityMethod extends Conductivity {
         pureComponentConductivity = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcConductivity() {
         calcPureComponentConductivity();

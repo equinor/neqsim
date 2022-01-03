@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>SampleCreator class.</p>
  *
  * @author  even solbraa
+ * @version $Id: $Id
  */
 public class SampleCreator {
 

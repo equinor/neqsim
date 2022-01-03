@@ -33,7 +33,7 @@ public class PackedSection extends SeparatorSection {
         super(name, type, sep);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();

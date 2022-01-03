@@ -47,19 +47,19 @@ public abstract class Standard implements StandardInterface {
         thermoSystem = thermoSyst;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setSalesContract(String name) {
         if (name.equals("baseContract")) {
@@ -67,13 +67,13 @@ public abstract class Standard implements StandardInterface {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setSalesContract(ContractInterface salesContract) {
         this.salesContract = salesContract;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public ContractInterface getSalesContract() {
         return salesContract;
@@ -117,7 +117,7 @@ public abstract class Standard implements StandardInterface {
         this.standardDescription = standardDescription;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);
@@ -158,7 +158,7 @@ public abstract class Standard implements StandardInterface {
         return table;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void display(String name) {
         JDialog dialog = new JDialog(new JFrame(), "Standard-Report");
@@ -174,13 +174,13 @@ public abstract class Standard implements StandardInterface {
         dialog.setVisible(true);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String[][] getResultTable() {
         return resultTable;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;

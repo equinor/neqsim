@@ -6,6 +6,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>ChungFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ChungFunction extends LevenbergMarquardtFunction {
 

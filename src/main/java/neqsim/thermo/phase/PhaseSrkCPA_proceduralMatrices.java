@@ -71,14 +71,14 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(1, this);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -508,32 +508,32 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentSrkCPA(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdV() {
         return super.dFdTdV() + cpaon * dFCPAdTdV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdV() {
         double dv2 = dFCPAdV();
@@ -541,19 +541,19 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     }
 
     // @Override
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
@@ -904,7 +904,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         this.hcpatot = hcpatot;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGcpa() {
         return gcpa;
@@ -985,7 +985,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -1256,7 +1256,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -1299,7 +1299,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGcpav() {
         return gcpav;
@@ -1314,13 +1314,13 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         this.gcpav = gcpav;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcPressure() {
         gcpa = calc_g();
@@ -1336,7 +1336,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return super.calcPressure();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {

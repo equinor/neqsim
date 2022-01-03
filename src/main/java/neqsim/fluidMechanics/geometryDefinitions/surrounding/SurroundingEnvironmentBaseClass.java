@@ -34,7 +34,7 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getHeatTransferCoefficient() {
         return heatTransferCoefficient;

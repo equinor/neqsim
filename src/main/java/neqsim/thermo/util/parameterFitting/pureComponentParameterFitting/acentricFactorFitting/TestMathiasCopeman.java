@@ -15,6 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>TestMathiasCopeman class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestMathiasCopeman {
 

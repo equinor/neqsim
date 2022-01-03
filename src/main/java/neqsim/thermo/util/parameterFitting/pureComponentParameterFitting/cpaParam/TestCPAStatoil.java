@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestCPAStatoil class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCPAStatoil {
     static Logger logger = LogManager.getLogger(TestCPAStatoil.class);

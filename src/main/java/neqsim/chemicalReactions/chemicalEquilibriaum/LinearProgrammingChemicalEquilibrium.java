@@ -29,6 +29,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>LinearProgrammingChemicalEquilibrium class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class LinearProgrammingChemicalEquilibrium
         implements neqsim.thermo.ThermodynamicConstantsInterface {

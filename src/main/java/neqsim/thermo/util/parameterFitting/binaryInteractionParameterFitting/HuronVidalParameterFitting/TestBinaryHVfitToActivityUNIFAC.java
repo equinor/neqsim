@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemUNIFACpsrk;
  * <p>TestBinaryHVfitToActivityUNIFAC class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVfitToActivityUNIFAC implements Cloneable {
 

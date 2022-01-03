@@ -8,6 +8,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>RackettZ class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class RackettZ extends LevenbergMarquardtFunction {
 

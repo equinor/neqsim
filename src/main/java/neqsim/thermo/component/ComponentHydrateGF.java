@@ -14,6 +14,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentHydrateGF class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ComponentHydrateGF extends ComponentHydrate {
 
@@ -77,7 +78,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
@@ -153,7 +154,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
@@ -247,7 +248,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
     // public int getHydrateStructure() {
     // return this.getHydrateStructure();
     // }
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -270,7 +271,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return yki / temp;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
 

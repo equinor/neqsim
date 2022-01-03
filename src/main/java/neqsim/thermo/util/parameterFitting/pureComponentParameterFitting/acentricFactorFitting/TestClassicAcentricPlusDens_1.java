@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestClassicAcentricPlusDens_1 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestClassicAcentricPlusDens_1 {
     static Logger logger = LogManager.getLogger(TestClassicAcentricPlusDens_1.class);

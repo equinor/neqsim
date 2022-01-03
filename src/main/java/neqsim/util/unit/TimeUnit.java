@@ -10,6 +10,7 @@ package neqsim.util.unit;
  * <p>TimeUnit class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class TimeUnit extends neqsim.util.unit.BaseUnit {
 

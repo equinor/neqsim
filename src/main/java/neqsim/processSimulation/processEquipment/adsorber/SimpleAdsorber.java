@@ -15,6 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>SimpleAdsorber class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 

@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentInterface;
  * <p>PhaseDefault class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseDefault extends Phase {
 

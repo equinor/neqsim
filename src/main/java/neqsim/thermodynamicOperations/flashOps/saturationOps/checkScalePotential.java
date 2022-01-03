@@ -42,7 +42,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         logger.info("ok ");
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -191,12 +191,12 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String[][] getResultTable() {
         logger.info("checking table...scale " + resultTable[0][0]);

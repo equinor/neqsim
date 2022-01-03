@@ -9,6 +9,7 @@ package neqsim.statistics.parameterFitting;
  * <p>StatisticsInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface StatisticsInterface {
 

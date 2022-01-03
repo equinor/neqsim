@@ -6,6 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * <p>ConductivityInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface ConductivityInterface extends ThermodynamicConstantsInterface,
         neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {

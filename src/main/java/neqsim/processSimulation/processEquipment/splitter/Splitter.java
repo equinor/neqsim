@@ -15,6 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Splitter class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
 

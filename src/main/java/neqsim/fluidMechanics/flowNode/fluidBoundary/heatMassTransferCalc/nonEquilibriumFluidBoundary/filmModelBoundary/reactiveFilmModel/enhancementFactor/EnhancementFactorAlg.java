@@ -12,6 +12,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBo
  * <p>EnhancementFactorAlg class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class EnhancementFactorAlg extends EnhancementFactor {
 
@@ -33,7 +34,7 @@ public class EnhancementFactorAlg extends EnhancementFactor {
         super(fluidBoundary);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcEnhancementVec(int phase) {
         double hatta = 0.0;

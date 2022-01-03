@@ -4,6 +4,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * <p>LiquidPhysicalPropertyMethod class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class LiquidPhysicalPropertyMethod
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {

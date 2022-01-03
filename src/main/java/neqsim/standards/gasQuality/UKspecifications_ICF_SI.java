@@ -41,14 +41,14 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
         iso6976 = new Standard_ISO6976(thermoSystem, 15, 15, "volume");
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calculate() {
         iso6976.calculate();
         propaneNumber = calcPropaneNumber();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("PropaneNumber")) {
@@ -65,19 +65,19 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         return thermoSystem.getPhase(0).getComponent(componentName).getz();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         return unit;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return true;

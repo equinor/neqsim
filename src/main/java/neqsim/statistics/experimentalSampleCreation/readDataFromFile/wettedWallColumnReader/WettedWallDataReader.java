@@ -15,6 +15,7 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
  * <p>WettedWallDataReader class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class WettedWallDataReader extends DataReader {
 

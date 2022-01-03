@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestBinaryHVParameterFittingToSolubilityDataCO2AcOH class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVParameterFittingToSolubilityDataCO2AcOH {
     static Logger logger =

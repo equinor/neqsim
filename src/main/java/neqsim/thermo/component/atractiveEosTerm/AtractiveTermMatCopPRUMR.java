@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermMatCopPRUMR class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
@@ -82,7 +83,7 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
@@ -96,7 +97,7 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
@@ -106,7 +107,7 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
@@ -124,7 +125,7 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
@@ -150,7 +151,7 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {
@@ -160,7 +161,7 @@ public class AtractiveTermMatCopPRUMR extends AtractiveTermPr {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (useStandardAlphaForSupercritical && temperature / getComponent().getTC() > 1.0 || parameters[0] < 1e-20) {

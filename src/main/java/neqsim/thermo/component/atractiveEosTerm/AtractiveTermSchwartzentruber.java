@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermSchwartzentruber class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
 
@@ -56,14 +57,14 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         m = (0.48508 + 1.55191 * getComponent().getAcentricFactor()
                 - 0.15613 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         // System.out.println("alpha here " + Math.pow( 1.0 +
@@ -100,7 +101,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                         * Math.pow(temperature / TC, 1.0 * d) * d / (temperature * temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -110,7 +111,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         return 2.0
@@ -125,7 +126,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                                 + 2.0 * parameters[2] * temperature / (getComponent().getTC() * getComponent().getTC())));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         return 2.0
@@ -152,7 +153,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                                         / (getComponent().getTC() * getComponent().getTC()));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -162,7 +163,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {

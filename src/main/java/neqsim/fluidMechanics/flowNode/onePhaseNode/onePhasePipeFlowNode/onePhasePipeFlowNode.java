@@ -51,13 +51,13 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
         return clonedSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         super.init();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcReynoldsNumber() {
         reynoldsNumber[0] = getVelocity() * pipe.getDiameter()

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.*;
  * <p>ComponentHydratePVTsim class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ComponentHydratePVTsim extends ComponentHydrate {
 
@@ -87,14 +88,14 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
@@ -192,7 +193,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -219,7 +220,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         // this is equation 8.8

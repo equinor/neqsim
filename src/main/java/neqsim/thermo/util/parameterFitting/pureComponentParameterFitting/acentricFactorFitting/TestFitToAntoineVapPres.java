@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
  * <p>TestFitToAntoineVapPres class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestFitToAntoineVapPres {
     static Logger logger = LogManager.getLogger(TestFitToAntoineVapPres.class);

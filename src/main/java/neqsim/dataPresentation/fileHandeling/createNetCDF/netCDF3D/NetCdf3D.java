@@ -14,6 +14,7 @@ import ucar.nc2.*;
  * <p>NetCdf3D class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class NetCdf3D {
 

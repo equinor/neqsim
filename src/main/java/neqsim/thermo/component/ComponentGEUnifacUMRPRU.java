@@ -15,6 +15,7 @@ import org.apache.logging.log4j.*;
  * <p>ComponentGEUnifacUMRPRU class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
 
@@ -179,7 +180,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;

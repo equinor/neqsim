@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
  * <p>PhysicalPropertyMethod class.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
 

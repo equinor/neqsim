@@ -53,7 +53,7 @@ public class Viscosity
         return properties;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
 
@@ -68,7 +68,7 @@ public class Viscosity
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];

@@ -13,6 +13,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * <p>EnhancementFactor class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class EnhancementFactor implements EnhancementFactorInterface {
 
@@ -67,7 +68,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcEnhancementVec(int phase) {
     }
@@ -119,7 +120,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
         return this.hattaNumber;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getHattaNumber(int i) {
         return this.hattaNumber[i];

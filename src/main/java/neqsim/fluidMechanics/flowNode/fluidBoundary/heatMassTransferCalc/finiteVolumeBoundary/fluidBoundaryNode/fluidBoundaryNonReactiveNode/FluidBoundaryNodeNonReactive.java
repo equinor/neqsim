@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>FluidBoundaryNodeNonReactive class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FluidBoundaryNodeNonReactive extends FluidBoundaryNode {
 

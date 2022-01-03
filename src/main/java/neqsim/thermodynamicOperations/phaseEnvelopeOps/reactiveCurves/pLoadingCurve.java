@@ -19,6 +19,7 @@ import org.apache.logging.log4j.*;
  * <p>pLoadingCurve class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class pLoadingCurve implements OperationInterface {
 

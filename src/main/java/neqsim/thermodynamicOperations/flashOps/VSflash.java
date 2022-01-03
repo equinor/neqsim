@@ -8,6 +8,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>VSflash class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class VSflash extends Flash {
 

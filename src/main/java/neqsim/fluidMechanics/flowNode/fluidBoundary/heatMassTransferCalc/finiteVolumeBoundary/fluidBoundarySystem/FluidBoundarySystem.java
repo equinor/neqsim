@@ -15,6 +15,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * <p>FluidBoundarySystem class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FluidBoundarySystem implements FluidBoundarySystemInterface {
 
@@ -43,60 +44,60 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
         reactive = false;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addBoundary(FluidBoundaryInterface boundary) {
         this.boundary = boundary;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setNumberOfNodes(int nodes) {
         this.numberOfNodes = nodes;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public int getNumberOfNodes() {
         return numberOfNodes;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public FluidBoundaryNodeInterface getNode(int i) {
         return nodes[i];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setFilmThickness(double filmThickness) {
         this.filmThickness = filmThickness;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getNodeLength() {
         return this.filmThickness / this.numberOfNodes;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getFilmThickness() {
         return filmThickness;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public FluidBoundaryInterface getFluidBoundary() {
         return boundary;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void createSystem() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solve() {
         solver = new FluidBoundarySolver(this, reactive);

@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentRK;
  * <p>PhaseRK class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseRK extends PhaseEos {
 
@@ -42,7 +43,7 @@ public class PhaseRK extends PhaseEos {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);

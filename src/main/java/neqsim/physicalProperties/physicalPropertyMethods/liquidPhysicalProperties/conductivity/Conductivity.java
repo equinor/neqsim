@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
  * <p>Conductivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Conductivity
         extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
@@ -53,7 +54,7 @@ public class Conductivity
         return properties;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcConductivity() {
         double tempVar = 0, tempVar2 = 0;

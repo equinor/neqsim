@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentKentEisenberg class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentKentEisenberg extends ComponentGeNRTL {
 
@@ -35,7 +36,7 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         double gamma = 1.0;

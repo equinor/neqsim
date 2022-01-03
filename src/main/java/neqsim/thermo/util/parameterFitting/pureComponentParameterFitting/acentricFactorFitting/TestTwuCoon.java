@@ -16,6 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>TestTwuCoon class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestTwuCoon {
 

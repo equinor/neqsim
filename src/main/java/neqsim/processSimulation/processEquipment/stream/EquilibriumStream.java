@@ -13,6 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>EquilibriumStream class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class EquilibriumStream extends Stream {
 
@@ -67,7 +68,7 @@ public class EquilibriumStream extends Stream {
         return clonedStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         System.out.println("start flashing stream... " + streamNumber);

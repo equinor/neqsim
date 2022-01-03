@@ -20,6 +20,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <p>WettedWallColumnSampleCreator class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
 

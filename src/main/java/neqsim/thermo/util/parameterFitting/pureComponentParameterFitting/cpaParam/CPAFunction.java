@@ -9,6 +9,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>CPAFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAFunction extends LevenbergMarquardtFunction {
 

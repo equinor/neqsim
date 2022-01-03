@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>GasScrubberSimple class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class GasScrubberSimple extends Separator {
 

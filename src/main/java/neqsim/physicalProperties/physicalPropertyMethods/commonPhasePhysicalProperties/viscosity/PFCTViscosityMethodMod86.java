@@ -48,7 +48,7 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
 

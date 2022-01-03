@@ -17,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>ReactiveKrishnaStandartFilmModel class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 
@@ -64,7 +65,7 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 //        return 1;
 //    }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcTotalMassTransferCoefficientMatrix(int phase) {
         super.calcTotalMassTransferCoefficientMatrix(phase);
@@ -74,7 +75,7 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
                 .times(enhancementvec.get(0, getBulkSystem().getPhase(0).getNumberOfComponents() - 1));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setEnhancementType(int type) {
         enhancementType = type;

@@ -43,7 +43,7 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
         system = null;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         double olfFug = 0.0;
@@ -165,7 +165,7 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
         system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

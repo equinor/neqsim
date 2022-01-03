@@ -21,7 +21,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
     public SolidComplexFunction() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         try {
@@ -34,7 +34,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
         // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

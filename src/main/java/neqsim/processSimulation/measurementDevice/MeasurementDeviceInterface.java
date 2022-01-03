@@ -11,6 +11,7 @@ import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
  * <p>MeasurementDeviceInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface MeasurementDeviceInterface extends java.io.Serializable {
 

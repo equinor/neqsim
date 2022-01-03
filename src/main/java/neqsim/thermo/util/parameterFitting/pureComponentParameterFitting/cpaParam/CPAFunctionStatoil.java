@@ -8,6 +8,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>CPAFunctionStatoil class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
 

@@ -14,6 +14,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * <p>InterphasePipeFlow class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class InterphasePipeFlow extends InterphaseOnePhase {
 
@@ -35,7 +36,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
         // flowNode = node;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -47,7 +48,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -59,7 +60,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -76,7 +77,7 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {

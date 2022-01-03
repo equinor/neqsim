@@ -17,6 +17,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>TPmultiflashWAX class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TPmultiflashWAX extends TPflash {
 

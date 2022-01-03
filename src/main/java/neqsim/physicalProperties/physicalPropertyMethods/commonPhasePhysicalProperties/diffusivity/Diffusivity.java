@@ -8,6 +8,7 @@ import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProp
  * <p>Diffusivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Diffusivity extends CommonPhysicalPropertyMethod implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {

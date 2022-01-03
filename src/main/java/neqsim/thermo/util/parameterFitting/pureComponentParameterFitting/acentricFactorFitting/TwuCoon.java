@@ -8,6 +8,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>TwuCoon class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TwuCoon extends LevenbergMarquardtFunction {
 

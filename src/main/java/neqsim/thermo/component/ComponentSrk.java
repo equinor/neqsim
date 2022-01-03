@@ -12,6 +12,7 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
  * <p>ComponentSrk class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentSrk extends ComponentEos {
 
@@ -91,13 +92,13 @@ public class ComponentSrk extends ComponentEos {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         if (ionicCharge != 0) {
@@ -114,13 +115,13 @@ public class ComponentSrk extends ComponentEos {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calca() {
         return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
@@ -156,7 +157,7 @@ public class ComponentSrk extends ComponentEos {
         return dqPuredTdT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();

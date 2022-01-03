@@ -12,6 +12,7 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  * <p>InterphasePackedBed class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class InterphasePackedBed extends InterphaseReactorFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -34,41 +35,41 @@ public class InterphasePackedBed extends InterphaseReactorFlow
         // flowNode = node;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         return 100.1;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         double redMassTrans = 0;

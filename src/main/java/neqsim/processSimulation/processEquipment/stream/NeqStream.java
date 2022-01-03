@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>NeqStream class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class NeqStream extends Stream {
 
@@ -68,7 +69,7 @@ public class NeqStream extends Stream {
         return clonedStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         System.out.println("start flashing stream... " + streamNumber);

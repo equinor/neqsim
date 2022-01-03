@@ -13,6 +13,7 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * <p>TwoPhaseFlowNodeVisualization class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
 
@@ -24,7 +25,7 @@ public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
     public TwoPhaseFlowNodeVisualization() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setData(FlowNodeInterface node) {
         super.setData(node);

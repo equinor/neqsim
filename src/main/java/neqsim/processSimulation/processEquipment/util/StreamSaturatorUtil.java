@@ -50,7 +50,7 @@ public class StreamSaturatorUtil extends ProcessEquipmentBaseClass {
         return outStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
     	boolean changeBack = false;

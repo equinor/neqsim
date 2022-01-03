@@ -12,6 +12,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentElectrolyteCPA class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEos implements ComponentCPAInterface {
 
@@ -143,7 +144,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         if ((getRacketZCPA() < 1.0e-10) && cpaon == 1) {
@@ -155,13 +156,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setAtractiveTerm(int i) {
         super.setAtractiveTerm(i);
@@ -170,19 +171,19 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void seta(double a) {
         aCPA = a;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setb(double a) {
         bCPA = a;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calca() {
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
@@ -192,7 +193,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcb() {
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
@@ -202,7 +203,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
@@ -216,7 +217,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         return Fsup + cpaon * Fcpa;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
@@ -227,7 +228,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         // System.out.println("dQdndV " + dFCPAdNdV(phase, numberOfComponents,
@@ -241,7 +242,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
         // System.out.println("ij " + componentNumber + " " + j + " dQCPAdndn " +
@@ -392,7 +393,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         return hdn;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdXi(int site, PhaseInterface phase) {
         return getNumberOfMolesInPhase() * (1.0 / xsite[site] - 1.0 / 2.0);
@@ -409,7 +410,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         return (1.0 / xsite[site] - 1.0 / 2.0);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
         double fact = 0.0;
@@ -422,14 +423,14 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
                                 phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdVdXi(int site, PhaseInterface phase) {
         return -1.0 / (2.0 * phase.getTotalVolume())
                 * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
@@ -509,49 +510,49 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         this.xsite = xsite;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsitedV() {
         return this.xsitedV;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedV(int i, double xsitedV) {
         this.xsitedV[i] = xsitedV;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsitedT() {
         return this.xsitedT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsitedTdT() {
         return this.xsitedTdT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedT(int i, double xsitedT) {
         this.xsitedT[i] = xsitedT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedTdT(int i, double xsitedTdT) {
         this.xsitedTdT[i] = xsitedTdT;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double[] getXsiteOld() {
         return this.xsiteOld;
@@ -566,7 +567,7 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         this.xsiteOld = xsiteOld;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsiteOld(int i, double xsiteOld) {
         this.xsiteOld[i] = xsiteOld;
@@ -601,13 +602,13 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
         this.xsitedni = xsitedni;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setXsitedni(int xnumb, int compnumb, double val) {
         xsitedni[xnumb][compnumb] = val;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double AA = 0, BB = 0;

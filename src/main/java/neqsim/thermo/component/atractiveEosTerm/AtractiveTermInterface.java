@@ -10,6 +10,7 @@ package neqsim.thermo.component.atractiveEosTerm;
  * <p>AtractiveTermInterface interface.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public interface AtractiveTermInterface extends Cloneable, java.io.Serializable {
     /**

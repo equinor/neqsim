@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>CPAParameterFittingToSolubilityData_Vap class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtFunction {
 

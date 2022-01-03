@@ -13,6 +13,7 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  * <p>InterphaseDropletFlow class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -35,7 +36,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         // flowNode = node;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
@@ -47,13 +48,13 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
@@ -71,7 +72,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         // System.out.println("velocity " + node.getVelocity(phase));
@@ -91,7 +92,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -103,7 +104,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         double redMassTrans = 0;

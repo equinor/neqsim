@@ -10,6 +10,7 @@ package neqsim.util.unit;
  * <p>LengthUnit class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class LengthUnit extends neqsim.util.unit.BaseUnit {
 

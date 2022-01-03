@@ -19,6 +19,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <p>graph2b class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class graph2b extends javax.swing.JFrame {
 

@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentGEWilson class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentGEWilson extends ComponentGE {
 
@@ -68,7 +69,7 @@ public class ComponentGEWilson extends ComponentGE {
         return getWilsonActivityCoeffisient(phase);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {

@@ -10,6 +10,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalPro
  * <p>CommonPhysicalPropertyMethod class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CommonPhysicalPropertyMethod
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {
@@ -37,7 +38,7 @@ public class CommonPhysicalPropertyMethod
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         this.phase = phase;

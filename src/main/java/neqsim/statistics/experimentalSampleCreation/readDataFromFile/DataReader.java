@@ -14,6 +14,7 @@ import java.util.StringTokenizer;
  * <p>DataReader class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class DataReader implements DataReaderInterface {
     protected String fileName;

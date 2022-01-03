@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermTwuCoon class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
@@ -53,14 +54,14 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
         // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         double Tr = (temperature / getComponent().getTC());
@@ -98,7 +99,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -108,7 +109,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         double t = temperature;
@@ -123,7 +124,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         + Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / t * Math.exp(b * (1 - Math.pow(Tr, c))));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         double t = temperature;
@@ -161,7 +162,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -171,7 +172,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {

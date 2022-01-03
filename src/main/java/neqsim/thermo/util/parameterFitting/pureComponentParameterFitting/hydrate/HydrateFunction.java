@@ -9,6 +9,7 @@ import neqsim.thermo.component.ComponentHydrate;
  * <p>HydrateFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class HydrateFunction extends LevenbergMarquardtFunction {
 

@@ -15,6 +15,7 @@ import org.apache.logging.log4j.*;
  * <p>PhaseGEUnifacPSRK class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
 
@@ -50,14 +51,14 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         this.setMixingRule(2);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGEUnifacPSRK(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -68,7 +69,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         calccij();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -78,7 +79,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {

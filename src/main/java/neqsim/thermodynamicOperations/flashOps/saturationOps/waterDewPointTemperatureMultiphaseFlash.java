@@ -35,7 +35,7 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -67,7 +67,7 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

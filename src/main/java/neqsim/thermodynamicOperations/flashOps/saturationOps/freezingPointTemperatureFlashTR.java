@@ -215,7 +215,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         // logger.info("max freezing temp " + maxTemperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
 

@@ -10,6 +10,7 @@ package neqsim.util.util;
  * <p>DoubleCloneable class.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public class DoubleCloneable implements Cloneable {
 

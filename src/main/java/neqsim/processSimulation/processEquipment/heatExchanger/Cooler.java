@@ -11,6 +11,7 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * <p>Cooler class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Cooler extends Heater {
 
@@ -42,7 +43,7 @@ public class Cooler extends Heater {
         super(name, inStream);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getEntropyProduction(String unit) {
         //

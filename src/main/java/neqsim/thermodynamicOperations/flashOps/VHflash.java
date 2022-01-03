@@ -6,6 +6,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>VHflash class.</p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class VHflash extends Flash {
 

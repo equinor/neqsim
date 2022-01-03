@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentGeNRTL;
  * <p>PhaseGENRTL class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGENRTL extends PhaseGE {
 
@@ -57,14 +58,14 @@ public class PhaseGENRTL extends PhaseGE {
         setMixingRule(2);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGeNRTL(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -74,7 +75,7 @@ public class PhaseGENRTL extends PhaseGE {
         this.Dij = mixSelect.getNRTLDij();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setAlpha(double[][] alpha) {
         for (int i = 0; i < alpha.length; i++) {
@@ -82,7 +83,7 @@ public class PhaseGENRTL extends PhaseGE {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setDij(double[][] Dij) {
         for (int i = 0; i < Dij.length; i++) {
@@ -90,7 +91,7 @@ public class PhaseGENRTL extends PhaseGE {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -103,13 +104,13 @@ public class PhaseGENRTL extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,

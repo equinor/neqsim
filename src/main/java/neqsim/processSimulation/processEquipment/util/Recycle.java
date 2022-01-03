@@ -18,6 +18,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Recycle class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
 

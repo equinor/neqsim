@@ -14,6 +14,7 @@ import org.apache.logging.log4j.*;
  * <p>PhaseGEUnifacUMRPRU class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
 
@@ -159,7 +160,7 @@ public class PhaseGEUnifacUMRPRU extends PhaseGEUnifac {
         return QmixdN[0];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcaij() {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();

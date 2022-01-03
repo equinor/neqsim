@@ -172,7 +172,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         } while (Math.abs(oldIterTemp - system.getTemperature()) > 1e-3);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         ThermodynamicOperations localOperation = new ThermodynamicOperations(system);
@@ -277,7 +277,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

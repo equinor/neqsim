@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentSrkCPAs;
  * <p>PhaseSrkCPAsOld class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
 
@@ -23,7 +24,7 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         super();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
@@ -42,7 +43,7 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_g() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -51,7 +52,7 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         return g;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_lngV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -59,7 +60,7 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
         return -gv;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_lngVV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -75,7 +76,7 @@ public class PhaseSrkCPAsOld extends PhaseSrkCPAs {
 //        return gvv;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calc_lngVVV() {
         double totVol = getTotalVolume();

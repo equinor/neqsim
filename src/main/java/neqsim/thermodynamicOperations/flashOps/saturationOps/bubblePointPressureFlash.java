@@ -35,7 +35,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -175,7 +175,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

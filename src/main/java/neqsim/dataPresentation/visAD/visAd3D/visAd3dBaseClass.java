@@ -12,6 +12,7 @@ import neqsim.dataPresentation.visAD.visAdBaseClass;
  * <p>visAd3dBaseClass class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class visAd3dBaseClass extends visAdBaseClass {
 

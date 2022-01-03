@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>PhysicalPropertiesInterface interface.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public interface PhysicalPropertiesInterface extends Cloneable {
 

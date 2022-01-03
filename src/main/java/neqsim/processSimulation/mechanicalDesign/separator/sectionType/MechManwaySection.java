@@ -22,7 +22,7 @@ public class MechManwaySection extends SepDesignSection {
         nominalSize = "DN 500";
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
 

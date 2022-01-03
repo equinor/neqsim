@@ -30,7 +30,7 @@ public class Filter extends ProcessEquipmentBaseClass {
         outStream = (Stream) inStream.clone();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         SystemInterface system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -83,7 +83,7 @@ public class Filter extends ProcessEquipmentBaseClass {
         return outStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
         double deltaP = inStream.getPressure("bara") - outStream.getPressure("bara");

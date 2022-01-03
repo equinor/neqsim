@@ -11,6 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <p>TestBinaryHVfitToActivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVfitToActivity implements Cloneable {
 

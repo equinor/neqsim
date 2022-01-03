@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermRk class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermRk extends AtractiveTermBaseClass {
 
@@ -39,25 +40,25 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         return Math.sqrt(getComponent().getTC() / temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         return getComponent().geta() * alpha(temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         return -0.5 * getComponent().getTC() / (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 2.0));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         return -0.25 * getComponent().getTC() * getComponent().getTC()
@@ -66,13 +67,13 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         return getComponent().geta() * diffalphaT(temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);

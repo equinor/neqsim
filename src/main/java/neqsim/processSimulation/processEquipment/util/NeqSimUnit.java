@@ -64,7 +64,7 @@ public class NeqSimUnit extends ProcessEquipmentBaseClass {
         return outStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();

@@ -13,6 +13,7 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * <p>InterphaseStirredCellFlow class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
 
@@ -34,7 +35,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         // flowNode = node;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
@@ -52,7 +53,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -70,7 +71,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -82,7 +83,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         double redMassTrans = 0.0, massTrans = 0.0;

@@ -17,6 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>StirredCellSolver class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.thermo.ThermodynamicConstantsInterface {
 
@@ -328,7 +329,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver implements neqsim.
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void solveTDMA() {
         initProfiles();

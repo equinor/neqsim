@@ -21,6 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>ChemicalReactionOperations class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ChemicalReactionOperations
         implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {

@@ -11,6 +11,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermUMRPRU class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermUMRPRU extends AtractiveTermPr {
 
@@ -42,7 +43,7 @@ public class AtractiveTermUMRPRU extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         m = (0.384401 + 1.52276 * getComponent().getAcentricFactor()

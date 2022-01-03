@@ -10,6 +10,7 @@ import neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Bin
  * <p>TestBinaryEosParameterFit class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryEosParameterFit {
 

@@ -8,6 +8,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>ClassicAcentricFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ClassicAcentricFunction extends LevenbergMarquardtFunction {
 

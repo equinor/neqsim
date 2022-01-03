@@ -15,6 +15,7 @@ import java.util.*;
  * <p>NetCdf2D class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class NetCdf2D {
 

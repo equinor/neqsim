@@ -40,13 +40,13 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
         this.thermoSystem = thermoSystem;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calculate() {
         thermoSystem.init(0);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         thermoSystem.init(0);
@@ -59,19 +59,19 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
         return 0.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         return unit;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return true;

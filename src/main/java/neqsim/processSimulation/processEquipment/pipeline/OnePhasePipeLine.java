@@ -13,6 +13,7 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * <p>OnePhasePipeLine class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class OnePhasePipeLine extends Pipeline {
 
@@ -41,7 +42,7 @@ public class OnePhasePipeLine extends Pipeline {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         super.run();
@@ -51,7 +52,7 @@ public class OnePhasePipeLine extends Pipeline {
         outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void runTransient() {
         super.runTransient();

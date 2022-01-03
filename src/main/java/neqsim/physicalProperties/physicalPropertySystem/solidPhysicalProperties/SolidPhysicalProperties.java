@@ -7,6 +7,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>SolidPhysicalProperties class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SolidPhysicalProperties extends PhysicalProperties {
 

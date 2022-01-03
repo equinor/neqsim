@@ -10,6 +10,7 @@ package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
  * <p>LevenbergMarquardtAbsDev class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class LevenbergMarquardtAbsDev extends LevenbergMarquardt {
 

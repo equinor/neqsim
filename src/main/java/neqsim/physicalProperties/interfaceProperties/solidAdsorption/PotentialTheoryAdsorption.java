@@ -47,13 +47,13 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setSolidMaterial(String solidM) {
         solidMaterial = solidM;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcAdorption(int phase) {
         SystemInterface tempSystem = (SystemInterface) system.clone();
@@ -128,7 +128,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSurfaceExcess(String componentName) {
         int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
@@ -175,7 +175,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getSurfaceExess(int component) {
         return 1.0;

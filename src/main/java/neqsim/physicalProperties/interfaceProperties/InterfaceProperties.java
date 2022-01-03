@@ -21,6 +21,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>InterfaceProperties class.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
 

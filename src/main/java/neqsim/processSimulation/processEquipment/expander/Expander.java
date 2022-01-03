@@ -14,6 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Expander class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class Expander extends Compressor implements ExpanderInterface {
 
@@ -45,7 +46,7 @@ public class Expander extends Compressor implements ExpanderInterface {
         super(name, inletStream);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         // System.out.println("expander running..");

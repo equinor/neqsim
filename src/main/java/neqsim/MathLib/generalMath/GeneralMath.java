@@ -4,6 +4,7 @@ package neqsim.MathLib.generalMath;
  * <p>GeneralMath class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class GeneralMath implements java.io.Serializable {
 

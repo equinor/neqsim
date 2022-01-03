@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
  * <p>PhaseGENRTLmodifiedWS class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
 
@@ -67,7 +68,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -77,7 +78,7 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -87,14 +88,14 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         this.Dij = mixSelect.getNRTLDij();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGENRTLmodifiedWS(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {

@@ -26,6 +26,7 @@ import visad.java2d.DisplayImplJ2D;
  * <p>visAdContourPlot class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class visAdContourPlot {
 

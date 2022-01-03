@@ -26,6 +26,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>WaterStripperColumn class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class WaterStripperColumn extends SimpleAbsorber {
 

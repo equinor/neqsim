@@ -52,14 +52,14 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() {
         // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
         // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         a = this.parameters[0];
@@ -95,14 +95,14 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
 //        temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
 //        temperature/TC,1.0*d)*d/(temperature*temperature);
     // }
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
 
         return getComponent().geta() * alpha(temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         a = this.parameters[0];
@@ -119,7 +119,7 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         a = this.parameters[0];
@@ -142,14 +142,14 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
 
         return getComponent().geta() * diffalphaT(temperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
 

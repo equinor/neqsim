@@ -11,6 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>PhysicalPropertyMixingRuleInterface interface.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
 

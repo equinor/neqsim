@@ -13,6 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>ComponentCSPsrk class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentCSPsrk extends ComponentSrk {
 
@@ -78,7 +79,7 @@ public class ComponentCSPsrk extends ComponentSrk {
         return clonedComponent;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
@@ -96,7 +97,7 @@ public class ComponentCSPsrk extends ComponentSrk {
         f_scale_mix_i = (termfi1 - termfi2 - termfi3) / termfi4 * refPhaseBWRS.getF_scale_mix();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
         // System.out.println("dFdN super " + super.dFdN(phase,

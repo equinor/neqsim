@@ -12,6 +12,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>GrunbergNissanFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
 
@@ -23,7 +24,7 @@ public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
     public GrunbergNissanFunction() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         system.init(1);
@@ -31,7 +32,7 @@ public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
         return system.getPhases()[1].getPhysicalProperties().getViscosity() * 1e3;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

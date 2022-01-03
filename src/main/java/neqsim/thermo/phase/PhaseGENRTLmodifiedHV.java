@@ -13,6 +13,7 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
  * <p>PhaseGENRTLmodifiedHV class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
 
@@ -73,14 +74,14 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGENRTLmodifiedHV(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -91,7 +92,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         this.Dij = mixSelect.getHVDij();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule,
             double[][] intparam) {
@@ -103,7 +104,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         this.intparam = intparam;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setDijT(double[][] DijT) {
         for (int i = 0; i < DijT.length; i++) {
@@ -111,7 +112,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -130,7 +131,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         return (R * phase.getTemperature() * GE) * phase.getNumberOfMolesInPhase();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         double val = 0.0;
@@ -140,7 +141,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getHresTP() {
         double val = 0.0;

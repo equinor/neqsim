@@ -9,6 +9,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * <p>IonicInteractionParameterFittingFunction_Sleipnernoacid class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_Sleipnernoacid
         extends LevenbergMarquardtFunction implements ThermodynamicConstantsInterface {

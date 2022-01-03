@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>SurfaceTension class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SurfaceTension extends InterfaceProperties implements SurfaceTensionInterface {
 
@@ -45,7 +46,7 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
         return 0.0;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcSurfaceTension(int int1, int int2) {
         return 0.0;

@@ -14,6 +14,7 @@ import neqsim.statistics.parameterFitting.StatisticsInterface;
  * <p>MonteCarloSimulation class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class MonteCarloSimulation {
 

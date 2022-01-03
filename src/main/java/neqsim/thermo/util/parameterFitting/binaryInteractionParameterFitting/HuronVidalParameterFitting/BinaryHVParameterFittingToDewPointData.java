@@ -8,6 +8,7 @@ import neqsim.thermo.phase.PhaseEosInterface;
  * <p>BinaryHVParameterFittingToDewPointData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
 

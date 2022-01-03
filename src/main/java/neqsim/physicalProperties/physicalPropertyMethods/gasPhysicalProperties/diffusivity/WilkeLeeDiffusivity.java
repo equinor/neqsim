@@ -4,6 +4,7 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
  * <p>WilkeLeeDiffusivity class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class WilkeLeeDiffusivity extends Diffusivity {
 

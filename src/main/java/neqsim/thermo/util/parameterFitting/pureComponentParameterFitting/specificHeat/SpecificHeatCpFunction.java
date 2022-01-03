@@ -21,7 +21,7 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
         params = new double[4];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -35,7 +35,7 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getCp("kJ/kgK");
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

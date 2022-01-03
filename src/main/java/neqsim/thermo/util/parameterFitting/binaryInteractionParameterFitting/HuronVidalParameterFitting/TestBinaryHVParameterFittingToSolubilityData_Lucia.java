@@ -16,6 +16,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestBinaryHVParameterFittingToSolubilityData_Lucia class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
 

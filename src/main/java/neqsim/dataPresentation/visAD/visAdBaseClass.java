@@ -13,6 +13,7 @@ import visad.*;
  * <p>visAdBaseClass class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class visAdBaseClass implements visAdInterface, java.io.Serializable {
 
@@ -24,7 +25,7 @@ public class visAdBaseClass implements visAdInterface, java.io.Serializable {
     public visAdBaseClass() {
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init() throws RemoteException, VisADException {
     }

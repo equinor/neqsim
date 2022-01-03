@@ -12,6 +12,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermGERG class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermGERG extends AtractiveTermPr {
 
@@ -50,7 +51,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         return atractiveTerm;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         if (getComponent().getName().equals("water")) {
@@ -70,7 +71,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (getComponent().getName().equals("water")) {
@@ -138,7 +139,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (getComponent().getName().equals("water")) {
@@ -148,7 +149,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (getComponent().getName().equals("water")) {

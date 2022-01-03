@@ -29,6 +29,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * <p>Mixer class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 

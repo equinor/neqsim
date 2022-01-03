@@ -80,7 +80,7 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
 

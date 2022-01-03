@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestIonicInteractionParameterFittingAcid class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestIonicInteractionParameterFittingAcid {
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingAcid.class);

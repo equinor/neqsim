@@ -20,6 +20,7 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * <p>PhaseElectrolyteCPA class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implements PhaseCPAInterface {
 
@@ -70,7 +71,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         return clonedPhase;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -78,7 +79,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -419,32 +420,32 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentElectrolyteCPA(componentName, moles, molesInPhase, compNumber);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdV() {
         return super.dFdTdV() + cpaon * dFCPAdTdV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdV() {
         double dv2 = dFCPAdV();
@@ -457,13 +458,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
@@ -757,7 +758,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         this.hcpatot = hcpatot;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGcpa() {
         return gcpa;
@@ -838,7 +839,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         }
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume2(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -962,7 +963,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -1234,7 +1235,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         return getMolarVolume();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double getGcpav() {
         return gcpav;
@@ -1249,13 +1250,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         this.gcpav = gcpav;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcPressure() {
         gcpa = calc_g();
@@ -1271,7 +1272,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos implem
         return super.calcPressure();
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {

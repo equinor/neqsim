@@ -4,6 +4,7 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Hu
  * <p>BinaryWSParameterFittingToSolubilityData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunction {
 

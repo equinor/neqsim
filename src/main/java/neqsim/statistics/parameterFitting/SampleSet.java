@@ -13,6 +13,7 @@ import java.util.Arrays;
  * <p>SampleSet class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class SampleSet implements Cloneable {
 

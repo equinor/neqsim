@@ -21,7 +21,7 @@ public class MechVaneSection extends SepDesignSection {
         super(separatorSection);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
 

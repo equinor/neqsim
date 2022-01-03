@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestSolidAntoine class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestSolidAntoine {
     static Logger logger = LogManager.getLogger(TestSolidAntoine.class);

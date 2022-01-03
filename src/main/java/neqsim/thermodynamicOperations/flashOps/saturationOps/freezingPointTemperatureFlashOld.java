@@ -32,7 +32,7 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
         super(system);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -104,7 +104,7 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
         // logger.info("max freezing temp " + maxTemperature);
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

@@ -14,6 +14,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * <p>AtractiveTermBaseClass class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AtractiveTermBaseClass implements AtractiveTermInterface {
 

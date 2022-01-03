@@ -22,6 +22,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>ChemicalReactionList class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;

@@ -14,6 +14,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>PhysicalPropertyMixingRule class.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public class PhysicalPropertyMixingRule
         implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface {

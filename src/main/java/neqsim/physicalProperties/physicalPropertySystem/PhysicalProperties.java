@@ -14,6 +14,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * <p>Abstract PhysicalProperties class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class PhysicalProperties implements PhysicalPropertiesInterface, ThermodynamicConstantsInterface {
 

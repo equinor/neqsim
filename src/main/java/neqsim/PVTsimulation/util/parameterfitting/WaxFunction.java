@@ -6,6 +6,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * <p>WaxFunction class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class WaxFunction extends LevenbergMarquardtFunction {
 

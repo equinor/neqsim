@@ -12,6 +12,7 @@ import org.apache.logging.log4j.*;
  * <p>InfluenceParamGTFunctionBinaryData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFunction {
 
@@ -25,7 +26,7 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         params = new double[1];
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         system.init(3);
@@ -39,7 +40,7 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -16,6 +16,7 @@ import visad.java2d.DisplayImplJ2D;
  * <p>visAd2dBaseClass class.</p>
  *
  * @author  esol
+ * @version $Id: $Id
  */
 public class visAd2dBaseClass extends visAdBaseClass {
 

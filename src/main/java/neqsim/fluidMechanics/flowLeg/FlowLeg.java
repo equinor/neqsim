@@ -14,6 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>Abstract FlowLeg class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable {
 

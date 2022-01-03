@@ -18,6 +18,7 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  * <p>PhaseGE class.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
 

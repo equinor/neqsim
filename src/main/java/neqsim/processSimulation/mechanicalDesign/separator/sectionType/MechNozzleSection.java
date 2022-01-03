@@ -22,7 +22,7 @@ public class MechNozzleSection extends SepDesignSection {
         nominalSize = "DN 150";
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void calcDesign() {
 

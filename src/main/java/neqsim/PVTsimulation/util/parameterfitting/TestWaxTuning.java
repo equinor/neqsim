@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <p>TestWaxTuning class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestWaxTuning {
     /**

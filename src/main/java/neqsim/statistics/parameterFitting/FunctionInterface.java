@@ -12,6 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>FunctionInterface interface.</p>
  *
  * @author  Even Solbraa
+ * @version $Id: $Id
  */
 public interface FunctionInterface extends Cloneable {
     /**
