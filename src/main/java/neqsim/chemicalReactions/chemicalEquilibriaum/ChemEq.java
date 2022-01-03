@@ -3,7 +3,9 @@ package neqsim.chemicalReactions.chemicalEquilibriaum;
 import Jama.Matrix;
 
 /**
- * <p>ChemEq class.</p>
+ * <p>
+ * ChemEq class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -37,10 +39,11 @@ public class ChemEq implements java.io.Serializable {
     double[][] matrix;
 
     /**
-     * <p>Constructor for ChemEq.</p>
+     * <p>
+     * Constructor for ChemEq.
+     * </p>
      */
     public ChemEq() {
-
         for (int i = 0; i < 10; i++) {
             chem_ref[i] += Math.log(P);
         }
@@ -56,7 +59,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>Constructor for ChemEq.</p>
+     * <p>
+     * Constructor for ChemEq.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -98,7 +103,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>Constructor for ChemEq.</p>
+     * <p>
+     * Constructor for ChemEq.
+     * </p>
      *
      * @param A_matrix an array of {@link double} objects
      */
@@ -107,7 +114,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>Constructor for ChemEq.</p>
+     * <p>
+     * Constructor for ChemEq.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -120,7 +129,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>chemSolve.</p>
+     * <p>
+     * chemSolve.
+     * </p>
      */
     public void chemSolve() {
         n_t = 0;
@@ -177,7 +188,6 @@ public class ChemEq implements java.io.Serializable {
         double[][] btest = new double[NNOT][1];
 
         for (i = 0; i < NNOT; i++) {
-
             btest[i][0] = b_vector[i];
 
             for (j = 0; j < NNOT; j++) {
@@ -210,7 +220,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>step.</p>
+     * <p>
+     * step.
+     * </p>
      *
      * @return a double
      */
@@ -261,7 +273,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>innerStep.</p>
+     * <p>
+     * innerStep.
+     * </p>
      *
      * @param n_omega an array of {@link double} objects
      * @param check a int
@@ -293,7 +307,9 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -359,19 +375,19 @@ public class ChemEq implements java.io.Serializable {
     }
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      */
     public void solve() {
         double error = 0;
         double Gibbs = 0;
 
         do {
-
             error = 0;
             chemSolve();
 
             for (i = 0; i < NSPEC; i++) {
-
                 System.out.println(n_mol[i] + "  prove korreksjon  " + step * d_n[i]);
 
                 error += d_n[i] / n_mol[i];
@@ -393,7 +409,6 @@ public class ChemEq implements java.io.Serializable {
         } while (error > 0.00005);
 
         for (j = 0; j < NSPEC; j++) {
-
             System.out.println(
                     " SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
         }

@@ -12,6 +12,7 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
  * <p>AbsorberInterface interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface AbsorberInterface extends ProcessEquipmentInterface{
     /** {@inheritDoc} */

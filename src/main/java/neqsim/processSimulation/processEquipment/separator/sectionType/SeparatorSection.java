@@ -4,13 +4,14 @@ import neqsim.processSimulation.mechanicalDesign.separator.sectionType.SepDesign
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
- * <p>SeparatorSection class.</p>
+ * <p>
+ * SeparatorSection class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     private double efficiency = 0.95;
@@ -23,7 +24,9 @@ public class SeparatorSection {
     public SepDesignSection mechanicalDesign = null;
 
     /**
-     * <p>Constructor for SeparatorSection.</p>
+     * <p>
+     * Constructor for SeparatorSection.
+     * </p>
      *
      * @param type a {@link java.lang.String} object
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
@@ -35,7 +38,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Constructor for SeparatorSection.</p>
+     * <p>
+     * Constructor for SeparatorSection.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
@@ -47,7 +52,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>calcEfficiency.</p>
+     * <p>
+     * calcEfficiency.
+     * </p>
      *
      * @return a double
      */
@@ -56,7 +63,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Getter for the field <code>efficiency</code>.</p>
+     * <p>
+     * Getter for the field <code>efficiency</code>.
+     * </p>
      *
      * @return the efficiency
      */
@@ -68,7 +77,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Setter for the field <code>efficiency</code>.</p>
+     * <p>
+     * Setter for the field <code>efficiency</code>.
+     * </p>
      *
      * @param efficiency the efficiency to set
      */
@@ -77,7 +88,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>isCalcEfficiency.</p>
+     * <p>
+     * isCalcEfficiency.
+     * </p>
      *
      * @return the calcEfficiency
      */
@@ -86,7 +99,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Setter for the field <code>calcEfficiency</code>.</p>
+     * <p>
+     * Setter for the field <code>calcEfficiency</code>.
+     * </p>
      *
      * @param calcEfficiency the calcEfficiency to set
      */
@@ -95,19 +110,24 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>getMinimumLiquidSealHeight.</p>
+     * <p>
+     * getMinimumLiquidSealHeight.
+     * </p>
      *
      * @return a double
      */
     public double getMinimumLiquidSealHeight() {
         return getPresureDrop() * 1e5 / neqsim.thermo.ThermodynamicConstantsInterface.gravity
                 / (getSeparator().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity()
-                        - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties().getDensity());
+                        - getSeparator().getThermoSystem().getPhase(0).getPhysicalProperties()
+                                .getDensity());
 
     }
 
     /**
-     * <p>getPresureDrop.</p>
+     * <p>
+     * getPresureDrop.
+     * </p>
      *
      * @return the presureDrop
      */
@@ -116,7 +136,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>setPresureDrop.</p>
+     * <p>
+     * setPresureDrop.
+     * </p>
      *
      * @param presureDrop the presureDrop to set
      */
@@ -125,7 +147,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Getter for the field <code>name</code>.</p>
+     * <p>
+     * Getter for the field <code>name</code>.
+     * </p>
      *
      * @return the name
      */
@@ -134,7 +158,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Setter for the field <code>name</code>.</p>
+     * <p>
+     * Setter for the field <code>name</code>.
+     * </p>
      *
      * @param name the name to set
      */
@@ -143,7 +169,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Getter for the field <code>mechanicalDesign</code>.</p>
+     * <p>
+     * Getter for the field <code>mechanicalDesign</code>.
+     * </p>
      *
      * @return the mechanicalDesign
      */
@@ -152,7 +180,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Setter for the field <code>mechanicalDesign</code>.</p>
+     * <p>
+     * Setter for the field <code>mechanicalDesign</code>.
+     * </p>
      *
      * @param mechanicalDesign the mechanicalDesign to set
      */
@@ -161,7 +191,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Getter for the field <code>separator</code>.</p>
+     * <p>
+     * Getter for the field <code>separator</code>.
+     * </p>
      *
      * @return the separator
      */
@@ -170,7 +202,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Setter for the field <code>separator</code>.</p>
+     * <p>
+     * Setter for the field <code>separator</code>.
+     * </p>
      *
      * @param separator the separator to set
      */
@@ -179,7 +213,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Getter for the field <code>outerDiameter</code>.</p>
+     * <p>
+     * Getter for the field <code>outerDiameter</code>.
+     * </p>
      *
      * @return the outerDiameter
      */
@@ -188,7 +224,9 @@ public class SeparatorSection {
     }
 
     /**
-     * <p>Setter for the field <code>outerDiameter</code>.</p>
+     * <p>
+     * Setter for the field <code>outerDiameter</code>.
+     * </p>
      *
      * @param outerDiameter the outerDiameter to set
      */

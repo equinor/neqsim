@@ -11,7 +11,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>PlusCharacterize class.</p>
+ * <p>
+ * PlusCharacterize class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -41,7 +43,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     public PlusCharacterize() {}
 
     /**
-     * <p>Constructor for PlusCharacterize.</p>
+     * <p>
+     * Constructor for PlusCharacterize.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -62,7 +66,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     }
 
     /**
-     * <p>setHeavyTBPtoPlus.</p>
+     * <p>
+     * setHeavyTBPtoPlus.
+     * </p>
      */
     public void setHeavyTBPtoPlus() {
         int plusCompNumber = 0, compNumber = 0;
@@ -118,7 +124,6 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
                     if (firstPlusFractionNumber < firstPlusNumber.intValue()) {
                         firstPlusFractionNumber = firstPlusNumber.intValue();
                     }
-
                 }
             } catch (Exception e) {
                 e.toString();
@@ -293,7 +298,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     }
 
     /**
-     * <p>addPseudoTBPfraction.</p>
+     * <p>
+     * addPseudoTBPfraction.
+     * </p>
      *
      * @param start a int
      * @param end a int
@@ -526,7 +533,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
     }
 
     /**
-     * <p>characterizePlusFraction.</p>
+     * <p>
+     * characterizePlusFraction.
+     * </p>
      */
     public void characterizePlusFraction() {
         system.init(0);

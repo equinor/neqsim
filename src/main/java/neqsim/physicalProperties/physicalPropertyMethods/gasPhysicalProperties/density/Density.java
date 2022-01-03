@@ -11,28 +11,36 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod;
 
 /**
- * <p>Density class.</p>
+ * <p>
+ * Density class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
-public class Density extends GasPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
-
+public class Density extends GasPhysicalPropertyMethod implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
     /**
-     * Creates new Density
+     * <p>
+     * Constructor for Density.
+     * </p>
      */
-    public Density() {
-    }
+    public Density() {}
 
     /**
-     * <p>Constructor for Density.</p>
+     * <p>
+     * Constructor for Density.
+     * </p>
      *
-     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
-    public Density(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
+    public Density(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         this.gasPhase = gasPhase;
     }
 
@@ -50,14 +58,13 @@ public class Density extends GasPhysicalPropertyMethod
         return properties;
     }
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Returns the density of the phase. Unit: kg/m^3
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * Returns the density of the phase. Unit: kg/m^3
+     */
     @Override
-	public double calcDensity() {
-
+    public double calcDensity() {
         double tempVar = 0;
         if (gasPhase.getPhase().useVolumeCorrection()) {
             for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
@@ -65,6 +72,7 @@ public class Density extends GasPhysicalPropertyMethod
                         * gasPhase.getPhase().getComponents()[i].getVolumeCorrection();
             }
         }
-        return 1.0 / (gasPhase.getPhase().getMolarVolume() - tempVar) * gasPhase.getPhase().getMolarMass() * 1e5;
+        return 1.0 / (gasPhase.getPhase().getMolarVolume() - tempVar)
+                * gasPhase.getPhase().getMolarMass() * 1e5;
     }
 }

@@ -7,24 +7,30 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SaturateWithWater class.</p>
+ * <p>
+ * SaturateWithWater class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class SaturateWithWater extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SaturateWithWater.class);
 
     Flash tpFlash;
 
     /**
-     * <p>Constructor for SaturateWithWater.</p>
+     * <p>
+     * Constructor for SaturateWithWater.
+     * </p>
      */
     public SaturateWithWater() {}
 
     /**
-     * <p>Constructor for SaturateWithWater.</p>
+     * <p>
+     * Constructor for SaturateWithWater.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -36,7 +42,6 @@ public class SaturateWithWater extends QfuncFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         if (!system.getPhase(0).hasComponent("water")) {
             system.addComponent("water", system.getTotalNumberOfMoles());
             system.createDatabase(true);
@@ -89,7 +94,9 @@ public class SaturateWithWater extends QfuncFlash {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

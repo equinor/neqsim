@@ -3,22 +3,26 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- * <p>AbsorptionColumnDesignStandard class.</p>
+ * <p>
+ * AbsorptionColumnDesignStandard class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class AbsorptionColumnDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     private double molecularSieveWaterCapacity = 20;// %
 
     /**
-     * <p>Constructor for AbsorptionColumnDesignStandard.</p>
+     * <p>
+     * Constructor for AbsorptionColumnDesignStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      */
     public AbsorptionColumnDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
@@ -33,7 +37,8 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
                 while (dataSet.next()) {
                     String specName = dataSet.getString("SPECIFICATION");
                     if (specName.equals("MolecularSieve3AWaterCapacity")) {
-                        molecularSieveWaterCapacity = Double.parseDouble(dataSet.getString("MAXVALUE"));
+                        molecularSieveWaterCapacity =
+                                Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
                 }
             } catch (Exception e) {
@@ -54,7 +59,9 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>molecularSieveWaterCapacity</code>.</p>
+     * <p>
+     * Getter for the field <code>molecularSieveWaterCapacity</code>.
+     * </p>
      *
      * @return the molecularSieveWaterCapacity
      */
@@ -63,7 +70,9 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Setter for the field <code>molecularSieveWaterCapacity</code>.</p>
+     * <p>
+     * Setter for the field <code>molecularSieveWaterCapacity</code>.
+     * </p>
      *
      * @param molecularSieveWaterCapacity the molecularSieveWaterCapacity to set
      */

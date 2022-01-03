@@ -12,12 +12,14 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>SimpleAdsorber class.</p>
+ * <p>
+ * SimpleAdsorber class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleAdsorber extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -34,16 +36,21 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     private double stageEfficiency = 0.25;
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for SimpleAdsorber.
+     * </p>
      */
     public SimpleAdsorber() {
         mechanicalDesign = new AdsorberMechanicalDesign(this);
     }
 
     /**
-     * <p>Constructor for SimpleAdsorber.</p>
+     * <p>
+     * Constructor for SimpleAdsorber.
+     * </p>
      *
-     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public SimpleAdsorber(StreamInterface inStream1) {
         mechanicalDesign = new AdsorberMechanicalDesign(this);
@@ -58,7 +65,8 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         SystemInterface systemOut1 = (SystemInterface) inStream1.getThermoSystem().clone();
         outStream[0].setThermoSystem(systemOut1);
 
-        double molCO2 = inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
+        double molCO2 =
+                inStream1.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfmoles();
         System.out.println("mol CO2 " + molCO2);
         SystemInterface systemOut0 = (SystemInterface) inStream1.getThermoSystem().clone();
         systemOut0.init(0);
@@ -80,7 +88,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>dT</code>.</p>
+     * <p>
+     * Setter for the field <code>dT</code>.
+     * </p>
      *
      * @param dT a double
      */
@@ -89,7 +99,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -99,7 +111,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setOutTemperature.</p>
+     * <p>
+     * setOutTemperature.
+     * </p>
      *
      * @param temperature a double
      */
@@ -108,7 +122,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getOutTemperature.</p>
+     * <p>
+     * getOutTemperature.
+     * </p>
      *
      * @param i a int
      */
@@ -117,7 +133,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getInTemperature.</p>
+     * <p>
+     * getInTemperature.
+     * </p>
      *
      * @param i a int
      */
@@ -135,29 +153,37 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         outStream[1].run();
 
         double error = 1e5;
-        error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")
-                .getNumberOfMolesInPhase()
-                + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
-                / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
-                        + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
+        error = absorptionEfficiency - (outStream[1].getThermoSystem().getPhase(1)
+                .getComponent("CO2").getNumberOfMolesInPhase()
+                + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-")
+                        .getNumberOfMolesInPhase())
+                / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA")
+                        .getNumberOfMolesInPhase()
+                        + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+")
+                                .getNumberOfMolesInPhase());
         int iter = 0;
         do {
             iter++;
-            double factor = (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
-                    + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+").getNumberOfMolesInPhase());
+            double factor = (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA")
+                    .getNumberOfMolesInPhase()
+                    + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+")
+                            .getNumberOfMolesInPhase());
             // outStream[1].getThermoSystem().addComponent("CO2",(20.0-outStream[1].getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase()),0);
             outStream[1].getThermoSystem().addComponent("MDEA", -error * factor);
             outStream[1].getThermoSystem().addComponent("water", -error * 10.0 * factor);
             outStream[1].run();
-            error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1).getComponent("CO2")
-                    .getNumberOfMolesInPhase()
-                    + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-").getNumberOfMolesInPhase())
-                    / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA").getNumberOfMolesInPhase()
+            error = absorptionEfficiency - ((outStream[1].getThermoSystem().getPhase(1)
+                    .getComponent("CO2").getNumberOfMolesInPhase()
+                    + outStream[1].getThermoSystem().getPhase(1).getComponent("HCO3-")
+                            .getNumberOfMolesInPhase())
+                    / (outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA")
+                            .getNumberOfMolesInPhase()
                             + outStream[1].getThermoSystem().getPhase(1).getComponent("MDEA+")
                                     .getNumberOfMolesInPhase()));
 
             System.out.println("error " + error);
-        } while (Math.abs(error) > 1e-4 && iter < 30 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
+        } while (Math.abs(error) > 1e-4 && iter < 30
+                && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
                 && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
 
     }
@@ -176,13 +202,16 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     /**
-     * <p>setAproachToEquilibrium.</p>
+     * <p>
+     * setAproachToEquilibrium.
+     * </p>
      *
      * @param eff a double
      */
@@ -191,7 +220,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>numberOfTheoreticalStages</code>.</p>
+     * <p>
+     * Getter for the field <code>numberOfTheoreticalStages</code>.
+     * </p>
      *
      * @return a double
      */
@@ -200,7 +231,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>numberOfTheoreticalStages</code>.</p>
+     * <p>
+     * Setter for the field <code>numberOfTheoreticalStages</code>.
+     * </p>
      *
      * @param numberOfTheoreticalStages a double
      */
@@ -209,7 +242,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>numberOfStages</code>.</p>
+     * <p>
+     * Getter for the field <code>numberOfStages</code>.
+     * </p>
      *
      * @return a int
      */
@@ -218,7 +253,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>numberOfStages</code>.</p>
+     * <p>
+     * Setter for the field <code>numberOfStages</code>.
+     * </p>
      *
      * @param numberOfStages a int
      */
@@ -227,7 +264,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>stageEfficiency</code>.</p>
+     * <p>
+     * Getter for the field <code>stageEfficiency</code>.
+     * </p>
      *
      * @return a double
      */
@@ -236,7 +275,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>stageEfficiency</code>.</p>
+     * <p>
+     * Setter for the field <code>stageEfficiency</code>.
+     * </p>
      *
      * @param stageEfficiency a double
      */
@@ -245,7 +286,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getHTU.</p>
+     * <p>
+     * getHTU.
+     * </p>
      *
      * @return a double
      */
@@ -254,7 +297,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setHTU.</p>
+     * <p>
+     * setHTU.
+     * </p>
      *
      * @param HTU a double
      */
@@ -263,7 +308,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getNTU.</p>
+     * <p>
+     * getNTU.
+     * </p>
      *
      * @return a double
      */
@@ -272,7 +319,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setNTU.</p>
+     * <p>
+     * setNTU.
+     * </p>
      *
      * @param NTU a double
      */

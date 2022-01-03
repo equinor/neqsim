@@ -14,12 +14,14 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>pLoadingCurve2 class.</p>
+ * <p>
+ * pLoadingCurve2 class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class pLoadingCurve2 extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pLoadingCurve2.class);
 
@@ -46,12 +48,16 @@ public class pLoadingCurve2 extends BaseOperation {
     int speceq = 0;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for pLoadingCurve2.
+     * </p>
      */
     public pLoadingCurve2() {}
 
     /**
-     * <p>Constructor for pLoadingCurve2.</p>
+     * <p>
+     * Constructor for pLoadingCurve2.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */

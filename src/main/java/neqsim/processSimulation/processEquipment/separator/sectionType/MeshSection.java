@@ -4,17 +4,20 @@ import neqsim.processSimulation.mechanicalDesign.separator.sectionType.MecMeshSe
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
- * <p>MeshSection class.</p>
+ * <p>
+ * MeshSection class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class MeshSection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for MeshSection.</p>
+     * <p>
+     * Constructor for MeshSection.
+     * </p>
      *
      * @param type a {@link java.lang.String} object
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
@@ -26,7 +29,9 @@ public class MeshSection extends SeparatorSection {
     }
 
     /**
-     * <p>Constructor for MeshSection.</p>
+     * <p>
+     * Constructor for MeshSection.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
@@ -39,7 +44,7 @@ public class MeshSection extends SeparatorSection {
 
     /** {@inheritDoc} */
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         double gasLoadF = getSeparator().getGasLoadFactor();
         if (gasLoadF > 0.1) {
             return 0.1 / gasLoadF;

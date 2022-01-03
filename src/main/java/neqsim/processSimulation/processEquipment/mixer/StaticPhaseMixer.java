@@ -14,11 +14,16 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class StaticPhaseMixer extends StaticMixer {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for StaticPhaseMixer.
+     * </p>
+     */
     public StaticPhaseMixer() {}
 
     /**
@@ -39,10 +44,8 @@ public class StaticPhaseMixer extends StaticMixer {
         String compName = new String();
 
         for (int k = 1; k < streams.size(); k++) {
-
             for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
                     .getNumberOfComponents(); i++) {
-
                 boolean gotComponent = false;
                 String componentName =
                         streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
@@ -134,5 +137,4 @@ public class StaticPhaseMixer extends StaticMixer {
     public String getName() {
         return name;
     }
-
 }

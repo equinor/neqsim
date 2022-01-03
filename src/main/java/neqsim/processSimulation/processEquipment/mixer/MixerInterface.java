@@ -11,25 +11,32 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>MixerInterface interface.</p>
+ * <p>
+ * MixerInterface interface.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface MixerInterface extends ProcessEquipmentInterface {
-
     /** {@inheritDoc} */
     @Override
-	public void run();
+    public void run();
 
     /**
-     * <p>addStream.</p>
+     * <p>
+     * addStream.
+     * </p>
      *
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void addStream(StreamInterface newStream);
 
     /**
-     * <p>getOutStream.</p>
+     * <p>
+     * getOutStream.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -37,26 +44,31 @@ public interface MixerInterface extends ProcessEquipmentInterface {
 
     /** {@inheritDoc} */
     @Override
-	public void setName(String name);
+    public void setName(String name);
 
     /**
-     * <p>replaceStream.</p>
+     * <p>
+     * replaceStream.
+     * </p>
      *
      * @param i a int
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void replaceStream(int i, StreamInterface newStream);
 
     /** {@inheritDoc} */
     @Override
-	public String getName();
+    public String getName();
 
     /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem();
+    public SystemInterface getThermoSystem();
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient();
 }

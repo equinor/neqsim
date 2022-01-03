@@ -9,21 +9,27 @@
 package neqsim.MathLib.generalMath;
 
 /**
- * <p>TDMAsolve class.</p>
+ * <p>
+ * TDMAsolve class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TDMAsolve implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new TDMAsolve
+     * <p>
+     * Constructor for TDMAsolve.
+     * </p>
      */
     public TDMAsolve() {}
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      *
      * @param a an array of {@link double} objects
      * @param b an array of {@link double} objects
@@ -32,7 +38,6 @@ public class TDMAsolve implements java.io.Serializable {
      * @return an array of {@link double} objects
      */
     public static double[] solve(double a[], double b[], double c[], double r[]) {
-
         int length = a.length;
         double[] u = new double[length];
         double bet = 0;
@@ -52,5 +57,4 @@ public class TDMAsolve implements java.io.Serializable {
         }
         return u;
     }
-
 }

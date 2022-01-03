@@ -5,25 +5,27 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
 import org.apache.logging.log4j.*;
 
 /**
- * <p>SolidComplexFunction class.</p>
+ * <p>
+ * SolidComplexFunction class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class SolidComplexFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexFunction.class);
 
     /**
-     * <p>Constructor for SolidComplexFunction.</p>
+     * <p>
+     * Constructor for SolidComplexFunction.
+     * </p>
      */
-    public SolidComplexFunction() {
-    }
+    public SolidComplexFunction() {}
 
     /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         try {
             thermoOps.calcSolidComlexTemperature("TEG", "water");
         } catch (Exception e) {
@@ -36,7 +38,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
 
     /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             SolidComplexTemperatureCalc.HrefComplex = value;

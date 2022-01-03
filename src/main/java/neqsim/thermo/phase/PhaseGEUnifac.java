@@ -14,16 +14,18 @@ import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
 
 /**
- * <p>PhaseGEUnifac class.</p>
+ * <p>
+ * PhaseGEUnifac class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGEUnifac extends PhaseGEUniquac {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhaseGEUniquac
+     *
      */
     double[][] aij = new double[1][1];
     double[][] bij = new double[1][1];
@@ -32,7 +34,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
 
     /**
-     * <p>Constructor for PhaseGEUnifac.</p>
+     * <p>
+     * Constructor for PhaseGEUnifac.
+     * </p>
      */
     public PhaseGEUnifac() {
         super();
@@ -40,7 +44,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Constructor for PhaseGEUnifac.</p>
+     * <p>
+     * Constructor for PhaseGEUnifac.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param alpha an array of {@link double} objects
@@ -96,7 +102,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>calcaij.</p>
+     * <p>
+     * calcaij.
+     * </p>
      */
     public void calcaij() {
         aij = new double[((ComponentGEUnifac) getComponent(0))
@@ -151,7 +159,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>checkGroups.</p>
+     * <p>
+     * checkGroups.
+     * </p>
      */
     public void checkGroups() {
         ArrayList<neqsim.thermo.atomElement.UNIFACgroup> unifacGroups =
@@ -229,7 +239,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Getter for the field <code>aij</code>.</p>
+     * <p>
+     * Getter for the field <code>aij</code>.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -240,7 +252,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Setter for the field <code>aij</code>.</p>
+     * <p>
+     * Setter for the field <code>aij</code>.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -251,7 +265,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Getter for the field <code>bij</code>.</p>
+     * <p>
+     * Getter for the field <code>bij</code>.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -262,7 +278,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Setter for the field <code>bij</code>.</p>
+     * <p>
+     * Setter for the field <code>bij</code>.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -273,7 +291,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Getter for the field <code>cij</code>.</p>
+     * <p>
+     * Getter for the field <code>cij</code>.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -284,7 +304,9 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     }
 
     /**
-     * <p>Setter for the field <code>cij</code>.</p>
+     * <p>
+     * Setter for the field <code>cij</code>.
+     * </p>
      *
      * @param i a int
      * @param j a int

@@ -10,23 +10,29 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>GasPhysicalProperties class.</p>
+ * <p>
+ * GasPhysicalProperties class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
-public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
-
+public class GasPhysicalProperties
+        extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GasPhysicalProperties.class);
 
     /**
-     * <p>Constructor for GasPhysicalProperties.</p>
+     * <p>
+     * Constructor for GasPhysicalProperties.
+     * </p>
      */
-    public GasPhysicalProperties() {
-    }
+    public GasPhysicalProperties() {}
 
     /**
-     * <p>Constructor for GasPhysicalProperties.</p>
+     * <p>
+     * Constructor for GasPhysicalProperties.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param binaryDiffusionCoefficientMethod a int
@@ -37,23 +43,29 @@ public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPro
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         // conductivityCalc = new
         // neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity.ChungConductivityMethod(this);
-        conductivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-                this);
+        conductivityCalc =
+                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
+                        this);
         // viscosityCalc = new
         // physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity.ChungViscosityMethod(this);
         // viscosityCalc = new
         // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(this);
         // viscosityCalc = new
         // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(this);
-        viscosityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
-                this);
+        viscosityCalc =
+                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
+                        this);
 
-///    viscosityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
-        diffusivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(
-                this);
+        /// viscosityCalc = new
+        /// neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
+        diffusivityCalc =
+                new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.Diffusivity(
+                        this);
         // diffusivityCalc = new
         // physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity.WilkeLeeDiffusivity(this);
-        densityCalc = new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(this);
+        densityCalc =
+                new neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.density.Density(
+                        this);
         // this.init(phase);
     }
 

@@ -9,7 +9,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>CPAEosTest class.</p>
+ * <p>
+ * CPAEosTest class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -19,7 +21,9 @@ public class CPAEosTest {
     static SystemInterface thermoSystem = null;
 
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {
@@ -32,9 +36,10 @@ public class CPAEosTest {
         thermoSystem.setMixingRule(10);
     }
 
-
     /**
-     * <p>testTPflash.</p>
+     * <p>
+     * testTPflash.
+     * </p>
      */
     @Ignore
     public void testTPflash() {
@@ -44,7 +49,9 @@ public class CPAEosTest {
     }
 
     /**
-     * <p>initPhysicalProperties.</p>
+     * <p>
+     * initPhysicalProperties.
+     * </p>
      */
     @Test
     public void initPhysicalProperties() {
@@ -54,7 +61,9 @@ public class CPAEosTest {
     }
 
     /**
-     * <p>testPHflash.</p>
+     * <p>
+     * testPHflash.
+     * </p>
      */
     @Test
     public void testPHflash() {
@@ -71,7 +80,9 @@ public class CPAEosTest {
     }
 
     /**
-     * <p>testPSflash.</p>
+     * <p>
+     * testPSflash.
+     * </p>
      */
     @Test
     public void testPSflash() {
@@ -86,7 +97,4 @@ public class CPAEosTest {
 
         assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
     }
-
-
-
 }

@@ -9,22 +9,27 @@ package neqsim.processSimulation.processEquipment.stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>NeqStream class.</p>
+ * <p>
+ * NeqStream class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class NeqStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for NeqStream.</p>
+     * <p>
+     * Constructor for NeqStream.
+     * </p>
      */
-    public NeqStream() {
-    }
+    public NeqStream() {}
 
     /**
-     * <p>Constructor for NeqStream.</p>
+     * <p>
+     * Constructor for NeqStream.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -33,7 +38,9 @@ public class NeqStream extends Stream {
     }
 
     /**
-     * <p>Constructor for NeqStream.</p>
+     * <p>
+     * Constructor for NeqStream.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -43,9 +50,12 @@ public class NeqStream extends Stream {
     }
 
     /**
-     * <p>Constructor for NeqStream.</p>
+     * <p>
+     * Constructor for NeqStream.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public NeqStream(StreamInterface stream) {
         super(stream);
@@ -54,7 +64,6 @@ public class NeqStream extends Stream {
     /** {@inheritDoc} */
     @Override
     public NeqStream clone() {
-
         NeqStream clonedStream = null;
 
         try {
@@ -70,7 +79,7 @@ public class NeqStream extends Stream {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         if (stream != null) {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
@@ -83,5 +92,4 @@ public class NeqStream extends Stream {
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());
     }
-
 }

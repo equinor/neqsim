@@ -14,7 +14,9 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;;
 
 /**
- * <p>ValveMechanicalDesign class.</p>
+ * <p>
+ * ValveMechanicalDesign class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -29,9 +31,12 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     double dP = 0.0;
 
     /**
-     * <p>Constructor for ValveMechanicalDesign.</p>
+     * <p>
+     * Constructor for ValveMechanicalDesign.
+     * </p>
      *
-     * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public ValveMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
@@ -40,23 +45,22 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
     /** {@inheritDoc} */
     @Override
-	public void readDesignSpecifications() {
-
+    public void readDesignSpecifications() {
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("valve design codes")) {
-            System.out
-                    .println("valve code standard: " + getDesignStandard().get("valve design codes").getStandardName());
-            valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
+            System.out.println("valve code standard: "
+                    + getDesignStandard().get("valve design codes").getStandardName());
+            valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes"))
+                    .getValveCvMax();
         } else {
             System.out.println("no valve code standard specified......using default");
         }
-
     }
 
     /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
+    public void calcDesign() {
         super.calcDesign();
         ThrottlingValve valve1 = (ThrottlingValve) getProcessEquipment();
         inletPressure = valve1.getInletPressure();
@@ -70,13 +74,12 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
     /** {@inheritDoc} */
     @Override
-	public void displayResults() {
-
+    public void displayResults() {
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "Name", "Value", "Unit" };
+        String[] names = {"Name", "Value", "Unit"};
 
         String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
 

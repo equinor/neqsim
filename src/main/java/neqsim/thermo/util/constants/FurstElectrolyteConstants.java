@@ -7,12 +7,14 @@
 package neqsim.thermo.util.constants;
 
 /**
- * <p>FurstElectrolyteConstants class.</p>
+ * <p>
+ * FurstElectrolyteConstants class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FurstElectrolyteConstants implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,
@@ -49,12 +51,16 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
     // 0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043, -0.0000000451,
     // 0.0000088136
     /**
-     * Creates new FurstElectrolyteConstants
+     * <p>
+     * Constructor for FurstElectrolyteConstants.
+     * </p>
      */
     public FurstElectrolyteConstants() {}
 
     /**
-     * <p>setFurstParam.</p>
+     * <p>
+     * setFurstParam.
+     * </p>
      *
      * @param i a int
      * @param value a double
@@ -64,7 +70,9 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
     }
 
     /**
-     * <p>getFurstParam.</p>
+     * <p>
+     * getFurstParam.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -74,7 +82,9 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
     }
 
     /**
-     * <p>getFurstParamMDEA.</p>
+     * <p>
+     * getFurstParamMDEA.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -84,7 +94,9 @@ public class FurstElectrolyteConstants implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>furstParams</code>.</p>
+     * <p>
+     * Setter for the field <code>furstParams</code>.
+     * </p>
      *
      * @param type a {@link java.lang.String} object
      */

@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>OLGApropGenerator class.</p>
+ * <p>
+ * OLGApropGenerator class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class OLGApropGenerator {
     static Logger logger = LogManager.getLogger(OLGApropGenerator.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -65,6 +69,5 @@ public class OLGApropGenerator {
             testSystem.display();
             logger.error(e.toString());
         }
-
     }
 }

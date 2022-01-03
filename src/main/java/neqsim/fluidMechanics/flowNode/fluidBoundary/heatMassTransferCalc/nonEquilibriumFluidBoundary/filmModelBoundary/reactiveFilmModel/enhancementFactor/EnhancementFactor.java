@@ -10,12 +10,14 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBo
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.FluidBoundarySystemInterface;
 
 /**
- * <p>EnhancementFactor class.</p>
+ * <p>
+ * EnhancementFactor class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class EnhancementFactor implements EnhancementFactorInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected double[] enhancementVec = null;
@@ -24,25 +26,34 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     protected FluidBoundarySystemInterface nonReactiveInterface, reactiveInterface;
 
     /**
-     * <p>Constructor for EnhancementFactor.</p>
+     * <p>
+     * Constructor for EnhancementFactor.
+     * </p>
      */
-    public EnhancementFactor() {
-    }
+    public EnhancementFactor() {}
 
     /**
-     * <p>Constructor for EnhancementFactor.</p>
+     * <p>
+     * Constructor for EnhancementFactor.
+     * </p>
      *
-     * @param fluidBoundary a {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface} object
+     * @param fluidBoundary a
+     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+     *        object
      */
     public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
         this();
         this.fluidBoundary = fluidBoundary;
-        enhancementVec = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
-        hattaNumber = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        enhancementVec =
+                new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+        hattaNumber =
+                new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
     }
 
     /**
-     * <p>calcEnhancementVec.</p>
+     * <p>
+     * calcEnhancementVec.
+     * </p>
      *
      * @param phase a int
      * @param enhancementType a int
@@ -57,28 +68,30 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     }
 
     /**
-     * <p>setOnesVec.</p>
+     * <p>
+     * setOnesVec.
+     * </p>
      *
      * @param phase a int
      */
     public void setOnesVec(int phase) {
-        for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
+        for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase]
+                .getNumberOfComponents(); j++) {
             enhancementVec[j] = 1.0;
         }
     }
 
     /** {@inheritDoc} */
     @Override
-	public void calcEnhancementVec(int phase) {
-    }
+    public void calcEnhancementVec(int phase) {}
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Indexed getter for property enhancementVec.
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * Indexed getter for property enhancementVec.
+     */
     @Override
-	public double getEnhancementVec(int index) {
+    public double getEnhancementVec(int index) {
         return enhancementVec[index];
     }
 
@@ -94,7 +107,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     /**
      * Indexed setter for property enhancementVec.
      *
-     * @param index          Index of the property.
+     * @param index Index of the property.
      * @param enhancementVec New value of the property at <CODE>index</CODE>.
      */
     public void setEnhancementVec(int index, double enhancementVec) {
@@ -121,7 +134,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
     /** {@inheritDoc} */
     @Override
-	public double getHattaNumber(int i) {
+    public double getHattaNumber(int i) {
         return this.hattaNumber[i];
     }
 
@@ -135,7 +148,6 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     }
 
     /*
-     * public FluidBoundarySystemInterface getNumericInterface(){ return
-     * numericInterface; }
+     * public FluidBoundarySystemInterface getNumericInterface(){ return numericInterface; }
      */
 }

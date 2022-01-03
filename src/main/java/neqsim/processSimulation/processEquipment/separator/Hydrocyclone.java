@@ -6,7 +6,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Hydrocyclone class.</p>
+ * <p>
+ * Hydrocyclone class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,16 +25,21 @@ public class Hydrocyclone extends Separator {
     StreamInterface waterOutStream = new Stream(waterSystem);
 
     /**
-     * Creates new Separator
+     * <p>
+     * Constructor for Hydrocyclone.
+     * </p>
      */
     public Hydrocyclone() {
         super();
     }
 
     /**
-     * <p>Constructor for Hydrocyclone.</p>
+     * <p>
+     * Constructor for Hydrocyclone.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Hydrocyclone(StreamInterface inletStream) {
         this();
@@ -40,10 +47,13 @@ public class Hydrocyclone extends Separator {
     }
 
     /**
-     * <p>Constructor for Hydrocyclone.</p>
+     * <p>
+     * Constructor for Hydrocyclone.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Hydrocyclone(String name, StreamInterface inletStream) {
         this();
@@ -53,7 +63,7 @@ public class Hydrocyclone extends Separator {
 
     /** {@inheritDoc} */
     @Override
-	public void setInletStream(StreamInterface inletStream) {
+    public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
 
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -62,7 +72,9 @@ public class Hydrocyclone extends Separator {
     }
 
     /**
-     * <p>Getter for the field <code>waterOutStream</code>.</p>
+     * <p>
+     * Getter for the field <code>waterOutStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -71,7 +83,9 @@ public class Hydrocyclone extends Separator {
     }
 
     /**
-     * <p>getOilOutStream.</p>
+     * <p>
+     * getOilOutStream.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -81,7 +95,7 @@ public class Hydrocyclone extends Separator {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         inletStreamMixer.run();
         thermoSystem = (SystemInterface) inletStreamMixer.getOutStream().getThermoSystem().clone();
 
@@ -109,10 +123,10 @@ public class Hydrocyclone extends Separator {
         } else {
             gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
         }
-//        //gasOutStream.run();
-//
-////        liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
-////        liquidOutStream.setThermoSystem(liquidSystem);
+        // //gasOutStream.run();
+        //
+        //// liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
+        //// liquidOutStream.setThermoSystem(liquidSystem);
         if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
             liquidOutStream.setThermoSystemFromPhase(thermoSystem, "liquid");
             liquidOutStream.getFluid().init(2);
@@ -126,21 +140,21 @@ public class Hydrocyclone extends Separator {
 
     /** {@inheritDoc} */
     @Override
-	public void displayResult() {
+    public void displayResult() {
         thermoSystem.display("from here " + getName());
 
     }
 
     /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
-
+    public void runTransient() {}
 }

@@ -16,6 +16,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * <p>TestCPAParameterFittingToSolubilityData class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCPAParameterFittingToSolubilityData {
     static Logger logger = LogManager.getLogger(TestCPAParameterFittingToSolubilityData.class);

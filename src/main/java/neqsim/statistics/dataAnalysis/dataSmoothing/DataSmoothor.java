@@ -9,12 +9,14 @@ package neqsim.statistics.dataAnalysis.dataSmoothing;
 import Jama.*;
 
 /**
- * <p>DataSmoothor class.</p>
+ * <p>
+ * DataSmoothor class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class DataSmoothor {
-
     private static final long serialVersionUID = 1000;
 
     double[] nonSmoothedNumbers, smoothedNumbers, cCoef;
@@ -25,13 +27,16 @@ public class DataSmoothor {
     double sum = 0, fac = 0;
 
     /**
-     * Creates new DataSmoothor
+     * <p>
+     * Constructor for DataSmoothor.
+     * </p>
      */
-    public DataSmoothor() {
-    }
+    public DataSmoothor() {}
 
     /**
-     * <p>Constructor for DataSmoothor.</p>
+     * <p>
+     * Constructor for DataSmoothor.
+     * </p>
      *
      * @param nonSmoothedNumbers an array of {@link double} objects
      * @param nl a int
@@ -52,7 +57,9 @@ public class DataSmoothor {
     }
 
     /**
-     * <p>runSmoothing.</p>
+     * <p>
+     * runSmoothing.
+     * </p>
      */
     public void runSmoothing() {
         findCoefs();
@@ -60,10 +67,13 @@ public class DataSmoothor {
     }
 
     /**
-     * <p>findCoefs.</p>
+     * <p>
+     * findCoefs.
+     * </p>
      */
     public void findCoefs() {
-        if (nonSmoothedNumbers.length < (nl + nr + 1) || nl < 0 || nr < 0 || ld > m || nl + nr < m) {
+        if (nonSmoothedNumbers.length < (nl + nr + 1) || nl < 0 || nr < 0 || ld > m
+                || nl + nr < m) {
             System.err.println("Wrong input to DataSmoothor!");
         }
 
@@ -123,14 +133,17 @@ public class DataSmoothor {
     }
 
     /**
-     * <p>Setter for the field <code>smoothedNumbers</code>.</p>
+     * <p>
+     * Setter for the field <code>smoothedNumbers</code>.
+     * </p>
      */
     public void setSmoothedNumbers() {
         for (int i = nl; i < nonSmoothedNumbers.length - nr; i++) {
             smoothedNumbers[i] = 0;
             smoothedNumbers[i] = cCoef[0] * nonSmoothedNumbers[i];
             for (int j = 0; j < nl; j++) {
-                smoothedNumbers[i] += cCoef[nonSmoothedNumbers.length - 1 - j] * nonSmoothedNumbers[i - j - 1];
+                smoothedNumbers[i] +=
+                        cCoef[nonSmoothedNumbers.length - 1 - j] * nonSmoothedNumbers[i - j - 1];
             }
             for (int j = 0; j < nr; j++) {
                 smoothedNumbers[i] += cCoef[j + 1] * nonSmoothedNumbers[i + j - 1];
@@ -139,7 +152,9 @@ public class DataSmoothor {
     }
 
     /**
-     * <p>Getter for the field <code>smoothedNumbers</code>.</p>
+     * <p>
+     * Getter for the field <code>smoothedNumbers</code>.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -148,12 +163,14 @@ public class DataSmoothor {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        double[] numbers = { 10, 11, 12, 13, 14, 15, 15.5, 15, 19, 14, 14, 13, 12, 12, 11, 10, 9, 8 };
+        double[] numbers = {10, 11, 12, 13, 14, 15, 15.5, 15, 19, 14, 14, 13, 12, 12, 11, 10, 9, 8};
         DataSmoothor test = new DataSmoothor(numbers, 3, 3, 0, 4);
         Matrix data = new Matrix(test.getSmoothedNumbers(), 1);
         data.print(10, 2);

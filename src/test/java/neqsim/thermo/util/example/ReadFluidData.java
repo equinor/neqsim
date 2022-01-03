@@ -7,12 +7,15 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /*
-*
-* @author  esol
-* @version
-*/
+ *
+ * @author esol
+ * 
+ * @version
+ */
 /**
- * <p>ReadFluidData class.</p>
+ * <p>
+ * ReadFluidData class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,7 +25,9 @@ public class ReadFluidData {
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -54,6 +59,5 @@ public class ReadFluidData {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

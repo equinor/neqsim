@@ -1,25 +1,30 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
- * <p>BinaryWSParameterFittingToSolubilityData class.</p>
+ * <p>
+ * BinaryWSParameterFittingToSolubilityData class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryWSParameterFittingToSolubilityData extends WongSandlerFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;
     int type = 1;
 
-
     /**
-     * <p>Constructor for BinaryWSParameterFittingToSolubilityData.</p>
+     * <p>
+     * Constructor for BinaryWSParameterFittingToSolubilityData.
+     * </p>
      */
     public BinaryWSParameterFittingToSolubilityData() {}
 
     /**
-     * <p>Constructor for BinaryWSParameterFittingToSolubilityData.</p>
+     * <p>
+     * Constructor for BinaryWSParameterFittingToSolubilityData.
+     * </p>
      *
      * @param phase a int
      * @param type a int

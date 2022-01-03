@@ -11,12 +11,14 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TwoPhaseSeparator class.</p>
+ * <p>
+ * TwoPhaseSeparator class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TwoPhaseSeparator extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -26,25 +28,32 @@ public class TwoPhaseSeparator extends Separator {
     String name = new String();
 
     /**
-     * Creates new Separator
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
      */
-    public TwoPhaseSeparator() {
-    }
+    public TwoPhaseSeparator() {}
 
     /**
-     * <p>Constructor for TwoPhaseSeparator.</p>
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public TwoPhaseSeparator(StreamInterface inletStream) {
         this.setInletStream(inletStream);
     }
 
     /**
-     * <p>Constructor for TwoPhaseSeparator.</p>
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public TwoPhaseSeparator(String name, StreamInterface inletStream) {
         this.name = name;
@@ -111,8 +120,7 @@ public class TwoPhaseSeparator extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override
@@ -121,9 +129,9 @@ public class TwoPhaseSeparator extends Separator {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
-
+    public void runTransient() {}
 }

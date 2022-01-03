@@ -16,13 +16,14 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
- * <p>SeparatorMechanicalDesign class.</p>
+ * <p>
+ * SeparatorMechanicalDesign class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     double wallThickness = 0.0;
@@ -30,9 +31,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double gasLoadFactor = 1.0, volumeSafetyFactor = 1.0, Fg = 1.0, retentionTime = 60.0;
 
     /**
-     * <p>Constructor for SeparatorMechanicalDesign.</p>
+     * <p>
+     * Constructor for SeparatorMechanicalDesign.
+     * </p>
      *
-     * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
@@ -42,7 +46,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     /** {@inheritDoc} */
     @Override
     public void readDesignSpecifications() {
-
         super.readDesignSpecifications();
         if (getDesignStandard().containsKey("material plate design codes")) {
             ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
@@ -78,13 +81,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
             System.out.println("no separator process design specified......");
             return;
         }
-
     }
 
     /** {@inheritDoc} */
     @Override
     public void displayResults() {
-
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
@@ -292,5 +293,4 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
-
 }

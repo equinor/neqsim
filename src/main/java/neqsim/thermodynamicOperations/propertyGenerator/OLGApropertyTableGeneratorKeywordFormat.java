@@ -5,22 +5,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>OLGApropertyTableGeneratorKeywordFormat class.</p>
+ * <p>
+ * OLGApropertyTableGeneratorKeywordFormat class.
+ * </p>
  *
  * @author Kjetil Raul
  * @version $Id: $Id
  */
 public class OLGApropertyTableGeneratorKeywordFormat
         extends neqsim.thermodynamicOperations.BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorKeywordFormat.class);
 
@@ -42,7 +41,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     String[] namesKeyword;
 
     /**
-     * <p>Constructor for OLGApropertyTableGeneratorKeywordFormat.</p>
+     * <p>
+     * Constructor for OLGApropertyTableGeneratorKeywordFormat.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -52,7 +53,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>setPressureRange.</p>
+     * <p>
+     * setPressureRange.
+     * </p>
      *
      * @param minPressure a double
      * @param maxPressure a double
@@ -69,7 +72,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>setTemperatureRange.</p>
+     * <p>
+     * setTemperatureRange.
+     * </p>
      *
      * @param minTemperature a double
      * @param maxTemperature a double
@@ -87,7 +92,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>calcPhaseEnvelope.</p>
+     * <p>
+     * calcPhaseEnvelope.
+     * </p>
      */
     public void calcPhaseEnvelope() {
         try {
@@ -104,7 +111,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>calcBubP.</p>
+     * <p>
+     * calcBubP.
+     * </p>
      *
      * @param temperatures an array of {@link double} objects
      * @return an array of {@link double} objects
@@ -113,7 +122,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.bubblePointPressureFlash(false);
@@ -128,7 +136,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>calcDewP.</p>
+     * <p>
+     * calcDewP.
+     * </p>
      *
      * @param temperatures an array of {@link double} objects
      * @return an array of {@link double} objects
@@ -137,7 +147,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.dewPointPressureFlash();
@@ -152,7 +161,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>calcBubT.</p>
+     * <p>
+     * calcBubT.
+     * </p>
      *
      * @param pressures an array of {@link double} objects
      * @return an array of {@link double} objects
@@ -161,7 +172,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         double[] bubT = new double[pressures.length];
         bubTLOG = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
-
             thermoSystem.setPressure(pressures[i]);
             try {
                 thermoOps.bubblePointTemperatureFlash();
@@ -176,10 +186,11 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>initCalc.</p>
+     * <p>
+     * initCalc.
+     * </p>
      */
     public void initCalc() {
-
         double standgasdens, standliqdens, TC, PC;
 
         molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -188,7 +199,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
         components = new String[thermoSystem.getPhase(0).getNumberOfComponents()];
 
         for (int i = 0; i < molfracs.length; i++) {
-
             molfracs[i] = thermoSystem.getPhase(0).getComponent(i).getz();
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
@@ -213,7 +223,6 @@ public class OLGApropertyTableGeneratorKeywordFormat
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         logger.info("Start creating arrays");
 
         nProps = 18;
@@ -412,15 +421,16 @@ public class OLGApropertyTableGeneratorKeywordFormat
     }
 
     /**
-     * <p>writeOLGAinpFile.</p>
+     * <p>
+     * writeOLGAinpFile.
+     * </p>
      *
      * @param filename a {@link java.lang.String} object
      */
     public void writeOLGAinpFile(String filename) {
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+                "C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
                 "utf-8"))) {
-
             writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO"
                     + ",\\" + "\n");
             writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");

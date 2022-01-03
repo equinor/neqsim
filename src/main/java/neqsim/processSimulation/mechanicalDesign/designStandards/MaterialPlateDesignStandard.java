@@ -3,26 +3,31 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- * <p>MaterialPlateDesignStandard class.</p>
+ * <p>
+ * MaterialPlateDesignStandard class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class MaterialPlateDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for MaterialPlateDesignStandard.</p>
+     * <p>
+     * Constructor for MaterialPlateDesignStandard.
+     * </p>
      */
-    public MaterialPlateDesignStandard() {
-    }
+    public MaterialPlateDesignStandard() {}
 
     /**
-     * <p>Constructor for MaterialPlateDesignStandard.</p>
+     * <p>
+     * Constructor for MaterialPlateDesignStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      */
     public MaterialPlateDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
@@ -30,7 +35,9 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>divisionClass</code>.</p>
+     * <p>
+     * Getter for the field <code>divisionClass</code>.
+     * </p>
      *
      * @return the divisionClass
      */
@@ -39,7 +46,9 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Setter for the field <code>divisionClass</code>.</p>
+     * <p>
+     * Setter for the field <code>divisionClass</code>.
+     * </p>
      *
      * @param divisionClass the divisionClass to set
      */
@@ -55,32 +64,39 @@ public class MaterialPlateDesignStandard extends DesignStandard {
     private double divisionClass = 425;
 
     /**
-     * <p>readMaterialDesignStandard.</p>
+     * <p>
+     * readMaterialDesignStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param specNo a {@link java.lang.String} object
      * @param grade a {@link java.lang.String} object
      * @param divClassNo a int
      */
-    public void readMaterialDesignStandard(String name, String specNo, String grade, int divClassNo) {
+    public void readMaterialDesignStandard(String name, String specNo, String grade,
+            int divClassNo) {
         materialName = name;
         specificationNumber = specNo;
         divisionClassNumber = divClassNo;
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='" + name
-                        + "' AND grade='" + grade + "' AND specificationNumber='" + specNo + "'"));
+                dataSet = database
+                        .getResultSet(("SELECT * FROM materialplateproperties WHERE materialName='"
+                                + name + "' AND grade='" + grade + "' AND specificationNumber='"
+                                + specNo + "'"));
                 while (dataSet.next()) {
                     if (divClassNo == 1) {
-                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1"))) * 0.00689475729; // MPa
+                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass1")))
+                                * 0.00689475729; // MPa
                     } else {
-                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2"))) * 0.00689475729; // MPa
+                        divisionClass = (Double.parseDouble(dataSet.getString("divisionClass2")))
+                                * 0.00689475729; // MPa
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -99,5 +115,4 @@ public class MaterialPlateDesignStandard extends DesignStandard {
             }
         }
     }
-
 }

@@ -4,13 +4,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>SeparatorTest class.</p>
+ * <p>
+ * SeparatorTest class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SeparatorTest extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -21,7 +22,9 @@ public class SeparatorTest extends BasePVTsimulation {
     double oilVolumeStdCond = 0;
 
     /**
-     * <p>Constructor for SeparatorTest.</p>
+     * <p>
+     * Constructor for SeparatorTest.
+     * </p>
      *
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -30,20 +33,23 @@ public class SeparatorTest extends BasePVTsimulation {
     }
 
     /**
-     * <p>setSeparatorConditions.</p>
+     * <p>
+     * setSeparatorConditions.
+     * </p>
      *
      * @param temperature an array of {@link double} objects
      * @param pressure an array of {@link double} objects
      */
     public void setSeparatorConditions(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
 
     }
 
     /**
-     * <p>runCalc.</p>
+     * <p>
+     * runCalc.
+     * </p>
      */
     public void runCalc() {
         Sm3gas = new double[pressure.length];
@@ -84,7 +90,9 @@ public class SeparatorTest extends BasePVTsimulation {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -119,15 +127,17 @@ public class SeparatorTest extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
 
         SeparatorTest sepSim = new SeparatorTest(tempSystem);
-        double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
-        double[] pres = { 500, 400, 200, 100, 50.0, 5.0, 1.01325 };
+        double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
+        double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setSeparatorConditions(temps, pres);
         sepSim.runCalc();
 
     }
 
     /**
-     * <p>getGOR.</p>
+     * <p>
+     * getGOR.
+     * </p>
      *
      * @return the GOR
      */
@@ -136,7 +146,9 @@ public class SeparatorTest extends BasePVTsimulation {
     }
 
     /**
-     * <p>getBofactor.</p>
+     * <p>
+     * getBofactor.
+     * </p>
      *
      * @return the Bofactor
      */

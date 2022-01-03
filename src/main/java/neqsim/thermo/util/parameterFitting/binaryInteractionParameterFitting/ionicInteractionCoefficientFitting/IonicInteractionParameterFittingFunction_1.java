@@ -4,18 +4,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>IonicInteractionParameterFittingFunction_1 class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunction_1 class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_1
         extends IonicInteractionParameterFittingFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_1.class);
 
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunction_1.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunction_1.
+     * </p>
      */
     public IonicInteractionParameterFittingFunction_1() {}
 
@@ -31,5 +35,4 @@ public class IonicInteractionParameterFittingFunction_1
         }
         return system.getPressure();
     }
-
 }

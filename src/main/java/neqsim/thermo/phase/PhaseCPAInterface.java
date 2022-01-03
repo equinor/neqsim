@@ -8,21 +8,27 @@ package neqsim.thermo.phase;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
 /**
- * <p>PhaseCPAInterface interface.</p>
+ * <p>
+ * PhaseCPAInterface interface.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
-
     /**
-     * <p>getHcpatot.</p>
+     * <p>
+     * getHcpatot.
+     * </p>
      *
      * @return a double
      */
     double getHcpatot();
 
     /**
-     * <p>getCrossAssosiationScheme.</p>
+     * <p>
+     * getCrossAssosiationScheme.
+     * </p>
      *
      * @param comp1 a int
      * @param comp2 a int
@@ -33,35 +39,45 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
     int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2);
 
     /**
-     * <p>getGcpa.</p>
+     * <p>
+     * getGcpa.
+     * </p>
      *
      * @return a double
      */
     public double getGcpa();
 
     /**
-     * <p>getGcpav.</p>
+     * <p>
+     * getGcpav.
+     * </p>
      *
      * @return a double
      */
     public double getGcpav();
 
     /**
-     * <p>getTotalNumberOfAccociationSites.</p>
+     * <p>
+     * getTotalNumberOfAccociationSites.
+     * </p>
      *
      * @return a int
      */
     public int getTotalNumberOfAccociationSites();
 
     /**
-     * <p>setTotalNumberOfAccociationSites.</p>
+     * <p>
+     * setTotalNumberOfAccociationSites.
+     * </p>
      *
      * @param totalNumberOfAccociationSites a int
      */
     public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites);
 
     /**
-     * <p>getCpamix.</p>
+     * <p>
+     * getCpamix.
+     * </p>
      *
      * @return a {@link neqsim.thermo.mixingRule.CPAMixingInterface} object
      */

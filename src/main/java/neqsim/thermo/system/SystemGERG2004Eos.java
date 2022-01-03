@@ -11,19 +11,20 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 /**
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemGERG2004Eos extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemSrkEos clonedSystem;
     /**
-     * <p>Constructor for SystemGERG2004Eos.</p>
+     * <p>
+     * Constructor for SystemGERG2004Eos.
+     * </p>
      */
     public SystemGERG2004Eos() {
         super();
@@ -38,7 +39,9 @@ public class SystemGERG2004Eos extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemGERG2004Eos.</p>
+     * <p>
+     * Constructor for SystemGERG2004Eos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -56,7 +59,9 @@ public class SystemGERG2004Eos extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemGERG2004Eos.</p>
+     * <p>
+     * Constructor for SystemGERG2004Eos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -108,7 +113,9 @@ public class SystemGERG2004Eos extends SystemEos {
     }
 
     /**
-     * <p>commonInitialization.</p>
+     * <p>
+     * commonInitialization.
+     * </p>
      */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(false);

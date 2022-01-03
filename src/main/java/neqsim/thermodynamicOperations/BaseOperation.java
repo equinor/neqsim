@@ -9,18 +9,22 @@ package neqsim.thermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract BaseOperation class.</p>
+ * <p>
+ * Abstract BaseOperation class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public abstract class BaseOperation implements OperationInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface systemThermo = null;;
 
     /**
-     * Creates new BaseOperation
+     * <p>
+     * Constructor for BaseOperation.
+     * </p>
      */
     public BaseOperation() {}
 
@@ -54,9 +58,7 @@ public abstract class BaseOperation implements OperationInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void createNetCdfFile(String name) {
-
-    }
+    public void createNetCdfFile(String name) {}
 
     /** {@inheritDoc} */
     @Override
@@ -66,7 +68,5 @@ public abstract class BaseOperation implements OperationInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

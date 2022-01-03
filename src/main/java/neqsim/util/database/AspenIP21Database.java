@@ -7,14 +7,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * <p>AspenIP21Database class.</p>
+ * <p>
+ * AspenIP21Database class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class AspenIP21Database
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected Connection databaseConnection = null;
@@ -22,10 +23,11 @@ public class AspenIP21Database
     private Statement statement = null;
 
     /**
-     * <p>Constructor for AspenIP21Database.</p>
+     * <p>
+     * Constructor for AspenIP21Database.
+     * </p>
      */
     public AspenIP21Database() {
-
         try {
             if (dataBaseType.equals("Karsto")) {
                 Class.forName("sun.jdbc.odbc.JdbcOdbcDriver").getDeclaredConstructor()
@@ -46,7 +48,9 @@ public class AspenIP21Database
     }
 
     /**
-     * <p>openConnection.</p>
+     * <p>
+     * openConnection.
+     * </p>
      *
      * @param database a {@link java.lang.String} object
      * @return a Connection object
@@ -77,7 +81,9 @@ public class AspenIP21Database
     }
 
     /**
-     * <p>Setter for the field <code>statement</code>.</p>
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
      *
      * @param statement a Statement object
      */
@@ -86,7 +92,9 @@ public class AspenIP21Database
     }
 
     /**
-     * <p>getResultSet.</p>
+     * <p>
+     * getResultSet.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      * @return a ResultSet object
@@ -96,7 +104,9 @@ public class AspenIP21Database
     }
 
     /**
-     * <p>getResultSet.</p>
+     * <p>
+     * getResultSet.
+     * </p>
      *
      * @param database a {@link java.lang.String} object
      * @param sqlString a {@link java.lang.String} object
@@ -114,7 +124,9 @@ public class AspenIP21Database
     }
 
     /**
-     * <p>Getter for the field <code>statement</code>.</p>
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
      *
      * @return a Statement object
      */
@@ -123,7 +135,9 @@ public class AspenIP21Database
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

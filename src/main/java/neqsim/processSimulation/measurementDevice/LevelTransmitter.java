@@ -3,26 +3,32 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
- * <p>LevelTransmitter class.</p>
+ * <p>
+ * LevelTransmitter class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class LevelTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected Separator separator = null;
 
     /**
-     * <p>Constructor for LevelTransmitter.</p>
+     * <p>
+     * Constructor for LevelTransmitter.
+     * </p>
      */
     public LevelTransmitter() {}
 
     /**
-     * <p>Constructor for LevelTransmitter.</p>
+     * <p>
+     * Constructor for LevelTransmitter.
+     * </p>
      *
-     * @param separator a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
+     * @param separator a {@link neqsim.processSimulation.processEquipment.separator.Separator}
+     *        object
      */
     public LevelTransmitter(Separator separator) {
         this.separator = separator;

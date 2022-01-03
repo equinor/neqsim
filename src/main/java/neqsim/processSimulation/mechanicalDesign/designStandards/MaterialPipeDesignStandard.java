@@ -3,26 +3,31 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- * <p>MaterialPipeDesignStandard class.</p>
+ * <p>
+ * MaterialPipeDesignStandard class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class MaterialPipeDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for MaterialPipeDesignStandard.</p>
+     * <p>
+     * Constructor for MaterialPipeDesignStandard.
+     * </p>
      */
-    public MaterialPipeDesignStandard() {
-    }
+    public MaterialPipeDesignStandard() {}
 
     /**
-     * <p>Constructor for MaterialPipeDesignStandard.</p>
+     * <p>
+     * Constructor for MaterialPipeDesignStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      */
     public MaterialPipeDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
@@ -30,7 +35,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>designFactor</code>.</p>
+     * <p>
+     * Getter for the field <code>designFactor</code>.
+     * </p>
      *
      * @return the designFactor
      */
@@ -39,7 +46,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Setter for the field <code>designFactor</code>.</p>
+     * <p>
+     * Setter for the field <code>designFactor</code>.
+     * </p>
      *
      * @param designFactor the designFactor to set
      */
@@ -48,7 +57,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>getEfactor.</p>
+     * <p>
+     * getEfactor.
+     * </p>
      *
      * @return the Efactor
      */
@@ -57,7 +68,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>setEfactor.</p>
+     * <p>
+     * setEfactor.
+     * </p>
      *
      * @param Efactor the Efactor to set
      */
@@ -66,7 +79,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>temperatureDeratingFactor</code>.</p>
+     * <p>
+     * Getter for the field <code>temperatureDeratingFactor</code>.
+     * </p>
      *
      * @return the temperatureDeratingFactor
      */
@@ -75,7 +90,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Setter for the field <code>temperatureDeratingFactor</code>.</p>
+     * <p>
+     * Setter for the field <code>temperatureDeratingFactor</code>.
+     * </p>
      *
      * @param temperatureDeratingFactor the temperatureDeratingFactor to set
      */
@@ -84,7 +101,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>minimumYeildStrength</code>.</p>
+     * <p>
+     * Getter for the field <code>minimumYeildStrength</code>.
+     * </p>
      *
      * @return the minimumYeildStrength
      */
@@ -93,7 +112,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Setter for the field <code>minimumYeildStrength</code>.</p>
+     * <p>
+     * Setter for the field <code>minimumYeildStrength</code>.
+     * </p>
      *
      * @param minimumYeildStrength the minimumYeildStrength to set
      */
@@ -110,7 +131,9 @@ public class MaterialPipeDesignStandard extends DesignStandard {
     private double temperatureDeratingFactor = 1.0;
 
     /**
-     * <p>readMaterialDesignStandard.</p>
+     * <p>
+     * readMaterialDesignStandard.
+     * </p>
      *
      * @param specNo a {@link java.lang.String} object
      * @param grade a {@link java.lang.String} object
@@ -119,22 +142,23 @@ public class MaterialPipeDesignStandard extends DesignStandard {
         this.grade = grade;
         specificationNumber = specNo;
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
-                dataSet = database.getResultSet(("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
-                        + specificationNumber + "' AND grade='" + grade + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM materialpipeproperties WHERE specificationNumber='"
+                                + specificationNumber + "' AND grade='" + grade + "'"));
                 while (dataSet.next()) {
-
-                    minimumYeildStrength = (Double.parseDouble(dataSet.getString("minimumYeildStrength")))
-                            * 0.00689475729;
+                    minimumYeildStrength =
+                            (Double.parseDouble(dataSet.getString("minimumYeildStrength")))
+                                    * 0.00689475729;
 
                     // design factor table has to be developed
                     // Efactor table has to be implemented
                     // temperatureDeratingFactor has to be implemented
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -153,5 +177,4 @@ public class MaterialPipeDesignStandard extends DesignStandard {
             }
         }
     }
-
 }

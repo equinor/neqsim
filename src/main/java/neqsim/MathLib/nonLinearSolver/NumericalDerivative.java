@@ -10,12 +10,14 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>NumericalDerivative class.</p>
+ * <p>
+ * NumericalDerivative class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class NumericalDerivative implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     final static double CON = 1.4;
@@ -25,12 +27,16 @@ public class NumericalDerivative implements java.io.Serializable {
     final static double SAFE = 2;
 
     /**
-     * Creates new NumericalDerivative
+     * <p>
+     * Constructor for NumericalDerivative.
+     * </p>
      */
     public NumericalDerivative() {}
 
     /**
-     * <p>fugcoefDiffPres.</p>
+     * <p>
+     * fugcoefDiffPres.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentInterface} object
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -41,8 +47,6 @@ public class NumericalDerivative implements java.io.Serializable {
      */
     public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase,
             int numberOfComponents, double temperature, double pressure) {
-
-
         double ans = 00001;
         // double errt, fac, hh, err = 0.0000000001;
         // double h = pressure / 50;
@@ -86,7 +90,9 @@ public class NumericalDerivative implements java.io.Serializable {
     }
 
     /**
-     * <p>fugcoefDiffTemp.</p>
+     * <p>
+     * fugcoefDiffTemp.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentInterface} object
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -98,7 +104,6 @@ public class NumericalDerivative implements java.io.Serializable {
      */
     public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,
             int numberOfComponents, double temperature, double pressure, int phasetype) {
-
         double ans = 0.000001;
         // double errt, fac, hh, err = 0.00000000000001;
         // double h = temperature / 50;

@@ -5,18 +5,21 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>TwuCoon class.</p>
+ * <p>
+ * TwuCoon class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TwuCoon extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TwuCoon.class);
 
-
     /**
-     * <p>Constructor for TwuCoon.</p>
+     * <p>
+     * Constructor for TwuCoon.
+     * </p>
      */
     public TwuCoon() {
         params = new double[3];

@@ -5,18 +5,21 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>CPAFunctionStatoil class.</p>
+ * <p>
+ * CPAFunctionStatoil class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAFunctionStatoil extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionStatoil.class);
 
-
     /**
-     * <p>Constructor for CPAFunctionStatoil.</p>
+     * <p>
+     * Constructor for CPAFunctionStatoil.
+     * </p>
      */
     public CPAFunctionStatoil() {}
 

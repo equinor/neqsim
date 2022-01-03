@@ -5,7 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>LumpingModel class.</p>
+ * <p>
+ * LumpingModel class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -20,7 +22,9 @@ public class LumpingModel implements java.io.Serializable {
     static Logger logger = LogManager.getLogger(LumpingModel.class);
 
     /**
-     * <p>Constructor for LumpingModel.</p>
+     * <p>
+     * Constructor for LumpingModel.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -37,7 +41,6 @@ public class LumpingModel implements java.io.Serializable {
      */
     public class StandardLumpingModel
             implements LumpingModelInterface, Cloneable, java.io.Serializable {
-
         public StandardLumpingModel() {}
 
         @Override
@@ -211,12 +214,10 @@ public class LumpingModel implements java.io.Serializable {
      * @version 1.0
      */
     public class PVTLumpingModel extends StandardLumpingModel {
-
         public PVTLumpingModel() {}
 
         @Override
         public void generateLumpedComposition(Characterise charac) {
-
             double weightFrac = 0.0;
             double weightTot = 0.0;
             double molFracTot = 0.0;
@@ -314,7 +315,9 @@ public class LumpingModel implements java.io.Serializable {
     }
 
     /**
-     * <p>getModel.</p>
+     * <p>
+     * getModel.
+     * </p>
      *
      * @param modelName a {@link java.lang.String} object
      * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
@@ -326,5 +329,4 @@ public class LumpingModel implements java.io.Serializable {
             return new StandardLumpingModel();
 
     }
-
 }

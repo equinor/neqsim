@@ -3,13 +3,14 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>WaterContentAnalyser class.</p>
+ * <p>
+ * WaterContentAnalyser class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -18,14 +19,19 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
     protected StreamInterface stream = null;
 
     /**
-     * <p>Constructor for WaterContentAnalyser.</p>
+     * <p>
+     * Constructor for WaterContentAnalyser.
+     * </p>
      */
     public WaterContentAnalyser() {}
 
     /**
-     * <p>Constructor for WaterContentAnalyser.</p>
+     * <p>
+     * Constructor for WaterContentAnalyser.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public WaterContentAnalyser(StreamInterface stream) {
         this.stream = stream;
@@ -57,5 +63,4 @@ public class WaterContentAnalyser extends MeasurementDeviceBaseClass {
                 * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
                 * 24;
     }
-
 }

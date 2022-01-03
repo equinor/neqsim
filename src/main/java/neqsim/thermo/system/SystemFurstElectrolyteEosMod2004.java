@@ -9,16 +9,20 @@ package neqsim.thermo.system;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
 
 /**
- * <p>SystemFurstElectrolyteEosMod2004 class.</p>
+ * <p>
+ * SystemFurstElectrolyteEosMod2004 class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new SystemModifiedFurstElectrolyteEos
+     * <p>
+     * Constructor for SystemFurstElectrolyteEosMod2004.
+     * </p>
      */
     public SystemFurstElectrolyteEosMod2004() {
         super();
@@ -30,7 +34,9 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemFurstElectrolyteEosMod2004.</p>
+     * <p>
+     * Constructor for SystemFurstElectrolyteEosMod2004.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -64,5 +70,4 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

@@ -11,13 +11,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
 /**
- * <p>addIonToScaleSaturation class.</p>
+ * <p>
+ * addIonToScaleSaturation class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
     String saltName = "", scaleSaltName = "", nameOfIonToBeAdded = "";
@@ -25,13 +26,16 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     String[][] resultTable = null;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for addIonToScaleSaturation.
+     * </p>
      */
-    public addIonToScaleSaturation() {
-    }
+    public addIonToScaleSaturation() {}
 
     /**
-     * <p>Constructor for addIonToScaleSaturation.</p>
+     * <p>
+     * Constructor for addIonToScaleSaturation.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseNumber a int
@@ -74,7 +78,8 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
 
         double numberOfMolesMEG = 0.0;
         if (system.getPhase(phaseNumber).hasComponent("MEG")) {
-            numberOfMolesMEG = system.getPhase(phaseNumber).getComponent("MEG").getNumberOfMolesInPhase();
+            numberOfMolesMEG =
+                    system.getPhase(phaseNumber).getComponent("MEG").getNumberOfMolesInPhase();
             system.addComponent("MEG", -numberOfMolesMEG * 0.9999, phaseNumber);
             system.addComponent("water", numberOfMolesMEG, phaseNumber);
             system.init(1);
@@ -92,12 +97,15 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
                 double temperatureC = system.getPhase(phaseNumber).getTemperature();
                 ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureC
                         + Double.parseDouble(dataSet.getString("Ksp-water2"))
-                        + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Ksp-water3"))
+                        + Math.log(temperatureC)
+                                * Double.parseDouble(dataSet.getString("Ksp-water3"))
                         + temperatureC * Double.parseDouble(dataSet.getString("Ksp-water4"))
-                        + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureC * temperatureC));
+                        + Double.parseDouble(dataSet.getString("Ksp-water5"))
+                                / (temperatureC * temperatureC));
                 if (saltName.equals("NaCl")) {
                     ksp = -814.18 + 7.4685 * temperatureC - 2.3262e-2 * temperatureC * temperatureC
-                            + 3.0536e-5 * Math.pow(temperatureC, 3.0) - 1.4573e-8 * Math.pow(temperatureC, 4.0);
+                            + 3.0536e-5 * Math.pow(temperatureC, 3.0)
+                            - 1.4573e-8 * Math.pow(temperatureC, 4.0);
                 }
 
                 if (system.getPhase(phaseNumber).hasComponent(name1)
@@ -110,21 +118,27 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
                     do {
                         iterations++;
                         logger.info("theoretic lnKsp = " + Math.log(ksp));
-                        int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
-                        int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
-                        int waterompNumb = system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
+                        int compNumb1 = system.getPhase(phaseNumber).getComponent(name1)
+                                .getComponentNumber();
+                        int compNumb2 = system.getPhase(phaseNumber).getComponent(name2)
+                                .getComponentNumber();
+                        int waterompNumb = system.getPhase(phaseNumber).getComponent("water")
+                                .getComponentNumber();
 
                         double x1 = system.getPhase(phaseNumber).getComponent(name1).getx()
                                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                        * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
+                                        * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                                .getMolarMass());
                         double x2 = system.getPhase(phaseNumber).getComponent(name2).getx()
                                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
-                                        * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
-                        double kspReac = Math.pow(
-                                system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb) * x1,
-                                stoc1)
-                                * Math.pow(x2
-                                        * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb),
+                                        * system.getPhase(phaseNumber).getComponent(waterompNumb)
+                                                .getMolarMass());
+                        double kspReac = Math
+                                .pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1,
+                                        waterompNumb) * x1, stoc1)
+                                * Math.pow(
+                                        x2 * system.getPhase(phaseNumber)
+                                                .getActivityCoefficient(compNumb2, waterompNumb),
                                         stoc2);
                         double stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2);
                         logger.info("calc Ksp " + kspReac);
@@ -134,7 +148,8 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
 
                         double scalePotentialFactor = kspReac / ksp;
 
-                        error = (scalePotentialFactor - oldScalePotentialFactor) / scalePotentialFactor * 100;
+                        error = (scalePotentialFactor - oldScalePotentialFactor)
+                                / scalePotentialFactor * 100;
                         oldScalePotentialFactor = scalePotentialFactor;
                         logger.info("Scale potential factor " + scalePotentialFactor);
                         resultTable[numb][0] = name1 + " " + name2;
@@ -144,13 +159,16 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
                         if (saltName.equals(scaleSaltName)) {
                             logger.info("error " + error);
                             logger.info("pH : " + system.getPhase(phaseNumber).getpH());
-                            system.addComponent(nameOfIonToBeAdded, (1.0 - scalePotentialFactor) / 100000.0,
-                                    phaseNumber);
+                            system.addComponent(nameOfIonToBeAdded,
+                                    (1.0 - scalePotentialFactor) / 100000.0, phaseNumber);
                             ops.TPflash();
-                            logger.info("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
-                            logger.info("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
+                            logger.info("x1 "
+                                    + system.getPhase(phaseNumber).getComponent(name1).getx());
+                            logger.info("x2 "
+                                    + system.getPhase(phaseNumber).getComponent(name2).getx());
                         }
-                    } while (saltName.equals(scaleSaltName) && Math.abs(error) > 1e-6 && iterations < 200);//
+                    } while (saltName.equals(scaleSaltName) && Math.abs(error) > 1e-6
+                            && iterations < 200);//
                 }
             }
         } catch (Exception e) {
@@ -167,8 +185,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
 
     /** {@inheritDoc} */
     @Override
-    public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
     /** {@inheritDoc} */
     @Override
@@ -181,5 +198,4 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         logger.info("checking table...scale " + resultTable[1][2]);
         return resultTable;
     }
-
 }

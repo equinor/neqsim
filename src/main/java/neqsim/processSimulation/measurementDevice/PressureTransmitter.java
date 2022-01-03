@@ -3,13 +3,14 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>PressureTransmitter class.</p>
+ * <p>
+ * PressureTransmitter class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class PressureTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -18,7 +19,9 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
     protected StreamInterface stream = null;
 
     /**
-     * <p>Constructor for PressureTransmitter.</p>
+     * <p>
+     * Constructor for PressureTransmitter.
+     * </p>
      */
     public PressureTransmitter() {
         name = "Pressure Transmitter";
@@ -26,9 +29,12 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Constructor for PressureTransmitter.</p>
+     * <p>
+     * Constructor for PressureTransmitter.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public PressureTransmitter(StreamInterface stream) {
         this();
@@ -48,5 +54,4 @@ public class PressureTransmitter extends MeasurementDeviceBaseClass {
     public double getMeasuredValue() {
         return stream.getThermoSystem().getPressure();
     }
-
 }

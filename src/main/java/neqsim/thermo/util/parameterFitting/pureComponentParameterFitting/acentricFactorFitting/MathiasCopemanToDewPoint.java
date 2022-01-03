@@ -5,18 +5,21 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>MathiasCopemanToDewPoint class.</p>
+ * <p>
+ * MathiasCopemanToDewPoint class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class MathiasCopemanToDewPoint extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(MathiasCopemanToDewPoint.class);
 
-
     /**
-     * <p>Constructor for MathiasCopemanToDewPoint.</p>
+     * <p>
+     * Constructor for MathiasCopemanToDewPoint.
+     * </p>
      */
     public MathiasCopemanToDewPoint() {
         params = new double[3];

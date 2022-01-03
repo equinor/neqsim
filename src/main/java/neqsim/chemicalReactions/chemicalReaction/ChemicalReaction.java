@@ -12,12 +12,14 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>ChemicalReaction class.</p>
+ * <p>
+ * ChemicalReaction class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     String[] names, reactantNames, productNames;
@@ -31,12 +33,16 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     int numberOfReactants = 0;
 
     /**
-     * Creates new chemicalReaction
+     * <p>
+     * Constructor for ChemicalReaction.
+     * </p>
      */
     public ChemicalReaction() {}
 
     /**
-     * <p>Constructor for ChemicalReaction.</p>
+     * <p>
+     * Constructor for ChemicalReaction.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param names an array of {@link java.lang.String} objects
@@ -48,7 +54,6 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
      */
     public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
             double activationEnergy, double refT) {
-
         /*
          * this.names = names; this.stocCoefs = stocCoefs; this.K = K;
          * 
@@ -91,7 +96,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>Getter for the field <code>reactantNames</code>.</p>
+     * <p>
+     * Getter for the field <code>reactantNames</code>.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */
@@ -109,7 +116,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>Getter for the field <code>rateFactor</code>.</p>
+     * <p>
+     * Getter for the field <code>rateFactor</code>.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
@@ -121,7 +130,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>getK.</p>
+     * <p>
+     * getK.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
@@ -137,7 +148,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>Getter for the field <code>stocCoefs</code>.</p>
+     * <p>
+     * Getter for the field <code>stocCoefs</code>.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -146,7 +159,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>Getter for the field <code>productNames</code>.</p>
+     * <p>
+     * Getter for the field <code>productNames</code>.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */
@@ -155,7 +170,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>Getter for the field <code>names</code>.</p>
+     * <p>
+     * Getter for the field <code>names</code>.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */
@@ -164,7 +181,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>calcKx.</p>
+     * <p>
+     * calcKx.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseNumb a int
@@ -180,7 +199,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>calcKgamma.</p>
+     * <p>
+     * calcKgamma.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseNumb a int
@@ -201,7 +222,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>getSaturationRatio.</p>
+     * <p>
+     * getSaturationRatio.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseNumb a int
@@ -221,7 +244,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>calcK.</p>
+     * <p>
+     * calcK.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseNumb a int
@@ -298,7 +323,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      */
@@ -329,7 +356,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>checkK.</p>
+     * <p>
+     * checkK.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -343,7 +372,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>reactantsContains.</p>
+     * <p>
+     * reactantsContains.
+     * </p>
      *
      * @param names an array of {@link java.lang.String} objects
      * @return a boolean
@@ -448,7 +479,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     }
 
     /**
-     * <p>setK.</p>
+     * <p>
+     * setK.
+     * </p>
      *
      * @param i a int
      * @param Kd a double
@@ -474,5 +507,4 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     public void setName(java.lang.String name) {
         this.name = name;
     }
-
 }

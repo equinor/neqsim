@@ -3,13 +3,14 @@ package neqsim.processSimulation.processEquipment.util;
 import java.util.ArrayList;
 
 /**
- * <p>RecycleController class.</p>
+ * <p>
+ * RecycleController class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class RecycleController implements java.io.Serializable {
-
     ArrayList<Recycle> recycleArray = new ArrayList<Recycle>();
     ArrayList<Integer> priorityArray = new ArrayList<Integer>();
     private int currentPriorityLevel = 100;
@@ -17,13 +18,16 @@ public class RecycleController implements java.io.Serializable {
     private int maximumPriorityLevel = 100;
 
     /**
-     * <p>Constructor for RecycleController.</p>
+     * <p>
+     * Constructor for RecycleController.
+     * </p>
      */
-    public RecycleController() {
-    }
+    public RecycleController() {}
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      */
     public void init() {
         for (Recycle recyc : recycleArray) {
@@ -39,14 +43,18 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>resetPriorityLevel.</p>
+     * <p>
+     * resetPriorityLevel.
+     * </p>
      */
     public void resetPriorityLevel() {
         currentPriorityLevel = minimumPriorityLevel;
     }
 
     /**
-     * <p>addRecycle.</p>
+     * <p>
+     * addRecycle.
+     * </p>
      *
      * @param recycle a {@link neqsim.processSimulation.processEquipment.util.Recycle} object
      */
@@ -56,7 +64,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>doSolveRecycle.</p>
+     * <p>
+     * doSolveRecycle.
+     * </p>
      *
      * @param recycle a {@link neqsim.processSimulation.processEquipment.util.Recycle} object
      * @return a boolean
@@ -69,7 +79,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>isHighestPriority.</p>
+     * <p>
+     * isHighestPriority.
+     * </p>
      *
      * @param recycle a {@link neqsim.processSimulation.processEquipment.util.Recycle} object
      * @return a boolean
@@ -82,7 +94,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>solvedCurrentPriorityLevel.</p>
+     * <p>
+     * solvedCurrentPriorityLevel.
+     * </p>
      *
      * @return a boolean
      */
@@ -97,14 +111,18 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>nextPriorityLevel.</p>
+     * <p>
+     * nextPriorityLevel.
+     * </p>
      */
     public void nextPriorityLevel() {
         currentPriorityLevel = maximumPriorityLevel;
     }
 
     /**
-     * <p>hasLoverPriorityLevel.</p>
+     * <p>
+     * hasLoverPriorityLevel.
+     * </p>
      *
      * @return a boolean
      */
@@ -116,7 +134,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>hasHigherPriorityLevel.</p>
+     * <p>
+     * hasHigherPriorityLevel.
+     * </p>
      *
      * @return a boolean
      */
@@ -128,7 +148,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>solvedAll.</p>
+     * <p>
+     * solvedAll.
+     * </p>
      *
      * @return a boolean
      */
@@ -141,7 +163,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>clear.</p>
+     * <p>
+     * clear.
+     * </p>
      */
     public void clear() {
         recycleArray.clear();
@@ -149,15 +173,18 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
-    public static void main(String[] args) {
-    }
+    public static void main(String[] args) {}
 
     /**
-     * <p>Getter for the field <code>currentPriorityLevel</code>.</p>
+     * <p>
+     * Getter for the field <code>currentPriorityLevel</code>.
+     * </p>
      *
      * @return a int
      */
@@ -166,7 +193,9 @@ public class RecycleController implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>currentPriorityLevel</code>.</p>
+     * <p>
+     * Setter for the field <code>currentPriorityLevel</code>.
+     * </p>
      *
      * @param currentPriorityLevel a int
      */

@@ -73,7 +73,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
         this.outletStream = outletStream;
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run() {
         SystemInterface outThermoSystem = null;
@@ -101,7 +101,7 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
 
     }
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void displayResult() {
         outletStream.getFluid().display();

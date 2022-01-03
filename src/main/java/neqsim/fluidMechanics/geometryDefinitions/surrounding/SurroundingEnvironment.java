@@ -1,36 +1,45 @@
 package neqsim.fluidMechanics.geometryDefinitions.surrounding;
 
 /**
- * <p>SurroundingEnvironment interface.</p>
+ * <p>
+ * SurroundingEnvironment interface.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public interface SurroundingEnvironment {
-
     /**
-     * <p>getTemperature.</p>
+     * <p>
+     * getTemperature.
+     * </p>
      *
      * @return a double
      */
     public double getTemperature();
 
     /**
-     * <p>setTemperature.</p>
+     * <p>
+     * setTemperature.
+     * </p>
      *
      * @param temperature a double
      */
     public void setTemperature(double temperature);
 
     /**
-     * <p>getHeatTransferCoefficient.</p>
+     * <p>
+     * getHeatTransferCoefficient.
+     * </p>
      *
      * @return a double
      */
     public double getHeatTransferCoefficient();
 
     /**
-     * <p>setHeatTransferCoefficient.</p>
+     * <p>
+     * setHeatTransferCoefficient.
+     * </p>
      *
      * @param heatTransferCoefficient a double
      */

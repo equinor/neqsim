@@ -11,12 +11,14 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.FlowNodeVisualizationInterface;
 
 /**
- * <p>FlowSystemVisualization class.</p>
+ * <p>
+ * FlowSystemVisualization class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FlowSystemVisualization implements FlowSystemVisualizationInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeVisualizationInterface[][] flowNodes;
@@ -25,13 +27,16 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     protected double[] absTime;
 
     /**
-     * Creates new FlowVisualization
+     * <p>
+     * Constructor for FlowSystemVisualization.
+     * </p>
      */
-    public FlowSystemVisualization() {
-    }
+    public FlowSystemVisualization() {}
 
     /**
-     * <p>Constructor for FlowSystemVisualization.</p>
+     * <p>
+     * Constructor for FlowSystemVisualization.
+     * </p>
      *
      * @param nodes a int
      * @param timeSteps a int
@@ -51,7 +56,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
 
     /** {@inheritDoc} */
     @Override
-	public void setNextData(FlowSystemInterface system) {
+    public void setNextData(FlowSystemInterface system) {
         flowSystem[time] = system;
         absTime[time] = 0;
         for (int i = 0; i < flowNodes[time].length; i++) {
@@ -63,7 +68,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
 
     /** {@inheritDoc} */
     @Override
-	public void setNextData(FlowSystemInterface system, double abstime) {
+    public void setNextData(FlowSystemInterface system, double abstime) {
         flowSystem[time] = system;
         absTime[time] = abstime;
         for (int i = 0; i < flowNodes[time].length; i++) {
@@ -74,7 +79,7 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
 
     /** {@inheritDoc} */
     @Override
-	public void createNetCdfFile(String name) {
+    public void createNetCdfFile(String name) {
         System.out.println("ok...");
         for (int j = 0; j < time; j++) {
             for (int i = 0; i < flowNodes[j].length; i++) {
@@ -85,12 +90,9 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
 
     /** {@inheritDoc} */
     @Override
-	public void setPoints() {
-    }
+    public void setPoints() {}
 
     /** {@inheritDoc} */
     @Override
-	public void displayResult(String name) {
-    }
-
+    public void displayResult(String name) {}
 }

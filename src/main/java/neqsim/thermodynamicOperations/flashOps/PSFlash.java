@@ -8,12 +8,14 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>PSFlash class.</p>
+ * <p>
+ * PSFlash class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class PSFlash extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
@@ -21,12 +23,16 @@ public class PSFlash extends QfuncFlash {
     int type = 0;
 
     /**
-     * Creates new PHflash
+     * <p>
+     * Constructor for PSFlash.
+     * </p>
      */
     public PSFlash() {}
 
     /**
-     * <p>Constructor for PSFlash.</p>
+     * <p>
+     * Constructor for PSFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Sspec a double
@@ -111,11 +117,11 @@ public class PSFlash extends QfuncFlash {
     }
 
     /**
-     * <p>onPhaseSolve.</p>
+     * <p>
+     * onPhaseSolve.
+     * </p>
      */
-    public void onPhaseSolve() {
-
-    }
+    public void onPhaseSolve() {}
 
     /** {@inheritDoc} */
     @Override

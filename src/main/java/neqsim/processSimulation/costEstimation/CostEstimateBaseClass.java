@@ -5,27 +5,30 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
- * <p>CostEstimateBaseClass class.</p>
+ * <p>
+ * CostEstimateBaseClass class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class CostEstimateBaseClass implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     ProcessSystem procesSystem = null;
     private double CAPEXperWeight = 1000.0; // KNOK/tones
 
     /**
-     * <p>Constructor for CostEstimateBaseClass.</p>
+     * <p>
+     * Constructor for CostEstimateBaseClass.
+     * </p>
      */
-    public CostEstimateBaseClass() {
-
-    }
+    public CostEstimateBaseClass() {}
 
     /**
-     * <p>Constructor for CostEstimateBaseClass.</p>
+     * <p>
+     * Constructor for CostEstimateBaseClass.
+     * </p>
      *
      * @param procesSystem a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
@@ -34,7 +37,9 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     }
 
     /**
-     * <p>getWeightBasedCAPEXEstimate.</p>
+     * <p>
+     * getWeightBasedCAPEXEstimate.
+     * </p>
      *
      * @return a double
      */
@@ -43,7 +48,9 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     }
 
     /**
-     * <p>getCAPEXestimate.</p>
+     * <p>
+     * getCAPEXestimate.
+     * </p>
      *
      * @return a double
      */
@@ -66,7 +73,9 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     }
 
     /**
-     * <p>getCAPEXperWeight.</p>
+     * <p>
+     * getCAPEXperWeight.
+     * </p>
      *
      * @return the CAPEXperWeight
      */

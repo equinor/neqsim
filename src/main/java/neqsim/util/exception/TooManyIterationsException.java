@@ -1,16 +1,20 @@
 package neqsim.util.exception;
 
 /**
- * <p>TooManyIterationsException class.</p>
+ * <p>
+ * TooManyIterationsException class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TooManyIterationsException extends neqsim.util.exception.ThermoException {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new <code>IterationException</code> without detail message.
+     * <p>
+     * Constructor for TooManyIterationsException.
+     * </p>
      */
     public TooManyIterationsException() {}
 

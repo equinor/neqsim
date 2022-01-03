@@ -3,19 +3,24 @@ package neqsim.processSimulation.mechanicalDesign.separator.sectionType;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
- * <p>DistillationTraySection class.</p>
+ * <p>
+ * DistillationTraySection class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class DistillationTraySection extends SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for DistillationTraySection.</p>
+     * <p>
+     * Constructor for DistillationTraySection.
+     * </p>
      *
-     * @param separatorSection a {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection} object
+     * @param separatorSection a
+     *        {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *        object
      */
     public DistillationTraySection(SeparatorSection separatorSection) {
         super(separatorSection);
@@ -24,7 +29,6 @@ public class DistillationTraySection extends SepDesignSection {
     /** {@inheritDoc} */
     @Override
     public void calcDesign() {
-
         double vesselDiameter =
                 separatorSection.getSeparator().getMechanicalDesign().getOuterDiameter() * 1e3;
         if (vesselDiameter <= 616) {

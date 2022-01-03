@@ -7,24 +7,30 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>IonicInteractionParameterFittingFunctionCH4 class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunctionCH4 class.
+ * </p>
  *
  * @author Neeraj
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunctionCH4.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4.
+     * </p>
      */
     public IonicInteractionParameterFittingFunctionCH4() {}
 
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunctionCH4.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4.
+     * </p>
      *
      * @param phase a int
      * @param type a int
@@ -173,7 +179,6 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
             ((PhaseEosInterface) system.getPhases()[1]).getMixingRule()
                     .setBinaryInteractionParameter(CO2Numb, CH4Numb, value);
         }
-
     }
 
 }

@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestIonicInteractionParameterFittingCo2nacl class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestIonicInteractionParameterFittingCo2nacl {
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingCo2nacl.class);

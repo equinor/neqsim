@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestCPAParameterFittingToSolubilityData_Lucia class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCPAParameterFittingToSolubilityData_Lucia {
     static Logger logger =

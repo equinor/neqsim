@@ -6,18 +6,21 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.component.ComponentHydrate;
 
 /**
- * <p>HydrateFunction class.</p>
+ * <p>
+ * HydrateFunction class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class HydrateFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFunction.class);
 
-
     /**
-     * <p>Constructor for HydrateFunction.</p>
+     * <p>
+     * Constructor for HydrateFunction.
+     * </p>
      */
     public HydrateFunction() {
         // params = new double[3];

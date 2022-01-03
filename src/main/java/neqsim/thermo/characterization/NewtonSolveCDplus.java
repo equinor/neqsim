@@ -5,7 +5,9 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
 /**
- * <p>NewtonSolveCDplus class.</p>
+ * <p>
+ * NewtonSolveCDplus class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,13 +24,16 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
     /**
-     * <p>Constructor for NewtonSolveCDplus.</p>
+     * <p>
+     * Constructor for NewtonSolveCDplus.
+     * </p>
      */
-    public NewtonSolveCDplus() {
-    }
+    public NewtonSolveCDplus() {}
 
     /**
-     * <p>Constructor for NewtonSolveCDplus.</p>
+     * <p>
+     * Constructor for NewtonSolveCDplus.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param characterizeClass a {@link neqsim.thermo.characterization.PlusCharacterize} object
@@ -49,13 +54,16 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>fvec</code>.</p>
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
      */
     public void setfvec() {
         double zSum = 0.0, mSum = 0.0, densSum = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                 .getLastPlusFractionNumber(); i++) {
-            double ztemp = Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
+            double ztemp =
+                    Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * (i));
             double M = CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0;
             double dens = characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i);
             zSum += ztemp;
@@ -78,7 +86,9 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     }
 
     /**
-     * <p>setJac.</p>
+     * <p>
+     * setJac.
+     * </p>
      */
     public void setJac() {
         Jac.timesEquals(0.0);
@@ -92,7 +102,8 @@ public class NewtonSolveCDplus implements java.io.Serializable {
             for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                     .getLastPlusFractionNumber(); i++) {
                 nTot += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                nTot2 += i * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
+                nTot2 += i
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
             }
             if (j == 0) {
                 tempJ = nTot;
@@ -112,9 +123,12 @@ public class NewtonSolveCDplus implements java.io.Serializable {
                         * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
                 mTot2 += i * (CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0)
                         * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                zSum2 += Math.pow(Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i), 2.0);
+                zSum2 += Math.pow(
+                        Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i),
+                        2.0);
                 zSum += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                zSum3 += i * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
+                zSum3 += i
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
             }
             if (j == 0) {
                 tempJ = (mTot1 * zSum - mTot1 * zSum) / zSum2;
@@ -127,25 +141,37 @@ public class NewtonSolveCDplus implements java.io.Serializable {
         }
 
         for (int j = 0; j < 3; j++) {
-            double A = 0.0, B = 0.0, Bpow2 = 0.0, Ader1 = 0.0, Bder1 = 0.0, Ader2 = 0.0, Bder2 = 0.0, Bder3 = 0.0,
-                    Bder4 = 0.0;
+            double A = 0.0, B = 0.0, Bpow2 = 0.0, Ader1 = 0.0, Bder1 = 0.0, Ader2 = 0.0,
+                    Bder2 = 0.0, Bder3 = 0.0, Bder4 = 0.0;
             for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
                     .getLastPlusFractionNumber(); i++) {
                 double M = CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0;
-                double dens = characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i);
+                double dens =
+                        characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i);
                 A += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                B += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens;
-                Bpow2 += Math.pow(M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens,
-                        2.0);
+                B += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
+                        / dens;
+                Bpow2 += Math.pow(M
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
+                        / dens, 2.0);
                 Ader1 = A;
-                Bder1 += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M / dens;
-                Ader2 += i * M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-                Bder2 += i * M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens;
-                Bder3 += -Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), -2.0)
-                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M;
+                Bder1 += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
+                        * M / dens;
+                Ader2 += i * M
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
+                Bder2 += i * M
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
+                        / dens;
+                Bder3 += -Math.pow(
+                        characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i),
+                        -2.0)
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
+                        * M;
                 Bder4 += -Math.log(i)
-                        * Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), -2.0)
-                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M;
+                        * Math.pow(characterizeClass.getCoef(2)
+                                + characterizeClass.getCoef(3) * Math.log(i), -2.0)
+                        * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
+                        * M;
             }
             if (j == 0) {
                 tempJ = (Ader1 * B - Bder1 * A) / Bpow2;
@@ -158,11 +184,12 @@ public class NewtonSolveCDplus implements java.io.Serializable {
             }
             Jac.set(2, j, tempJ);
         }
-
     }
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      */
     public void solve() {
         iter = 0;

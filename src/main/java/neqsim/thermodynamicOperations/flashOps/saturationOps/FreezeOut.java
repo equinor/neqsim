@@ -13,12 +13,15 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>FreezeOut class.</p>
+ * <p>
+ * FreezeOut class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
-public class FreezeOut extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
-
+public class FreezeOut extends constantDutyTemperatureFlash
+        implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezeOut.class);
     public double[] FCompTemp = new double[10];
@@ -26,13 +29,16 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
     public boolean noFreezeFlash = true;
 
     /**
-     * <p>Constructor for FreezeOut.</p>
+     * <p>
+     * Constructor for FreezeOut.
+     * </p>
      */
-    public FreezeOut() {
-    }
+    public FreezeOut() {}
 
     /**
-     * <p>Constructor for FreezeOut.</p>
+     * <p>
+     * Constructor for FreezeOut.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -42,7 +48,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         SystemInterface testSystem = system;
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -75,7 +81,8 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
 
                 SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(216, 1);
                 ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
-                testSystem2.addComponent(testSystem.getPhase(0).getComponent(k).getComponentName(), 1);
+                testSystem2.addComponent(testSystem.getPhase(0).getComponent(k).getComponentName(),
+                        1);
                 testSystem2.setPhaseType(0, 1);
                 noFreezeliq = true;
                 SolidFug = 0.0;
@@ -98,11 +105,14 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
                         temp = trpTemp;
                     }
                     if (CCequation) {
-                        Pvapsolid = testSystem.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
+                        Pvapsolid = testSystem.getPhase(0).getComponent(k)
+                                .getCCsolidVaporPressure(temp);
                     } else {
-                        Pvapsolid = testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
+                        Pvapsolid =
+                                testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
                     }
-                    soldens = testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
+                    soldens = testSystem.getPhase(0).getComponent(k)
+                            .getPureComponentSolidDensity(temp) * 1000;
                     if (soldens > 2000) {
                         soldens = 1000;
                     }
@@ -115,10 +125,11 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
                     testOps.TPflash();
                     testOps2.TPflash();
 
-                    logger.info("Partial pressure "
-                            + testSystem.getPhase(1).getComponent(k).getx() * testSystem.getPressure());
+                    logger.info("Partial pressure " + testSystem.getPhase(1).getComponent(k).getx()
+                            * testSystem.getPressure());
 
-                    SolidFug = Pvapsolid * testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient()
+                    SolidFug = Pvapsolid
+                            * testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient()
                             * Math.exp(solvol / (R * temp) * (pres - Pvapsolid));
                     FluidFug = testSystem.getPhase(0).getFugacity(k);
 
@@ -157,7 +168,8 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
 
                     testSystem.setTemperature(newTemp);
                 } // do lokke
-                while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq && SolidForms);
+                while (((Math.abs(FugRatio - 1) >= 0.00001 && iterations < 100)) && noFreezeliq
+                        && SolidForms);
                 logger.info("noFreezeliq: " + noFreezeliq + " SolidForms: " + SolidForms);
 
                 if (noFreezeliq && SolidForms) {
@@ -189,8 +201,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
 
     /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-
+    public void printToFile(String name) {
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
             name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
         }
@@ -203,9 +214,9 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
 
             for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
                 // print line to output file
-                pr_writer.println(
-                        FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure() + ","
-                                + java.lang.Double.toString(system.getPhases()[0].getComponents()[k].getz()));
+                pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k])
+                        + "," + system.getPressure() + "," + java.lang.Double
+                                .toString(system.getPhases()[0].getComponents()[k].getz()));
                 pr_writer.flush();
             }
             pr_writer.close();

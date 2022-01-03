@@ -4,30 +4,35 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 
 /**
- * <p>SeparatorResponse class.</p>
+ * <p>
+ * SeparatorResponse class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class SeparatorResponse {
-
     public String name;
     public Double gasLoadFactor;
     public Double massflow;
     public Fluid gasFluid, oilFluid;
-    
-    /**
-     * <p>Constructor for SeparatorResponse.</p>
-     */
-    public SeparatorResponse() {
-    }
 
     /**
-     * <p>Constructor for SeparatorResponse.</p>
-     *
-     * @param inputSeparator a {@link neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator} object
+     * <p>
+     * Constructor for SeparatorResponse.
+     * </p>
      */
-    public SeparatorResponse(ThreePhaseSeparator inputSeparator){
+    public SeparatorResponse() {}
+
+    /**
+     * <p>
+     * Constructor for SeparatorResponse.
+     * </p>
+     *
+     * @param inputSeparator a
+     *        {@link neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator} object
+     */
+    public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
         name = inputSeparator.getName();
         massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
         gasLoadFactor = inputSeparator.getGasLoadFactor();
@@ -36,11 +41,14 @@ public class SeparatorResponse {
     }
 
     /**
-     * <p>Constructor for SeparatorResponse.</p>
+     * <p>
+     * Constructor for SeparatorResponse.
+     * </p>
      *
-     * @param inputSeparator a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
+     * @param inputSeparator a {@link neqsim.processSimulation.processEquipment.separator.Separator}
+     *        object
      */
-    public SeparatorResponse(Separator inputSeparator){
+    public SeparatorResponse(Separator inputSeparator) {
         name = inputSeparator.getName();
         massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
         gasLoadFactor = inputSeparator.getGasLoadFactor();

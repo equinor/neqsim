@@ -10,12 +10,14 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TimeSeries class.</p>
+ * <p>
+ * TimeSeries class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class TimeSeries implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected double[] timeSeries, outletMolarFlowRate, outletMolarFlowRates;
@@ -25,14 +27,18 @@ public class TimeSeries implements java.io.Serializable {
     protected double[] times, timeSteps;
 
     /**
-     * Creates new TimeSeries
+     * <p>
+     * Constructor for TimeSeries.
+     * </p>
      */
     public TimeSeries() {
         this.timeSeries = new double[1];
     }
 
     /**
-     * <p>Setter for the field <code>times</code>.</p>
+     * <p>
+     * Setter for the field <code>times</code>.
+     * </p>
      *
      * @param times an array of {@link double} objects
      */
@@ -41,7 +47,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>setInletThermoSystems.</p>
+     * <p>
+     * setInletThermoSystems.
+     * </p>
      *
      * @param inletThermoSystem an array of {@link neqsim.thermo.system.SystemInterface} objects
      */
@@ -50,7 +58,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>outletMolarFlowRate</code>.</p>
+     * <p>
+     * Setter for the field <code>outletMolarFlowRate</code>.
+     * </p>
      *
      * @param outletMolarFlowRate an array of {@link double} objects
      */
@@ -59,7 +69,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>outletMolarFlowRates</code>.</p>
+     * <p>
+     * Getter for the field <code>outletMolarFlowRates</code>.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -68,7 +80,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>numberOfTimeStepsInInterval</code>.</p>
+     * <p>
+     * Setter for the field <code>numberOfTimeStepsInInterval</code>.
+     * </p>
      *
      * @param numberOfTimeStepsInInterval a int
      */
@@ -77,7 +91,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      *
      * @param flowSystem a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      */
@@ -105,7 +121,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>getThermoSystem.</p>
+     * <p>
+     * getThermoSystem.
+     * </p>
      *
      * @return an array of {@link neqsim.thermo.system.SystemInterface} objects
      */
@@ -114,7 +132,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>getTimeStep.</p>
+     * <p>
+     * getTimeStep.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -123,7 +143,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>getTime.</p>
+     * <p>
+     * getTime.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -132,7 +154,9 @@ public class TimeSeries implements java.io.Serializable {
     }
 
     /**
-     * <p>getTime.</p>
+     * <p>
+     * getTime.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -140,5 +164,4 @@ public class TimeSeries implements java.io.Serializable {
     public double getTime(int i) {
         return times[i];
     }
-
 }

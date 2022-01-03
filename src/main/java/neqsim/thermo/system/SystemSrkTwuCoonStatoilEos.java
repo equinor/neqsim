@@ -1,13 +1,14 @@
 package neqsim.thermo.system;
 
 /**
- * <p>SystemSrkTwuCoonStatoilEos class.</p>
+ * <p>
+ * SystemSrkTwuCoonStatoilEos class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -21,7 +22,9 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemSrkTwuCoonStatoilEos.</p>
+     * <p>
+     * Constructor for SystemSrkTwuCoonStatoilEos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -33,7 +36,9 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemSrkTwuCoonStatoilEos.</p>
+     * <p>
+     * Constructor for SystemSrkTwuCoonStatoilEos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -55,10 +60,10 @@ public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {
             logger.error("Cloning failed.", e);
         }
 
-//        
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        //
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }

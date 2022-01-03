@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestCPA2 class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCPA2 {
     static Logger logger = LogManager.getLogger(TestCPA2.class);

@@ -1,10 +1,5 @@
 package neqsim.util.database;
 
-/*
- * testPointbase.java
- *
- * Created on 1. november 2001, 08:56
- */
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,16 +9,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>NeqSimExperimentDatabase class.</p>
+ * <p>
+ * NeqSimExperimentDatabase class.
+ * </p>
  *
  * @author Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimExperimentDatabase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
-     * <p>createTemporaryTables.</p>
+     * <p>
+     * createTemporaryTables.
+     * </p>
      *
      * @return the createTemporaryTables
      */
@@ -32,7 +30,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>createTemporaryTables</code>.</p>
+     * <p>
+     * Setter for the field <code>createTemporaryTables</code>.
+     * </p>
      *
      * @param createTemporaryTables the createTemporaryTables to set
      */
@@ -44,6 +44,11 @@ public class NeqSimExperimentDatabase
     /** Constant <code>dataBasePath=""</code> */
     public static String dataBasePath = "";
     /** Constant <code>username=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
     /** Constant <code>password=""</code> */
     public static String username = "", password = "";
     static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
@@ -58,10 +63,11 @@ public class NeqSimExperimentDatabase
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimExperimentDatabase.
+     * </p>
      */
     public NeqSimExperimentDatabase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -75,7 +81,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>
+     * openConnection.
+     * </p>
      *
      * @return a Connection object
      * @throws java.sql.SQLException if any.
@@ -116,7 +124,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>getConnection.</p>
+     * <p>
+     * getConnection.
+     * </p>
      *
      * @return a Connection object
      */
@@ -125,7 +135,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>getResultSet.</p>
+     * <p>
+     * getResultSet.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      * @return a ResultSet object
@@ -141,7 +153,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>execute.</p>
+     * <p>
+     * execute.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      */
@@ -160,7 +174,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Getter for the field <code>dataBaseType</code>.</p>
+     * <p>
+     * Getter for the field <code>dataBaseType</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -169,7 +185,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>dataBaseType</code>.</p>
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
      *
      * @param aDataBaseType a {@link java.lang.String} object
      */
@@ -178,7 +196,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>dataBaseType</code>.</p>
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
      *
      * @param aDataBaseType a {@link java.lang.String} object
      * @param connectionString a {@link java.lang.String} object
@@ -223,7 +243,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Getter for the field <code>statement</code>.</p>
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
      *
      * @return a Statement object
      */
@@ -233,7 +255,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>statement</code>.</p>
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
      *
      * @param statement a Statement object
      */
@@ -243,7 +267,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>username</code>.</p>
+     * <p>
+     * Setter for the field <code>username</code>.
+     * </p>
      *
      * @param aUsername the username to set
      */
@@ -252,7 +278,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>password</code>.</p>
+     * <p>
+     * Setter for the field <code>password</code>.
+     * </p>
      *
      * @param aPassword the password to set
      */
@@ -261,7 +289,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Getter for the field <code>connectionString</code>.</p>
+     * <p>
+     * Getter for the field <code>connectionString</code>.
+     * </p>
      *
      * @return the connectionString
      */
@@ -270,7 +300,9 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * <p>Setter for the field <code>connectionString</code>.</p>
+     * <p>
+     * Setter for the field <code>connectionString</code>.
+     * </p>
      *
      * @param aConnectionString the connectionString to set
      */

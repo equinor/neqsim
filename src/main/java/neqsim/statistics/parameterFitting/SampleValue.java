@@ -10,12 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SampleValue class.</p>
+ * <p>
+ * SampleValue class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     protected FunctionInterface testFunction;
@@ -35,13 +37,16 @@ public class SampleValue implements Cloneable {
     double[] standardDeviations;
 
     /**
-     * Creates new SampleValue
+     * <p>
+     * Constructor for SampleValue.
+     * </p>
      */
-    public SampleValue() {
-    }
+    public SampleValue() {}
 
     /**
-     * <p>Constructor for SampleValue.</p>
+     * <p>
+     * Constructor for SampleValue.
+     * </p>
      *
      * @param sampleValue a double
      * @param standardDeviation a double
@@ -55,7 +60,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>Constructor for SampleValue.</p>
+     * <p>
+     * Constructor for SampleValue.
+     * </p>
      *
      * @param sampleValue a double
      * @param standardDeviation a double
@@ -81,13 +88,16 @@ public class SampleValue implements Cloneable {
         // clonedValue.system = (SystemInterface) system.clone();
         clonedValue.testFunction = (FunctionInterface) testFunction.clone();
         clonedValue.dependentValues = this.dependentValues.clone();
-        System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0, dependentValues.length);
+        System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0,
+                dependentValues.length);
 
         return clonedValue;
     }
 
     /**
-     * <p>setThermodynamicSystem.</p>
+     * <p>
+     * setThermodynamicSystem.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -98,7 +108,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>setFunction.</p>
+     * <p>
+     * setFunction.
+     * </p>
      *
      * @param function a {@link neqsim.statistics.parameterFitting.BaseFunction} object
      */
@@ -107,7 +119,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>getFunction.</p>
+     * <p>
+     * getFunction.
+     * </p>
      *
      * @return a {@link neqsim.statistics.parameterFitting.FunctionInterface} object
      */
@@ -116,7 +130,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>standardDeviation</code>.</p>
+     * <p>
+     * Getter for the field <code>standardDeviation</code>.
+     * </p>
      *
      * @return a double
      */
@@ -125,7 +141,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>standardDeviation</code>.</p>
+     * <p>
+     * Getter for the field <code>standardDeviation</code>.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -135,7 +153,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>sampleValue</code>.</p>
+     * <p>
+     * Getter for the field <code>sampleValue</code>.
+     * </p>
      *
      * @return a double
      */
@@ -144,7 +164,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>dependentValues</code>.</p>
+     * <p>
+     * Getter for the field <code>dependentValues</code>.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -153,7 +175,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>getDependentValue.</p>
+     * <p>
+     * getDependentValue.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -163,7 +187,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>Setter for the field <code>dependentValues</code>.</p>
+     * <p>
+     * Setter for the field <code>dependentValues</code>.
+     * </p>
      *
      * @param vals an array of {@link double} objects
      */
@@ -172,7 +198,9 @@ public class SampleValue implements Cloneable {
     }
 
     /**
-     * <p>setDependentValue.</p>
+     * <p>
+     * setDependentValue.
+     * </p>
      *
      * @param i a int
      * @param val a double

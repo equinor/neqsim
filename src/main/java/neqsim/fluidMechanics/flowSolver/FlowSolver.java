@@ -7,12 +7,14 @@
 package neqsim.fluidMechanics.flowSolver;
 
 /**
- * <p>Abstract FlowSolver class.</p>
+ * <p>
+ * Abstract FlowSolver class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class FlowSolver implements FlowSolverInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected int numberOfVelocityNodes = 0;
@@ -22,15 +24,15 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
     protected int solverType = 0;
 
     /**
-     * Creates new FlowSolver
+     * <p>
+     * Constructor for FlowSolver.
+     * </p>
      */
-    public FlowSolver() {
-    }
+    public FlowSolver() {}
 
     /** {@inheritDoc} */
     @Override
-    public void solve() {
-    }
+    public void solve() {}
 
     /** {@inheritDoc} */
     @Override
@@ -60,6 +62,5 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
 
     /** {@inheritDoc} */
     @Override
-    public void solveTDMA() {
-    }
+    public void solveTDMA() {}
 }

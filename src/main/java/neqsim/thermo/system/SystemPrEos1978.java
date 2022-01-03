@@ -12,16 +12,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the Peng RObinson v. 1978
- * equation of state
+ * This class defines a thermodynamic system using the Peng RObinson v. 1978 equation of state
  */
 public class SystemPrEos1978 extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -42,7 +40,9 @@ public class SystemPrEos1978 extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemPrEos1978.</p>
+     * <p>
+     * Constructor for SystemPrEos1978.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -60,7 +60,9 @@ public class SystemPrEos1978 extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemPrEos1978.</p>
+     * <p>
+     * Constructor for SystemPrEos1978.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -114,5 +116,4 @@ public class SystemPrEos1978 extends SystemEos {
 
         return clonedSystem;
     }
-
 }

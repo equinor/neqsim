@@ -4,24 +4,29 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall.PipeWall;
 
 /**
- * <p>PipeData class.</p>
+ * <p>
+ * PipeData class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class PipeData extends GeometryDefinition {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PipeData.</p>
+     * <p>
+     * Constructor for PipeData.
+     * </p>
      */
     public PipeData() {
-        wall = new PipeWall();
+        this.wall = new PipeWall();
     }
 
     /**
-     * <p>Constructor for PipeData.</p>
+     * <p>
+     * Constructor for PipeData.
+     * </p>
      *
      * @param diameter a double
      */
@@ -32,7 +37,9 @@ public class PipeData extends GeometryDefinition {
     }
 
     /**
-     * <p>Constructor for PipeData.</p>
+     * <p>
+     * Constructor for PipeData.
+     * </p>
      *
      * @param diameter a double
      * @param roughness a double

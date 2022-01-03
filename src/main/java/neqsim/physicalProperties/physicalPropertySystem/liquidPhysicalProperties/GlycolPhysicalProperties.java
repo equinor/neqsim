@@ -13,22 +13,27 @@ import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalPropertie
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>GlycolPhysicalProperties class.</p>
+ * <p>
+ * GlycolPhysicalProperties class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new GlycolPhysicalProperties
+     * <p>
+     * Constructor for GlycolPhysicalProperties.
+     * </p>
      */
-    public GlycolPhysicalProperties() {
-    }
+    public GlycolPhysicalProperties() {}
 
     /**
-     * <p>Constructor for GlycolPhysicalProperties.</p>
+     * <p>
+     * Constructor for GlycolPhysicalProperties.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param binaryDiffusionCoefficientMethod a int

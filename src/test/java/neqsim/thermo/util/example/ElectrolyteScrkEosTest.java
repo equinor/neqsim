@@ -6,7 +6,9 @@ import org.junit.jupiter.api.Disabled;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
 /**
- * <p>ElectrolyteScrkEosTest class.</p>
+ * <p>
+ * ElectrolyteScrkEosTest class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -15,7 +17,9 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 @Disabled
 public class ElectrolyteScrkEosTest extends ModelBaseTest {
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {
@@ -28,7 +32,9 @@ public class ElectrolyteScrkEosTest extends ModelBaseTest {
     }
 
     /**
-     * <p>tearDown.</p>
+     * <p>
+     * tearDown.
+     * </p>
      */
     @AfterAll
     public static void tearDown() {}

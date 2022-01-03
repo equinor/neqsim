@@ -11,35 +11,45 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Expander class.</p>
+ * <p>
+ * Expander class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class Expander extends Compressor implements ExpanderInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new ThrottelValve
+     * <p>
+     * Constructor for Expander.
+     * </p>
      */
     public Expander() {
         super();
     }
 
     /**
-     * <p>Constructor for Expander.</p>
+     * <p>
+     * Constructor for Expander.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Expander(StreamInterface inletStream) {
         super(inletStream);
     }
 
     /**
-     * <p>Constructor for Expander.</p>
+     * <p>
+     * Constructor for Expander.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Expander(String name, StreamInterface inletStream) {
         super(name, inletStream);
@@ -47,7 +57,7 @@ public class Expander extends Compressor implements ExpanderInterface {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("expander running..");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -67,7 +77,8 @@ public class Expander extends Compressor implements ExpanderInterface {
                 hinn = getThermoSystem().getEnthalpy();
                 getThermoSystem().setPressure(getThermoSystem().getPressure() + dp);
                 thermoOps.PSflash(entropy);
-                double hout = hinn + (getThermoSystem().getEnthalpy() - hinn) * polytropicEfficiency;
+                double hout =
+                        hinn + (getThermoSystem().getEnthalpy() - hinn) * polytropicEfficiency;
                 thermoOps.PHflash(hout, 0);
             }
             /*
@@ -76,18 +87,17 @@ public class Expander extends Compressor implements ExpanderInterface {
              *
              * iter++; double n = Math.log(thermoSystem.getPressure() / presinn) /
              * Math.log(thermoSystem.getDensity() / densInn); double k =
-             * Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal /
-             * densInn); double factor = ((Math.pow(thermoSystem.getPressure() / presinn, (n
-             * - 1.0) / n) - 1.0) * (n / (n - 1.0)) * (k - 1) / k) /
-             * (Math.pow(thermoSystem.getPressure() / presinn, (k - 1.0) / k) - 1.0);
-             * oldPolyt = polytropicEfficiency; polytropicEfficiency = factor *
-             * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn +
-             * dH / polytropicEfficiency; thermoOps.PHflash(hout, 0);
+             * Math.log(thermoSystem.getPressure() / presinn) / Math.log(densOutIdeal / densInn);
+             * double factor = ((Math.pow(thermoSystem.getPressure() / presinn, (n - 1.0) / n) -
+             * 1.0) * (n / (n - 1.0)) * (k - 1) / k) / (Math.pow(thermoSystem.getPressure() /
+             * presinn, (k - 1.0) / k) - 1.0); oldPolyt = polytropicEfficiency; polytropicEfficiency
+             * = factor * isentropicEfficiency; dH = thermoSystem.getEnthalpy() - hinn; hout = hinn
+             * + dH / polytropicEfficiency; thermoOps.PHflash(hout, 0);
              * System.out.println(" factor " + factor + " n " + n + " k " + k +
              * " polytropic effici " + polytropicEfficiency + " iter " + iter);
              *
-             * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 &&
-             * iter < 500); // polytropicEfficiency = isentropicEfficiency * ();
+             * } while (Math.abs((oldPolyt - polytropicEfficiency) / oldPolyt) > 1e-5 && iter <
+             * 500); // polytropicEfficiency = isentropicEfficiency * ();
              *
              */
         } else {
@@ -108,5 +118,4 @@ public class Expander extends Compressor implements ExpanderInterface {
         // thermoSystem.display();
         outStream.setThermoSystem(getThermoSystem());
     }
-
 }

@@ -8,13 +8,14 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>TemperatureTransmitter class.</p>
+ * <p>
+ * TemperatureTransmitter class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -31,9 +32,12 @@ public class TemperatureTransmitter extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Constructor for TemperatureTransmitter.</p>
+     * <p>
+     * Constructor for TemperatureTransmitter.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public TemperatureTransmitter(StreamInterface stream) {
         this();

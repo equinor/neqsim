@@ -11,12 +11,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>GasScrubberSimple class.</p>
+ * <p>
+ * GasScrubberSimple class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class GasScrubberSimple extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -26,7 +28,9 @@ public class GasScrubberSimple extends Separator {
     String name = new String();
 
     /**
-     * Creates new GasScrubberSimple
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
      */
     public GasScrubberSimple() {
         super();
@@ -35,7 +39,9 @@ public class GasScrubberSimple extends Separator {
     }
 
     /**
-     * <p>Constructor for GasScrubberSimple.</p>
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -45,7 +51,9 @@ public class GasScrubberSimple extends Separator {
     }
 
     /**
-     * <p>Constructor for GasScrubberSimple.</p>
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
@@ -63,7 +71,9 @@ public class GasScrubberSimple extends Separator {
     }
 
     /**
-     * <p>Setter for the field <code>inletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -106,7 +116,6 @@ public class GasScrubberSimple extends Separator {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
@@ -134,7 +143,9 @@ public class GasScrubberSimple extends Separator {
     }
 
     /**
-     * <p>calcLiquidCarryoverFraction.</p>
+     * <p>
+     * calcLiquidCarryoverFraction.
+     * </p>
      *
      * @return a double
      */
@@ -146,14 +157,16 @@ public class GasScrubberSimple extends Separator {
         }
         System.out.println("Ktot " + (1.0 - Ktot));
         double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
-        double gasVel = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
+        double gasVel =
+                thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
         setLiquidCarryoverFraction(Ktot);
         return gasVel;
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 }

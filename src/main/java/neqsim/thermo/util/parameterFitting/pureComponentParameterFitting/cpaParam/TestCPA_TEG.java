@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * <p>TestCPA_TEG class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestCPA_TEG {
     static Logger logger = LogManager.getLogger(TestCPA_TEG.class);

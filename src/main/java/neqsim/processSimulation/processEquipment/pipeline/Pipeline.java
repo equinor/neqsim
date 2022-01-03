@@ -15,12 +15,14 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Pipeline class.</p>
+ * <p>
+ * Pipeline class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
@@ -33,25 +35,30 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
     // default variables
     int numberOfLegs = 1, numberOfNodesInLeg = 30;
-    double[] legHeights = { 0, 0 };// ,0,0,0};
-    double[] legPositions = { 0.0, 1.0 };// 10.0,20.0,30.0,40.0};
-    double[] pipeDiameters = { 0.1507588, 0.1507588 };// , 1.207588, 1.207588, 1.207588};
-    double[] outerTemperature = { 278.0, 278.0 };// , 278.0, 278.0, 278.0};
-    double[] pipeWallRoughness = { 1e-5, 1e-5 };// , 1e-5, 1e-5, 1e-5};
-    double[] outerHeatTransferCoeffs = { 1e-5, 1e-5 };// , 1e-5, 1e-5, 1e-5};
-    double[] wallHeatTransferCoeffs = { 1e-5, 1e-5 };// , 1e-5, 1e-5, 1e-5};
+    double[] legHeights = {0, 0};// ,0,0,0};
+    double[] legPositions = {0.0, 1.0};// 10.0,20.0,30.0,40.0};
+    double[] pipeDiameters = {0.1507588, 0.1507588};// , 1.207588, 1.207588, 1.207588};
+    double[] outerTemperature = {278.0, 278.0};// , 278.0, 278.0, 278.0};
+    double[] pipeWallRoughness = {1e-5, 1e-5};// , 1e-5, 1e-5, 1e-5};
+    double[] outerHeatTransferCoeffs = {1e-5, 1e-5};// , 1e-5, 1e-5, 1e-5};
+    double[] wallHeatTransferCoeffs = {1e-5, 1e-5};// , 1e-5, 1e-5, 1e-5};
 
     /**
-     * Creates new Pipeline
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
      */
     public Pipeline() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
     /**
-     * <p>Constructor for Pipeline.</p>
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Pipeline(StreamInterface inStream) {
         this();
@@ -60,10 +67,13 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>Constructor for Pipeline.</p>
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Pipeline(String name, StreamInterface inStream) {
         this();
@@ -79,7 +89,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -142,7 +154,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>setPipeOuterHeatTransferCoefficients.</p>
+     * <p>
+     * setPipeOuterHeatTransferCoefficients.
+     * </p>
      *
      * @param heatCoefs an array of {@link double} objects
      */
@@ -159,7 +173,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>setPipeWallHeatTransferCoefficients.</p>
+     * <p>
+     * setPipeWallHeatTransferCoefficients.
+     * </p>
      *
      * @param heatCoefs an array of {@link double} objects
      */
@@ -204,7 +220,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>Setter for the field <code>equilibriumMassTransfer</code>.</p>
+     * <p>
+     * Setter for the field <code>equilibriumMassTransfer</code>.
+     * </p>
      *
      * @param test a boolean
      */
@@ -213,7 +231,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>Setter for the field <code>equilibriumHeatTransfer</code>.</p>
+     * <p>
+     * Setter for the field <code>equilibriumHeatTransfer</code>.
+     * </p>
      *
      * @param test a boolean
      */
@@ -246,7 +266,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient() {
         pipe.solveTransient(2);
@@ -255,8 +277,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override
@@ -292,7 +313,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     }
 
     /**
-     * <p>getSuperficialVelocity.</p>
+     * <p>
+     * getSuperficialVelocity.
+     * </p>
      *
      * @param phase a int
      * @param node a int
@@ -302,7 +325,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         try {
             return outStream.getThermoSystem().getPhase(phase).getNumberOfMolesInPhase()
                     * outStream.getThermoSystem().getPhase(phase).getMolarMass()
-                    / outStream.getThermoSystem().getPhase(phase).getPhysicalProperties().getDensity()
+                    / outStream.getThermoSystem().getPhase(phase).getPhysicalProperties()
+                            .getDensity()
                     / (3.14 * pipeDiameters[node] * pipeDiameters[node] / 4.0);
         } catch (Exception e) {
             e.printStackTrace();
@@ -328,6 +352,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+        return outStream.getThermoSystem().getEntropy(unit)
+                - inStream.getThermoSystem().getEntropy(unit);
     }
 }

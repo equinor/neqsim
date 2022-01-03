@@ -9,22 +9,27 @@ package neqsim.thermo.component;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwu;
 
 /**
- * <p>ComponentTST class.</p>
+ * <p>
+ * ComponentTST class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentTST extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new System_SRK_EOS
+     * <p>
+     * Constructor for ComponentTST.
+     * </p>
      */
-    public ComponentTST() {
-    }
+    public ComponentTST() {}
 
     /**
-     * <p>Constructor for ComponentTST.</p>
+     * <p>
+     * Constructor for ComponentTST.
+     * </p>
      *
      * @param moles a double
      */
@@ -33,7 +38,9 @@ public class ComponentTST extends ComponentEos {
     }
 
     /**
-     * <p>Constructor for ComponentTST.</p>
+     * <p>
+     * Constructor for ComponentTST.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -54,7 +61,9 @@ public class ComponentTST extends ComponentEos {
     }
 
     /**
-     * <p>Constructor for ComponentTST.</p>
+     * <p>
+     * Constructor for ComponentTST.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -70,7 +79,6 @@ public class ComponentTST extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public ComponentTST clone() {
-
         ComponentTST clonedComponent = null;
         try {
             clonedComponent = (ComponentTST) super.clone();
@@ -83,34 +91,38 @@ public class ComponentTST extends ComponentEos {
 
     /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
     /** {@inheritDoc} */
     @Override
-	public double calca() {
+    public double calca() {
         return .427481 * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double calcb() {
+    public double calcb() {
         return .086641 * R * criticalTemperature / criticalPressure;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (this.getRacketZ() < 1e-10) {
             return 0.0;
         } else {
-            return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
+            return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature
+                    / criticalPressure;
         }
     }
 
     /**
-     * <p>getQpure.</p>
+     * <p>
+     * getQpure.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -120,7 +132,9 @@ public class ComponentTST extends ComponentEos {
     }
 
     /**
-     * <p>getdQpuredT.</p>
+     * <p>
+     * getdQpuredT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -130,7 +144,9 @@ public class ComponentTST extends ComponentEos {
     }
 
     /**
-     * <p>getdQpuredTdT.</p>
+     * <p>
+     * getdQpuredTdT.
+     * </p>
      *
      * @param temperature a double
      * @return a double

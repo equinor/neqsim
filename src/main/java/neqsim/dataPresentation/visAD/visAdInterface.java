@@ -13,6 +13,7 @@ import visad.*;
  * <p>visAdInterface interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface visAdInterface {
     /**

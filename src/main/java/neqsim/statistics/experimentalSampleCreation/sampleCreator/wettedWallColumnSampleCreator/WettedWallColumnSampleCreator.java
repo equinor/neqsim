@@ -17,30 +17,35 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>WettedWallColumnSampleCreator class.</p>
+ * <p>
+ * WettedWallColumnSampleCreator class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
-
     private static final long serialVersionUID = 1000;
     WettedWallDataReader reader;
     DataSmoothor smoothor;
     double[] time, pressure, inletLiquidTemperature, outletLiquidTemperature, inletGasTemperature,
-            inletTotalGasFlowRate, inletLiquidFlowRate, co2SupplyRate, columnWallTemperature, dPdt, dNdt, dPdn, dNdtOld,
-            dnVdt;
+            inletTotalGasFlowRate, inletLiquidFlowRate, co2SupplyRate, columnWallTemperature, dPdt,
+            dNdt, dPdn, dNdtOld, dnVdt;
     double[] smoothedPressure, smoothedInletLiquidTemperature, smoothedOutletLiquidTemperature,
             smoothedInletGasTemperature, smoothedInletTotalGasFlowRate, smoothedInletLiquidFlowRate,
             smoothedCo2SupplyRate, smoothedColumnWallTemperature;
 
     /**
-     * Creates new WettedWallColumnSampleCreator
+     * <p>
+     * Constructor for WettedWallColumnSampleCreator.
+     * </p>
      */
-    public WettedWallColumnSampleCreator() {
-    }
+    public WettedWallColumnSampleCreator() {}
 
     /**
-     * <p>Constructor for WettedWallColumnSampleCreator.</p>
+     * <p>
+     * Constructor for WettedWallColumnSampleCreator.
+     * </p>
      *
      * @param file a {@link java.lang.String} object
      */
@@ -49,7 +54,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
     }
 
     /**
-     * <p>setSampleValues.</p>
+     * <p>
+     * setSampleValues.
+     * </p>
      */
     public void setSampleValues() {
         time = new double[reader.getSampleObjectList().size() - 1];
@@ -65,24 +72,33 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
         int i = 0;
         do {
             time[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getTime();
-            pressure[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getPressure();
-            inletLiquidTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getInletLiquidTemperature();
-            outletLiquidTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getOutletLiquidTemperature();
-            columnWallTemperature[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getColumnWallTemperature();
-            inletTotalGasFlowRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getInletTotalGasFlow();
-            co2SupplyRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i)).getCo2SupplyFlow();
-            inletLiquidFlowRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
-                    .getInletLiquidFlow();
+            pressure[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                    .getPressure();
+            inletLiquidTemperature[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletLiquidTemperature();
+            outletLiquidTemperature[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getOutletLiquidTemperature();
+            columnWallTemperature[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getColumnWallTemperature();
+            inletTotalGasFlowRate[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletTotalGasFlow();
+            co2SupplyRate[i] = ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                    .getCo2SupplyFlow();
+            inletLiquidFlowRate[i] =
+                    ((WettedWallColumnDataObject) reader.getSampleObjectList().get(i))
+                            .getInletLiquidFlow();
             i++;
         } while (i < reader.getSampleObjectList().size() - 1);
     }
 
     /**
-     * <p>smoothData.</p>
+     * <p>
+     * smoothData.
+     * </p>
      */
     public void smoothData() {
         Matrix data = new Matrix(pressure, 1);
@@ -123,7 +139,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
     }
 
     /**
-     * <p>calcdPdt.</p>
+     * <p>
+     * calcdPdt.
+     * </p>
      */
     public void calcdPdt() {
         system.init(0);
@@ -148,7 +166,8 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
                 system.getPhases()[1].addMoles(1, -dNdt[i] * (time[i] - time[i - 1]));
                 system.init(1);
                 // her bor det komme en funksjon som finer nummeret til Co2!
-                dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1]) / (time[i + 1] - time[i - 1]);
+                dPdt[i] = (smoothedPressure[i + 1] - smoothedPressure[i - 1])
+                        / (time[i + 1] - time[i - 1]);
                 // dPdn[i] = system.getPhases()[1].getdPdn(1);
             }
 
@@ -169,7 +188,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

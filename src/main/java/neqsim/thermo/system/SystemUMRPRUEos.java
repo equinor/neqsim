@@ -7,7 +7,7 @@
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -15,7 +15,6 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the UMR-PRU equation of state
  */
 public class SystemUMRPRUEos extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -30,7 +29,9 @@ public class SystemUMRPRUEos extends SystemPrEos {
     }
 
     /**
-     * <p>Constructor for SystemUMRPRUEos.</p>
+     * <p>
+     * Constructor for SystemUMRPRUEos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -40,15 +41,18 @@ public class SystemUMRPRUEos extends SystemPrEos {
         setBmixType(1);
         modelName = "UMR-PRU-EoS";
         attractiveTermNumber = 1;
-        CapeOpenProperties11 = new String[] { "speedOfSound", "jouleThomsonCoefficient", "internalEnergy",
-                "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy", "fugacityCoefficient",
-                "logFugacityCoefficient", "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
-                "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy", "heatCapacityCp",
-                "heatCapacityCv", "density", "volume" };
+        CapeOpenProperties11 = new String[] {"speedOfSound", "jouleThomsonCoefficient",
+                "internalEnergy", "internalEnergy.Dtemperature", "gibbsEnergy", "helmholtzEnergy",
+                "fugacityCoefficient", "logFugacityCoefficient",
+                "logFugacityCoefficient.Dtemperature", "logFugacityCoefficient.Dpressure",
+                "logFugacityCoefficient.Dmoles", "enthalpy", "enthalpy.Dtemperature", "entropy",
+                "heatCapacityCp", "heatCapacityCv", "density", "volume"};
     }
 
     /**
-     * <p>Constructor for SystemUMRPRUEos.</p>
+     * <p>
+     * Constructor for SystemUMRPRUEos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -75,12 +79,13 @@ public class SystemUMRPRUEos extends SystemPrEos {
     }
 
     /**
-     * <p>commonInitialization.</p>
+     * <p>
+     * commonInitialization.
+     * </p>
      */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(true);
         setImplementedPressureDeriativesofFugacity(true);
         setImplementedTemperatureDeriativesofFugacity(true);
     }
-
 }

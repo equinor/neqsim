@@ -1,23 +1,31 @@
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
 
 /**
- * <p>SiddiqiLucasMethod class.</p>
+ * <p>
+ * SiddiqiLucasMethod class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SiddiqiLucasMethod extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for SiddiqiLucasMethod.
+     * </p>
      */
     public SiddiqiLucasMethod() {}
 
     /**
-     * <p>Constructor for SiddiqiLucasMethod.</p>
+     * <p>
+     * Constructor for SiddiqiLucasMethod.
+     * </p>
      *
-     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public SiddiqiLucasMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
@@ -43,7 +51,9 @@ public class SiddiqiLucasMethod extends Diffusivity {
 
     // non-aqueous correlation
     /**
-     * <p>calcBinaryDiffusionCoefficient2.</p>
+     * <p>
+     * calcBinaryDiffusionCoefficient2.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -67,5 +77,4 @@ public class SiddiqiLucasMethod extends Diffusivity {
                 * liquidPhase.getPhase().getTemperature();
         return binaryDiffusionCoeffisients[i][j];
     }
-
 }

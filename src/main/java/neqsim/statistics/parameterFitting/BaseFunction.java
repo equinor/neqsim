@@ -4,12 +4,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Abstract BaseFunction class.</p>
+ * <p>
+ * Abstract BaseFunction class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class BaseFunction implements FunctionInterface {
-
     private static final long serialVersionUID = 1000;
 
     public double[] params = null;
@@ -19,7 +21,9 @@ public abstract class BaseFunction implements FunctionInterface {
     public ThermodynamicOperations thermoOps;
 
     /**
-     * <p>Constructor for BaseFunction.</p>
+     * <p>
+     * Constructor for BaseFunction.
+     * </p>
      */
     public BaseFunction() {}
 
@@ -127,5 +131,4 @@ public abstract class BaseFunction implements FunctionInterface {
     public void setBounds(double[][] bounds) {
         this.bounds = bounds;
     }
-
 }

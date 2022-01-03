@@ -12,20 +12,25 @@ abstract class Viscosity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
     public double[] pureComponentViscosity;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      */
     public Viscosity() {}
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      *
-     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Viscosity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
@@ -34,12 +39,13 @@ abstract class Viscosity extends
     }
 
     /**
-     * <p>calcPureComponentViscosity.</p>
+     * <p>
+     * calcPureComponentViscosity.
+     * </p>
      */
     public void calcPureComponentViscosity() {
         pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-
             if (phase.getPhase().getTemperature() > phase.getPhase().getComponents()[i].getTC()) {
                 pureComponentViscosity[i] = 5.0e-1;
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 1) {
@@ -48,7 +54,6 @@ abstract class Viscosity extends
                         * Math.pow(phase.getPhase().getTemperature(),
                                 phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1));
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 2) {
-
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 3) {
                 pureComponentViscosity[i] =
                         Math.exp(phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)
@@ -76,7 +81,9 @@ abstract class Viscosity extends
     }
 
     /**
-     * <p>getViscosityPressureCorrection.</p>
+     * <p>
+     * getViscosityPressureCorrection.
+     * </p>
      *
      * @param i a int
      * @return a double

@@ -12,16 +12,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestConductivityFit class.</p>
+ * <p>
+ * TestConductivityFit class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestConductivityFit {
-
     static Logger logger = LogManager.getLogger(TestConductivityFit.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -37,7 +41,6 @@ public class TestConductivityFit {
         // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
         try {
-
             logger.info("adding....");
             while (dataSet.next()) {
                 ConductivityFunction function = new ConductivityFunction();

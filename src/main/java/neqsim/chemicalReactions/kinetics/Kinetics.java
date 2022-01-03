@@ -14,24 +14,30 @@ import neqsim.chemicalReactions.chemicalReaction.ChemicalReaction;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>Kinetics class.</p>
+ * <p>
+ * Kinetics class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class Kinetics implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     protected ChemicalReactionOperations operations;
     double phiInfinite = 0.0;
     boolean isIrreversible;
 
     /**
-     * Creates new Kinetics
+     * <p>
+     * Constructor for Kinetics.
+     * </p>
      */
     public Kinetics() {}
 
     /**
-     * <p>Constructor for Kinetics.</p>
+     * <p>
+     * Constructor for Kinetics.
+     * </p>
      *
      * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
      */
@@ -40,12 +46,16 @@ public class Kinetics implements java.io.Serializable {
     }
 
     /**
-     * <p>calcKinetics.</p>
+     * <p>
+     * calcKinetics.
+     * </p>
      */
     public void calcKinetics() {}
 
     /**
-     * <p>calcReacMatrix.</p>
+     * <p>
+     * calcReacMatrix.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -116,7 +126,9 @@ public class Kinetics implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>phiInfinite</code>.</p>
+     * <p>
+     * Getter for the field <code>phiInfinite</code>.
+     * </p>
      *
      * @return a double
      */
@@ -125,7 +137,9 @@ public class Kinetics implements java.io.Serializable {
     }
 
     /**
-     * <p>getPseudoFirstOrderCoef.</p>
+     * <p>
+     * getPseudoFirstOrderCoef.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object

@@ -11,12 +11,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>IncompressiblePipeFlow class.</p>
+ * <p>
+ * IncompressiblePipeFlow class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IncompressiblePipeFlow extends AdiabaticPipe {
-
     private static final long serialVersionUID = 1000;
 
     Fittings fittings = new Fittings();
@@ -24,22 +26,28 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     double momentum = 0;
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for IncompressiblePipeFlow.
+     * </p>
      */
-    public IncompressiblePipeFlow() {
-    }
+    public IncompressiblePipeFlow() {}
 
     /**
-     * <p>Constructor for IncompressiblePipeFlow.</p>
+     * <p>
+     * Constructor for IncompressiblePipeFlow.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public IncompressiblePipeFlow(StreamInterface inStream) {
         super(inStream);
     }
 
     /**
-     * <p>addFittingFromDatabase.</p>
+     * <p>
+     * addFittingFromDatabase.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -48,7 +56,9 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     }
 
     /**
-     * <p>addFitting.</p>
+     * <p>
+     * addFitting.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param LdivD a double
@@ -59,7 +69,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
 
     /** {@inheritDoc} */
     @Override
-	public double calcPressureOut() {
+    public double calcPressureOut() {
         setTotalEqLenth(length);
 
         for (int i = 0; i < fittings.fittingList.size(); i++) {
@@ -68,7 +78,9 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
 
         double area = 3.14 / 4.0 * Math.pow(insideDiameter, 2.0);
         double velocity = 1.0 / system.getPhase(0).getPhysicalProperties().getDensity()
-                / (system.getPhase(0).getNumberOfMolesInPhase() * (system.getPhase(0).getMolarVolume() / 1e5)) / area;
+                / (system.getPhase(0).getNumberOfMolesInPhase()
+                        * (system.getPhase(0).getMolarVolume() / 1e5))
+                / area;
 
         momentum = system.getPhase(0).getPhysicalProperties().getDensity() * velocity * velocity;
         double reynoldsNumber = velocity * insideDiameter
@@ -76,7 +88,8 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
 
         double dp = -momentum * frictionFactor * getTotalEqLenth() / (2.0 * insideDiameter);
-        dp += (getInletElevation() - getOutletElevation()) * system.getPhase(0).getPhysicalProperties().getDensity()
+        dp += (getInletElevation() - getOutletElevation())
+                * system.getPhase(0).getPhysicalProperties().getDensity()
                 * neqsim.thermo.ThermodynamicConstantsInterface.gravity;
 
         // double dp = Math.pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() *
@@ -84,16 +97,16 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         // 2.0) * frictionFactor * length * system.getPhase(0).getZ() *
         // thermo.ThermodynamicConstantsInterface.R/system.getPhase(0).getMolarMass() *
         // system.getTemperature() / Math.pow(insideDiameter, 5.0);
-        System.out.println("outpres " + ((system.getPressure() * 1e5 + dp) / 1.0e5) + " dp " + dp + " friction fact"
-                + frictionFactor + " velocity " + velocity + " reynolds number " + reynoldsNumber + " equivalentLength "
-                + getTotalEqLenth());
+        System.out.println("outpres " + ((system.getPressure() * 1e5 + dp) / 1.0e5) + " dp " + dp
+                + " friction fact" + frictionFactor + " velocity " + velocity + " reynolds number "
+                + reynoldsNumber + " equivalentLength " + getTotalEqLenth());
 
         return (system.getPressure() * 1e5 + dp) / 1.0e5;
     }
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
         // system.setMultiPhaseCheck(true);
         if (setTemperature) {
@@ -111,12 +124,15 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param name an array of {@link java.lang.String} objects
      */
     public static void main(String[] name) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
         testSystem.addComponent("water", 100.0 * 1e3, "kg/hr");
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -136,7 +152,8 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         pipe2.setInletElevation(10);
         pipe2.setOutletElevation(0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipe);
         operations.add(pipe2);
@@ -145,7 +162,9 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     }
 
     /**
-     * <p>Getter for the field <code>totalEqLenth</code>.</p>
+     * <p>
+     * Getter for the field <code>totalEqLenth</code>.
+     * </p>
      *
      * @return the totalEqLenth
      */
@@ -154,7 +173,9 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     }
 
     /**
-     * <p>Setter for the field <code>totalEqLenth</code>.</p>
+     * <p>
+     * Setter for the field <code>totalEqLenth</code>.
+     * </p>
      *
      * @param totalEqLenth the totalEqLenth to set
      */

@@ -6,20 +6,22 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
 /**
- * <p>UMRPRUFunction class.</p>
+ * <p>
+ * UMRPRUFunction class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class UMRPRUFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new Test
+     * <p>
+     * Constructor for UMRPRUFunction.
+     * </p>
      */
-    public UMRPRUFunction() {
-
-    }
+    public UMRPRUFunction() {}
 
     /** {@inheritDoc} */
     @Override
@@ -35,7 +37,6 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
         params[i] = value;
 
         if (i == 0) {
-
             PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0])
                     .getMixingRule().getGEPhase();
             unifacp.setAij(0, 2, value);
@@ -48,7 +49,6 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
         }
 
         if (i == 1) {
-
             PhaseGEUnifac unifacp = (PhaseGEUnifac) ((PhaseEosInterface) system.getPhases()[0])
                     .getMixingRule().getGEPhase();
             unifacp.setBij(0, 2, value);
@@ -72,6 +72,5 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
             unifacp2.setAij(2, 0, value);
             unifacp2.setAij(2, 1, value);
         }
-
     }
 }

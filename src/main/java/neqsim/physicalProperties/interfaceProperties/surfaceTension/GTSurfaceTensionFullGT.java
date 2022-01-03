@@ -1,28 +1,23 @@
 package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 
-/**
- *
- * @author John Morud <John.Morud@sintef.no>
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
- */
-//import static easyjcckit.QuickPlot.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import no.uib.cipr.matrix.*;
-import org.apache.logging.log4j.*;
+import no.uib.cipr.matrix.BandMatrix;
+import no.uib.cipr.matrix.DenseMatrix;
 
 /**
- * <p>GTSurfaceTensionFullGT class.</p>
+ * <p>
+ * GTSurfaceTensionFullGT class. Solving for the surface tension by direct Newton method. <br>
+ * todo: Makeuse of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when
+ * this becomes available in NeqSIM API.
+ * </p>
  *
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
- * @author John C. Morud <john.c.morud@sintef.no>
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
- * @brief Solving for the surface tension by direct Newton method.
- * @todo Make use of binary interaction parameter for the influence parameter
- *       \f$\beta_{ij}\f$ when this becomes available in NeqSIM API.
+ * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
+ * @author John C. Morud john.c.morud@sintef.no
  * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
 
@@ -44,7 +39,9 @@ public class GTSurfaceTensionFullGT {
     private static final boolean DEBUGPLOT = false; // Set to true for profile plot.
 
     /**
-     * <p>Constructor for GTSurfaceTensionFullGT.</p>
+     * <p>
+     * Constructor for GTSurfaceTensionFullGT.
+     * </p>
      *
      * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
      * @param phase1 a int
@@ -72,8 +69,8 @@ public class GTSurfaceTensionFullGT {
             }
         }
         if (hasAddedComp) {
-            neqsim.thermodynamicOperations.ThermodynamicOperations ops = new neqsim.thermodynamicOperations.ThermodynamicOperations(
-                    this.sys);
+            neqsim.thermodynamicOperations.ThermodynamicOperations ops =
+                    new neqsim.thermodynamicOperations.ThermodynamicOperations(this.sys);
             ops.TPflash();
         }
 
@@ -81,7 +78,8 @@ public class GTSurfaceTensionFullGT {
          * Get influence parameters and densities at phase equilibrium.
          */
         for (i = 0; i < this.ncomp; i++) {
-            this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
+            this.ci[i] =
+                    this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
             this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx()
                     / this.sys.getPhase(phase1).getMolarVolume() / m3;
             this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx()
@@ -98,13 +96,13 @@ public class GTSurfaceTensionFullGT {
         for (i = 0; i < ncomp; i++) {
             nv[i] = this.rho_ph1[i] * Pa;
         }
-        this.sys.setTotalFlowRate(1.0, "mol/sec"); // added by Even S 18/02/2020 (can not set molar composition if total
+        this.sys.setTotalFlowRate(1.0, "mol/sec"); // added by Even S 18/02/2020 (can not set molar
+                                                   // composition if total
                                                    // flow is zero
         this.sys.setMolarComposition(nv);
         this.sys.init_x_y();
         this.sys.setBeta(1.0);
         this.sys.init(3);
-
     }
 
     /**
@@ -174,7 +172,8 @@ public class GTSurfaceTensionFullGT {
         // Get interaction parameters (Already done???) FIXME!!
         for (i = 0; i < ncomp; i++) {
             // this.sys.getPhase(0).getComponent(i-1).getSurfaceTenisionInfluenceParameter(this.sys.getPhase(0).getTemperature());
-            this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
+            this.ci[i] =
+                    this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
         }
 
         /// @todo Change to \f$c_{ij} = (1-\beta_{ij})\sqrt{c_ic_j}\f$ when a
@@ -192,7 +191,8 @@ public class GTSurfaceTensionFullGT {
         xgrid = linspace(-L, L, Ngrid);
 
         for (i = 0; i < Nrefinements; i++) {
-            sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod, rhomat, sys, ncomp, t, mueq);
+            sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod, rhomat, sys,
+                    ncomp, t, mueq);
             if (!NDEBUG && DEBUGPLOT) {
                 debugPlot(xgrid, rhomat); // create a plot using xaxis and yvalues
             }
@@ -238,7 +238,6 @@ public class GTSurfaceTensionFullGT {
                         rhotmp[j][k] = alpha * rhomat[kk][k] + (1 - alpha) * rhomat[kk + 1][k];
                     }
                 }
-
             }
 
             // Update the current guess
@@ -259,16 +258,15 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>Newton.</p>
+     * <p>
+     * Newton. Calculate surface tension by full gradient method and Newtons method
      *
-     * @brief Calculate surface tension by full gradient method and Newtons method
+     * The routine solves the Finite Difference equations for the full Gradient Theory by Newtons
+     * method. Note that the length coordinate is in nm-units. Method: 1. Calculate delta_mu and its
+     * Jacobian 2. Call routine "directsolve" for Newton step 3. Dampen the step if relative step
+     * too large 4. Iterate until convergence or max #iterations (N_Newton)
+     * </p>
      *
-     *        The routine solves the Finite Difference equations for the full
-     *        Gradient Theory by Newtons method. Note that the length coordinate is
-     *        in nm-units. Method: 1. Calculate delta_mu and its Jacobian 2. Call
-     *        routine "directsolve" for Newton step 3. Dampen the step if relative
-     *        step too large 4. Iterate until convergence or max #iterations
-     *        (N_Newton)
      * @return sigma The surface tension [N/m]
      * @param cij an array of {@link double} objects
      * @param L a double
@@ -282,8 +280,9 @@ public class GTSurfaceTensionFullGT {
      * @param t a double
      * @param mueq an array of {@link double} objects
      */
-    public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange, boolean highOrder,
-            boolean directMethod, double[][] rhomat, SystemInterface sys, int ncomp, double t, double[] mueq) {
+    public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange,
+            boolean highOrder, boolean directMethod, double[][] rhomat, SystemInterface sys,
+            int ncomp, double t, double[] mueq) {
         int i, j, k;
         int NewtonStep;
         int Ngrid = rhomat.length;
@@ -338,8 +337,10 @@ public class GTSurfaceTensionFullGT {
             maxrelchange = 0.0;
             for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
                 for (j = 0; j < ncomp; j++) {// Each specie
-                    if (Math.abs(rhomat[i][j] - rrho_prev[i][j]) > maxrelchange * Math.abs(rrho_prev[i][j])) {
-                        maxrelchange = Math.abs(rhomat[i][j] - rrho_prev[i][j]) / Math.abs(rrho_prev[i][j]);
+                    if (Math.abs(rhomat[i][j] - rrho_prev[i][j]) > maxrelchange
+                            * Math.abs(rrho_prev[i][j])) {
+                        maxrelchange = Math.abs(rhomat[i][j] - rrho_prev[i][j])
+                                / Math.abs(rrho_prev[i][j]);
                     }
                 }
             }
@@ -348,11 +349,13 @@ public class GTSurfaceTensionFullGT {
             // Update solution
             for (i = 1; i < Ngrid - 1; i++) { // Inner grid points
                 for (j = 0; j < ncomp; j++) {// Each specie
-                    rhomat[i][j] = urel_Newton * rhomat[i][j] + (1.0 - urel_Newton) * rrho_prev[i][j];
+                    rhomat[i][j] =
+                            urel_Newton * rhomat[i][j] + (1.0 - urel_Newton) * rrho_prev[i][j];
                 }
             }
 
-            if (urel_Newton * maxrelchange < 0.00001) {// %Convergence test FIXME: Hardcoded tolerance
+            if (urel_Newton * maxrelchange < 0.00001) {// %Convergence test FIXME: Hardcoded
+                                                       // tolerance
                 break; // %Converged
             }
 
@@ -415,16 +418,16 @@ public class GTSurfaceTensionFullGT {
                     }
                 }
             }
-
         }
 
         return sigma;
     }
 
     /**
-     * <p>directsolve.</p>
+     * <p>
+     * directsolve. Solve linear system for Full Gradient method
+     * </p>
      *
-     * @brief Solve linear system for Full Gradient method
      * @param rres an array of {@link double} objects
      * @param JJ an array of {@link double} objects
      * @param C an array of {@link double} objects
@@ -433,9 +436,8 @@ public class GTSurfaceTensionFullGT {
      * @param rhomat an array of {@link double} objects
      * @param ncomp a int
      */
-    public static void directsolve(double rres[][], double JJ[][][], double C[][], double H, int Ngrid,
-            double rhomat[][], int ncomp) {
-
+    public static void directsolve(double rres[][], double JJ[][][], double C[][], double H,
+            int Ngrid, double rhomat[][], int ncomp) {
         int i, j, k;
         double H2 = H * H;
         double bbtmp;
@@ -456,8 +458,8 @@ public class GTSurfaceTensionFullGT {
                 for (k = 0; k < ncomp; k++) {// Each specie
                     // bb[i][j] = rhomat[i][j] + JJ[i][j][k]*rhomat[i][k] -
                     // C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
-                    bbtmp += JJ[i][j][k] * rhomat[i][k]
-                            - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
+                    bbtmp += JJ[i][j][k] * rhomat[i][k] - C[j][k]
+                            * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
                 }
                 bb.set(iglob++, 0, -bbtmp);
             }
@@ -467,8 +469,8 @@ public class GTSurfaceTensionFullGT {
         i = 1; // Grid point 2 is the first unknown
         for (j = 0; j < ncomp; j++) {// Each specie
             for (k = 0; k < ncomp; k++) {// Each specie
-//            Jac[j][k]=JJ[i][j][k]+2.0/H2*C[j][k];
-//            Jac[j][k+ncomp] = -1.0/H2*C[j][k];
+                // Jac[j][k]=JJ[i][j][k]+2.0/H2*C[j][k];
+                // Jac[j][k+ncomp] = -1.0/H2*C[j][k];
                 Jac.set(j, k, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
                 Jac.set(j, k + ncomp, -1.0 / H2 * C[j][k]);
             }
@@ -478,9 +480,9 @@ public class GTSurfaceTensionFullGT {
             skip = ncomp * (i - 1);
             for (j = 0; j < ncomp; j++) {// Each specie
                 for (k = 0; k < ncomp; k++) {// Each specie
-//                Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
-//                Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
-//                Jac[j+skip][k+skip+ncomp] = -1.0/H2*C[j][k];
+                    // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
+                    // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
+                    // Jac[j+skip][k+skip+ncomp] = -1.0/H2*C[j][k];
                     Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
                     Jac.set(j + skip, k + skip, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
                     Jac.set(j + skip, k + skip + ncomp, -1.0 / H2 * C[j][k]);
@@ -492,8 +494,8 @@ public class GTSurfaceTensionFullGT {
         skip = ncomp * (i - 1);
         for (j = 0; j < ncomp; j++) {// Each specie
             for (k = 0; k < ncomp; k++) {// Each specie
-//            Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
-//            Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
+                // Jac[j+skip][k+skip-ncomp] = -1.0/H2*C[j][k];
+                // Jac[j+skip][k+skip]=JJ[i][j][k]+2.0/H2*C[j][k];
                 Jac.set(j + skip, k + skip - ncomp, -1.0 / H2 * C[j][k]);
                 Jac.set(j + skip, k + skip, JJ[i][j][k] + 2.0 / H2 * C[j][k]);
             }
@@ -511,13 +513,13 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>sigmaCalc.</p>
+     * <p>
+     * sigmaCalc. Calculates the interface tension
      *
-     * @brief Calculates the interface tension
+     * The following integral is solved with the trapezoidal method: \f{equation}{ \sigma =
+     * \int_{-\infty}^{\infty} \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
+     * </p>
      *
-     *        The following integral is solved with the trapezoidal method:
-     *        \f{equation}{ \sigma = \int_{-\infty}^{\infty} \boldsymbol{n_z}^T
-     *        \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
      * @return sigma The surface tension [N/m]
      * @param h a double
      * @param rrho an array of {@link double} objects
@@ -526,8 +528,8 @@ public class GTSurfaceTensionFullGT {
      * @param drhodz an array of {@link double} objects
      * @param ncomp a int
      */
-    public static double sigmaCalc(double h, double rrho[][], double C[][], boolean highOrder, double drhodz[][],
-            int ncomp) {
+    public static double sigmaCalc(double h, double rrho[][], double C[][], boolean highOrder,
+            double drhodz[][], int ncomp) {
         int i, j, k;
         double drho2; // For each pair of species j,k, drho2=sum_i{drhodz[i][j]*drhodz[i][k]}
         double sigma;
@@ -556,19 +558,19 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>calc_std_integral.</p>
+     * <p>
+     * calc_std_integral. Calculate width of interface region (length scale)
      *
-     * @brief Calculate width of interface region (length scale)
+     * Estimate the width of interface by calculating the second moment of the surface tension
+     * integrand. Used to adjust the domain size
+     * </p>
      *
-     *        Estimate the width of interface by calculating the second moment of
-     *        the surface tension integrand. Used to adjust the domain size
      * @return Interface width (length scale) [nm]
      * @param z an array of {@link double} objects
      * @param C an array of {@link double} objects
      * @param drhodz an array of {@link double} objects
      */
     public double calc_std_integral(double z[], double C[][], double drhodz[][]) {
-
         double h1 = z[1] - z[0];
         double mean, std_integral;
         int Ngrid = drhodz.length + 1;
@@ -593,9 +595,10 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>delta_mu.</p>
+     * <p>
+     * delta_mu. Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
+     * </p>
      *
-     * @brief Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
      * @param sys a {@link neqsim.thermo.system.SystemInterface} object
      * @param ncomp a int
      * @param t a double
@@ -604,8 +607,8 @@ public class GTSurfaceTensionFullGT {
      * @param delta_mu an array of {@link double} objects
      * @param dmu_drho an array of {@link double} objects
      */
-    public static void delta_mu(SystemInterface sys, int ncomp, double t, double mueq[], double[] rho,
-            double[] delta_mu, double[][] dmu_drho) {
+    public static void delta_mu(SystemInterface sys, int ncomp, double t, double mueq[],
+            double[] rho, double[] delta_mu, double[][] dmu_drho) {
         int i;
         double[] pdummy = new double[ncomp];
         double[] mu = new double[ncomp];
@@ -618,9 +621,10 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>linspace.</p>
+     * <p>
+     * linspace. Make an array of double with N values linearly spaced between a and b.
+     * </p>
      *
-     * @brief Make an array of double with N values linearly spaced between a and b.
      * @param a start of range
      * @param b end of range
      * @param N number of values.
@@ -638,9 +642,10 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>debugPlot.</p>
+     * <p>
+     * debugPlot. Plotting of density profiles y over the domain x.
+     * </p>
      *
-     * @brief Plotting of density profiles y over the domain x.
      * @param x abscissa values
      * @param y array of ordinate value arrays.
      */
@@ -663,10 +668,11 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * <p>initmu.</p>
+     * <p>
+     * initmu. Initialize equilibrium chemical potential, and derivative and test that the bulk
+     * equilibrium is satisfied.
+     * </p>
      *
-     * @brief Initialize equilibrium chemical potential, and derivative and test
-     *        that the bulk equilibrium is satisfied.
      * @param sys a {@link neqsim.thermo.system.SystemInterface} object
      * @param ncomp a int
      * @param t a double
@@ -676,8 +682,8 @@ public class GTSurfaceTensionFullGT {
      * @param p0 an array of {@link double} objects
      * @param reltol a double
      */
-    public static void initmu(SystemInterface sys, int ncomp, double t, double rho_ph1[], double rho_ph2[],
-            double mueq[], double p0[], double reltol) {
+    public static void initmu(SystemInterface sys, int ncomp, double t, double rho_ph1[],
+            double rho_ph2[], double mueq[], double p0[], double reltol) {
         int i;
         double maxerr = 0.;
         double[][] dmu_drho1 = new double[ncomp][ncomp];
@@ -692,8 +698,9 @@ public class GTSurfaceTensionFullGT {
             maxerr = Math.max(maxerr, Math.abs(mueq[i] / mueq2[i] - 1.0));
         }
         if (maxerr > reltol) {
-            logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr
-                    + " > " + reltol);
+            logger.error(
+                    "Flash is not properly solved.  Maximum relative error in chemical potential:  "
+                            + maxerr + " > " + reltol);
             throw new RuntimeException("Flash not solved!");
         }
     }

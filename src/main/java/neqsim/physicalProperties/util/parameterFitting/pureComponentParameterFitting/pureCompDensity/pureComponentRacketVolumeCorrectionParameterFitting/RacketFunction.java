@@ -9,16 +9,20 @@ package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFi
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>RacketFunction class.</p>
+ * <p>
+ * RacketFunction class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class RacketFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for RacketFunction.</p>
+     * <p>
+     * Constructor for RacketFunction.
+     * </p>
      */
     public RacketFunction() {
         params = new double[1];
@@ -26,7 +30,7 @@ public class RacketFunction extends LevenbergMarquardtFunction {
 
     /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
         system.init(1);
         system.initPhysicalProperties();
@@ -35,7 +39,7 @@ public class RacketFunction extends LevenbergMarquardtFunction {
 
     /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponents()[i].setRacketZ(value);
         system.getPhases()[1].getComponents()[i].setRacketZ(value);

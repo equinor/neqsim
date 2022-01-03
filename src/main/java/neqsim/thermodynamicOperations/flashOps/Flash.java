@@ -16,7 +16,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
  * @version
  */
 abstract class Flash extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Flash.class);
 
@@ -37,12 +36,16 @@ abstract class Flash extends BaseOperation {
     boolean findLowesGibsPhaseIsChecked = false;
 
     /**
-     * Creates new Flash
+     * <p>
+     * Constructor for Flash.
+     * </p>
      */
     public Flash() {}
 
     /**
-     * <p>findLowestGibbsEnergyPhase.</p>
+     * <p>
+     * findLowestGibbsEnergyPhase.
+     * </p>
      *
      * @return a int
      */
@@ -64,7 +67,9 @@ abstract class Flash extends BaseOperation {
     }
 
     /**
-     * <p>stabilityAnalysis.</p>
+     * <p>
+     * stabilityAnalysis.
+     * </p>
      *
      * @throws neqsim.util.exception.IsNaNException if any.
      * @throws neqsim.util.exception.TooManyIterationsException if any.
@@ -152,7 +157,6 @@ abstract class Flash extends BaseOperation {
 
                 if ((iterations <= maxiterations - 10)
                         || !system.isImplementedCompositionDeriativesofFugacity()) {
-
                     clonedSystem.init(1, j);
                     fNormOld = fNorm;
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -305,7 +309,9 @@ abstract class Flash extends BaseOperation {
     }
 
     /**
-     * <p>stabilityCheck.</p>
+     * <p>
+     * stabilityCheck.
+     * </p>
      *
      * @return a boolean
      */
@@ -337,7 +343,6 @@ abstract class Flash extends BaseOperation {
             if (solidCheck && !system.doMultiPhaseCheck()) {
                 this.solidPhaseFlash();
             }
-
         } else {
             try {
                 system.calcBeta();
@@ -358,7 +363,9 @@ abstract class Flash extends BaseOperation {
     }
 
     /**
-     * <p>solidPhaseFlash.</p>
+     * <p>
+     * solidPhaseFlash.
+     * </p>
      */
     public void solidPhaseFlash() {
         boolean solidPhase = false;
@@ -438,14 +445,12 @@ abstract class Flash extends BaseOperation {
                 // solidPhaseFlash();
                 // solid-vapor flash
             }
-
         } else {
             // system.setPhaseIndex(system.getNumberOfPhases() - 1,
             // system.getNumberOfPhases() - 1);
             system.setNumberOfPhases(system.getNumberOfPhases() - 1);
             // logger.info("no solid phase will form..");
         }
-
     }
 
     /** {@inheritDoc} */
@@ -470,7 +475,5 @@ abstract class Flash extends BaseOperation {
 
     /** {@inheritDoc} */
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

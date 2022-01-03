@@ -4,25 +4,30 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>CPAFunctionCp class.</p>
+ * <p>
+ * CPAFunctionCp class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAFunctionCp extends CPAFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionCp.class);
 
     int phasetype = 1;
 
-
     /**
-     * <p>Constructor for CPAFunctionCp.</p>
+     * <p>
+     * Constructor for CPAFunctionCp.
+     * </p>
      */
     public CPAFunctionCp() {}
 
     /**
-     * <p>Constructor for CPAFunctionCp.</p>
+     * <p>
+     * Constructor for CPAFunctionCp.
+     * </p>
      *
      * @param phase a int
      */
@@ -59,5 +64,4 @@ public class CPAFunctionCp extends CPAFunction {
                 / (system.getPhase(phasetype).getNumberOfMolesInPhase()
                         * system.getPhase(phasetype).getMolarMass() * 1000);
     }
-
 }

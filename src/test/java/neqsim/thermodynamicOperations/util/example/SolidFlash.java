@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SolidFlash class.</p>
+ * <p>
+ * SolidFlash class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class SolidFlash {
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -57,6 +61,5 @@ public class SolidFlash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

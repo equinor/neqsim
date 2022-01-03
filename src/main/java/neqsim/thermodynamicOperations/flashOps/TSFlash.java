@@ -10,24 +10,30 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TSFlash class.</p>
+ * <p>
+ * TSFlash class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class TSFlash extends QfuncFlash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
     Flash tpFlash;
 
     /**
-     * Creates new TSFlash
+     * <p>
+     * Constructor for TSFlash.
+     * </p>
      */
     public TSFlash() {}
 
     /**
-     * <p>Constructor for TSFlash.</p>
+     * <p>
+     * Constructor for TSFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Sspec a double
@@ -88,11 +94,11 @@ public class TSFlash extends QfuncFlash {
     }
 
     /**
-     * <p>onPhaseSolve.</p>
+     * <p>
+     * onPhaseSolve.
+     * </p>
      */
-    public void onPhaseSolve() {
-
-    }
+    public void onPhaseSolve() {}
 
     /** {@inheritDoc} */
     @Override
@@ -102,7 +108,9 @@ public class TSFlash extends QfuncFlash {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -126,6 +134,5 @@ public class TSFlash extends QfuncFlash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

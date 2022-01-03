@@ -1,17 +1,21 @@
 package neqsim.fluidMechanics.util.parameterFitting.masstransfer;
 
 /**
- * <p>MassTransferFunction class.</p>
+ * <p>
+ * MassTransferFunction class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class MassTransferFunction extends
         neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for MassTransferFunction.</p>
+     * <p>
+     * Constructor for MassTransferFunction.
+     * </p>
      */
     public MassTransferFunction() {
         params = new double[1];

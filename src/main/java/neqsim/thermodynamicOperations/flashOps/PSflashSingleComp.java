@@ -8,23 +8,29 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>PSflashSingleComp class.</p>
+ * <p>
+ * PSflashSingleComp class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class PSflashSingleComp extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
 
     /**
-     * Creates new PSflashSingleComp
+     * <p>
+     * Constructor for PSflashSingleComp.
+     * </p>
      */
     public PSflashSingleComp() {}
 
     /**
-     * <p>Constructor for PSflashSingleComp.</p>
+     * <p>
+     * Constructor for PSflashSingleComp.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Sspec a double

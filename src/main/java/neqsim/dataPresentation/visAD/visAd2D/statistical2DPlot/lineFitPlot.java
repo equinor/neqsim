@@ -25,12 +25,14 @@ import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- * <p>lineFitPlot class.</p>
+ * <p>
+ * lineFitPlot class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class lineFitPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType x, y, index;
@@ -56,7 +58,9 @@ public class lineFitPlot {
     float[][] xy_disc_samples;
 
     /**
-     * Creates new visAdContourPlot
+     * <p>
+     * Constructor for lineFitPlot.
+     * </p>
      *
      * @param firstax a {@link java.lang.String} object
      * @param yax a {@link java.lang.String} object
@@ -64,7 +68,6 @@ public class lineFitPlot {
      * @throws visad.VisADException if any.
      */
     public lineFitPlot(String firstax, String yax) throws RemoteException, VisADException {
-
         x = RealType.getRealType("test1");
         y = RealType.getRealType("test");
 
@@ -80,7 +83,9 @@ public class lineFitPlot {
     // }
 
     /**
-     * <p>setXYVals.</p>
+     * <p>
+     * setXYVals.
+     * </p>
      *
      * @param xvals an array of {@link double} objects
      * @param yvals an array of {@link double} objects
@@ -106,7 +111,9 @@ public class lineFitPlot {
     }
 
     /**
-     * <p>setXYVals2.</p>
+     * <p>
+     * setXYVals2.
+     * </p>
      *
      * @param xvals an array of {@link double} objects
      * @param yvals an array of {@link double} objects
@@ -130,7 +137,9 @@ public class lineFitPlot {
     }
 
     /**
-     * <p>setLineXYVals.</p>
+     * <p>
+     * setLineXYVals.
+     * </p>
      *
      * @param xvals an array of {@link double} objects
      * @param yvals an array of {@link double} objects
@@ -162,13 +171,14 @@ public class lineFitPlot {
      */
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      *
      * @throws java.rmi.RemoteException if any.
      * @throws visad.VisADException if any.
      */
     public void init() throws RemoteException, VisADException {
-
         index_set = new Integer1DSet(index, xy_samples[0].length);
         points_ff = new FlatField(func_i_tuple, index_set);
         points_ff.setSamples(xy_samples);
@@ -227,14 +237,15 @@ public class lineFitPlot {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      * @throws java.rmi.RemoteException if any.
      * @throws visad.VisADException if any.
      */
     public static void main(String[] args) throws RemoteException, VisADException {
-
         lineFitPlot plot = new lineFitPlot("long", "alt");
 
         double[][] z = {{0, 0.5, 1, 3, 1}, {2, 6, 4, 1, 3}, {1, 3, 2, 1, 1}, {3, 2, 1, 3, 2},

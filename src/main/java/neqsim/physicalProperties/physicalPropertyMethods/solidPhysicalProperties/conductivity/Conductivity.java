@@ -9,31 +9,40 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>Conductivity class.</p>
+ * <p>
+ * Conductivity class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
-public class Conductivity
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
+public class Conductivity extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
     double conductivity = 0;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
      */
-    public Conductivity() {
-    }
+    public Conductivity() {}
 
     /**
-     * <p>Constructor for Conductivity.</p>
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
      *
-     * @param solidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param solidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
-    public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
+    public Conductivity(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
@@ -53,7 +62,7 @@ public class Conductivity
 
     /** {@inheritDoc} */
     @Override
-	public double calcConductivity() {
+    public double calcConductivity() {
         // using default value of parafin wax
         if (solidPhase.getPhase().getPhaseTypeName().equals("wax")) {
             conductivity = 0.25;

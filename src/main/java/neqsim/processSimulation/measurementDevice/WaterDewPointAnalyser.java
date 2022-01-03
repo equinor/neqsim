@@ -6,13 +6,14 @@ import neqsim.thermo.util.empiric.BukacekWaterInGas;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>WaterDewPointAnalyser class.</p>
+ * <p>
+ * WaterDewPointAnalyser class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -23,14 +24,19 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
     private String method = "Bukacek";
 
     /**
-     * <p>Constructor for WaterDewPointAnalyser.</p>
+     * <p>
+     * Constructor for WaterDewPointAnalyser.
+     * </p>
      */
     public WaterDewPointAnalyser() {}
 
     /**
-     * <p>Constructor for WaterDewPointAnalyser.</p>
+     * <p>
+     * Constructor for WaterDewPointAnalyser.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public WaterDewPointAnalyser(StreamInterface stream) {
         this.stream = stream;
@@ -93,7 +99,9 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>referencePressure</code>.</p>
+     * <p>
+     * Getter for the field <code>referencePressure</code>.
+     * </p>
      *
      * @return a double
      */
@@ -102,7 +110,9 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>referencePressure</code>.</p>
+     * <p>
+     * Setter for the field <code>referencePressure</code>.
+     * </p>
      *
      * @param referencePressure a double
      */
@@ -111,7 +121,9 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>method</code>.</p>
+     * <p>
+     * Getter for the field <code>method</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -120,12 +132,13 @@ public class WaterDewPointAnalyser extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>method</code>.</p>
+     * <p>
+     * Setter for the field <code>method</code>.
+     * </p>
      *
      * @param method a {@link java.lang.String} object
      */
     public void setMethod(String method) {
         this.method = method;
     }
-
 }

@@ -6,19 +6,21 @@
 
 package neqsim.thermo.phase;
 
-import neqsim.thermo.component.ComponentGEInterface;
-
 /**
- * <p>PhaseGEUniquacmodifiedHV class.</p>
+ * <p>
+ * PhaseGEUniquacmodifiedHV class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhaseGEUniquacmodifiedHV
+     * <p>
+     * Constructor for PhaseGEUniquacmodifiedHV.
+     * </p>
      */
     public PhaseGEUniquacmodifiedHV() {
         super();
@@ -26,7 +28,8 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
     /** {@inheritDoc} */
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
         // componentArray[compNumber] = new ComponentGEUniquacmodifiedHV(componentName,
         // moles, molesInPhase, compNumber);
@@ -34,17 +37,18 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
     /** {@inheritDoc} */
     @Override
-	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype) {
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure, int phasetype) {
         double GE = 0;
 
-        ComponentGEInterface[] comp_Array = (ComponentGEInterface[]) this.getcomponentArray();
+        /*
+         * ComponentGEInterface[] comp_Array = (ComponentGEInterface[]) this.getcomponentArray();
+         * 
+         * for (int i = 0; i < numberOfComponents; i++) { GE = GE + comp_Array[i].getx() *
+         * Math.log(comp_Array[i].getGamma(phase, numberOfComponents, temperature, pressure,
+         * phasetype)); }
+         */
 
-        for (int i = 0; i < numberOfComponents; i++) {
-            // GE = GE + comp_Array[i].getx()*Math.log(comp_Array[i].getGamma(phase,
-            // numberOfComponents, temperature, pressure, phasetype));
-        }
         return R * temperature * GE * numberOfMolesInPhase;
     }
-
 }

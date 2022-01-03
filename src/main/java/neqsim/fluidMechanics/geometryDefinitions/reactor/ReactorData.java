@@ -3,23 +3,27 @@ package neqsim.fluidMechanics.geometryDefinitions.reactor;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
 /**
- * <p>ReactorData class.</p>
+ * <p>
+ * ReactorData class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class ReactorData extends GeometryDefinition {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ReactorData.</p>
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
      */
-    public ReactorData() {
-    }
+    public ReactorData() {}
 
     /**
-     * <p>Constructor for ReactorData.</p>
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
      *
      * @param diameter a double
      */
@@ -28,18 +32,23 @@ public class ReactorData extends GeometryDefinition {
     }
 
     /**
-     * <p>Constructor for ReactorData.</p>
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
      *
      * @param diameter a double
      * @param roughness a double
      */
     public ReactorData(double diameter, double roughness) {
         super(diameter, roughness);
-        packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
+        packing =
+                new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
     }
 
     /**
-     * <p>Constructor for ReactorData.</p>
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
      *
      * @param diameter a double
      * @param packingType a int
@@ -53,26 +62,32 @@ public class ReactorData extends GeometryDefinition {
     @Override
     public void setPackingType(int i) {
         // if(i!=100){
-        packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
+        packing =
+                new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
         // }
     }
 
     /**
-     * <p>setPackingType.</p>
+     * <p>
+     * setPackingType.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
     public void setPackingType(String name) {
         if (name.equals("pallring")) {
-            packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-                    "pallring");
+            packing =
+                    new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
+                            "pallring");
         } else if (name.equals("rashigring")) {
-            packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking(
-                    "rashigring");
+            packing =
+                    new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking(
+                            "rashigring");
         } else {
             System.out.println("pakcing " + name + " not defined in database - using pallrings");
-            packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-                    "pallring");
+            packing =
+                    new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
+                            "pallring");
         }
     }
 
@@ -80,15 +95,18 @@ public class ReactorData extends GeometryDefinition {
     @Override
     public void setPackingType(String name, String material, int size) {
         if (name.equals("pallring")) {
-            packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-                    "pallring", material, size);
+            packing =
+                    new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
+                            "pallring", material, size);
         } else if (name.equals("rashigring")) {
-            packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking(
-                    "rashigring", material, size);
+            packing =
+                    new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.RachigRingPacking(
+                            "rashigring", material, size);
         } else {
             System.out.println("pakcing " + name + " not defined in database - using pallrings");
-            packing = new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
-                    "pallring", material, size);
+            packing =
+                    new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking(
+                            "pallring", material, size);
         }
     }
 
@@ -110,5 +128,4 @@ public class ReactorData extends GeometryDefinition {
 
         return clonedPipe;
     }
-
 }

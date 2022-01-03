@@ -1,25 +1,33 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity;
 
 /**
- * <p>WilkeLeeDiffusivity class.</p>
+ * <p>
+ * WilkeLeeDiffusivity class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class WilkeLeeDiffusivity extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for WilkeLeeDiffusivity.
+     * </p>
      */
     public WilkeLeeDiffusivity() {}
 
     /**
-     * <p>Constructor for WilkeLeeDiffusivity.</p>
+     * <p>
+     * Constructor for WilkeLeeDiffusivity.
+     * </p>
      *
-     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public WilkeLeeDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
@@ -49,5 +57,4 @@ public class WilkeLeeDiffusivity extends Diffusivity {
                         * binaryLennardJonesOmega[i][j]);
         return binaryDiffusionCoeffisients[i][j] * 1e-4;
     }
-
 }

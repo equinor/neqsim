@@ -3,13 +3,14 @@ package neqsim.PVTsimulation.modelTuning;
 import neqsim.PVTsimulation.simulation.SimulationInterface;
 
 /**
- * <p>BaseTuningClass class.</p>
+ * <p>
+ * BaseTuningClass class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class BaseTuningClass implements TuningInterface {
-
     private static final long serialVersionUID = 1000;
 
     private SimulationInterface simulation = null;
@@ -19,12 +20,16 @@ public class BaseTuningClass implements TuningInterface {
     public double saturationPressure = 273.15;
 
     /**
-     * <p>Constructor for BaseTuningClass.</p>
+     * <p>
+     * Constructor for BaseTuningClass.
+     * </p>
      */
     public BaseTuningClass() {}
 
     /**
-     * <p>Constructor for BaseTuningClass.</p>
+     * <p>
+     * Constructor for BaseTuningClass.
+     * </p>
      *
      * @param simulationClass a {@link neqsim.PVTsimulation.simulation.SimulationInterface} object
      */
@@ -46,7 +51,9 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
-     * <p>isTunePlusMolarMass.</p>
+     * <p>
+     * isTunePlusMolarMass.
+     * </p>
      *
      * @return the tunePlusMolarMass
      */
@@ -55,7 +62,9 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
-     * <p>Setter for the field <code>tunePlusMolarMass</code>.</p>
+     * <p>
+     * Setter for the field <code>tunePlusMolarMass</code>.
+     * </p>
      *
      * @param tunePlusMolarMass the tunePlusMolarMass to set
      */
@@ -64,7 +73,9 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
-     * <p>isTuneVolumeCorrection.</p>
+     * <p>
+     * isTuneVolumeCorrection.
+     * </p>
      *
      * @return the tuneVolumeCorrection
      */
@@ -73,7 +84,9 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
-     * <p>Setter for the field <code>tuneVolumeCorrection</code>.</p>
+     * <p>
+     * Setter for the field <code>tuneVolumeCorrection</code>.
+     * </p>
      *
      * @param tuneVolumeCorrection the tuneVolumeCorrection to set
      */

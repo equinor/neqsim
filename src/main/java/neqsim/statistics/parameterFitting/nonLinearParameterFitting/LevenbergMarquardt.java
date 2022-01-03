@@ -10,12 +10,14 @@ import Jama.Matrix;
 import neqsim.statistics.parameterFitting.StatisticsBaseClass;
 
 /**
- * <p>LevenbergMarquardt class.</p>
+ * <p>
+ * LevenbergMarquardt class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
-
     private static final long serialVersionUID = 1000;
     double oldChiSquare = 1e100;
     double newChiSquare = 0;
@@ -26,7 +28,9 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     private int maxNumberOfIterations = 50;
 
     /**
-     * Creates new LevenbergMarquardt
+     * <p>
+     * Constructor for LevenbergMarquardt.
+     * </p>
      */
     public LevenbergMarquardt() {
         thisThread = new Thread();
@@ -47,7 +51,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
 
     /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         chiSquare = calcChiSquare();
         System.out.println("Chi square: " + chiSquare);
         dyda = calcDerivatives();
@@ -57,7 +61,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
 
     /** {@inheritDoc} */
     @Override
-	public void solve() {
+    public void solve() {
         setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
         Matrix betaMatrix;
         Matrix newParameters;
@@ -74,7 +78,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
             alphaMatrix.print(10, 3);
             Matrix solvedMatrix = alphaMatrix.solve(betaMatrix);
 
-            Matrix oldParameters = new Matrix(sampleSet.getSample(0).getFunction().getFittingParams(), 1).copy();
+            Matrix oldParameters =
+                    new Matrix(sampleSet.getSample(0).getFunction().getFittingParams(), 1).copy();
             newParameters = oldParameters.copy().plus(solvedMatrix.transpose());
             Matrix diffMat = newParameters.copy().minus(oldParameters);
             this.checkBounds(newParameters);
@@ -99,8 +104,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
             System.out.println("Parameters:");
             newParameters.print(100, 100);
             init();
-        } while (((Math.abs(newChiSquare) > 1e-6) && n < maxNumberOfIterations && Math.abs(betaMatrix.norm2()) > 1.0e-6)
-                || n < 5);
+        } while (((Math.abs(newChiSquare) > 1e-6) && n < maxNumberOfIterations
+                && Math.abs(betaMatrix.norm2()) > 1.0e-6) || n < 5);
         solved = true;
 
         System.out.println("iterations: " + n);
@@ -110,19 +115,21 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
         /*
-         * LevenbergMarquardt optim = new LevenbergMarquardt(); TestFunction
-         * testFunction = new TestFunction(); // optim.setFunction(testFunction);
+         * LevenbergMarquardt optim = new LevenbergMarquardt(); TestFunction testFunction = new
+         * TestFunction(); // optim.setFunction(testFunction);
          * 
-         * SampleValue[] sample = new SampleValue[3]; double sample1[] = { 6 };
-         * sample[0] = new SampleValue(8.5,0.1,sample1); double sample2[] = { 4 };
-         * sample[1] = new SampleValue(5.5,0.1,sample2); double sample3[] = { 4 };
-         * sample[2] = new SampleValue(5.51,0.1,sample3);
+         * SampleValue[] sample = new SampleValue[3]; double sample1[] = { 6 }; sample[0] = new
+         * SampleValue(8.5,0.1,sample1); double sample2[] = { 4 }; sample[1] = new
+         * SampleValue(5.5,0.1,sample2); double sample3[] = { 4 }; sample[2] = new
+         * SampleValue(5.51,0.1,sample3);
          * 
          * SampleSet sampleSet = new SampleSet(sample); sampleSet =
          * sampleSet.createNewNormalDistributedSet(); optim.setSampleSet(sampleSet); //
@@ -131,7 +138,9 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>maxNumberOfIterations</code>.</p>
+     * <p>
+     * Getter for the field <code>maxNumberOfIterations</code>.
+     * </p>
      *
      * @return the maxNumberOfIterations
      */
@@ -140,12 +149,13 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>maxNumberOfIterations</code>.</p>
+     * <p>
+     * Setter for the field <code>maxNumberOfIterations</code>.
+     * </p>
      *
      * @param maxNumberOfIterations the maxNumberOfIterations to set
      */
     public void setMaxNumberOfIterations(int maxNumberOfIterations) {
         this.maxNumberOfIterations = maxNumberOfIterations;
     }
-
 }

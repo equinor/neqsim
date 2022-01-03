@@ -7,14 +7,18 @@
 package neqsim.thermo.mixingRule;
 
 /**
- * <p>HVmixingRuleInterface interface.</p>
+ * <p>
+ * HVmixingRuleInterface interface.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface HVmixingRuleInterface extends EosMixingRulesInterface {
-
     /**
-     * <p>setHVDijParameter.</p>
+     * <p>
+     * setHVDijParameter.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -23,7 +27,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public void setHVDijParameter(int i, int j, double value);
 
     /**
-     * <p>setHVDijTParameter.</p>
+     * <p>
+     * setHVDijTParameter.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -32,7 +38,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public void setHVDijTParameter(int i, int j, double value);
 
     /**
-     * <p>getHVDijParameter.</p>
+     * <p>
+     * getHVDijParameter.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -41,7 +49,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public double getHVDijParameter(int i, int j);
 
     /**
-     * <p>getHVDijTParameter.</p>
+     * <p>
+     * getHVDijTParameter.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -50,7 +60,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public double getHVDijTParameter(int i, int j);
 
     /**
-     * <p>getKijWongSandler.</p>
+     * <p>
+     * getKijWongSandler.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -59,7 +71,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public double getKijWongSandler(int i, int j);
 
     /**
-     * <p>setKijWongSandler.</p>
+     * <p>
+     * setKijWongSandler.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -68,7 +82,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public void setKijWongSandler(int i, int j, double value);
 
     /**
-     * <p>setHValphaParameter.</p>
+     * <p>
+     * setHValphaParameter.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -77,7 +93,9 @@ public interface HVmixingRuleInterface extends EosMixingRulesInterface {
     public void setHValphaParameter(int i, int j, double value);
 
     /**
-     * <p>getHValphaParameter.</p>
+     * <p>
+     * getHValphaParameter.
+     * </p>
      *
      * @param i a int
      * @param j a int

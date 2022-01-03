@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseSrkCPA;
  * This class defines a thermodynamic system using the CPA EoS equation of state
  */
 public class SystemSrkCPA extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -36,7 +35,9 @@ public class SystemSrkCPA extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemSrkCPA.</p>
+     * <p>
+     * Constructor for SystemSrkCPA.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -54,7 +55,9 @@ public class SystemSrkCPA extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemSrkCPA.</p>
+     * <p>
+     * Constructor for SystemSrkCPA.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -105,7 +108,9 @@ public class SystemSrkCPA extends SystemSrkEos {
     }
 
     /**
-     * <p>commonInitialization.</p>
+     * <p>
+     * commonInitialization.
+     * </p>
      */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(true);
@@ -115,7 +120,7 @@ public class SystemSrkCPA extends SystemSrkEos {
 
     /** {@inheritDoc} */
     @Override
-	public void addComponent(String componentName, double moles) {
+    public void addComponent(String componentName, double moles) {
         // if (componentName.equals("Ca++") || componentName.equals("Na+") ||
         // componentName.equals("Cl-")) {
         // componentName = "NaCl";

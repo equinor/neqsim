@@ -5,13 +5,14 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>sysNewtonRhapsonTPflashNew class.</p>
+ * <p>
+ * sysNewtonRhapsonTPflashNew class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -33,12 +34,16 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     boolean etterCP2 = false;
 
     /**
-     * <p>Constructor for sysNewtonRhapsonTPflashNew.</p>
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflashNew.
+     * </p>
      */
     public sysNewtonRhapsonTPflashNew() {}
 
     /**
-     * Creates new nonlin
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflashNew.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param numberOfPhases a int
@@ -61,7 +66,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>fvec</code>.</p>
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
      */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -81,7 +88,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     }
 
     /**
-     * <p>setJac.</p>
+     * <p>
+     * setJac.
+     * </p>
      */
     public void setJac() {
         Jac.timesEquals(0.0);
@@ -133,7 +142,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>u</code>.</p>
+     * <p>
+     * Setter for the field <code>u</code>.
+     * </p>
      */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -144,7 +155,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      */
     public void init() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -157,7 +170,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     }
 
     /**
-     * <p>solve.</p>
+     * <p>
+     * solve.
+     * </p>
      *
      * @param np a int
      */

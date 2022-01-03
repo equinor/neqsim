@@ -4,13 +4,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>WaterDewPointEquilibriumLine class.</p>
+ * <p>
+ * WaterDewPointEquilibriumLine class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
 
     double[][] hydratePoints = null;
@@ -18,7 +19,9 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
     int numberOfPoints = 10;
 
     /**
-     * <p>Constructor for WaterDewPointEquilibriumLine.</p>
+     * <p>
+     * Constructor for WaterDewPointEquilibriumLine.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param minPres a double
@@ -32,7 +35,7 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         SystemInterface system = (SystemInterface) this.system.clone();
         hydratePoints = new double[2][numberOfPoints];
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -40,7 +43,6 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
         system.setPressure(minPressure);
         double dp = (maxPressure - minPressure) / (numberOfPoints - 1.0);
         for (int i = 0; i < numberOfPoints; i++) {
-
             system.setPressure(minPressure + dp * i);
             try {
                 ops.waterDewPointTemperatureMultiphaseFlash();
@@ -56,7 +58,7 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
 
     /** {@inheritDoc} */
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return hydratePoints;
     }
 }

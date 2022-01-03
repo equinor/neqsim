@@ -7,17 +7,20 @@
 package neqsim.dataPresentation;
 
 /**
- * <p>userInterface class.</p>
+ * <p>
+ * userInterface class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class userInterface implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new userInterface
+     * <p>
+     * Constructor for userInterface.
+     * </p>
      */
-    public userInterface() {
-    }
+    public userInterface() {}
 }

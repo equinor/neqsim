@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemUNIFACpsrk extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -38,7 +37,9 @@ public class SystemUNIFACpsrk extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemUNIFACpsrk.</p>
+     * <p>
+     * Constructor for SystemUNIFACpsrk.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -58,7 +59,9 @@ public class SystemUNIFACpsrk extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemUNIFACpsrk.</p>
+     * <p>
+     * Constructor for SystemUNIFACpsrk.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -100,9 +103,9 @@ public class SystemUNIFACpsrk extends SystemEos {
             logger.error("Cloning failed.", e);
         }
 
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }

@@ -9,14 +9,18 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoeffici
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
- * <p>InterphaseTransportCoefficientInterface interface.</p>
+ * <p>
+ * InterphaseTransportCoefficientInterface interface.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface InterphaseTransportCoefficientInterface {
-
     /**
-     * <p>calcWallFrictionFactor.</p>
+     * <p>
+     * calcWallFrictionFactor.
+     * </p>
      *
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      * @return a double
@@ -24,7 +28,9 @@ public interface InterphaseTransportCoefficientInterface {
     public double calcWallFrictionFactor(FlowNodeInterface node);
 
     /**
-     * <p>calcWallFrictionFactor.</p>
+     * <p>
+     * calcWallFrictionFactor.
+     * </p>
      *
      * @param phase a int
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
@@ -33,7 +39,9 @@ public interface InterphaseTransportCoefficientInterface {
     public double calcWallFrictionFactor(int phase, FlowNodeInterface node);
 
     /**
-     * <p>calcInterPhaseFrictionFactor.</p>
+     * <p>
+     * calcInterPhaseFrictionFactor.
+     * </p>
      *
      * @param phase a int
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
@@ -42,47 +50,61 @@ public interface InterphaseTransportCoefficientInterface {
     public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node);
 
     /**
-     * <p>calcWallHeatTransferCoefficient.</p>
+     * <p>
+     * calcWallHeatTransferCoefficient.
+     * </p>
      *
      * @param phase a int
      * @param prandtlNumber a double
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      * @return a double
      */
-    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node);
+    public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber,
+            FlowNodeInterface node);
 
     /**
-     * <p>calcWallMassTransferCoefficient.</p>
+     * <p>
+     * calcWallMassTransferCoefficient.
+     * </p>
      *
      * @param phase a int
      * @param schmidt a double
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      * @return a double
      */
-    public double calcWallMassTransferCoefficient(int phase, double schmidt, FlowNodeInterface node);
+    public double calcWallMassTransferCoefficient(int phase, double schmidt,
+            FlowNodeInterface node);
 
     /**
-     * <p>calcInterphaseHeatTransferCoefficient.</p>
+     * <p>
+     * calcInterphaseHeatTransferCoefficient.
+     * </p>
      *
      * @param phase a int
      * @param prandtlNumber a double
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      * @return a double
      */
-    public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node);
+    public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber,
+            FlowNodeInterface node);
 
     /**
-     * <p>calcInterphaseMassTransferCoefficient.</p>
+     * <p>
+     * calcInterphaseMassTransferCoefficient.
+     * </p>
      *
      * @param phase a int
      * @param schmidt a double
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      * @return a double
      */
-    public double calcInterphaseMassTransferCoefficient(int phase, double schmidt, FlowNodeInterface node);
+    public double calcInterphaseMassTransferCoefficient(int phase, double schmidt,
+            FlowNodeInterface node);
 
     /**
-     * <p>calcWallHeatTransferCoefficient.</p>
+     * <p>
+     * calcWallHeatTransferCoefficient.
+     * </p>
      *
      * @param phase a int
      * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object

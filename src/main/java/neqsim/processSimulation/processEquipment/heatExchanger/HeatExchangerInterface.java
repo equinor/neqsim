@@ -10,6 +10,7 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
  * <p>HeatExchangerInterface interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface HeatExchangerInterface extends HeaterInterface {
     /**

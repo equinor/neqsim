@@ -8,22 +8,26 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Filter class.</p>
+ * <p>
+ * Filter class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class Filter extends ProcessEquipmentBaseClass {
-
     private double deltaP = 0.01;
     protected StreamInterface outStream;
     protected StreamInterface inStream;
     private double Cv = 0.0;
 
     /**
-     * <p>Constructor for Filter.</p>
+     * <p>
+     * Constructor for Filter.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public Filter(StreamInterface inStream) {
         this.inStream = inStream;
@@ -32,7 +36,7 @@ public class Filter extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         SystemInterface system = (SystemInterface) inStream.getThermoSystem().clone();
         if (Math.abs(getDeltaP()) > 1e-10) {
             system.setPressure(inStream.getPressure() - getDeltaP());
@@ -45,7 +49,9 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>deltaP</code>.</p>
+     * <p>
+     * Getter for the field <code>deltaP</code>.
+     * </p>
      *
      * @return a double
      */
@@ -54,7 +60,9 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>deltaP</code>.</p>
+     * <p>
+     * Setter for the field <code>deltaP</code>.
+     * </p>
      *
      * @param deltaP a double
      */
@@ -64,7 +72,9 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>deltaP</code>.</p>
+     * <p>
+     * Setter for the field <code>deltaP</code>.
+     * </p>
      *
      * @param deltaP a double
      * @param unit a {@link java.lang.String} object
@@ -75,7 +85,9 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -85,13 +97,15 @@ public class Filter extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-	public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
+    public void runConditionAnalysis(ProcessEquipmentInterface refTEGabsorberloc) {
         double deltaP = inStream.getPressure("bara") - outStream.getPressure("bara");
         Cv = Math.sqrt(deltaP) / inStream.getFlowRate("kg/hr");
     }
 
     /**
-     * <p>getCvFactor.</p>
+     * <p>
+     * getCvFactor.
+     * </p>
      *
      * @return a double
      */
@@ -100,7 +114,9 @@ public class Filter extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setCvFactor.</p>
+     * <p>
+     * setCvFactor.
+     * </p>
      *
      * @param pressureCoef a double
      */

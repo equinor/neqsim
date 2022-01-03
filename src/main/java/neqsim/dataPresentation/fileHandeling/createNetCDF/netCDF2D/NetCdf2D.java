@@ -1,23 +1,21 @@
-/*
- * NetCdf.java
- *
- * Created on 5. august 2001, 21:52
- */
-
 package neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D;
 
 import java.io.IOException;
-import ucar.ma2.*;
-import ucar.nc2.*;
-import java.util.*;
+import java.util.ArrayList;
+import ucar.ma2.Array;
+import ucar.nc2.Dimension;
+import ucar.nc2.NetcdfFileWriter;
+import ucar.nc2.Variable;
 
 /**
- * <p>NetCdf2D class.</p>
+ * <p>
+ * NetCdf2D class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class NetCdf2D {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/temp/example.nc";
@@ -30,13 +28,16 @@ public class NetCdf2D {
     int yLength = 0;
 
     /**
-     * Creates new NetCdf
+     * <p>
+     * Constructor for NetCdf2D.
+     * </p>
      */
-    public NetCdf2D() {
-    }
+    public NetCdf2D() {}
 
     /**
-     * <p>setOutputFileName.</p>
+     * <p>
+     * setOutputFileName.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -45,7 +46,9 @@ public class NetCdf2D {
     }
 
     /**
-     * <p>Setter for the field <code>xvalues</code>.</p>
+     * <p>
+     * Setter for the field <code>xvalues</code>.
+     * </p>
      *
      * @param x an array of {@link double} objects
      * @param name a {@link java.lang.String} object
@@ -57,7 +60,9 @@ public class NetCdf2D {
     }
 
     /**
-     * <p>Setter for the field <code>yvalues</code>.</p>
+     * <p>
+     * Setter for the field <code>yvalues</code>.
+     * </p>
      *
      * @param y an array of {@link double} objects
      * @param name a {@link java.lang.String} object
@@ -73,12 +78,14 @@ public class NetCdf2D {
     }
 
     /**
-     * <p>createFile.</p>
+     * <p>
+     * createFile.
+     * </p>
      */
     public void createFile() {
-
         try {
-            NetcdfFileWriter ncfile = NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, fileName, null);
+            NetcdfFileWriter ncfile =
+                    NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, fileName, null);
         } catch (IOException e) {
             System.err.println("ERROR creating file");
         }
@@ -96,7 +103,8 @@ public class NetCdf2D {
 
         for (int i = 0; i < yLength; i++) {
             lonD.add(ncfile.addDimension(null, yName2[i], yvalues2[i].length));
-            Variable u = ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
+            Variable u =
+                    ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
             // u.addAttribute(new Attribute("units", "degrees_east"));
 
         }
@@ -107,7 +115,6 @@ public class NetCdf2D {
             ncfile.create();
 
         } catch (IOException e) {
-
             System.err.println("ERROR creating file");
         }
 
@@ -118,7 +125,6 @@ public class NetCdf2D {
                 v = ncfile.findVariable(lonD.get(i).getName());
                 ncfile.write(v, Array.factory(yvalues2[i]));
             }
-
         } catch (Exception e) {
             System.err.println("ERROR writing file");
         }
@@ -133,7 +139,9 @@ public class NetCdf2D {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -145,5 +153,4 @@ public class NetCdf2D {
         test.setYvalues(y, "length", "meter");
         test.createFile();
     }
-
 }

@@ -12,16 +12,14 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the SRK EoS amd NRTL for
- * liquids
+ * This class defines a thermodynamic system using the SRK EoS amd NRTL for liquids
  */
 public class SystemNRTL extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -39,7 +37,9 @@ public class SystemNRTL extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemNRTL.</p>
+     * <p>
+     * Constructor for SystemNRTL.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -59,7 +59,9 @@ public class SystemNRTL extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemNRTL.</p>
+     * <p>
+     * Constructor for SystemNRTL.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -101,11 +103,10 @@ public class SystemNRTL extends SystemEos {
             logger.error("Cloning failed.", e);
         }
 
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }
-
 }

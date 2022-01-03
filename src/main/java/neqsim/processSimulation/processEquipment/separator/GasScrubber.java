@@ -13,12 +13,14 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>GasScrubber class.</p>
+ * <p>
+ * GasScrubber class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class GasScrubber extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -29,7 +31,9 @@ public class GasScrubber extends Separator {
     String name = new String();
 
     /**
-     * Creates new GasScrubber
+     * <p>
+     * Constructor for GasScrubber.
+     * </p>
      */
     public GasScrubber() {
         super();
@@ -38,7 +42,9 @@ public class GasScrubber extends Separator {
     }
 
     /**
-     * <p>Constructor for GasScrubber.</p>
+     * <p>
+     * Constructor for GasScrubber.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -48,7 +54,9 @@ public class GasScrubber extends Separator {
     }
 
     /**
-     * <p>Constructor for GasScrubber.</p>
+     * <p>
+     * Constructor for GasScrubber.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
@@ -66,7 +74,9 @@ public class GasScrubber extends Separator {
     }
 
     /**
-     * <p>Setter for the field <code>inletStream</code>.</p>
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
      *
      * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
      */
@@ -83,7 +93,9 @@ public class GasScrubber extends Separator {
     }
 
     /**
-     * <p>addScrubberSection.</p>
+     * <p>
+     * addScrubberSection.
+     * </p>
      *
      * @param type a {@link java.lang.String} object
      */
@@ -131,8 +143,7 @@ public class GasScrubber extends Separator {
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override
@@ -141,8 +152,9 @@ public class GasScrubber extends Separator {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 }

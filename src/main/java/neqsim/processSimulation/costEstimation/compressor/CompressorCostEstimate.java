@@ -4,19 +4,24 @@ import neqsim.processSimulation.costEstimation.UnitCostEstimateBaseClass;
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 
 /**
- * <p>CompressorCostEstimate class.</p>
+ * <p>
+ * CompressorCostEstimate class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for CompressorCostEstimate.</p>
+     * <p>
+     * Constructor for CompressorCostEstimate.
+     * </p>
      *
-     * @param mechanicalEquipment a {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign} object
+     * @param mechanicalEquipment a
+     *        {@link neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign}
+     *        object
      */
     public CompressorCostEstimate(CompressorMechanicalDesign mechanicalEquipment) {
         super(mechanicalEquipment);
@@ -24,7 +29,7 @@ public class CompressorCostEstimate extends UnitCostEstimateBaseClass {
 
     /** {@inheritDoc} */
     @Override
-	public double getTotaltCost() {
+    public double getTotaltCost() {
         CompressorMechanicalDesign sepMecDesign = (CompressorMechanicalDesign) mechanicalEquipment;
 
         sepMecDesign.getWeightTotal();

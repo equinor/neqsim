@@ -4,41 +4,49 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>TrayInterface interface.</p>
+ * <p>
+ * TrayInterface interface.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public interface TrayInterface extends ProcessEquipmentInterface {
-
     /** {@inheritDoc} */
     @Override
-	public void run();
+    public void run();
 
     /**
-     * <p>addStream.</p>
+     * <p>
+     * addStream.
+     * </p>
      *
-     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void addStream(StreamInterface newStream);
 
     /** {@inheritDoc} */
     @Override
-	public void setName(String name);
+    public void setName(String name);
 
     /** {@inheritDoc} */
     @Override
-	public String getName();
+    public String getName();
 
     /**
-     * <p>setHeatInput.</p>
+     * <p>
+     * setHeatInput.
+     * </p>
      *
      * @param heatinp a double
      */
     public void setHeatInput(double heatinp);
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient();
 }

@@ -9,15 +9,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>Diffusivity class.</p>
+ * <p>
+ * Diffusivity class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
@@ -25,14 +27,20 @@ public class Diffusivity extends
     double[] effectiveDiffusionCoefficient;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      */
     public Diffusivity() {}
 
     /**
-     * <p>Constructor for Diffusivity.</p>
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      *
-     * @param solidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param solidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
@@ -67,15 +75,12 @@ public class Diffusivity extends
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-
         return binaryDiffusionCoeffisients;
     }
 
     /** {@inheritDoc} */
     @Override
-    public void calcEffectiveDiffusionCoeffisients() {
-
-    }
+    public void calcEffectiveDiffusionCoeffisients() {}
 
     /** {@inheritDoc} */
     @Override

@@ -5,13 +5,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>CricondenbarAnalyser class.</p>
+ * <p>
+ * CricondenbarAnalyser class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -20,14 +21,19 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     protected StreamInterface stream = null;
 
     /**
-     * <p>Constructor for CricondenbarAnalyser.</p>
+     * <p>
+     * Constructor for CricondenbarAnalyser.
+     * </p>
      */
     public CricondenbarAnalyser() {}
 
     /**
-     * <p>Constructor for CricondenbarAnalyser.</p>
+     * <p>
+     * Constructor for CricondenbarAnalyser.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public CricondenbarAnalyser(StreamInterface stream) {
         this.stream = stream;
@@ -73,7 +79,9 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>getMeasuredValue2.</p>
+     * <p>
+     * getMeasuredValue2.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @param temp a double
@@ -96,5 +104,4 @@ public class CricondenbarAnalyser extends MeasurementDeviceBaseClass {
         }
         return thermoOps.getSaturationPressure();
     }
-
 }

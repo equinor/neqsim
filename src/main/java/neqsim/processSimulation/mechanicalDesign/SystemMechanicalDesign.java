@@ -5,13 +5,14 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
- * <p>SystemMechanicalDesign class.</p>
+ * <p>
+ * SystemMechanicalDesign class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SystemMechanicalDesign implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     ProcessSystem processSystem = null;
@@ -19,7 +20,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     int numberOfModules = 0;
 
     /**
-     * <p>Constructor for SystemMechanicalDesign.</p>
+     * <p>
+     * Constructor for SystemMechanicalDesign.
+     * </p>
      *
      * @param processSystem a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
@@ -28,7 +31,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * <p>setCompanySpecificDesignStandards.</p>
+     * <p>
+     * setCompanySpecificDesignStandards.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -37,11 +42,12 @@ public class SystemMechanicalDesign implements java.io.Serializable {
             processSystem.getUnitOperations().get(i).getMechanicalDesign()
                     .setCompanySpecificDesignStandards(name);
         }
-
     }
 
     /**
-     * <p>runDesignCalculation.</p>
+     * <p>
+     * runDesignCalculation.
+     * </p>
      */
     public void runDesignCalculation() {
         ArrayList<String> names = processSystem.getAllUnitNames();
@@ -69,7 +75,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * <p>setDesign.</p>
+     * <p>
+     * setDesign.
+     * </p>
      */
     public void setDesign() {
         for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
@@ -78,7 +86,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>totalPlotSpace</code>.</p>
+     * <p>
+     * Getter for the field <code>totalPlotSpace</code>.
+     * </p>
      *
      * @return a double
      */
@@ -87,17 +97,20 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>totalVolume</code>.</p>
+     * <p>
+     * Getter for the field <code>totalVolume</code>.
+     * </p>
      *
      * @return a double
      */
     public double getTotalVolume() {
-
         return totalVolume;
     }
 
     /**
-     * <p>Getter for the field <code>totalWeight</code>.</p>
+     * <p>
+     * Getter for the field <code>totalWeight</code>.
+     * </p>
      *
      * @return a double
      */
@@ -106,12 +119,13 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     }
 
     /**
-     * <p>getTotalNumberOfModules.</p>
+     * <p>
+     * getTotalNumberOfModules.
+     * </p>
      *
      * @return a int
      */
     public int getTotalNumberOfModules() {
-
         return numberOfModules;
     }
 }

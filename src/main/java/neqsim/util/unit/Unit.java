@@ -10,6 +10,7 @@ package neqsim.util.unit;
  * <p>Unit interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface Unit {
     /**

@@ -4,25 +4,30 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>CPAFunctionDens class.</p>
+ * <p>
+ * CPAFunctionDens class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class CPAFunctionDens extends CPAFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAFunctionDens.class);
 
     int phasetype = 1;
 
-
     /**
-     * <p>Constructor for CPAFunctionDens.</p>
+     * <p>
+     * Constructor for CPAFunctionDens.
+     * </p>
      */
     public CPAFunctionDens() {}
 
     /**
-     * <p>Constructor for CPAFunctionDens.</p>
+     * <p>
+     * Constructor for CPAFunctionDens.
+     * </p>
      *
      * @param phase a int
      */
@@ -44,7 +49,9 @@ public class CPAFunctionDens extends CPAFunction {
     // return system.getPhase(phasetype).getPhysicalProperties().getDensity();
     // }
     /**
-     * <p>calcValue2.</p>
+     * <p>
+     * calcValue2.
+     * </p>
      *
      * @param dependentValues an array of {@link double} objects
      * @return a double

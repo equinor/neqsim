@@ -14,12 +14,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>AdiabaticTwoPhasePipe class.</p>
+ * <p>
+ * AdiabaticTwoPhasePipe class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class AdiabaticTwoPhasePipe extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     double inletPressure = 0;
@@ -39,14 +41,18 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     String pipeSpecification = "AP02";
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for AdiabaticTwoPhasePipe.
+     * </p>
      */
     public AdiabaticTwoPhasePipe() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
     /**
-     * <p>Setter for the field <code>pipeSpecification</code>.</p>
+     * <p>
+     * Setter for the field <code>pipeSpecification</code>.
+     * </p>
      *
      * @param nominalDiameter a double
      * @param pipeSec a {@link java.lang.String} object
@@ -57,9 +63,12 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Constructor for AdiabaticTwoPhasePipe.</p>
+     * <p>
+     * Constructor for AdiabaticTwoPhasePipe.
+     * </p>
      *
-     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public AdiabaticTwoPhasePipe(StreamInterface inStream) {
         this.inStream = inStream;
@@ -85,7 +94,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>setOutTemperature.</p>
+     * <p>
+     * setOutTemperature.
+     * </p>
      *
      * @param temperature a double
      */
@@ -95,7 +106,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>setOutPressure.</p>
+     * <p>
+     * setOutPressure.
+     * </p>
      *
      * @param pressure a double
      */
@@ -105,7 +118,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>calcWallFrictionFactor.</p>
+     * <p>
+     * calcWallFrictionFactor.
+     * </p>
      *
      * @param reynoldsNumber a double
      * @return a double
@@ -118,13 +133,16 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         } else {
             flowPattern = "turbulent";
             return Math.pow(
-                    (1.0 / (-1.8 * GeneralMath.log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
+                    (1.0 / (-1.8 * GeneralMath
+                            .log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
                     2.0);
         }
     }
 
     /**
-     * <p>calcPressureOut.</p>
+     * <p>
+     * calcPressureOut.
+     * </p>
      *
      * @return a double
      */
@@ -133,21 +151,25 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         velocity = system.getFlowRate("m3/sec") / area;
         double reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity("m2/sec");
         double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
-        double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0) / insideDiameter
-                / system.getDensity("kg/m3");// * () * neqsim.thermo.ThermodynamicConstantsInterface.R
+        double dp = 2.0 * frictionFactor * length * Math.pow(system.getFlowRate("kg/sec"), 2.0)
+                / insideDiameter / system.getDensity("kg/m3");// * () *
+                                                              // neqsim.thermo.ThermodynamicConstantsInterface.R
         // / system.getMolarMass() * system.getTemperature() / Math.pow(insideDiameter,
         // 5.0);
         // \\System.out.println("friction fact" + frictionFactor + " velocity " +
         // velocity + " reynolds number " + reynoldsNumber);
         // System.out.println("dp gravity " +
         // system.getDensity("kg/m3")*neqsim.thermo.ThermodynamicConstantsInterface.gravity*(inletElevation-outletElevation)/1.0e5);
-        double dp_gravity = system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-                * (inletElevation - outletElevation);
+        double dp_gravity =
+                system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
+                        * (inletElevation - outletElevation);
         return (inletPressure * 1e5 - dp) / 1.0e5 + dp_gravity / 1.0e5;
     }
 
     /**
-     * <p>calcFlow.</p>
+     * <p>
+     * calcFlow.
+     * </p>
      *
      * @param pressureOut a double
      * @return a double
@@ -170,8 +192,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
             velocity = system.getVolume("m3") / area;
             reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity();
             double frictionFactor = calcWallFrictionFactor(reynoldsNumber) * 4.0;
-            double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0)
-                    / (gasGravity * system.getZ() * system.getTemperature() * frictionFactor * length / 1000.0));
+            double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0) / (gasGravity
+                    * system.getZ() * system.getTemperature() * frictionFactor * length / 1000.0));
             flow = 1.1494e-3 * 288.15 / (system.getPressure() * 100) * temp;
             system.setTotalFlowRate(flow / 1e6, "MSm^3/day");
             testOps.TPflash();
@@ -220,7 +242,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                 do {
                     iter++;
                     oldPressure = system.getNumberOfMoles();
-                    system.setTotalNumberOfMoles(system.getNumberOfMoles() * outP / pressureOutLimit);
+                    system.setTotalNumberOfMoles(
+                            system.getNumberOfMoles() * outP / pressureOutLimit);
 
                     // System.out.println("new moles " +
                     // system.getNumberOfMoles() + " outP "+ outP);
@@ -236,7 +259,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                     if (outP < 1e-10 || Double.isNaN(outP))
                         break;
 
-                } while (Math.abs(system.getNumberOfMoles() - oldPressure) / oldPressure > 1e-3 && iter < 3);
+                } while (Math.abs(system.getNumberOfMoles() - oldPressure) / oldPressure > 1e-3
+                        && iter < 3);
                 // calcFlow(pressureOutLimit);
                 // System.out.println("new moles " +
                 // system.getNumberOfMoles()*system.getPressure()/pressureOutLimit);
@@ -246,7 +270,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                 system.setTotalFlowRate(flowLimit, maxflowunit);
                 system.init(1);
             }
-            inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit), maxflowunit);
+            inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate(maxflowunit),
+                    maxflowunit);
             inStream.run();
         } else {
             calcFlow(pressureOut);
@@ -292,7 +317,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void runTransient() {
-
         run();
     }
 
@@ -304,11 +328,12 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void setInitialFlowPattern(String flowPattern) {
-    }
+    public void setInitialFlowPattern(String flowPattern) {}
 
     /**
-     * <p>Getter for the field <code>length</code>.</p>
+     * <p>
+     * Getter for the field <code>length</code>.
+     * </p>
      *
      * @return the length
      */
@@ -317,7 +342,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Setter for the field <code>length</code>.</p>
+     * <p>
+     * Setter for the field <code>length</code>.
+     * </p>
      *
      * @param length the length to set
      */
@@ -326,7 +353,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>getDiameter.</p>
+     * <p>
+     * getDiameter.
+     * </p>
      *
      * @return the diameter
      */
@@ -335,7 +364,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>setDiameter.</p>
+     * <p>
+     * setDiameter.
+     * </p>
      *
      * @param diameter the diameter to set
      */
@@ -344,7 +375,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Getter for the field <code>pipeWallRoughness</code>.</p>
+     * <p>
+     * Getter for the field <code>pipeWallRoughness</code>.
+     * </p>
      *
      * @return the pipeWallRoughness
      */
@@ -353,7 +386,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Setter for the field <code>pipeWallRoughness</code>.</p>
+     * <p>
+     * Setter for the field <code>pipeWallRoughness</code>.
+     * </p>
      *
      * @param pipeWallRoughness the pipeWallRoughness to set
      */
@@ -362,7 +397,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Getter for the field <code>inletElevation</code>.</p>
+     * <p>
+     * Getter for the field <code>inletElevation</code>.
+     * </p>
      *
      * @return the inletElevation
      */
@@ -371,7 +408,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Setter for the field <code>inletElevation</code>.</p>
+     * <p>
+     * Setter for the field <code>inletElevation</code>.
+     * </p>
      *
      * @param inletElevation the inletElevation to set
      */
@@ -380,7 +419,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Getter for the field <code>outletElevation</code>.</p>
+     * <p>
+     * Getter for the field <code>outletElevation</code>.
+     * </p>
      *
      * @return the outletElevation
      */
@@ -389,7 +430,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Setter for the field <code>outletElevation</code>.</p>
+     * <p>
+     * Setter for the field <code>outletElevation</code>.
+     * </p>
      *
      * @param outletElevation the outletElevation to set
      */
@@ -398,12 +441,15 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param name an array of {@link java.lang.String} objects
      */
     public static void main(String[] name) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 100.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 100.00);
         testSystem.addComponent("methane", 10.0, "MSm^3/day");
         testSystem.addComponent("n-heptane", 5.0, "MSm^3/day");
         testSystem.createDatabase(true);
@@ -418,7 +464,8 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         pipe.setPipeWallRoughness(10e-6);
         // pipe.setOutPressure(112.0);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(pipe);
         operations.run();
@@ -427,7 +474,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Getter for the field <code>pressureOutLimit</code>.</p>
+     * <p>
+     * Getter for the field <code>pressureOutLimit</code>.
+     * </p>
      *
      * @return a double
      */
@@ -436,7 +485,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Setter for the field <code>pressureOutLimit</code>.</p>
+     * <p>
+     * Setter for the field <code>pressureOutLimit</code>.
+     * </p>
      *
      * @param pressureOutLimit a double
      */
@@ -445,7 +496,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
 
     /**
-     * <p>Setter for the field <code>flowLimit</code>.</p>
+     * <p>
+     * Setter for the field <code>flowLimit</code>.
+     * </p>
      *
      * @param flowLimit a double
      * @param unit a {@link java.lang.String} object

@@ -10,22 +10,27 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>EquilibriumStream class.</p>
+ * <p>
+ * EquilibriumStream class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class EquilibriumStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new Stream
+     * <p>
+     * Constructor for EquilibriumStream.
+     * </p>
      */
-    public EquilibriumStream() {
-    }
+    public EquilibriumStream() {}
 
     /**
-     * <p>Constructor for EquilibriumStream.</p>
+     * <p>
+     * Constructor for EquilibriumStream.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -34,16 +39,21 @@ public class EquilibriumStream extends Stream {
     }
 
     /**
-     * <p>Constructor for EquilibriumStream.</p>
+     * <p>
+     * Constructor for EquilibriumStream.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public EquilibriumStream(StreamInterface stream) {
         super(stream.getThermoSystem());
     }
 
     /**
-     * <p>Constructor for EquilibriumStream.</p>
+     * <p>
+     * Constructor for EquilibriumStream.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -69,12 +79,11 @@ public class EquilibriumStream extends Stream {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         System.out.println("start flashing stream... " + streamNumber);
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());
     }
-
 }

@@ -9,12 +9,14 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualiza
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
- * <p>FlowNodeVisualization class.</p>
+ * <p>
+ * FlowNodeVisualization class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
-
     private static final long serialVersionUID = 1000;
 
     public double[] temperature = new double[2];
@@ -24,21 +26,23 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
     public double[] velocity = new double[2];
     public double[] phaseFraction = new double[2];
     public double[] wallContactLength = new double[2];
-    public double[][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient, effectiveSchmidtNumber;
+    public double[][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient,
+            effectiveSchmidtNumber;
     public double[][] molarFlux;
     public double interphaseContactLength = 0.0;
     public double nodeCenter;
     public int numberOfComponents = 0;
 
     /**
-     * Creates new FlowNodeVisualization
+     * <p>
+     * Constructor for FlowNodeVisualization.
+     * </p>
      */
-    public FlowNodeVisualization() {
-    }
+    public FlowNodeVisualization() {}
 
     /** {@inheritDoc} */
     @Override
-	public void setData(FlowNodeInterface node) {
+    public void setData(FlowNodeInterface node) {
         temperature[0] = node.getBulkSystem().getPhases()[0].getTemperature();
         temperature[1] = node.getBulkSystem().getPhases()[1].getTemperature();
         pressure[0] = node.getBulkSystem().getPhases()[0].getPressure();
@@ -55,92 +59,91 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
 
     /** {@inheritDoc} */
     @Override
-	public int getNumberOfComponents() {
+    public int getNumberOfComponents() {
         return numberOfComponents;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getInterphaseContactLength() {
+    public double getInterphaseContactLength() {
         return interphaseContactLength;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getWallContactLength(int phase) {
+    public double getWallContactLength(int phase) {
         return wallContactLength[phase];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getPressure(int i) {
+    public double getPressure(int i) {
         return pressure[i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getReynoldsNumber(int i) {
+    public double getReynoldsNumber(int i) {
         return reynoldsNumber[i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getDistanceToCenterOfNode() {
+    public double getDistanceToCenterOfNode() {
         return nodeCenter;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getTemperature(int i) {
+    public double getTemperature(int i) {
         return temperature[i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getInterfaceTemperature(int i) {
+    public double getInterfaceTemperature(int i) {
         return interfaceTemperature[i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getVelocity(int i) {
+    public double getVelocity(int i) {
         return velocity[i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getBulkComposition(int i, int phase) {
+    public double getBulkComposition(int i, int phase) {
         return bulkComposition[phase][i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getInterfaceComposition(int i, int phase) {
+    public double getInterfaceComposition(int i, int phase) {
         return interfaceComposition[phase][i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getMolarFlux(int i, int phase) {
+    public double getMolarFlux(int i, int phase) {
         return molarFlux[phase][i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getEffectiveMassTransferCoefficient(int i, int phase) {
+    public double getEffectiveMassTransferCoefficient(int i, int phase) {
         return effectiveMassTransferCoefficient[phase][i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getEffectiveSchmidtNumber(int i, int phase) {
+    public double getEffectiveSchmidtNumber(int i, int phase) {
         return effectiveSchmidtNumber[phase][i];
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getPhaseFraction(int phase) {
+    public double getPhaseFraction(int phase) {
         return phaseFraction[phase];
     }
-
 }

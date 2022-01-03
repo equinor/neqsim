@@ -3,13 +3,14 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>VolumeFlowTransmitter class.</p>
+ * <p>
+ * VolumeFlowTransmitter class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -19,14 +20,19 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
     private int measuredPhaseNumber = 0;
 
     /**
-     * <p>Constructor for VolumeFlowTransmitter.</p>
+     * <p>
+     * Constructor for VolumeFlowTransmitter.
+     * </p>
      */
     public VolumeFlowTransmitter() {}
 
     /**
-     * <p>Constructor for VolumeFlowTransmitter.</p>
+     * <p>
+     * Constructor for VolumeFlowTransmitter.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public VolumeFlowTransmitter(StreamInterface stream) {
         this.stream = stream;
@@ -72,7 +78,9 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>measuredPhaseNumber</code>.</p>
+     * <p>
+     * Getter for the field <code>measuredPhaseNumber</code>.
+     * </p>
      *
      * @return a int
      */
@@ -81,12 +89,13 @@ public class VolumeFlowTransmitter extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>measuredPhaseNumber</code>.</p>
+     * <p>
+     * Setter for the field <code>measuredPhaseNumber</code>.
+     * </p>
      *
      * @param measuredPhase a int
      */
     public void setMeasuredPhaseNumber(int measuredPhase) {
         this.measuredPhaseNumber = measuredPhase;
     }
-
 }

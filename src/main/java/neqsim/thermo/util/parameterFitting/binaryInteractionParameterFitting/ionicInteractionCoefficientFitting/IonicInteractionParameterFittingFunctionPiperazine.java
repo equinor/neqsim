@@ -6,19 +6,22 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>IonicInteractionParameterFittingFunctionPiperazine class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunctionPiperazine class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionPiperazine extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
 
-
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunctionPiperazine.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionPiperazine.
+     * </p>
      */
     public IonicInteractionParameterFittingFunctionPiperazine() {}
 
@@ -259,7 +262,9 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
     }
 
     /**
-     * <p>setFittingParams5.</p>
+     * <p>
+     * setFittingParams5.
+     * </p>
      *
      * @param i a int
      * @param value a double
@@ -351,7 +356,9 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
     }
 
     /**
-     * <p>setFittingParams3.</p>
+     * <p>
+     * setFittingParams3.
+     * </p>
      *
      * @param i a int
      * @param value a double
@@ -396,5 +403,4 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
                     .setWijParameter(MDEAplusNumb, CO2Numb, value);
         }
     }
-
 }

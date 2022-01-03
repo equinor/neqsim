@@ -11,13 +11,15 @@ import neqsim.MathLib.generalMath.TDMAsolve;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 
 /**
- * <p>TwoPhaseFixedStaggeredGridSolver class.</p>
+ * <p>
+ * TwoPhaseFixedStaggeredGridSolver class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     Matrix diffMatrix;
     double dn[][];
@@ -34,12 +36,16 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     protected double oldEnergy[][];
 
     /**
-     * Creates new steadstateOnePhasePipeFlowSolver
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
      */
     public TwoPhaseFixedStaggeredGridSolver() {}
 
     /**
-     * Creates new nonlin
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
      *
      * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      * @param length a double
@@ -50,7 +56,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>Constructor for TwoPhaseFixedStaggeredGridSolver.</p>
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
      *
      * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      * @param length a double
@@ -88,7 +96,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initProfiles.</p>
+     * <p>
+     * initProfiles.
+     * </p>
      */
     public void initProfiles() {
         double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
@@ -148,7 +158,6 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                         molDiff[i - 1][1][componentNumber]);
 
             }
-
         }
         pipe.getNode(numberOfNodes - 1).init();
         pipe.getNode(numberOfNodes - 1).calcFluxes();
@@ -191,7 +200,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initMatrix.</p>
+     * <p>
+     * initMatrix.
+     * </p>
      */
     public void initMatrix() {
         for (int i = 0; i < numberOfNodes; i++) {
@@ -229,7 +240,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initPressure.</p>
+     * <p>
+     * initPressure.
+     * </p>
      *
      * @param phase a int
      */
@@ -245,7 +258,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initVelocity.</p>
+     * <p>
+     * initVelocity.
+     * </p>
      *
      * @param phase a int
      */
@@ -265,7 +280,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initTemperature.</p>
+     * <p>
+     * initTemperature.
+     * </p>
      *
      * @param phase a int
      */
@@ -286,7 +303,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initPhaseFraction.</p>
+     * <p>
+     * initPhaseFraction.
+     * </p>
      *
      * @param phase a int
      */
@@ -300,7 +319,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initComposition.</p>
+     * <p>
+     * initComposition.
+     * </p>
      *
      * @param phase a int
      * @param comp a int
@@ -350,7 +371,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>setMassConservationMatrix.</p>
+     * <p>
+     * setMassConservationMatrix.
+     * </p>
      *
      * @param phase a int
      */
@@ -430,7 +453,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>setPhaseFractionMatrix.</p>
+     * <p>
+     * setPhaseFractionMatrix.
+     * </p>
      *
      * @param phase a int
      */
@@ -517,7 +542,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>setImpulsMatrixTDMA.</p>
+     * <p>
+     * setImpulsMatrixTDMA.
+     * </p>
      *
      * @param phase a int
      */
@@ -649,7 +676,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>setEnergyMatrixTDMA.</p>
+     * <p>
+     * setEnergyMatrixTDMA.
+     * </p>
      *
      * @param phase a int
      */
@@ -773,7 +802,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>setComponentConservationMatrix2.</p>
+     * <p>
+     * setComponentConservationMatrix2.
+     * </p>
      *
      * @param phase a int
      * @param componentNumber a int
@@ -845,7 +876,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>setComponentConservationMatrix.</p>
+     * <p>
+     * setComponentConservationMatrix.
+     * </p>
      *
      * @param phase a int
      * @param componentNumber a int
@@ -940,7 +973,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initFinalResults.</p>
+     * <p>
+     * initFinalResults.
+     * </p>
      *
      * @param phase a int
      */
@@ -965,7 +1000,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>calcFluxes.</p>
+     * <p>
+     * calcFluxes.
+     * </p>
      */
     public void calcFluxes() {
         for (int i = 0; i < numberOfNodes; i++) {
@@ -974,7 +1011,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     }
 
     /**
-     * <p>initNodes.</p>
+     * <p>
+     * initNodes.
+     * </p>
      */
     public void initNodes() {
         for (int i = 0; i < numberOfNodes; i++) {

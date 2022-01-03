@@ -12,12 +12,14 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>Adjuster class.</p>
+ * <p>
+ * Adjuster class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
@@ -33,12 +35,16 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     static Logger logger = LogManager.getLogger(Adjuster.class);
 
     /**
-     * Creates new staticMixer
+     * <p>
+     * Constructor for Adjuster.
+     * </p>
      */
     public Adjuster() {}
 
     /**
-     * <p>Constructor for Adjuster.</p>
+     * <p>
+     * Constructor for Adjuster.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -47,9 +53,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setAdjustedVariable.</p>
+     * <p>
+     * setAdjustedVariable.
+     * </p>
      *
-     * @param adjustedEquipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param adjustedEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      * @param adjstedVariable a {@link java.lang.String} object
      */
     public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
@@ -59,9 +68,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>targetVariable</code>.</p>
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
      *
-     * @param targetEquipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      * @param targetVariable a {@link java.lang.String} object
      * @param targetValue a double
      * @param targetUnit a {@link java.lang.String} object
@@ -75,9 +87,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>targetVariable</code>.</p>
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
      *
-     * @param targetEquipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      * @param targetVariable a {@link java.lang.String} object
      * @param targetValue a double
      * @param targetUnit a {@link java.lang.String} object
@@ -93,9 +108,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>targetVariable</code>.</p>
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
      *
-     * @param targetEquipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      * @param targetVariable a {@link java.lang.String} object
      * @param targetValue a double
      * @param targetUnit a {@link java.lang.String} object
@@ -113,7 +131,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient() {
         run();
@@ -190,12 +210,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-
-    }
+    public void displayResult() {}
 
     /**
-     * <p>Getter for the field <code>tolerance</code>.</p>
+     * <p>
+     * Getter for the field <code>tolerance</code>.
+     * </p>
      *
      * @return a double
      */
@@ -204,7 +224,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>tolerance</code>.</p>
+     * <p>
+     * Setter for the field <code>tolerance</code>.
+     * </p>
      *
      * @param tolerance the tolerance to set
      */
@@ -213,7 +235,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>error</code>.</p>
+     * <p>
+     * Getter for the field <code>error</code>.
+     * </p>
      *
      * @return the error
      */
@@ -222,7 +246,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>error</code>.</p>
+     * <p>
+     * Setter for the field <code>error</code>.
+     * </p>
      *
      * @param error the error to set
      */
@@ -231,7 +257,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -257,7 +285,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>isActivateWhenLess.</p>
+     * <p>
+     * isActivateWhenLess.
+     * </p>
      *
      * @return a boolean
      */
@@ -266,12 +296,13 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>activateWhenLess</code>.</p>
+     * <p>
+     * Setter for the field <code>activateWhenLess</code>.
+     * </p>
      *
      * @param activateWhenLess a boolean
      */
     public void setActivateWhenLess(boolean activateWhenLess) {
         this.activateWhenLess = activateWhenLess;
     }
-
 }

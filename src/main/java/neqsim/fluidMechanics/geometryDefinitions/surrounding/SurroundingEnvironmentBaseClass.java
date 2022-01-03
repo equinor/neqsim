@@ -1,26 +1,29 @@
 package neqsim.fluidMechanics.geometryDefinitions.surrounding;
 
 /**
- * <p>SurroundingEnvironmentBaseClass class.</p>
+ * <p>
+ * SurroundingEnvironmentBaseClass class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
-public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /**
-                                                                                * @return the heatTransferCoefficient
-                                                                                */
+public class SurroundingEnvironmentBaseClass
+        implements SurroundingEnvironment /**
+                                           * @return the heatTransferCoefficient
+                                           */
 {
     private static final long serialVersionUID = 1000;
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getTemperature() {
+    public double getTemperature() {
         return temperature;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setTemperature(double temperature) {
+    public void setTemperature(double temperature) {
         this.temperature = temperature;
     }
 
@@ -28,22 +31,21 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment /
     private double temperature = 298.15;
 
     /**
-     * <p>Constructor for SurroundingEnvironmentBaseClass.</p>
+     * <p>
+     * Constructor for SurroundingEnvironmentBaseClass.
+     * </p>
      */
-    public SurroundingEnvironmentBaseClass() {
+    public SurroundingEnvironmentBaseClass() {}
 
+    /** {@inheritDoc} */
+    @Override
+    public double getHeatTransferCoefficient() {
+        return heatTransferCoefficient;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getHeatTransferCoefficient() {
-        return heatTransferCoefficient;
-    }
-
-	/** {@inheritDoc} */
-    @Override
-	public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    public void setHeatTransferCoefficient(double heatTransferCoefficient) {
         this.heatTransferCoefficient = heatTransferCoefficient;
     }
-
 }

@@ -5,18 +5,21 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>AcentricFunctionScwartzentruber class.</p>
+ * <p>
+ * AcentricFunctionScwartzentruber class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AcentricFunctionScwartzentruber.class);
 
-
     /**
-     * <p>Constructor for AcentricFunctionScwartzentruber.</p>
+     * <p>
+     * Constructor for AcentricFunctionScwartzentruber.
+     * </p>
      */
     public AcentricFunctionScwartzentruber() {
         params = new double[3];

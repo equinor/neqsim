@@ -12,16 +12,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestGrunbergNissanFit class.</p>
+ * <p>
+ * TestGrunbergNissanFit class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestGrunbergNissanFit {
-
     static Logger logger = LogManager.getLogger(TestGrunbergNissanFit.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

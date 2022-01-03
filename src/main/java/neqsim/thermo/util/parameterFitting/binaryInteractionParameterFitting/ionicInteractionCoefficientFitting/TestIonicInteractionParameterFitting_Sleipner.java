@@ -15,6 +15,7 @@ import neqsim.util.database.NeqSimDataBase;
  * <p>TestIonicInteractionParameterFitting_Sleipner class.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestIonicInteractionParameterFitting_Sleipner {
     static Logger logger =

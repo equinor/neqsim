@@ -6,13 +6,14 @@ import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>PhysicalPropertyHandler class.</p>
+ * <p>
+ * PhysicalPropertyHandler class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
-
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties =
             null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties =
@@ -26,14 +27,16 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhysicalPropertyHandler.</p>
+     * <p>
+     * Constructor for PhysicalPropertyHandler.
+     * </p>
      */
-    public PhysicalPropertyHandler() {
-
-    }
+    public PhysicalPropertyHandler() {}
 
     /**
-     * <p>setPhysicalProperties.</p>
+     * <p>
+     * setPhysicalProperties.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param type a int
@@ -122,10 +125,14 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     }
 
     /**
-     * <p>getPhysicalProperty.</p>
+     * <p>
+     * getPhysicalProperty.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-     * @return a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @return a
+     *         {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *         object
      */
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperty(
             PhaseInterface phase) {

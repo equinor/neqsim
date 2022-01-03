@@ -6,24 +6,28 @@
 
 package neqsim.util.unit;
 
-import org.apache.logging.log4j.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>RateUnit class.</p>
+ * <p>
+ * RateUnit class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class RateUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(RateUnit.class);
 
     double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
 
     /**
-     * Creates new RateUnit
+     * <p>
+     * Constructor for RateUnit.
+     * </p>
      *
      * @param value a double
      * @param name a {@link java.lang.String} object
@@ -40,18 +44,20 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 
     /** {@inheritDoc} */
     @Override
-	public double getSIvalue() {
+    public double getSIvalue() {
         return getConversionFactor(inunit) / getConversionFactor("SI") * invalue;
     }
 
     /** {@inheritDoc} */
     @Override
-	public double getValue(String tounit) {
+    public double getValue(String tounit) {
         return getConversionFactor(inunit) / getConversionFactor(tounit) * invalue;
     }
 
     /**
-     * <p>getConversionFactor.</p>
+     * <p>
+     * getConversionFactor.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a double
@@ -65,7 +71,8 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
             mol_m3 = 1.0 / (molarmass) * stddens * 1000;
         }
 
-        if (name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI") || name.equals("mol")) {
+        if (name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI")
+                || name.equals("mol")) {
             factor = 1.0;
         } else if (name.equals("Nlitre/min")) {
             factor = 1.0 / 60.0 * mol_m3 / 1000.0;
@@ -105,5 +112,4 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 
         return factor;
     }
-
 }

@@ -14,16 +14,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>NeqSimBlobDatabase class.</p>
+ * <p>
+ * NeqSimBlobDatabase class.
+ * </p>
  *
  * @author Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimBlobDatabase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
-     * <p>createTemporaryTables.</p>
+     * <p>
+     * createTemporaryTables.
+     * </p>
      *
      * @return the createTemporaryTables
      */
@@ -32,7 +35,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>createTemporaryTables</code>.</p>
+     * <p>
+     * Setter for the field <code>createTemporaryTables</code>.
+     * </p>
      *
      * @param createTemporaryTables the createTemporaryTables to set
      */
@@ -55,10 +60,11 @@ public class NeqSimBlobDatabase
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimBlobDatabase.
+     * </p>
      */
     public NeqSimBlobDatabase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -72,7 +78,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>
+     * openConnection.
+     * </p>
      *
      * @return a Connection object
      * @throws java.sql.SQLException if any.
@@ -124,11 +132,12 @@ public class NeqSimBlobDatabase
                 logger.error("error", e);
             }
         }
-
     }
 
     /**
-     * <p>getConnection.</p>
+     * <p>
+     * getConnection.
+     * </p>
      *
      * @return a Connection object
      */
@@ -137,7 +146,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>getResultSet.</p>
+     * <p>
+     * getResultSet.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      * @return a ResultSet object
@@ -153,7 +164,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>execute.</p>
+     * <p>
+     * execute.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      */
@@ -172,7 +185,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Getter for the field <code>dataBaseType</code>.</p>
+     * <p>
+     * Getter for the field <code>dataBaseType</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -181,7 +196,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>dataBaseType</code>.</p>
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
      *
      * @param aDataBaseType a {@link java.lang.String} object
      */
@@ -190,7 +207,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>dataBaseType</code>.</p>
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
      *
      * @param aDataBaseType a {@link java.lang.String} object
      * @param connectionString a {@link java.lang.String} object
@@ -215,7 +234,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Getter for the field <code>statement</code>.</p>
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
      *
      * @return a Statement object
      */
@@ -225,7 +246,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>statement</code>.</p>
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
      *
      * @param statement a Statement object
      */
@@ -235,7 +258,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>username</code>.</p>
+     * <p>
+     * Setter for the field <code>username</code>.
+     * </p>
      *
      * @param aUsername the username to set
      */
@@ -244,7 +269,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>password</code>.</p>
+     * <p>
+     * Setter for the field <code>password</code>.
+     * </p>
      *
      * @param aPassword the password to set
      */
@@ -253,7 +280,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Getter for the field <code>connectionString</code>.</p>
+     * <p>
+     * Getter for the field <code>connectionString</code>.
+     * </p>
      *
      * @return the connectionString
      */
@@ -262,7 +291,9 @@ public class NeqSimBlobDatabase
     }
 
     /**
-     * <p>Setter for the field <code>connectionString</code>.</p>
+     * <p>
+     * Setter for the field <code>connectionString</code>.
+     * </p>
      *
      * @param aConnectionString the connectionString to set
      */

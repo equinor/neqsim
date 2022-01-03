@@ -7,12 +7,14 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>VHflashQfunc class.</p>
+ * <p>
+ * VHflashQfunc class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class VHflashQfunc extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VHflashQfunc.class);
 
@@ -20,12 +22,16 @@ public class VHflashQfunc extends Flash {
     Flash tpFlash;
 
     /**
-     * <p>Constructor for VHflashQfunc.</p>
+     * <p>
+     * Constructor for VHflashQfunc.
+     * </p>
      */
     public VHflashQfunc() {}
 
     /**
-     * <p>Constructor for VHflashQfunc.</p>
+     * <p>
+     * Constructor for VHflashQfunc.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Vspec a double
@@ -39,7 +45,9 @@ public class VHflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdPP.</p>
+     * <p>
+     * calcdQdPP.
+     * </p>
      *
      * @return a double
      */
@@ -53,12 +61,13 @@ public class VHflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdTT.</p>
+     * <p>
+     * calcdQdTT.
+     * </p>
      *
      * @return a double
      */
     public double calcdQdTT() {
-
         double dQdTT = -system.getCp()
                 / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
                 - calcdQdT() / system.getTemperature();
@@ -66,7 +75,9 @@ public class VHflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdT.</p>
+     * <p>
+     * calcdQdT.
+     * </p>
      *
      * @return a double
      */
@@ -77,7 +88,9 @@ public class VHflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdP.</p>
+     * <p>
+     * calcdQdP.
+     * </p>
      *
      * @return a double
      */
@@ -88,7 +101,9 @@ public class VHflashQfunc extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */
@@ -137,7 +152,9 @@ public class VHflashQfunc extends Flash {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

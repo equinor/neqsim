@@ -11,12 +11,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SampleCreator class.</p>
+ * <p>
+ * SampleCreator class.
+ * </p>
  *
- * @author  even solbraa
+ * @author even solbraa
+ * @version $Id: $Id
  */
 public class SampleCreator {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface system;
@@ -24,13 +26,16 @@ public class SampleCreator {
     ExperimentalEquipmentData equipment;
 
     /**
-     * Creates new SampleCreator
+     * <p>
+     * Constructor for SampleCreator.
+     * </p>
      */
-    public SampleCreator() {
-    }
+    public SampleCreator() {}
 
     /**
-     * <p>Constructor for SampleCreator.</p>
+     * <p>
+     * Constructor for SampleCreator.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param thermoOps a {@link neqsim.thermodynamicOperations.ThermodynamicOperations} object
@@ -41,7 +46,9 @@ public class SampleCreator {
     }
 
     /**
-     * <p>setThermoSystem.</p>
+     * <p>
+     * setThermoSystem.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -50,9 +57,12 @@ public class SampleCreator {
     }
 
     /**
-     * <p>setExperimentalEquipment.</p>
+     * <p>
+     * setExperimentalEquipment.
+     * </p>
      *
-     * @param equipment a {@link neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData} object
+     * @param equipment a
+     *        {@link neqsim.statistics.experimentalEquipmentData.ExperimentalEquipmentData} object
      */
     public void setExperimentalEquipment(ExperimentalEquipmentData equipment) {
         this.equipment = equipment;

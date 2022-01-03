@@ -6,6 +6,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * <p>DiffusivityInterface interface.</p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public interface DiffusivityInterface extends ThermodynamicConstantsInterface,
         neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethodInterface {

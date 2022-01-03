@@ -8,18 +8,21 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>IonicInteractionParameterFittingFunctionCH4 class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunctionCH4 class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
-
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunctionCH4.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4.
+     * </p>
      */
     public IonicInteractionParameterFittingFunctionCH4() {}
 
@@ -137,5 +140,4 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
                     .setHVDijParameter(MDEANumb, CO2Numb, value);
         }
     }
-
 }

@@ -12,7 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * <p>NeqSimFluidDataBase class.</p>
+ * <p>
+ * NeqSimFluidDataBase class.
+ * </p>
  *
  * @author esol
  * @version The database is used for storing fluid info and recreating a fluid it uses the database
@@ -20,7 +22,6 @@ import java.sql.Statement;
  */
 public class NeqSimFluidDataBase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     static boolean started = false;
@@ -31,7 +32,9 @@ public class NeqSimFluidDataBase
     Statement statement = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimFluidDataBase.
+     * </p>
      */
     public NeqSimFluidDataBase() {
         try {
@@ -52,7 +55,9 @@ public class NeqSimFluidDataBase
     }
 
     /**
-     * Creates new FluidDatabase
+     * <p>
+     * openConnection.
+     * </p>
      *
      * @param database a {@link java.lang.String} object
      * @return a Connection object
@@ -78,7 +83,9 @@ public class NeqSimFluidDataBase
     }
 
     /**
-     * <p>getConnection.</p>
+     * <p>
+     * getConnection.
+     * </p>
      *
      * @return a Connection object
      */
@@ -87,7 +94,9 @@ public class NeqSimFluidDataBase
     }
 
     /**
-     * <p>getResultSet.</p>
+     * <p>
+     * getResultSet.
+     * </p>
      *
      * @param database a {@link java.lang.String} object
      * @param sqlString a {@link java.lang.String} object
@@ -105,7 +114,9 @@ public class NeqSimFluidDataBase
     }
 
     /**
-     * <p>getResultSet.</p>
+     * <p>
+     * getResultSet.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      * @return a ResultSet object
@@ -115,7 +126,9 @@ public class NeqSimFluidDataBase
     }
 
     /**
-     * <p>execute.</p>
+     * <p>
+     * execute.
+     * </p>
      *
      * @param sqlString a {@link java.lang.String} object
      */
@@ -133,7 +146,9 @@ public class NeqSimFluidDataBase
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

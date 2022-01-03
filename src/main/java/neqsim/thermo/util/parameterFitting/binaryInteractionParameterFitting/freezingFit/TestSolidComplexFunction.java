@@ -12,18 +12,21 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestSolidComplexFunction class.</p>
+ * <p>
+ * TestSolidComplexFunction class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class TestSolidComplexFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestSolidComplexFunction.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

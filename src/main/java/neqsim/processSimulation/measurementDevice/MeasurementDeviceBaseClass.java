@@ -3,13 +3,14 @@ package neqsim.processSimulation.measurementDevice;
 import neqsim.processSimulation.measurementDevice.online.OnlineSignal;
 
 /**
- * <p>Abstract MeasurementDeviceBaseClass class.</p>
+ * <p>
+ * Abstract MeasurementDeviceBaseClass class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
     /** {@inheritDoc} */
@@ -19,7 +20,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Setter for the field <code>onlineSignal</code>.</p>
+     * <p>
+     * Setter for the field <code>onlineSignal</code>.
+     * </p>
      *
      * @param onlineSignal the onlineSignal to set
      */
@@ -34,7 +37,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Setter for the field <code>isOnlineSignal</code>.</p>
+     * <p>
+     * Setter for the field <code>isOnlineSignal</code>.
+     * </p>
      *
      * @param isOnlineSignal the isOnlineSignal to set
      * @param plantName a {@link java.lang.String} object
@@ -154,7 +159,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Setter for the field <code>onlineMeasurementValue</code>.</p>
+     * <p>
+     * Setter for the field <code>onlineMeasurementValue</code>.
+     * </p>
      *
      * @param value a double
      * @param unit a {@link java.lang.String} object
@@ -165,7 +172,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Getter for the field <code>onlineMeasurementValue</code>.</p>
+     * <p>
+     * Getter for the field <code>onlineMeasurementValue</code>.
+     * </p>
      *
      * @return a double
      */
@@ -174,7 +183,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>doConditionAnalysis.</p>
+     * <p>
+     * doConditionAnalysis.
+     * </p>
      *
      * @return a boolean
      */
@@ -183,7 +194,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Setter for the field <code>conditionAnalysis</code>.</p>
+     * <p>
+     * Setter for the field <code>conditionAnalysis</code>.
+     * </p>
      *
      * @param conditionMonitor a boolean
      */
@@ -192,7 +205,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>runConditionAnalysis.</p>
+     * <p>
+     * runConditionAnalysis.
+     * </p>
      */
     public void runConditionAnalysis() {
         if (Math.abs(getMeasuredValue(onlineMeasurementValueUnit)
@@ -204,7 +219,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Getter for the field <code>conditionAnalysisMessage</code>.</p>
+     * <p>
+     * Getter for the field <code>conditionAnalysisMessage</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -213,7 +230,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>setQualityCheckMessage.</p>
+     * <p>
+     * setQualityCheckMessage.
+     * </p>
      *
      * @param conditionAnalysisMessage a {@link java.lang.String} object
      */
@@ -222,7 +241,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Getter for the field <code>conditionAnalysisMaxDeviation</code>.</p>
+     * <p>
+     * Getter for the field <code>conditionAnalysisMaxDeviation</code>.
+     * </p>
      *
      * @return a double
      */
@@ -231,7 +252,9 @@ public abstract class MeasurementDeviceBaseClass implements MeasurementDeviceInt
     }
 
     /**
-     * <p>Setter for the field <code>conditionAnalysisMaxDeviation</code>.</p>
+     * <p>
+     * Setter for the field <code>conditionAnalysisMaxDeviation</code>.
+     * </p>
      *
      * @param conditionAnalysisMaxDeviation a double
      */

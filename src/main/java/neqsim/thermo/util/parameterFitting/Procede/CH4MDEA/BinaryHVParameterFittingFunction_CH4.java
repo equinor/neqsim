@@ -7,25 +7,30 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
- * <p>BinaryHVParameterFittingFunction_CH4 class.</p>
+ * <p>
+ * BinaryHVParameterFittingFunction_CH4 class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_CH4.class);
 
-
     /**
-     * <p>Constructor for BinaryHVParameterFittingFunction_CH4.</p>
+     * <p>
+     * Constructor for BinaryHVParameterFittingFunction_CH4.
+     * </p>
      */
     public BinaryHVParameterFittingFunction_CH4() {}
 
     /**
-     * <p>Constructor for BinaryHVParameterFittingFunction_CH4.</p>
+     * <p>
+     * Constructor for BinaryHVParameterFittingFunction_CH4.
+     * </p>
      *
      * @param phase a int
      * @param type a int
@@ -100,5 +105,4 @@ public class BinaryHVParameterFittingFunction_CH4 extends LevenbergMarquardtFunc
          */
         // }
     }
-
 }

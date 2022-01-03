@@ -12,12 +12,14 @@ import neqsim.thermo.phase.PhaseBWRSEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>ComponentBWRS class.</p>
+ * <p>
+ * ComponentBWRS class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ComponentBWRS extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     int OP = 9;
@@ -40,13 +42,16 @@ public class ComponentBWRS extends ComponentSrk {
     static Logger logger = LogManager.getLogger(ComponentBWRS.class);
 
     /**
-     * Creates new System_SRK_EOS Ev liten fil ja.
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
      */
-    public ComponentBWRS() {
-    }
+    public ComponentBWRS() {}
 
     /**
-     * <p>Constructor for ComponentBWRS.</p>
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
      *
      * @param moles a double
      */
@@ -55,7 +60,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>Constructor for ComponentBWRS.</p>
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
@@ -66,15 +73,18 @@ public class ComponentBWRS extends ComponentSrk {
         super(component_name, moles, molesInPhase, compnumber);
 
         try {
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
                 dataSet.next();
                 dataSet.getClob("name");
             } catch (Exception e) {
                 dataSet.close();
-                dataSet = database.getResultSet(("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
+                dataSet = database.getResultSet(
+                        ("SELECT * FROM mbwr32param WHERE name='" + component_name + "'"));
                 dataSet.next();
             }
 
@@ -96,7 +106,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>Constructor for ComponentBWRS.</p>
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -112,7 +124,6 @@ public class ComponentBWRS extends ComponentSrk {
     /** {@inheritDoc} */
     @Override
     public ComponentBWRS clone() {
-
         ComponentBWRS clonedComponent = null;
         try {
             clonedComponent = (ComponentBWRS) super.clone();
@@ -125,13 +136,15 @@ public class ComponentBWRS extends ComponentSrk {
 
     /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
 
         BP[0] = R * temperature;
-        BP[1] = aBWRS[0] * temperature + aBWRS[1] * Math.sqrt(temperature) + aBWRS[2] + aBWRS[3] / temperature
-                + aBWRS[4] / Math.pow(temperature, 2.0);
-        BP[2] = aBWRS[5] * temperature + aBWRS[6] + aBWRS[7] / temperature + aBWRS[8] / Math.pow(temperature, 2.0);
+        BP[1] = aBWRS[0] * temperature + aBWRS[1] * Math.sqrt(temperature) + aBWRS[2]
+                + aBWRS[3] / temperature + aBWRS[4] / Math.pow(temperature, 2.0);
+        BP[2] = aBWRS[5] * temperature + aBWRS[6] + aBWRS[7] / temperature
+                + aBWRS[8] / Math.pow(temperature, 2.0);
         BP[3] = aBWRS[9] * temperature + aBWRS[10] + aBWRS[11] / temperature;
         BP[4] = aBWRS[12];
         BP[5] = aBWRS[13] / temperature + aBWRS[14] / Math.pow(temperature, 2.0);
@@ -148,22 +161,32 @@ public class ComponentBWRS extends ComponentSrk {
                 + aBWRS[31] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
 
         BPdT[0] = R;
-        BPdT[1] = aBWRS[0] + aBWRS[1] / (2.0 * Math.sqrt(temperature)) - aBWRS[3] / Math.pow(temperature, 2.0)
+        BPdT[1] = aBWRS[0] + aBWRS[1] / (2.0 * Math.sqrt(temperature))
+                - aBWRS[3] / Math.pow(temperature, 2.0)
                 - 2.0 * aBWRS[4] / Math.pow(temperature, 3.0);
-        BPdT[2] = aBWRS[5] - aBWRS[7] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[8] / Math.pow(temperature, 3.0);
+        BPdT[2] = aBWRS[5] - aBWRS[7] / Math.pow(temperature, 2.0)
+                - 2.0 * aBWRS[8] / Math.pow(temperature, 3.0);
         BPdT[3] = aBWRS[9] - aBWRS[11] / Math.pow(temperature, 2.0);
         BPdT[4] = 0.0;
-        BPdT[5] = -aBWRS[13] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[14] / Math.pow(temperature, 3.0);
+        BPdT[5] = -aBWRS[13] / Math.pow(temperature, 2.0)
+                - 2.0 * aBWRS[14] / Math.pow(temperature, 3.0);
         BPdT[6] = -aBWRS[15] / Math.pow(temperature, 2.0);
-        BPdT[7] = -aBWRS[16] / Math.pow(temperature, 2.0) - 2.0 * aBWRS[17] / Math.pow(temperature, 3.0);
+        BPdT[7] = -aBWRS[16] / Math.pow(temperature, 2.0)
+                - 2.0 * aBWRS[17] / Math.pow(temperature, 3.0);
         BPdT[8] = -2.0 * aBWRS[18] / Math.pow(temperature, 3.0);
 
-        BEdT[0] = (-2.0 * aBWRS[19] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[20] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-        BEdT[1] = (-2.0 * aBWRS[21] / Math.pow(temperature, 3.0) - 4.0 * aBWRS[22] / Math.pow(temperature, 5.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-        BEdT[2] = (-2.0 * aBWRS[23] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[24] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-        BEdT[3] = (-2.0 * aBWRS[25] / Math.pow(temperature, 3.0) - 4.0 * aBWRS[26] / Math.pow(temperature, 5.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-        BEdT[4] = (-2.0 * aBWRS[27] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[28] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
-        BEdT[5] = (-2.0 * aBWRS[29] / Math.pow(temperature, 3.0) - 3.0 * aBWRS[30] / Math.pow(temperature, 4.0)
+        BEdT[0] = (-2.0 * aBWRS[19] / Math.pow(temperature, 3.0)
+                - 3.0 * aBWRS[20] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+        BEdT[1] = (-2.0 * aBWRS[21] / Math.pow(temperature, 3.0)
+                - 4.0 * aBWRS[22] / Math.pow(temperature, 5.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+        BEdT[2] = (-2.0 * aBWRS[23] / Math.pow(temperature, 3.0)
+                - 3.0 * aBWRS[24] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+        BEdT[3] = (-2.0 * aBWRS[25] / Math.pow(temperature, 3.0)
+                - 4.0 * aBWRS[26] / Math.pow(temperature, 5.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+        BEdT[4] = (-2.0 * aBWRS[27] / Math.pow(temperature, 3.0)
+                - 3.0 * aBWRS[28] / Math.pow(temperature, 4.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
+        BEdT[5] = (-2.0 * aBWRS[29] / Math.pow(temperature, 3.0)
+                - 3.0 * aBWRS[30] / Math.pow(temperature, 4.0)
                 - 4.0 * aBWRS[31] / Math.pow(temperature, 5.0));// *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
 
         // disse deriverte er ennaa ikke satt inn (finnes i Odvar's avhandling)
@@ -187,7 +210,8 @@ public class ComponentBWRS extends ComponentSrk {
 
     /** {@inheritDoc} */
     @Override
-	public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature,
+            double pressure) {
         // System.out.println("Fref " +
         // refPhaseBWRS.getF()/phase.getNumberOfMolesInPhase());
         // System.out.println("Fref2 " + 1e3*(getFpoldn(phase, numberOfComponentphases,
@@ -196,14 +220,19 @@ public class ComponentBWRS extends ComponentSrk {
         // System.out.println("Fref3 " + refPhaseBWRS.getdFdN());
         return refPhaseBWRS.getF() / phase.getNumberOfMolesInPhase();
         // return refPhaseBWRS.getdFdN();
-//        System.out.println("dFdN super " + super.dFdN(phase,numberOfComponentphases,temperature,pressure));
-//        System.out.println("this dFdN " + 1e3*(getFpoldn(phase, numberOfComponentphases, temperature, pressure) + getFexpdn(phase, numberOfComponentphases, temperature, pressure)));
+        // System.out.println("dFdN super " +
+        // super.dFdN(phase,numberOfComponentphases,temperature,pressure));
+        // System.out.println("this dFdN " + 1e3*(getFpoldn(phase, numberOfComponentphases,
+        // temperature, pressure) + getFexpdn(phase, numberOfComponentphases, temperature,
+        // pressure)));
         // return 1e3*(getFpoldn(phase, numberOfComponentphases, temperature, pressure)
         // + getFexpdn(phase, numberOfComponentphases, temperature, pressure));
     }
 
     /**
-     * <p>getFpoldn.</p>
+     * <p>
+     * getFpoldn.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponentphases a int
@@ -211,10 +240,12 @@ public class ComponentBWRS extends ComponentSrk {
      * @param pressure a double
      * @return a double
      */
-    public double getFpoldn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    public double getFpoldn(PhaseInterface phase, int numberOfComponentphases, double temperature,
+            double pressure) {
         double temp = 0.0;
         for (int i = 1; i < OP; i++) {
-            temp += i * getBP(i) / (i - 0.0) * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), i - 1.0)
+            temp += i * getBP(i) / (i - 0.0)
+                    * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), i - 1.0)
                     * getdRhodn(phase, numberOfComponentphases, temperature, pressure);
         }
         return phase.getNumberOfMolesInPhase() / (R * temperature) * temp
@@ -222,7 +253,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>getdRhodn.</p>
+     * <p>
+     * getdRhodn.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponentphases a int
@@ -230,12 +263,15 @@ public class ComponentBWRS extends ComponentSrk {
      * @param pressure a double
      * @return a double
      */
-    public double getdRhodn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    public double getdRhodn(PhaseInterface phase, int numberOfComponentphases, double temperature,
+            double pressure) {
         return ((PhaseBWRSEos) phase).getMolarDensity() / phase.getNumberOfMolesInPhase();
     }
 
     /**
-     * <p>getELdn.</p>
+     * <p>
+     * getELdn.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponentphases a int
@@ -243,14 +279,18 @@ public class ComponentBWRS extends ComponentSrk {
      * @param pressure a double
      * @return a double
      */
-    public double getELdn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    public double getELdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
+            double pressure) {
         return -2.0 * ((PhaseBWRSEos) phase).getMolarDensity() * getGammaBWRS()
-                * Math.exp(-getGammaBWRS() * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2.0))
+                * Math.exp(
+                        -getGammaBWRS() * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2.0))
                 * getdRhodn(phase, numberOfComponentphases, temperature, pressure);
     }
 
     /**
-     * <p>getFexpdn.</p>
+     * <p>
+     * getFexpdn.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponentphases a int
@@ -258,13 +298,16 @@ public class ComponentBWRS extends ComponentSrk {
      * @param pressure a double
      * @return a double
      */
-    public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
+    public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
+            double pressure) {
         double oldTemp = 0.0, temp = 0.0;
-        oldTemp = -getBE(0) / (2.0 * getGammaBWRS()) * getELdn(phase, numberOfComponentphases, temperature, pressure);
+        oldTemp = -getBE(0) / (2.0 * getGammaBWRS())
+                * getELdn(phase, numberOfComponentphases, temperature, pressure);
 
         temp += oldTemp;
         for (int i = 1; i < OE; i++) {
-            oldTemp = -getBE(i) / (2.0 * getGammaBWRS()) * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2 * i)
+            oldTemp = -getBE(i) / (2.0 * getGammaBWRS())
+                    * Math.pow(((PhaseBWRSEos) phase).getMolarDensity(), 2 * i)
                     * getELdn(phase, numberOfComponentphases, temperature, pressure)
 
                     - (2.0 * i) * getBE(i) / (2.0 * getGammaBWRS()) * ((PhaseBWRSEos) phase).getEL()
@@ -289,7 +332,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>Getter for the field <code>aBWRS</code>.</p>
+     * <p>
+     * Getter for the field <code>aBWRS</code>.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -336,7 +381,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>getBE.</p>
+     * <p>
+     * getBE.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -355,7 +402,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>Setter for the field <code>refPhaseBWRS</code>.</p>
+     * <p>
+     * Setter for the field <code>refPhaseBWRS</code>.
+     * </p>
      *
      * @param refPhaseBWRS a {@link neqsim.thermo.phase.PhaseBWRSEos} object
      */
@@ -391,7 +440,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>getBPdT.</p>
+     * <p>
+     * getBPdT.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -419,7 +470,9 @@ public class ComponentBWRS extends ComponentSrk {
     }
 
     /**
-     * <p>getBEdT.</p>
+     * <p>
+     * getBEdT.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -454,5 +507,4 @@ public class ComponentBWRS extends ComponentSrk {
     public void setRhoc(double rhoc) {
         this.rhoc = rhoc;
     }
-
 }

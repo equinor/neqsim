@@ -7,21 +7,27 @@ import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 
 /**
- * <p>dataHandeling class.</p>
+ * <p>
+ * dataHandeling class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class dataHandeling {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new dataRepresentation
+     * <p>
+     * Constructor for dataHandeling.
+     * </p>
      */
     public dataHandeling() {}
 
     /**
-     * <p>getXValue.</p>
+     * <p>
+     * getXValue.
+     * </p>
      *
      * @param series a int
      * @param item a int
@@ -82,7 +88,9 @@ public class dataHandeling {
     }
 
     /**
-     * <p>getLegendItemCount.</p>
+     * <p>
+     * getLegendItemCount.
+     * </p>
      *
      * @return a int
      */
@@ -91,7 +99,9 @@ public class dataHandeling {
     }
 
     /**
-     * <p>getLegendItemLabels.</p>
+     * <p>
+     * getLegendItemLabels.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */
@@ -103,13 +113,14 @@ public class dataHandeling {
     }
 
     /**
-     * <p>printToFile.</p>
+     * <p>
+     * printToFile.
+     * </p>
      *
      * @param points an array of {@link double} objects
      * @param filename a {@link java.lang.String} object
      */
     public void printToFile(double[][] points, String filename) {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.####E0");

@@ -9,23 +9,27 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>constantDutyPressureFlash class.</p>
+ * <p>
+ * constantDutyPressureFlash class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class constantDutyPressureFlash extends constantDutyFlash {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for constantDutyPressureFlash.
+     * </p>
      */
-    public constantDutyPressureFlash() {
-    }
+    public constantDutyPressureFlash() {}
 
     /**
-     * <p>Constructor for constantDutyPressureFlash.</p>
+     * <p>
+     * Constructor for constantDutyPressureFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -35,8 +39,7 @@ public class constantDutyPressureFlash extends constantDutyFlash {
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         // system.calc_x_y();
         // system.init(2);
 
@@ -54,8 +57,10 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
                         .setK(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                                / system.getPhases()[0].getComponents()[i].getFugasityCoeffisient());
-                system.getPhases()[1].getComponents()[i].setK(system.getPhases()[0].getComponents()[i].getK());
+                                / system.getPhases()[0].getComponents()[i]
+                                        .getFugasityCoeffisient());
+                system.getPhases()[1].getComponents()[i]
+                        .setK(system.getPhases()[0].getComponents()[i].getK());
             }
 
             system.calc_x_y_nonorm();
@@ -67,9 +72,12 @@ public class constantDutyPressureFlash extends constantDutyFlash {
                 dkidp = (system.getPhases()[1].getComponents()[i].getdfugdp()
                         - system.getPhases()[0].getComponents()[i].getdfugdp())
                         * system.getPhases()[1].getComponents()[i].getK();
-                dxidp = -system.getPhases()[1].getComponents()[i].getz() * system.getBeta() * dkidp / Math.pow(
-                        1.0 - system.getBeta() + system.getBeta() * system.getPhases()[1].getComponents()[i].getK(),
-                        2.0);
+                dxidp = -system.getPhases()[1].getComponents()[i].getz() * system.getBeta() * dkidp
+                        / Math.pow(
+                                1.0 - system.getBeta()
+                                        + system.getBeta()
+                                                * system.getPhases()[1].getComponents()[i].getK(),
+                                2.0);
                 dyidp = dkidp * system.getPhases()[1].getComponents()[i].getx()
                         + system.getPhases()[1].getComponents()[i].getK() * dxidp;
                 funk += system.getPhases()[0].getComponents()[i].getx()
@@ -82,26 +90,24 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             Pold = system.getPressure();
             double pres = Math.abs(Pold - 0.5 * funk / deriv);
             system.setPressure(pres);
-        } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10 && iterations < 300)
-                || iterations < 3);
+        } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10
+                && iterations < 300) || iterations < 3);
 
     }
 
     /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
     /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
     /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return system;
     }
-
 }

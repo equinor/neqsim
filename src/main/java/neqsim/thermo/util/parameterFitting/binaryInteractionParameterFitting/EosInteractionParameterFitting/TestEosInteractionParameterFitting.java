@@ -12,27 +12,32 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestEosInteractionParameterFitting class.</p>
+ * <p>
+ * TestEosInteractionParameterFitting class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TestEosInteractionParameterFitting {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestEosInteractionParameterFitting.class);
 
     /**
-     * <p>Constructor for TestEosInteractionParameterFitting.</p>
+     * <p>
+     * Constructor for TestEosInteractionParameterFitting.
+     * </p>
      */
     public TestEosInteractionParameterFitting() {}
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -44,7 +49,6 @@ public class TestEosInteractionParameterFitting {
         // activityCoefficientTable WHERE Component1='MDEA' AND Component2='water'");
 
         try {
-
             logger.info("adding....");
             while (dataSet.next()) {
                 EosInteractionParameterFittingFunction function =

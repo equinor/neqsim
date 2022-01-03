@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,11 +20,12 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemCSPsrkEos extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for SystemCSPsrkEos.</p>
+     * <p>
+     * Constructor for SystemCSPsrkEos.
+     * </p>
      */
     public SystemCSPsrkEos() {
         super();
@@ -38,7 +39,9 @@ public class SystemCSPsrkEos extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemCSPsrkEos.</p>
+     * <p>
+     * Constructor for SystemCSPsrkEos.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -55,7 +58,9 @@ public class SystemCSPsrkEos extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemCSPsrkEos.</p>
+     * <p>
+     * Constructor for SystemCSPsrkEos.
+     * </p>
      *
      * @param T a double
      * @param P a double

@@ -18,12 +18,14 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.ContourWidget;
 
 /**
- * <p>surfaceFitPlot class.</p>
+ * <p>
+ * surfaceFitPlot class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class surfaceFitPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType longitude, latitude, temperature, isotemperature;
@@ -42,7 +44,9 @@ public class surfaceFitPlot {
     private ContourWidget contourWid;
 
     /**
-     * Creates new visAdContourPlot
+     * <p>
+     * Constructor for surfaceFitPlot.
+     * </p>
      *
      * @param firstax a {@link java.lang.String} object
      * @param secax a {@link java.lang.String} object
@@ -52,7 +56,6 @@ public class surfaceFitPlot {
      */
     public surfaceFitPlot(String firstax, String secax, String zax)
             throws RemoteException, VisADException {
-
         latitude = RealType.getRealType(firstax);
         longitude = RealType.getRealType(secax);
         domain_tuple = new RealTupleType(latitude, longitude);
@@ -63,7 +66,9 @@ public class surfaceFitPlot {
     }
 
     /**
-     * <p>setXYvals.</p>
+     * <p>
+     * setXYvals.
+     * </p>
      *
      * @param xMin a double
      * @param xMax a double
@@ -92,7 +97,9 @@ public class surfaceFitPlot {
      */
 
     /**
-     * <p>setZvals.</p>
+     * <p>
+     * setZvals.
+     * </p>
      *
      * @param vals an array of {@link double} objects
      * @throws java.rmi.RemoteException if any.
@@ -103,7 +110,9 @@ public class surfaceFitPlot {
     }
 
     /**
-     * <p>init.</p>
+     * <p>
+     * init.
+     * </p>
      *
      * @throws java.rmi.RemoteException if any.
      * @throws visad.VisADException if any.
@@ -112,9 +121,7 @@ public class surfaceFitPlot {
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
         for (int c = 0; c < NCOLS; c++) {
-
             for (int r = 0; r < NROWS; r++) {
-
                 flat_samples[0][c * NROWS + r] = (float) z_samples[c][r];
             }
         }
@@ -180,7 +187,9 @@ public class surfaceFitPlot {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      * @throws java.rmi.RemoteException if any.

@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>CompressorChart class.</p>
+ * <p>
+ * CompressorChart class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -52,7 +54,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double[][] redpolytropicEfficiency;
 
     /**
-     * <p>Constructor for CompressorChart.</p>
+     * <p>
+     * Constructor for CompressorChart.
+     * </p>
      */
     public CompressorChart() {}
 
@@ -68,7 +72,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     @Override
     public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
             double[][] head, double[][] polyEff) {
-
         this.speed = speed;
         this.head = head;
         this.polytropicEfficiency = polyEff;
@@ -110,11 +113,11 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     /**
-     * <p>fitReducedCurve.</p>
+     * <p>
+     * fitReducedCurve.
+     * </p>
      */
-    public void fitReducedCurve() {
-
-    }
+    public void fitReducedCurve() {}
 
     /** {@inheritDoc} */
     @Override
@@ -138,7 +141,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     /** {@inheritDoc} */
     @Override
     public int getSpeed(double flow, double head) {
-
         int iter = 1;
         double error = 1.0, derrordspeed = 1.0;
         double newspeed = referenceSpeed;
@@ -161,7 +163,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     /**
-     * <p>addSurgeCurve.</p>
+     * <p>
+     * addSurgeCurve.
+     * </p>
      *
      * @param flow an array of {@link double} objects
      * @param head an array of {@link double} objects
@@ -176,7 +180,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     // }
 
     /**
-     * <p>polytropicEfficiency.</p>
+     * <p>
+     * polytropicEfficiency.
+     * </p>
      *
      * @param flow a double
      * @param speed a double
@@ -187,7 +193,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     /**
-     * <p>checkSurge1.</p>
+     * <p>
+     * checkSurge1.
+     * </p>
      *
      * @param flow a double
      * @param head a double
@@ -198,7 +206,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     /**
-     * <p>checkSurge2.</p>
+     * <p>
+     * checkSurge2.
+     * </p>
      *
      * @param flow a double
      * @param speed a double
@@ -209,7 +219,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     /**
-     * <p>checkStoneWall.</p>
+     * <p>
+     * checkStoneWall.
+     * </p>
      *
      * @param flow a double
      * @param speed a double
@@ -254,7 +266,9 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -457,5 +471,4 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
                         "red eff vs red dflow", "red flow", "red eff");
         graph4.setVisible(true);
     }
-
 }

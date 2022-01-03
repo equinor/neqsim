@@ -18,12 +18,14 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>pTphaseEnvelope1 class.</p>
+ * <p>
+ * pTphaseEnvelope1 class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class pTphaseEnvelope1 extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelope1.class);
 
@@ -65,12 +67,16 @@ public class pTphaseEnvelope1 extends BaseOperation {
     int speceq = 0;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for pTphaseEnvelope1.
+     * </p>
      */
     public pTphaseEnvelope1() {}
 
     /**
-     * <p>Constructor for pTphaseEnvelope1.</p>
+     * <p>
+     * Constructor for pTphaseEnvelope1.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param name a {@link java.lang.String} object
@@ -110,9 +116,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         try {
-
             points[0] = new double[10000];
             points[1] = new double[10000];
 
@@ -173,7 +177,6 @@ public class pTphaseEnvelope1 extends BaseOperation {
             startPres = system.getPressure();
 
             for (np = 1; np < 9500; np++) {
-
                 if (np % 5 == 0) {
                     monitor.setValue(np);
                     monitor.setString("Calculated points: " + np);
@@ -485,5 +488,4 @@ public class pTphaseEnvelope1 extends BaseOperation {
     public String[][] getResultTable() {
         return null;
     }
-
 }

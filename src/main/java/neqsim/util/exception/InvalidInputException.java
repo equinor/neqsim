@@ -7,23 +7,25 @@
 package neqsim.util.exception;
 
 /**
- * <p>InvalidInputException class.</p>
+ * <p>
+ * InvalidInputException class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class InvalidInputException extends neqsim.util.exception.ThermoException {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new <code>VolumeIsNaNException</code> without detail message.
+     * <p>
+     * Constructor for InvalidInputException.
+     * </p>
      */
-    public InvalidInputException() {
-    }
+    public InvalidInputException() {}
 
     /**
-     * Constructs an <code>VolumeIsNaNException</code> with the specified detail
-     * message.
+     * Constructs an <code>VolumeIsNaNException</code> with the specified detail message.
      *
      * @param msg the detail message.
      */

@@ -14,12 +14,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SimpleReservoir class.</p>
+ * <p>
+ * SimpleReservoir class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -42,14 +44,18 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     double time = 0.0;
 
     /**
-     * Creates new SimpleReservoir
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
      */
     public SimpleReservoir() {
         super();
     }
 
     /**
-     * <p>getReservoirFluid.</p>
+     * <p>
+     * getReservoirFluid.
+     * </p>
      *
      * @return a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -66,7 +72,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      */
 
     /**
-     * <p>Constructor for SimpleReservoir.</p>
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -81,7 +89,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>addGasProducer.</p>
+     * <p>
+     * addGasProducer.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -97,7 +107,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>addOilProducer.</p>
+     * <p>
+     * addOilProducer.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -113,7 +125,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>addWaterInjector.</p>
+     * <p>
+     * addWaterInjector.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -130,7 +144,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>addGasInjector.</p>
+     * <p>
+     * addGasInjector.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
@@ -146,7 +162,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getGasInPlace.</p>
+     * <p>
+     * getGasInPlace.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -169,7 +187,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getOilInPlace.</p>
+     * <p>
+     * getOilInPlace.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -192,7 +212,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>gasProducer</code>.</p>
+     * <p>
+     * Getter for the field <code>gasProducer</code>.
+     * </p>
      *
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
@@ -202,7 +224,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>oilProducer</code>.</p>
+     * <p>
+     * Getter for the field <code>oilProducer</code>.
+     * </p>
      *
      * @param i a int
      * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
@@ -212,7 +236,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>oilProducer</code>.</p>
+     * <p>
+     * Getter for the field <code>oilProducer</code>.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
@@ -227,7 +253,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>setReservoirFluid.</p>
+     * <p>
+     * setReservoirFluid.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      * @param gasVolume a double
@@ -319,12 +347,13 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>GORprodution.</p>
+     * <p>
+     * GORprodution.
+     * </p>
      *
      * @return a double
      */
     public double GORprodution() {
-
         double GOR = 0.0;
         double flow = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -341,7 +370,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getGasProdution.</p>
+     * <p>
+     * getGasProdution.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -362,7 +393,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getOilProdution.</p>
+     * <p>
+     * getOilProdution.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -482,7 +515,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         for (int k = 0; k < gasInjector.size(); k++) {
             gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
         }
-
     }
 
     /** {@inheritDoc} */
@@ -492,7 +524,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -628,11 +662,12 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
                     + producedOilStream.getPressure("bara") + " pipe out pres "
                     + testPipe.getOutStream().getFluid().getPressure());
         }
-
     }
 
     /**
-     * <p>Getter for the field <code>gasProductionTotal</code>.</p>
+     * <p>
+     * Getter for the field <code>gasProductionTotal</code>.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -646,7 +681,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>oilProductionTotal</code>.</p>
+     * <p>
+     * Getter for the field <code>oilProductionTotal</code>.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -658,7 +695,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getProductionTotal.</p>
+     * <p>
+     * getProductionTotal.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -671,7 +710,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getOOIP.</p>
+     * <p>
+     * getOOIP.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -683,7 +724,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>getOGIP.</p>
+     * <p>
+     * getOGIP.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -695,12 +738,13 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>time</code>.</p>
+     * <p>
+     * Getter for the field <code>time</code>.
+     * </p>
      *
      * @return a double
      */
     public double getTime() {
         return time;
     }
-
 }

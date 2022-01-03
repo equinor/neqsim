@@ -5,12 +5,14 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>VSflash class.</p>
+ * <p>
+ * VSflash class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class VSflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
@@ -18,12 +20,16 @@ public class VSflash extends Flash {
     Flash tpFlash;
 
     /**
-     * <p>Constructor for VSflash.</p>
+     * <p>
+     * Constructor for VSflash.
+     * </p>
      */
     public VSflash() {}
 
     /**
-     * <p>Constructor for VSflash.</p>
+     * <p>
+     * Constructor for VSflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Vspec a double
@@ -39,7 +45,9 @@ public class VSflash extends Flash {
     }
 
     /**
-     * <p>calcdQdPP.</p>
+     * <p>
+     * calcdQdPP.
+     * </p>
      *
      * @return a double
      */
@@ -54,7 +62,9 @@ public class VSflash extends Flash {
     }
 
     /**
-     * <p>calcdQdTT.</p>
+     * <p>
+     * calcdQdTT.
+     * </p>
      *
      * @return a double
      */
@@ -72,7 +82,9 @@ public class VSflash extends Flash {
     }
 
     /**
-     * <p>calcdQdT.</p>
+     * <p>
+     * calcdQdT.
+     * </p>
      *
      * @return a double
      */
@@ -83,7 +95,9 @@ public class VSflash extends Flash {
     }
 
     /**
-     * <p>calcdQdP.</p>
+     * <p>
+     * calcdQdP.
+     * </p>
      *
      * @return a double
      */
@@ -94,7 +108,9 @@ public class VSflash extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */
@@ -141,7 +157,9 @@ public class VSflash extends Flash {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -165,6 +183,5 @@ public class VSflash extends Flash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

@@ -4,24 +4,32 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>AmineDiffusivity class.</p>
+ * <p>
+ * AmineDiffusivity class.
+ * </p>
  *
  * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class AmineDiffusivity extends SiddiqiLucasMethod {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AmineDiffusivity.class);
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for AmineDiffusivity.
+     * </p>
      */
     public AmineDiffusivity() {}
 
     /**
-     * <p>Constructor for AmineDiffusivity.</p>
+     * <p>
+     * Constructor for AmineDiffusivity.
+     * </p>
      *
-     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
      */
     public AmineDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
@@ -88,5 +96,4 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
         return binaryDiffusionCoeffisients;
     }
-
 }

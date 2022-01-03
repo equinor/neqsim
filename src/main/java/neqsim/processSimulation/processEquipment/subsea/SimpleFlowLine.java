@@ -6,13 +6,14 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>SimpleFlowLine class.</p>
+ * <p>
+ * SimpleFlowLine class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class SimpleFlowLine extends ProcessEquipmentBaseClass {
-
     protected StreamInterface inStream;
     private StreamInterface outStream;
     private double height = 100.0;
@@ -21,9 +22,12 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     AdiabaticTwoPhasePipe pipeline;
 
     /**
-     * <p>Constructor for SimpleFlowLine.</p>
+     * <p>
+     * Constructor for SimpleFlowLine.
+     * </p>
      *
-     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public SimpleFlowLine(StreamInterface instream) {
         this.inStream = instream;
@@ -32,9 +36,12 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>pipeline</code>.</p>
+     * <p>
+     * Getter for the field <code>pipeline</code>.
+     * </p>
      *
-     * @return a {@link neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe} object
+     * @return a {@link neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe}
+     *         object
      */
     public AdiabaticTwoPhasePipe getPipeline() {
         return pipeline;
@@ -42,13 +49,13 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return getOutStream().getThermoSystem();
     }
 
     /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
@@ -61,23 +68,23 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
          * double density = fluidIn.getDensity("kg/m3");
          * 
          * double deltaP =
-         * density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
-         * 0e5;
+         * density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1. 0e5;
          * 
          * System.out.println("density " +density + " delta P " + deltaP);
          * 
          * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
          * fluidIn.setTemperature(outletTemperature);
          * 
-         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn);
-         * ops.TPflash();
+         * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
          * 
          * getOutStream().setFluid(fluidIn);
          */
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -86,16 +93,21 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>outStream</code>.</p>
+     * <p>
+     * Setter for the field <code>outStream</code>.
+     * </p>
      *
-     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;
     }
 
     /**
-     * <p>Getter for the field <code>height</code>.</p>
+     * <p>
+     * Getter for the field <code>height</code>.
+     * </p>
      *
      * @return a double
      */
@@ -104,7 +116,9 @@ public class SimpleFlowLine extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>height</code>.</p>
+     * <p>
+     * Setter for the field <code>height</code>.
+     * </p>
      *
      * @param height a double
      */

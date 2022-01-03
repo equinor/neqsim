@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 
 abstract class Phase implements PhaseInterface {
-
     private static final long serialVersionUID = 1000;
 
     public ComponentInterface[] componentArray;
@@ -47,14 +46,18 @@ abstract class Phase implements PhaseInterface {
 
     // Class methods
     /**
-     * Creates new Phase
+     * <p>
+     * Constructor for Phase.
+     * </p>
      */
     public Phase() {
         componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
     }
 
     /**
-     * <p>Constructor for Phase.</p>
+     * <p>
+     * Constructor for Phase.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.Phase} object
      */
@@ -86,7 +89,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>addcomponent.</p>
+     * <p>
+     * addcomponent.
+     * </p>
      *
      * @param moles a double
      */
@@ -511,7 +516,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>calcA.</p>
+     * <p>
+     * calcA.
+     * </p>
      *
      * @param comp a int
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -543,7 +550,6 @@ abstract class Phase implements PhaseInterface {
     @Override
     public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
-
         return 1;
     }
 
@@ -605,7 +611,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getBi.</p>
+     * <p>
+     * getBi.
+     * </p>
      *
      * @return a double
      */
@@ -626,7 +634,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getAiT.</p>
+     * <p>
+     * getAiT.
+     * </p>
      *
      * @return a double
      */
@@ -661,7 +671,6 @@ abstract class Phase implements PhaseInterface {
     /** {@inheritDoc} */
     @Override
     public double calcR() {
-
         double R = 8.314 / getMolarMass();
 
         return R;
@@ -860,7 +869,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getCvres.</p>
+     * <p>
+     * getCvres.
+     * </p>
      *
      * @return a double
      */
@@ -876,7 +887,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getHresdP.</p>
+     * <p>
+     * getHresdP.
+     * </p>
      *
      * @return a double
      */
@@ -893,7 +906,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getSresTV.</p>
+     * <p>
+     * getSresTV.
+     * </p>
      *
      * @return a double
      */
@@ -920,7 +935,9 @@ abstract class Phase implements PhaseInterface {
 
     // Integral av Cp0 mhp T
     /**
-     * <p>getHID.</p>
+     * <p>
+     * getHID.
+     * </p>
      *
      * @return a double
      */
@@ -1223,6 +1240,7 @@ abstract class Phase implements PhaseInterface {
      * {@inheritDoc}
      *
      * method to return conductivity of a phase
+     * 
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
@@ -1257,6 +1275,7 @@ abstract class Phase implements PhaseInterface {
      * {@inheritDoc}
      *
      * method to return conductivity in a given unit
+     * 
      * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override
@@ -1286,7 +1305,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>initRefPhases.</p>
+     * <p>
+     * initRefPhases.
+     * </p>
      *
      * @param onlyPure a boolean
      * @param name a {@link java.lang.String} object
@@ -1345,7 +1366,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getLogPureComponentFugacity.</p>
+     * <p>
+     * getLogPureComponentFugacity.
+     * </p>
      *
      * @param k a int
      * @param pure a boolean
@@ -1412,7 +1435,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getInfiniteDiluteFugacity.</p>
+     * <p>
+     * getInfiniteDiluteFugacity.
+     * </p>
      *
      * @param k a int
      * @return a double
@@ -1724,7 +1749,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>calcDiElectricConstant.</p>
+     * <p>
+     * calcDiElectricConstant.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -1739,7 +1766,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>calcDiElectricConstantdT.</p>
+     * <p>
+     * calcDiElectricConstantdT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -1754,7 +1783,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>calcDiElectricConstantdTdT.</p>
+     * <p>
+     * calcDiElectricConstantdTdT.
+     * </p>
      *
      * @param temperature a double
      * @return a double
@@ -1769,7 +1800,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>Getter for the field <code>diElectricConstant</code>.</p>
+     * <p>
+     * Getter for the field <code>diElectricConstant</code>.
+     * </p>
      *
      * @return a double
      */
@@ -1806,7 +1839,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>getpH_old.</p>
+     * <p>
+     * getpH_old.
+     * </p>
      *
      * @return a double
      */
@@ -1971,7 +2006,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>groupTBPfractions.</p>
+     * <p>
+     * groupTBPfractions.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -2028,7 +2065,6 @@ abstract class Phase implements PhaseInterface {
     /** {@inheritDoc} */
     @Override
     public void setMixingRuleGEModel(String name) {}
-
 
     /**
      * {@inheritDoc}
@@ -2311,7 +2347,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * <p>Getter for the field <code>thermoPropertyModelName</code>.</p>
+     * <p>
+     * Getter for the field <code>thermoPropertyModelName</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */

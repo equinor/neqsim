@@ -18,12 +18,14 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>InterfaceProperties class.</p>
+ * <p>
+ * InterfaceProperties class.
+ * </p>
  *
- * @author  esol
+ * @author esol
+ * @version $Id: $Id
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface system;
@@ -37,13 +39,16 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     static Logger logger = LogManager.getLogger(InterfaceProperties.class);
 
     /**
-     * Creates new InterfaceProperties
+     * <p>
+     * Constructor for InterfaceProperties.
+     * </p>
      */
-    public InterfaceProperties() {
-    }
+    public InterfaceProperties() {}
 
     /**
-     * <p>Constructor for InterfaceProperties.</p>
+     * <p>
+     * Constructor for InterfaceProperties.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -119,13 +124,12 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     /*
-     * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) {
-     * return 0.0; } else { return surfaceTension[numb]; } }
+     * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
+     * else { return surfaceTension[numb]; } }
      */
     /** {@inheritDoc} */
     @Override
     public double getSurfaceTension(int numb1, int numb2) {
-
         if (system.getPhase(numb1).getPhaseTypeName().equals("gas")
                 && system.getPhase(numb2).getPhaseTypeName().equals("oil")) {
             return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
@@ -187,7 +191,6 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         } else if (phase1.equals("oil") && phase2.equals("aqueous")) {
             liquidLiquidSurfaceTensionCalc = surfTensModel;
         }
-
     }
 
     /** {@inheritDoc} */
@@ -226,7 +229,6 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
             gasAqueousSurfaceTensionCalc = new ParachorSurfaceTension(system);
             liquidLiquidSurfaceTensionCalc = new ParachorSurfaceTension(system);
         }
-
     }
 
     /** {@inheritDoc} */

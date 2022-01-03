@@ -9,12 +9,14 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TPgradientFlash class.</p>
+ * <p>
+ * TPgradientFlash class.
+ * </p>
  *
  * @author even solbraa
+ * @version $Id: $Id
  */
 public class TPgradientFlash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface localSystem = null, tempSystem = null;
@@ -27,12 +29,16 @@ public class TPgradientFlash extends Flash {
     Matrix uold;
 
     /**
-     * Creates new TPgradientFlash
+     * <p>
+     * Constructor for TPgradientFlash.
+     * </p>
      */
     public TPgradientFlash() {}
 
     /**
-     * <p>Constructor for TPgradientFlash.</p>
+     * <p>
+     * Constructor for TPgradientFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param height a double
@@ -49,7 +55,9 @@ public class TPgradientFlash extends Flash {
     }
 
     /**
-     * <p>Setter for the field <code>fvec</code>.</p>
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
      */
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -81,7 +89,9 @@ public class TPgradientFlash extends Flash {
     }
 
     /**
-     * <p>setJac.</p>
+     * <p>
+     * setJac.
+     * </p>
      */
     public void setJac() {
         Jac.timesEquals(0.0);
@@ -107,7 +117,9 @@ public class TPgradientFlash extends Flash {
     }
 
     /**
-     * <p>setNewX.</p>
+     * <p>
+     * setNewX.
+     * </p>
      */
     public void setNewX() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {

@@ -8,13 +8,14 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 
 /**
- * <p>AdsorberMechanicalDesign class.</p>
+ * <p>
+ * AdsorberMechanicalDesign class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class AdsorberMechanicalDesign extends MechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     private double wallThickness = 0.0;
@@ -22,9 +23,12 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
     double molecularSieveWaterCapacity = 10.0;
 
     /**
-     * <p>Constructor for AdsorberMechanicalDesign.</p>
+     * <p>
+     * Constructor for AdsorberMechanicalDesign.
+     * </p>
      *
-     * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public AdsorberMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
@@ -32,15 +36,14 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
 
     /** {@inheritDoc} */
     @Override
-	public void readDesignSpecifications() {
-
+    public void readDesignSpecifications() {
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("pressure vessel design code")) {
             System.out.println("pressure vessel code standard: "
                     + getDesignStandard().get("pressure vessel design code").getStandardName());
-            wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-                    .calcWallThickness();
+            wallThickness = ((PressureVesselDesignStandard) getDesignStandard()
+                    .get("pressure vessel design code")).calcWallThickness();
         } else {
             System.out.println("no pressure vessel code standard specified......");
             return;
@@ -53,12 +56,11 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
         } else {
             System.out.println("no separator process design specified......");
         }
-
     }
 
     /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
+    public void calcDesign() {
         super.calcDesign();
         SimpleAdsorber separator = (SimpleAdsorber) getProcessEquipment();
         double Fg = 1.0;
@@ -72,10 +74,10 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
         double materialsCost = 0.0;
         double sepLength = 0.0;
 
-        double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0)
-                .getPhysicalProperties().getDensity();
-        double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(1)
-                .getPhysicalProperties().getDensity();
+        double gasDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem()
+                .getPhase(0).getPhysicalProperties().getDensity();
+        double liqDensity = ((SeparatorInterface) getProcessEquipment()).getThermoSystem()
+                .getPhase(1).getPhysicalProperties().getDensity();
 
         // maxDesignVolumeFlow = volumeSafetyFactor * ((Separator)
         // getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;
@@ -111,11 +113,12 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
 
         setOuterDiameter(innerDiameter * 2.0 * getWallThickness());
 
-        System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " mm");
+        System.out.println(
+                "wall thickness: " + separator.getName() + " " + getWallThickness() + " mm");
         System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
         System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-        System.out.println(
-                "foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
+        System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength
+                + " height " + moduleHeight + " meter.");
         System.out.println("mechanical price: " + materialsCost + " kNOK");
 
         setWeigthVesselShell(emptyVesselWeight);
@@ -146,7 +149,7 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
 
     /** {@inheritDoc} */
     @Override
-	public void setDesign() {
+    public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...
@@ -154,25 +157,25 @@ public class AdsorberMechanicalDesign extends MechanicalDesign {
 
     /** {@inheritDoc} */
     @Override
-	public double getOuterDiameter() {
+    public double getOuterDiameter() {
         return outerDiameter;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getWallThickness() {
+    public double getWallThickness() {
         return wallThickness;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setWallThickness(double wallThickness) {
+    public void setWallThickness(double wallThickness) {
         this.wallThickness = wallThickness;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setOuterDiameter(double outerDiameter) {
+    public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
 }

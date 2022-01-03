@@ -13,9 +13,10 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
  * <p>ExpanderInterface interface.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface ExpanderInterface extends ProcessEquipmentInterface {
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public void run();
 
@@ -40,7 +41,7 @@ public interface ExpanderInterface extends ProcessEquipmentInterface {
      */
     public double getEnergy();
 
-    /** {@inheritDoc} */
+	/** {@inheritDoc} */
     @Override
 	public String getName();
 

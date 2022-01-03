@@ -12,12 +12,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>ThreePhaseSeparator class.</p>
+ * <p>
+ * ThreePhaseSeparator class.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class ThreePhaseSeparator extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     StreamInterface waterOutStream = new Stream(waterSystem);
@@ -42,16 +44,21 @@ public class ThreePhaseSeparator extends Separator {
     String aqueousInOilSpec = "mole";
 
     /**
-     * Creates new Separator
+     * <p>
+     * Constructor for ThreePhaseSeparator.
+     * </p>
      */
     public ThreePhaseSeparator() {
         super();
     }
 
     /**
-     * <p>Constructor for ThreePhaseSeparator.</p>
+     * <p>
+     * Constructor for ThreePhaseSeparator.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public ThreePhaseSeparator(StreamInterface inletStream) {
         this();
@@ -59,10 +66,13 @@ public class ThreePhaseSeparator extends Separator {
     }
 
     /**
-     * <p>Constructor for ThreePhaseSeparator.</p>
+     * <p>
+     * Constructor for ThreePhaseSeparator.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public ThreePhaseSeparator(String name, StreamInterface inletStream) {
         this();
@@ -71,7 +81,9 @@ public class ThreePhaseSeparator extends Separator {
     }
 
     /**
-     * <p>setEntrainment.</p>
+     * <p>
+     * setEntrainment.
+     * </p>
      *
      * @param val a double
      * @param specType a {@link java.lang.String} object
@@ -79,7 +91,8 @@ public class ThreePhaseSeparator extends Separator {
      * @param phaseFrom a {@link java.lang.String} object
      * @param phaseTo a {@link java.lang.String} object
      */
-    public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom, String phaseTo) {
+    public void setEntrainment(double val, String specType, String specifiedStream,
+            String phaseFrom, String phaseTo) {
         this.specifiedStream = specifiedStream;
         if (phaseFrom.equals("gas") && phaseTo.equals("aqueous")) {
             gasInAqueous = val;
@@ -105,7 +118,6 @@ public class ThreePhaseSeparator extends Separator {
             aqueousInOil = val;
             aqueousInOilSpec = specType;
         }
-
     }
 
     /** {@inheritDoc} */
@@ -119,7 +131,9 @@ public class ThreePhaseSeparator extends Separator {
     }
 
     /**
-     * <p>Getter for the field <code>waterOutStream</code>.</p>
+     * <p>
+     * Getter for the field <code>waterOutStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -128,7 +142,9 @@ public class ThreePhaseSeparator extends Separator {
     }
 
     /**
-     * <p>getOilOutStream.</p>
+     * <p>
+     * getOilOutStream.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -146,12 +162,16 @@ public class ThreePhaseSeparator extends Separator {
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();
         // thermoSystem.display();
-        thermoSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas", "aqueous");
+        thermoSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas",
+                "aqueous");
         thermoSystem.addPhaseFractionToPhase(gasInOil, gasInOilSpec, specifiedStream, "gas", "oil");
-        thermoSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil", "aqueous");
+        thermoSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil",
+                "aqueous");
         thermoSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
-        thermoSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream, "aqueous", "gas");
-        thermoSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
+        thermoSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream,
+                "aqueous", "gas");
+        thermoSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream,
+                "aqueous", "oil");
         // thermoSystem.init_x_y();
         // thermoSystem.display();
         // thermoSystem.init(3);
@@ -222,10 +242,11 @@ public class ThreePhaseSeparator extends Separator {
     }
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
-    public void runTransient() {
-    }
+    public void runTransient() {}
 
     /** {@inheritDoc} */
     @Override
@@ -250,7 +271,8 @@ public class ThreePhaseSeparator extends Separator {
         double entrop = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {
             inletStreamMixer.getStream(i).getFluid().init(3);
-            entrop += inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature, unit);
+            entrop += inletStreamMixer.getStream(i).getFluid().getExergy(sourrondingTemperature,
+                    unit);
         }
         getWaterOutStream().getThermoSystem().init(3);
         getOilOutStream().getThermoSystem().init(3);
@@ -258,6 +280,7 @@ public class ThreePhaseSeparator extends Separator {
 
         return getWaterOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
                 + getOilOutStream().getThermoSystem().getEntropy(unit)
-                + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit) - entrop;
+                + getGasOutStream().getThermoSystem().getExergy(sourrondingTemperature, unit)
+                - entrop;
     }
 }

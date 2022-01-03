@@ -16,24 +16,31 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>FluidBoundarySystemNonReactive class.</p>
+ * <p>
+ * FluidBoundarySystemNonReactive class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new FluidBoundarySystemReactive
+     * <p>
+     * Constructor for FluidBoundarySystemNonReactive.
+     * </p>
      */
-    public FluidBoundarySystemNonReactive() {
-    }
+    public FluidBoundarySystemNonReactive() {}
 
     /**
-     * <p>Constructor for FluidBoundarySystemNonReactive.</p>
+     * <p>
+     * Constructor for FluidBoundarySystemNonReactive.
+     * </p>
      *
-     * @param boundary a {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface} object
+     * @param boundary a
+     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+     *        object
      */
     public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary) {
         super(boundary);
@@ -41,7 +48,7 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
 
     /** {@inheritDoc} */
     @Override
-	public void createSystem() {
+    public void createSystem() {
         nodes = new FluidBoundaryNodeNonReactive[numberOfNodes];
         super.createSystem();
 
@@ -52,7 +59,9 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -77,5 +86,4 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
         // System.out.println("enhancement " +
         // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().getEnhancementFactor(0));
     }
-
 }

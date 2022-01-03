@@ -9,25 +9,31 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>StreamInterface interface.</p>
+ * <p>
+ * StreamInterface interface.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public interface StreamInterface extends ProcessEquipmentInterface {
-
     /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem();
+    public SystemInterface getThermoSystem();
 
     /**
-     * <p>setThermoSystem.</p>
+     * <p>
+     * setThermoSystem.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setThermoSystem(SystemInterface thermoSystem);
 
     /**
-     * <p>setFlowRate.</p>
+     * <p>
+     * setFlowRate.
+     * </p>
      *
      * @param flowrate a double
      * @param unit a {@link java.lang.String} object
@@ -35,7 +41,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setFlowRate(double flowrate, String unit);
 
     /**
-     * <p>getPressure.</p>
+     * <p>
+     * getPressure.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -43,12 +51,16 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public double getPressure(String unit);
 
     /**
-     * <p>runTPflash.</p>
+     * <p>
+     * runTPflash.
+     * </p>
      */
     public void runTPflash();
 
     /**
-     * <p>getTemperature.</p>
+     * <p>
+     * getTemperature.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -57,10 +69,12 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
     /** {@inheritDoc} */
     @Override
-	public void setName(String name);
+    public void setName(String name);
 
     /**
-     * <p>CCT.</p>
+     * <p>
+     * CCT.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -68,14 +82,18 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public double CCT(String unit);
 
     /**
-     * <p>getTemperature.</p>
+     * <p>
+     * getTemperature.
+     * </p>
      *
      * @return a double
      */
     public double getTemperature();
 
     /**
-     * <p>CCB.</p>
+     * <p>
+     * CCB.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -83,7 +101,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public double CCB(String unit);
 
     /**
-     * <p>getFlowRate.</p>
+     * <p>
+     * getFlowRate.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      * @return a double
@@ -91,7 +111,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public double getFlowRate(String unit);
 
     /**
-     * <p>TVP.</p>
+     * <p>
+     * TVP.
+     * </p>
      *
      * @param temperature a double
      * @param unit a {@link java.lang.String} object
@@ -100,14 +122,18 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public double TVP(double temperature, String unit);
 
     /**
-     * <p>setFluid.</p>
+     * <p>
+     * setFluid.
+     * </p>
      *
      * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setFluid(SystemInterface fluid);
 
     /**
-     * <p>getMolarRate.</p>
+     * <p>
+     * getMolarRate.
+     * </p>
      *
      * @return a double
      */
@@ -115,29 +141,37 @@ public interface StreamInterface extends ProcessEquipmentInterface {
 
     /** {@inheritDoc} */
     @Override
-	public double getPressure();
+    public double getPressure();
 
     /**
-     * <p>clone.</p>
+     * <p>
+     * clone.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface clone();
 
     /**
-     * <p>flashStream.</p>
+     * <p>
+     * flashStream.
+     * </p>
      */
     public void flashStream();
 
     /**
-     * <p>getHydrateEquilibriumTemperature.</p>
+     * <p>
+     * getHydrateEquilibriumTemperature.
+     * </p>
      *
      * @return a double
      */
     public double getHydrateEquilibriumTemperature();
 
     /**
-     * <p>setThermoSystemFromPhase.</p>
+     * <p>
+     * setThermoSystemFromPhase.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      * @param phaseTypeName a {@link java.lang.String} object
@@ -145,14 +179,18 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setThermoSystemFromPhase(SystemInterface thermoSystem, String phaseTypeName);
 
     /**
-     * <p>setEmptyThermoSystem.</p>
+     * <p>
+     * setEmptyThermoSystem.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public void setEmptyThermoSystem(SystemInterface thermoSystem);
 
     /**
-     * <p>setPressure.</p>
+     * <p>
+     * setPressure.
+     * </p>
      *
      * @param pressure a double
      * @param unit a {@link java.lang.String} object
@@ -160,7 +198,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setPressure(double pressure, String unit);
 
     /**
-     * <p>setTemperature.</p>
+     * <p>
+     * setTemperature.
+     * </p>
      *
      * @param temperature a double
      * @param unit a {@link java.lang.String} object
@@ -168,14 +208,18 @@ public interface StreamInterface extends ProcessEquipmentInterface {
     public void setTemperature(double temperature, String unit);
 
     /**
-     * <p>GCV.</p>
+     * <p>
+     * GCV.
+     * </p>
      *
      * @return a double
      */
     public double GCV();
 
     /**
-     * <p>LCV.</p>
+     * <p>
+     * LCV.
+     * </p>
      *
      * @return a double
      */
