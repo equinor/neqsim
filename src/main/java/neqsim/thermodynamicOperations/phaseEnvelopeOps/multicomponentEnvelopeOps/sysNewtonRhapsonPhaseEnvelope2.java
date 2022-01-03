@@ -9,6 +9,12 @@ import org.apache.logging.log4j.Logger;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>sysNewtonRhapsonPhaseEnvelope2 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
@@ -32,10 +38,15 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
     boolean etterCP = false;
     boolean etterCP2 = false;
 
+    /**
+     * <p>Constructor for sysNewtonRhapsonPhaseEnvelope2.</p>
+     */
     public sysNewtonRhapsonPhaseEnvelope2() {}
 
     /**
      * Creates new nonlin
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
     public sysNewtonRhapsonPhaseEnvelope2(SystemInterface system) {
         this.system = system;
@@ -52,6 +63,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         solver.setOrder(3);
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             fvec.setEntry(i, 0, u.getEntry(i, 0)
@@ -68,6 +82,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         fvec.setEntry(system.getPhase(0).getNumberOfComponents() + 1, 0, 0);
     }
 
+    /**
+     * <p>findSpecEqInit.</p>
+     */
     public void findSpecEqInit() {
         speceq = 0;
         int speceqmin = 0;
@@ -89,6 +106,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         logger.info("dTmax: " + dTmax + "  dPmax: " + dPmax);
     }
 
+    /**
+     * <p>findSpecEq.</p>
+     */
     public void findSpecEq() {
         double max = 0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents() + 2; i++) {
@@ -101,6 +121,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         // logger.info("spec eq: " + speceq);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac = Jac.scalarMultiply(0.0);
         double dij = 0.0;
@@ -135,6 +158,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         Jac.setEntry(nofc + 1, speceq, 1.0);
     }
 
+    /**
+     * <p>Setter for the field <code>u</code>.</p>
+     */
     public void setu() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             u.setEntry(i, 0, Math.log(system.getPhase(0).getComponents()[i].getK()));
@@ -145,6 +171,9 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
                 Math.log(system.getPressure()));
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             system.getPhase(0).getComponents()[i].setK(Math.exp(u.getEntry(i, 0)));
@@ -156,6 +185,11 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         system.init(3);
     }
 
+    /**
+     * <p>calcInc.</p>
+     *
+     * @param np a int
+     */
     public void calcInc(int np) {
         // First we need the sensitivity vector dX/dS
 
@@ -228,6 +262,11 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>calcInc2.</p>
+     *
+     * @param np a int
+     */
     public void calcInc2(int np) {
         for (int j = 0; j < neq; j++) {
             xg = Xgij.getSubMatrix(j, j, 0, 3);
@@ -355,10 +394,20 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>Getter for the field <code>npCrit</code>.</p>
+     *
+     * @return a int
+     */
     public int getNpCrit() {
         return npCrit;
     }
 
+    /**
+     * <p>critPassed.</p>
+     *
+     * @return a boolean
+     */
     public boolean critPassed() {
         if (testcrit == 1) {
             testcrit = -3;
@@ -368,12 +417,24 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>sign.</p>
+     *
+     * @param a a double
+     * @param b a double
+     * @return a double
+     */
     public double sign(double a, double b) {
         a = Math.abs(a);
         b = b >= 0 ? 1.0 : -1.0;
         return a * b;
     }
 
+    /**
+     * <p>solve.</p>
+     *
+     * @param np a int
+     */
     public void solve(int np) {
         RealMatrix dx;
         iter = 0;
@@ -400,6 +461,11 @@ public class sysNewtonRhapsonPhaseEnvelope2 implements java.io.Serializable {
         init();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         /*
          * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};

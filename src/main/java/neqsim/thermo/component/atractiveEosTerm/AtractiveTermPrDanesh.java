@@ -9,9 +9,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermPrDanesh class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
 
@@ -19,11 +19,16 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
 
     double mMod = 0;
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermPrDanesh(ComponentEosInterface component) {
         super(component);
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermPrDanesh clone() {
         AtractiveTermPrDanesh atractiveTerm = null;
@@ -36,12 +41,14 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
                 - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         if (temperature > getComponent().getTC()) {
@@ -52,11 +59,13 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
         return Math.pow(1.0 + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC())), 2.0);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         return getComponent().geta() * alpha(temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         if (temperature > getComponent().getTC()) {
@@ -68,6 +77,7 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
                 / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         if (temperature > getComponent().getTC()) {
@@ -83,11 +93,13 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         return getComponent().geta() * diffalphaT(temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);

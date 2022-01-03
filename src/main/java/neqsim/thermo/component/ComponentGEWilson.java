@@ -10,23 +10,42 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>ComponentGEWilson class.</p>
  *
  * @author Even Solbraa
- * @version
  */
-
 public class ComponentGEWilson extends ComponentGE {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new ComponentGEWilson */
+    /**
+     * Creates new ComponentGEWilson
+     */
     public ComponentGEWilson() {
     }
 
+    /**
+     * <p>Constructor for ComponentGEWilson.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGEWilson(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /**
+     * <p>fugcoef.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         fugasityCoeffisient = (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
@@ -34,11 +53,22 @@ public class ComponentGEWilson extends ComponentGE {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>getGamma.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         return getWilsonActivityCoeffisient(phase);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
@@ -46,6 +76,12 @@ public class ComponentGEWilson extends ComponentGE {
         return 0.0;
     }
 
+    /**
+     * <p>getWilsonActivityCoeffisient.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWilsonActivityCoeffisient(PhaseInterface phase1) {
         double sum1 = 0.0;
         double sum2 = 0.0;
@@ -64,6 +100,14 @@ public class ComponentGEWilson extends ComponentGE {
         return Math.exp(1.0 - Math.log(sum1) - sum2);
     }
 
+    /**
+     * <p>getCharEnergyParamter.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param comp1 a int
+     * @param comp2 a int
+     * @return a double
+     */
     public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
 
         double param1 = 0.0; // ((ComponentWaxWilson)
@@ -95,6 +139,12 @@ public class ComponentGEWilson extends ComponentGE {
         return energyParameter;
     }
 
+    /**
+     * <p>getWilsonInteractionEnergy.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWilsonInteractionEnergy(PhaseInterface phase1) {
         double coordinationNumber = 6.0;
 

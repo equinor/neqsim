@@ -11,13 +11,15 @@ import no.uib.cipr.matrix.*;
 import org.apache.logging.log4j.*;
 
 /**
- * @brief Solving for the surface tension by direct Newton method.
+ * <p>GTSurfaceTensionFullGT class.</p>
  *
- * @todo Make use of binary interaction parameter for the influence parameter
- *       \f$\beta_{ij}\f$ when this becomes available in NeqSIM API.
- *
+ * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  * @author John C. Morud <john.c.morud@sintef.no>
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * @brief Solving for the surface tension by direct Newton method.
+ * @todo Make use of binary interaction parameter for the influence parameter
+ *       \f$\beta_{ij}\f$ when this becomes available in NeqSIM API.
+ * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
 
@@ -41,6 +43,13 @@ public class GTSurfaceTensionFullGT {
     private static final boolean NDEBUG = true; // Set to false for debug mode.
     private static final boolean DEBUGPLOT = false; // Set to true for profile plot.
 
+    /**
+     * <p>Constructor for GTSurfaceTensionFullGT.</p>
+     *
+     * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phase1 a int
+     * @param phase2 a int
+     */
     public GTSurfaceTensionFullGT(SystemInterface flashedSystem, int phase1, int phase2) {
         int i = 0;
 
@@ -250,6 +259,8 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
+     * <p>Newton.</p>
+     *
      * @brief Calculate surface tension by full gradient method and Newtons method
      *
      *        The routine solves the Finite Difference equations for the full
@@ -258,20 +269,18 @@ public class GTSurfaceTensionFullGT {
      *        routine "directsolve" for Newton step 3. Dampen the step if relative
      *        step too large 4. Iterate until convergence or max #iterations
      *        (N_Newton)
-     *
-     * @param[in] cij Matrix of influence parameters [nm^2(J/mol)/(mol/m^3)]
-     * @param[in] L Half-width of solution domain [nm]
-     * @param[in] N_Newton Number of Newton steps between refinements
-     * @param[in] allowedRelChange Maximum allowed relative change per Newton step
-     * @param[in] highOrder If true a 4th order method will be used
-     * @param[in] directMethod If true a direct solver is used (only option for now)
-     * @param[out] rhomat rhomat[i][j] is the density of species j at grid pt i
-     *             [mol/m^3]
-     * @param[in] sys Thermodynamic system
-     * @param[in] ncomp Number of chemical species
-     * @param[in] t Temperature [K]
-     * @param[in] mueq Chemical potential far from interface [J/mol]
      * @return sigma The surface tension [N/m]
+     * @param cij an array of {@link double} objects
+     * @param L a double
+     * @param N_Newton a int
+     * @param allowedRelChange a double
+     * @param highOrder a boolean
+     * @param directMethod a boolean
+     * @param rhomat an array of {@link double} objects
+     * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+     * @param ncomp a int
+     * @param t a double
+     * @param mueq an array of {@link double} objects
      */
     public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange, boolean highOrder,
             boolean directMethod, double[][] rhomat, SystemInterface sys, int ncomp, double t, double[] mueq) {
@@ -413,15 +422,16 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * @brief Solve linear system for Full Gradient method
+     * <p>directsolve.</p>
      *
-     * @param[in] rres rres[i][j] is the residual for species j at grid pt i
-     * @param[in] JJ JJ[i] contains the Jacobian dmu_drho at grid point i
-     * @param[in] C Matrix of influence parameters
-     * @param[in] H Distance between two grid points
-     * @param[in] Ngrid Number of grid points
-     * @param[in] rhomat rhomat[i][j] is the density for species j at grid pt i
-     * @param[in] ncomp Number of components.
+     * @brief Solve linear system for Full Gradient method
+     * @param rres an array of {@link double} objects
+     * @param JJ an array of {@link double} objects
+     * @param C an array of {@link double} objects
+     * @param H a double
+     * @param Ngrid a int
+     * @param rhomat an array of {@link double} objects
+     * @param ncomp a int
      */
     public static void directsolve(double rres[][], double JJ[][][], double C[][], double H, int Ngrid,
             double rhomat[][], int ncomp) {
@@ -501,21 +511,20 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
+     * <p>sigmaCalc.</p>
+     *
      * @brief Calculates the interface tension
      *
      *        The following integral is solved with the trapezoidal method:
      *        \f{equation}{ \sigma = \int_{-\infty}^{\infty} \boldsymbol{n_z}^T
      *        \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
-     *
-     * @param[in] h Grid spacing.
-     * @param[in] rrho Array of number density profiles.
-     * @param[in] C Cross influence parameter matrix.
-     * @param[in] highOrder Use high order calculation (not yet implemented for this
-     *            integral).
-     * @param[out] drhodz Number density derivative
-     *             \f$\partial\boldsymbol{\rho}/\partial\mathbf{z}\f$
-     * @param[in] ncomp Number of components
      * @return sigma The surface tension [N/m]
+     * @param h a double
+     * @param rrho an array of {@link double} objects
+     * @param C an array of {@link double} objects
+     * @param highOrder a boolean
+     * @param drhodz an array of {@link double} objects
+     * @param ncomp a int
      */
     public static double sigmaCalc(double h, double rrho[][], double C[][], boolean highOrder, double drhodz[][],
             int ncomp) {
@@ -547,16 +556,16 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
+     * <p>calc_std_integral.</p>
+     *
      * @brief Calculate width of interface region (length scale)
      *
      *        Estimate the width of interface by calculating the second moment of
      *        the surface tension integrand. Used to adjust the domain size
-     *
-     * @param[in] z Mesh coordinates.
-     * @param[in] C Cross influence parameter matrix.
-     * @param[in] drhodz Number density derivative
-     *            \f$\partial\boldsymbol{\rho}/\partial\mathbf{z}\f$
      * @return Interface width (length scale) [nm]
+     * @param z an array of {@link double} objects
+     * @param C an array of {@link double} objects
+     * @param drhodz an array of {@link double} objects
      */
     public double calc_std_integral(double z[], double C[][], double drhodz[][]) {
 
@@ -584,7 +593,16 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
+     * <p>delta_mu.</p>
+     *
      * @brief Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
+     * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+     * @param ncomp a int
+     * @param t a double
+     * @param mueq an array of {@link double} objects
+     * @param rho an array of {@link double} objects
+     * @param delta_mu an array of {@link double} objects
+     * @param dmu_drho an array of {@link double} objects
      */
     public static void delta_mu(SystemInterface sys, int ncomp, double t, double mueq[], double[] rho,
             double[] delta_mu, double[][] dmu_drho) {
@@ -600,11 +618,13 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
-     * @brief Make an array of double with N values linearly spaced between a and b.
+     * <p>linspace.</p>
      *
+     * @brief Make an array of double with N values linearly spaced between a and b.
      * @param a start of range
      * @param b end of range
      * @param N number of values.
+     * @return an array of {@link double} objects
      */
     public static double[] linspace(double a, double b, int N) {
         double x[] = new double[N];
@@ -618,11 +638,12 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
+     * <p>debugPlot.</p>
+     *
      * @brief Plotting of density profiles y over the domain x.
      * @param x abscissa values
      * @param y array of ordinate value arrays.
      */
-
     public static void debugPlot(double[] x, double[][] y) {
         int N = y.length;
         int M = y[0].length;
@@ -642,8 +663,18 @@ public class GTSurfaceTensionFullGT {
     }
 
     /**
+     * <p>initmu.</p>
+     *
      * @brief Initialize equilibrium chemical potential, and derivative and test
      *        that the bulk equilibrium is satisfied.
+     * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+     * @param ncomp a int
+     * @param t a double
+     * @param rho_ph1 an array of {@link double} objects
+     * @param rho_ph2 an array of {@link double} objects
+     * @param mueq an array of {@link double} objects
+     * @param p0 an array of {@link double} objects
+     * @param reltol a double
      */
     public static void initmu(SystemInterface sys, int ncomp, double t, double rho_ph1[], double rho_ph2[],
             double mueq[], double p0[], double reltol) {

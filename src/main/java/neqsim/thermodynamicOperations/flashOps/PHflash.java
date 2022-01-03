@@ -8,8 +8,9 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>PHflash class.</p>
+ *
  * @author even solbraa
- * @version
  */
 public class PHflash extends Flash {
 
@@ -24,6 +25,13 @@ public class PHflash extends Flash {
      */
     public PHflash() {}
 
+    /**
+     * <p>Constructor for PHflash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Hspec a double
+     * @param type a int
+     */
     public PHflash(SystemInterface system, double Hspec, int type) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -31,16 +39,31 @@ public class PHflash extends Flash {
         this.type = type;
     }
 
+    /**
+     * <p>calcdQdTT.</p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
         double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCp();
         return dQdTT / Math.abs(Hspec);
     }
 
+    /**
+     * <p>calcdQdT.</p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQ = (system.getEnthalpy() - Hspec) / Math.abs(Hspec);
         return dQ;
     }
 
+    /**
+     * <p>solveQ.</p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -115,6 +138,11 @@ public class PHflash extends Flash {
         return 1.0 / nyTemp;
     }
 
+    /**
+     * <p>solveQ2.</p>
+     *
+     * @return a double
+     */
     public double solveQ2() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -163,6 +191,7 @@ public class PHflash extends Flash {
         return 1.0 / nyTemp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
@@ -180,6 +209,7 @@ public class PHflash extends Flash {
         // System.out.println("Temperature: " + system.getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

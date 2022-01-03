@@ -9,24 +9,32 @@ package neqsim.processSimulation.processEquipment.mixer;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * StaticPhaseMixer class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
  */
 public class StaticPhaseMixer extends StaticMixer {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new staticMixer */
-    public StaticPhaseMixer() {
-    }
+    public StaticPhaseMixer() {}
 
+    /**
+     * <p>
+     * Constructor for StaticPhaseMixer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public StaticPhaseMixer(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void mixStream() {
+    public void mixStream() {
         int index = 0;
         String compName = new String();
 
@@ -36,8 +44,9 @@ public class StaticPhaseMixer extends StaticMixer {
                     .getNumberOfComponents(); i++) {
 
                 boolean gotComponent = false;
-                String componentName = streams.get(k).getThermoSystem()
-                        .getPhases()[0].getComponents()[i].getName();
+                String componentName =
+                        streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
+                                .getName();
                 System.out.println("adding: " + componentName);
                 int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
                 double[] moles = new double[numberOfPhases];
@@ -57,14 +66,16 @@ public class StaticPhaseMixer extends StaticMixer {
                             .setTemperature(streams.get(k).getThermoSystem().getTemperature());
                 }
 
-                for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
+                for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
+                        .getNumberOfComponents(); p++) {
                     if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
                             .equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhases()[0]
-                                .getComponents()[p].getComponentNumber();
-                        compName = streams.get(0).getThermoSystem()
-                                .getPhases()[0].getComponents()[p].getComponentName();
+                        index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+                                .getComponentNumber();
+                        compName =
+                                streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
+                                        .getComponentName();
 
                     }
                 }
@@ -97,8 +108,9 @@ public class StaticPhaseMixer extends StaticMixer {
 
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         double enthalpy = 0.0;
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().init(3);
@@ -117,8 +129,9 @@ public class StaticPhaseMixer extends StaticMixer {
 
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 

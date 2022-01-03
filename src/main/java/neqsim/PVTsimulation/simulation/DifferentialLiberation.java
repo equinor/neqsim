@@ -4,8 +4,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>DifferentialLiberation class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class DifferentialLiberation extends BasePVTsimulation {
 
@@ -25,10 +27,18 @@ public class DifferentialLiberation extends BasePVTsimulation {
     private double[] relGasGravity;
     double[] gasVolume;
 
+    /**
+     * <p>Constructor for DifferentialLiberation.</p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public DifferentialLiberation(SystemInterface tempSystem) {
         super(tempSystem);
     }
 
+    /**
+     * <p>calcSaturationConditions.</p>
+     */
     public void calcSaturationConditions() {
 
         getThermoSystem().setPressure(1.0);
@@ -59,6 +69,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
         saturationConditionFound = true;
     }
 
+    /**
+     * <p>runCalc.</p>
+     */
     public void runCalc() {
         saturationConditionFound = false;
         relativeVolume = new double[pressures.length];
@@ -158,6 +171,11 @@ public class DifferentialLiberation extends BasePVTsimulation {
         System.out.println("test finished");
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 83.5, 450.0);
         tempSystem.addComponent("nitrogen", 0.586);
@@ -186,21 +204,23 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>relativeVolume</code>.</p>
+     *
      * @return the relativeVolume
      */
     public double[] getRelativeVolume() {
         return relativeVolume;
     }
 
-    /**
-     * @return the saturationPressure
-     */
+	/** {@inheritDoc} */
     @Override
 	public double getSaturationPressure() {
         return saturationPressure;
     }
 
     /**
+     * <p>getBo.</p>
+     *
      * @return the Bo
      */
     public double[] getBo() {
@@ -208,6 +228,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>getBg.</p>
+     *
      * @return the Bg
      */
     public double[] getBg() {
@@ -215,6 +237,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>getRs.</p>
+     *
      * @return the Rs
      */
     public double[] getRs() {
@@ -222,6 +246,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>getZgas.</p>
+     *
      * @return the Zgas
      */
     public double[] getZgas() {
@@ -229,6 +255,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>relGasGravity</code>.</p>
+     *
      * @return the relGasGravity
      */
     public double[] getRelGasGravity() {
@@ -236,6 +264,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>gasStandardVolume</code>.</p>
+     *
      * @return the gasStandardVolume
      */
     public double[] getGasStandardVolume() {
@@ -243,6 +273,8 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>oilDensity</code>.</p>
+     *
      * @return the oilDensity
      */
     public double[] getOilDensity() {

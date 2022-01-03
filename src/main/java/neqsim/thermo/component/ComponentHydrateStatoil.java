@@ -9,9 +9,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ComponentHydrateStatoil class.</p>
  *
  * @author esol
- * @version
  */
 public class ComponentHydrateStatoil extends ComponentHydrate {
 
@@ -23,10 +23,20 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     double cavprwat[][] = new double[2][2];
     static Logger logger = LogManager.getLogger(ComponentHydrateStatoil.class);
 
-    /** Creates new Class */
+    /**
+     * Creates new Class
+     */
     public ComponentHydrateStatoil() {
     }
 
+    /**
+     * <p>Constructor for ComponentHydrateStatoil.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentHydrateStatoil(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         coordNumb[0][0] = 20.0;
@@ -48,11 +58,13 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
@@ -96,6 +108,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -117,6 +130,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         return yki / temp;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -128,6 +142,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         return cki / 1.0e30;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
         double val = 0.0;
@@ -153,6 +168,7 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
         double pot = 2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameterHydrate()
@@ -178,6 +194,15 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
         return pot;
     }
 
+    /**
+     * <p>delt.</p>
+     *
+     * @param n a double
+     * @param radius a double
+     * @param struccture a int
+     * @param cavityType a int
+     * @return a double
+     */
     public double delt(double n, double radius, int struccture, int cavityType) {
         double diff1 = (radius + getSphericalCoreRadiusHydrate()) / cavRadius[struccture][cavityType];
         double diff2 = (radius - getSphericalCoreRadiusHydrate()) / cavRadius[struccture][cavityType];

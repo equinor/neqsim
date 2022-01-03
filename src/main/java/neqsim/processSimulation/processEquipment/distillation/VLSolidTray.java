@@ -5,7 +5,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>VLSolidTray class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class VLSolidTray extends SimpleTray {
 
@@ -14,9 +17,13 @@ public class VLSolidTray extends SimpleTray {
     double heatInput = 0.0;
     private double temperature = 273.15;
 
+    /**
+     * <p>Constructor for VLSolidTray.</p>
+     */
     public VLSolidTray() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         int pp = 0;
@@ -29,11 +36,13 @@ public class VLSolidTray extends SimpleTray {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHeatInput(double heatinp) {
         this.heatInput = heatinp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcMixStreamEnthalpy() {
         double enthalpy = heatInput;
@@ -47,6 +56,7 @@ public class VLSolidTray extends SimpleTray {
         return enthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double enthalpy = 0.0;
@@ -89,31 +99,30 @@ public class VLSolidTray extends SimpleTray {
         // outStream.setThermoSystem(mixedStream.getThermoSystem());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getGasOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getLiquidOutStream() {
         return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
     }
 
-    /**
-     * @return the temperature
-     */
+    /** {@inheritDoc} */
     @Override
     public double getTemperature() {
         return temperature;
     }
 
-    /**
-     * @param temperature the temperature to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setTemperature(double temperature) {
         this.temperature = temperature;

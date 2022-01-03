@@ -8,9 +8,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermCPAstatoil class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
 
@@ -20,6 +20,8 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
 
     /**
      * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
     public AtractiveTermCPAstatoil(ComponentEosInterface component) {
         super(component);
@@ -48,6 +50,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermCPAstatoil clone() {
         AtractiveTermCPAstatoil atractiveTerm = null;
@@ -62,6 +65,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         super.init();
@@ -70,6 +74,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -79,6 +84,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         return var * var;// Math.pow(1.0+parameters[0]*(1.0-Math.sqrt(Tr))+parameters[1]*temp1*temp1+parameters[2]*temp1*temp1*temp1,2.0);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 1.0) {
@@ -89,6 +95,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -102,6 +109,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -123,6 +131,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 1.0) {
@@ -132,6 +141,7 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 1.0) {

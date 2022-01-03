@@ -24,6 +24,9 @@ public class SystemPrDanesh extends SystemPrEos {
     private static final long serialVersionUID = 1000;
 
     // SystemPrEos clonedSystem;
+    /**
+     * <p>Constructor for SystemPrDanesh.</p>
+     */
     public SystemPrDanesh() {
         super();
         modelName = "PR-Danesh-EOS";
@@ -35,6 +38,12 @@ public class SystemPrDanesh extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemPrDanesh.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPrDanesh(double T, double P) {
         super(T, P);
         modelName = "PR-Danesh-EOS";
@@ -46,6 +55,13 @@ public class SystemPrDanesh extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemPrDanesh.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPrDanesh(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "PR-Danesh-EOS";
@@ -77,6 +93,7 @@ public class SystemPrDanesh extends SystemPrEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemPrDanesh clone() {
         SystemPrDanesh clonedSystem = null;

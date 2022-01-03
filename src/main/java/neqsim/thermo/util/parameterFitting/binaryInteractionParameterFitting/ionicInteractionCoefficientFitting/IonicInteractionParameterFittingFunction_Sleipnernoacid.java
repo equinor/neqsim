@@ -6,9 +6,9 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
+ * <p>IonicInteractionParameterFittingFunction_Sleipnernoacid class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class IonicInteractionParameterFittingFunction_Sleipnernoacid
         extends LevenbergMarquardtFunction implements ThermodynamicConstantsInterface {
@@ -17,8 +17,12 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunction_Sleipnernoacid.class);
 
+    /**
+     * <p>Constructor for IonicInteractionParameterFittingFunction_Sleipnernoacid.</p>
+     */
     public IonicInteractionParameterFittingFunction_Sleipnernoacid() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -31,11 +35,13 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
         return system.getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

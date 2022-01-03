@@ -12,14 +12,19 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>TestBinaryHVfitToActivityCPA class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestBinaryHVfitToActivityCPA implements Cloneable {
 
     static Logger logger = LogManager.getLogger(TestBinaryHVfitToActivityCPA.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

@@ -9,9 +9,9 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
 
 /**
+ * <p>ComponentSrk class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentSrk extends ComponentEos {
 
@@ -23,13 +23,29 @@ public class ComponentSrk extends ComponentEos {
      */
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
+    /**
+     * <p>Constructor for ComponentSrk.</p>
+     */
     public ComponentSrk() {
     }
 
+    /**
+     * <p>Constructor for ComponentSrk.</p>
+     *
+     * @param moles a double
+     */
     public ComponentSrk(double moles) {
         numberOfMoles = moles;
     }
 
+    /**
+     * <p>Constructor for ComponentSrk.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentSrk(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
@@ -48,10 +64,21 @@ public class ComponentSrk extends ComponentEos {
 
     }
 
+    /**
+     * <p>Constructor for ComponentSrk.</p>
+     *
+     * @param number a int
+     * @param TC a double
+     * @param PC a double
+     * @param M a double
+     * @param a a double
+     * @param moles a double
+     */
     public ComponentSrk(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentSrk clone() {
         ComponentSrk clonedComponent = null;
@@ -64,11 +91,13 @@ public class ComponentSrk extends ComponentEos {
         return clonedComponent;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getVolumeCorrection() {
         if (ionicCharge != 0) {
@@ -85,28 +114,49 @@ public class ComponentSrk extends ComponentEos {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calca() {
         return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcb() {
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     }
 
+    /**
+     * <p>getQpure.</p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double getQpure(double temperature) {
         return this.getaT() / (this.getb() * R * temperature);
     }
 
+    /**
+     * <p>getdQpuredT.</p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double getdQpuredT(double temperature) {
         return dqPuredT;
     }
 
+    /**
+     * <p>getdQpuredTdT.</p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double getdQpuredTdT(double temperature) {
         return dqPuredTdT;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getSurfaceTenisionInfluenceParameter(double temperature) {
         double TR = 1.0 - temperature / getTC();

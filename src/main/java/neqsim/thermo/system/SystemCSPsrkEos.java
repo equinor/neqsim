@@ -23,6 +23,9 @@ public class SystemCSPsrkEos extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for SystemCSPsrkEos.</p>
+     */
     public SystemCSPsrkEos() {
         super();
         modelName = "CSPsrk-EOS";
@@ -34,6 +37,12 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemCSPsrkEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemCSPsrkEos(double T, double P) {
         super(T, P);
         modelName = "CSPsrk-EOS";
@@ -45,6 +54,13 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemCSPsrkEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemCSPsrkEos(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "CSPsrk-EOS";
@@ -76,6 +92,7 @@ public class SystemCSPsrkEos extends SystemSrkEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemCSPsrkEos clone() {
         SystemCSPsrkEos clonedSystem = null;

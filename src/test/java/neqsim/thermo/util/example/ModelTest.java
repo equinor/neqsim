@@ -7,13 +7,19 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ModelTest class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class ModelTest {
     static Logger logger = LogManager.getLogger(ModelTest.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemFurstElectrolyteEos(280.15,10.00);
 

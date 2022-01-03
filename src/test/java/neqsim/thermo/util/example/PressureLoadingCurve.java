@@ -6,11 +6,20 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>PressureLoadingCurve class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class PressureLoadingCurve {
         static Logger logger = LogManager.getLogger(PressureLoadingCurve.class);
 
         /**
          * This method is just meant to test the thermo package.
+         *
+         * @param args an array of {@link java.lang.String} objects
          */
         @SuppressWarnings("unused")
         public static void main(String args[]) {

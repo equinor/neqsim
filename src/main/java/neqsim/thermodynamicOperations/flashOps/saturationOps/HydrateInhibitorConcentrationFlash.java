@@ -10,6 +10,12 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>HydrateInhibitorConcentrationFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
@@ -24,16 +30,27 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
     public HydrateInhibitorConcentrationFlash() {
     }
 
+    /**
+     * <p>Constructor for HydrateInhibitorConcentrationFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param inhibitor a {@link java.lang.String} object
+     * @param hydrateTemperature a double
+     */
     public HydrateInhibitorConcentrationFlash(SystemInterface system, String inhibitor, double hydrateTemperature) {
         super(system);
         hydT = hydrateTemperature;
         this.inhibitor = inhibitor;
     }
 
+    /**
+     * <p>stop.</p>
+     */
     public void stop() {
         system = null;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -74,10 +91,16 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
         } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 0, 100.0);
 

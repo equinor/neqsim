@@ -8,9 +8,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermPr1978 class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermPr1978 extends AtractiveTermPr {
 
@@ -18,6 +18,8 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
 
     /**
      * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
     public AtractiveTermPr1978(ComponentEosInterface component) {
         super(component);
@@ -31,6 +33,7 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermPr1978 clone() {
         AtractiveTermPr1978 atractiveTerm = null;
@@ -43,6 +46,7 @@ public class AtractiveTermPr1978 extends AtractiveTermPr {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         if (getComponent().getAcentricFactor() > 0.49) {

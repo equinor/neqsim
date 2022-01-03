@@ -6,9 +6,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>HydrateFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class HydrateFlash {
     static Logger logger = LogManager.getLogger(HydrateFlash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkCPAstatoil(288.15, 10.450);
         SystemInterface testSystem = new SystemSrkEos(273.15 + 10.5, 51.0);

@@ -8,25 +8,34 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>ParachorSurfaceTension class.</p>
  *
  * @author esol
- * @version
  */
 public class ParachorSurfaceTension extends SurfaceTension {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new GasLiquidSurfaceTension */
+    /**
+     * Creates new GasLiquidSurfaceTension
+     */
     public ParachorSurfaceTension() {
     }
 
+    /**
+     * <p>Constructor for ParachorSurfaceTension.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ParachorSurfaceTension(SystemInterface system) {
         super(system);
     }
 
-    /**
-     * Calculates the pure component surfacetension using the Macleod/Sugden method
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Calculates the pure component surfacetension using the Macleod/Sugden method
+	 */
     @Override
 	public double calcPureComponentSurfaceTension(int componentNumber) {
         return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
@@ -38,10 +47,12 @@ public class ParachorSurfaceTension extends SurfaceTension {
                 4.0);
     }
 
-    /**
-     * Calculates the surfacetension using the Macleod/Sugden method for mixtures
-     * Units: N/m
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Calculates the surfacetension using the Macleod/Sugden method for mixtures
+	 * Units: N/m
+	 */
     @Override
 	public double calcSurfaceTension(int interface1, int interface2) {
         double temp = 0;

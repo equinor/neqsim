@@ -10,9 +10,9 @@ import Jama.Matrix;
 import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem;
 
 /**
+ * <p>OnePhasePipeFlowSolver class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
 
@@ -30,10 +30,19 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
     protected double length;
     protected PipeFlowSystem pipe;
 
-    /** Creates new OnePhasePipeFlowSolver */
+    /**
+     * Creates new OnePhasePipeFlowSolver
+     */
     public OnePhasePipeFlowSolver() {
     }
 
+    /**
+     * <p>Constructor for OnePhasePipeFlowSolver.</p>
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem} object
+     * @param length a double
+     * @param nodes a int
+     */
     public OnePhasePipeFlowSolver(PipeFlowSystem pipe, double length, int nodes) {
         this.pipe = pipe;
         this.length = length;
@@ -52,6 +61,7 @@ public class OnePhasePipeFlowSolver extends neqsim.fluidMechanics.flowSolver.one
         r = new double[nodes];
     }
 
+    /** {@inheritDoc} */
     @Override
     public OnePhasePipeFlowSolver clone() {
         OnePhasePipeFlowSolver clonedSystem = null;

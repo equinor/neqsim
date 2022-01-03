@@ -4,8 +4,10 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ComponentWonWax class.</p>
  *
  * @author rahmat
+ * @version $Id: $Id
  */
 public class ComponentWonWax extends ComponentSolid {
 
@@ -18,11 +20,20 @@ public class ComponentWonWax extends ComponentSolid {
     public ComponentWonWax() {
     }
 
+    /**
+     * <p>Constructor for ComponentWonWax.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentWonWax(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
     // Uses Claperyons equation to calculate the solid fugacity
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase1) {
         if (!isWaxFormer()) {
@@ -31,6 +42,7 @@ public class ComponentWonWax extends ComponentSolid {
         return fugcoef2(phase1);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef2(PhaseInterface phase1) {
         refPhase.setTemperature(phase1.getTemperature());
@@ -52,6 +64,12 @@ public class ComponentWonWax extends ComponentSolid {
 
     // public double fugcoef(PhaseInterface phase, int numberOfComps, double temp,
     // double pres){
+    /**
+     * <p>getWonActivityCoeficient.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWonActivityCoeficient(PhaseInterface phase1) {
         double TetaAvg = 0.0;
         double SolidActivity = 0.0;
@@ -71,12 +89,24 @@ public class ComponentWonWax extends ComponentSolid {
         return gamma;
     }
 
+    /**
+     * <p>getWonVolume.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWonVolume(PhaseInterface phase1) {
         double d25 = 0.8155 + 0.6273e-4 * getMolarMass() - 13.06 / getMolarMass();
 
         return getMolarMass() / d25;
     }
 
+    /**
+     * <p>getWonParam.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWonParam(PhaseInterface phase1) {
         double WonParam = 0.0;
         // calculation of Heat of fusion

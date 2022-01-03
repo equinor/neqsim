@@ -12,18 +12,28 @@ import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalPropertie
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>LiquidPhysicalProperties class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class LiquidPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LiquidPhysicalProperties.class);
 
+    /**
+     * <p>Constructor for LiquidPhysicalProperties.</p>
+     */
     public LiquidPhysicalProperties() {
     }
 
+    /**
+     * <p>Constructor for LiquidPhysicalProperties.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public LiquidPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
@@ -44,6 +54,7 @@ public class LiquidPhysicalProperties extends neqsim.physicalProperties.physical
         densityCalc = new Density(this);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public LiquidPhysicalProperties clone() {
         LiquidPhysicalProperties properties = null;

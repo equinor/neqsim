@@ -9,6 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>waterDewPointTemperatureMultiphaseFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
@@ -20,10 +26,16 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
     public waterDewPointTemperatureMultiphaseFlash() {
     }
 
+    /**
+     * <p>Constructor for waterDewPointTemperatureMultiphaseFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public waterDewPointTemperatureMultiphaseFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -55,6 +67,7 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

@@ -9,9 +9,9 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualiza
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
+ * <p>FlowNodeVisualization class.</p>
  *
  * @author esol
- * @version
  */
 public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
 
@@ -30,10 +30,13 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
     public double nodeCenter;
     public int numberOfComponents = 0;
 
-    /** Creates new FlowNodeVisualization */
+    /**
+     * Creates new FlowNodeVisualization
+     */
     public FlowNodeVisualization() {
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setData(FlowNodeInterface node) {
         temperature[0] = node.getBulkSystem().getPhases()[0].getTemperature();
@@ -50,76 +53,91 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
         nodeCenter = node.getDistanceToCenterOfNode();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public int getNumberOfComponents() {
         return numberOfComponents;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getInterphaseContactLength() {
         return interphaseContactLength;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getWallContactLength(int phase) {
         return wallContactLength[phase];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getPressure(int i) {
         return pressure[i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getReynoldsNumber(int i) {
         return reynoldsNumber[i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getDistanceToCenterOfNode() {
         return nodeCenter;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getTemperature(int i) {
         return temperature[i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getInterfaceTemperature(int i) {
         return interfaceTemperature[i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getVelocity(int i) {
         return velocity[i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getBulkComposition(int i, int phase) {
         return bulkComposition[phase][i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getInterfaceComposition(int i, int phase) {
         return interfaceComposition[phase][i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getMolarFlux(int i, int phase) {
         return molarFlux[phase][i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getEffectiveMassTransferCoefficient(int i, int phase) {
         return effectiveMassTransferCoefficient[phase][i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getEffectiveSchmidtNumber(int i, int phase) {
         return effectiveSchmidtNumber[phase][i];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getPhaseFraction(int phase) {
         return phaseFraction[phase];

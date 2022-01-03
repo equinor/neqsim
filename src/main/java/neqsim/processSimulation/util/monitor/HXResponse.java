@@ -2,6 +2,12 @@ package neqsim.processSimulation.util.monitor;
 
 import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
 
+/**
+ * <p>HXResponse class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HXResponse {
 
     public String name = "test";
@@ -18,11 +24,19 @@ public class HXResponse {
 
     
 
+    /**
+     * <p>Constructor for HXResponse.</p>
+     */
     public HXResponse(){
 
     }
 
 
+    /**
+     * <p>Constructor for HXResponse.</p>
+     *
+     * @param inputHeatExchenger a {@link neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger} object
+     */
     public HXResponse(HeatExchanger inputHeatExchenger){
         name = inputHeatExchenger.getName();
 

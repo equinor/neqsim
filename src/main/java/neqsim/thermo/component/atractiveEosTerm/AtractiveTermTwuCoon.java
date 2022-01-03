@@ -9,9 +9,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermTwuCoon class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
@@ -19,13 +19,21 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     private double a = -0.201158, b = 0.141599, c = 2.29528, d = -0.660145, e = 0.500315, f = 2.63165;
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermTwuCoon(ComponentEosInterface component) {
         super(component);
         m = component.getAcentricFactor();
     }
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * {@inheritDoc}
+     *
+     * Creates new AtractiveTermSrk
+     */
 //    public AtractiveTermTwuCoon(ComponentEosInterface component, double[] params) {
 //        this(component);
 //        System.arraycopy(params,0,this.parameters,0,params.length);
@@ -45,12 +53,14 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
         // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         double Tr = (temperature / getComponent().getTC());
@@ -88,6 +98,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -97,6 +108,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         double t = temperature;
@@ -111,6 +123,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         + Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / t * Math.exp(b * (1 - Math.pow(Tr, c))));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         double t = temperature;
@@ -148,6 +161,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -157,6 +171,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {

@@ -14,9 +14,9 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEqui
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>ReactiveKrishnaStandartFilmModel class.</p>
  *
  * @author esol
- * @version
  */
 public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 
@@ -24,15 +24,27 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 
     int enhancementType = 1;
 
-    /** Creates new ReactiveKrishnaStandartFilmModel */
+    /**
+     * Creates new ReactiveKrishnaStandartFilmModel
+     */
     public ReactiveKrishnaStandartFilmModel() {
     }
 
+    /**
+     * <p>Constructor for ReactiveKrishnaStandartFilmModel.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ReactiveKrishnaStandartFilmModel(SystemInterface system) {
         super(system);
         enhancementFactor = new EnhancementFactorAlg(this);
     }
 
+    /**
+     * <p>Constructor for ReactiveKrishnaStandartFilmModel.</p>
+     *
+     * @param flowNode a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public ReactiveKrishnaStandartFilmModel(FlowNodeInterface flowNode) {
         super(flowNode);
         enhancementFactor = new EnhancementFactorAlg(this);
@@ -52,6 +64,7 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
 //        return 1;
 //    }
 
+    /** {@inheritDoc} */
     @Override
 	public void calcTotalMassTransferCoefficientMatrix(int phase) {
         super.calcTotalMassTransferCoefficientMatrix(phase);
@@ -61,6 +74,7 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
                 .times(enhancementvec.get(0, getBulkSystem().getPhase(0).getNumberOfComponents() - 1));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setEnhancementType(int type) {
         enhancementType = type;

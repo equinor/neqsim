@@ -10,8 +10,9 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>NumericalDerivative class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class NumericalDerivative implements java.io.Serializable {
 
@@ -23,9 +24,21 @@ public class NumericalDerivative implements java.io.Serializable {
     final static int NTAB = 100;
     final static double SAFE = 2;
 
-    /** Creates new NumericalDerivative */
+    /**
+     * Creates new NumericalDerivative
+     */
     public NumericalDerivative() {}
 
+    /**
+     * <p>fugcoefDiffPres.</p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentInterface} object
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase,
             int numberOfComponents, double temperature, double pressure) {
 
@@ -72,6 +85,17 @@ public class NumericalDerivative implements java.io.Serializable {
         return ans;
     }
 
+    /**
+     * <p>fugcoefDiffTemp.</p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentInterface} object
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,
             int numberOfComponents, double temperature, double pressure, int phasetype) {
 

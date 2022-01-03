@@ -7,13 +7,19 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>SulfureDeposition class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class SulfureDeposition {
     static Logger logger = LogManager.getLogger(SulfureDeposition.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkTwuCoonEos(220.15, 6.0);
         SystemInterface testSystem = new SystemSrkEos(273.15 + 55.0, 150.9);

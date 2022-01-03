@@ -7,15 +7,17 @@
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 /**
+ * <p>DataObject class.</p>
  *
  * @author even solbraa
- * @version
  */
 public class DataObject implements DataObjectInterface {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new DataReaderObject */
+    /**
+     * Creates new DataReaderObject
+     */
     public DataObject() {
     }
 }

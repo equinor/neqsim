@@ -6,6 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>MultiPhaseMeter class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
 	private static final long serialVersionUID = 1000;
 
@@ -20,41 +26,76 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
 		name = "Mutli Phase Meter";
 	}
 
+	/**
+	 * <p>Constructor for MultiPhaseMeter.</p>
+	 *
+	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public MultiPhaseMeter(StreamInterface stream) {
 		this();
 		name = "Mutli Phase Meter";
 		this.stream = stream;
 	}
 
+	/**
+	 * <p>Constructor for MultiPhaseMeter.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public MultiPhaseMeter(String name, StreamInterface stream) {
 		this();
 		this.name = name;
 		this.stream = stream;
 	}
 
+	/**
+	 * <p>Getter for the field <code>pressure</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getPressure() {
 		return pressure;
 	}
 
+	/**
+	 * <p>Setter for the field <code>pressure</code>.</p>
+	 *
+	 * @param pressure a double
+	 * @param unitP a {@link java.lang.String} object
+	 */
 	public void setPressure(double pressure, String unitP) {
 		this.pressure = pressure;
 		this.unitP = unitP;
 	}
 
+	/**
+	 * <p>getTemperautre.</p>
+	 *
+	 * @return a double
+	 */
 	public double getTemperautre() {
 		return pressure;
 	}
 
+	/**
+	 * <p>Setter for the field <code>temperature</code>.</p>
+	 *
+	 * @param temperature a double
+	 * @param unitT a {@link java.lang.String} object
+	 */
 	public void setTemperature(double temperature, String unitT) {
 		this.temperature = temperature;
 		this.unitT = unitT;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public double getMeasuredValue() {
 		return stream.getThermoSystem().getFlowRate("kg/hr");
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public double getMeasuredValue(String measurement) {
 		if (measurement.equals("mass rate")) {
@@ -138,6 +179,11 @@ public class MultiPhaseMeter extends MeasurementDeviceBaseClass {
 			return 0.0;
 	}
 
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 */
 	public static void main(String[] args) {
 		SystemInterface testFluid = new SystemSrkEos(338.15, 50.0);
 		testFluid.addComponent("nitrogen", 1.205);

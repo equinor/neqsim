@@ -4,9 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>BinaryHVParameterFittingToSolubilityData class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction {
 
@@ -17,13 +17,23 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
     int type = 1;
 
 
+    /**
+     * <p>Constructor for BinaryHVParameterFittingToSolubilityData.</p>
+     */
     public BinaryHVParameterFittingToSolubilityData() {}
 
+    /**
+     * <p>Constructor for BinaryHVParameterFittingToSolubilityData.</p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public BinaryHVParameterFittingToSolubilityData(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
 
@@ -46,6 +56,7 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;

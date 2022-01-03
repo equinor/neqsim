@@ -8,9 +8,9 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>ComponentWax class.</p>
  *
  * @author esol
- * @version
  */
 public class ComponentWax extends ComponentSolid {
 
@@ -22,13 +22,23 @@ public class ComponentWax extends ComponentSolid {
     public ComponentWax() {
     }
 
+    /**
+     * <p>Constructor for ComponentWax.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentWax(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /**
-     * Uses Claperyons equation to calculate the solid fugacity
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Uses Claperyons equation to calculate the solid fugacity
+	 */
     @Override
 	public double fugcoef(PhaseInterface phase1) {
         if (!isWaxFormer()) {
@@ -39,6 +49,7 @@ public class ComponentWax extends ComponentSolid {
         return fugcoef2(phase1);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef2(PhaseInterface phase1) {
         try {

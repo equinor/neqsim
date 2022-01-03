@@ -9,9 +9,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ComponentGEUniquac class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentGEUniquac extends ComponentGE {
 
@@ -27,6 +27,14 @@ public class ComponentGEUniquac extends ComponentGE {
     public ComponentGEUniquac() {
     }
 
+    /**
+     * <p>Constructor for ComponentGEUniquac.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGEUniquac(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         if (!this.getClass().equals(ComponentGEUniquac.class)) {
@@ -63,6 +71,16 @@ public class ComponentGEUniquac extends ComponentGE {
 
     }
 
+    /**
+     * <p>fugcoef.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         fugasityCoeffisient = (this.getGamma(phase, numberOfComponents, temperature, pressure, phasetype)
@@ -70,6 +88,7 @@ public class ComponentGEUniquac extends ComponentGE {
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
@@ -77,6 +96,16 @@ public class ComponentGEUniquac extends ComponentGE {
         return 0.0;
     }
 
+    /**
+     * <p>getGamma.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         /*
@@ -133,6 +162,16 @@ public class ComponentGEUniquac extends ComponentGE {
         return gamma;
     }
 
+    /**
+     * <p>fugcoefDiffPres.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure + 0.01, phasetype))
@@ -140,6 +179,16 @@ public class ComponentGEUniquac extends ComponentGE {
         return dfugdp;
     }
 
+    /**
+     * <p>fugcoefDiffTemp.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature + 0.01, pressure, phasetype))
@@ -166,19 +215,31 @@ public class ComponentGEUniquac extends ComponentGE {
      * }
      */
 
+    /**
+     * <p>Getter for the field <code>r</code>.</p>
+     *
+     * @return a double
+     */
     public double getr() {
         return r;
     }
 
+    /**
+     * <p>Getter for the field <code>q</code>.</p>
+     *
+     * @return a double
+     */
     public double getq() {
         return q;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getlnGammadt() {
         return dlngammadt;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getlnGammadn(int k) {
         return dlngammadn[k];

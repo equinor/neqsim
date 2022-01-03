@@ -7,12 +7,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>OLGApropGeneratorPH class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class OLGApropGeneratorPH {
     static Logger logger = LogManager.getLogger(OLGApropGeneratorPH.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(383.15, 1.0);
         // testSystem.addComponent("ethane", 10.0);

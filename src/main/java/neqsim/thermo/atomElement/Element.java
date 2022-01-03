@@ -12,8 +12,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
+ * <p>Element class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class Element implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
@@ -21,9 +22,16 @@ public class Element implements ThermodynamicConstantsInterface {
     double[] coefArray;
     static Logger logger = LogManager.getLogger(Element.class);
 
-    /** Creates new Element */
+    /**
+     * Creates new Element
+     */
     public Element() {}
 
+    /**
+     * <p>Constructor for Element.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public Element(String name) {
 
         ArrayList<String> names = new ArrayList<String>();
@@ -60,10 +68,20 @@ public class Element implements ThermodynamicConstantsInterface {
         }
     }
 
+    /**
+     * <p>getElementNames.</p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getElementNames() {
         return nameArray;
     }
 
+    /**
+     * <p>getElementCoefs.</p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getElementCoefs() {
         return coefArray;
     }

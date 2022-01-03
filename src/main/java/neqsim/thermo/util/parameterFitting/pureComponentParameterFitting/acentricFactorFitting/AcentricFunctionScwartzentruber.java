@@ -5,9 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>AcentricFunctionScwartzentruber class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction {
 
@@ -15,10 +15,14 @@ public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction 
     static Logger logger = LogManager.getLogger(AcentricFunctionScwartzentruber.class);
 
 
+    /**
+     * <p>Constructor for AcentricFunctionScwartzentruber.</p>
+     */
     public AcentricFunctionScwartzentruber() {
         params = new double[3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         // System.out.println("dep " + dependentValues[0]);
@@ -37,11 +41,13 @@ public class AcentricFunctionScwartzentruber extends LevenbergMarquardtFunction 
         return Math.log(system.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return Math.exp(val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

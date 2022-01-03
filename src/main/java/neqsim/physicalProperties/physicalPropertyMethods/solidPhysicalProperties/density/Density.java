@@ -10,9 +10,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>Density class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class Density
         extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
@@ -21,14 +21,22 @@ public class Density
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
-    /** Creates new Density */
+    /**
+     * Creates new Density
+     */
     public Density() {
     }
 
+    /**
+     * <p>Constructor for Density.</p>
+     *
+     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Density(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         this.solidPhase = liquidPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Density clone() {
         Density properties = null;
@@ -42,9 +50,11 @@ public class Density
         return properties;
     }
 
-    /**
-     * Returns the density of the phase. Unit: kg/m^3
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Returns the density of the phase. Unit: kg/m^3
+	 */
     @Override
 	public double calcDensity() {
 

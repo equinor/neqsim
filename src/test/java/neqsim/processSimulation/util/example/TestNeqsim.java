@@ -6,11 +6,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>TestNeqsim class.</p>
  *
  * @author Administrator
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class TestNeqsim {
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     @SuppressWarnings("unused")

@@ -7,10 +7,13 @@
 package neqsim.statistics.experimentalSampleCreation.readDataFromFile;
 
 /**
+ * <p>DataReaderInterface interface.</p>
  *
  * @author even solbraa
- * @version
  */
 public interface DataReaderInterface {
+    /**
+     * <p>readData.</p>
+     */
     public void readData();
 }

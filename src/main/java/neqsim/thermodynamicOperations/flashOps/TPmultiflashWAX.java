@@ -14,8 +14,9 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>TPmultiflashWAX class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class TPmultiflashWAX extends TPflash {
 
@@ -35,16 +36,33 @@ public class TPmultiflashWAX extends TPflash {
      */
     public TPmultiflashWAX() {}
 
+    /**
+     * <p>Constructor for TPmultiflashWAX.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public TPmultiflashWAX(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>Constructor for TPmultiflashWAX.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param check a boolean
+     */
     public TPmultiflashWAX(SystemInterface system, boolean check) {
         super(system, check);
     }
 
+    /**
+     * <p>calcMultiPhaseBeta.</p>
+     */
     public void calcMultiPhaseBeta() {}
 
+    /**
+     * <p>setXY.</p>
+     */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases(); k++) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -71,6 +89,9 @@ public class TPmultiflashWAX extends TPflash {
         }
     }
 
+    /**
+     * <p>calcE.</p>
+     */
     public void calcE() {
         E = new double[system.getPhase(0).getNumberOfComponents()];
 
@@ -82,6 +103,11 @@ public class TPmultiflashWAX extends TPflash {
         }
     }
 
+    /**
+     * <p>calcQ.</p>
+     *
+     * @return a double
+     */
     public double calcQ() {
         Q = 0;
         double betaTotal = 0;
@@ -123,6 +149,11 @@ public class TPmultiflashWAX extends TPflash {
         return Q;
     }
 
+    /**
+     * <p>solveBeta.</p>
+     *
+     * @param updateFugacities a boolean
+     */
     public void solveBeta(boolean updateFugacities) {
         double oldBeta[] = new double[system.getNumberOfPhases()];
         double newBeta[] = new double[system.getNumberOfPhases()];
@@ -171,6 +202,7 @@ public class TPmultiflashWAX extends TPflash {
         } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void stabilityAnalysis() {
         double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
@@ -376,6 +408,7 @@ public class TPmultiflashWAX extends TPflash {
         logger.info("tm1: " + tm[0] + "  tm2: " + tm[1]);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // logger.info("Starting multiphase-flash....");

@@ -4,8 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>Diffusivity class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
@@ -18,9 +19,16 @@ public class Diffusivity extends
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
     double[] effectiveDiffusionCoefficient;
 
-    /** Creates new Conductivity */
+    /**
+     * Creates new Conductivity
+     */
     public Diffusivity() {}
 
+    /**
+     * <p>Constructor for Diffusivity.</p>
+     *
+     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
@@ -31,6 +39,7 @@ public class Diffusivity extends
         effectiveDiffusionCoefficient = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public Diffusivity clone() {
         Diffusivity properties = null;
@@ -50,6 +59,7 @@ public class Diffusivity extends
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         // method - estimation method
@@ -67,6 +77,7 @@ public class Diffusivity extends
         return binaryDiffusionCoeffisients[i][j] *= 1e-4;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
@@ -87,6 +98,7 @@ public class Diffusivity extends
         return binaryDiffusionCoeffisients;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
@@ -105,16 +117,19 @@ public class Diffusivity extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         /*

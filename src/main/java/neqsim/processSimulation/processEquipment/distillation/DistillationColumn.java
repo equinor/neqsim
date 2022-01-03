@@ -13,7 +13,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>DistillationColumn class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass
 		implements DistillationInterface {
@@ -36,6 +39,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 	Heater heater;
 	Separator separator2;
 
+	/**
+	 * <p>Constructor for DistillationColumn.</p>
+	 *
+	 * @param numberOfTraysLocal a int
+	 * @param hasReboiler a boolean
+	 * @param hasCondenser a boolean
+	 */
 	public DistillationColumn(int numberOfTraysLocal, boolean hasReboiler, boolean hasCondenser) {
 		this.hasReboiler = hasReboiler;
 		this.hasCondenser = hasCondenser;
@@ -57,6 +67,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		}
 	}
 
+	/**
+	 * <p>addFeedStream.</p>
+	 *
+	 * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 * @param feedTrayNumber a int
+	 */
 	public void addFeedStream(StreamInterface inputStream, int feedTrayNumber) {
 		feedStream = inputStream;
 		getTray(feedTrayNumber).addStream(inputStream);
@@ -68,6 +84,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		liquidOutStream.getThermoSystem().setTotalNumberOfMoles(moles / 2.0);
 	}
 
+	/**
+	 * <p>init.</p>
+	 */
 	public void init() {
 		if (!isDoInitializion()) {
 			return;
@@ -143,18 +162,35 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 
 	}
 
+	/**
+	 * <p>Getter for the field <code>gasOutStream</code>.</p>
+	 *
+	 * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public StreamInterface getGasOutStream() {
 		return gasOutStream;
 	}
 
+	/**
+	 * <p>Getter for the field <code>liquidOutStream</code>.</p>
+	 *
+	 * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public StreamInterface getLiquidOutStream() {
 		return liquidOutStream;
 	}
 
+	/**
+	 * <p>getTray.</p>
+	 *
+	 * @param trayNumber a int
+	 * @return a {@link neqsim.processSimulation.processEquipment.distillation.SimpleTray} object
+	 */
 	public SimpleTray getTray(int trayNumber) {
 		return trays.get(trayNumber);
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public void setNumberOfTrays(int number) {
 		int oldNumberOfTrays = numberOfTrays;
@@ -185,18 +221,34 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		init();
 	}
 
+	/**
+	 * <p>setTopCondeserDuty.</p>
+	 *
+	 * @param duty a double
+	 */
 	public void setTopCondeserDuty(double duty) {
 		condenserCoolingDuty = duty;
 	}
 
+	/**
+	 * <p>setTopPressure.</p>
+	 *
+	 * @param topPressure a double
+	 */
 	public void setTopPressure(double topPressure) {
 		topTrayPressure = topPressure;
 	}
 
+	/**
+	 * <p>setBottomPressure.</p>
+	 *
+	 * @param bottomPressure a double
+	 */
 	public void setBottomPressure(double bottomPressure) {
 		bottomTrayPressure = bottomPressure;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public void run() {
 		double dp = 0.0;
@@ -277,11 +329,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		liquidOutStream.setThermoSystem((SystemInterface) trays.get(0).getLiquidOutStream().getThermoSystem().clone());
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public void displayResult() {
 		distoperations.displayResult();
 	}
 
+	/**
+	 * <p>massBalanceCheck.</p>
+	 *
+	 * @return a boolean
+	 */
 	public boolean massBalanceCheck() {
 		double[] massInput = new double[numberOfTrays];
 		double[] massOutput = new double[numberOfTrays];
@@ -328,6 +386,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 			return true;
 	}
 
+	/**
+	 * <p>energyBalanceCheck.</p>
+	 */
 	public void energyBalanceCheck() {
 
 		double[] energyInput = new double[numberOfTrays];
@@ -350,6 +411,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 		}
 	}
 
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 */
 	public static void main(String[] args) {
 		neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 - 0.0), 15.000);
 		// testSystem.addComponent("methane", 10.00);
@@ -386,15 +452,27 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 
 	}
 
+	/**
+	 * <p>getReboiler.</p>
+	 *
+	 * @return a {@link neqsim.processSimulation.processEquipment.distillation.SimpleTray} object
+	 */
 	public SimpleTray getReboiler() {
 		return trays.get(0);
 	}
 
+	/**
+	 * <p>getCondenser.</p>
+	 *
+	 * @return a {@link neqsim.processSimulation.processEquipment.distillation.SimpleTray} object
+	 */
 	public SimpleTray getCondenser() {
 		return trays.get(trays.size() - 1);
 	}
 
 	/**
+	 * <p>Getter for the field <code>reboilerTemperature</code>.</p>
+	 *
 	 * @return the reboilerTemperature
 	 */
 	public double getReboilerTemperature() {
@@ -402,6 +480,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 	}
 
 	/**
+	 * <p>Setter for the field <code>reboilerTemperature</code>.</p>
+	 *
 	 * @param reboilerTemperature the reboilerTemperature to set
 	 */
 	public void setReboilerTemperature(double reboilerTemperature) {
@@ -409,6 +489,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 	}
 
 	/**
+	 * <p>getCondenserTemperature.</p>
+	 *
 	 * @return the condeserTemperature
 	 */
 	public double getCondenserTemperature() {
@@ -416,6 +498,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 	}
 
 	/**
+	 * <p>setCondenserTemperature.</p>
+	 *
 	 * @param condeserTemperature the condeserTemperature to set
 	 */
 	public void setCondenserTemperature(double condeserTemperature) {
@@ -423,6 +507,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 	}
 
 	/**
+	 * <p>Getter for the field <code>feedTrayNumber</code>.</p>
+	 *
 	 * @return the feedTrayNumber
 	 */
 	public int getFeedTrayNumber() {
@@ -430,30 +516,57 @@ public class DistillationColumn extends ProcessEquipmentBaseClass
 	}
 
 	/**
+	 * <p>Setter for the field <code>feedTrayNumber</code>.</p>
+	 *
 	 * @param feedTrayNumber the feedTrayNumber to set
 	 */
 	public void setFeedTrayNumber(int feedTrayNumber) {
 		this.feedTrayNumber = feedTrayNumber;
 	}
 
+	/**
+	 * <p>isDoInitializion.</p>
+	 *
+	 * @return a boolean
+	 */
 	public boolean isDoInitializion() {
 		return doInitializion;
 	}
 
+	/**
+	 * <p>Setter for the field <code>doInitializion</code>.</p>
+	 *
+	 * @param doInitializion a boolean
+	 */
 	public void setDoInitializion(boolean doInitializion) {
 		this.doInitializion = doInitializion;
 	}
 
+	/**
+	 * <p>getFsFactor.</p>
+	 *
+	 * @return a double
+	 */
 	public double getFsFactor() {
 		double intArea = 3.14 * getInternalDiameter() * getInternalDiameter() / 4.0;
 		return getGasOutStream().getThermoSystem().getFlowRate("m3/sec") / intArea
 				* Math.sqrt(getGasOutStream().getThermoSystem().getDensity("kg/m3"));
 	}
 
+	/**
+	 * <p>Getter for the field <code>internalDiameter</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getInternalDiameter() {
 		return internalDiameter;
 	}
 
+	/**
+	 * <p>Setter for the field <code>internalDiameter</code>.</p>
+	 *
+	 * @param internalDiameter a double
+	 */
 	public void setInternalDiameter(double internalDiameter) {
 		this.internalDiameter = internalDiameter;
 	}

@@ -12,17 +12,25 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestEosInteractionParameterFitting class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestEosInteractionParameterFitting {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestEosInteractionParameterFitting.class);
 
+    /**
+     * <p>Constructor for TestEosInteractionParameterFitting.</p>
+     */
     public TestEosInteractionParameterFitting() {}
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

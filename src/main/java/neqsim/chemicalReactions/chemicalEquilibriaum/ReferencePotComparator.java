@@ -12,14 +12,15 @@ import java.util.Comparator;
 import neqsim.thermo.component.ComponentInterface;
 
 /**
+ * <p>ReferencePotComparator class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ReferencePotComparator implements Comparator, java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
 
+    /** {@inheritDoc} */
     @Override
     public int compare(Object o1, Object o2) {
 

@@ -17,9 +17,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>PhaseEnvelope class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class PhaseEnvelope {
     static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         // String[] components=neqsim.util.database.NeqSimDataBase.getComponentNames();

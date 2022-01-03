@@ -15,8 +15,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Recycle class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
 
@@ -35,28 +36,43 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     int iterations = 0;
     int maxIterations = 10;
 
-    /** Creates new staticMixer */
+    /**
+     * Creates new staticMixer
+     */
     public Recycle() {
     }
 
+    /**
+     * <p>Constructor for Recycle.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public Recycle(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return mixedStream.getThermoSystem();
     }
 
+    /**
+     * <p>Setter for the field <code>downstreamProperty</code>.</p>
+     *
+     * @param property a {@link java.lang.String} object
+     */
     public void setDownstreamProperty(String property) {
         downstreamProperty.add(property);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void replaceStream(int i, StreamInterface newStream) {
         streams.set(i, newStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addStream(StreamInterface newStream) {
         streams.add(newStream);
@@ -73,10 +89,19 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         lastIterationStream = (StreamInterface) mixedStream.clone();
     }
 
+    /**
+     * <p>getStream.</p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getStream(int i) {
         return streams.get(i);
     }
 
+    /**
+     * <p>mixStream.</p>
+     */
     public void mixStream() {
         int index = 0;
         String compName = new String();
@@ -118,6 +143,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         // mixedStream.getThermoSystem().init(2);
     }
 
+    /**
+     * <p>guessTemperature.</p>
+     *
+     * @return a double
+     */
     public double guessTemperature() {
         double gtemp = 0;
         for (int k = 0; k < streams.size(); k++) {
@@ -129,6 +159,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         return gtemp;
     }
 
+    /**
+     * <p>calcMixStreamEnthalpy.</p>
+     *
+     * @return a double
+     */
     public double calcMixStreamEnthalpy() {
         double enthalpy = 0;
         for (int k = 0; k < streams.size(); k++) {
@@ -141,20 +176,30 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         return enthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getOutStream() {
         return (Stream) mixedStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {
         run();
     }
 
+    /**
+     * <p>initiateDownstreamProperties.</p>
+     *
+     * @param outstream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public void initiateDownstreamProperties(Stream outstream) {
         lastIterationStream = (Stream) outstream.clone();
     }
 
+    /**
+     * <p>setDownstreamProperties.</p>
+     */
     public void setDownstreamProperties() {
         if (downstreamProperty.size() > 0) {
             for (int i = 0; i < downstreamProperty.size(); i++) {
@@ -164,6 +209,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         iterations++;
@@ -220,6 +266,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         // outStream.setThermoSystem(mixedStream.getThermoSystem());
     }
 
+    /**
+     * <p>massBalanceCheck.</p>
+     *
+     * @return a double
+     */
     public double massBalanceCheck() {
         double error = 0.0;
         // System.out.println("flow rate new " +
@@ -242,11 +293,13 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         return Math.abs(error);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPressure(double pres) {
         for (int k = 0; k < streams.size(); k++) {
@@ -255,6 +308,11 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         mixedStream.getThermoSystem().setPressure(pres);
     }
 
+    /**
+     * <p>setTemperature.</p>
+     *
+     * @param temp a double
+     */
     public void setTemperature(double temp) {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().setTemperature(temp);
@@ -263,6 +321,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
+     * <p>Getter for the field <code>tolerance</code>.</p>
+     *
      * @return the tolerance
      */
     public double getTolerance() {
@@ -270,6 +330,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
+     * <p>Setter for the field <code>tolerance</code>.</p>
+     *
      * @param tolerance the tolerance to set
      */
     public void setTolerance(double tolerance) {
@@ -277,6 +339,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
+     * <p>Getter for the field <code>error</code>.</p>
+     *
      * @return the error
      */
     public double getError() {
@@ -284,20 +348,33 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
 
     /**
+     * <p>Setter for the field <code>error</code>.</p>
+     *
      * @param error the error to set
      */
     public void setError(double error) {
         this.error = error;
     }
 
+    /**
+     * <p>Getter for the field <code>priority</code>.</p>
+     *
+     * @return a int
+     */
     public int getPriority() {
         return priority;
     }
 
+    /**
+     * <p>Setter for the field <code>priority</code>.</p>
+     *
+     * @param priority a int
+     */
     public void setPriority(int priority) {
         this.priority = priority;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean solved() {
         if (error < tolerance)
@@ -306,18 +383,38 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
             return false;
     }
 
+    /**
+     * <p>Getter for the field <code>downstreamProperty</code>.</p>
+     *
+     * @return a {@link java.util.ArrayList} object
+     */
     public ArrayList<String> getDownstreamProperty() {
         return downstreamProperty;
     }
 
+    /**
+     * <p>Setter for the field <code>downstreamProperty</code>.</p>
+     *
+     * @param upstreamProperty a {@link java.util.ArrayList} object
+     */
     public void setDownstreamProperty(ArrayList<String> upstreamProperty) {
         this.downstreamProperty = upstreamProperty;
     }
 
+    /**
+     * <p>Getter for the field <code>outletStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutletStream() {
         return outletStream;
     }
 
+    /**
+     * <p>Setter for the field <code>outletStream</code>.</p>
+     *
+     * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public void setOutletStream(StreamInterface outletStream) {
         this.outletStream = outletStream;
         lastIterationStream = (StreamInterface) this.outletStream.clone();

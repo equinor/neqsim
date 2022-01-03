@@ -8,6 +8,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>bubblePointTemperatureFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
@@ -19,10 +25,16 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
     public bubblePointTemperatureFlash() {
     }
 
+    /**
+     * <p>Constructor for bubblePointTemperatureFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public bubblePointTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -78,6 +90,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

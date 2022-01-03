@@ -5,6 +5,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>StreamTransition class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class StreamTransition extends ProcessEquipmentBaseClass {
     /**
      * 
@@ -13,31 +19,61 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
     private StreamInterface outletStream = null;
     private StreamInterface inletStream = null;
 
+    /**
+     * <p>Constructor for StreamTransition.</p>
+     */
     public StreamTransition() {
         super();
     }
 
+    /**
+     * <p>Constructor for StreamTransition.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamTransition(StreamInterface inletStream, StreamInterface outletStream) {
         this.inletStream = inletStream;
         this.outletStream = outletStream;
     }
 
+    /**
+     * <p>Getter for the field <code>inletStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getInletStream() {
         return inletStream;
     }
 
+    /**
+     * <p>Setter for the field <code>inletStream</code>.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
     }
 
+    /**
+     * <p>Getter for the field <code>outletStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutletStream() {
         return outletStream;
     }
 
+    /**
+     * <p>Setter for the field <code>outletStream</code>.</p>
+     *
+     * @param outletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public void setOutletStream(StreamInterface outletStream) {
         this.outletStream = outletStream;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         SystemInterface outThermoSystem = null;
@@ -65,11 +101,17 @@ public class StreamTransition extends ProcessEquipmentBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void displayResult() {
         outletStream.getFluid().display();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         ProcessSystem offshoreProcessoperations = ProcessSystem.open("c:/temp/offshorePro.neqsim");
         ProcessSystem TEGprocess = ProcessSystem.open("c:/temp//TEGprocessHX.neqsim");

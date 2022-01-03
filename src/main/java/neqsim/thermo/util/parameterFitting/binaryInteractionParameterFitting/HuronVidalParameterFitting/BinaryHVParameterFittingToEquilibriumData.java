@@ -4,19 +4,23 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>BinaryHVParameterFittingToEquilibriumData class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class BinaryHVParameterFittingToEquilibriumData extends HuronVidalFunction {
 
     private static final long serialVersionUID = 1000;
 
 
+    /**
+     * <p>Constructor for BinaryHVParameterFittingToEquilibriumData.</p>
+     */
     public BinaryHVParameterFittingToEquilibriumData() {
         params = new double[2];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         double calcK = 0;
@@ -39,6 +43,7 @@ public class BinaryHVParameterFittingToEquilibriumData extends HuronVidalFunctio
         return diff;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

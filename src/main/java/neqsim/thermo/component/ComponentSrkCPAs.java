@@ -8,9 +8,9 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>ComponentSrkCPAs class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentSrkCPAs extends ComponentSrkCPA {
 
@@ -22,18 +22,42 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     public ComponentSrkCPAs() {
     }
 
+    /**
+     * <p>Constructor for ComponentSrkCPAs.</p>
+     *
+     * @param moles a double
+     */
     public ComponentSrkCPAs(double moles) {
         super(moles);
     }
 
+    /**
+     * <p>Constructor for ComponentSrkCPAs.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentSrkCPAs(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /**
+     * <p>Constructor for ComponentSrkCPAs.</p>
+     *
+     * @param number a int
+     * @param TC a double
+     * @param PC a double
+     * @param M a double
+     * @param a a double
+     * @param moles a double
+     */
     public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentSrkCPAs clone() {
 
@@ -52,6 +76,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * }
      */
 
+    /** {@inheritDoc} */
     @Override
 	public double calc_lngi(PhaseInterface phase) {
         return 0.475 * getBi() / (phase.getTotalVolume() - 0.475 * phase.getB());
@@ -62,12 +87,14 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
      * nbeti = nbet / phase.getB() * getBi(); return dlngdb * nbeti; }
      */
 
+    /** {@inheritDoc} */
     @Override
 	public double calc_lngidV(PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();
         return -0.475 * getBi() / (temp * temp);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calc_lngij(int j, PhaseInterface phase) {
         double temp = phase.getTotalVolume() - 0.475 * phase.getB();

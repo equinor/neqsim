@@ -4,9 +4,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>CPAFunctionCp class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class CPAFunctionCp extends CPAFunction {
 
@@ -16,12 +16,21 @@ public class CPAFunctionCp extends CPAFunction {
     int phasetype = 1;
 
 
+    /**
+     * <p>Constructor for CPAFunctionCp.</p>
+     */
     public CPAFunctionCp() {}
 
+    /**
+     * <p>Constructor for CPAFunctionCp.</p>
+     *
+     * @param phase a int
+     */
     public CPAFunctionCp(int phase) {
         phasetype = phase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
@@ -34,6 +43,7 @@ public class CPAFunctionCp extends CPAFunction {
     // system.initPhysicalProperties();
     // return system.getPhase(phasetype).getPhysicalProperties().getDensity();
     // }
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);

@@ -7,13 +7,19 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>FreezingPoint class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class FreezingPoint {
     static Logger logger = LogManager.getLogger(FreezingPoint.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(260.15,19.00);
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 1, 1.01325);

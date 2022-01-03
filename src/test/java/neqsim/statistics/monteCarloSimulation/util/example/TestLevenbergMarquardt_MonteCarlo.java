@@ -6,11 +6,17 @@ import neqsim.statistics.parameterFitting.SampleValue;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardt;
 
 /**
+ * <p>TestLevenbergMarquardt_MonteCarlo class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @since 2.2.3
  */
 public class TestLevenbergMarquardt_MonteCarlo {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

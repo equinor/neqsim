@@ -9,6 +9,12 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOp
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>CricondenThermFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class CricondenThermFlash extends pTphaseEnvelope {
 
     private static final long serialVersionUID = 1000;
@@ -46,9 +52,22 @@ public class CricondenThermFlash extends pTphaseEnvelope {
     // double [] cricondenBarX = new double [100] ;
     // double [] cricondenBarY = new double [100] ;
 
+    /**
+     * <p>Constructor for CricondenThermFlash.</p>
+     */
     public CricondenThermFlash() {
     }
 
+    /**
+     * <p>Constructor for CricondenThermFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param cricondenTherm an array of {@link double} objects
+     * @param cricondenThermX an array of {@link double} objects
+     * @param cricondenThermY an array of {@link double} objects
+     */
     public CricondenThermFlash(SystemInterface system, String name, double phaseFraction, double[] cricondenTherm,
             double[] cricondenThermX, double[] cricondenThermY) {
         this.system = system;
@@ -60,6 +79,7 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         bubblePointFirst = false;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -220,6 +240,9 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>setNewK.</p>
+     */
     public void setNewK() {
 
         for (int j = 0; j < numberOfComponents; j++) {
@@ -230,6 +253,9 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>setNewX.</p>
+     */
     public void setNewX() {
         double sumx = 0.;
         double sumy = 0.;
@@ -262,12 +288,18 @@ public class CricondenThermFlash extends pTphaseEnvelope {
 
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         // setNewX();
         system.init(3);
 
     }
 
+    /**
+     * <p>funcT.</p>
+     */
     public void funcT() {
 
         funcT = -1.0;
@@ -295,6 +327,9 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>funcP.</p>
+     */
     public void funcP() {
 
         funcP = -1.0;

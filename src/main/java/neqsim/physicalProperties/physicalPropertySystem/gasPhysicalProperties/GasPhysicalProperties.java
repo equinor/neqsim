@@ -10,18 +10,28 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>GasPhysicalProperties class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GasPhysicalProperties.class);
 
+    /**
+     * <p>Constructor for GasPhysicalProperties.</p>
+     */
     public GasPhysicalProperties() {
     }
 
+    /**
+     * <p>Constructor for GasPhysicalProperties.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public GasPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
@@ -47,6 +57,7 @@ public class GasPhysicalProperties extends neqsim.physicalProperties.physicalPro
         // this.init(phase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public GasPhysicalProperties clone() {
         GasPhysicalProperties properties = null;

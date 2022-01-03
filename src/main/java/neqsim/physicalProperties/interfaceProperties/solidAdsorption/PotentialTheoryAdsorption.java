@@ -4,8 +4,10 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>PotentialTheoryAdsorption class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
@@ -23,9 +25,17 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     double[] pressureField, surfaceExcess, surfaceExcessMolFraction, deltaz;
     String solidMaterial = "AC";
 
+    /**
+     * <p>Constructor for PotentialTheoryAdsorption.</p>
+     */
     public PotentialTheoryAdsorption() {
     }
 
+    /**
+     * <p>Constructor for PotentialTheoryAdsorption.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public PotentialTheoryAdsorption(SystemInterface system) {
         this.system = system;
         compositionSurface = new double[integrationSteps][system.getPhase(0).getNumberOfComponents()];
@@ -37,11 +47,13 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setSolidMaterial(String solidM) {
         solidMaterial = solidM;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calcAdorption(int phase) {
         SystemInterface tempSystem = (SystemInterface) system.clone();
@@ -116,12 +128,16 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getSurfaceExcess(String componentName) {
         int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
         return surfaceExcess[componentNumber];
     }
 
+    /**
+     * <p>readDBParameters.</p>
+     */
     public void readDBParameters() {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
@@ -159,6 +175,7 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getSurfaceExess(int component) {
         return 1.0;

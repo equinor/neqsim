@@ -9,9 +9,9 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGeDuanSun;
 
 /**
+ * <p>PhaseDuanSun class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class PhaseDuanSun extends PhaseGE {
 
@@ -23,18 +23,21 @@ public class PhaseDuanSun extends PhaseGE {
     double[][] Dij;
     double GE = 0.0;
 
-    /** Creates new PhaseGENRTLmodifiedHV */
-
+    /**
+     * Creates new PhaseGENRTLmodifiedHV
+     */
     public PhaseDuanSun() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGeDuanSun(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -42,6 +45,7 @@ public class PhaseDuanSun extends PhaseGE {
         this.Dij = mixSelect.getNRTLDij();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setAlpha(double[][] alpha) {
         for (int i = 0; i < alpha.length; i++) {
@@ -49,6 +53,7 @@ public class PhaseDuanSun extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setDij(double[][] Dij) {
         for (int i = 0; i < Dij.length; i++) {
@@ -56,6 +61,7 @@ public class PhaseDuanSun extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -92,11 +98,13 @@ public class PhaseDuanSun extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,

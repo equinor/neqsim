@@ -17,15 +17,25 @@ abstract class Viscosity extends
     static Logger logger = LogManager.getLogger(Viscosity.class);
     public double[] pureComponentViscosity;
 
-    /** Creates new Conductivity */
+    /**
+     * Creates new Conductivity
+     */
     public Viscosity() {}
 
+    /**
+     * <p>Constructor for Viscosity.</p>
+     *
+     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Viscosity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
         pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
     }
 
+    /**
+     * <p>calcPureComponentViscosity.</p>
+     */
     public void calcPureComponentViscosity() {
         pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
@@ -65,6 +75,12 @@ abstract class Viscosity extends
         }
     }
 
+    /**
+     * <p>getViscosityPressureCorrection.</p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getViscosityPressureCorrection(int i) {
         double TR = phase.getPhase().getTemperature() / phase.getPhase().getComponent(i).getTC();
         if (TR > 1) {
@@ -81,11 +97,13 @@ abstract class Viscosity extends
                 / (1.0 + C * phase.getPhase().getComponent(i).getAcentricFactor() * deltaPr);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public Viscosity clone() {
         Viscosity properties = null;

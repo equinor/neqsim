@@ -6,9 +6,9 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>IonicInteractionParameterFittingFunctionPiperazine class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class IonicInteractionParameterFittingFunctionPiperazine extends LevenbergMarquardtFunction {
 
@@ -17,8 +17,12 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
             LogManager.getLogger(IonicInteractionParameterFittingFunctionPiperazine.class);
 
 
+    /**
+     * <p>Constructor for IonicInteractionParameterFittingFunctionPiperazine.</p>
+     */
     public IonicInteractionParameterFittingFunctionPiperazine() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -31,11 +35,13 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -252,6 +258,12 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         // }
     }
 
+    /**
+     * <p>setFittingParams5.</p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams5(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
@@ -338,6 +350,12 @@ public class IonicInteractionParameterFittingFunctionPiperazine extends Levenber
         }
     }
 
+    /**
+     * <p>setFittingParams3.</p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams3(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;

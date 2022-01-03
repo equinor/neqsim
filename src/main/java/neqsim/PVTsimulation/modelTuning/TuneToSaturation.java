@@ -4,17 +4,25 @@ import neqsim.PVTsimulation.simulation.SimulationInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>TuneToSaturation class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class TuneToSaturation extends BaseTuningClass {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for TuneToSaturation.</p>
+     *
+     * @param simulation a {@link neqsim.PVTsimulation.simulation.SimulationInterface} object
+     */
     public TuneToSaturation(SimulationInterface simulation) {
         super(simulation);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double error = 1.0;

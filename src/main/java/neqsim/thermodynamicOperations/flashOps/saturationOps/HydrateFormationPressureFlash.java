@@ -11,19 +11,33 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>HydrateFormationPressureFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFormationPressureFlash.class);
 
-    /** Creates new bubblePointFlash */
+    /**
+     * Creates new bubblePointFlash
+     */
     public HydrateFormationPressureFlash() {
     }
 
+    /**
+     * <p>Constructor for HydrateFormationPressureFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public HydrateFormationPressureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         double olfFug = 0.0;
@@ -52,6 +66,9 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
         logger.info("end");
     }
 
+    /**
+     * <p>setFug.</p>
+     */
     public void setFug() {
         for (int j = 0; j < system.getPhase(0).getNumberOfComponents(); j++) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -62,6 +79,7 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
         system.getPhase(4).getComponent("water").setx(1.0);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

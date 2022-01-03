@@ -27,9 +27,9 @@ import neqsim.processSimulation.processEquipment.util.RecycleController;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>ProcessSystem class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ProcessSystem implements java.io.Serializable, Runnable {
 
@@ -52,11 +52,19 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     private CostEstimateBaseClass costEstimator = null;
     static Logger logger = LogManager.getLogger(ProcessSystem.class);
 
+    /**
+     * <p>Constructor for ProcessSystem.</p>
+     */
     public ProcessSystem() {
         systemMechanicalDesign = new SystemMechanicalDesign(this);
         costEstimator = new CostEstimateBaseClass(this);
     }
 
+    /**
+     * <p>add.</p>
+     *
+     * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public void add(ProcessEquipmentInterface operation) {
         getUnitOperations().add(operation);
         if (operation instanceof ModuleInterface) {
@@ -64,14 +72,30 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>add.</p>
+     *
+     * @param measurementDevice a {@link neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface} object
+     */
     public void add(MeasurementDeviceInterface measurementDevice) {
         measurementDevices.add(measurementDevice);
     }
 
+    /**
+     * <p>add.</p>
+     *
+     * @param operations an array of {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} objects
+     */
     public void add(ProcessEquipmentInterface[] operations) {
         getUnitOperations().addAll(Arrays.asList(operations));
     }
 
+    /**
+     * <p>getUnit.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link java.lang.Object} object
+     */
     public Object getUnit(String name) {
         for (int i = 0; i < getUnitOperations().size(); i++) {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
@@ -91,6 +115,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return null;
     }
 
+    /**
+     * <p>hasUnitName.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a boolean
+     */
     public boolean hasUnitName(String name) {
         if (getUnit(name) == null) {
             return false;
@@ -99,6 +129,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>getMeasurementDevice.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link java.lang.Object} object
+     */
     public Object getMeasurementDevice(String name) {
         for (int i = 0; i < measurementDevices.size(); i++) {
             if (measurementDevices.get(i).getName().equals(name)) {
@@ -108,6 +144,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return null;
     }
 
+    /**
+     * <p>getUnitNumber.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a int
+     */
     public int getUnitNumber(String name) {
         for (int i = 0; i < getUnitOperations().size(); i++) {
             if (getUnitOperations().get(i) instanceof ModuleInterface) {
@@ -126,10 +168,21 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return 0;
     }
 
+    /**
+     * <p>replaceObject.</p>
+     *
+     * @param unitName a {@link java.lang.String} object
+     * @param operation a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass} object
+     */
     public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
         unitOperations.set(getUnitNumber(name), operation);
     }
 
+    /**
+     * <p>getAllUnitNames.</p>
+     *
+     * @return a {@link java.util.ArrayList} object
+     */
     public ArrayList<String> getAllUnitNames() {
         ArrayList<String> unitNames = new ArrayList<String>();
         for (int i = 0; i < getUnitOperations().size(); i++) {
@@ -146,12 +199,19 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     /**
+     * <p>Getter for the field <code>unitOperations</code>.</p>
+     *
      * @return the unitOperations
      */
     public ArrayList<ProcessEquipmentInterface> getUnitOperations() {
         return unitOperations;
     }
 
+    /**
+     * <p>removeUnit.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void removeUnit(String name) {
         for (int i = 0; i < unitOperations.size(); i++) {
             if (unitOperations.get(i).getName().equals(name)) {
@@ -160,14 +220,27 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>clearAll.</p>
+     */
     public void clearAll() {
         unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     }
 
+    /**
+     * <p>clear.</p>
+     */
     public void clear() {
         unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     }
 
+    /**
+     * <p>setFluid.</p>
+     *
+     * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
+     * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
+     * @param addNewComponents a boolean
+     */
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2, boolean addNewComponents) {
         fluid1.removeMoles();
         boolean addedComps = false;
@@ -199,6 +272,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         fluid1.setPressure(fluid2.getPressure());
     }
 
+    /**
+     * <p>setFluid.</p>
+     *
+     * @param fluid1 a {@link neqsim.thermo.system.SystemInterface} object
+     * @param fluid2 a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void setFluid(SystemInterface fluid1, SystemInterface fluid2) {
         fluid1.removeMoles();
         boolean addedComps = false;
@@ -228,12 +307,18 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         fluid1.setPressure(fluid2.getPressure());
     }
 
+    /**
+     * <p>runAsThread.</p>
+     *
+     * @return a {@link java.lang.Thread} object
+     */
     public Thread runAsThread() {
         Thread processThread = new Thread(this);
         processThread.start();
         return processThread;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         boolean isConverged = true;
@@ -320,15 +405,31 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>runTransient.</p>
+     *
+     * @param deltat a double
+     */
     public void runTransient(double deltat) {
         timeStep = deltat;
         runTransient();
     }
 
+    /**
+     * <p>Getter for the field <code>time</code>.</p>
+     *
+     * @return a double
+     */
     public double getTime() {
         return time;
     }
 
+    /**
+     * <p>Getter for the field <code>time</code>.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getTime(String unit) {
         if (unit.equals("sec")) {
             return time;
@@ -342,6 +443,9 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return time;
     }
 
+    /**
+     * <p>runTransient.</p>
+     */
     public void runTransient() {
         time += getTimeStep();
 
@@ -359,14 +463,25 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>size.</p>
+     *
+     * @return a int
+     */
     public int size() {
         return unitOperations.size();
     }
 
+    /**
+     * <p>view.</p>
+     */
     public void view() {
         this.displayResult();
     }
 
+    /**
+     * <p>displayResult.</p>
+     */
     public void displayResult() {
         try {
             thisThread.join();
@@ -385,6 +500,9 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
          */
     }
 
+    /**
+     * <p>reportMeasuredValues.</p>
+     */
     public void reportMeasuredValues() {
         try {
             thisThread.join();
@@ -402,6 +520,11 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>save.</p>
+     *
+     * @param filePath a {@link java.lang.String} object
+     */
     public void save(String filePath) {
         try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
             out.writeObject(this);
@@ -412,6 +535,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         }
     }
 
+    /**
+     * <p>open.</p>
+     *
+     * @param filePath a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
     public static ProcessSystem open(String filePath) {
         ProcessSystem tempSystem = null;
         try (ObjectInputStream objectinputstream = new ObjectInputStream(new FileInputStream(filePath))) {
@@ -424,6 +553,11 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return tempSystem;
     }
 
+    /**
+     * <p>reportResults.</p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[][] reportResults() {
         String[][] text = new String[200][];
 
@@ -436,6 +570,11 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return text;
     }
 
+    /**
+     * <p>printLogFile.</p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void printLogFile(String filename) {
         neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempFile =
                 new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
@@ -444,15 +583,27 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         tempFile.createFile();
     }
 
+    /**
+     * <p>Getter for the field <code>timeStep</code>.</p>
+     *
+     * @return a double
+     */
     public double getTimeStep() {
         return timeStep;
     }
 
+    /**
+     * <p>Setter for the field <code>timeStep</code>.</p>
+     *
+     * @param timeStep a double
+     */
     public void setTimeStep(double timeStep) {
         this.timeStep = timeStep;
     }
 
     /**
+     * <p>Getter for the field <code>name</code>.</p>
+     *
      * @return the name
      */
     public String getName() {
@@ -460,6 +611,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     /**
+     * <p>Setter for the field <code>name</code>.</p>
+     *
      * @param name the name to set
      */
     public void setName(String name) {
@@ -467,6 +620,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     /**
+     * <p>Getter for the field <code>systemMechanicalDesign</code>.</p>
+     *
      * @return the systemMechanicalDesign
      */
     public SystemMechanicalDesign getSystemMechanicalDesign() {
@@ -474,6 +629,8 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     /**
+     * <p>Setter for the field <code>systemMechanicalDesign</code>.</p>
+     *
      * @param systemMechanicalDesign the systemMechanicalDesign to set
      */
     public void setSystemMechanicalDesign(SystemMechanicalDesign systemMechanicalDesign) {
@@ -481,12 +638,20 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
     }
 
     /**
+     * <p>Getter for the field <code>costEstimator</code>.</p>
+     *
      * @return the costEstimator
      */
     public CostEstimateBaseClass getCostEstimator() {
         return costEstimator;
     }
 
+    /**
+     * <p>getEntropyProduction.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getEntropyProduction(String unit) {
         double entropyProduction = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -497,6 +662,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return entropyProduction;
     }
 
+    /**
+     * <p>getExergyChange.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getExergyChange(String unit) {
         double exergyChange = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -507,6 +678,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return exergyChange;
     }
 
+    /**
+     * <p>getPower.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getPower(String unit) {
         double power = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -526,6 +703,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
             return power;
     }
 
+    /**
+     * <p>getCoolerDuty.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getCoolerDuty(String unit) {
         double heat = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -537,6 +720,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return heat;
     }
 
+    /**
+     * <p>getHeaterDuty.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getHeaterDuty(String unit) {
         double heat = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -548,6 +737,12 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return heat;
     }
 
+    /**
+     * <p>getMechanicalWeight.</p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getMechanicalWeight(String unit) {
         double weight = 0.0;
         for (int i = 0; i < unitOperations.size(); i++) {
@@ -559,20 +754,40 @@ public class ProcessSystem implements java.io.Serializable, Runnable {
         return weight;
     }
 
+    /**
+     * <p>Getter for the field <code>surroundingTemperature</code>.</p>
+     *
+     * @return a double
+     */
     public double getSurroundingTemperature() {
         return surroundingTemperature;
     }
 
+    /**
+     * <p>Setter for the field <code>surroundingTemperature</code>.</p>
+     *
+     * @param surroundingTemperature a double
+     */
     public void setSurroundingTemperature(double surroundingTemperature) {
         this.surroundingTemperature = surroundingTemperature;
     }
 
+    /**
+     * <p>copy.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
     public ProcessSystem copy() {
         byte[] bytes = SerializationUtils.serialize(this);
         ProcessSystem copyOperation = (ProcessSystem) SerializationUtils.deserialize(bytes);
         return copyOperation;
     }
 
+    /**
+     * <p>getConditionMonitor.</p>
+     *
+     * @return a {@link neqsim.processSimulation.conditionMonitor.ConditionMonitor} object
+     */
     public ConditionMonitor getConditionMonitor() {
         return new ConditionMonitor(this);
     }

@@ -11,6 +11,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * <p>CompressorChart class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CompressorChart.class);
@@ -45,8 +51,12 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     double[][] redhead;
     double[][] redpolytropicEfficiency;
 
+    /**
+     * <p>Constructor for CompressorChart.</p>
+     */
     public CompressorChart() {}
 
+    /** {@inheritDoc} */
     @Override
     public void addCurve(double speed, double[] flow, double[] head,
             double[] polytropicEfficiency) {
@@ -54,6 +64,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         chartValues.add(curve);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
             double[][] head, double[][] polyEff) {
@@ -98,10 +109,14 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         setUseCompressorChart(true);
     }
 
+    /**
+     * <p>fitReducedCurve.</p>
+     */
     public void fitReducedCurve() {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPolytropicHead(double flow, double speed) {
         // double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
@@ -111,6 +126,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         // speed;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPolytropicEfficiency(double flow, double speed) {
         // double flowCorrection = fanLawCorrectionFunc.value(speed/referenceSpeed);
@@ -119,6 +135,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         // speed);
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getSpeed(double flow, double head) {
 
@@ -143,6 +160,12 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         return (int) Math.round(newspeed);
     }
 
+    /**
+     * <p>addSurgeCurve.</p>
+     *
+     * @param flow an array of {@link double} objects
+     * @param head an array of {@link double} objects
+     */
     public void addSurgeCurve(double[] flow, double[] head) {
         surgeCurve = new SurgeCurve(flow, head);
     }
@@ -152,22 +175,51 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     // return 100.0;
     // }
 
+    /**
+     * <p>polytropicEfficiency.</p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a double
+     */
     public double polytropicEfficiency(double flow, double speed) {
         return 100.0;
     }
 
+    /**
+     * <p>checkSurge1.</p>
+     *
+     * @param flow a double
+     * @param head a double
+     * @return a boolean
+     */
     public boolean checkSurge1(double flow, double head) {
         return false;
     }
 
+    /**
+     * <p>checkSurge2.</p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a boolean
+     */
     public boolean checkSurge2(double flow, double speed) {
         return false;
     }
 
+    /**
+     * <p>checkStoneWall.</p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a boolean
+     */
     public boolean checkStoneWall(double flow, double speed) {
         return false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
             double refZ) {
@@ -177,26 +229,35 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
         this.refZ = refZ;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SurgeCurve getSurgeCurve() {
         return surgeCurve;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSurgeCurve(SurgeCurve surgeCurve) {
         this.surgeCurve = surgeCurve;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StoneWallCurve getStoneWallCurve() {
         return stoneWallCurve;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
         this.stoneWallCurve = stoneWallCurve;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
 
@@ -336,36 +397,43 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isUseCompressorChart() {
         return useCompressorChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setUseCompressorChart(boolean useCompressorChart) {
         this.useCompressorChart = useCompressorChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getHeadUnit() {
         return headUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHeadUnit(String headUnit) {
         this.headUnit = headUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean useRealKappa() {
         return useRealKappa;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setUseRealKappa(boolean useRealKappa) {
         this.useRealKappa = useRealKappa;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void plot() {
         neqsim.dataPresentation.JFreeChart.graph2b graph =

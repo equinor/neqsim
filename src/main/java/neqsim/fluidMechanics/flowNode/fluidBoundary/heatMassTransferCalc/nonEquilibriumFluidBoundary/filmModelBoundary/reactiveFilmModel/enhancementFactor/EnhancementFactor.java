@@ -10,9 +10,9 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBo
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.FluidBoundarySystemInterface;
 
 /**
+ * <p>EnhancementFactor class.</p>
  *
  * @author esol
- * @version
  */
 public class EnhancementFactor implements EnhancementFactorInterface {
 
@@ -23,9 +23,17 @@ public class EnhancementFactor implements EnhancementFactorInterface {
     protected FluidBoundaryInterface fluidBoundary;
     protected FluidBoundarySystemInterface nonReactiveInterface, reactiveInterface;
 
+    /**
+     * <p>Constructor for EnhancementFactor.</p>
+     */
     public EnhancementFactor() {
     }
 
+    /**
+     * <p>Constructor for EnhancementFactor.</p>
+     *
+     * @param fluidBoundary a {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface} object
+     */
     public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
         this();
         this.fluidBoundary = fluidBoundary;
@@ -33,6 +41,12 @@ public class EnhancementFactor implements EnhancementFactorInterface {
         hattaNumber = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
     }
 
+    /**
+     * <p>calcEnhancementVec.</p>
+     *
+     * @param phase a int
+     * @param enhancementType a int
+     */
     public void calcEnhancementVec(int phase, int enhancementType) {
         if (phase == 1) {
             this.calcEnhancementVec(phase);
@@ -42,22 +56,27 @@ public class EnhancementFactor implements EnhancementFactorInterface {
         }
     }
 
+    /**
+     * <p>setOnesVec.</p>
+     *
+     * @param phase a int
+     */
     public void setOnesVec(int phase) {
         for (int j = 0; j < fluidBoundary.getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
             enhancementVec[j] = 1.0;
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calcEnhancementVec(int phase) {
     }
 
-    /**
-     * Indexed getter for property enhancementVec.
-     * 
-     * @param index Index of the property.
-     * @return Value of the property at <CODE>index</CODE>.
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Indexed getter for property enhancementVec.
+	 */
     @Override
 	public double getEnhancementVec(int index) {
         return enhancementVec[index];
@@ -65,7 +84,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
     /**
      * Getter for property enhancementVec.
-     * 
+     *
      * @return Value of property enhancementVec.
      */
     public double[] getEnhancementVec() {
@@ -74,7 +93,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
     /**
      * Indexed setter for property enhancementVec.
-     * 
+     *
      * @param index          Index of the property.
      * @param enhancementVec New value of the property at <CODE>index</CODE>.
      */
@@ -84,7 +103,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
     /**
      * Setter for property enhancementVec.
-     * 
+     *
      * @param enhancementVec New value of property enhancementVec.
      */
     public void setEnhancementVec(double[] enhancementVec) {
@@ -93,13 +112,14 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
     /**
      * Getter for property hattaNumber.
-     * 
+     *
      * @return Value of property hattaNumber.
      */
     public double[] getHattaNumber() {
         return this.hattaNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getHattaNumber(int i) {
         return this.hattaNumber[i];
@@ -107,7 +127,7 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
     /**
      * Setter for property hattaNumber.
-     * 
+     *
      * @param hattaNumber New value of property hattaNumber.
      */
     public void setHattaNumber(double[] hattaNumber) {

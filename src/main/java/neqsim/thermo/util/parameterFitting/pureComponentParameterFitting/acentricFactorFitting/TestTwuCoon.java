@@ -13,15 +13,20 @@ import neqsim.thermo.system.SystemSrkTwuCoonParamEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>TestTwuCoon class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestTwuCoon {
 
     static Logger logger = LogManager.getLogger(TestTwuCoon.class);
 
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

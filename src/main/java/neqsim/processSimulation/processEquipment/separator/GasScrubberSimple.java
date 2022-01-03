@@ -11,8 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>GasScrubberSimple class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class GasScrubberSimple extends Separator {
 
@@ -33,22 +34,39 @@ public class GasScrubberSimple extends Separator {
         this.setOrientation("vertical");
     }
 
+    /**
+     * <p>Constructor for GasScrubberSimple.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public GasScrubberSimple(Stream inletStream) {
         this();
         this.setInletStream(inletStream);
     }
 
+    /**
+     * <p>Constructor for GasScrubberSimple.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public GasScrubberSimple(String name, Stream inletStream) {
         this();
         this.name = name;
         this.setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * <p>Setter for the field <code>inletStream</code>.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public void setInletStream(Stream inletStream) {
         this.inletStream = inletStream;
 
@@ -61,26 +79,31 @@ public class GasScrubberSimple extends Separator {
         liquidOutStream = new Stream(liquidSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getLiquidOutStream() {
         return liquidOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getGasOutStream() {
         return gasOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getGas() {
         return getGasOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getLiquid() {
         return getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
 
@@ -104,11 +127,17 @@ public class GasScrubberSimple extends Separator {
         liquidOutStream.setThermoSystem(liquidSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * <p>calcLiquidCarryoverFraction.</p>
+     *
+     * @return a double
+     */
     public double calcLiquidCarryoverFraction() {
         double Ktot = 1.0;
 
@@ -122,6 +151,9 @@ public class GasScrubberSimple extends Separator {
         return gasVel;
     }
 
+    /**
+     * <p>runTransient.</p>
+     */
     public void runTransient() {
     }
 }

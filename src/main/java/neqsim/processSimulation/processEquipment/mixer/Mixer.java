@@ -26,8 +26,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Mixer class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
@@ -40,24 +41,34 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     private double outTemperature = Double.NaN;
     static Logger logger = LogManager.getLogger(Mixer.class);
 
-    /** Creates new staticMixer */
+    /**
+     * Creates new staticMixer
+     */
     public Mixer() {
     }
 
+    /**
+     * <p>Constructor for Mixer.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public Mixer(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return mixedStream.getThermoSystem();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void replaceStream(int i, StreamInterface newStream) {
         streams.set(i, newStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addStream(StreamInterface newStream) {
         streams.add(newStream);
@@ -77,10 +88,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         numberOfInputStreams++;
     }
 
+    /**
+     * <p>getStream.</p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getStream(int i) {
         return streams.get(i);
     }
 
+    /**
+     * <p>mixStream.</p>
+     */
     public void mixStream() {
         int index = 0;
         String compName = new String();
@@ -129,6 +149,11 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // mixedStream.getThermoSystem().init(2);
     }
 
+    /**
+     * <p>guessTemperature.</p>
+     *
+     * @return a double
+     */
     public double guessTemperature() {
         double gtemp = 0;
         for (int k = 0; k < streams.size(); k++) {
@@ -140,6 +165,11 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         return gtemp;
     }
 
+    /**
+     * <p>calcMixStreamEnthalpy.</p>
+     *
+     * @return a double
+     */
     public double calcMixStreamEnthalpy() {
         double enthalpy = 0;
         for (int k = 0; k < streams.size(); k++) {
@@ -152,16 +182,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         return enthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getOutStream() {
         return mixedStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {
         run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double enthalpy = 0.0;
@@ -216,6 +249,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         // outStream.setThermoSystem(mixedStream.getThermoSystem());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         SystemInterface thermoSystem = mixedStream.getThermoSystem();
@@ -312,11 +346,13 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPressure(double pres) {
         for (int k = 0; k < streams.size(); k++) {
@@ -325,6 +361,11 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         mixedStream.getThermoSystem().setPressure(pres);
     }
 
+    /**
+     * <p>setTemperature.</p>
+     *
+     * @param temp a double
+     */
     public void setTemperature(double temp) {
         for (int k = 0; k < streams.size(); k++) {
             streams.get(k).getThermoSystem().setTemperature(temp);
@@ -332,27 +373,53 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
         mixedStream.getThermoSystem().setTemperature(temp);
     }
 
+    /**
+     * <p>Getter for the field <code>outTemperature</code>.</p>
+     *
+     * @return a double
+     */
     public double getOutTemperature() {
         return outTemperature;
     }
 
+    /**
+     * <p>Setter for the field <code>outTemperature</code>.</p>
+     *
+     * @param outTemperature a double
+     */
     public void setOutTemperature(double outTemperature) {
         isSetOutTemperature(true);
         this.outTemperature = outTemperature;
     }
 
+    /**
+     * <p>isSetOutTemperature.</p>
+     *
+     * @return a boolean
+     */
     public boolean isSetOutTemperature() {
         return isSetOutTemperature;
     }
 
+    /**
+     * <p>isSetOutTemperature.</p>
+     *
+     * @param isSetOutTemperature a boolean
+     */
     public void isSetOutTemperature(boolean isSetOutTemperature) {
         this.isSetOutTemperature = isSetOutTemperature;
     }
 
+    /**
+     * <p>Getter for the field <code>numberOfInputStreams</code>.</p>
+     *
+     * @return a int
+     */
     public int getNumberOfInputStreams() {
         return numberOfInputStreams;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         getOutStream().run();

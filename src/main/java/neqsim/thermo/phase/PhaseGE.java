@@ -15,8 +15,9 @@ import neqsim.thermo.mixingRule.EosMixingRules;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**
+ * <p>PhaseGE class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
 
@@ -27,7 +28,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
     static Logger logger = LogManager.getLogger(PhaseGE.class);
 
-    /** Creates new PhaseGE */
+    /**
+     * Creates new PhaseGE
+     */
     public PhaseGE() {
         super();
         phaseTypeName = "liquid";
@@ -35,6 +38,17 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         useVolumeCorrection = false;
     }
 
+    /**
+     * <p>init.</p>
+     *
+     * @param temperature a double
+     * @param pressure a double
+     * @param totalNumberOfMoles a double
+     * @param beta a double
+     * @param numberOfComponents a int
+     * @param type a int
+     * @param phase a int
+     */
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int numberOfComponents, int type, int phase) { // type = 0 start init type =1 gi nye betingelser
         for (int i = 0; i < numberOfComponents; i++) {
@@ -58,6 +72,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int initType, int phase, double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, initType, phase, beta);
@@ -89,6 +104,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         mixingRuleDefined = true;
@@ -96,6 +112,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         mixRuleEos = mixSelect.getMixingRule(2, this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void resetMixingRule(int type) {
         mixingRuleDefined = true;
@@ -103,26 +120,49 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         mixRuleEos = mixSelect.resetMixingRule(2, this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double molarVolume(double pressure, double temperature, double A, double B, int phase) {
         return 1;
     }
 
+    /**
+     * <p>molarVolumeAnalytic.</p>
+     *
+     * @param pressure a double
+     * @param temperature a double
+     * @param A a double
+     * @param B a double
+     * @param phase a int
+     * @return a double
+     */
     public double molarVolumeAnalytic(double pressure, double temperature, double A, double B, int phase) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
     }
 
+    /**
+     * <p>setAlpha.</p>
+     *
+     * @param alpha an array of {@link double} objects
+     */
     public void setAlpha(double[][] alpha) {
     }
 
+    /**
+     * <p>setDij.</p>
+     *
+     * @param Dij an array of {@link double} objects
+     */
     public void setDij(double[][] Dij) {
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -130,31 +170,47 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGibbsEnergy() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy() {
         logger.error("this getExxess should never be used.......");
         return 0;
     }
 
+    /**
+     * <p>setDijT.</p>
+     *
+     * @param DijT an array of {@link double} objects
+     */
     public void setDijT(double[][] DijT) {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getActivityCoefficientSymetric(int k) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getActivityCoefficient(int k) {
         return ((ComponentGEInterface) getComponent(k)).getGamma();
     }
 
+    /**
+     * <p>getActivityCoefficientInfDilWater.</p>
+     *
+     * @param k a int
+     * @param p a int
+     * @return a double
+     */
     public double getActivityCoefficientInfDilWater(int k, int p) {
         if (refPhase == null) {
             initRefPhases(false, getComponent(p).getName());
@@ -167,6 +223,12 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         return ((ComponentGEInterface) refPhase[k].getComponent(0)).getGamma();
     }
 
+    /**
+     * <p>getActivityCoefficientInfDil.</p>
+     *
+     * @param k a int
+     * @return a double
+     */
     public double getActivityCoefficientInfDil(int k) {
         PhaseInterface dilphase = (PhaseInterface) this.clone();
         dilphase.addMoles(k, -(1.0 - 1e-10) * dilphase.getComponent(k).getNumberOfMolesInPhase());
@@ -178,16 +240,19 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         return ((ComponentGEInterface) dilphase.getComponent(0)).getGamma();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEnthalpy() {
         return getCp() * temperature * numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropy() {
         return getCp() * Math.log(temperature / ThermodynamicConstantsInterface.referenceTemperature);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getCp() {
         double tempVar = 0.0;
@@ -197,6 +262,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
         return tempVar;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getCv() {
         // Cv is assumed equal to Cp
@@ -204,6 +270,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     // return speed of sound in water constant 1470.0 m/sec
+    /** {@inheritDoc} */
     @Override
     public double getZ() {
         double densityIdealGas = pressure * 1e5 / 8.314 / temperature * getMolarMass();
@@ -211,28 +278,31 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     }
 
     // return speed of sound in water constant 1470.0 m/sec
+    /** {@inheritDoc} */
     @Override
     public double getSoundSpeed() {
         return 1470.0;
     }
 
     // return speed of JT coefficient of water at K/bar (assumed constant)
+    /** {@inheritDoc} */
     @Override
     public double getJouleThomsonCoefficient() {
         return -0.125 / 10.0;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to get density of a phase note: at the moment return density of water
      * (997 kg/m3)
-     *
-     * @return density with unit kg/m3
      */
     @Override
     public double getDensity() {
         return 997.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMolarVolume() {
         return 1.0 / (getDensity() / getMolarMass()) * 1.0e5;

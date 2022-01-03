@@ -11,9 +11,9 @@ import neqsim.fluidMechanics.flowSystem.FlowSystem;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.twoPhaseFlowNodeVisualization.TwoPhaseFlowNodeVisualization;
 
 /**
+ * <p>TwoPhasePipeFlowVisualization class.</p>
  *
  * @author esol
- * @version
  */
 public class TwoPhasePipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.TwoPhaseFlowVisualization {
@@ -36,10 +36,18 @@ public class TwoPhasePipeFlowVisualization extends
     double[] timeArray = new double[10];
     visAdInterface plot;
 
-    /** Creates new PipeFlowVisualization */
+    /**
+     * Creates new PipeFlowVisualization
+     */
     public TwoPhasePipeFlowVisualization() {
     }
 
+    /**
+     * <p>Constructor for TwoPhasePipeFlowVisualization.</p>
+     *
+     * @param nodes a int
+     * @param timeSteps a int
+     */
     public TwoPhasePipeFlowVisualization(int nodes, int timeSteps) {
         flowNodes = new TwoPhaseFlowNodeVisualization[timeSteps][nodes];
         flowSystem = new FlowSystem[timeSteps];
@@ -53,6 +61,7 @@ public class TwoPhasePipeFlowVisualization extends
         System.out.println("times " + time);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setPoints() {
         pressurePoint = new double[2][time][flowNodes[0].length];
@@ -102,6 +111,7 @@ public class TwoPhasePipeFlowVisualization extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void displayResult(String name) {
         // double[][] points = new double[1][1];
@@ -145,6 +155,7 @@ public class TwoPhasePipeFlowVisualization extends
     // file.createFile();
     // }
     //
+    /** {@inheritDoc} */
     @Override
 	public void createNetCdfFile(String name) {
         setPoints();

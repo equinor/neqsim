@@ -10,9 +10,9 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>IonicInteractionParameterFittingFunction_Sleipner class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class IonicInteractionParameterFittingFunction_Sleipner extends LevenbergMarquardtFunction
         implements ThermodynamicConstantsInterface {
@@ -21,8 +21,12 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunction_Sleipner.class);
 
+    /**
+     * <p>Constructor for IonicInteractionParameterFittingFunction_Sleipner.</p>
+     */
     public IonicInteractionParameterFittingFunction_Sleipner() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -37,11 +41,13 @@ public class IonicInteractionParameterFittingFunction_Sleipner extends Levenberg
         return system.getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

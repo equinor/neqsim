@@ -11,9 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Expander class.</p>
  *
  * @author esol
- * @version
  */
 public class Expander extends Compressor implements ExpanderInterface {
 
@@ -26,14 +26,26 @@ public class Expander extends Compressor implements ExpanderInterface {
         super();
     }
 
+    /**
+     * <p>Constructor for Expander.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public Expander(StreamInterface inletStream) {
         super(inletStream);
     }
 
+    /**
+     * <p>Constructor for Expander.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public Expander(String name, StreamInterface inletStream) {
         super(name, inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         // System.out.println("expander running..");

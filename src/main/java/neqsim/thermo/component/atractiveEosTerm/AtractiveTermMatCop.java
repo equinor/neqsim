@@ -8,9 +8,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermMatCop class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermMatCop extends AtractiveTermSrk {
 
@@ -20,6 +20,8 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     /**
      * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
     public AtractiveTermMatCop(ComponentEosInterface component) {
         super(component);
@@ -29,6 +31,9 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     /**
      * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     * @param params an array of {@link double} objects
      */
     public AtractiveTermMatCop(ComponentEosInterface component, double[] params) {
         this(component);
@@ -39,6 +44,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermMatCop clone() {
         AtractiveTermMatCop atractiveTerm = null;
@@ -51,12 +57,14 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         super.init();
         parameters[0] = m;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -65,6 +73,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {
@@ -75,6 +84,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -88,6 +98,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         double Tr = temperature / getComponent().getTC();
@@ -109,6 +120,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {
@@ -118,6 +130,7 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {

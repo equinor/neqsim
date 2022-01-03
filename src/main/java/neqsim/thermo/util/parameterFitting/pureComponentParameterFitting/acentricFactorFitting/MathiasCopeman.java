@@ -5,9 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>MathiasCopeman class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class MathiasCopeman extends LevenbergMarquardtFunction {
 
@@ -15,10 +15,14 @@ public class MathiasCopeman extends LevenbergMarquardtFunction {
     static Logger logger = LogManager.getLogger(MathiasCopeman.class);
 
 
+    /**
+     * <p>Constructor for MathiasCopeman.</p>
+     */
     public MathiasCopeman() {
         params = new double[3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         // System.out.println("dep " + dependentValues[0]);
@@ -36,11 +40,13 @@ public class MathiasCopeman extends LevenbergMarquardtFunction {
         return Math.log(system.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return Math.exp(val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

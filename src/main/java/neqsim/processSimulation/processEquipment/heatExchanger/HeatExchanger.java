@@ -13,8 +13,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>HeatExchanger class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class HeatExchanger extends Heater implements HeatExchangerInterface {
 
@@ -44,6 +45,11 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         inStream = new Stream[2];
     }
 
+    /**
+     * <p>Constructor for HeatExchanger.</p>
+     *
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public HeatExchanger(StreamInterface inStream1) {
         outStream = new Stream[2];
         inStream = new Stream[2];
@@ -53,6 +59,12 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         outStream[1] = (StreamInterface) inStream1.clone();
     }
 
+    /**
+     * <p>Constructor for HeatExchanger.</p>
+     *
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inStream2 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public HeatExchanger(StreamInterface inStream1, StreamInterface inStream2) {
         outStream = new Stream[2];
         inStream = new Stream[2];
@@ -62,15 +74,27 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         outStream[1] = (StreamInterface) inStream2.clone();
     }
 
+    /**
+     * <p>addInStream.</p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public void addInStream(StreamInterface inStream) {
         this.inStream[1] = inStream;
     }
 
+    /**
+     * <p>setFeedStream.</p>
+     *
+     * @param number a int
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public void setFeedStream(int number, StreamInterface inStream) {
         this.inStream[number] = inStream;
         outStream[number] = (StreamInterface) inStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         outStream[0].setName(name + "_Sout1");
@@ -78,41 +102,66 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setdT(double dT) {
         this.dT = dT;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream(int i) {
         return outStream[i];
     }
 
+    /**
+     * <p>Getter for the field <code>inStream</code>.</p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getInStream(int i) {
         return inStream[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutTemperature(double temperature) {
         this.temperatureOut = temperature;
     }
 
+    /**
+     * <p>getOutTemperature.</p>
+     *
+     * @param i a int
+     */
     public void getOutTemperature(int i) {
         outStream[i].getThermoSystem().getTemperature();
     }
 
+    /**
+     * <p>getInTemperature.</p>
+     *
+     * @param i a int
+     */
     public void getInTemperature(int i) {
         inStream[i].getThermoSystem().getTemperature();
     }
 
     /**
+     * <p>Setter for the field <code>outStream</code>.</p>
+     *
      * @param outStream the outStream to set
+     * @param streamNumber a int
      */
     public void setOutStream(int streamNumber, StreamInterface outStream) {
         this.outStream[streamNumber] = outStream;
         outStreamSpecificationNumber = streamNumber;
     }
 
+    /**
+     * <p>runSpecifiedStream.</p>
+     */
     public void runSpecifiedStream() {
         int nonOutStreamSpecifiedStreamNumber = 0;
         if (outStreamSpecificationNumber == 0) {
@@ -143,6 +192,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (getSpecification().equals("out stream")) {
@@ -260,11 +310,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getDuty() {
         return duty;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         outStream[0].displayResult();
@@ -272,6 +324,8 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     }
 
     /**
+     * <p>getUAvalue.</p>
+     *
      * @return the UAvalue
      */
     public double getUAvalue() {
@@ -279,20 +333,33 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     }
 
     /**
+     * <p>setUAvalue.</p>
+     *
      * @param UAvalue the UAvalue to set
      */
     public void setUAvalue(double UAvalue) {
         this.UAvalue = UAvalue;
     }
 
+    /**
+     * <p>Getter for the field <code>guessOutTemperature</code>.</p>
+     *
+     * @return a double
+     */
     public double getGuessOutTemperature() {
         return guessOutTemperature;
     }
 
+    /**
+     * <p>Setter for the field <code>guessOutTemperature</code>.</p>
+     *
+     * @param guessOutTemperature a double
+     */
     public void setGuessOutTemperature(double guessOutTemperature) {
         this.guessOutTemperature = guessOutTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         //
@@ -319,6 +386,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         return entrop + heatTransferEntropyProd;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMassBalance(String unit) {
         //
@@ -334,6 +402,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         return mass;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
         double heatBalanceError = 0.0;
@@ -375,14 +444,27 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         hotColdDutyBalance = duty1/duty2;
     }
 
+    /**
+     * <p>runConditionAnalysis.</p>
+     */
     public void runConditionAnalysis() {
         runConditionAnalysis(this);
     }
 
+    /**
+     * <p>Getter for the field <code>thermalEffectiveness</code>.</p>
+     *
+     * @return a double
+     */
     public double getThermalEffectiveness() {
         return thermalEffectiveness;
     }
 
+    /**
+     * <p>Setter for the field <code>thermalEffectiveness</code>.</p>
+     *
+     * @param thermalEffectiveness a double
+     */
     public void setThermalEffectiveness(double thermalEffectiveness) {
         this.thermalEffectiveness = thermalEffectiveness;
     }
@@ -395,6 +477,13 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
         this.flowArrangement = flowArrangement;
     }
 
+    /**
+     * <p>calcThermalEffectivenes.</p>
+     *
+     * @param NTU a double
+     * @param Cr a double
+     * @return a double
+     */
     public double calcThermalEffectivenes(double NTU, double Cr) {
         if (Cr == 0.0) {
             return 1.0 - Math.exp(-NTU);
@@ -412,10 +501,20 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
             return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
     }
 
+	/**
+	 * <p>Getter for the field <code>hotColdDutyBalance</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getHotColdDutyBalance() {
 		return hotColdDutyBalance;
 	}
 
+	/**
+	 * <p>Setter for the field <code>hotColdDutyBalance</code>.</p>
+	 *
+	 * @param hotColdDutyBalance a double
+	 */
 	public void setHotColdDutyBalance(double hotColdDutyBalance) {
 		this.hotColdDutyBalance = hotColdDutyBalance;
 	}

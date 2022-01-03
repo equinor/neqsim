@@ -9,17 +9,21 @@ package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameter
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>GrunbergNissanFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for GrunbergNissanFunction.</p>
+     */
     public GrunbergNissanFunction() {
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         system.init(1);
@@ -27,6 +31,7 @@ public class GrunbergNissanFunction extends LevenbergMarquardtFunction {
         return system.getPhases()[1].getPhysicalProperties().getViscosity() * 1e3;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

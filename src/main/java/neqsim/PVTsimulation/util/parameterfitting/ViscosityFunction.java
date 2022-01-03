@@ -4,9 +4,9 @@ import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProp
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>ViscosityFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
 
@@ -15,15 +15,24 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     double molarMass = 0.0;
     boolean includeWaxEmulsionViscosity = true;
 
+    /**
+     * <p>Constructor for ViscosityFunction.</p>
+     */
     public ViscosityFunction() {
         params = new double[1];
     }
 
+    /**
+     * <p>Constructor for ViscosityFunction.</p>
+     *
+     * @param includeWax a boolean
+     */
     public ViscosityFunction(boolean includeWax) {
         params = new double[1];
         includeWaxEmulsionViscosity = includeWax;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
@@ -38,6 +47,7 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getPhysicalProperties().getViscosity(); // %wax
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

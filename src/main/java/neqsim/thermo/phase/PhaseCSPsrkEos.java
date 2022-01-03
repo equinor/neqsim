@@ -10,9 +10,9 @@ import neqsim.thermo.component.ComponentCSPsrk;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>PhaseCSPsrkEos class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class PhaseCSPsrkEos extends PhaseSrkEos {
 
@@ -25,7 +25,9 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     double acrefBWRSPhase = 0;
     double mrefBWRSPhase = 0;
 
-    /** Creates new PhaseSrkEos */
+    /**
+     * Creates new PhaseSrkEos
+     */
     public PhaseCSPsrkEos() {
         super();
         refBWRSPhase = new PhaseBWRSEos();
@@ -40,6 +42,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
                 * refBWRSPhase.getComponent(0).getTC() / refBWRSPhase.getComponent(0).getPC();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseCSPsrkEos clone() {
         PhaseCSPsrkEos clonedPhase = null;
@@ -52,6 +55,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
@@ -59,6 +63,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         ((ComponentCSPsrk) componentArray[compNumber]).setRefPhaseBWRS(this);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -86,24 +91,28 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
         } while (Math.abs((oldtemp - refBWRSPhase.getTemperature()) / oldtemp) > 1e-8);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getF() {
         return f_scale_mix * refBWRSPhase.getF() / refBWRSPhase.getNumberOfMolesInPhase()
                 * refBWRSPhase.getTemperature() / getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdV() {
         return (f_scale_mix * refBWRSPhase.dFdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix)
                 * refBWRSPhase.getTemperature() / getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         return (f_scale_mix * refBWRSPhase.dFdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix
                 / h_scale_mix) * refBWRSPhase.getTemperature() / getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdVdVdV() {
         return (f_scale_mix * refBWRSPhase.dFdVdVdV() / refBWRSPhase.getNumberOfMolesInPhase() / h_scale_mix
@@ -112,9 +121,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Getter for property f_scale_mix.
-     * 
-     * @return Value of property f_scale_mix.
      *
+     * @return Value of property f_scale_mix.
      */
     public double getF_scale_mix() {
         return f_scale_mix;
@@ -124,9 +132,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Setter for property f_scale_mix.
-     * 
-     * @param f_scale_mix New value of property f_scale_mix.
      *
+     * @param f_scale_mix New value of property f_scale_mix.
      */
     public void setF_scale_mix(double f_scale_mix) {
         this.f_scale_mix = f_scale_mix;
@@ -134,9 +141,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Getter for property h_scale_mix.
-     * 
-     * @return Value of property h_scale_mix.
      *
+     * @return Value of property h_scale_mix.
      */
     public double getH_scale_mix() {
         return h_scale_mix;
@@ -144,9 +150,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Setter for property h_scale_mix.
-     * 
-     * @param h_scale_mix New value of property h_scale_mix.
      *
+     * @param h_scale_mix New value of property h_scale_mix.
      */
     public void setH_scale_mix(double h_scale_mix) {
         this.h_scale_mix = h_scale_mix;
@@ -154,9 +159,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Getter for property brefBWRSPhase.
-     * 
-     * @return Value of property brefBWRSPhase.
      *
+     * @return Value of property brefBWRSPhase.
      */
     public double getBrefBWRSPhase() {
         return brefBWRSPhase;
@@ -164,9 +168,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Setter for property brefBWRSPhase.
-     * 
-     * @param brefBWRSPhase New value of property brefBWRSPhase.
      *
+     * @param brefBWRSPhase New value of property brefBWRSPhase.
      */
     public void setBrefBWRSPhase(double brefBWRSPhase) {
         this.brefBWRSPhase = brefBWRSPhase;
@@ -174,9 +177,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Getter for property acrefBWRSPhase.
-     * 
-     * @return Value of property acrefBWRSPhase.
      *
+     * @return Value of property acrefBWRSPhase.
      */
     public double getAcrefBWRSPhase() {
         return acrefBWRSPhase;
@@ -184,9 +186,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Setter for property acrefBWRSPhase.
-     * 
-     * @param acrefBWRSPhase New value of property acrefBWRSPhase.
      *
+     * @param acrefBWRSPhase New value of property acrefBWRSPhase.
      */
     public void setAcrefBWRSPhase(double acrefBWRSPhase) {
         this.acrefBWRSPhase = acrefBWRSPhase;
@@ -194,9 +195,8 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Getter for property refBWRSPhase.
-     * 
-     * @return Value of property refBWRSPhase.
      *
+     * @return Value of property refBWRSPhase.
      */
     public neqsim.thermo.phase.PhaseSrkEos getRefBWRSPhase() {
         return refBWRSPhase;
@@ -204,14 +204,14 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
 
     /**
      * Setter for property refBWRSPhase.
-     * 
-     * @param refBWRSPhase New value of property refBWRSPhase.
      *
+     * @param refBWRSPhase New value of property refBWRSPhase.
      */
     public void setRefBWRSPhase(neqsim.thermo.phase.PhaseBWRSEos refBWRSPhase) {
         this.refBWRSPhase = refBWRSPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {

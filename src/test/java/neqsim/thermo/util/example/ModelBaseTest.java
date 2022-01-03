@@ -9,20 +9,32 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>ModelBaseTest class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 @Disabled
 public class ModelBaseTest {
     static SystemInterface thermoSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
 
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {}
 
+    /**
+     * <p>tearDown.</p>
+     */
     @AfterAll
     public static void tearDown() {}
 
+    /**
+     * <p>testInit0.</p>
+     */
     @Test
     public void testInit0() {
         try {
@@ -32,6 +44,9 @@ public class ModelBaseTest {
         }
     }
 
+    /**
+     * <p>testInit1.</p>
+     */
     @Test
     public void testInit1() {
         try {
@@ -41,6 +56,9 @@ public class ModelBaseTest {
         }
     }
 
+    /**
+     * <p>testActivity.</p>
+     */
     @Test
     public void testActivity() {
         thermoSystem.init(0);
@@ -52,6 +70,9 @@ public class ModelBaseTest {
         assertTrue(Math.abs((activ1 - activ2)) < 1e-6);
     }
 
+    /**
+     * <p>testVolume.</p>
+     */
     @Test
     public void testVolume() {
         thermoSystem.init(0);
@@ -63,6 +84,9 @@ public class ModelBaseTest {
         assertTrue(dens2 > dens1);
     }
 
+    /**
+     * <p>testGibbs.</p>
+     */
     @Test
     public void testGibbs() {
         thermoSystem.init(0);
@@ -74,6 +98,9 @@ public class ModelBaseTest {
         assertTrue(gibbs2 < gibbs1);
     }
 
+    /**
+     * <p>testFugasities.</p>
+     */
     @Test
     public void testFugasities() {
         thermoSystem.init(0);
@@ -82,6 +109,9 @@ public class ModelBaseTest {
         assertTrue(fugTest.checkFugasityCoeffisients());
     }
 
+    /**
+     * <p>testFugasitiesdT.</p>
+     */
     @Test
     public void testFugasitiesdT() {
         thermoSystem.init(0);
@@ -90,6 +120,9 @@ public class ModelBaseTest {
         assertTrue(fugTest.checkFugasityCoeffisientsDT());
     }
 
+    /**
+     * <p>testFugasitiesdP.</p>
+     */
     @Test
     public void testFugasitiesdP() {
         thermoSystem.init(0);
@@ -98,6 +131,9 @@ public class ModelBaseTest {
         assertTrue(fugTest.checkFugasityCoeffisientsDP());
     }
 
+    /**
+     * <p>testFugasitiesdn.</p>
+     */
     @Test
     public void testFugasitiesdn() {
         thermoSystem.init(0);

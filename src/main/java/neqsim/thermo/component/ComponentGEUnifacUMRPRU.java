@@ -12,9 +12,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ComponentGEUnifacUMRPRU class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
 
@@ -35,6 +35,14 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     public ComponentGEUnifacUMRPRU() {
     }
 
+    /**
+     * <p>Constructor for ComponentGEUnifacUMRPRU.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGEUnifacUMRPRU(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         // System.out.println("finished reading UNIFAC ");
@@ -92,6 +100,11 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /**
+     * <p>calcTempExpaij.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calcTempExpaij(PhaseInterface phase) {
         if (tempExpaij == null) {
             tempExpaij = new double[getNumberOfUNIFACgroups()][getNumberOfUNIFACgroups()];
@@ -113,6 +126,9 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /**
+     * <p>calcSum2Comp.</p>
+     */
     public void calcSum2Comp() {
         UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();
         for (int i = 0; i < unifacGroupsLocal.length; i++) {
@@ -125,6 +141,11 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /**
+     * <p>calcSum2CompdTdT.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calcSum2CompdTdT(PhaseInterface phase) {
         double der, tempVar, tempVar2;
         double tempSqared = phase.getTemperature() * phase.getTemperature();
@@ -158,6 +179,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
@@ -175,6 +197,13 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         getUnifacGroup(k).setLnGammaMix(tempGammaMix);
     }
 
+    /**
+     * <p>calclnGammakdn.</p>
+     *
+     * @param k a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param derCompNumb a int
+     */
     public void calclnGammakdn(int k, PhaseInterface phase, int derCompNumb) {
         double sum1Mix = 0.0, sum1Mixdn = 0.0, sum3Mix = 0.0;
         UNIFACgroup[] unifacGroupsLocal = getUnifacGroups();
@@ -194,6 +223,12 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         unifacGroupsLocal[k].setLnGammaMixdn(tempGammaMix, derCompNumb);
     }
 
+    /**
+     * <p>calclnGammakdTdT.</p>
+     *
+     * @param k a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calclnGammakdTdT(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1CompdT = 0.0, sum1CompdTdT = 0.0, sum1Mix = 0.0, sum1MixdT = 0.0, sum1MixdTdT = 0.0,
                 sum2Comp2, sum2Mix2;
@@ -271,6 +306,15 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         unifacGroupsLocal[k].setLnGammaMixdTdT(tempGammaMixdT);
     }
 
+    /**
+     * <p>commonInit.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     */
     public void commonInit(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         VCommontemp = 0;
@@ -287,6 +331,7 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
     }
 
 // TODO impement dlngammadn
+    /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -404,6 +449,11 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         return gamma;
     }
 
+    /**
+     * <p>calcUnifacGroupParams.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calcUnifacGroupParams(PhaseInterface phase) {
         if (aij == null) {
             aij = new double[getNumberOfUNIFACgroups()][getNumberOfUNIFACgroups()];
@@ -415,6 +465,11 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /**
+     * <p>calcUnifacGroupParamsdT.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calcUnifacGroupParamsdT(PhaseInterface phase) {
         if (aijdT == null) {
             aijdT = new double[getNumberOfUNIFACgroups()][getNumberOfUNIFACgroups()];
@@ -428,6 +483,15 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /**
+     * <p>calcGammaNumericalDerivatives.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     */
     public void calcGammaNumericalDerivatives(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
         phase.setInitType(1);
@@ -449,29 +513,74 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
     }
 
+    /**
+     * <p>Getter for the field <code>aij</code>.</p>
+     *
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double getaij(int i, int j) {
         return aij[i][j];
     }
 
+    /**
+     * <p>Getter for the field <code>aijdT</code>.</p>
+     *
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double getaijdT(int i, int j) {
         return aijdT[i][j];
     }
 
+    /**
+     * <p>Getter for the field <code>aijdTdT</code>.</p>
+     *
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double getaijdTdT(int i, int j) {
         return aijdTdT[i][j];
     }
 
+    /**
+     * <p>calcaij.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double calcaij(PhaseInterface phase, int i, int j) {
         double temp = phase.getTemperature() - 298.15;
         return ((PhaseGEUnifac) phase).getAij(i, j) + ((PhaseGEUnifac) phase).getBij(i, j) * temp
                 + ((PhaseGEUnifac) phase).getCij(i, j) * temp * temp;
     }
 
+    /**
+     * <p>calcaijdT.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double calcaijdT(PhaseInterface phase, int i, int j) {
         return ((PhaseGEUnifac) phase).getBij(i, j)
                 + 2.0 * ((PhaseGEUnifac) phase).getCij(i, j) * (phase.getTemperature() - 298.15);
     }
 
+    /**
+     * <p>calcaijdTdT.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double calcaijdTdT(PhaseInterface phase, int i, int j) {
         return 2.0 * ((PhaseGEUnifac) phase).getCij(i, j);
     }

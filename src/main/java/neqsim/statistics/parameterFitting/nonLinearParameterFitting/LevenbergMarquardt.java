@@ -10,9 +10,9 @@ import Jama.Matrix;
 import neqsim.statistics.parameterFitting.StatisticsBaseClass;
 
 /**
+ * <p>LevenbergMarquardt class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
 
@@ -25,11 +25,14 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     boolean solved = false;
     private int maxNumberOfIterations = 50;
 
-    /** Creates new LevenbergMarquardt */
+    /**
+     * Creates new LevenbergMarquardt
+     */
     public LevenbergMarquardt() {
         thisThread = new Thread();
     }
 
+    /** {@inheritDoc} */
     @Override
     public LevenbergMarquardt clone() {
         LevenbergMarquardt clonedClass = null;
@@ -42,6 +45,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         return clonedClass;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         chiSquare = calcChiSquare();
@@ -51,6 +55,7 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         alpha = calcAlphaMatrix();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void solve() {
         setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
@@ -104,6 +109,11 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
         newParameters.print(10, 10);
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         /*
          * LevenbergMarquardt optim = new LevenbergMarquardt(); TestFunction
@@ -121,6 +131,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     /**
+     * <p>Getter for the field <code>maxNumberOfIterations</code>.</p>
+     *
      * @return the maxNumberOfIterations
      */
     public int getMaxNumberOfIterations() {
@@ -128,6 +140,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     }
 
     /**
+     * <p>Setter for the field <code>maxNumberOfIterations</code>.</p>
+     *
      * @param maxNumberOfIterations the maxNumberOfIterations to set
      */
     public void setMaxNumberOfIterations(int maxNumberOfIterations) {

@@ -11,8 +11,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>PHsolidFlash class.</p>
+ *
  * @author even solbraa
- * @version
  */
 public class PHsolidFlash extends Flash {
 
@@ -23,15 +24,24 @@ public class PHsolidFlash extends Flash {
     int refluxPhase = 0;
     double enthalpyspec = 0.5;
 
-    /** Creates new PHsolidFlash */
+    /**
+     * Creates new PHsolidFlash
+     */
     public PHsolidFlash() {}
 
+    /**
+     * <p>Constructor for PHsolidFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param ent a double
+     */
     public PHsolidFlash(SystemInterface system, double ent) {
         this.system = system;
         this.tpFlash = new TPflash(this.system, true);
         this.enthalpyspec = ent;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // logger.info("enthalpy: " + system.getEnthalpy());
@@ -74,6 +84,7 @@ public class PHsolidFlash extends Flash {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

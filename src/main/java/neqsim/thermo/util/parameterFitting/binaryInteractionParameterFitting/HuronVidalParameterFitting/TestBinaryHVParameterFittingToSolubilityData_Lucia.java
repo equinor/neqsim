@@ -13,9 +13,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestBinaryHVParameterFittingToSolubilityData_Lucia class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
 
@@ -23,6 +23,11 @@ public class TestBinaryHVParameterFittingToSolubilityData_Lucia {
             LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData_Lucia.class);
 
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

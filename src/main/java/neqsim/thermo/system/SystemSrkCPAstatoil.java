@@ -89,6 +89,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemSrkCPAstatoil clone() {
         SystemSrkCPAstatoil clonedSystem = null;

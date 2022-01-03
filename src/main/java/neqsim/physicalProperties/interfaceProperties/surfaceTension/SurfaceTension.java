@@ -10,9 +10,9 @@ import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>SurfaceTension class.</p>
  *
  * @author esol
- * @version
  */
 public class SurfaceTension extends InterfaceProperties implements SurfaceTensionInterface {
 
@@ -20,23 +20,42 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
 
     protected SystemInterface system;
 
-    /** Creates new SurfaceTension */
+    /**
+     * Creates new SurfaceTension
+     */
     public SurfaceTension() {
     }
 
+    /**
+     * <p>Constructor for SurfaceTension.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SurfaceTension(SystemInterface system) {
         this.system = system;
     }
 
+    /**
+     * <p>calcPureComponentSurfaceTension.</p>
+     *
+     * @param componentNumber a int
+     * @return a double
+     */
     public double calcPureComponentSurfaceTension(int componentNumber) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcSurfaceTension(int int1, int int2) {
         return 0.0;
     }
 
+    /**
+     * <p>getComponentWithHighestBoilingpoint.</p>
+     *
+     * @return a int
+     */
     public int getComponentWithHighestBoilingpoint() {
         int compNumb = 0;
         double boilPoint = -273.15;

@@ -15,8 +15,10 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>Standard_ISO6976 class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Standard_ISO6976 extends neqsim.standards.Standard
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -63,6 +65,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
 
     /**
      * Creates a new instance of Standard_ISO1992
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Standard_ISO6976(SystemInterface thermoSystem) {
         super(thermoSystem);
@@ -167,6 +171,14 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         // logger.info("ok adding components in " + getName());
     }
 
+    /**
+     * <p>Constructor for Standard_ISO6976.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param volumetricReferenceTemperaturedegC a double
+     * @param energyReferenceTemperaturedegC a double
+     * @param calculationType a {@link java.lang.String} object
+     */
     public Standard_ISO6976(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
             double energyReferenceTemperaturedegC, String calculationType) {
         this(thermoSystem);
@@ -175,6 +187,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         energyRefT = energyReferenceTemperaturedegC;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calculate() {
         Zmix0 = 1.0;
@@ -224,6 +237,7 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         // System.out.println("molRefm3 " + molRefm3);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("GCV")) {
@@ -339,11 +353,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         if (returnParameter.equals("CompressionFactor")) {
@@ -353,11 +369,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return true;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);
@@ -468,6 +486,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Getter for the field <code>energyRefT</code>.</p>
+     *
      * @return the energyRefT
      */
     public // combustion conditions
@@ -476,6 +496,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Setter for the field <code>energyRefT</code>.</p>
+     *
      * @param energyRefT the energyRefT to set
      */
     public void setEnergyRefT(double energyRefT) {
@@ -483,6 +505,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Getter for the field <code>energyRefP</code>.</p>
+     *
      * @return the energyRefP
      */
     public double getEnergyRefP() {
@@ -490,6 +514,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Setter for the field <code>energyRefP</code>.</p>
+     *
      * @param energyRefP the energyRefP to set
      */
     public void setEnergyRefP(double energyRefP) {
@@ -497,6 +523,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Getter for the field <code>volRefT</code>.</p>
+     *
      * @return the volRefT
      */
     public // metering conditions
@@ -505,6 +533,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Setter for the field <code>volRefT</code>.</p>
+     *
      * @param volRefT the volRefT to set
      */
     public void setVolRefT(double volRefT) {
@@ -512,6 +542,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Getter for the field <code>componentsNotDefinedByStandard</code>.</p>
+     *
      * @return the componentsNotDefinedByStandard
      */
     public // metering conditions
@@ -519,6 +551,11 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         return componentsNotDefinedByStandard;
     }
 
+    /**
+     * <p>getTotalMolesOfInerts.</p>
+     *
+     * @return a double
+     */
     public double getTotalMolesOfInerts() {
         double inerts = 0.0;
         for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
@@ -530,6 +567,9 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
         return inerts;
     }
 
+    /**
+     * <p>removeInertsButNitrogen.</p>
+     */
     public void removeInertsButNitrogen() {
         for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
             if (carbonNumber[j] == 0 && !thermoSystem.getPhase(0).getComponent(j).getName().equals("nitrogen")) {
@@ -541,6 +581,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Getter for the field <code>averageCarbonNumber</code>.</p>
+     *
      * @return the averageCarbonNumber
      */
     public double getAverageCarbonNumber() {
@@ -555,6 +597,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Getter for the field <code>referenceType</code>.</p>
+     *
      * @return the referenceType
      */
     public String getReferenceType() {
@@ -562,6 +606,8 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
     }
 
     /**
+     * <p>Setter for the field <code>referenceType</code>.</p>
+     *
      * @param referenceType the referenceType to set
      */
     public void setReferenceType(String referenceType) {

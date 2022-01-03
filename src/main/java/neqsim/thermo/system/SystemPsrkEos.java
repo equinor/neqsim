@@ -19,7 +19,9 @@ public class SystemPsrkEos extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
     public SystemPsrkEos() {
         super();
@@ -27,18 +29,32 @@ public class SystemPsrkEos extends SystemSrkEos {
         attractiveTermNumber = 4;
     }
 
+    /**
+     * <p>Constructor for SystemPsrkEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPsrkEos(double T, double P) {
         super(T, P);
         modelName = "Predictive-SRK-EOS";
         attractiveTermNumber = 4;
     }
 
+    /**
+     * <p>Constructor for SystemPsrkEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPsrkEos(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         attractiveTermNumber = 4;
         modelName = "Predictive-SRK-EOS";
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemPsrkEos clone() {
         SystemPsrkEos clonedSystem = null;

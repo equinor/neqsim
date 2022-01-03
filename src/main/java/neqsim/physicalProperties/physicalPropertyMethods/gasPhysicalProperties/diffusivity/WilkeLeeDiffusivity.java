@@ -1,9 +1,9 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.diffusivity;
 
 /**
+ * <p>WilkeLeeDiffusivity class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class WilkeLeeDiffusivity extends Diffusivity {
 
@@ -11,9 +11,16 @@ public class WilkeLeeDiffusivity extends Diffusivity {
 
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
 
-    /** Creates new Conductivity */
+    /**
+     * Creates new Conductivity
+     */
     public WilkeLeeDiffusivity() {}
 
+    /**
+     * <p>Constructor for WilkeLeeDiffusivity.</p>
+     *
+     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public WilkeLeeDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
@@ -23,6 +30,7 @@ public class WilkeLeeDiffusivity extends Diffusivity {
                 .getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         // method - estimation method

@@ -19,8 +19,9 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.ContourWidget;
 
 /**
+ * <p>visAd3DPlot class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class visAd3DPlot extends visAdBaseClass {
 
@@ -42,7 +43,15 @@ public class visAd3DPlot extends visAdBaseClass {
     double[][] z_samples;
     private ContourWidget contourWid;
 
-    /** Creates new visAdContourPlot */
+    /**
+     * Creates new visAdContourPlot
+     *
+     * @param firstax a {@link java.lang.String} object
+     * @param secax a {@link java.lang.String} object
+     * @param zax a {@link java.lang.String} object
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public visAd3DPlot(String firstax, String secax, String zax)
             throws RemoteException, VisADException {
         latitude = RealType.getRealType(firstax);
@@ -54,6 +63,18 @@ public class visAd3DPlot extends visAdBaseClass {
         func_domain_iso_range = new FunctionType(domain_tuple, isotemperature);
     }
 
+    /**
+     * <p>setXYvals.</p>
+     *
+     * @param xMin a double
+     * @param xMax a double
+     * @param Nrows a int
+     * @param yMin a double
+     * @param yMax a double
+     * @param NCols a int
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYvals(double xMin, double xMax, int Nrows, double yMin, double yMax, int NCols)
             throws RemoteException, VisADException {
         NCOLS = NCols;
@@ -62,6 +83,14 @@ public class visAd3DPlot extends visAdBaseClass {
         set_samples = domain_set.getSamples(true);
     }
 
+    /**
+     * <p>setXYvals.</p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYvals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
         /*
          * NCOLS = xvals.length; NROWS = yvals.length;
@@ -76,11 +105,19 @@ public class visAd3DPlot extends visAdBaseClass {
          */
     }
 
+    /**
+     * <p>setZvals.</p>
+     *
+     * @param vals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
 
         z_samples = vals;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() throws RemoteException, VisADException {
 
@@ -165,6 +202,13 @@ public class visAd3DPlot extends visAdBaseClass {
         jframe.setVisible(true);
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public static void main(String[] args) throws RemoteException, VisADException {
 
         visAd3DPlot test = new visAd3DPlot("long", "alt", "height");

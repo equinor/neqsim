@@ -10,8 +10,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>TSFlash class.</p>
+ *
  * @author even solbraa
- * @version
  */
 public class TSFlash extends QfuncFlash {
 
@@ -25,12 +26,19 @@ public class TSFlash extends QfuncFlash {
      */
     public TSFlash() {}
 
+    /**
+     * <p>Constructor for TSFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Sspec a double
+     */
     public TSFlash(SystemInterface system, double Sspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Sspec = Sspec;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
@@ -46,12 +54,14 @@ public class TSFlash extends QfuncFlash {
         return dQdTT;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double solveQ() {
         // this method is not yet implemented
@@ -77,16 +87,25 @@ public class TSFlash extends QfuncFlash {
         return nyTemp;
     }
 
+    /**
+     * <p>onPhaseSolve.</p>
+     */
     public void onPhaseSolve() {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
         solveQ();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(373.15, 45.551793);
 

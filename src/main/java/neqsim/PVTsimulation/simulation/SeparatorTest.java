@@ -4,8 +4,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>SeparatorTest class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SeparatorTest extends BasePVTsimulation {
 
@@ -18,10 +20,21 @@ public class SeparatorTest extends BasePVTsimulation {
     private double[] GOR = null;
     double oilVolumeStdCond = 0;
 
+    /**
+     * <p>Constructor for SeparatorTest.</p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SeparatorTest(SystemInterface tempSystem) {
         super(tempSystem);
     }
 
+    /**
+     * <p>setSeparatorConditions.</p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setSeparatorConditions(double[] temperature, double[] pressure) {
 
         this.pressure = pressure;
@@ -29,6 +42,9 @@ public class SeparatorTest extends BasePVTsimulation {
 
     }
 
+    /**
+     * <p>runCalc.</p>
+     */
     public void runCalc() {
         Sm3gas = new double[pressure.length];
         m3oil = new double[pressure.length];
@@ -67,6 +83,11 @@ public class SeparatorTest extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 300.0);
         tempSystem.addComponent("nitrogen", 0.64);
@@ -106,6 +127,8 @@ public class SeparatorTest extends BasePVTsimulation {
     }
 
     /**
+     * <p>getGOR.</p>
+     *
      * @return the GOR
      */
     public double[] getGOR() {
@@ -113,6 +136,8 @@ public class SeparatorTest extends BasePVTsimulation {
     }
 
     /**
+     * <p>getBofactor.</p>
+     *
      * @return the Bofactor
      */
     public double[] getBofactor() {

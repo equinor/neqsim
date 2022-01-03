@@ -9,9 +9,9 @@ import neqsim.thermo.component.ComponentGERG2004;
 import neqsim.thermo.util.JNI.GERG2004EOS;
 
 /**
+ * <p>PhaseGERG2004Eos class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class PhaseGERG2004Eos extends PhaseEos {
 
@@ -26,12 +26,15 @@ public class PhaseGERG2004Eos extends PhaseEos {
     double enthalpy = 0.0, entropy = 0.0, gibbsEnergy = 0.0, CpGERG = 0.0, CvGERG = 0.0, internalEnery = 0.0,
             JTcoef = 0.0;
 
-    /** Creates new PhaseSrkEos */
+    /**
+     * Creates new PhaseSrkEos
+     */
     public PhaseGERG2004Eos() {
         super();
         thermoPropertyModelName = "GERG-EoS 2008";
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseGERG2004Eos clone() {
         PhaseGERG2004Eos clonedPhase = null;
@@ -44,12 +47,16 @@ public class PhaseGERG2004Eos extends PhaseEos {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGERG2004(componentName, moles, molesInPhase, compNumber);
     }
 
+    /**
+     * <p>Setter for the field <code>xFracGERG</code>.</p>
+     */
     public void setxFracGERG() {
         double sumFrac = 0.0;
         for (int j = 0; j < gergEOS.getNameList().length; j++) {
@@ -62,6 +69,7 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
         IPHASE = phase == 0 ? -1 : -2;
@@ -122,41 +130,49 @@ public class PhaseGERG2004Eos extends PhaseEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         return gibbsEnergy;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getJouleThomsonCoefficient() {
         return JTcoef;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getEnthalpy() {
         return enthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getEntropy() {
         return entropy;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getInternalEnergy() {
         return internalEnery;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getCp() {
         return CpGERG;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getCv() {
         return CvGERG;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {

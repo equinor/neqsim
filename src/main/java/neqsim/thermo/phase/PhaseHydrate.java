@@ -10,9 +10,9 @@ import neqsim.thermo.component.ComponentHydrateGF;
 import neqsim.thermo.component.ComponentHydratePVTsim;
 
 /**
+ * <p>PhaseHydrate class.</p>
  *
  * @author esol
- * @version
  */
 public class PhaseHydrate extends Phase {
 
@@ -26,6 +26,11 @@ public class PhaseHydrate extends Phase {
         phaseTypeName = "hydrate";
     }
 
+    /**
+     * <p>Constructor for PhaseHydrate.</p>
+     *
+     * @param fluidModel a {@link java.lang.String} object
+     */
     public PhaseHydrate(String fluidModel) {
         if (fluidModel.isEmpty()) {
             hydrateModel = "PVTsimHydrateModel";
@@ -37,6 +42,7 @@ public class PhaseHydrate extends Phase {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseHydrate clone() {
         PhaseHydrate clonedPhase = null;
@@ -49,6 +55,7 @@ public class PhaseHydrate extends Phase {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -64,6 +71,7 @@ public class PhaseHydrate extends Phase {
         // return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
@@ -82,6 +90,7 @@ public class PhaseHydrate extends Phase {
         // molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -91,10 +100,16 @@ public class PhaseHydrate extends Phase {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void resetMixingRule(int type) {
     }
 
+    /**
+     * <p>setSolidRefFluidPhase.</p>
+     *
+     * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void setSolidRefFluidPhase(PhaseInterface refPhase) {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getName().equals("water")) {

@@ -16,23 +16,31 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>FluidBoundarySystemReactive class.</p>
  *
  * @author esol
- * @version
  */
 public class FluidBoundarySystemReactive extends FluidBoundarySystem {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new FluidBoundarySystemReactive */
+    /**
+     * Creates new FluidBoundarySystemReactive
+     */
     public FluidBoundarySystemReactive() {
     }
 
+    /**
+     * <p>Constructor for FluidBoundarySystemReactive.</p>
+     *
+     * @param boundary a {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface} object
+     */
     public FluidBoundarySystemReactive(FluidBoundaryInterface boundary) {
         super(boundary);
         reactive = true;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void createSystem() {
         nodes = new FluidBoundaryNodeReactive[numberOfNodes];
@@ -44,6 +52,11 @@ public class FluidBoundarySystemReactive extends FluidBoundarySystem {
         System.out.println("system created...");
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 1.01325);
         PipeData pipe1 = new PipeData(10.0, 0.025);

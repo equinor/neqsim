@@ -5,9 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>CharacterisationFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class CharacterisationFunction extends LevenbergMarquardtFunction {
 
@@ -15,10 +15,14 @@ public class CharacterisationFunction extends LevenbergMarquardtFunction {
     static Logger logger = LogManager.getLogger(CharacterisationFunction.class);
 
 
+    /**
+     * <p>Constructor for CharacterisationFunction.</p>
+     */
     public CharacterisationFunction() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
@@ -32,6 +36,7 @@ public class CharacterisationFunction extends LevenbergMarquardtFunction {
         return Math.log(system.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

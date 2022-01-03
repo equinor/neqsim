@@ -4,18 +4,36 @@ import java.util.HashMap;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>PropertyGenerator class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class PropertyGenerator {
 
     double[] temperatures, pressures;
     SystemInterface fluid = null;
     HashMap<String, double[]> properties = new HashMap<String, double[]>();
 
+    /**
+     * <p>Constructor for PropertyGenerator.</p>
+     *
+     * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
+     * @param temperatures an array of {@link double} objects
+     * @param pressures an array of {@link double} objects
+     */
     public PropertyGenerator(SystemInterface fluid, double[] temperatures, double[] pressures) {
         this.fluid = fluid;
         this.temperatures = temperatures;
         this.pressures = pressures;
     }
 
+    /**
+     * <p>calculate.</p>
+     *
+     * @return a {@link java.util.HashMap} object
+     */
     public HashMap<String, double[]> calculate() {
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         int length = temperatures.length;
@@ -317,6 +335,12 @@ public class PropertyGenerator {
      * .getOrCreate(); // Dataset<Row> df =
      * spark.read().json("examples./src/main/resources/people.json"); Dataset<Row> df = teenagersDF;
      * // Displays the content of the DataFrame to stdout df.show(); }
+     */
+    /**
+     * <p>getValue.</p>
+     *
+     * @param propertyName a {@link java.lang.String} object
+     * @return a double
      */
     public double getValue(String propertyName) {
         return 0.0;

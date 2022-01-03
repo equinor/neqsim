@@ -1,10 +1,23 @@
 package neqsim.thermo.util.empiric;
 
+/**
+ * <p>BukacekWaterInGas class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class BukacekWaterInGas {
 	
 	/*
      * Calculates the ppm(mol) water content of a gas at its water dew point                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
      */
+	/**
+	 * <p>getWaterInGas.</p>
+	 *
+	 * @param temperature a double
+	 * @param pressure a double
+	 * @return a double
+	 */
 	public static double getWaterInGas(double temperature, double pressure) {
 		double TCwater = 393.99+273.15, PCwater = 220.64;
 		double tau = (TCwater-temperature)/TCwater;
@@ -24,6 +37,13 @@ public class BukacekWaterInGas {
         return ans / molgasSm3;
 	}
 	
+	/**
+	 * <p>waterDewPointTemperature.</p>
+	 *
+	 * @param moleFractionWaterInGas a double
+	 * @param pressure a double
+	 * @return a double
+	 */
 	public static double waterDewPointTemperature(double moleFractionWaterInGas, double pressure) {
 		int iter = 0;
 		double newppm, newTemp = 273.15;
@@ -36,6 +56,11 @@ public class BukacekWaterInGas {
 		return newTemp;
 	}
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 		System.out.println("water in gas " + BukacekWaterInGas.getWaterInGas(273.15-18.0, 70.0));
 		

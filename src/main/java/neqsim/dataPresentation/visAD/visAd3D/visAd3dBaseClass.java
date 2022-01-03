@@ -9,15 +9,17 @@ package neqsim.dataPresentation.visAD.visAd3D;
 import neqsim.dataPresentation.visAD.visAdBaseClass;
 
 /**
+ * <p>visAd3dBaseClass class.</p>
  *
  * @author esol
- * @version
  */
 public class visAd3dBaseClass extends visAdBaseClass {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new visAd2dBaseClass */
+    /**
+     * Creates new visAd2dBaseClass
+     */
     public visAd3dBaseClass() {
     }
 

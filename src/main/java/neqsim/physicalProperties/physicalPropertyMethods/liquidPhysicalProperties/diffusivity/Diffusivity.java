@@ -18,10 +18,16 @@ abstract class Diffusivity extends
     double[][] binaryDiffusionCoeffisients;
     double[] effectiveDiffusionCoefficient;
 
-    /** Creates new Conductivity */
-
+    /**
+     * Creates new Conductivity
+     */
     public Diffusivity() {}
 
+    /**
+     * <p>Constructor for Diffusivity.</p>
+     *
+     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
@@ -31,6 +37,7 @@ abstract class Diffusivity extends
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public Diffusivity clone() {
         Diffusivity properties = null;
@@ -50,6 +57,7 @@ abstract class Diffusivity extends
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
@@ -77,6 +85,7 @@ abstract class Diffusivity extends
         return binaryDiffusionCoeffisients;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
@@ -95,16 +104,19 @@ abstract class Diffusivity extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double temp = (i == j) ? 1.0 : 0.0;

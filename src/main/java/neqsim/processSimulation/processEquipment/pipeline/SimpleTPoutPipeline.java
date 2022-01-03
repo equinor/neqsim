@@ -13,8 +13,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>SimpleTPoutPipeline class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class SimpleTPoutPipeline extends Pipeline {
 
@@ -24,33 +25,53 @@ public class SimpleTPoutPipeline extends Pipeline {
     protected double temperatureOut = 0, pressureOut = 0.0;
     double dH = 0.0;
 
-    /** Creates new Heater */
+    /**
+     * Creates new Heater
+     */
     public SimpleTPoutPipeline() {
     }
 
+    /**
+     * <p>Constructor for SimpleTPoutPipeline.</p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public SimpleTPoutPipeline(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>setOutTemperature.</p>
+     *
+     * @param temperature a double
+     */
     public void setOutTemperature(double temperature) {
         this.temperatureOut = temperature;
     }
 
+    /**
+     * <p>setOutPressure.</p>
+     *
+     * @param pressure a double
+     */
     public void setOutPressure(double pressure) {
         this.pressureOut = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -63,6 +84,7 @@ public class SimpleTPoutPipeline extends Pipeline {
         outStream.setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         outStream.getThermoSystem().display(name);
@@ -73,20 +95,24 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowSystemInterface getPipe() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInitialFlowPattern(String flowPattern) {
 

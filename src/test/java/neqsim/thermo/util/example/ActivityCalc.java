@@ -10,11 +10,17 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ActivityCalc class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class ActivityCalc {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42, 1.01325);
 

@@ -4,18 +4,30 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>SaturationPressure class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SaturationPressure extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
 
     private double saturationPressure;
 
+    /**
+     * <p>Constructor for SaturationPressure.</p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SaturationPressure(SystemInterface tempSystem) {
         super(tempSystem);
     }
 
+    /**
+     * <p>calcSaturationPressure.</p>
+     *
+     * @return a double
+     */
     public double calcSaturationPressure() {
         getThermoSystem().isImplementedCompositionDeriativesofFugacity(false);
         getThermoSystem().setPressure(1.0);
@@ -47,12 +59,18 @@ public class SaturationPressure extends BasePVTsimulation {
         return getThermoSystem().getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         super.run();
         saturationPressure = calcSaturationPressure();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // SystemInterface tempSystem = new SystemSrkCPAstatoil(273.15 + 120, 100.0);
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 120, 100.0);
@@ -91,6 +109,7 @@ public class SaturationPressure extends BasePVTsimulation {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getSaturationPressure() {
         return saturationPressure;

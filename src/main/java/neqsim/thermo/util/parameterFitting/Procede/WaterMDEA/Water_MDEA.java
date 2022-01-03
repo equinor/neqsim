@@ -14,15 +14,22 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>Water_MDEA class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Water_MDEA {
     static Logger logger = LogManager.getLogger(Water_MDEA.class);
 
+    /**
+     * <p>Constructor for Water_MDEA.</p>
+     */
     public Water_MDEA() {}
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     @SuppressWarnings("unused")

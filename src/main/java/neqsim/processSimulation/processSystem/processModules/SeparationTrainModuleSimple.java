@@ -14,8 +14,10 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>SeparationTrainModuleSimple class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
@@ -31,6 +33,7 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
@@ -38,6 +41,7 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -52,6 +56,7 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -63,6 +68,7 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         oilExitStream = oilCooler.getOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -151,26 +157,31 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         // oilExitStream = thirdStageSeparator.getOilOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("Second stage pressure")) {
@@ -193,6 +204,11 @@ public class SeparationTrainModuleSimple extends ProcessModuleBaseClass {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =

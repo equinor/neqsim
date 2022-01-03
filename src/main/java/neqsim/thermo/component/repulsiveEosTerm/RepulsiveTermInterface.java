@@ -7,9 +7,9 @@
 package neqsim.thermo.component.repulsiveEosTerm;
 
 /**
+ * <p>RepulsiveTermInterface interface.</p>
  *
  * @author esol
- * @version
  */
 public interface RepulsiveTermInterface {
 

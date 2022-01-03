@@ -3,16 +3,20 @@ package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameter
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>DiffusivityFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class DiffusivityFunction extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for DiffusivityFunction.</p>
+     */
     public DiffusivityFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(1);
@@ -20,6 +24,7 @@ public class DiffusivityFunction extends LevenbergMarquardtFunction {
         return system.getPhase(1).getPhysicalProperties().getDiffusionCoeffisient(0, 1) * 1e9;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

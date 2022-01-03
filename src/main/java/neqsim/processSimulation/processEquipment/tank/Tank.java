@@ -13,8 +13,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Tank class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class Tank extends ProcessEquipmentBaseClass {
 
@@ -35,19 +36,37 @@ public class Tank extends ProcessEquipmentBaseClass {
     double liquidVolume = 235.0, gasVolume = 15.0;
     private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
 
-    /** Creates new Separator */
+    /**
+     * Creates new Separator
+     */
     public Tank() {
     }
 
+    /**
+     * <p>Constructor for Tank.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Tank(Stream inletStream) {
         addStream(inletStream);
     }
 
+    /**
+     * <p>Constructor for Tank.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Tank(String name, Stream inletStream) {
         this.name = name;
         addStream(inletStream);
     }
 
+    /**
+     * <p>setInletStream.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public void setInletStream(Stream inletStream) {
         inletStreamMixer.addStream(inletStream);
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -60,6 +79,11 @@ public class Tank extends ProcessEquipmentBaseClass {
 
     }
 
+    /**
+     * <p>addStream.</p>
+     *
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public void addStream(StreamInterface newStream) {
         if (numberOfInputStreams == 0) {
             setInletStream((Stream) newStream);
@@ -69,22 +93,43 @@ public class Tank extends ProcessEquipmentBaseClass {
         numberOfInputStreams++;
     }
 
+    /**
+     * <p>Getter for the field <code>liquidOutStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getLiquidOutStream() {
         return liquidOutStream;
     }
 
+    /**
+     * <p>Getter for the field <code>gasOutStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getGasOutStream() {
         return gasOutStream;
     }
 
+    /**
+     * <p>getGas.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getGas() {
         return getGasOutStream();
     }
 
+    /**
+     * <p>getLiquid.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getLiquid() {
         return getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         inletStreamMixer.run();
@@ -143,11 +188,13 @@ public class Tank extends ProcessEquipmentBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         thermoSystem.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         inletStreamMixer.run();
@@ -208,6 +255,11 @@ public class Tank extends ProcessEquipmentBaseClass {
 
     }
 
+    /**
+     * <p>setOutComposition.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void setOutComposition(SystemInterface thermoSystem) {
         for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
             if (thermoSystem.hasPhaseType("gas")) {
@@ -221,6 +273,12 @@ public class Tank extends ProcessEquipmentBaseClass {
         }
     }
 
+    /**
+     * <p>setTempPres.</p>
+     *
+     * @param temp a double
+     * @param pres a double
+     */
     public void setTempPres(double temp, double pres) {
         gasOutStream.getThermoSystem().setTemperature(temp);
         liquidOutStream.getThermoSystem().setTemperature(temp);
@@ -234,38 +292,83 @@ public class Tank extends ProcessEquipmentBaseClass {
         liquidOutStream.run();
     }
 
+    /**
+     * <p>Getter for the field <code>efficiency</code>.</p>
+     *
+     * @return a double
+     */
     public double getEfficiency() {
         return efficiency;
     }
 
+    /**
+     * <p>Setter for the field <code>efficiency</code>.</p>
+     *
+     * @param efficiency a double
+     */
     public void setEfficiency(double efficiency) {
         this.efficiency = efficiency;
     }
 
+    /**
+     * <p>Getter for the field <code>liquidCarryoverFraction</code>.</p>
+     *
+     * @return a double
+     */
     public double getLiquidCarryoverFraction() {
         return liquidCarryoverFraction;
     }
 
+    /**
+     * <p>Setter for the field <code>liquidCarryoverFraction</code>.</p>
+     *
+     * @param liquidCarryoverFraction a double
+     */
     public void setLiquidCarryoverFraction(double liquidCarryoverFraction) {
         this.liquidCarryoverFraction = liquidCarryoverFraction;
     }
 
+    /**
+     * <p>Getter for the field <code>gasCarryunderFraction</code>.</p>
+     *
+     * @return a double
+     */
     public double getGasCarryunderFraction() {
         return gasCarryunderFraction;
     }
 
+    /**
+     * <p>Setter for the field <code>gasCarryunderFraction</code>.</p>
+     *
+     * @param gasCarryunderFraction a double
+     */
     public void setGasCarryunderFraction(double gasCarryunderFraction) {
         this.gasCarryunderFraction = gasCarryunderFraction;
     }
 
+    /**
+     * <p>Getter for the field <code>liquidLevel</code>.</p>
+     *
+     * @return a double
+     */
     public double getLiquidLevel() {
         return liquidLevel;
     }
 
+    /**
+     * <p>Getter for the field <code>volume</code>.</p>
+     *
+     * @return a double
+     */
     public double getVolume() {
         return volume;
     }
 
+    /**
+     * <p>Setter for the field <code>volume</code>.</p>
+     *
+     * @param volume a double
+     */
     public void setVolume(double volume) {
         this.volume = volume;
     }

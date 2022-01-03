@@ -13,13 +13,19 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 
 /**
+ * <p>TestGERG2004EOS class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class TestGERG2004EOS {
     static Logger logger = LogManager.getLogger(TestGERG2004EOS.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemGERG2004Eos(29.74536 + 273.15, 90.66201);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

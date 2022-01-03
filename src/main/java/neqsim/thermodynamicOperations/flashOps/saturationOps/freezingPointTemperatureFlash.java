@@ -16,6 +16,12 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>freezingPointTemperatureFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
 
@@ -33,15 +39,31 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
     public freezingPointTemperatureFlash() {
     }
 
+    /**
+     * <p>Constructor for freezingPointTemperatureFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public freezingPointTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>Constructor for freezingPointTemperatureFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Freeze a boolean
+     */
     public freezingPointTemperatureFlash(SystemInterface system, boolean Freeze) {
         super(system);
         noFreezeFlash = Freeze;
     }
 
+    /**
+     * <p>calcFunc.</p>
+     *
+     * @return a double
+     */
     public double calcFunc() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         // double deriv = 0, funkOld = 0;
@@ -64,6 +86,7 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         return funk;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -139,6 +162,13 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         system.init(1);
     }
 
+    /**
+     * <p>printToFile.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param FCompNames an array of {@link java.lang.String} objects
+     * @param FCompTemp an array of {@link double} objects
+     */
     public void printToFile(String name, String[] FCompNames, double[] FCompTemp) {
 
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {

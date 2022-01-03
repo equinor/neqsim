@@ -93,6 +93,7 @@ public class SystemSrkPenelouxEos extends SystemSrkEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemSrkPenelouxEos clone() {
         SystemSrkPenelouxEos clonedSystem = null;

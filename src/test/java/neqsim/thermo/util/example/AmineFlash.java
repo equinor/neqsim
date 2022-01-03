@@ -7,13 +7,19 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>AmineFlash class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class AmineFlash {
     static Logger logger = LogManager.getLogger(AmineFlash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(273.15 + 50, 1.01325);
         // SystemInterface testSystem = new SystemElectrolyteCPA(273.15+40, 1.01325);

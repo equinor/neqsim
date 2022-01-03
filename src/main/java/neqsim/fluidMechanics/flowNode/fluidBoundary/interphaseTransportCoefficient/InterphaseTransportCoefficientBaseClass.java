@@ -10,9 +10,9 @@ import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
+ * <p>InterphaseTransportCoefficientBaseClass class.</p>
  *
  * @author esol
- * @version
  */
 public class InterphaseTransportCoefficientBaseClass implements InterphaseTransportCoefficientInterface {
 
@@ -22,14 +22,19 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
      * Creates new FrictionFactorBaseClass All frictionfactors are the fanning
      * frictionfactor.
      */
-
     public InterphaseTransportCoefficientBaseClass() {
     }
 
+    /**
+     * <p>Constructor for InterphaseTransportCoefficientBaseClass.</p>
+     *
+     * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public InterphaseTransportCoefficientBaseClass(FlowNodeInterface node) {
         // flowNode = node;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -41,6 +46,7 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber()) < 2000) {
@@ -52,31 +58,37 @@ public class InterphaseTransportCoefficientBaseClass implements InterphaseTransp
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, FlowNodeInterface node) {
         return this.calcWallHeatTransferCoefficient(phase, node.getPrandtlNumber(phase), node);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcInterphaseMassTransferCoefficient(int phase, double schmidt, FlowNodeInterface node) {
         return 0;

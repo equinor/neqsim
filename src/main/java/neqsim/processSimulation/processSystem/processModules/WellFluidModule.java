@@ -11,8 +11,10 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>WellFluidModule class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class WellFluidModule extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
@@ -28,6 +30,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     double firstStageCompressorAfterCoolerTemperature = 273.15 + 30;
     double exportOilTemperature = 273.15 + 30;
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
@@ -35,6 +38,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -43,6 +47,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         return this.outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -83,6 +88,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         outStream = ((Mixer) getOperations().getUnit("well mixer")).getOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -147,26 +153,31 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         // oilExitStream = thirdStageSeparator.getOilOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("Second stage pressure")) {
@@ -180,6 +191,11 @@ public class WellFluidModule extends ProcessModuleBaseClass {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =

@@ -9,6 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>PFCTViscosityMethodHeavyOil class.</p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -27,9 +28,17 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
             1.4529023444e2, 6.1276818706e3 };
     double viscRefK[] = { -9.74602, 18.0834, -4126.66, 44.6055, 0.976544, 81.8134, 15649.9 };
 
+    /**
+     * <p>Constructor for PFCTViscosityMethodHeavyOil.</p>
+     */
     public PFCTViscosityMethodHeavyOil() {
     }
 
+    /**
+     * <p>Constructor for PFCTViscosityMethodHeavyOil.</p>
+     *
+     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public PFCTViscosityMethodHeavyOil(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -39,6 +48,7 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
         this.calcPureComponentViscosity();
@@ -140,6 +150,13 @@ public class PFCTViscosityMethodHeavyOil extends Viscosity {
         return viscosity;
     }
 
+    /**
+     * <p>getRefComponentViscosity.</p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double getRefComponentViscosity(double temp, double pres) {
 
         referenceSystem.setTemperature(temp);

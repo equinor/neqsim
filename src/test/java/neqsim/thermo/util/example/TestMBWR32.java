@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author  esol
  * @version
  */
+/**
+ * <p>TestMBWR32 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestMBWR32 {
     static Logger logger = LogManager.getLogger(TestMBWR32.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemBWRSEos(298.15, 0.101);
         // SystemInterface testSystem = new SystemSrkEos(111.15, 5.01);

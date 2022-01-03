@@ -13,13 +13,18 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
+ * <p>TestEosParameterFittingToMercurySolubility class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestEosParameterFittingToMercurySolubility {
     static Logger logger = LogManager.getLogger(TestEosParameterFittingToMercurySolubility.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

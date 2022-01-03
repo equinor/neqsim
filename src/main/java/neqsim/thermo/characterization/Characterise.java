@@ -5,7 +5,10 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>Characterise class.</p>
+ *
  * @author esol
+ * @version $Id: $Id
  */
 public class Characterise implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;
@@ -25,6 +28,11 @@ public class Characterise implements java.io.Serializable, Cloneable {
      */
     public Characterise() {}
 
+    /**
+     * <p>Constructor for Characterise.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public Characterise(SystemInterface system) {
         this.system = system;
 
@@ -40,10 +48,16 @@ public class Characterise implements java.io.Serializable, Cloneable {
         plusFractionModel = plusFractionModelSelector.getModel("");
     }
 
+    /**
+     * <p>setThermoSystem.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void setThermoSystem(SystemInterface system) {
         this.system = system;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Characterise clone() {
         Characterise clonedSystem = null;
@@ -57,30 +71,63 @@ public class Characterise implements java.io.Serializable, Cloneable {
         return clonedSystem;
     }
 
+    /**
+     * <p>getTBPModel.</p>
+     *
+     * @return a {@link neqsim.thermo.characterization.TBPModelInterface} object
+     */
     public TBPModelInterface getTBPModel() {
         return TBPfractionModel;
     }
 
+    /**
+     * <p>setTBPModel.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setTBPModel(String name) {
         TBPfractionModel = TBPfractionModelSelector.getModel(name);
     }
 
+    /**
+     * <p>Setter for the field <code>lumpingModel</code>.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setLumpingModel(String name) {
         lumpingModel = lumpingModelSelector.getModel(name);
     }
 
+    /**
+     * <p>Setter for the field <code>plusFractionModel</code>.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setPlusFractionModel(String name) {
         plusFractionModel = plusFractionModelSelector.getModel(name);
     }
 
+    /**
+     * <p>Getter for the field <code>plusFractionModel</code>.</p>
+     *
+     * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
+     */
     public PlusFractionModelInterface getPlusFractionModel() {
         return plusFractionModel;
     }
 
+    /**
+     * <p>Getter for the field <code>lumpingModel</code>.</p>
+     *
+     * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
+     */
     public LumpingModelInterface getLumpingModel() {
         return lumpingModel;
     }
 
+    /**
+     * <p>characterisePlusFraction.</p>
+     */
     public void characterisePlusFraction() {
         system.init(0);
         if (plusFractionModel.hasPlusFraction()) {

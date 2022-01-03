@@ -15,14 +15,11 @@ import java.io.ObjectOutputStream;
 import java.sql.ResultSet;
 import java.text.FieldPosition;
 import java.util.ArrayList;
-
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.chemicalReactions.ChemicalReactionOperations;
 import neqsim.physicalProperties.interfaceProperties.InterfaceProperties;
 import neqsim.physicalProperties.interfaceProperties.InterphasePropertiesInterface;
@@ -650,12 +647,10 @@ abstract class SystemThermo implements SystemInterface {
             return totalNumberOfMoles * getMolarMass();
         } else if (flowunit.equals("kg/min")) {
             return totalNumberOfMoles * getMolarMass() * 60.0;
-        } 
-        else if (flowunit.equals("Sm3/sec")) {
+        } else if (flowunit.equals("Sm3/sec")) {
             return totalNumberOfMoles * ThermodynamicConstantsInterface.R
                     * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
-        }
-        else if (flowunit.equals("Sm3/hr")) {
+        } else if (flowunit.equals("Sm3/hr")) {
             return totalNumberOfMoles * 3600.0 * ThermodynamicConstantsInterface.R
                     * ThermodynamicConstantsInterface.standardStateTemperature / 101325.0;
         } else if (flowunit.equals("Sm3/day")) {
@@ -908,7 +903,7 @@ abstract class SystemThermo implements SystemInterface {
             getPhase(i).getComponent(componentName).setCpD(cpd);
         }
     }
-    
+
     /**
      * method to add true boiling point fraction
      *
@@ -919,7 +914,8 @@ abstract class SystemThermo implements SystemInterface {
      */
     @Override
     public void addTBPfraction(String componentName, double numberOfMoles, double molarMass,
-            double density, double criticalTemperature, double criticalPressure, double acentricFactor) {
+            double density, double criticalTemperature, double criticalPressure,
+            double acentricFactor) {
         if (density < 0.0 || molarMass < 0.0) {
             logger.error("Negative input molar mass or density.");
             neqsim.util.exception.InvalidInputException e =
@@ -943,10 +939,11 @@ abstract class SystemThermo implements SystemInterface {
             refSystem.setNumberOfPhases(1);
             refSystem.setPhaseType(0, "liquid");
             molarMass = 1000 * molarMass;
-            TC = criticalTemperature;//characterization.getTBPModel().calcTC(molarMass, density);
-            PC = criticalPressure;//characterization.getTBPModel().calcPC(molarMass, density);
+            TC = criticalTemperature;// characterization.getTBPModel().calcTC(molarMass, density);
+            PC = criticalPressure;// characterization.getTBPModel().calcPC(molarMass, density);
             m = characterization.getTBPModel().calcm(molarMass, density);
-            acs = acentricFactor;// acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass, density);
+            acs = acentricFactor;// acentracentrcharacterization.getTBPModel().calcAcentricFactor(molarMass,
+                                 // density);
             TB = characterization.getTBPModel().calcTB(molarMass, density);
             molarMass /= 1000.0;
 
@@ -3765,7 +3762,8 @@ abstract class SystemThermo implements SystemInterface {
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                try (ObjectInputStream ins = new ObjectInputStream(new ByteArrayInputStream(rs.getBytes("FLUID")))) {
+                try (ObjectInputStream ins =
+                        new ObjectInputStream(new ByteArrayInputStream(rs.getBytes("FLUID")))) {
                     tempSystem = (SystemThermo) ins.readObject();
                 }
             }
@@ -3848,7 +3846,8 @@ abstract class SystemThermo implements SystemInterface {
 
     @Override
     public void saveObjectToFile(String filePath, String fluidName) {
-        try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath, false))) {
+        try (ObjectOutputStream out =
+                new ObjectOutputStream(new FileOutputStream(filePath, false))) {
             out.writeObject(this);
         } catch (Exception e) {
             logger.error(e.toString());
@@ -3858,7 +3857,8 @@ abstract class SystemThermo implements SystemInterface {
     @Override
     public SystemInterface readObjectFromFile(String filePath, String fluidName) {
         SystemThermo tempSystem = null;
-        try (ObjectInputStream objectinputstream = new ObjectInputStream(new FileInputStream(filePath))) {
+        try (ObjectInputStream objectinputstream =
+                new ObjectInputStream(new FileInputStream(filePath))) {
             tempSystem = (SystemThermo) objectinputstream.readObject();
 
         } catch (Exception e) {

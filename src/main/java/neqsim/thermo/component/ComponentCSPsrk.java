@@ -10,9 +10,9 @@ import neqsim.thermo.phase.PhaseCSPsrkEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>ComponentCSPsrk class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentCSPsrk extends ComponentSrk {
 
@@ -22,22 +22,49 @@ public class ComponentCSPsrk extends ComponentSrk {
     double h_scale_mix_i = 0;
     PhaseCSPsrkEos refPhaseBWRS = null;
 
+    /**
+     * <p>Constructor for ComponentCSPsrk.</p>
+     */
     public ComponentCSPsrk() {
         super();
     }
 
+    /**
+     * <p>Constructor for ComponentCSPsrk.</p>
+     *
+     * @param moles a double
+     */
     public ComponentCSPsrk(double moles) {
         super(moles);
     }
 
+    /**
+     * <p>Constructor for ComponentCSPsrk.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentCSPsrk(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /**
+     * <p>Constructor for ComponentCSPsrk.</p>
+     *
+     * @param number a int
+     * @param TC a double
+     * @param PC a double
+     * @param M a double
+     * @param a a double
+     * @param moles a double
+     */
     public ComponentCSPsrk(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentCSPsrk clone() {
 
@@ -51,6 +78,7 @@ public class ComponentCSPsrk extends ComponentSrk {
         return clonedComponent;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
@@ -68,6 +96,7 @@ public class ComponentCSPsrk extends ComponentSrk {
         f_scale_mix_i = (termfi1 - termfi2 - termfi3) / termfi4 * refPhaseBWRS.getF_scale_mix();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature, double pressure) {
         // System.out.println("dFdN super " + super.dFdN(phase,
@@ -96,9 +125,8 @@ public class ComponentCSPsrk extends ComponentSrk {
 
     /**
      * Getter for property f_scale_mix_i.
-     * 
-     * @return Value of property f_scale_mix_i.
      *
+     * @return Value of property f_scale_mix_i.
      */
     public double getF_scale_mix_i() {
         return f_scale_mix_i;
@@ -106,9 +134,8 @@ public class ComponentCSPsrk extends ComponentSrk {
 
     /**
      * Setter for property f_scale_mix_i.
-     * 
-     * @param f_scale_mix_i New value of property f_scale_mix_i.
      *
+     * @param f_scale_mix_i New value of property f_scale_mix_i.
      */
     public void setF_scale_mix_i(double f_scale_mix_i) {
         this.f_scale_mix_i = f_scale_mix_i;
@@ -116,9 +143,8 @@ public class ComponentCSPsrk extends ComponentSrk {
 
     /**
      * Getter for property h_scale_mix_i.
-     * 
-     * @return Value of property h_scale_mix_i.
      *
+     * @return Value of property h_scale_mix_i.
      */
     public double getH_scale_mix_i() {
         return h_scale_mix_i;
@@ -126,9 +152,8 @@ public class ComponentCSPsrk extends ComponentSrk {
 
     /**
      * Setter for property h_scale_mix_i.
-     * 
-     * @param h_scale_mix_i New value of property h_scale_mix_i.
      *
+     * @param h_scale_mix_i New value of property h_scale_mix_i.
      */
     public void setH_scale_mix_i(double h_scale_mix_i) {
         this.h_scale_mix_i = h_scale_mix_i;
@@ -136,9 +161,8 @@ public class ComponentCSPsrk extends ComponentSrk {
 
     /**
      * Getter for property refPhaseBWRS.
-     * 
-     * @return Value of property refPhaseBWRS.
      *
+     * @return Value of property refPhaseBWRS.
      */
     public neqsim.thermo.phase.PhaseCSPsrkEos getRefPhaseBWRS() {
         return refPhaseBWRS;
@@ -146,9 +170,8 @@ public class ComponentCSPsrk extends ComponentSrk {
 
     /**
      * Setter for property refPhaseBWRS.
-     * 
-     * @param refPhaseBWRS New value of property refPhaseBWRS.
      *
+     * @param refPhaseBWRS New value of property refPhaseBWRS.
      */
     public void setRefPhaseBWRS(neqsim.thermo.phase.PhaseCSPsrkEos refPhaseBWRS) {
         this.refPhaseBWRS = refPhaseBWRS;

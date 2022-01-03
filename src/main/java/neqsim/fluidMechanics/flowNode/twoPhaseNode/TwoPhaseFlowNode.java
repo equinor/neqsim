@@ -6,14 +6,29 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBo
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>Abstract TwoPhaseFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public abstract class TwoPhaseFlowNode extends FlowNode {
 
     private static final long serialVersionUID = 1000;
 
     // public double[] molarMassTransferFlux;
     // public double[] molarMassTransfer;
+    /**
+     * <p>Constructor for TwoPhaseFlowNode.</p>
+     */
     public TwoPhaseFlowNode() {}
 
+    /**
+     * <p>Constructor for TwoPhaseFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public TwoPhaseFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
 
@@ -29,6 +44,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         getBulkSystem().init_x_y();
     }
 
+    /** {@inheritDoc} */
     @Override
     public TwoPhaseFlowNode clone() {
         TwoPhaseFlowNode clonedSystem = null;
@@ -46,6 +62,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return clonedSystem;
     }
 
+    /**
+     * <p>initVelocity.</p>
+     *
+     * @return a double
+     */
     public double initVelocity() {
         getBulkSystem().init(1);
         getBulkSystem().initPhysicalProperties();
@@ -63,6 +84,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return velocity[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initFlowCalc() {
         this.init();
@@ -131,6 +153,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         this.init();
     }
 
+    /**
+     * <p>calcHydraulicDiameter.</p>
+     *
+     * @return a double
+     */
     public double calcHydraulicDiameter() {
         hydraulicDiameter[0] = 4.0 * phaseFraction[0] * pipe.getArea()
                 / (wallContactLength[0] + interphaseContactLength[0]);
@@ -138,6 +165,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return hydraulicDiameter[0];
     }
 
+    /**
+     * <p>calcReynoldNumber.</p>
+     *
+     * @return a double
+     */
     public double calcReynoldNumber() {
         reynoldsNumber[1] = velocity[1] * hydraulicDiameter[1]
                 * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
@@ -148,6 +180,11 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return reynoldsNumber[1];
     }
 
+    /**
+     * <p>calcWallFrictionFactor.</p>
+     *
+     * @return a double
+     */
     public double calcWallFrictionFactor() {
         for (int i = 0; i < 2; i++) {
             wallFrictionFactor[i] = Math.pow(
@@ -158,6 +195,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         return wallFrictionFactor[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFluxes(double dn[]) {
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
@@ -169,6 +207,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void updateMolarFlow() {
         for (int phase = 0; phase < 2; phase++) {
@@ -182,10 +221,16 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         getBulkSystem().init(1);
     }
 
+    /**
+     * <p>calcContactLength.</p>
+     *
+     * @return a double
+     */
     public double calcContactLength() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         super.init();
@@ -216,11 +261,17 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
                 interphaseTransportCoefficient.calcInterPhaseFrictionFactor(0, this);
     }
 
+    /**
+     * <p>calcGasLiquidContactArea.</p>
+     *
+     * @return a double
+     */
     public double calcGasLiquidContactArea() {
         interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
         return interphaseContactArea;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcFluxes() {
         if (bulkSystem.isChemicalSystem()) {
@@ -231,6 +282,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         fluidBoundary.calcFluxes();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void update() {
 

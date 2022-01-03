@@ -3,13 +3,23 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.stirredCellSystem;
 import neqsim.thermo.system.SystemInterface;
 
 //import guiAuto.*;
+/**
+ * <p>StirredCellSystem class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for StirredCellSystem.</p>
+     */
     public StirredCellSystem() {
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void createSystem() {
         flowLeg = new neqsim.fluidMechanics.flowLeg.pipeLeg.PipeLeg[this.getNumberOfLegs()];
@@ -28,6 +38,7 @@ public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhase
         this.setNodes();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
@@ -47,12 +58,14 @@ public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhase
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void solveSteadyState(int solverType) {
         flowSolver = new neqsim.fluidMechanics.flowSolver.twoPhaseFlowSolver.stirredCellSolver.StirredCellSolver(this,
                 getSystemLength(), getTotalNumberOfNodes(), false);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void solveTransient(int solverType) {
         getTimeSeries().init(this);
@@ -74,6 +87,11 @@ public class StirredCellSystem extends neqsim.fluidMechanics.flowSystem.twoPhase
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // Initierer et nyt rorsystem
         neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new StirredCellSystem();

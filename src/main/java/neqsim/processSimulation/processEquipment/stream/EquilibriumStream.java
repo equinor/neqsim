@@ -10,30 +10,49 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>EquilibriumStream class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class EquilibriumStream extends Stream {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Stream */
+    /**
+     * Creates new Stream
+     */
     public EquilibriumStream() {
     }
 
+    /**
+     * <p>Constructor for EquilibriumStream.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public EquilibriumStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
 
+    /**
+     * <p>Constructor for EquilibriumStream.</p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public EquilibriumStream(StreamInterface stream) {
         super(stream.getThermoSystem());
     }
 
+    /**
+     * <p>Constructor for EquilibriumStream.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public EquilibriumStream(String name, SystemInterface thermoSystem) {
         super(name, thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public EquilibriumStream clone() {
         EquilibriumStream clonedStream = null;
@@ -48,6 +67,7 @@ public class EquilibriumStream extends Stream {
         return clonedStream;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         System.out.println("start flashing stream... " + streamNumber);

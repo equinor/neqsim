@@ -41,6 +41,11 @@ abstract class Flash extends BaseOperation {
      */
     public Flash() {}
 
+    /**
+     * <p>findLowestGibbsEnergyPhase.</p>
+     *
+     * @return a int
+     */
     public int findLowestGibbsEnergyPhase() {
         if (!findLowesGibsPhaseIsChecked) {
             minimumGibbsEnergySystem = (SystemInterface) system.clone();
@@ -58,6 +63,12 @@ abstract class Flash extends BaseOperation {
         return lowestGibbsEnergyPhase;
     }
 
+    /**
+     * <p>stabilityAnalysis.</p>
+     *
+     * @throws neqsim.util.exception.IsNaNException if any.
+     * @throws neqsim.util.exception.TooManyIterationsException if any.
+     */
     public void stabilityAnalysis() throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
         double[] logWi = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -293,6 +304,11 @@ abstract class Flash extends BaseOperation {
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
     }
 
+    /**
+     * <p>stabilityCheck.</p>
+     *
+     * @return a boolean
+     */
     public boolean stabilityCheck() {
         boolean stable = false;
         // logger.info("starting stability analysis....");
@@ -335,11 +351,15 @@ abstract class Flash extends BaseOperation {
         return stable;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         system.display();
     }
 
+    /**
+     * <p>solidPhaseFlash.</p>
+     */
     public void solidPhaseFlash() {
         boolean solidPhase = false;
         double frac = 0;
@@ -428,22 +448,27 @@ abstract class Flash extends BaseOperation {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addData(String name, double[][] data) {
 

@@ -12,8 +12,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ReBoiler class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class ReBoiler extends ProcessEquipmentBaseClass {
 
@@ -25,19 +26,32 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     SystemInterface system;
     private double reboilerDuty = 0.0;
 
-    /** Creates new Heater */
+    /**
+     * Creates new Heater
+     */
     public ReBoiler() {
     }
 
+    /**
+     * <p>Constructor for ReBoiler.</p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public ReBoiler(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (StreamInterface) inStream.clone();
     }
 
+    /**
+     * <p>Getter for the field <code>outStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -61,18 +75,32 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
         // outStream.setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         System.out.println("out Temperature " + reboilerDuty);
     }
 
+    /**
+     * <p>runTransient.</p>
+     */
     public void runTransient() {
     }
 
+    /**
+     * <p>Getter for the field <code>reboilerDuty</code>.</p>
+     *
+     * @return a double
+     */
     public double getReboilerDuty() {
         return reboilerDuty;
     }
 
+    /**
+     * <p>Setter for the field <code>reboilerDuty</code>.</p>
+     *
+     * @param reboilerDuty a double
+     */
     public void setReboilerDuty(double reboilerDuty) {
         this.reboilerDuty = reboilerDuty;
     }

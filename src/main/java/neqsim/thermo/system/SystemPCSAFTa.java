@@ -25,6 +25,9 @@ public class SystemPCSAFTa extends SystemSrkEos {
     private static final long serialVersionUID = 1000;
 
     // SystemSrkEos clonedSystem;
+    /**
+     * <p>Constructor for SystemPCSAFTa.</p>
+     */
     public SystemPCSAFTa() {
         super();
         modelName = "PCSAFTa-EOS";
@@ -37,6 +40,12 @@ public class SystemPCSAFTa extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /**
+     * <p>Constructor for SystemPCSAFTa.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPCSAFTa(double T, double P) {
         super(T, P);
         modelName = "PCSAFTa-EOS";
@@ -49,6 +58,13 @@ public class SystemPCSAFTa extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /**
+     * <p>Constructor for SystemPCSAFTa.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPCSAFTa(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "PCSAFTa-EOS";
@@ -80,6 +96,7 @@ public class SystemPCSAFTa extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemPCSAFTa clone() {
         SystemPCSAFTa clonedSystem = null;

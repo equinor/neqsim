@@ -17,13 +17,18 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestBinaryHVParameterFitting_MDEA class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestBinaryHVParameterFitting_MDEA {
     static Logger logger = LogManager.getLogger(TestBinaryHVParameterFitting_MDEA.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();

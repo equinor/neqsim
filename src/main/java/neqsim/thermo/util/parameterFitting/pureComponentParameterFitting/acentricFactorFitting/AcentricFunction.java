@@ -5,9 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>AcentricFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class AcentricFunction extends LevenbergMarquardtFunction {
 
@@ -15,10 +15,14 @@ public class AcentricFunction extends LevenbergMarquardtFunction {
     static Logger logger = LogManager.getLogger(AcentricFunction.class);
 
 
+    /**
+     * <p>Constructor for AcentricFunction.</p>
+     */
     public AcentricFunction() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
@@ -32,6 +36,7 @@ public class AcentricFunction extends LevenbergMarquardtFunction {
         return Math.log(system.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

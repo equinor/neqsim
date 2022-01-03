@@ -13,7 +13,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 
 /**
+ * <p>ChemicalEquilibrium class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class ChemicalEquilibrium extends BaseOperation {
 
@@ -22,14 +25,22 @@ public class ChemicalEquilibrium extends BaseOperation {
 
     SystemInterface system;
 
-    /** Creates a new instance of ChemicalEquilibrium */
+    /**
+     * Creates a new instance of ChemicalEquilibrium
+     */
     public ChemicalEquilibrium() {
     }
 
+    /**
+     * <p>Constructor for ChemicalEquilibrium.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ChemicalEquilibrium(SystemInterface system) {
         this.system = system;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double chemdev = 0;
@@ -64,29 +75,35 @@ public class ChemicalEquilibrium extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         system.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;

@@ -10,18 +10,27 @@ import neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>DefaultPhysicalProperties class.</p>
  *
  * @author esol
- * @version
  */
 public class DefaultPhysicalProperties extends PhysicalProperties {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new NaturalGasPhysicalProperties */
+    /**
+     * Creates new NaturalGasPhysicalProperties
+     */
     public DefaultPhysicalProperties() {
     }
 
+    /**
+     * <p>Constructor for DefaultPhysicalProperties.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public DefaultPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);

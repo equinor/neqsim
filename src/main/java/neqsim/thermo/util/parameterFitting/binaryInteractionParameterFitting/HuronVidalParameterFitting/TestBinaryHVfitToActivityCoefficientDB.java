@@ -12,15 +12,20 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestBinaryHVfitToActivityCoefficientDB class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
 
     static Logger logger = LogManager.getLogger(TestBinaryHVfitToActivityCoefficientDB.class);
 
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();
