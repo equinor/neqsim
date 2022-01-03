@@ -10,21 +10,21 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneable {
 
-    public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber);
+    public void addcomponent(String componentName, double molesInPhase, double moles,
+            int compNumber);
 
     public void setMoleFractions(double[] x);
 
     public double getPhaseFraction();
 
     /**
-     * @param  unit The unit as a string -
-     *              molefraction/wtfraction/molespersec/volumefraction
-     * @return      composition array with unit
+     * @param unit The unit as a string - molefraction/wtfraction/molespersec/volumefraction
+     * @return composition array with unit
      */
     public double[] getComposition(String unit);
 
@@ -38,11 +38,10 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     public double getDensity_AGA8();
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented in
-     * phaseEos
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      * 
-     * @param  unit The unit as a string. Supported units are K/bar, C/bar
-     * @return      Joule Thomson coefficient in given unit
+     * @param unit The unit as a string. Supported units are K/bar, C/bar
+     * @return Joule Thomson coefficient in given unit
      */
     public double getJouleThomsonCoefficient(String unit);
 
@@ -56,8 +55,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return fluid volume
      *
-     * @param  unit The unit as a string. Supported units are m3, litre
-     * @return      volume in specified unit
+     * @param unit The unit as a string. Supported units are m3, litre
+     * @return volume in specified unit
      */
     public double getVolume(String unit);
 
@@ -69,8 +68,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     public double getGamma2();
 
     /**
-     * method to return heat capacity ratio/adiabatic index/Poisson constant. The
-     * method calculates it as Cp (real) /Cv (real)
+     * method to return heat capacity ratio/adiabatic index/Poisson constant. The method calculates
+     * it as Cp (real) /Cv (real)
      *
      * @return gamma
      */
@@ -100,7 +99,18 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
     public double getMoleFraction();
 
-    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta);
+
+    /**
+     * Method to initialize phaze
+     * 
+     * @param totalNumberOfMoles
+     * @param numberOfComponents
+     * @param type 0 To initialize, 1 to set new conditions
+     * @param phase
+     * @param beta
+     */
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta);
 
     public void initPhysicalProperties();
 
@@ -113,8 +123,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     public double getWtFraction(SystemInterface system);
 
     /**
-     * method to return molar volume of the phase note: without Peneloux volume
-     * correction
+     * method to return molar volume of the phase note: without Peneloux volume correction
      *
      * @return molar volume volume in unit m3/mol*1e5
      */
@@ -123,9 +132,9 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return flow rate of a phase
      *
-     * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                  m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
-     * @return          flow rate in specified unit
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *        m3/hr, mole/sec, mole/min, mole/hr
+     * @return flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
 
@@ -137,12 +146,11 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
      * @return density with unit kg/m3
      */
     public double getDensity_GERG2008();
-    
+
     public double[] getProperties_GERG2008();
 
     /**
-     * method to get density of a phase note: does not use Peneloux volume
-     * correction
+     * method to get density of a phase note: does not use Peneloux volume correction
      *
      * @return density with unit kg/m3
      */
@@ -151,12 +159,13 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to get density of a fluid note: with Peneloux volume correction
      *
-     * @param  unit The unit as a string. Supported units are kg/m3, mol/m3
-     * @return      density in specified unit
+     * @param unit The unit as a string. Supported units are kg/m3, mol/m3
+     * @return density in specified unit
      */
     public double getDensity(String unit);
 
-    public void removeComponent(String componentName, double moles, double molesInPhase, int compNumber);
+    public void removeComponent(String componentName, double moles, double molesInPhase,
+            int compNumber);
 
     public double getFugacity(int compNumb);
 
@@ -252,7 +261,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties();
 
     double molarVolume(double pressure, double temperature, double A, double B, int phase)
-            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException;
+            throws neqsim.util.exception.IsNaNException,
+            neqsim.util.exception.TooManyIterationsException;
 
     public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
@@ -264,17 +274,23 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
     double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
-    double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcAi(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcAiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcAij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcAij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcBij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcBij(int compNumb, int j, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcAT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcAT(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
-    double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+    double calcBi(int compNumb, PhaseInterface phase, double temperature, double pressure,
+            int numbcomp);
 
     double calcR();
 
@@ -292,9 +308,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return phase enthalpy in a given unit
      *
-     * @param  unit The unit as a string. Supported units are J, J/mol, J/kg and
-     *              kJ/kg
-     * @return      enthalpy in specified unit
+     * @param unit The unit as a string. Supported units are J, J/mol, J/kg and kJ/kg
+     * @return enthalpy in specified unit
      */
     public double getEnthalpy(String unit);
 
@@ -306,9 +321,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return entropy of the phase
      *
-     * @param  unit The unit as a string. Supported units are J/K, J/moleK, J/kgK
-     *              and kJ/kgK
-     * @return      entropy in specified unit
+     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
+     * @return entropy in specified unit
      */
     public double getEntropy(String unit);
 
@@ -322,9 +336,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return viscosity og the phase in a given unit
      *
-     * @param  unit The unit as a string. Supported units are kg/msec, cP
-     *              (centipoise)
-     * @return      viscosity in specified unit
+     * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
+     * @return viscosity in specified unit
      */
     public double getViscosity(String unit);
 
@@ -338,8 +351,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return conductivity in a given unit
      *
-     * @param  unit The unit as a string. Supported units are W/mK, W/cmK
-     * @return      conductivity in specified unit
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return conductivity in specified unit
      */
     public double getConductivity(String unit);
 
@@ -353,8 +366,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return conductivity in a given unit
      *
-     * @param  unit The unit as a string. Supported units are W/mK, W/cmK
-     * @return      conductivity in specified unit
+     * @param unit The unit as a string. Supported units are W/mK, W/cmK
+     * @return conductivity in specified unit
      */
     public double getThermalConductivity(String unit);
 
@@ -368,9 +381,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return specific heat capacity (Cp) in a given unit
      *
-     * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-     *              kJ/kgK
-     * @return      Cp in specified unit
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
+     * @return Cp in specified unit
      */
     public double getCp(String unit);
 
@@ -388,9 +400,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return specific heat capacity (Cv) in a given unit
      *
-     * @param  unit The unit as a string. Supported units are J/K, J/molK, J/kgK and
-     *              kJ/kgK
-     * @return      Cv in specified unit
+     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
+     * @return Cv in specified unit
      */
     public double getCv(String unit);
 
@@ -418,8 +429,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     public void setNumberOfComponents(int k);
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented in
-     * phaseEos
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      *
      * @return Joule Thomson coefficient in K/bar
      */
@@ -487,8 +497,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
     /**
      * method to return pressure in a given unit
      *
-     * @param  unit The unit as a string. Supported units are bara, barg, Pa and MPa
-     * @return      pressure in specified unit
+     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
+     * @return pressure in specified unit
      */
     public double getPressure(String unit);
 
@@ -597,8 +607,8 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
     public void setPhysicalPropertyType(int physicalPropertyType);
 
-    public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT, String[][] mixRule,
-            double[][] intparam);
+    public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
+            String[][] mixRule, double[][] intparam);
 
     public java.lang.String getPhaseTypeName();
 

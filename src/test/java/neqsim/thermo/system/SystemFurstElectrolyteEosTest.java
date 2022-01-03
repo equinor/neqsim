@@ -1,16 +1,11 @@
-package neqsim.thermo.util.example;
+package neqsim.thermo.system;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
-import neqsim.thermo.system.SystemFurstElectrolyteEos;
 
-/**
- *
- * @author ESOL
- */
 @Disabled
-public class ElectrolyteScrkEosTest extends ModelBaseTest {
+public class SystemFurstElectrolyteEosTest extends ModelBaseTest {
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemFurstElectrolyteEos(298.15, 1.01325);

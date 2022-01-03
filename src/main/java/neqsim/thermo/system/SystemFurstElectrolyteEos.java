@@ -1,9 +1,3 @@
-/*
- * SystemModifiedFurstElectrolyteEos.java
- *
- * Created on 26. februar 2001, 17:38
- */
-
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
@@ -55,5 +49,4 @@ public class SystemFurstElectrolyteEos extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

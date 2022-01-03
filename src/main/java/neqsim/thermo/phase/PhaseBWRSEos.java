@@ -42,19 +42,18 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
 
-        componentArray[compNumber] = new ComponentBWRS(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentBWRS(componentName, moles, molesInPhase, compNumber);
         ((ComponentBWRS) componentArray[compNumber]).setRefPhaseBWRS(this);
     }
 
     @Override
-	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
-                                                                                                            // start
-                                                                                                            // init type
-                                                                                                            // =1 gi nye
-                                                                                                            // betingelser
+    public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
+            double beta) {
         double oldMolDens = 0;
         if (type == 0) {
             super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
@@ -92,7 +91,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     public double getFpol() {
         double temp = 0.0;
         for (int i = 1; i < OP; i++) {
-            temp += ((ComponentBWRS) componentArray[0]).getBP(i) / (i + 0.0) * Math.pow(getMolarDensity(), i);
+            temp += ((ComponentBWRS) componentArray[0]).getBP(i) / (i + 0.0)
+                    * Math.pow(getMolarDensity(), i);
         }
         return numberOfMolesInPhase / (R * temperature) * temp;
     }
@@ -122,36 +122,42 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         double temp = 0.0, temp2 = 0.0;
         double temp3 = 0.0, temp4 = 0.0;
         for (int i = 1; i < OP; i++) {
-            temp += (i - 2) * (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
-                    * Math.pow(getMolarDensity(), i - 3);
+            temp += (i - 2) * (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i)
+                    / (i - 0.0) * Math.pow(getMolarDensity(), i - 3);
             temp2 += (i - 1) * (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
                     * Math.pow(getMolarDensity(), i - 2);
             temp3 += (i) * ((ComponentBWRS) componentArray[0]).getBP(i) / (i - 0.0)
                     * Math.pow(getMolarDensity(), i - 1);
         }
         return numberOfMolesInPhase / (R * temperature) * temp * Math.pow(getdRhodV(), 3)
-                + 2 * numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1) * getdRhodVdV()
-                + numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1) * getdRhodVdV()
+                + 2 * numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1)
+                        * getdRhodVdV()
+                + numberOfMolesInPhase / (R * temperature) * temp2 * Math.pow(getdRhodV(), 1)
+                        * getdRhodVdV()
                 + numberOfMolesInPhase / (R * temperature) * temp2 * getdRhodVdVdV();
     }
 
     public double getFpoldT() {
         double temp = 0.0, temp2 = 0.0;
         for (int i = 1; i < OP; i++) {
-            temp += ((ComponentBWRS) componentArray[0]).getBP(i) / (i + 0.0) * Math.pow(getMolarDensity(), i);
-            temp2 += ((ComponentBWRS) componentArray[0]).getBPdT(i) / (i + 0.0) * Math.pow(getMolarDensity(), i);
+            temp += ((ComponentBWRS) componentArray[0]).getBP(i) / (i + 0.0)
+                    * Math.pow(getMolarDensity(), i);
+            temp2 += ((ComponentBWRS) componentArray[0]).getBPdT(i) / (i + 0.0)
+                    * Math.pow(getMolarDensity(), i);
         }
         return -numberOfMolesInPhase / (R * temperature * temperature) * temp
                 + numberOfMolesInPhase / (R * temperature) * temp2;
     }
 
     public double getEL() {
-        return Math.exp(-((ComponentBWRS) componentArray[0]).getGammaBWRS() * Math.pow(getMolarDensity(), 2.0));
+        return Math.exp(-((ComponentBWRS) componentArray[0]).getGammaBWRS()
+                * Math.pow(getMolarDensity(), 2.0));
     }
 
     public double getELdRho() {
         return -2.0 * getMolarDensity() * ((ComponentBWRS) componentArray[0]).getGammaBWRS()
-                * Math.exp(-((ComponentBWRS) componentArray[0]).getGammaBWRS() * Math.pow(getMolarDensity(), 2.0));
+                * Math.exp(-((ComponentBWRS) componentArray[0]).getGammaBWRS()
+                        * Math.pow(getMolarDensity(), 2.0));
     }
 
     public double getFexp() {
@@ -162,8 +168,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         for (int i = 1; i < OE; i++) {
             oldTemp = -((ComponentBWRS) componentArray[0]).getBE(i)
                     / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
-                    * (getEL() * Math.pow(getMolarDensity(), 2.0 * i)
-                            - (2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp);
+                    * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i)
+                            / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp);
             temp += oldTemp;
         }
         return numberOfMolesInPhase / (R * temperature) * temp;
@@ -172,13 +178,14 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     public double getFexpdV() {
         double oldTemp = 0.0, temp = 0.0;
         oldTemp = -((ComponentBWRS) componentArray[0]).getBE(0)
-                / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * getELdRho() * getdRhodV();
+                / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * getELdRho()
+                * getdRhodV();
 
         temp += oldTemp;
         for (int i = 1; i < OE; i++) {
             oldTemp = -((ComponentBWRS) componentArray[0]).getBE(i)
-                    / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * Math.pow(getMolarDensity(), 2 * i)
-                    * getELdRho() * getdRhodV()
+                    / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
+                    * Math.pow(getMolarDensity(), 2 * i) * getELdRho() * getdRhodV()
 
                     - (2.0 * i) * ((ComponentBWRS) componentArray[0]).getBE(i)
                             / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * getEL()
@@ -213,26 +220,29 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
             oldTemp = -((ComponentBWRS) componentArray[0]).getBEdT(i)
                     / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
-                    * (getEL() * Math.pow(getMolarDensity(), 2.0 * i)
-                            - (2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp2)
+                    * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i)
+                            / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp2)
 
                     +
 
                     -((ComponentBWRS) componentArray[0]).getBE(i)
                             / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
-                            * ((2.0 * i) / Math.pow(((ComponentBWRS) componentArray[0]).getBE(i - 1), 2.0) * oldTemp2)
+                            * ((2.0 * i) / Math
+                                    .pow(((ComponentBWRS) componentArray[0]).getBE(i - 1), 2.0)
+                                    * oldTemp2)
                             * ((ComponentBWRS) componentArray[0]).getBEdT(i - 1)
 
                     +
 
                     ((ComponentBWRS) componentArray[0]).getBE(i)
                             / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
-                            * ((2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp);
+                            * ((2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1)
+                                    * oldTemp);
 
             oldTemp2 = -((ComponentBWRS) componentArray[0]).getBE(i)
                     / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
-                    * (getEL() * Math.pow(getMolarDensity(), 2.0 * i)
-                            - (2.0 * i) / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp2);
+                    * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i)
+                            / ((ComponentBWRS) componentArray[0]).getBE(i - 1) * oldTemp2);
 
             temp += oldTemp;
         }
@@ -244,10 +254,12 @@ public class PhaseBWRSEos extends PhaseSrkEos {
         double temp = 0.0;
         logger.info("molar density " + getMolarDensity());
         for (int i = 0; i < OP; i++) {
-            temp += ((ComponentBWRS) componentArray[0]).getBP(i) * Math.pow(getMolarDensity(), 1.0 + i);
+            temp += ((ComponentBWRS) componentArray[0]).getBP(i)
+                    * Math.pow(getMolarDensity(), 1.0 + i);
         }
         for (int i = 0; i < OE; i++) {
-            temp += getEL() * ((ComponentBWRS) componentArray[0]).getBE(i) * Math.pow(getMolarDensity(), 3.0 + 2.0 * i);
+            temp += getEL() * ((ComponentBWRS) componentArray[0]).getBE(i)
+                    * Math.pow(getMolarDensity(), 3.0 + 2.0 * i);
         }
         calcPVT();
         return temp / 100.0;
@@ -260,11 +272,15 @@ public class PhaseBWRSEos extends PhaseSrkEos {
             moldens[j] = 30 - j * 0.1;
             double temp = 0.0;
             for (int i = 0; i < OP; i++) {
-                temp += ((ComponentBWRS) componentArray[0]).getBP(i) * Math.pow(moldens[j], 1.0 + i);
+                temp += ((ComponentBWRS) componentArray[0]).getBP(i)
+                        * Math.pow(moldens[j], 1.0 + i);
             }
             for (int i = 0; i < OE; i++) {
-                temp += Math.exp(-((ComponentBWRS) componentArray[0]).getGammaBWRS() * Math.pow(moldens[j], 2.0))
-                        * ((ComponentBWRS) componentArray[0]).getBE(i) * Math.pow(moldens[j], 3.0 + 2.0 * i);
+                temp += Math
+                        .exp(-((ComponentBWRS) componentArray[0]).getGammaBWRS()
+                                * Math.pow(moldens[j], 2.0))
+                        * ((ComponentBWRS) componentArray[0]).getBE(i)
+                        * Math.pow(moldens[j], 3.0 + 2.0 * i);
             }
             pres[j] = temp / 100.0;
             logger.info("moldens " + moldens[j] * 16.01 + "  pres " + pres[j]);
@@ -272,7 +288,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public double getF() {
+    public double getF() {
         // System.out.println("F " + getFpol()*1e3+ " "+ getFexp()*1e3 + " super " +
         // super.getF() + " phasetype " +getPhaseTypeName());
         return (getFpol() + getFexp()) * 1e3;
@@ -298,7 +314,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public double dFdT() {
+    public double dFdT() {
 
         // double dv = temperature/1000.0;
         // temperature = temperature + dv;
@@ -319,7 +335,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public double dFdTdT() {
+    public double dFdTdT() {
         double dv = temperature / 1000.0;
         temperature += dv;
         init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
@@ -333,7 +349,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public double dFdTdV() {
+    public double dFdTdV() {
         double dv = getMolarVolume() / 1000.0;
 
         setMolarVolume(getMolarVolume() + dv);
@@ -346,7 +362,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public double dFdV() {
+    public double dFdV() {
         // double dv = molarVolume/1000.0;
         //
         // molarVolume = molarVolume + dv;
@@ -365,7 +381,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     }
 
     @Override
-	public double dFdVdV() {
+    public double dFdVdV() {
         double dv = getMolarVolume() / 1000.0;
 
         setMolarVolume(getMolarVolume() + dv);
@@ -386,8 +402,9 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     // }
 
     @Override
-	public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
-            throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
+            throws neqsim.util.exception.IsNaNException,
+            neqsim.util.exception.TooManyIterationsException {
 
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
@@ -402,8 +419,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
             guesPresdV = -R * temperature * dFdVdV()
                     - getNumberOfMolesInPhase() * R * temperature / Math.pow(getTotalVolume(), 2.0);
             logger.info("gues pres " + guesPres);
-            setMolarVolume(
-                    getMolarVolume() - 1.0 / (guesPresdV * getNumberOfMolesInPhase()) * (guesPres - pressure) / 50.0);
+            setMolarVolume(getMolarVolume() - 1.0 / (guesPresdV * getNumberOfMolesInPhase())
+                    * (guesPres - pressure) / 50.0);
             Z = pressure * getMolarVolume() / (R * temperature);
         } while (Math.abs((guesPres - pressure) / pressure) > 1.0e-10 && iterations < 10000);
         // System.out.println("gues pres " + guesPres);

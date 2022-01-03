@@ -361,11 +361,7 @@ abstract class Phase implements PhaseInterface {
 
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) { // type = 0
-                           // start
-                           // init type
-                           // =1 gi nye
-                           // betingelser
+            double beta) {
 
         this.beta = beta;
         numberOfMolesInPhase = beta * totalNumberOfMoles;

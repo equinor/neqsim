@@ -1,14 +1,8 @@
-package neqsim.thermo.util.example;
+package neqsim.thermo.system;
 
 import org.junit.jupiter.api.BeforeAll;
-import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 
-/**
- *
- * @author ESOL
- */
-
-public class ScrkEosTest extends ModelBaseTest {
+public class SystemSrkSchwartzentruberEosTest extends ModelBaseTest {
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemSrkSchwartzentruberEos(298.15, 1.01325);

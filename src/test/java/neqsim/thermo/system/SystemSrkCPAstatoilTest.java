@@ -1,18 +1,11 @@
-package neqsim.thermo.util.example;
+package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/**
- *
- * @author ESOL
- */
-public class CPAEosTest {
+public class SystemSrkCPAstatoilTest {
     static SystemInterface thermoSystem = null;
 
     @BeforeAll
@@ -26,8 +19,7 @@ public class CPAEosTest {
         thermoSystem.setMixingRule(10);
     }
 
-
-    @Ignore
+    @Test
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
         testOps.TPflash();
@@ -68,7 +60,4 @@ public class CPAEosTest {
 
         assertEquals(Math.round(entropy + 10.0), Math.round(entropy2));
     }
-
-
-
 }

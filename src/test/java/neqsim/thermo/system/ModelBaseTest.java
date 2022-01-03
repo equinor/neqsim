@@ -1,19 +1,16 @@
-package neqsim.thermo.util.example;
+package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  *
  * @author ESOL
  */
-@Disabled
-public class ModelBaseTest {
+public abstract class ModelBaseTest {
     static SystemInterface thermoSystem = null;
     neqsim.thermo.ThermodynamicModelTest fugTest;
 
