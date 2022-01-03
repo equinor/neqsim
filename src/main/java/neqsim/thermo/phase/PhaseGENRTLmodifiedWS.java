@@ -1,9 +1,3 @@
-/*
- * PhaseGENRTLmodifiedHV.java
- *
- * Created on 18. juli 2000, 18:32
- */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGEInterface;
@@ -17,8 +11,6 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
 public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
 
     private static final long serialVersionUID = 1000;
-
-    /** Creates new PhaseGENRTLmodifiedHV */
 
     public PhaseGENRTLmodifiedWS() {
         super();

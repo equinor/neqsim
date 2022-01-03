@@ -1,9 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentCSPsrk;
@@ -25,7 +19,7 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     double acrefBWRSPhase = 0;
     double mrefBWRSPhase = 0;
 
-    /** Creates new PhaseSrkEos */
+    /** Creates new PhaseCSPsrkEos */
     public PhaseCSPsrkEos() {
         super();
         refBWRSPhase = new PhaseBWRSEos();

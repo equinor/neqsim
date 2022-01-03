@@ -6,12 +6,6 @@ import neqsim.thermo.system.SystemGERG2004Eos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * PhaseEnvelope.java
- *
- * Created on 27. september 2001, 10:21
- */
-
 /**
  *
  * @author esol

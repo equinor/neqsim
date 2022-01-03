@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,7 +6,6 @@ import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
-// import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -55,12 +49,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             QMatksiksiksi = null, KlkVVVMatrix = null, KlkVVMatrix = null, udotTimesmiMatrix = null,
             ksiMatrix = null, KlkMatrix = null, hessianMatrix = null, hessianInvers = null,
             KlkVMatrix = null;
-    private DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;// new
-                                                                                   // DenseMatrix64F(getTotalNumberOfAccociationSites(),
-                                                                                   // 1);
+    private DMatrixRMaj corr2Matrix = null, corr3Matrix = null, corr4Matrix = null;
 
     /**
-     * Creates new PhaseSrkEos
+     * Creates new PhaseSrkCPA
      */
     public PhaseSrkCPA() {
         super();

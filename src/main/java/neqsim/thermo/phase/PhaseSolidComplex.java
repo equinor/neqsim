@@ -1,8 +1,3 @@
-/*
- * PhasePureComponentSolid.java
- *
- * Created on 18. august 2001, 12:39
- */
 package neqsim.thermo.phase;
 
 /**
@@ -15,7 +10,7 @@ public class PhaseSolidComplex extends PhaseSolid {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhasePureComponentSolid
+     * Creates new PhaseSolidComplex
      */
     public PhaseSolidComplex() {
         super();

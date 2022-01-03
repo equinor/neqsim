@@ -1,5 +1,3 @@
-
-
 /*
  * Phase.java
  *
@@ -45,7 +43,6 @@ abstract class Phase implements PhaseInterface {
     protected String phaseTypeName = "gas";
     static Logger logger = LogManager.getLogger(Phase.class);
 
-    // Class methods
     /**
      * Creates new Phase
      */

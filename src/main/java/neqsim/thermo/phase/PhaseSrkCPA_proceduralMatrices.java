@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,8 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.dense.row.NormOps_DDRM;
-// import org.ejml.simple.SimpleMatrix;
-// import org.ejml.data.DenseMatrix64F;
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingRule.CPAMixing;
@@ -50,7 +43,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     static Logger logger = LogManager.getLogger(PhaseSrkCPA_proceduralMatrices.class);
 
     /**
-     * Creates new PhaseSrkEos
+     * Creates new PhaseSrkCPA_proceduralMatrices
      */
     public PhaseSrkCPA_proceduralMatrices() {
         super();

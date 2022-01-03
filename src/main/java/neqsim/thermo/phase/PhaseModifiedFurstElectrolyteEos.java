@@ -33,7 +33,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     // PhaseInterface[] refPhase;// = new PhaseInterface[10];
 
     /** Creates new PhaseModifiedFurstElectrolyteEos */
-
     public PhaseModifiedFurstElectrolyteEos() {
         super();
         electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);

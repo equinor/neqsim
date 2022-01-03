@@ -1,9 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentRK;
@@ -17,7 +11,6 @@ public class PhaseRK extends PhaseEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new PhaseSrkEos */
     public PhaseRK() {
         super();
         // mixRule = mixSelect.getMixingRule(2);
@@ -40,9 +33,11 @@ public class PhaseRK extends PhaseEos {
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentRK(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentRK(componentName, moles, molesInPhase, compNumber);
     }
 
 }

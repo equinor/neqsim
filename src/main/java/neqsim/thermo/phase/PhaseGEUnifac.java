@@ -1,8 +1,3 @@
-/*
- * PhaseGEUniquac.java
- *
- * Created on 11. juli 2000, 21:01
- */
 package neqsim.thermo.phase;
 
 import java.util.ArrayList;
@@ -22,15 +17,15 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
 
     private static final long serialVersionUID = 1000;
 
-    /**
-     * Creates new PhaseGEUniquac
-     */
     double[][] aij = new double[1][1];
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
     boolean checkedGroups = false;
     static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
 
+    /**
+     * Creates new PhaseGEUnifac
+     */
     public PhaseGEUnifac() {
         super();
         componentArray = new ComponentGEUnifac[MAX_NUMBER_OF_COMPONENTS];

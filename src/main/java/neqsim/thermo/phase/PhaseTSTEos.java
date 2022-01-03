@@ -1,9 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
-
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentTST;
@@ -17,7 +11,6 @@ public class PhaseTSTEos extends PhaseEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new PhaseSrkEos */
     public PhaseTSTEos() {
         super();
         uEOS = 2.5;
@@ -39,9 +32,11 @@ public class PhaseTSTEos extends PhaseEos {
     }
 
     @Override
-	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
+    public void addcomponent(String componentName, double moles, double molesInPhase,
+            int compNumber) {
         super.addcomponent(molesInPhase);
-        componentArray[compNumber] = new ComponentTST(componentName, moles, molesInPhase, compNumber);
+        componentArray[compNumber] =
+                new ComponentTST(componentName, moles, molesInPhase, compNumber);
     }
 
 }

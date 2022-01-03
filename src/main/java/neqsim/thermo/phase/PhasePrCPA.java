@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentCPAInterface;
@@ -28,7 +23,6 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     int[][][] selfAccociationScheme = null;
     int[][][][] crossAccociationScheme = null;
 
-    /** Creates new PhaseSrkEos */
     public PhasePrCPA() {
         super();
         cpamix = cpaSelect.getMixingRule(1);

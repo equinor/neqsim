@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -32,7 +27,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     int[][][][] crossAccociationScheme = null;
     static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
-    /** Creates new PhaseSrkEos */
     public PhasePCSAFTa() {
         super();
     }

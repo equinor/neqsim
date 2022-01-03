@@ -1,9 +1,3 @@
-/*
- * PhaseGEUniquac.java
- *
- * Created on 11. juli 2000, 21:01
- */
-
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,8 +16,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhaseGEUnifacPSRK.class);
 
-    /** Creates new PhaseGEUniquac */
-
+    /** Creates new PhaseGEUnifacPSRK */
     public PhaseGEUnifacPSRK() {
         super();
         componentArray = new ComponentGEUnifacPSRK[MAX_NUMBER_OF_COMPONENTS];

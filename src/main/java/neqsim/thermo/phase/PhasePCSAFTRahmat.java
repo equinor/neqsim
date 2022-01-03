@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -66,7 +61,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     private double F1dispVolTermdVdVdV = 1.0;
     static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
-    /** Creates new PhaseSrkEos */
     public PhasePCSAFTRahmat() {
         super();
     }
