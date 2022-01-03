@@ -9,9 +9,9 @@ import Jama.Matrix;
 import neqsim.MathLib.generalMath.TDMAsolve;
 
 /**
+ * <p>OnePhaseFixedStaggeredGrid class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -39,6 +39,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
 
     /**
      * Creates new nonlin
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem} object
+     * @param length a double
+     * @param nodes a int
+     * @param dynamic a boolean
      */
     public OnePhaseFixedStaggeredGrid(
             neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem pipe, double length,
@@ -57,6 +62,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         numberOfVelocityNodes = nodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public OnePhaseFixedStaggeredGrid clone() {
         OnePhaseFixedStaggeredGrid clonedSystem = null;
@@ -69,6 +75,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         return clonedSystem;
     }
 
+    /**
+     * <p>initProfiles.</p>
+     */
     public void initProfiles() {
         double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
 
@@ -140,6 +149,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         initMatrix();
     }
 
+    /**
+     * <p>initMatrix.</p>
+     */
     public void initMatrix() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -158,6 +170,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>initPressure.</p>
+     *
+     * @param iteration a int
+     */
     public void initPressure(int iteration) {
         for (int i = 0; i < numberOfNodes; i++) {
             // if(dynamic) System.out.println(" old pressure " +
@@ -173,6 +190,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>initVelocity.</p>
+     *
+     * @param iteration a int
+     */
     public void initVelocity(int iteration) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).setVelocityIn(pipe.getNode(i).getVelocityIn().doubleValue()
@@ -199,6 +221,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         // }
     }
 
+    /**
+     * <p>initTemperature.</p>
+     *
+     * @param iteration a int
+     */
     public void initTemperature(int iteration) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -215,6 +242,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>initComposition.</p>
+     *
+     * @param iter a int
+     */
     public void initComposition(int iter) {
         for (int j = 1; j < numberOfNodes; j++) {
             for (int p = 0; p < pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents(); p++) {
@@ -231,6 +263,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>setMassConservationMatrixTDMA.</p>
+     */
     public void setMassConservationMatrixTDMA() {
         if (!dynamic) {
             double SU = 0;
@@ -303,6 +338,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>setImpulsMatrixTDMA.</p>
+     */
     public void setImpulsMatrixTDMA() {
         double SU = 0.0, SP = 0.0;
         double Fw = 0.0, Fe = 0.0;
@@ -411,6 +449,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         c[numberOfNodes - 1] = -c[numberOfNodes - 1];
     }
 
+    /**
+     * <p>setEnergyMatrixTDMA.</p>
+     */
     public void setEnergyMatrixTDMA() {
 
         a[0] = 0;
@@ -506,6 +547,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>setComponentConservationMatrix.</p>
+     *
+     * @param componentNumber a int
+     */
     public void setComponentConservationMatrix(int componentNumber) {
         double SU = 0;
         a[0] = 0;
@@ -569,6 +615,9 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>initFinalResults.</p>
+     */
     public void initFinalResults() {
         for (int i = 0; i < numberOfNodes; i++) {
             oldVelocity[i] = pipe.getNode(i).getVelocityIn().doubleValue();
@@ -587,6 +636,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void solveTDMA() {
         double d[];

@@ -12,8 +12,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Draft_GERG2004 class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Draft_GERG2004 extends neqsim.standards.Standard {
 
@@ -21,12 +23,19 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
     double specPressure = 70.0;
     double initTemperature = 273.15;
 
-    /** Creates a new instance of Standard_ISO1992 */
+    /**
+     * Creates a new instance of Standard_ISO1992
+     */
     public Draft_GERG2004() {
         name = "Draft_GERG2004";
         standardDescription = "reference properties of natural gas";
     }
 
+    /**
+     * <p>Constructor for Draft_GERG2004.</p>
+     *
+     * @param thermoSystemMet a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public Draft_GERG2004(SystemInterface thermoSystemMet) {
         this();
 
@@ -48,6 +57,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         this.thermoOps = new ThermodynamicOperations(this.thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calculate() {
 
@@ -59,11 +69,13 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
@@ -76,6 +88,7 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
@@ -88,11 +101,13 @@ public class Draft_GERG2004 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return false;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String[][] createTable(String name) {
         // thermoSystem.setNumberOfPhases(1);

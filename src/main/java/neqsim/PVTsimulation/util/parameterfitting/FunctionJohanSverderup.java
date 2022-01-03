@@ -4,9 +4,9 @@ import neqsim.PVTsimulation.simulation.SaturationPressure;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>FunctionJohanSverderup class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
 
@@ -14,10 +14,14 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
+    /**
+     * <p>Constructor for FunctionJohanSverderup.</p>
+     */
     public FunctionJohanSverderup() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.addComponent("methane",
@@ -32,6 +36,7 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
         return satPres;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -10,13 +10,28 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>WaxDepositionFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for WaxDepositionFlowNode.</p>
+     */
     public WaxDepositionFlowNode() {
         this.flowNodeType = "wax deposition node";
     }
 
+    /**
+     * <p>Constructor for WaxDepositionFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public WaxDepositionFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "wax deposition node";
@@ -26,6 +41,13 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
                         this);
     }
 
+    /**
+     * <p>Constructor for WaxDepositionFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -36,6 +58,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
                         this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public StratifiedFlowNode clone() {
         StratifiedFlowNode clonedSystem = null;
@@ -48,6 +71,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         inclination = 0.0;
@@ -56,6 +80,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
@@ -68,6 +93,7 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
@@ -80,6 +106,11 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 40.0, 10.0);

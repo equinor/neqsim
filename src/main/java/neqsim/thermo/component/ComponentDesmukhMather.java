@@ -10,9 +10,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ComponentDesmukhMather class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentDesmukhMather extends ComponentGE {
 
@@ -21,10 +21,20 @@ public class ComponentDesmukhMather extends ComponentGE {
     private double deshMathIonicDiameter = 1.0;
     static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
 
-    /** Creates new ComponentGENRTLmodifiedHV */
+    /**
+     * Creates new ComponentGENRTLmodifiedHV
+     */
     public ComponentDesmukhMather() {
     }
 
+    /**
+     * <p>Constructor for ComponentDesmukhMather.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentDesmukhMather(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -64,12 +74,23 @@ public class ComponentDesmukhMather extends ComponentGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
         return getGamma(phase, numberOfComponents, temperature, pressure, phasetype);
     }
 
+    /**
+     * <p>getGamma.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @return a double
+     */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
         double A = 1.174;
@@ -99,6 +120,7 @@ public class ComponentDesmukhMather extends ComponentGE {
         return gamma;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         // System.out.println("fug coef " +
@@ -124,14 +146,14 @@ public class ComponentDesmukhMather extends ComponentGE {
 
     /**
      * Getter for property lngamma.
-     * 
-     * @return Value of property lngamma.
      *
+     * @return Value of property lngamma.
      */
     public double getLngamma() {
         return lngamma;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getMolality(PhaseInterface phase) {
         return getNumberOfMolesInPhase() / ((PhaseDesmukhMather) phase).getSolventWeight();

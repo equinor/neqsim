@@ -7,12 +7,20 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>MEGwaterComplexFlash class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class MEGwaterComplexFlash {
     static Logger logger = LogManager.getLogger(MEGwaterComplexFlash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 50, 1.0);
         testSystem.addComponent("methane", 0.01);

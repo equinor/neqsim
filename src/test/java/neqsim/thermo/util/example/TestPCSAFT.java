@@ -13,9 +13,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TestPCSAFT class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestPCSAFT {
     static Logger logger = LogManager.getLogger(TestPCSAFT.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkEos(273.14, 50.00);

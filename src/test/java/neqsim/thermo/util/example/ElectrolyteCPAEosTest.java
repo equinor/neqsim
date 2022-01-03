@@ -9,12 +9,18 @@ import neqsim.thermo.system.SystemElectrolyteCPA;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ElectrolyteCPAEosTest class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 
 @Disabled
 public class ElectrolyteCPAEosTest extends ModelBaseTest {
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemElectrolyteCPA(298.15, 1.01325);
@@ -26,9 +32,15 @@ public class ElectrolyteCPAEosTest extends ModelBaseTest {
         thermoSystem.setMixingRule(1);
     }
 
+    /**
+     * <p>tearDown.</p>
+     */
     @AfterAll
     public static void tearDown() {}
 
+    /**
+     * <p>testTPflash.</p>
+     */
     @Disabled
     @Test
     public void testTPflash() {
@@ -37,6 +49,9 @@ public class ElectrolyteCPAEosTest extends ModelBaseTest {
         assertEquals(thermoSystem.getNumberOfPhases(), 2);
     }
 
+    /**
+     * <p>initPhysicalProperties.</p>
+     */
     @Test
     public void initPhysicalProperties() {
         thermoSystem.initPhysicalProperties();

@@ -13,9 +13,9 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>FreezeOut class.</p>
  *
  * @author esol
- * @version
  */
 public class FreezeOut extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
 
@@ -25,13 +25,22 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
     public String[] FCompNames = new String[10];
     public boolean noFreezeFlash = true;
 
+    /**
+     * <p>Constructor for FreezeOut.</p>
+     */
     public FreezeOut() {
     }
 
+    /**
+     * <p>Constructor for FreezeOut.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public FreezeOut(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         SystemInterface testSystem = system;
@@ -178,6 +187,7 @@ public class FreezeOut extends constantDutyTemperatureFlash implements Thermodyn
         // this.printToFile("FrzOut");
     } // end Main
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
 

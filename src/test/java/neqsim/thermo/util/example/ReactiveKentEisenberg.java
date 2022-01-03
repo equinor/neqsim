@@ -7,13 +7,19 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ReactiveKentEisenberg class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class ReactiveKentEisenberg {
     static Logger logger = LogManager.getLogger(ReactiveKentEisenberg.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemKentEisenberg(326.0, 1.1);
         SystemInterface testSystem = new SystemFurstElectrolyteEos(326.0, 0.1);

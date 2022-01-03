@@ -13,8 +13,10 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>GlycolDehydrationlModule class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
@@ -45,6 +47,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
      */
     public GlycolDehydrationlModule() {}
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("gasStreamToAbsorber")) {
@@ -56,6 +59,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -77,6 +81,12 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /**
+     * <p>solveAbsorptionFactor.</p>
+     *
+     * @param Ea a double
+     * @return a double
+     */
     public double solveAbsorptionFactor(double Ea) {
         double A = 7.0, Aold = 7.0;
         double error = 1.0, errorOld = 1.0;
@@ -98,6 +108,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         return A;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedStreams) {
@@ -113,6 +124,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
@@ -138,6 +150,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         if (!isInitializedStreams) {
@@ -209,11 +222,13 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         // operations.add(leanTEGStreamToAbsorber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setProperty(String specificationName, double value, String unit) {
         if (unit == "") {
@@ -223,6 +238,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setProperty(String specificationName, double value) {
         if (specificationName.equals("water dew point specification")) {
@@ -255,6 +271,12 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     }
 
+    /**
+     * <p>calcGlycolConcentration.</p>
+     *
+     * @param y0 a double
+     * @return a double
+     */
     public double calcGlycolConcentration(double y0) {
         Stream tempStream = (Stream) this.gasStreamToAbsorber.clone();
         tempStream.run();
@@ -292,6 +314,11 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         return leanGlycolwtFraction;
     }
 
+    /**
+     * <p>calcKglycol.</p>
+     *
+     * @return a double
+     */
     public double calcKglycol() {
         Stream tempStream = (Stream) this.gasStreamToAbsorber.clone();
         tempStream.getThermoSystem().addComponent("TEG", 5.0 * tempStream.getThermoSystem()
@@ -307,6 +334,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         return K;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         gasStreamFromAbsorber.getThermoSystem().display();
@@ -316,6 +344,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         waterSeparator.displayResult();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         setIsCalcDesign(true);
@@ -372,6 +401,7 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         this.leanTEGStreamToAbsorber.run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         neqsim.thermo.system.SystemInterface testSystem =
@@ -386,6 +416,11 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         absorbtionColumn.getMechanicalDesign().setDesign();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 40.0), 70.0);
@@ -470,10 +505,20 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
 
     }
 
+    /**
+     * <p>Getter for the field <code>flashPressure</code>.</p>
+     *
+     * @return a double
+     */
     public double getFlashPressure() {
         return flashPressure;
     }
 
+    /**
+     * <p>Setter for the field <code>flashPressure</code>.</p>
+     *
+     * @param flashPressure a double
+     */
     public void setFlashPressure(double flashPressure) {
         this.flashPressure = flashPressure;
     }

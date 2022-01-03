@@ -3,8 +3,9 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>PUflash class.</p>
+ *
  * @author even solbraa
- * @version
  */
 public class PUflash extends Flash {
 
@@ -13,24 +14,48 @@ public class PUflash extends Flash {
     double Uspec = 0;
     Flash tpFlash;
 
+    /**
+     * <p>Constructor for PUflash.</p>
+     */
     public PUflash() {}
 
+    /**
+     * <p>Constructor for PUflash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Uspec a double
+     */
     public PUflash(SystemInterface system, double Uspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Uspec = Uspec;
     }
 
+    /**
+     * <p>calcdQdTT.</p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
         double dQdTT = -system.getTemperature() * system.getTemperature() * system.getCv();
         return dQdTT;
     }
 
+    /**
+     * <p>calcdQdT.</p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQ = system.getInternalEnergy() - Uspec;
         return dQ;
     }
 
+    /**
+     * <p>solveQ.</p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
         double iterations = 1;
@@ -63,6 +88,7 @@ public class PUflash extends Flash {
         return 1.0 / nyTemp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
@@ -73,6 +99,7 @@ public class PUflash extends Flash {
         // System.out.println("Temperature: " + system.getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

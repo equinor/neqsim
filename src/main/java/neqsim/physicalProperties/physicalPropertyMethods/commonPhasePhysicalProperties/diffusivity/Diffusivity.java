@@ -5,8 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod;
 
 /**
+ * <p>Diffusivity class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class Diffusivity extends CommonPhysicalPropertyMethod implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
@@ -17,9 +18,16 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
     double[] effectiveDiffusionCoefficient;
 
-    /** Creates new Conductivity */
+    /**
+     * Creates new Conductivity
+     */
     public Diffusivity() {}
 
+    /**
+     * <p>Constructor for Diffusivity.</p>
+     *
+     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -31,6 +39,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public Diffusivity clone() {
         Diffusivity properties = null;
@@ -44,12 +53,14 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
 
         return 1.0e-6;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
@@ -70,6 +81,7 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
         return binaryDiffusionCoeffisients;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
@@ -88,16 +100,19 @@ public class Diffusivity extends CommonPhysicalPropertyMethod implements
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         /*

@@ -24,8 +24,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>EosMixingRules class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterface {
 
@@ -43,6 +44,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     int[][] wijCalcOrFitted;
     String[][] classicOrHV, classicOrWS;
     public double nEOSkij = 3.0;
+    /** Constant <code>calcEOSInteractionParameters=false</code> */
     public static boolean calcEOSInteractionParameters = false;
     private int bmixType = 0;
 
@@ -54,6 +56,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
     public EosMixingRules() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public EosMixingRules clone() {
         EosMixingRules clonedSystem = null;
@@ -1864,6 +1867,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
+    /**
+     * <p>getMixingRule.</p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.thermo.mixingRule.EosMixingRulesInterface} object
+     */
     public EosMixingRulesInterface getMixingRule(int i) {
         if (i == 1) {
             return new ClassicVdW();
@@ -1876,6 +1885,13 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
+    /**
+     * <p>getMixingRule.</p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a {@link neqsim.thermo.mixingRule.EosMixingRulesInterface} object
+     */
     public EosMixingRulesInterface getMixingRule(int i, PhaseInterface phase) {
         this.wij = new double[3][phase.getNumberOfComponents()][phase.getNumberOfComponents()];
 
@@ -2257,6 +2273,13 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
+    /**
+     * <p>resetMixingRule.</p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a {@link neqsim.thermo.mixingRule.EosMixingRulesInterface} object
+     */
     public EosMixingRulesInterface resetMixingRule(int i, PhaseInterface phase) {
         if (i == 1) {
             mixingRuleName = "no (kij=0)";
@@ -2309,6 +2332,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         }
     }
 
+    /**
+     * <p>getElectrolyteMixingRule.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a {@link neqsim.thermo.mixingRule.ElectrolyteMixingRulesInterface} object
+     */
     public ElectrolyteMixingRulesInterface getElectrolyteMixingRule(PhaseInterface phase) {
         return new ElectrolyteMixRule(phase);
     }
@@ -2322,6 +2351,11 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         return calcEOSInteractionParameters;
     }
 
+    /**
+     * <p>Setter for the field <code>calcEOSInteractionParameters</code>.</p>
+     *
+     * @param CalcEOSInteractionParameters2 a boolean
+     */
     public void setCalcEOSInteractionParameters(boolean CalcEOSInteractionParameters2) {
         calcEOSInteractionParameters = CalcEOSInteractionParameters2;
     }
@@ -2344,10 +2378,20 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         this.mixingRuleName = mixingRuleName;
     }
 
+    /**
+     * <p>Setter for the field <code>mixingRuleGEModel</code>.</p>
+     *
+     * @param GEmodel a {@link java.lang.String} object
+     */
     public void setMixingRuleGEModel(java.lang.String GEmodel) {
         this.mixingRuleGEModel = GEmodel;
     }
 
+    /**
+     * <p>getSRKbinaryInteractionParameters.</p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[][] getSRKbinaryInteractionParameters() {
         return intparam;
     }
@@ -2433,6 +2477,12 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
         return this.classicOrWS;
     }
 
+    /**
+     * <p>displayInteractionCoefficients.</p>
+     *
+     * @param intType a {@link java.lang.String} object
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void displayInteractionCoefficients(String intType, PhaseInterface phase) {
         String[][] interactTable = new String[phase.getNumberOfComponents() + 1][phase.getNumberOfComponents() + 1];
 

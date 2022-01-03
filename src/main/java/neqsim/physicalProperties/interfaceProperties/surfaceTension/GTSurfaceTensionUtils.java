@@ -6,10 +6,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>GTSurfaceTensionUtils class.</p>
+ *
  * @brief Collection of general utility functions used by the gradient theory
  *        classes.
- * 
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * @version $Id: $Id
  */
 public class GTSurfaceTensionUtils {
 
@@ -20,7 +22,7 @@ public class GTSurfaceTensionUtils {
 
     /**
      * Calculate chemical potential, chemical potential derivative, and pressure.
-     * 
+     *
      * Note that the volume/pressure units used in NeqSim renders the number density
      * incorrect by a factor of 1e5. When selecting the volume to unity to avoid
      * caring about volume derivatives when using number density as the free
@@ -28,14 +30,14 @@ public class GTSurfaceTensionUtils {
      * The chemical potential is unaffected by this as it is a intensive property.
      * The chemical potential derivative will scale inversely proportional with the
      * mole numbers according to the Euler homogeneity of the Gibbs energy function.
-     * 
-     * @param[in] t Temperature [K]
-     * @param[in] rho Number density [mol/m3]
-     * @param[out] mu Chemical potential [J/mol]
-     * @param[out] dmu_drho Derivatives of the chemical potential with respect to
-     *             number density [J/mol^2]
-     * @param[out] p Pressure [Pa]
      *
+     * @param sys a {@link neqsim.thermo.system.SystemInterface} object
+     * @param ncomp a int
+     * @param t a double
+     * @param rho an array of {@link double} objects
+     * @param mu an array of {@link double} objects
+     * @param dmu_drho an array of {@link double} objects
+     * @param p an array of {@link double} objects
      */
     public static void mufun(SystemInterface sys, int ncomp, double t, double[] rho, double[] mu, double[][] dmu_drho,
             double[] p) {

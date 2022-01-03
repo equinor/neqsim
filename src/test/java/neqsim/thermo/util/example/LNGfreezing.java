@@ -6,9 +6,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>LNGfreezing class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class LNGfreezing {
     static Logger logger = LogManager.getLogger(LNGfreezing.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 - 152.8, 5);
         // SystemInterface testSystem = new SystemSrkTwuCoonEos(162, 59.7);

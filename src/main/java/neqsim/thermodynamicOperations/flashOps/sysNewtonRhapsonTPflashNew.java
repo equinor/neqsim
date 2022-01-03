@@ -4,6 +4,12 @@ import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>sysNewtonRhapsonTPflashNew class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
@@ -26,9 +32,18 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
     boolean etterCP = false;
     boolean etterCP2 = false;
 
+    /**
+     * <p>Constructor for sysNewtonRhapsonTPflashNew.</p>
+     */
     public sysNewtonRhapsonTPflashNew() {}
 
-    /** Creates new nonlin */
+    /**
+     * Creates new nonlin
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
+     */
     public sysNewtonRhapsonTPflashNew(SystemInterface system, int numberOfPhases,
             int numberOfComponents) {
         this.system = system;
@@ -45,6 +60,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
         solver.setOrder(3);
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, u.get(i, 0)
@@ -62,6 +80,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
         // fvec.print(0,20);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -111,6 +132,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
         Jac.set(nofc, nofc, sumdyidbeta - sumdxidbeta);
     }
 
+    /**
+     * <p>Setter for the field <code>u</code>.</p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, Math.log(system.getPhases()[0].getComponents()[i].getK()));
@@ -119,6 +143,9 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
         u.set(numberOfComponents, 0, system.getBeta());
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhases()[0].getComponents()[i].setK(Math.exp(u.get(i, 0)));
@@ -129,6 +156,11 @@ public class sysNewtonRhapsonTPflashNew implements java.io.Serializable {
         system.init(3);
     }
 
+    /**
+     * <p>solve.</p>
+     *
+     * @param np a int
+     */
     public void solve(int np) {
         Matrix dx;
         iter = 0;

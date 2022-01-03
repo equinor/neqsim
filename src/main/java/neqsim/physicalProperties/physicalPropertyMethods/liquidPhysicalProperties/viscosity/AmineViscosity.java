@@ -1,6 +1,7 @@
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.viscosity;
 
 /**
+ * <p>AmineViscosity class.</p>
  *
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -9,14 +10,22 @@ public class AmineViscosity extends Viscosity {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Conductivity */
+    /**
+     * Creates new Conductivity
+     */
     public AmineViscosity() {}
 
+    /**
+     * <p>Constructor for AmineViscosity.</p>
+     *
+     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public AmineViscosity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
         super.calcViscosity();

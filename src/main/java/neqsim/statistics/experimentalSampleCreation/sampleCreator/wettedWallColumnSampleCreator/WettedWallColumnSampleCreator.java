@@ -17,9 +17,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>WettedWallColumnSampleCreator class.</p>
  *
  * @author even solbraa
- * @version
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
 
@@ -33,14 +33,24 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
             smoothedInletGasTemperature, smoothedInletTotalGasFlowRate, smoothedInletLiquidFlowRate,
             smoothedCo2SupplyRate, smoothedColumnWallTemperature;
 
-    /** Creates new WettedWallColumnSampleCreator */
+    /**
+     * Creates new WettedWallColumnSampleCreator
+     */
     public WettedWallColumnSampleCreator() {
     }
 
+    /**
+     * <p>Constructor for WettedWallColumnSampleCreator.</p>
+     *
+     * @param file a {@link java.lang.String} object
+     */
     public WettedWallColumnSampleCreator(String file) {
         reader = new WettedWallDataReader(file);
     }
 
+    /**
+     * <p>setSampleValues.</p>
+     */
     public void setSampleValues() {
         time = new double[reader.getSampleObjectList().size() - 1];
         pressure = new double[reader.getSampleObjectList().size() - 1];
@@ -71,6 +81,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
         } while (i < reader.getSampleObjectList().size() - 1);
     }
 
+    /**
+     * <p>smoothData.</p>
+     */
     public void smoothData() {
         Matrix data = new Matrix(pressure, 1);
         data.print(10, 2);
@@ -109,6 +122,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
         System.out.println("data-smoothing finished!");
     }
 
+    /**
+     * <p>calcdPdt.</p>
+     */
     public void calcdPdt() {
         system.init(0);
         dPdt = new double[reader.getSampleObjectList().size() - 1];
@@ -152,6 +168,11 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
         } while (err > 1e-10);
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         WettedWallColumnSampleCreator creator = new WettedWallColumnSampleCreator("31011250");
         ExperimentalEquipmentData eq = new WettedWallColumnData(0.025, 1.48, 4.9);

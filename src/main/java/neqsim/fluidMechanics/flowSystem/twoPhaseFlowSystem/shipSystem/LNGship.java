@@ -12,6 +12,12 @@ import neqsim.standards.gasQuality.Standard_ISO6976_2016;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>LNGship class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
 
     private static final long serialVersionUID = 1000;
@@ -40,6 +46,13 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     double endVolume = 0.0;
     static Logger logger = LogManager.getLogger(LNGship.class);
 
+    /**
+     * <p>Constructor for LNGship.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param totalTankVolume a double
+     * @param dailyBoilOffRatio a double
+     */
     public LNGship(neqsim.thermo.system.SystemInterface thermoSystem, double totalTankVolume,
             double dailyBoilOffRatio) {
         this.thermoSystem = thermoSystem;
@@ -49,6 +62,12 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         setStandardISO6976(new Standard_ISO6976_2016(thermoSystem, 0, 25, "volume"));
     }
 
+    /**
+     * <p>useStandardVersion.</p>
+     *
+     * @param isoName a {@link java.lang.String} object
+     * @param version a {@link java.lang.String} object
+     */
     public void useStandardVersion(String isoName, String version) {
         if (version.equals("2016")) {
             setStandardISO6976(new Standard_ISO6976(thermoSystem, getStandardISO6976().getVolRefT(),
@@ -62,6 +81,7 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void createSystem() {
         getThermoSystem().init(0);
@@ -95,10 +115,12 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void solveSteadyState(int solverType) {
         try {
@@ -111,6 +133,7 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         logger.info("temperature start " + getThermoSystem().getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void solveTransient(int type) {
         SystemInterface tempThermoSystem = (SystemInterface) getThermoSystem().clone();
@@ -268,10 +291,21 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         }
     }
 
+    /**
+     * <p>Getter for the field <code>resultTable</code>.</p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[][] getResultTable() {
         return resultTable;
     }
 
+    /**
+     * <p>getResults.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[][] getResults(String name) {
 
         String[][] table = new String[numberOffTimeSteps + 1][26];
@@ -329,6 +363,11 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
         return table;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // thermo.system.SystemInterface testSystem = new
         // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);
@@ -366,6 +405,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>resultTable</code>.</p>
+     *
      * @param resultTable the resultTable to set
      */
     public void setResultTable(String[][] resultTable) {
@@ -373,6 +414,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Getter for the field <code>liquidDensity</code>.</p>
+     *
      * @return the liquidDensity
      */
     public double getLiquidDensity() {
@@ -380,6 +423,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>liquidDensity</code>.</p>
+     *
      * @param liquidDensity the liquidDensity to set
      */
     public void setLiquidDensity(double liquidDensity) {
@@ -387,6 +432,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Getter for the field <code>endTime</code>.</p>
+     *
      * @return the endTime
      */
     public double getEndTime() {
@@ -394,6 +441,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>endTime</code>.</p>
+     *
      * @param endTime the endTime to set
      */
     public void setEndTime(double endTime) {
@@ -401,6 +450,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Getter for the field <code>standardISO6976</code>.</p>
+     *
      * @return the standardISO6976
      */
     public Standard_ISO6976 getStandardISO6976() {
@@ -408,6 +459,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>standardISO6976</code>.</p>
+     *
      * @param standardISO6976 the standardISO6976 to set
      */
     public void setStandardISO6976(Standard_ISO6976 standardISO6976) {
@@ -415,6 +468,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>isBackCalculate.</p>
+     *
      * @return the backCalculate
      */
     public boolean isBackCalculate() {
@@ -422,6 +477,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>backCalculate</code>.</p>
+     *
      * @param backCalculate the backCalculate to set
      */
     public void setBackCalculate(boolean backCalculate) {
@@ -429,6 +486,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Getter for the field <code>thermoSystem</code>.</p>
+     *
      * @return the thermoSystem
      */
     public neqsim.thermo.system.SystemInterface getThermoSystem() {
@@ -436,6 +495,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>thermoSystem</code>.</p>
+     *
      * @param thermoSystem the thermoSystem to set
      */
     public void setThermoSystem(neqsim.thermo.system.SystemInterface thermoSystem) {
@@ -443,6 +504,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>isSetInitialTemperature.</p>
+     *
      * @return the setInitialTemperature
      */
     public boolean isSetInitialTemperature() {
@@ -450,6 +513,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>initialTemperature</code>.</p>
+     *
      * @param setInitialTemperature the setInitialTemperature to set
      */
     public void setInitialTemperature(boolean setInitialTemperature) {
@@ -457,6 +522,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Getter for the field <code>initialTemperature</code>.</p>
+     *
      * @return the initialTemperature
      */
     public double getInitialTemperature() {
@@ -464,6 +531,8 @@ public class LNGship extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem
     }
 
     /**
+     * <p>Setter for the field <code>initialTemperature</code>.</p>
+     *
      * @param initialTemperature the initialTemperature to set
      */
     public void setInitialTemperature(double initialTemperature) {

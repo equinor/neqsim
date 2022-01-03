@@ -8,9 +8,9 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>ComponentSolid class.</p>
  *
  * @author esol
- * @version
  */
 public class ComponentSolid extends ComponentSrk {
 
@@ -30,13 +30,23 @@ public class ComponentSolid extends ComponentSrk {
     public ComponentSolid() {
     }
 
+    /**
+     * <p>Constructor for ComponentSolid.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentSolid(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
-    /**
-     * Uses Claperyons equation to calculate the solid fugacity
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Uses Claperyons equation to calculate the solid fugacity
+	 */
     @Override
 	public double fugcoef(PhaseInterface phase1) {
         // dfugdt(phase, phase.getNumberOfComponents(), phase.getTemperature(),
@@ -52,6 +62,12 @@ public class ComponentSolid extends ComponentSrk {
         // return fugcoef(phase1.getTemperature(), phase1.getPressure());
     }
 
+    /**
+     * <p>fugcoef2.</p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double fugcoef2(PhaseInterface phase1) {
         refPhase.setTemperature(phase1.getTemperature());
         refPhase.setPressure(phase1.getPressure());
@@ -99,6 +115,13 @@ public class ComponentSolid extends ComponentSrk {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>fugcoef.</p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double fugcoef(double temp, double pres) {
 
         if (Math.abs(Hsub) < 0.000001) {
@@ -171,10 +194,20 @@ public class ComponentSolid extends ComponentSrk {
 //    public double getdpdt() {
 //        return dpdt;
 //    }
+    /**
+     * <p>getMolarVolumeSolid.</p>
+     *
+     * @return a double
+     */
     public double getMolarVolumeSolid() {
         return getPureComponentSolidDensity(getMeltingPointTemperature()) / molarMass;
     }
 
+    /**
+     * <p>setSolidRefFluidPhase.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void setSolidRefFluidPhase(PhaseInterface phase) {
         try {
              if((!isTBPfraction && !isPlusFraction)){
@@ -197,6 +230,11 @@ public class ComponentSolid extends ComponentSrk {
         }
     }
 
+    /**
+     * <p>getVolumeCorrection2.</p>
+     *
+     * @return a double
+     */
     public double getVolumeCorrection2() {
         return 0.0;
     }

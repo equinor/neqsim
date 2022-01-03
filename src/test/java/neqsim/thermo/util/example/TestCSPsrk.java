@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TestCSPsrk class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestCSPsrk {
     static Logger logger = LogManager.getLogger(TestCSPsrk.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemCSPsrkEos(158, 5.662);
         // SystemInterface testSystem = new SystemSrkEos(110.0, 1.262);

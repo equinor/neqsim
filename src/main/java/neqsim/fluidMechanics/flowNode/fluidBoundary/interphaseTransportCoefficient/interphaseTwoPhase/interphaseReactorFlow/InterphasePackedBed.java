@@ -9,9 +9,9 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoeffici
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
+ * <p>InterphasePackedBed class.</p>
  *
  * @author esol
- * @version
  */
 public class InterphasePackedBed extends InterphaseReactorFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -22,43 +22,53 @@ public class InterphasePackedBed extends InterphaseReactorFlow
      * Creates new FrictionFactorBaseClass All frictionfactors are the fanning
      * frictionfactor.
      */
-
     public InterphasePackedBed() {
     }
 
+    /**
+     * <p>Constructor for InterphasePackedBed.</p>
+     *
+     * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public InterphasePackedBed(FlowNodeInterface node) {
         // flowNode = node;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber, FlowNodeInterface node) {
         return 100.1;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcWallMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         System.out.println("no def");
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber, FlowNodeInterface node) {
         double redMassTrans = 0;

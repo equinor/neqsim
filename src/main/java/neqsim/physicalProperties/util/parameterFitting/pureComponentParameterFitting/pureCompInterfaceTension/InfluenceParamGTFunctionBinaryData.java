@@ -9,19 +9,23 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>InfluenceParamGTFunctionBinaryData class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFunction {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(InfluenceParamGTFunctionBinaryData.class);
 
+    /**
+     * <p>Constructor for InfluenceParamGTFunctionBinaryData.</p>
+     */
     public InfluenceParamGTFunctionBinaryData() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcValue(double[] dependentValues) {
         system.init(3);
@@ -35,6 +39,7 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setFittingParams(int i, double value) {
         params[i] = value;

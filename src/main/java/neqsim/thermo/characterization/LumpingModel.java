@@ -5,7 +5,10 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>LumpingModel class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class LumpingModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -16,6 +19,11 @@ public class LumpingModel implements java.io.Serializable {
     SystemInterface system = null;
     static Logger logger = LogManager.getLogger(LumpingModel.class);
 
+    /**
+     * <p>Constructor for LumpingModel.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public LumpingModel(SystemInterface system) {
         this.system = system;
     }
@@ -305,6 +313,12 @@ public class LumpingModel implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>getModel.</p>
+     *
+     * @param modelName a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
+     */
     public LumpingModelInterface getModel(String modelName) {
         if (modelName.equals("PVTlumpingModel")) {
             return new PVTLumpingModel();

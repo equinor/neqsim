@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>Viscosity class.</p>
  *
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -29,10 +30,16 @@ public class Viscosity
     public Viscosity() {
     }
 
+    /**
+     * <p>Constructor for Viscosity.</p>
+     *
+     * @param solidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Viscosity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public Viscosity clone() {
         Viscosity properties = null;
@@ -46,6 +53,7 @@ public class Viscosity
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
 
@@ -53,15 +61,25 @@ public class Viscosity
         return viscosity;
     }
 
+    /**
+     * <p>calcPureComponentViscosity.</p>
+     */
     public void calcPureComponentViscosity() {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
+    /**
+     * <p>getViscosityPressureCorrection.</p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getViscosityPressureCorrection(int i) {
         return 0.0;
     }

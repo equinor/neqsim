@@ -9,13 +9,28 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>TwoPhaseTrayTowerFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     */
     public TwoPhaseTrayTowerFlowNode() {
         this.flowNodeType = "stratified";
     }
 
+    /**
+     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public TwoPhaseTrayTowerFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
@@ -25,6 +40,13 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
                         this);
     }
 
+    /**
+     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public TwoPhaseTrayTowerFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -35,6 +57,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
                         this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public TwoPhaseTrayTowerFlowNode clone() {
         TwoPhaseTrayTowerFlowNode clonedSystem = null;
@@ -47,6 +70,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         inclination = 0.0;
@@ -54,6 +78,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
@@ -70,6 +95,7 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
         TwoPhaseTrayTowerFlowNode newNode = (TwoPhaseTrayTowerFlowNode) this.clone();
@@ -82,6 +108,11 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         /*

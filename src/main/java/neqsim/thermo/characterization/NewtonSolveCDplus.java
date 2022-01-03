@@ -4,6 +4,12 @@ import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>NewtonSolveCDplus class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class NewtonSolveCDplus implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
@@ -15,9 +21,18 @@ public class NewtonSolveCDplus implements java.io.Serializable {
     // SystemInterface system = null;
     static Logger logger = LogManager.getLogger(NewtonSolveCDplus.class);
 
+    /**
+     * <p>Constructor for NewtonSolveCDplus.</p>
+     */
     public NewtonSolveCDplus() {
     }
 
+    /**
+     * <p>Constructor for NewtonSolveCDplus.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param characterizeClass a {@link neqsim.thermo.characterization.PlusCharacterize} object
+     */
     public NewtonSolveCDplus(SystemInterface system, PlusCharacterize characterizeClass) {
         // this.system = system;
         this.characterizeClass = characterizeClass;
@@ -33,6 +48,9 @@ public class NewtonSolveCDplus implements java.io.Serializable {
         // sol.set(3,0,characterizeClass.getCoef(3));
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         double zSum = 0.0, mSum = 0.0, densSum = 0.0;
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
@@ -59,6 +77,9 @@ public class NewtonSolveCDplus implements java.io.Serializable {
         fvec.set(2, 0, densSum - characterizeClass.getDensPlus());
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -140,6 +161,9 @@ public class NewtonSolveCDplus implements java.io.Serializable {
 
     }
 
+    /**
+     * <p>solve.</p>
+     */
     public void solve() {
         iter = 0;
         do {

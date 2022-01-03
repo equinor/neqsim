@@ -13,8 +13,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>OLGApropertyTableGeneratorKeywordFormat class.</p>
  *
  * @author Kjetil Raul
+ * @version $Id: $Id
  */
 public class OLGApropertyTableGeneratorKeywordFormat
         extends neqsim.thermodynamicOperations.BaseOperation {
@@ -39,11 +41,23 @@ public class OLGApropertyTableGeneratorKeywordFormat
     String[] units;
     String[] namesKeyword;
 
+    /**
+     * <p>Constructor for OLGApropertyTableGeneratorKeywordFormat.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public OLGApropertyTableGeneratorKeywordFormat(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
     }
 
+    /**
+     * <p>setPressureRange.</p>
+     *
+     * @param minPressure a double
+     * @param maxPressure a double
+     * @param numberOfSteps a int
+     */
     public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
         pressures = new double[numberOfSteps];
         pressureLOG = new double[numberOfSteps];
@@ -54,6 +68,13 @@ public class OLGApropertyTableGeneratorKeywordFormat
         }
     }
 
+    /**
+     * <p>setTemperatureRange.</p>
+     *
+     * @param minTemperature a double
+     * @param maxTemperature a double
+     * @param numberOfSteps a int
+     */
     public void setTemperatureRange(double minTemperature, double maxTemperature,
             int numberOfSteps) {
         temperatures = new double[numberOfSteps];
@@ -65,6 +86,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
         }
     }
 
+    /**
+     * <p>calcPhaseEnvelope.</p>
+     */
     public void calcPhaseEnvelope() {
         try {
             thermoOps.calcPTphaseEnvelope();
@@ -79,6 +103,12 @@ public class OLGApropertyTableGeneratorKeywordFormat
         // thermoOps.ge
     }
 
+    /**
+     * <p>calcBubP.</p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubP(double[] temperatures) {
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
@@ -97,6 +127,12 @@ public class OLGApropertyTableGeneratorKeywordFormat
         return bubP;
     }
 
+    /**
+     * <p>calcDewP.</p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcDewP(double[] temperatures) {
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
@@ -115,6 +151,12 @@ public class OLGApropertyTableGeneratorKeywordFormat
         return dewP;
     }
 
+    /**
+     * <p>calcBubT.</p>
+     *
+     * @param pressures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubT(double[] pressures) {
         double[] bubT = new double[pressures.length];
         bubTLOG = new double[pressures.length];
@@ -133,6 +175,9 @@ public class OLGApropertyTableGeneratorKeywordFormat
         return bubT;
     }
 
+    /**
+     * <p>initCalc.</p>
+     */
     public void initCalc() {
 
         double standgasdens, standliqdens, TC, PC;
@@ -165,6 +210,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
 
@@ -341,6 +387,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
         initCalc();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
@@ -364,6 +411,11 @@ public class OLGApropertyTableGeneratorKeywordFormat
         writeOLGAinpFile("");
     }
 
+    /**
+     * <p>writeOLGAinpFile.</p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile(String filename) {
         try (Writer writer = new BufferedWriter(new OutputStreamWriter(
                 new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),

@@ -9,6 +9,8 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.ode.nonstiff.*;
 
 /**
+ * <p>GTSurfaceTension class.</p>
+ *
  * @brief Calculates the surfacetension using the Gradient Theory for mixtures.
  *        The method assumes the number of components to be two or more, and
  *        that the species set is equal and in the same component order for both
@@ -42,11 +44,11 @@ import org.apache.commons.math3.ode.nonstiff.*;
  *
  *        The integral is at its minimum when the densities satisfy the
  *        Euler-Lagrange equation
- * 
+ *
  *        \f{equation}{ \boldsymbol{C}\frac{d^2\boldsymbol{n}}{dz^2} = \mu_0
  *        \left( \boldsymbol{n} \right) - \mu_{\infty} \equiv \Delta \mu \left(
  *        \boldsymbol{n} \right) \f}
- * 
+ *
  *        where \f$\mu_0\f$ is the chemical potential of the homogeneous fluid
  *        and \f$\mu_{\infty}\f$ is the chemical potential far from the
  *        interface (on either side, as the two fluids in contact are assumed to
@@ -62,10 +64,10 @@ import org.apache.commons.math3.ode.nonstiff.*;
  *        as the integration variable. This method can only be used if the
  *        component density varies monotonically over the interface and the
  *        binary interaction parameter for the influence parameter is such that
- * 
+ *
  *        \f{equation}{ \begin{cases} \beta_{ij} = 1 & i = j\\ \beta_{ij} = 0 &
  *        i\neq j \end{cases} \f}
- * 
+ *
  *        If these conditions are satisfied, this method is robust and has an
  *        acceptable numerical cost (order of seconds for calculation).
  *
@@ -75,9 +77,9 @@ import org.apache.commons.math3.ode.nonstiff.*;
  *        interface thickness. This is significantly more numerically intensive
  *        but handles the general case. To calculate the surface tension by this
  *        method, set the variable this.useFullGT=1
- *
  * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
  * @author John C. Morud <john.c.morud@sintef.no>
+ * @version $Id: $Id
  */
 public class GTSurfaceTension extends SurfaceTension {
 
@@ -86,16 +88,22 @@ public class GTSurfaceTension extends SurfaceTension {
     int useFullGT = 1; // 1 will use full gradient theory 0 - will use ODE solver and one component
                        // assumed linear
 
+    /**
+     * <p>Constructor for GTSurfaceTension.</p>
+     */
     public GTSurfaceTension() {
     }
 
+    /**
+     * <p>Constructor for GTSurfaceTension.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public GTSurfaceTension(SystemInterface system) {
         super(system);
     }
 
-    /**
-     * @return surface tension in units of N/m.
-     */
+    /** {@inheritDoc} */
     @Override
     public double calcSurfaceTension(int interface1, int interface2) {
         SystemInterface localSystem;
@@ -115,6 +123,8 @@ public class GTSurfaceTension extends SurfaceTension {
     }
 
     /**
+     * <p>solveWithRefcomp.</p>
+     *
      * @brief Solve for the surface tension by integration in a reference component
      *        density for cases with no binary interaction parameter in the
      *        influcence parameter.
@@ -165,7 +175,6 @@ public class GTSurfaceTension extends SurfaceTension {
      *        each evaluation of the differential. The resulting ordinary
      *        differential equation is integrated with a non-stiff Runge-Kutta class
      *        Dormand Prince method, similar to the MATLAB routine ode45.
-     *
      * @param system       NeqSIM system interface
      * @param interface1   Index of the phase to consider for the surface
      * @param interface2   Index of the phase to consider for the surface
@@ -214,12 +223,14 @@ public class GTSurfaceTension extends SurfaceTension {
     }
 
     /**
+     * <p>solveFullDensityProfile.</p>
+     *
      * @brief Calculate the surface tension for the general case by integration of
      *        the component density profiles.
-     * 
+     *
      *        This method can be used in the general case, including when binary
      *        interaction influence parameters \f$\beta_{ij}\f$ are nonzero.
-     * 
+     *
      *        On the top level, we solve the Euler-Lagrange equation with Newtons
      *        method. Consider solving Equation for \f$\delta\mu\f$ as a Dirichlet
      *        problem on a finite domain \f$-L < z < L\f$ around the interface. The
@@ -227,17 +238,17 @@ public class GTSurfaceTension extends SurfaceTension {
      *        results. The boundary conditions are the homogeneous densities of the
      *        two fluids in contact, as calculated by a flash calculation.
      *
-     * 
+     *
      *        We approximate the solution on a equi-spaced grid with \f$2^N+1\f$
      *        points where \f$N\f$ is an integer. Using a Finite Difference
      *        approximation, the equation for \f$\delta\mu\f$ can then be written as
      *        an equation system for the internal grid points, \f$i=2,3,...,2^N\f$:
-     * 
+     *
      *        \f{equation}{ \mathbf{0}=\mathbf{F}\left( \mathbf{n}_i \right) \equiv
      *        \Delta \mu \left( \mathbf{n}_i \right) - \mathbf{C}
      *        \frac{\mathbf{n}_{i-1} -2\mathbf{n}_i+\mathbf{n}_{i+1}}{\Delta z^2},
      *        \quad i=2,3,...,2^N \f}
-     * 
+     *
      *        Applying Newtons method on this equation yields the iteration formula
      *        for the Newton step: \f{eqnarray}{ \mathbf{J}_i\Delta \mathbf{n}_i -
      *        \mathbf{C} \frac{\Delta \mathbf{n}_{i-1} -2\Delta \mathbf{n}_i +\Delta
@@ -248,7 +259,6 @@ public class GTSurfaceTension extends SurfaceTension {
      *        \right)\f$ is the residual. \f$\beta \le 1\f$ is a damping factor.
      *        This is a block tridiagonal system that can be solved using a band
      *        solver or a sparse matrix solver.
-     * 
      * @param system     NeqSIM system interface
      * @param interface1 Index of the phase to consider for the surface
      * @param interface2 Index of the phase to consider for the surface

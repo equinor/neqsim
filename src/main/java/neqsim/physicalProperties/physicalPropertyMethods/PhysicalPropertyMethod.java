@@ -10,18 +10,22 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>PhysicalPropertyMethod class.</p>
+ *
  * @author  esol
- * @version
  */
 public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
 
-    /** Creates new PhysicalPropertyMethod */
+    /**
+     * Creates new PhysicalPropertyMethod
+     */
     public PhysicalPropertyMethod() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhysicalPropertyMethod clone() {
         PhysicalPropertyMethod properties = null;
@@ -35,10 +39,12 @@ public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPhase(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
     }
 
+    /** {@inheritDoc} */
     @Override
     public void tuneModel(double val, double temperature, double pressure) {
         logger.error("model tuning not implemented!");

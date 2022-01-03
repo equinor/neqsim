@@ -8,20 +8,23 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSolid;
 
 /**
+ * <p>Abstract PhaseSolid class.</p>
  *
  * @author esol
- * @version
  */
 public abstract class PhaseSolid extends PhaseSrkEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new PhaseSolid */
+    /**
+     * Creates new PhaseSolid
+     */
     public PhaseSolid() {
         super();
         phaseTypeName = "solid";
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseSolid clone() {
         PhaseSolid clonedPhase = null;
@@ -33,6 +36,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -43,12 +47,14 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         phaseTypeName = "solid";
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentSolid(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getEnthalpy() {
         double fusionHeat = 0.0;
@@ -58,6 +64,11 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         return super.getEnthalpy() - fusionHeat;
     }
 
+    /**
+     * <p>setSolidRefFluidPhase.</p>
+     *
+     * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void setSolidRefFluidPhase(PhaseInterface refPhase) {
         for (int i = 0; i < numberOfComponents; i++) {
             ((ComponentSolid) componentArray[i]).setSolidRefFluidPhase(refPhase);

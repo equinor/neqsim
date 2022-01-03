@@ -10,11 +10,17 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>OsmoticCoefficient_1 class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class OsmoticCoefficient_1 {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(298.15, 1.01325);

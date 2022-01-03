@@ -1,9 +1,9 @@
 package neqsim.util.exception;
 
 /**
+ * <p>TooManyIterationsException class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TooManyIterationsException extends neqsim.util.exception.ThermoException {
 
@@ -16,7 +16,7 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
 
     /**
      * Constructs an <code>IterationException</code> with the specified detail message.
-     * 
+     *
      * @param msg the detail message.
      */
     public TooManyIterationsException(String msg) {

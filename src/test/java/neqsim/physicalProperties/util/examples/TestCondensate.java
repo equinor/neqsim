@@ -11,9 +11,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 * @author  esol
 * @version
 */
+/**
+ * <p>TestCondensate class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestCondensate {
     static Logger logger = LogManager.getLogger(TestCondensate.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 15.0, 1.01325);
         SystemInterface testSystem = new SystemPrEos(273.15 + 15.0, 1.01325);

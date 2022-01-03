@@ -10,12 +10,18 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>SrkEoSTest class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class SrkEoSTest {
     static SystemInterface thermoSystem = null;
 
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -27,6 +33,9 @@ public class SrkEoSTest {
         thermoSystem.setMixingRule(2);
     }
 
+    /**
+     * <p>testTPflash.</p>
+     */
     @Test
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -34,6 +43,9 @@ public class SrkEoSTest {
         assertEquals(thermoSystem.getNumberOfPhases(), 2);
     }
 
+    /**
+     * <p>testSaturateWIthWater.</p>
+     */
     @Disabled
     @Test
     public void testSaturateWIthWater() {
@@ -42,6 +54,9 @@ public class SrkEoSTest {
         assertTrue(thermoSystem.getPhase(0).hasComponent("water"));
     }
 
+    /**
+     * <p>initPhysicalProperties.</p>
+     */
     @Test
     public void initPhysicalProperties() {
         thermoSystem.initPhysicalProperties();
@@ -49,6 +64,9 @@ public class SrkEoSTest {
                 thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
     }
 
+    /**
+     * <p>testPHflash.</p>
+     */
     @Test
     public void testPHflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -63,6 +81,9 @@ public class SrkEoSTest {
         assertEquals(Math.round(enthalpy + 10.0), Math.round(enthalpy2));
     }
 
+    /**
+     * <p>testPSflash.</p>
+     */
     @Test
     public void testPSflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);

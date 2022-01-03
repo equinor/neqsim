@@ -8,9 +8,9 @@ package neqsim.processSimulation.processEquipment.valve;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
+ * <p>SafetyValve class.</p>
  *
  * @author esol
- * @version
  */
 public class SafetyValve extends ThrottlingValve {
 
@@ -26,15 +26,28 @@ public class SafetyValve extends ThrottlingValve {
         super();
     }
 
+    /**
+     * <p>Constructor for SafetyValve.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public SafetyValve(Stream inletStream) {
         super(inletStream);
     }
 
+    /**
+     * <p>Constructor for SafetyValve.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public SafetyValve(String name, Stream inletStream) {
         super(name, inletStream);
     }
 
     /**
+     * <p>Getter for the field <code>pressureSpec</code>.</p>
+     *
      * @return the pressureSpec
      */
     public double getPressureSpec() {
@@ -42,6 +55,8 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     /**
+     * <p>Setter for the field <code>pressureSpec</code>.</p>
+     *
      * @param pressureSpec the pressureSpec to set
      */
     public void setPressureSpec(double pressureSpec) {
@@ -49,6 +64,8 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     /**
+     * <p>Getter for the field <code>fullOpenPressure</code>.</p>
+     *
      * @return the fullOpenPressure
      */
     public double getFullOpenPressure() {
@@ -56,6 +73,8 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     /**
+     * <p>Setter for the field <code>fullOpenPressure</code>.</p>
+     *
      * @param fullOpenPressure the fullOpenPressure to set
      */
     public void setFullOpenPressure(double fullOpenPressure) {

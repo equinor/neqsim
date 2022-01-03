@@ -9,15 +9,17 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finite
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySolver.FluidBoundarySolver;
 
 /**
+ * <p>FluidBoundaryReactiveSolver class.</p>
  *
  * @author esol
- * @version
  */
 public class FluidBoundaryReactiveSolver extends FluidBoundarySolver {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new FluidBoundaryReactiveSolver */
+    /**
+     * Creates new FluidBoundaryReactiveSolver
+     */
     public FluidBoundaryReactiveSolver() {
     }
 

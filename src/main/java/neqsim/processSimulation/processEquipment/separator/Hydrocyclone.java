@@ -5,6 +5,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>Hydrocyclone class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class Hydrocyclone extends Separator {
     private static final long serialVersionUID = 1000;
 
@@ -16,22 +22,36 @@ public class Hydrocyclone extends Separator {
     double oilInAqueous = 100e-6;
     StreamInterface waterOutStream = new Stream(waterSystem);
 
-    /** Creates new Separator */
+    /**
+     * Creates new Separator
+     */
     public Hydrocyclone() {
         super();
     }
 
+    /**
+     * <p>Constructor for Hydrocyclone.</p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public Hydrocyclone(StreamInterface inletStream) {
         this();
         addStream(inletStream);
     }
 
+    /**
+     * <p>Constructor for Hydrocyclone.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public Hydrocyclone(String name, StreamInterface inletStream) {
         this();
         setName(name);
         addStream(inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setInletStream(StreamInterface inletStream) {
         super.setInletStream(inletStream);
@@ -41,14 +61,25 @@ public class Hydrocyclone extends Separator {
         waterOutStream = new Stream(waterSystem);
     }
 
+    /**
+     * <p>Getter for the field <code>waterOutStream</code>.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getWaterOutStream() {
         return waterOutStream;
     }
 
+    /**
+     * <p>getOilOutStream.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOilOutStream() {
         return liquidOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         inletStreamMixer.run();
@@ -93,17 +124,22 @@ public class Hydrocyclone extends Separator {
         liquidOutStream.run();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void displayResult() {
         thermoSystem.display("from here " + getName());
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String getName() {
         return name;
     }
 
+    /**
+     * <p>runTransient.</p>
+     */
     public void runTransient() {
     }
 

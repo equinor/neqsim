@@ -7,8 +7,9 @@
 package neqsim.util.util;
 
 /**
+ * <p>DoubleCloneable class.</p>
+ *
  * @author  esol
- * @version
  */
 public class DoubleCloneable implements Cloneable {
 
@@ -16,14 +17,22 @@ public class DoubleCloneable implements Cloneable {
 
     double doubleValue;
 
-    /** Creates new DoubleCloneable */
+    /**
+     * Creates new DoubleCloneable
+     */
     public DoubleCloneable() {
     }
 
+    /**
+     * <p>Constructor for DoubleCloneable.</p>
+     *
+     * @param val a double
+     */
     public DoubleCloneable(double val) {
         this.doubleValue = val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public DoubleCloneable clone() {
         DoubleCloneable clonedSystem = null;
@@ -35,10 +44,20 @@ public class DoubleCloneable implements Cloneable {
         return clonedSystem;
     }
 
+    /**
+     * <p>set.</p>
+     *
+     * @param val a double
+     */
     public void set(double val) {
         doubleValue = val;
     }
 
+    /**
+     * <p>doubleValue.</p>
+     *
+     * @return a double
+     */
     public double doubleValue() {
         return doubleValue;
     }

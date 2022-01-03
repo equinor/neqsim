@@ -19,6 +19,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>pTphaseEnvelopeMay class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class pTphaseEnvelopeMay extends BaseOperation {
 
     private static final long serialVersionUID = 1000;
@@ -73,8 +79,20 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     double Pcfirst;
     double Tmin = 0.0;
 
+    /**
+     * <p>Constructor for pTphaseEnvelopeMay.</p>
+     */
     public pTphaseEnvelopeMay() {}
 
+    /**
+     * <p>Constructor for pTphaseEnvelopeMay.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param lowPres a double
+     * @param bubfirst a boolean
+     */
     public pTphaseEnvelopeMay(SystemInterface system, String name, double phaseFraction,
             double lowPres, boolean bubfirst) {
         this.bubblePointFirst = bubfirst;
@@ -93,6 +111,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
 
@@ -490,6 +509,9 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         }
     }
 
+    /**
+     * <p>calcHydrateLine.</p>
+     */
     public void calcHydrateLine() {
 
         ThermodynamicOperations opsHyd = new ThermodynamicOperations(system);
@@ -503,6 +525,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -563,14 +586,17 @@ public class pTphaseEnvelopeMay extends BaseOperation {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return points2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addData(String name, double[][] data) {
         double[][] localPoints = new double[points2.length + data.length][];
@@ -580,6 +606,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         points2 = localPoints;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         if (name.equals("dewT")) {
@@ -640,6 +667,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
         fileName = name;
@@ -650,7 +678,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
      *
      * @return Value of property bubblePointFirst.
      */
-
     public boolean isBubblePointFirst() {
         return bubblePointFirst;
     }
@@ -660,16 +687,23 @@ public class pTphaseEnvelopeMay extends BaseOperation {
      *
      * @param bubblePointFirst New value of property bubblePointFirst.
      */
-
     public void setBubblePointFirst(boolean bubblePointFirst) {
         this.bubblePointFirst = bubblePointFirst;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;
     }
 
+    /**
+     * <p>tempKWilson.</p>
+     *
+     * @param beta a double
+     * @param P a double
+     * @return a double
+     */
     public double tempKWilson(double beta, double P) {
 
         // Initiallizes the temperature of a saturation point for given pressure
@@ -766,6 +800,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         return Tstart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();

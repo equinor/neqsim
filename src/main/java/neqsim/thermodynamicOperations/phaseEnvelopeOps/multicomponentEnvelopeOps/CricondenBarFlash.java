@@ -9,6 +9,12 @@ package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOp
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>CricondenBarFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class CricondenBarFlash extends pTphaseEnvelope {
 
     private static final long serialVersionUID = 1000;
@@ -46,9 +52,22 @@ public class CricondenBarFlash extends pTphaseEnvelope {
     // double [] cricondenBarX = new double [100] ;
     // double [] cricondenBarY = new double [100] ;
 
+    /**
+     * <p>Constructor for CricondenBarFlash.</p>
+     */
     public CricondenBarFlash() {
     }
 
+    /**
+     * <p>Constructor for CricondenBarFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param cricondenBar an array of {@link double} objects
+     * @param cricondenBarX an array of {@link double} objects
+     * @param cricondenBarY an array of {@link double} objects
+     */
     public CricondenBarFlash(SystemInterface system, String name, double phaseFraction, double[] cricondenBar,
             double[] cricondenBarX, double[] cricondenBarY) {
         this.system = system;
@@ -61,6 +80,7 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -222,6 +242,9 @@ public class CricondenBarFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>setNewK.</p>
+     */
     public void setNewK() {
 
         for (int j = 0; j < numberOfComponents; j++) {
@@ -232,6 +255,9 @@ public class CricondenBarFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>setNewX.</p>
+     */
     public void setNewX() {
         double sumx = 0.;
         double sumy = 0.;
@@ -264,12 +290,18 @@ public class CricondenBarFlash extends pTphaseEnvelope {
 
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         // setNewX();
         system.init(3);
 
     }
 
+    /**
+     * <p>funcT.</p>
+     */
     public void funcT() {
 
         funcT = -1.0;
@@ -297,6 +329,9 @@ public class CricondenBarFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>funcP.</p>
+     */
     public void funcP() {
 
         funcP = -1.0;

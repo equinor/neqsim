@@ -16,8 +16,9 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 /**
+ * <p>graph2b class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class graph2b extends javax.swing.JFrame {
 
@@ -26,12 +27,19 @@ public class graph2b extends javax.swing.JFrame {
     XYDataset xyData;
     String titl, xaxtitle, yaxtitle;
 
-    /** Creates new form graph2b */
+    /**
+     * Creates new form graph2b
+     */
     public graph2b() {
         initComponents();
         pack();
     }
 
+    /**
+     * <p>Constructor for graph2b.</p>
+     *
+     * @param points an array of {@link double} objects
+     */
     public graph2b(double[][] points) {
         String[] seriesNames = new String[points.length];
         for (int i = 0; i < points.length; i++)
@@ -69,6 +77,15 @@ public class graph2b extends javax.swing.JFrame {
         pack();
     }
 
+    /**
+     * <p>Constructor for graph2b.</p>
+     *
+     * @param points an array of {@link double} objects
+     * @param seriesNames an array of {@link java.lang.String} objects
+     * @param tit a {@link java.lang.String} object
+     * @param xaxis a {@link java.lang.String} object
+     * @param yaxis a {@link java.lang.String} object
+     */
     public graph2b(double[][] points, String[] seriesNames, String tit, String xaxis, String yaxis) {
         XYSeriesCollection seriesCol = new XYSeriesCollection();
 
@@ -99,6 +116,16 @@ public class graph2b extends javax.swing.JFrame {
         pack();
     }
 
+    /**
+     * <p>Constructor for graph2b.</p>
+     *
+     * @param xpoints an array of {@link double} objects
+     * @param points an array of {@link double} objects
+     * @param seriesNames an array of {@link java.lang.String} objects
+     * @param tit a {@link java.lang.String} object
+     * @param xaxis a {@link java.lang.String} object
+     * @param yaxis a {@link java.lang.String} object
+     */
     public graph2b(double[][] xpoints, double[][] points, String[] seriesNames, String tit, String xaxis,
             String yaxis) {
 
@@ -131,6 +158,11 @@ public class graph2b extends javax.swing.JFrame {
         pack();
     }
 
+    /**
+     * <p>saveFigure.</p>
+     *
+     * @param fileName a {@link java.lang.String} object
+     */
     public void saveFigure(String fileName) {
         try {
             System.out.println("start creating png figure...");
@@ -143,6 +175,11 @@ public class graph2b extends javax.swing.JFrame {
         }
     }
 
+    /**
+     * <p>getBufferedImage.</p>
+     *
+     * @return a {@link java.awt.image.BufferedImage} object
+     */
     public BufferedImage getBufferedImage() {
         BufferedImage buf = null;
         try {
@@ -193,6 +230,11 @@ public class graph2b extends javax.swing.JFrame {
         this.setVisible(false);
     }// GEN-LAST:event_buttonclick
 
+    /**
+     * <p>createCategoryDataSource.</p>
+     *
+     * @return a {@link org.jfree.data.category.CategoryDataset} object
+     */
     public CategoryDataset createCategoryDataSource() {
         /*
         Number[][] data = new Integer[][] {
@@ -218,11 +260,18 @@ public class graph2b extends javax.swing.JFrame {
         this.removeAll();
     }// GEN-LAST:event_exitForm
 
+    /**
+     * <p>getChartPanel.</p>
+     *
+     * @return a {@link org.jfree.chart.ChartPanel} object
+     */
     public ChartPanel getChartPanel() {
         return chartPanel4;
     }
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     public static void main(String args[]) {
@@ -231,7 +280,7 @@ public class graph2b extends javax.swing.JFrame {
 
     /**
      * Getter for property chart.
-     * 
+     *
      * @return Value of property chart.
      */
     public JFreeChart getChart() {
@@ -240,7 +289,7 @@ public class graph2b extends javax.swing.JFrame {
 
     /**
      * Setter for property chart.
-     * 
+     *
      * @param chart New value of property chart.
      */
     public void setChart(JFreeChart chart) {

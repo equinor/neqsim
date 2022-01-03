@@ -11,9 +11,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermBaseClass class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
@@ -26,21 +26,30 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
 
     static Logger logger = LogManager.getLogger(AtractiveTermBaseClass.class);
 
+    /**
+     * <p>Constructor for AtractiveTermBaseClass.</p>
+     */
     public AtractiveTermBaseClass() {
 
     }
 
-    /** Creates new AtractiveTermBaseClass */
+    /**
+     * Creates new AtractiveTermBaseClass
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermBaseClass(ComponentEosInterface component) {
         this.setComponent(component);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setm(double val) {
         this.m = val;
         logger.info("does not solve for accentric when new m is set... in AccentricBase class");
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermBaseClass clone() {
         AtractiveTermBaseClass atractiveTerm = null;
@@ -57,44 +66,53 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {}
 
+    /** {@inheritDoc} */
     @Override
     public double diffdiffalphaT(double temperature) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffdiffaT(double temperature) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double aT(double temperature) {
         return getComponent().geta();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double alpha(double temperature) {
         return 1.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffaT(double temperature) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffalphaT(double temperature) {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setParameters(int i, double val) {
         parameters[i] = val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getParameters(int i) {
         return parameters[i];

@@ -6,9 +6,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>CPAFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class CPAFunction extends LevenbergMarquardtFunction {
 
@@ -20,6 +20,7 @@ public class CPAFunction extends LevenbergMarquardtFunction {
      */
     public CPAFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         // system.setTemperature(dependentValues[0]);
@@ -35,11 +36,13 @@ public class CPAFunction extends LevenbergMarquardtFunction {
         return system.getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -9,9 +9,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermGERG class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermGERG extends AtractiveTermPr {
 
@@ -19,7 +19,11 @@ public class AtractiveTermGERG extends AtractiveTermPr {
     protected double parametersGERG[] = { 0.905436, -0.213781, 0.26005 };
     protected double parametersSolidGERG[] = { 0.106025, 2.683845, -4.75638 };
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermGERG(ComponentEosInterface component) {
         super(component);
         if (component.getName().equals("water")) {
@@ -30,6 +34,11 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
+    /**
+     * <p>AtractiveTermGERG.</p>
+     *
+     * @return a {@link java.lang.Object} object
+     */
     public Object AtractiveTermGERG() {
         AtractiveTermGERG atractiveTerm = null;
         try {
@@ -41,6 +50,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         if (getComponent().getName().equals("water")) {
@@ -60,6 +70,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         if (getComponent().getName().equals("water")) {
@@ -69,6 +80,12 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
+    /**
+     * <p>diffalphaTGERG.</p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double diffalphaTGERG(double temperature) {
         // ikke beregnet riktig
         if (temperature < 273.15) {
@@ -88,6 +105,12 @@ public class AtractiveTermGERG extends AtractiveTermPr {
 
     }
 
+    /**
+     * <p>diffdiffalphaTGERG.</p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double diffdiffalphaTGERG(double temperature) {
         // ikke beregnet riktig
         if (temperature < 273.15) {
@@ -115,6 +138,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
                                         / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         if (getComponent().getName().equals("water")) {
@@ -124,6 +148,7 @@ public class AtractiveTermGERG extends AtractiveTermPr {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         if (getComponent().getName().equals("water")) {

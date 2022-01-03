@@ -17,6 +17,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * This class is an implementation of the compressor chart class that uses Fan
  * laws and "double" interpolation to navigate the compressor map (as opposed to
  * the standard class using reduced variables according to Fan laws).
+ *
+ * @author asmund
+ * @version $Id: $Id
  */
 public class CompressorChartAlternativeMapLookup implements CompressorChartInterface, java.io.Serializable {
 
@@ -45,9 +48,13 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
     PolynomialFunction fanLawCorrectionFunc = null;
     double gearRatio = 1.0;
 
+    /**
+     * <p>Constructor for CompressorChartAlternativeMapLookup.</p>
+     */
     public CompressorChartAlternativeMapLookup() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
         CompressorCurve curve = new CompressorCurve(speed, flow, head, polytropicEfficiency);
@@ -55,6 +62,7 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         chartSpeeds.add(speed);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
             double[][] polyEff) {
@@ -68,6 +76,12 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         setUseCompressorChart(true);
     }
 
+    /**
+     * <p>getClosestRefSpeeds.</p>
+     *
+     * @param speed a double
+     * @return a {@link java.util.ArrayList} object
+     */
     public ArrayList<Double> getClosestRefSpeeds(double speed) {
 
         ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
@@ -99,6 +113,7 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return closestRefSpeeds;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPolytropicHead(double flow, double speed) {
         ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
@@ -122,6 +137,7 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return sum / tempHeads.size();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPolytropicEfficiency(double flow, double speed) {
         ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
@@ -144,6 +160,12 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return sum / tempEffs.size();
     }
 
+    /**
+     * <p>addSurgeCurve.</p>
+     *
+     * @param flow an array of {@link double} objects
+     * @param head an array of {@link double} objects
+     */
     public void addSurgeCurve(double[] flow, double[] head) {
         surgeCurve = new SurgeCurve(flow, head);
     }
@@ -153,6 +175,12 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
     // return 100.0;
     // }
 
+    /**
+     * <p>getCurveAtRefSpeed.</p>
+     *
+     * @param refSpeed a double
+     * @return a {@link neqsim.processSimulation.processEquipment.compressor.CompressorCurve} object
+     */
     public CompressorCurve getCurveAtRefSpeed(double refSpeed) {
         for (int i = 0; i < chartValues.size(); i++) {
             CompressorCurve c = chartValues.get(i);
@@ -166,18 +194,36 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         throw new RuntimeException(e);
     }
 
+    /**
+     * <p>Getter for the field <code>gearRatio</code>.</p>
+     *
+     * @return a double
+     */
     public double getGearRatio() {
         return gearRatio;
     }
 
+    /**
+     * <p>Setter for the field <code>gearRatio</code>.</p>
+     *
+     * @param GR a double
+     */
     public void setGearRatio(double GR) {
         gearRatio = GR;
     }
 
+    /**
+     * <p>polytropicEfficiency.</p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a double
+     */
     public double polytropicEfficiency(double flow, double speed) {
         return 100.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getSpeed(double flow, double head) {
 
@@ -202,18 +248,40 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         return (int) Math.round(newspeed);
     }
 
+    /**
+     * <p>checkSurge1.</p>
+     *
+     * @param flow a double
+     * @param head a double
+     * @return a boolean
+     */
     public boolean checkSurge1(double flow, double head) {
         return false;
     }
 
+    /**
+     * <p>checkSurge2.</p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a boolean
+     */
     public boolean checkSurge2(double flow, double speed) {
         return false;
     }
 
+    /**
+     * <p>checkStoneWall.</p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a boolean
+     */
     public boolean checkStoneWall(double flow, double speed) {
         return false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ) {
         this.refMW = refMW;
@@ -222,26 +290,35 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         this.refZ = refZ;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SurgeCurve getSurgeCurve() {
         return surgeCurve;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSurgeCurve(SurgeCurve surgeCurve) {
         this.surgeCurve = surgeCurve;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StoneWallCurve getStoneWallCurve() {
         return stoneWallCurve;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setStoneWallCurve(StoneWallCurve stoneWallCurve) {
         this.stoneWallCurve = stoneWallCurve;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
 
@@ -353,40 +430,62 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         System.out.println("flow " + stream_1.getThermoSystem().getFlowRate("m3/hr"));
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isUseCompressorChart() {
         return useCompressorChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setUseCompressorChart(boolean useCompressorChart) {
         this.useCompressorChart = useCompressorChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getHeadUnit() {
         return headUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHeadUnit(String headUnit) {
         this.headUnit = headUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean useRealKappa() {
         return useRealKappa;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setUseRealKappa(boolean useRealKappa) {
         this.useRealKappa = useRealKappa;
     }
 
+    /**
+     * <p>bisect_left.</p>
+     *
+     * @param A an array of {@link java.lang.Double} objects
+     * @param x a double
+     * @return a int
+     */
     public static int bisect_left(Double[] A, double x) {
         return bisect_left(A, x, 0, A.length);
     }
 
+    /**
+     * <p>bisect_left.</p>
+     *
+     * @param A an array of {@link java.lang.Double} objects
+     * @param x a double
+     * @param lo a int
+     * @param hi a int
+     * @return a int
+     */
     public static int bisect_left(Double[] A, double x, int lo, int hi) {
         int N = A.length;
         if (N == 0) {
@@ -411,6 +510,7 @@ public class CompressorChartAlternativeMapLookup implements CompressorChartInter
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void plot() {
 

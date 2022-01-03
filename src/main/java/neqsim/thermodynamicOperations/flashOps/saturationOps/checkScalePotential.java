@@ -9,6 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>checkScalePotential class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class checkScalePotential extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
@@ -24,12 +30,19 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     public checkScalePotential() {
     }
 
+    /**
+     * <p>Constructor for checkScalePotential.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumber a int
+     */
     public checkScalePotential(SystemInterface system, int phaseNumber) {
         super(system);
         this.phaseNumber = phaseNumber;
         logger.info("ok ");
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
 
@@ -178,10 +191,12 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String[][] getResultTable() {
         logger.info("checking table...scale " + resultTable[0][0]);

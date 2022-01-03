@@ -9,11 +9,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>TestWaxTuning class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestWaxTuning {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

@@ -11,9 +11,9 @@ import org.apache.commons.math3.linear.*;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>GTSurfaceTensionSimple class.</p>
  *
  * @author esol
- * @version
  */
 public class GTSurfaceTensionSimple extends SurfaceTension {
 
@@ -35,10 +35,18 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     public GTSurfaceTensionSimple() {
     }
 
+    /**
+     * <p>Constructor for GTSurfaceTensionSimple.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public GTSurfaceTensionSimple(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>calcInfluenceParameters.</p>
+     */
     public void calcInfluenceParameters() {
         influenceParam = new double[localSystem.getPhase(0).getNumberOfComponents()];
         for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
@@ -47,10 +55,12 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         }
     }
 
-    /**
-     * Calculates the surfacetension using the Gradient Theory for mixtures Units:
-     * N/m
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Calculates the surfacetension using the Gradient Theory for mixtures Units:
+	 * N/m
+	 */
     @Override
 	public double calcSurfaceTension(int interface1, int interface2) {
         localSystem = (SystemInterface) system.clone();
@@ -299,6 +309,12 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         return Math.abs(surdenstemp);
     }
 
+    /**
+     * <p>getMolarDensity.</p>
+     *
+     * @param compnum a int
+     * @return an array of {@link double} objects
+     */
     public double[] getMolarDensity(int compnum) {
         double[] temp = new double[ite_step];
         for (int i = 0; i < ite_step; i++) {
@@ -307,6 +323,11 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         return temp;
     }
 
+    /**
+     * <p>getMolarDensityTotal.</p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getMolarDensityTotal() {
         double[] temp = new double[ite_step];
         for (int i = 0; i < ite_step; i++) {
@@ -317,14 +338,31 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         return temp;
     }
 
+    /**
+     * <p>getz.</p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getz() {
         return z_step;
     }
 
+    /**
+     * <p>getPressure.</p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getPressure() {
         return pressure_interface;
     }
 
+    /**
+     * <p>getInfluenceParameter.</p>
+     *
+     * @param interfaceTension a double
+     * @param componentNumber a int
+     * @return a double
+     */
     public double getInfluenceParameter(double interfaceTension, int componentNumber) {
         double startGuess = calcSurfaceTension(0, 1);
         double oldInfluenceParameter = influenceParam[componentNumber];
@@ -353,6 +391,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     }
 
     /**
+     * <p>Getter for the field <code>dmudn2</code>.</p>
+     *
      * @return the dmudn2
      */
     public double[][][] getDmudn2() {
@@ -360,6 +400,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     }
 
     /**
+     * <p>Setter for the field <code>dmudn2</code>.</p>
+     *
      * @param dmudn2 the dmudn2 to set
      */
     public void setDmudn2(double[][][] dmudn2) {

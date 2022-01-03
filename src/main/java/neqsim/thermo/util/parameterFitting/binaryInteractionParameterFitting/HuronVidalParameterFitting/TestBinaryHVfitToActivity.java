@@ -8,12 +8,17 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>TestBinaryHVfitToActivity class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestBinaryHVfitToActivity implements Cloneable {
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

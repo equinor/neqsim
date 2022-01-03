@@ -6,6 +6,12 @@ import Jama.Matrix;
 import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>sysNewtonRhapsonPhaseEnvelope class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
@@ -48,8 +54,18 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
     double volold = Math.pow(10, 5);
     double volold2 = Math.pow(10, 5);
 
+    /**
+     * <p>Constructor for sysNewtonRhapsonPhaseEnvelope.</p>
+     */
     public sysNewtonRhapsonPhaseEnvelope() {}
 
+    /**
+     * <p>Constructor for sysNewtonRhapsonPhaseEnvelope.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
+     */
     public sysNewtonRhapsonPhaseEnvelope(SystemInterface system, int numberOfPhases,
             int numberOfComponents) {
         this.system = system;
@@ -66,6 +82,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         solver.setOrder(3);
     }
 
+    /**
+     * <p>setfvec22.</p>
+     */
     public void setfvec22() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, Math
@@ -84,6 +103,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         fvec.set(numberOfComponents + 1, 0, u.get(speceq, 0) - specVal);
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
 
         for (int i = 0; i < numberOfComponents; i++) {
@@ -95,6 +117,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         fvec.set(numberOfComponents + 1, 0, u.get(speceq, 0) - specVal);
     }
 
+    /**
+     * <p>findSpecEqInit.</p>
+     */
     public void findSpecEqInit() {
         speceq = 0;
         int speceqmin = 0;
@@ -121,6 +146,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>findSpecEq.</p>
+     */
     public void findSpecEq() {
         double max = 0;
         double max2 = 0.;
@@ -157,12 +185,20 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>useAsSpecEq.</p>
+     *
+     * @param i a int
+     */
     public void useAsSpecEq(int i) {
         speceq = i;
         specVal = u.get(i, 0);
         System.out.println("Enforced Scec Variable" + speceq + "  " + specVal);
     }
 
+    /**
+     * <p>calc_x_y.</p>
+     */
     public final void calc_x_y() {
         sumx = 0;
         sumy = 0;
@@ -182,6 +218,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>setJac2.</p>
+     */
     public void setJac2() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -220,6 +259,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         Jac.set(numberOfComponents + 1, speceq, 1.0);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -265,6 +307,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         Jac.set(numberOfComponents + 1, speceq, 1.0);
     }
 
+    /**
+     * <p>Setter for the field <code>u</code>.</p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, Math.log(system.getPhase(0).getComponents()[i].getK()));
@@ -273,6 +318,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         u.set(numberOfComponents + 1, 0, Math.log(system.getPressure()));
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhase(0).getComponents()[i].setK(Math.exp(u.get(i, 0)));
@@ -286,6 +334,11 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         system.init(3);
     }
 
+    /**
+     * <p>calcInc.</p>
+     *
+     * @param np a int
+     */
     public void calcInc(int np) {
         // First we need the sensitivity vector dX/dS
         // calculates the sensitivity vector and stores the xgij matrix
@@ -415,6 +468,11 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         iter2 = 0;
     }
 
+    /**
+     * <p>calcInc2.</p>
+     *
+     * @param np a int
+     */
     public void calcInc2(int np) {
 
         // Here we calcualte the estimate of the next point from the polynomial.
@@ -446,6 +504,9 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         xcoefOld = xcoef.copy();
     }
 
+    /**
+     * <p>calcCrit.</p>
+     */
     public void calcCrit() {
         // calculates the critical point based on interpolation polynomials
         Matrix aa = a.copy();
@@ -488,16 +549,33 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
         u = uu.copy();
     }
 
+    /**
+     * <p>Getter for the field <code>npCrit</code>.</p>
+     *
+     * @return a int
+     */
     public int getNpCrit() {
         return npCrit;
     }
 
+    /**
+     * <p>sign.</p>
+     *
+     * @param a a double
+     * @param b a double
+     * @return a double
+     */
     public double sign(double a, double b) {
         a = Math.abs(a);
         b = b >= 0 ? 1.0 : -1.0;
         return a * b;
     }
 
+    /**
+     * <p>solve.</p>
+     *
+     * @param np a int
+     */
     public void solve(int np) {
         // this method actually solves the phase evnelope point
         Matrix dx;
@@ -575,6 +653,11 @@ public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {
          */
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         /*
          * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};

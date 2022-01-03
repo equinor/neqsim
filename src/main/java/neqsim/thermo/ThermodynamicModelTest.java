@@ -10,22 +10,33 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ThermodynamicModelTest class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     SystemInterface system;
     static Logger logger = LogManager.getLogger(ThermodynamicModelTest.class);
 
+    /**
+     * <p>Constructor for ThermodynamicModelTest.</p>
+     */
     public ThermodynamicModelTest() {
     }
 
+    /**
+     * <p>Constructor for ThermodynamicModelTest.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ThermodynamicModelTest(SystemInterface system) {
         this.system = system;
     }
 
+    /**
+     * <p>runTest.</p>
+     */
     public void runTest() {
         // system.init(0);
         system.init(3);
@@ -48,6 +59,11 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         // checkNumerically());
     }
 
+    /**
+     * <p>checkFugasityCoeffisients.</p>
+     *
+     * @return a boolean
+     */
     public boolean checkFugasityCoeffisients() {
         double temp1 = 0, temp2 = 0;
         boolean test1 = false, test2 = false;
@@ -74,6 +90,11 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         return Math.abs(sum) < 1e-10;
     }
 
+    /**
+     * <p>checkFugasityCoeffisientsDn.</p>
+     *
+     * @return a boolean
+     */
     public boolean checkFugasityCoeffisientsDn() {
         boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
@@ -108,6 +129,11 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         return Math.abs(sum) < 1e-10;
     }
 
+    /**
+     * <p>checkFugasityCoeffisientsDn2.</p>
+     *
+     * @return a boolean
+     */
     public boolean checkFugasityCoeffisientsDn2() {
         boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
@@ -139,6 +165,11 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         return Math.abs(sum) < 1e-10;
     }
 
+    /**
+     * <p>checkFugasityCoeffisientsDP.</p>
+     *
+     * @return a boolean
+     */
     public boolean checkFugasityCoeffisientsDP() {
         boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
@@ -167,6 +198,11 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         return Math.abs(sum) < 1e-10;
     }
 
+    /**
+     * <p>checkFugasityCoeffisientsDT.</p>
+     *
+     * @return a boolean
+     */
     public boolean checkFugasityCoeffisientsDT() {
         boolean test1 = false, test2 = false;
         double temp1 = 0, temp2 = 0;
@@ -192,6 +228,11 @@ public class ThermodynamicModelTest implements ThermodynamicConstantsInterface {
         return Math.abs(sum) < 1e-10;
     }
 
+    /**
+     * <p>checkNumerically.</p>
+     *
+     * @return a boolean
+     */
     public boolean checkNumerically() {
 
         double[][] gasfug = new double[2][system.getPhases()[0].getNumberOfComponents()];

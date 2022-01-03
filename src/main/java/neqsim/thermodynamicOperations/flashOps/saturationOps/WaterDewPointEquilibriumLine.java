@@ -4,8 +4,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>WaterDewPointEquilibriumLine class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
 
@@ -15,12 +17,20 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
     double minPressure = 1.0, maxPressure = 200.0;
     int numberOfPoints = 10;
 
+    /**
+     * <p>Constructor for WaterDewPointEquilibriumLine.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param minPres a double
+     * @param maxPres a double
+     */
     public WaterDewPointEquilibriumLine(SystemInterface system, double minPres, double maxPres) {
         super(system);
         minPressure = minPres;
         maxPressure = maxPres;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         SystemInterface system = (SystemInterface) this.system.clone();
@@ -44,6 +54,7 @@ public class WaterDewPointEquilibriumLine extends constantDutyTemperatureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double[][] getPoints(int i) {
         return hydratePoints;

@@ -3,7 +3,10 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import java.util.*;
 
 /**
+ * <p>Fittings class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Fittings {
 
@@ -11,17 +14,36 @@ public class Fittings {
 
     ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
 
+    /**
+     * <p>Constructor for Fittings.</p>
+     */
     public Fittings() {
     }
 
+    /**
+     * <p>add.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param LdivD a double
+     */
     public void add(String name, double LdivD) {
         fittingList.add(new Fitting(name, LdivD));
     }
 
+    /**
+     * <p>add.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void add(String name) {
         fittingList.add(new Fitting(name));
     }
 
+    /**
+     * <p>getFittingsList.</p>
+     *
+     * @return a {@link java.util.ArrayList} object
+     */
     public ArrayList<Fitting> getFittingsList() {
         return fittingList;
     }

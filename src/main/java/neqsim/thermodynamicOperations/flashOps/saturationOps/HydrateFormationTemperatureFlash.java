@@ -10,6 +10,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>HydrateFormationTemperatureFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFlash {
 
     private static final long serialVersionUID = 1000;
@@ -21,14 +27,23 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
     public HydrateFormationTemperatureFlash() {
     }
 
+    /**
+     * <p>Constructor for HydrateFormationTemperatureFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public HydrateFormationTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>stop.</p>
+     */
     public void stop() {
         system = null;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         double olfFug = 0.0;
@@ -78,6 +93,9 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
                 || iter < 3);
     }
 
+    /**
+     * <p>run2.</p>
+     */
     public void run2() {
         double olfFug = 0.0;
         double oldTemp = 0.0, oldOldTemp = 0.0, oldDiff = 0.0, oldOldDiff = 0.0;
@@ -126,6 +144,9 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
                 || iter < 3);
     }
 
+    /**
+     * <p>setFug.</p>
+     */
     public void setFug() {
         system.getPhase(4).getComponent("water").setx(1.0);
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -144,6 +165,7 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
         system.getPhase(4).getComponent("water").fugcoef(system.getPhase(4));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

@@ -9,12 +9,18 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>VapourPressureTTest class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class VapourPressureTTest {
     static SystemInterface thermoSystem = null;
 
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemSrkEos(128.0, 10.0);
@@ -23,6 +29,9 @@ public class VapourPressureTTest {
         thermoSystem.setMixingRule(2);
     }
 
+    /**
+     * <p>testDewBubblePointT.</p>
+     */
     @Test
     public void testDewBubblePointT() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -42,6 +51,9 @@ public class VapourPressureTTest {
         assertTrue(Math.abs(bubblePointT - dewPointT) < 1e-2);
     }
 
+    /**
+     * <p>testSaturateWIthWater.</p>
+     */
     @Disabled
     @Test
     public void testSaturateWIthWater() {

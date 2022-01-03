@@ -23,14 +23,22 @@ abstract class Conductivity
 
     double conductivity = 0;
 
-    /** Creates new Conductivity */
+    /**
+     * Creates new Conductivity
+     */
     public Conductivity() {
     }
 
+    /**
+     * <p>Constructor for Conductivity.</p>
+     *
+     * @param gasPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public Conductivity clone() {
         Conductivity properties = null;

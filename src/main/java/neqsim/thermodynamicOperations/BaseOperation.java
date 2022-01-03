@@ -9,8 +9,9 @@ package neqsim.thermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>Abstract BaseOperation class.</p>
+ *
  * @author esol
- * @version
  */
 public abstract class BaseOperation implements OperationInterface {
 
@@ -18,42 +19,52 @@ public abstract class BaseOperation implements OperationInterface {
 
     SystemInterface systemThermo = null;;
 
-    /** Creates new BaseOperation */
+    /**
+     * Creates new BaseOperation
+     */
     public BaseOperation() {}
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         return new double[3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return new String[10][3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addData(String name, double[][] data) {
 

@@ -5,11 +5,17 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>PS_PH_flash class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class PS_PH_flash {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkMathiasCopeman(273.15 + 5, 80);

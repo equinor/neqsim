@@ -5,9 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>AntoineSolidFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class AntoineSolidFunction extends LevenbergMarquardtFunction {
 
@@ -15,10 +15,14 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
     static Logger logger = LogManager.getLogger(AntoineSolidFunction.class);
 
 
+    /**
+     * <p>Constructor for AntoineSolidFunction.</p>
+     */
     public AntoineSolidFunction() {
         params = new double[2];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -30,6 +34,7 @@ public class AntoineSolidFunction extends LevenbergMarquardtFunction {
         return system.getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

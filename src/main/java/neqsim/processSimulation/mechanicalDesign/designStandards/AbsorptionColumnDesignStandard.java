@@ -3,8 +3,10 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>AbsorptionColumnDesignStandard class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class AbsorptionColumnDesignStandard extends DesignStandard {
 
@@ -12,6 +14,12 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
 
     private double molecularSieveWaterCapacity = 20;// %
 
+    /**
+     * <p>Constructor for AbsorptionColumnDesignStandard.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     */
     public AbsorptionColumnDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
@@ -46,6 +54,8 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     }
 
     /**
+     * <p>Getter for the field <code>molecularSieveWaterCapacity</code>.</p>
+     *
      * @return the molecularSieveWaterCapacity
      */
     public double getMolecularSieveWaterCapacity() {
@@ -53,6 +63,8 @@ public class AbsorptionColumnDesignStandard extends DesignStandard {
     }
 
     /**
+     * <p>Setter for the field <code>molecularSieveWaterCapacity</code>.</p>
+     *
      * @param molecularSieveWaterCapacity the molecularSieveWaterCapacity to set
      */
     public void setMolecularSieveWaterCapacity(double molecularSieveWaterCapacity) {

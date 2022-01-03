@@ -10,6 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>PFCTViscosityMethod class.</p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -26,16 +27,24 @@ public class PFCTViscosityMethod extends Viscosity {
     double viscRefJ[] = { -1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2,
             1.4529023444e2, 6.1276818706e3 };
 
-    /** Creates new ChungViscosityMethod */
+    /**
+     * Creates new ChungViscosityMethod
+     */
     public PFCTViscosityMethod() {
     }
 
+    /**
+     * <p>Constructor for PFCTViscosityMethod.</p>
+     *
+     * @param phase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public PFCTViscosityMethod(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
         referenceSystem.addComponent("methane", 10.0);
         referenceSystem.init(0);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcViscosity() {
 
@@ -103,11 +112,19 @@ public class PFCTViscosityMethod extends Viscosity {
         return viscosity;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getPureComponentViscosity(int i) {
         return 0;
     }
 
+    /**
+     * <p>getRefComponentViscosity.</p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double getRefComponentViscosity(double temp, double pres) {
 
         referenceSystem.setTemperature(temp);

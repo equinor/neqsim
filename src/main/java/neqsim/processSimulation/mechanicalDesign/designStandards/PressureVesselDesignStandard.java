@@ -4,17 +4,30 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
+ * <p>PressureVesselDesignStandard class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class PressureVesselDesignStandard extends DesignStandard {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for PressureVesselDesignStandard.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     */
     public PressureVesselDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
     }
 
+    /**
+     * <p>calcWallThickness.</p>
+     *
+     * @return a double
+     */
     public double calcWallThickness() {
         Separator separator = (Separator) equipment.getProcessEquipment();
         double wallT = 0;

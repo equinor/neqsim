@@ -11,16 +11,26 @@ package neqsim.chemicalReactions.chemicalReaction;
 import java.util.ArrayList;
 
 /**
+ * <p>ChemicalReactionFactory class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class ChemicalReactionFactory {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates a new instance of ChemicalReactionFactory */
+    /**
+     * Creates a new instance of ChemicalReactionFactory
+     */
     public ChemicalReactionFactory() {}
 
+    /**
+     * <p>getChemicalReaction.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReaction} object
+     */
     public static ChemicalReaction getChemicalReaction(String name) {
         ArrayList<String> names = new ArrayList<String>();
         ArrayList<String> stocCoef = new ArrayList<String>();

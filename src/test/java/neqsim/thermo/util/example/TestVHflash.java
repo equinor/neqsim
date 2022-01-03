@@ -11,9 +11,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author  esol
  * @version
  */
+/**
+ * <p>TestVHflash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestVHflash {
     static Logger logger = LogManager.getLogger(TestVHflash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         double pressureInTank = 1.01325; // Pa
         double temperatureInTank = 293.15;

@@ -23,14 +23,25 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
     protected double[] dlngammadn;
     static Logger logger = LogManager.getLogger(ComponentGE.class);
 
-    /** Creates new ComponentGE */
+    /**
+     * Creates new ComponentGE
+     */
     public ComponentGE() {
     }
 
+    /**
+     * <p>Constructor for ComponentGE.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGE(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
@@ -54,6 +65,12 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>fugcoefDiffPres.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double fugcoefDiffPres(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
@@ -65,6 +82,12 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         return dfugdp;
     }
 
+    /**
+     * <p>fugcoefDiffTemp.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double fugcoefDiffTemp(PhaseInterface phase) {
         double temperature = phase.getTemperature(), pressure = phase.getPressure();
         int numberOfComponents = phase.getNumberOfComponents();
@@ -78,42 +101,47 @@ abstract class ComponentGE extends Component implements ComponentGEInterface {
         return dfugdt;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGamma() {
         return gamma;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getlnGamma() {
         return lngamma;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getlnGammadt() {
         return dlngammadt;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getlnGammadtdt() {
         return dlngammadtdt;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setlnGammadn(int k, double val) {
         dlngammadn[k] = val;
     }
 
-    /**
-     * Getter for property gammaRefCor.
-     * 
-     * @return Value of property gammaRefCor.
-     *
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Getter for property gammaRefCor.
+	 */
     @Override
 	public double getGammaRefCor() {
         return gammaRefCor;

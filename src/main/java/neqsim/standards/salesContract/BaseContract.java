@@ -20,8 +20,10 @@ import neqsim.standards.gasQuality.UKspecifications_ICF_SI;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>BaseContract class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class BaseContract implements ContractInterface {
 
@@ -34,16 +36,30 @@ public class BaseContract implements ContractInterface {
     ContractSpecification[] spesifications = new ContractSpecification[50];
     private int specificationsNumber = 0;
 
-    /** Creates a new instance of BaseContract */
+    /**
+     * Creates a new instance of BaseContract
+     */
     public BaseContract() {
     }
 
+    /**
+     * <p>Constructor for BaseContract.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public BaseContract(SystemInterface system) {
         StandardInterface standard = new Draft_ISO18453(system);
         spesifications[0] = new ContractSpecification("", "", "", "water dew point specification", standard, 0, 0,
                 "degC", 0, 0, 0, "");
     }
 
+    /**
+     * <p>Constructor for BaseContract.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param terminal a {@link java.lang.String} object
+     * @param country a {@link java.lang.String} object
+     */
     public BaseContract(SystemInterface system, String terminal, String country) {
         int numb = 0;
         this.setContractName(contractName);
@@ -86,6 +102,13 @@ public class BaseContract implements ContractInterface {
         }
     }
 
+    /**
+     * <p>getMethod.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param methodName a {@link java.lang.String} object
+     * @return a {@link neqsim.standards.StandardInterface} object
+     */
     public StandardInterface getMethod(SystemInterface system, String methodName) {
         if (methodName.equals("ISO18453")) {
             return new Draft_ISO18453(system);
@@ -117,6 +140,23 @@ public class BaseContract implements ContractInterface {
         return null;
     }
 
+    /**
+     * <p>getSpecification.</p>
+     *
+     * @param method a {@link neqsim.standards.StandardInterface} object
+     * @param specificationName a {@link java.lang.String} object
+     * @param specificationName2 a {@link java.lang.String} object
+     * @param country a {@link java.lang.String} object
+     * @param terminal a {@link java.lang.String} object
+     * @param minValue a double
+     * @param maxValue a double
+     * @param unit a {@link java.lang.String} object
+     * @param referenceTemperature a double
+     * @param referenceTemperatureComb a double
+     * @param referencePressure a double
+     * @param comments a {@link java.lang.String} object
+     * @return a {@link neqsim.standards.salesContract.ContractSpecification} object
+     */
     public ContractSpecification getSpecification(StandardInterface method, String specificationName,
             String specificationName2, String country, String terminal, double minValue, double maxValue, String unit,
             double referenceTemperature, double referenceTemperatureComb, double referencePressure, String comments) {
@@ -125,6 +165,7 @@ public class BaseContract implements ContractInterface {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void runCheck() {
         int j = 0;
@@ -159,6 +200,7 @@ public class BaseContract implements ContractInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void display() {
         JFrame dialog = new JFrame("Specification check against sales specifications: " + getContractName());
@@ -175,83 +217,84 @@ public class BaseContract implements ContractInterface {
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setContract(String name) {
         waterDewPointTemperature = -12.0;
         waterDewPointSpecPressure = 70.0;
     }
 
-    /**
-     * Getter for property waterDewPointTemperature.
-     * 
-     * @return Value of property waterDewPointTemperature.
-     *
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Getter for property waterDewPointTemperature.
+	 */
     @Override
 	public double getWaterDewPointTemperature() {
         return waterDewPointTemperature;
     }
 
-    /**
-     * Setter for property waterDewPointTemperature.
-     * 
-     * @param waterDewPointTemperature New value of property
-     *                                 waterDewPointTemperature.
-     *
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Setter for property waterDewPointTemperature.
+	 */
     @Override
 	public void setWaterDewPointTemperature(double waterDewPointTemperature) {
         this.waterDewPointTemperature = waterDewPointTemperature;
     }
 
-    /**
-     * Getter for property waterDewPointSpecPressure.
-     * 
-     * @return Value of property waterDewPointSpecPressure.
-     *
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Getter for property waterDewPointSpecPressure.
+	 */
     @Override
 	public double getWaterDewPointSpecPressure() {
         return waterDewPointSpecPressure;
     }
 
-    /**
-     * Setter for property waterDewPointSpecPressure.
-     * 
-     * @param waterDewPointSpecPressure New value of property
-     *                                  waterDewPointSpecPressure.
-     *
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Setter for property waterDewPointSpecPressure.
+	 */
     @Override
 	public void setWaterDewPointSpecPressure(double waterDewPointSpecPressure) {
         this.waterDewPointSpecPressure = waterDewPointSpecPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public int getSpecificationsNumber() {
         return specificationsNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setSpecificationsNumber(int specificationsNumber) {
         this.specificationsNumber = specificationsNumber;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String[][] getResultTable() {
         return resultTable;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String getContractName() {
         return contractName;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setContractName(String contractName) {
         this.contractName = contractName;

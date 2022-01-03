@@ -9,9 +9,9 @@ import neqsim.thermo.phase.PhaseInterface;
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>ComponentHydrateKluda class.</p>
  *
  * @author esol
- * @version
  */
 public class ComponentHydrateKluda extends Component {
 
@@ -29,10 +29,20 @@ public class ComponentHydrateKluda extends Component {
     double reffug[] = new double[20];
     static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
-    /** Creates new Class */
+    /**
+     * Creates new Class
+     */
     public ComponentHydrateKluda() {
     }
 
+    /**
+     * <p>Constructor for ComponentHydrateKluda.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentHydrateKluda(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         coordNumb[0][0][0] = 20.0;
@@ -62,15 +72,30 @@ public class ComponentHydrateKluda extends Component {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
     }
 
+    /**
+     * <p>setStructure.</p>
+     *
+     * @param structure a int
+     */
     public void setStructure(int structure) {
         this.hydrateStructure = structure;
     }
 
+    /**
+     * <p>fugcoef.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
 
         if (componentName.equals("water")) {
@@ -113,6 +138,15 @@ public class ComponentHydrateKluda extends Component {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>dfugdt.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double dfugdt(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
             double solvol = 1.0 / getPureComponentSolidDensity(getMeltingPointTemperature()) * molarMass;
@@ -123,6 +157,13 @@ public class ComponentHydrateKluda extends Component {
         return dfugdt;
     }
 
+    /**
+     * <p>getEmptyHydrateStructureVapourPressure.</p>
+     *
+     * @param type a int
+     * @param temperature a double
+     * @return a double
+     */
     public double getEmptyHydrateStructureVapourPressure(int type, double temperature) {
         double par1_struc1 = 4.6477;
         double par2_struc1 = -5242.979;
@@ -139,6 +180,13 @@ public class ComponentHydrateKluda extends Component {
         }
     }
 
+    /**
+     * <p>getEmptyHydrateStructureVapourPressuredT.</p>
+     *
+     * @param type a int
+     * @param temperature a double
+     * @return a double
+     */
     public double getEmptyHydrateStructureVapourPressuredT(int type, double temperature) {
 
         if (type == 0) {
@@ -151,6 +199,14 @@ public class ComponentHydrateKluda extends Component {
         }
     }
 
+    /**
+     * <p>calcYKI.</p>
+     *
+     * @param stucture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("methane")) {
             double yki = calcCKI(stucture, cavityType, phase) * reffug[componentNumber];
@@ -168,6 +224,14 @@ public class ComponentHydrateKluda extends Component {
         }
     }
 
+    /**
+     * <p>calcCKI.</p>
+     *
+     * @param stucture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         double cki = 4.0 * pi / (boltzmannConstant * phase.getTemperature())
                 * (potIntegral(0, stucture, cavityType, phase));// +0*potIntegral(1,stucture,
@@ -177,10 +241,25 @@ public class ComponentHydrateKluda extends Component {
         return cki;
     }
 
+    /**
+     * <p>setRefFug.</p>
+     *
+     * @param compNumbm a int
+     * @param val a double
+     */
     public void setRefFug(int compNumbm, double val) {
         reffug[compNumbm] = val;
     }
 
+    /**
+     * <p>potIntegral.</p>
+     *
+     * @param intnumb a int
+     * @param stucture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double potIntegral(int intnumb, int stucture, int cavityType, PhaseInterface phase) {
         double val = 0.0;
         double endval = cavRadius[intnumb][stucture][cavityType] - getSphericalCoreRadius();
@@ -197,6 +276,16 @@ public class ComponentHydrateKluda extends Component {
         return val / 100000.0;
     }
 
+    /**
+     * <p>getPot.</p>
+     *
+     * @param intnumb a int
+     * @param radius a double
+     * @param struccture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getPot(int intnumb, double radius, int struccture, int cavityType, PhaseInterface phase) {
         double lenjonsenergy = Math.sqrt(
                 this.getLennardJonesEnergyParameter() * phase.getComponent("water").getLennardJonesEnergyParameter());
@@ -235,6 +324,17 @@ public class ComponentHydrateKluda extends Component {
         return pot;
     }
 
+    /**
+     * <p>delt.</p>
+     *
+     * @param intnumb a int
+     * @param n a double
+     * @param radius a double
+     * @param struccture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double delt(int intnumb, double n, double radius, int struccture, int cavityType, PhaseInterface phase) {
         double lenjonsenergy = Math.sqrt(
                 this.getLennardJonesEnergyParameter() * phase.getComponent("water").getLennardJonesEnergyParameter());

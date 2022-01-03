@@ -10,9 +10,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author esol @version
  */
+/**
+ * <p>HeatOfVaporization class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class HeatOfVaporization {
     static Logger logger = LogManager.getLogger(HeatOfVaporization.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(288.15000000, 0.001);//
         testSystem.addComponent("TEG", 1);

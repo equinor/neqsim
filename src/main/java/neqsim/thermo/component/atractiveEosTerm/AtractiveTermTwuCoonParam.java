@@ -8,9 +8,9 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermTwuCoonParam class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
@@ -18,7 +18,11 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     private double a = 0.0, b = 0.0, c = 0.0;
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermTwuCoonParam(ComponentEosInterface component) {
         super(component);
         a = this.parameters[0];
@@ -26,7 +30,12 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
         c = this.parameters[2];
     }
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     * @param params an array of {@link double} objects
+     */
     public AtractiveTermTwuCoonParam(ComponentEosInterface component, double[] params) {
         this(component);
         // this.parameters [0] for aa benytte gitte input parametre
@@ -34,6 +43,7 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermTwuCoonParam clone() {
         AtractiveTermTwuCoonParam atractiveTerm = null;
@@ -46,12 +56,14 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         // m = (0.48508 + 1.55191 * component.getAcentricFactor() - 0.15613 *
         // component.getAcentricFactor() * component.getAcentricFactor());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         a = this.parameters[0];
@@ -87,12 +99,14 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 //        temperature)+2.0*Math.pow(Math.exp(c*(1.0-Math.pow(temperature/TC,1.0*d))),2.0)*c*Math.pow(
 //        temperature/TC,1.0*d)*d/(temperature*temperature);
     // }
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
 
         return getComponent().geta() * alpha(temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         a = this.parameters[0];
@@ -109,6 +123,7 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         a = this.parameters[0];
@@ -131,12 +146,14 @@ public class AtractiveTermTwuCoonParam extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
 
         return getComponent().geta() * diffalphaT(temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
 

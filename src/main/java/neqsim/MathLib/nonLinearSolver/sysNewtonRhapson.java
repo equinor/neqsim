@@ -3,6 +3,12 @@ package neqsim.MathLib.nonLinearSolver;
 import Jama.*;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>sysNewtonRhapson class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class sysNewtonRhapson implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
@@ -25,10 +31,19 @@ public class sysNewtonRhapson implements java.io.Serializable {
     boolean etterCP = false;
     boolean etterCP2 = false;
 
+    /**
+     * <p>Constructor for sysNewtonRhapson.</p>
+     */
     public sysNewtonRhapson() {
     }
 
-    /** Creates new nonlin */
+    /**
+     * Creates new nonlin
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
+     */
     public sysNewtonRhapson(SystemInterface system, int numberOfPhases, int numberOfComponents) {
         this.system = system;
         this.numberOfComponents = numberOfComponents;
@@ -45,6 +60,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
         solver.setOrder(3);
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0, u.get(i, 0) + Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
@@ -61,6 +79,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
         // fvec.print(0,10);
     }
 
+    /**
+     * <p>findSpecEqInit.</p>
+     */
     public void findSpecEqInit() {
         speceq = 0;
 
@@ -85,6 +106,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
 
     }
 
+    /**
+     * <p>findSpecEq.</p>
+     */
     public void findSpecEq() {
         double max = 0;
         int speceq2 = 0;
@@ -98,6 +122,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
         // System.out.println("spec eq: " + speceq2);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -132,6 +159,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
         Jac.set(nofc + 1, speceq, 1.0);
     }
 
+    /**
+     * <p>Setter for the field <code>u</code>.</p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, Math.log(system.getPhases()[0].getComponents()[i].getK()));
@@ -140,6 +170,9 @@ public class sysNewtonRhapson implements java.io.Serializable {
         u.set(numberOfComponents + 1, 0, Math.log(system.getPressure()));
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         for (int i = 0; i < numberOfComponents; i++) {
             system.getPhases()[0].getComponents()[i].setK(Math.exp(u.get(i, 0)));
@@ -152,6 +185,11 @@ public class sysNewtonRhapson implements java.io.Serializable {
 
     }
 
+    /**
+     * <p>calcInc.</p>
+     *
+     * @param np a int
+     */
     public void calcInc(int np) {
 
         // u.print(0,10);
@@ -224,6 +262,11 @@ public class sysNewtonRhapson implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>calcInc2.</p>
+     *
+     * @param np a int
+     */
     public void calcInc2(int np) {
         for (int j = 0; j < neq; j++) {
             xg = Xgij.getMatrix(j, j, 0, 3);
@@ -345,16 +388,33 @@ public class sysNewtonRhapson implements java.io.Serializable {
 
     }
 
+    /**
+     * <p>Getter for the field <code>npCrit</code>.</p>
+     *
+     * @return a int
+     */
     public int getNpCrit() {
         return npCrit;
     }
 
+    /**
+     * <p>sign.</p>
+     *
+     * @param a a double
+     * @param b a double
+     * @return a double
+     */
     public double sign(double a, double b) {
         a = Math.abs(a);
         b = b >= 0 ? 1.0 : -1.0;
         return a * b;
     }
 
+    /**
+     * <p>solve.</p>
+     *
+     * @param np a int
+     */
     public void solve(int np) {
         Matrix dx;
         iter = 0;
@@ -377,6 +437,11 @@ public class sysNewtonRhapson implements java.io.Serializable {
         init();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         /*
          * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new

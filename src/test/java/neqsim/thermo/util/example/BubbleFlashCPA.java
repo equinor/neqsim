@@ -7,13 +7,19 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>BubbleFlashCPA class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
  */
 public class BubbleFlashCPA {
     static Logger logger = LogManager.getLogger(BubbleFlashCPA.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 36.6, 63.2);
         // SystemInterface testSystem = new SystemSrkEos(273.15- 50.6, 63.2);

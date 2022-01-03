@@ -13,8 +13,9 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>pTphaseEnvelopeNew class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class pTphaseEnvelopeNew extends BaseOperation {
 
@@ -49,9 +50,19 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     int np = 0;
     int speceq = 0;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * Creates new bubblePointFlash
+     */
     public pTphaseEnvelopeNew() {}
 
+    /**
+     * <p>Constructor for pTphaseEnvelopeNew.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param lowPres a double
+     */
     public pTphaseEnvelopeNew(SystemInterface system, String name, double phaseFraction,
             double lowPres) {
 
@@ -79,6 +90,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
 
@@ -271,6 +283,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -318,9 +331,11 @@ public class pTphaseEnvelopeNew extends BaseOperation {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
@@ -338,11 +353,13 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         return graph2.getChart();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return points2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         if (name.equals("bubT")) {
@@ -385,11 +402,13 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
         fileName = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;

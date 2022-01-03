@@ -11,8 +11,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Draft_ISO18453 class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Draft_ISO18453 extends neqsim.standards.Standard {
 
@@ -24,12 +26,19 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
 
-    /** Creates a new instance of Standard_ISO1992 */
+    /**
+     * Creates a new instance of Standard_ISO1992
+     */
     public Draft_ISO18453() {
         name = "Draft_ISO18453";
         standardDescription = "water dew point calculation method";
     }
 
+    /**
+     * <p>Constructor for Draft_ISO18453.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public Draft_ISO18453(SystemInterface thermoSystem) {
         this();
 
@@ -53,6 +62,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         this.thermoOps = new ThermodynamicOperations(this.thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calculate() {
         this.thermoSystem.setTemperature(initTemperature);
@@ -66,6 +76,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("dewPointTemperature")) {
@@ -75,6 +86,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getValue(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
@@ -87,6 +99,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public String getUnit(String returnParameter) {
         if (returnParameter.equals("dewPointTemperature")) {
@@ -99,6 +112,7 @@ public class Draft_ISO18453 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public boolean isOnSpec() {
         return dewPointTemperature < getSalesContract().getWaterDewPointTemperature();

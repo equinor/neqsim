@@ -9,19 +9,33 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>bubblePointPressureFlashDer class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
 
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointPressureFlashDer.class);
 
-    /** Creates new bubblePointFlash */
+    /**
+     * Creates new bubblePointFlash
+     */
     public bubblePointPressureFlashDer() {
     }
 
+    /**
+     * <p>Constructor for bubblePointPressureFlashDer.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public bubblePointPressureFlashDer(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -178,6 +192,7 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
     }

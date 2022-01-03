@@ -9,6 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>KrishnaStandartFilmModel class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class KrishnaStandartFilmModel extends
         neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.NonEquilibriumFluidBoundary
         implements ThermodynamicConstantsInterface {
@@ -19,8 +25,16 @@ public class KrishnaStandartFilmModel extends
     Matrix redCorrectionMatrix;
     Matrix betaMatrix;
 
+    /**
+     * <p>Constructor for KrishnaStandartFilmModel.</p>
+     */
     public KrishnaStandartFilmModel() {}
 
+    /**
+     * <p>Constructor for KrishnaStandartFilmModel.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public KrishnaStandartFilmModel(SystemInterface system) {
         super(system);
         binaryMassTransferCoefficient = new double[2][getBulkSystem().getPhases()[0]
@@ -33,6 +47,11 @@ public class KrishnaStandartFilmModel extends
         uMassTransold = uMassTrans.copy();
     }
 
+    /**
+     * <p>Constructor for KrishnaStandartFilmModel.</p>
+     *
+     * @param flowNode a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public KrishnaStandartFilmModel(FlowNodeInterface flowNode) {
         super(flowNode);
         binaryMassTransferCoefficient = new double[2][getBulkSystem().getPhases()[0]
@@ -49,6 +68,7 @@ public class KrishnaStandartFilmModel extends
                 new Matrix(getBulkSystem().getPhases()[0].getNumberOfComponents() - 1, 1);
     }
 
+    /** {@inheritDoc} */
     @Override
     public KrishnaStandartFilmModel clone() {
         KrishnaStandartFilmModel clonedSystem = null;
@@ -62,6 +82,12 @@ public class KrishnaStandartFilmModel extends
         return clonedSystem;
     }
 
+    /**
+     * <p>calcBinarySchmidtNumbers.</p>
+     *
+     * @param phase a int
+     * @return a double
+     */
     public double calcBinarySchmidtNumbers(int phase) {
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents(); i++) {
             for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
@@ -79,6 +105,12 @@ public class KrishnaStandartFilmModel extends
         return 1;
     }
 
+    /**
+     * <p>calcBinaryMassTransferCoefficients.</p>
+     *
+     * @param phase a int
+     * @return a double
+     */
     public double calcBinaryMassTransferCoefficients(int phase) {
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents(); i++) {
             for (int j = 0; j < getBulkSystem().getPhases()[phase].getNumberOfComponents(); j++) {
@@ -90,6 +122,12 @@ public class KrishnaStandartFilmModel extends
         return 1;
     }
 
+    /**
+     * <p>calcMassTransferCoeffisients.</p>
+     *
+     * @param phase a int
+     * @return a double
+     */
     public double calcMassTransferCoeffisients(int phase) {
         int n = getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1;
 
@@ -115,6 +153,11 @@ public class KrishnaStandartFilmModel extends
         return 1;
     }
 
+    /**
+     * <p>calcPhiMatrix.</p>
+     *
+     * @param phase a int
+     */
     public void calcPhiMatrix(int phase) {
         int n = getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1;
 
@@ -143,10 +186,20 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
+    /**
+     * <p>calcRedPhiMatrix.</p>
+     *
+     * @param phase a int
+     */
     public void calcRedPhiMatrix(int phase) {
         redPhiMatrix = new Matrix(phiMatrix.eig().getRealEigenvalues(), 1);
     }
 
+    /**
+     * <p>calcRedCorrectionMatrix.</p>
+     *
+     * @param phase a int
+     */
     public void calcRedCorrectionMatrix(int phase) {
         for (int i = 0; i < getBulkSystem().getPhases()[phase].getNumberOfComponents() - 1; i++) {
             redCorrectionMatrix.set(i, 0,
@@ -155,6 +208,11 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
+    /**
+     * <p>calcCorrectionMatrix.</p>
+     *
+     * @param phase a int
+     */
     public void calcCorrectionMatrix(int phase) {
         Matrix modalPhiMatrix = phiMatrix.eig().getV();
         Matrix diagonalRedCorrectionMatrix =
@@ -167,6 +225,11 @@ public class KrishnaStandartFilmModel extends
                 modalPhiMatrix.times(diagonalRedCorrectionMatrix.times(modalPhiMatrix.inverse()));
     }
 
+    /**
+     * <p>calcTotalMassTransferCoefficientMatrix.</p>
+     *
+     * @param phase a int
+     */
     public void calcTotalMassTransferCoefficientMatrix(int phase) {
         totalMassTransferCoefficientMatrix[phase] = massTransferCoefficientMatrix[phase];
         // System.out.println("before phase: " + phase);
@@ -193,6 +256,11 @@ public class KrishnaStandartFilmModel extends
         // totalMassTransferCoefficientMatrix[phase].print(10,10);
     }
 
+    /**
+     * <p>initCorrections.</p>
+     *
+     * @param phase a int
+     */
     public void initCorrections(int phase) {
         calcPhiMatrix(phase);
         // phiMatrix.print(10,10);
@@ -205,6 +273,7 @@ public class KrishnaStandartFilmModel extends
         // rateCorrectionMatrix[phase].print(10,10);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initMassTransferCalc() {
         super.initMassTransferCalc();
@@ -219,6 +288,7 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
@@ -228,6 +298,7 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         super.init();
@@ -239,11 +310,17 @@ public class KrishnaStandartFilmModel extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void solve() {
         super.solve();
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         System.out.println("Starter.....");

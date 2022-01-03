@@ -9,10 +9,15 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finite
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>FluidBoundaryNodeInterface interface.</p>
  *
  * @author esol
- * @version
  */
 public interface FluidBoundaryNodeInterface {
+    /**
+     * <p>getBulkSystem.</p>
+     *
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SystemInterface getBulkSystem();
 }

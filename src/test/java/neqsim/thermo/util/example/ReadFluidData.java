@@ -11,9 +11,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 * @author  esol
 * @version
 */
+/**
+ * <p>ReadFluidData class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class ReadFluidData {
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 25.0, 1.8);//
         // testSystem.addComponent("nitrogen", 12.681146444);

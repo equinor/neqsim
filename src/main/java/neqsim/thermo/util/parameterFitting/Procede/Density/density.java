@@ -14,11 +14,25 @@ import neqsim.thermo.system.SystemInterface;
  *
  * @author agrawalnj
  */
+/**
+ * <p>density class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class density {
     static Logger logger = LogManager.getLogger(density.class);
 
+    /**
+     * <p>Constructor for density.</p>
+     */
     public density() {}
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         double n1, n2, n3, x1, x2, x3, total;

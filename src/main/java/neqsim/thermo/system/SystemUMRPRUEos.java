@@ -18,9 +18,10 @@ public class SystemUMRPRUEos extends SystemPrEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
-
     public SystemUMRPRUEos() {
         super();
         setBmixType(1);
@@ -28,6 +29,12 @@ public class SystemUMRPRUEos extends SystemPrEos {
         attractiveTermNumber = 1;
     }
 
+    /**
+     * <p>Constructor for SystemUMRPRUEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemUMRPRUEos(double T, double P) {
         super(T, P);
         setBmixType(1);
@@ -40,6 +47,13 @@ public class SystemUMRPRUEos extends SystemPrEos {
                 "heatCapacityCv", "density", "volume" };
     }
 
+    /**
+     * <p>Constructor for SystemUMRPRUEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemUMRPRUEos(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         setBmixType(1);
@@ -47,6 +61,7 @@ public class SystemUMRPRUEos extends SystemPrEos {
         modelName = "UMR-PRU-EoS";
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemUMRPRUEos clone() {
         SystemUMRPRUEos clonedSystem = null;
@@ -59,6 +74,9 @@ public class SystemUMRPRUEos extends SystemPrEos {
         return clonedSystem;
     }
 
+    /**
+     * <p>commonInitialization.</p>
+     */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(true);
         setImplementedPressureDeriativesofFugacity(true);

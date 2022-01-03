@@ -19,7 +19,9 @@ public class SystemSrkMathiasCopeman extends SystemSrkEos {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
     public SystemSrkMathiasCopeman() {
         super();
@@ -27,18 +29,32 @@ public class SystemSrkMathiasCopeman extends SystemSrkEos {
         attractiveTermNumber = 4;
     }
 
+    /**
+     * <p>Constructor for SystemSrkMathiasCopeman.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemSrkMathiasCopeman(double T, double P) {
         super(T, P);
         modelName = "Mathias-Copeman-SRK-EOS";
         attractiveTermNumber = 4;
     }
 
+    /**
+     * <p>Constructor for SystemSrkMathiasCopeman.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemSrkMathiasCopeman(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         attractiveTermNumber = 4;
         modelName = "Mathias-Copeman-SRK-EOS";
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemSrkMathiasCopeman clone() {
         SystemSrkMathiasCopeman clonedSystem = null;

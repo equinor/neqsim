@@ -10,9 +10,9 @@ import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGEUniquac;
 
 /**
+ * <p>PhaseGEUniquac class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class PhaseGEUniquac extends PhaseGE {
 
@@ -24,12 +24,23 @@ public class PhaseGEUniquac extends PhaseGE {
     double[][] Dij;
     double GE = 0.0;
 
-    /** Creates new PhaseGEUniquac */
+    /**
+     * Creates new PhaseGEUniquac
+     */
     public PhaseGEUniquac() {
         super();
         componentArray = new ComponentGEInterface[MAX_NUMBER_OF_COMPONENTS];
     }
 
+    /**
+     * <p>Constructor for PhaseGEUniquac.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param alpha an array of {@link double} objects
+     * @param Dij an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @param intparam an array of {@link double} objects
+     */
     public PhaseGEUniquac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
             double[][] intparam) {
         super();
@@ -46,22 +57,26 @@ public class PhaseGEUniquac extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(molesInPhase);
         componentArray[compNumber] = new ComponentGEUniquac(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {
@@ -74,11 +89,13 @@ public class PhaseGEUniquac extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getExessGibbsEnergy() {
         // GE = getExessGibbsEnergy(this, numberOfComponents, temperature, pressure,

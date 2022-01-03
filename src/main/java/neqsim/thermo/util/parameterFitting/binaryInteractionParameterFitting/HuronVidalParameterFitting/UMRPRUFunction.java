@@ -6,9 +6,9 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
 /**
+ * <p>UMRPRUFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class UMRPRUFunction extends LevenbergMarquardtFunction {
 
@@ -21,6 +21,7 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
@@ -28,6 +29,7 @@ public class UMRPRUFunction extends LevenbergMarquardtFunction {
         return system.getPhases()[0].getComponents()[1].getx();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -1,9 +1,21 @@
 package neqsim.thermo.util.empiric;
 
+/**
+ * <p>Water class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class Water {
     private static final long serialVersionUID = 1000;
 
     // Correlation fo Kell (1975) for density of air free water at 1 atmosphere
+    /**
+     * <p>waterDensity.</p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public static double waterDensity(double temperature) {
         double Tcelcius = temperature - 273.15;
         return (999.83952 + 16.945176 * Tcelcius - 7.9870401e-3 * Tcelcius * Tcelcius
@@ -13,10 +25,20 @@ public class Water {
                 / (1.0 + 16.897850e-3 * Tcelcius);
     }
 
+    /**
+     * <p>density.</p>
+     *
+     * @return a double
+     */
     public double density() {
         return 1000.0;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         Water testWater = new Water();

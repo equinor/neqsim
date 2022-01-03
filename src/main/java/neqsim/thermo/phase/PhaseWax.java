@@ -8,20 +8,23 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentWax;
 
 /**
+ * <p>PhaseWax class.</p>
  *
  * @author esol
- * @version
  */
 public class PhaseWax extends PhaseSolid {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new PhasePureComponentSolid */
+    /**
+     * Creates new PhasePureComponentSolid
+     */
     public PhaseWax() {
         super();
         phaseTypeName = "wax";
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseWax clone() {
         PhaseWax clonedPhase = null;
@@ -34,6 +37,7 @@ public class PhaseWax extends PhaseSolid {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -45,6 +49,7 @@ public class PhaseWax extends PhaseSolid {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double molesInPhase, double moles, int compNumber) {
         super.addcomponent(molesInPhase);

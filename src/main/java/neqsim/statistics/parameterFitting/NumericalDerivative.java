@@ -7,8 +7,9 @@
 package neqsim.statistics.parameterFitting;
 
 /**
+ * <p>NumericalDerivative class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class NumericalDerivative implements java.io.Serializable {
 
@@ -20,10 +21,20 @@ public class NumericalDerivative implements java.io.Serializable {
     final static int NTAB = 10;
     final static double SAFE = 2.0;
 
-    /** Creates new NumericalDerivative */
+    /**
+     * Creates new NumericalDerivative
+     */
     public NumericalDerivative() {
     }
 
+    /**
+     * <p>calcDerivative.</p>
+     *
+     * @param system a {@link neqsim.statistics.parameterFitting.StatisticsBaseClass} object
+     * @param sampleNumber a int
+     * @param parameterNumber a int
+     * @return a double
+     */
     public static double calcDerivative(StatisticsBaseClass system, int sampleNumber, int parameterNumber) {
 
         double errt, fac, hh, ans, err;

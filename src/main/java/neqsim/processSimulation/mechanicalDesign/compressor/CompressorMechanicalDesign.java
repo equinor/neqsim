@@ -14,8 +14,10 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 
 /**
+ * <p>CompressorMechanicalDesign class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class CompressorMechanicalDesign extends MechanicalDesign {
 
@@ -23,11 +25,17 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     double compressorFactor = 0.0;
 
+    /**
+     * <p>Constructor for CompressorMechanicalDesign.</p>
+     *
+     * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public CompressorMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
         costEstimate = new CompressorCostEstimate(this);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void readDesignSpecifications() {
 
@@ -44,6 +52,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void displayResults() {
 
@@ -101,6 +110,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calcDesign() {
         super.calcDesign();
@@ -199,6 +209,7 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
@@ -206,30 +217,25 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         // this method will be implemented to set calculated design...
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getOuterDiameter() {
         return outerDiameter;
     }
 
-    /**
-     * @return the wallThickness
-     */
+	/** {@inheritDoc} */
     @Override
 	public double getWallThickness() {
         return wallThickness;
     }
 
-    /**
-     * @param wallThickness the wallThickness to set
-     */
+	/** {@inheritDoc} */
     @Override
 	public void setWallThickness(double wallThickness) {
         this.wallThickness = wallThickness;
     }
 
-    /**
-     * @param outerDiameter the outerDiameter to set
-     */
+	/** {@inheritDoc} */
     @Override
 	public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;

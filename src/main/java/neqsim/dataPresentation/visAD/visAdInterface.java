@@ -10,10 +10,16 @@ import java.rmi.RemoteException;
 import visad.*;
 
 /**
+ * <p>visAdInterface interface.</p>
  *
  * @author esol
- * @version
  */
 public interface visAdInterface {
+    /**
+     * <p>init.</p>
+     *
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void init() throws RemoteException, VisADException;
 }

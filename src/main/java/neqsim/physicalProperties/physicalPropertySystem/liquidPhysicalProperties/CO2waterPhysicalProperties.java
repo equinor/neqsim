@@ -9,9 +9,9 @@ import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalPropertie
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>CO2waterPhysicalProperties class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class CO2waterPhysicalProperties
         extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
@@ -19,8 +19,18 @@ public class CO2waterPhysicalProperties
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CO2waterPhysicalProperties.class);
 
+    /**
+     * <p>Constructor for CO2waterPhysicalProperties.</p>
+     */
     public CO2waterPhysicalProperties() {}
 
+    /**
+     * <p>Constructor for CO2waterPhysicalProperties.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public CO2waterPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
@@ -30,6 +40,7 @@ public class CO2waterPhysicalProperties
         densityCalc = new Density(this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public CO2waterPhysicalProperties clone() {
         CO2waterPhysicalProperties properties = null;

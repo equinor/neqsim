@@ -5,8 +5,10 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
+ * <p>CostEstimateBaseClass class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class CostEstimateBaseClass implements java.io.Serializable {
 
@@ -15,18 +17,36 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     ProcessSystem procesSystem = null;
     private double CAPEXperWeight = 1000.0; // KNOK/tones
 
+    /**
+     * <p>Constructor for CostEstimateBaseClass.</p>
+     */
     public CostEstimateBaseClass() {
 
     }
 
+    /**
+     * <p>Constructor for CostEstimateBaseClass.</p>
+     *
+     * @param procesSystem a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
     public CostEstimateBaseClass(ProcessSystem procesSystem) {
         this.procesSystem = procesSystem;
     }
 
+    /**
+     * <p>getWeightBasedCAPEXEstimate.</p>
+     *
+     * @return a double
+     */
     public double getWeightBasedCAPEXEstimate() {
         return procesSystem.getSystemMechanicalDesign().getTotalWeight() * CAPEXperWeight;
     }
 
+    /**
+     * <p>getCAPEXestimate.</p>
+     *
+     * @return a double
+     */
     public double getCAPEXestimate() {
         double cost = 0;
         ArrayList<String> names = procesSystem.getAllUnitNames();
@@ -46,6 +66,8 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     }
 
     /**
+     * <p>getCAPEXperWeight.</p>
+     *
      * @return the CAPEXperWeight
      */
     public double getCAPEXperWeight() {

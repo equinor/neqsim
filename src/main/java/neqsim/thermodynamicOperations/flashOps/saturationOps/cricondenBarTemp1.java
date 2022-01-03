@@ -3,6 +3,12 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>cricondenBarTemp1 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class cricondenBarTemp1 implements java.io.Serializable {
 
     private static final long serialVersionUID = 1000;
@@ -24,8 +30,16 @@ public class cricondenBarTemp1 implements java.io.Serializable {
     Matrix dx;
     Matrix xcoef;
 
+    /**
+     * <p>Constructor for cricondenBarTemp1.</p>
+     */
     public cricondenBarTemp1() {}
 
+    /**
+     * <p>Constructor for cricondenBarTemp1.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public cricondenBarTemp1(SystemInterface system) {
         this.system = system;
         this.numberOfComponents = system.getPhase(0).getNumberOfComponents();
@@ -39,6 +53,9 @@ public class cricondenBarTemp1 implements java.io.Serializable {
         // System.out.println("Spec : " +speceq);
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         double xtot = 0.0, dQdT = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -57,6 +74,9 @@ public class cricondenBarTemp1 implements java.io.Serializable {
         fvec.set(numberOfComponents + 1, 0, dQdT);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -79,12 +99,18 @@ public class cricondenBarTemp1 implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>Setter for the field <code>u</code>.</p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, system.getBeta() * system.getPhases()[0].getComponents()[i].getx());
         }
     }
 
+    /**
+     * <p>init.</p>
+     */
     public void init() {
         double temp = 0;
 
@@ -108,6 +134,11 @@ public class cricondenBarTemp1 implements java.io.Serializable {
         system.init(3);
     }
 
+    /**
+     * <p>solve.</p>
+     *
+     * @return a double
+     */
     public double solve() {
         iter++;
         init();
@@ -119,32 +150,76 @@ public class cricondenBarTemp1 implements java.io.Serializable {
         return (dx.norm2() / u.norm2());
     }
 
+    /**
+     * <p>run.</p>
+     */
     public void run() {
         solve();
     }
 
+    /**
+     * <p>getJFreeChart.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link org.jfree.chart.JFreeChart} object
+     */
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /**
+     * <p>get.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return an array of {@link double} objects
+     */
     public double[] get(String name) {
         return new double[0];
     }
 
+    /**
+     * <p>printToFile.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void printToFile(String name) {}
 
+    /**
+     * <p>displayResult.</p>
+     */
     public void displayResult() {}
 
+    /**
+     * <p>getPoints.</p>
+     *
+     * @param i a int
+     * @return an array of {@link double} objects
+     */
     public double[][] getPoints(int i) {
         return null;
     }
 
+    /**
+     * <p>getResultTable.</p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[][] getResultTable() {
         return null;
     }
 
+    /**
+     * <p>createNetCdfFile.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void createNetCdfFile(String name) {}
 
+    /**
+     * <p>getThermoSystem.</p>
+     *
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SystemInterface getThermoSystem() {
         return system;
     }

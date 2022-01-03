@@ -10,8 +10,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ScalePotentialCheckStream class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class ScalePotentialCheckStream extends Stream {
 
@@ -19,23 +20,42 @@ public class ScalePotentialCheckStream extends Stream {
 
     protected SystemInterface reactiveThermoSystem;
 
-    /** Creates new Stream */
+    /**
+     * Creates new Stream
+     */
     public ScalePotentialCheckStream() {
         super();
     }
 
+    /**
+     * <p>Constructor for ScalePotentialCheckStream.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ScalePotentialCheckStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
 
+    /**
+     * <p>Constructor for ScalePotentialCheckStream.</p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public ScalePotentialCheckStream(StreamInterface stream) {
         super(stream);
     }
 
+    /**
+     * <p>Constructor for ScalePotentialCheckStream.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ScalePotentialCheckStream(String name, SystemInterface thermoSystem) {
         super(name, thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ScalePotentialCheckStream clone() {
         ScalePotentialCheckStream clonedSystem = null;
@@ -47,6 +67,7 @@ public class ScalePotentialCheckStream extends Stream {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         System.out.println("start flashing stream... " + streamNumber);
@@ -65,6 +86,7 @@ public class ScalePotentialCheckStream extends Stream {
         System.out.println("beta: " + reactiveThermoSystem.getBeta());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         reactiveThermoSystem.display(name);

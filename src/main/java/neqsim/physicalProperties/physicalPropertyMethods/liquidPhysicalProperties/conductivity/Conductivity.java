@@ -9,9 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>Conductivity class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class Conductivity
         extends neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
@@ -29,11 +29,17 @@ public class Conductivity
     public Conductivity() {
     }
 
+    /**
+     * <p>Constructor for Conductivity.</p>
+     *
+     * @param liquidPhase a {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface} object
+     */
     public Conductivity(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
         pureComponentConductivity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public Conductivity clone() {
         Conductivity properties = null;
@@ -47,6 +53,7 @@ public class Conductivity
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcConductivity() {
         double tempVar = 0, tempVar2 = 0;
@@ -77,6 +84,9 @@ public class Conductivity
         return conductivity;
     }
 
+    /**
+     * <p>calcPureComponentConductivity.</p>
+     */
     public void calcPureComponentConductivity() {
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             // pure component conductivity

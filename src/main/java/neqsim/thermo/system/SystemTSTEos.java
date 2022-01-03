@@ -27,6 +27,9 @@ public class SystemTSTEos extends SystemEos {
             { 0.072846, 2.1881, 163.91, -4043.4, 1.0 / 3.0 }, { 0.37377, 0.005493, 0.011793, -4.9e-6, 0.0 } };
 
     // SystemPrEos clonedSystem;
+    /**
+     * <p>Constructor for SystemTSTEos.</p>
+     */
     public SystemTSTEos() {
         super();
         modelName = "TST-EOS";
@@ -38,6 +41,12 @@ public class SystemTSTEos extends SystemEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemTSTEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemTSTEos(double T, double P) {
         super(T, P);
         modelName = "TST-EOS";
@@ -49,6 +58,13 @@ public class SystemTSTEos extends SystemEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemTSTEos.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemTSTEos(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 14;
@@ -80,6 +96,7 @@ public class SystemTSTEos extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemTSTEos clone() {
         SystemTSTEos clonedSystem = null;

@@ -18,8 +18,9 @@ import visad.java3d.DisplayImplJ3D;
 import visad.util.ContourWidget;
 
 /**
+ * <p>surfaceFitPlot class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class surfaceFitPlot {
 
@@ -40,7 +41,15 @@ public class surfaceFitPlot {
     double[][] z_samples;
     private ContourWidget contourWid;
 
-    /** Creates new visAdContourPlot */
+    /**
+     * Creates new visAdContourPlot
+     *
+     * @param firstax a {@link java.lang.String} object
+     * @param secax a {@link java.lang.String} object
+     * @param zax a {@link java.lang.String} object
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public surfaceFitPlot(String firstax, String secax, String zax)
             throws RemoteException, VisADException {
 
@@ -53,6 +62,18 @@ public class surfaceFitPlot {
         func_domain_iso_range = new FunctionType(domain_tuple, isotemperature);
     }
 
+    /**
+     * <p>setXYvals.</p>
+     *
+     * @param xMin a double
+     * @param xMax a double
+     * @param Nrows a int
+     * @param yMin a double
+     * @param yMax a double
+     * @param NCols a int
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYvals(double xMin, double xMax, int Nrows, double yMin, double yMax, int NCols)
             throws RemoteException, VisADException {
         NCOLS = NCols;
@@ -70,10 +91,23 @@ public class surfaceFitPlot {
      * = domain_set.getSamples( true ); }
      */
 
+    /**
+     * <p>setZvals.</p>
+     *
+     * @param vals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setZvals(double[][] vals) throws RemoteException, VisADException {
         z_samples = vals;
     }
 
+    /**
+     * <p>init.</p>
+     *
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void init() throws RemoteException, VisADException {
         float[][] flat_samples = new float[1][NCOLS * NROWS];
 
@@ -145,6 +179,13 @@ public class surfaceFitPlot {
         jframe.setVisible(true);
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public static void main(String[] args) throws RemoteException, VisADException {
         /*
          * visAd3DPlot test = new visAd3DPlot("long", "alt", "height"); test.setXYvals(0, 10, 4, 0,

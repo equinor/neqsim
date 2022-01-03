@@ -8,9 +8,18 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>processCO2MDEA class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class processCO2MDEA {
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3, 10.01325);

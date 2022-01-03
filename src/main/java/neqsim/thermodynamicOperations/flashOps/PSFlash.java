@@ -8,8 +8,9 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>PSFlash class.</p>
+ *
  * @author even solbraa
- * @version
  */
 public class PSFlash extends QfuncFlash {
 
@@ -24,6 +25,13 @@ public class PSFlash extends QfuncFlash {
      */
     public PSFlash() {}
 
+    /**
+     * <p>Constructor for PSFlash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Sspec a double
+     * @param type a int
+     */
     public PSFlash(SystemInterface system, double Sspec, int type) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -31,6 +39,7 @@ public class PSFlash extends QfuncFlash {
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcdQdTT() {
         double cP1 = 0.0, cP2 = 0.0;
@@ -46,12 +55,14 @@ public class PSFlash extends QfuncFlash {
         return dQdTT;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcdQdT() {
         double dQ = -system.getEntropy() + Sspec;
         return dQ;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double solveQ() {
         double oldTemp = system.getTemperature(), nyTemp = system.getTemperature();
@@ -99,10 +110,14 @@ public class PSFlash extends QfuncFlash {
         return nyTemp;
     }
 
+    /**
+     * <p>onPhaseSolve.</p>
+     */
     public void onPhaseSolve() {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();

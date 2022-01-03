@@ -9,15 +9,19 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>AtractiveTermPr class.</p>
  *
  * @author esol
- * @version
  */
 public class AtractiveTermPr extends AtractiveTermBaseClass {
 
     private static final long serialVersionUID = 1000;
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * Creates new AtractiveTermSrk
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermPr(ComponentEosInterface component) {
         super(component);
         m = (0.37464 + 1.54226 * component.getAcentricFactor()
@@ -25,6 +29,7 @@ public class AtractiveTermPr extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermPr clone() {
         AtractiveTermPr atractiveTerm = null;
@@ -36,6 +41,7 @@ public class AtractiveTermPr extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setm(double val) {
         this.m = val;
@@ -47,29 +53,34 @@ public class AtractiveTermPr extends AtractiveTermBaseClass {
         // System.out.println("solve accen " + component.getAcentricFactor());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init() {
         m = (0.37464 + 1.54226 * getComponent().getAcentricFactor()
                 - 0.26992 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double alpha(double temperature) {
         double temp = 1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()));
         return temp * temp;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double aT(double temperature) {
         return getComponent().geta() * alpha(temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffalphaT(double temperature) {
         return -(1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
                 / Math.sqrt(temperature / getComponent().getTC()) / getComponent().getTC();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffalphaT(double temperature) {
         double tr = temperature / getComponent().getTC();
@@ -78,11 +89,13 @@ public class AtractiveTermPr extends AtractiveTermBaseClass {
 
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffaT(double temperature) {
         return getComponent().geta() * diffalphaT(temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);

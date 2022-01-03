@@ -7,17 +7,25 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
+ * <p>GasScrubberMechanicalDesign class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for GasScrubberMechanicalDesign.</p>
+     *
+     * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void readDesignSpecifications() {
 
@@ -36,6 +44,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         super.calcDesign();
@@ -124,6 +133,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
         setModuleLength(moduleLength);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);

@@ -28,6 +28,9 @@ public class SystemDuanSun extends SystemEos {
     // SystemSrkEos clonedSystem;
     protected String[] CapeOpenProperties11 = { "molecularWeight", "fugacityCoefficient", "logFugacityCoefficient" };
 
+    /**
+     * <p>Constructor for SystemDuanSun.</p>
+     */
     public SystemDuanSun() {
         super();
         modelName = "Duan-Sun-model";
@@ -39,6 +42,12 @@ public class SystemDuanSun extends SystemEos {
 
     }
 
+    /**
+     * <p>Constructor for SystemDuanSun.</p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemDuanSun(double T, double P) {
         super(T, P);
         attractiveTermNumber = 0;
@@ -53,6 +62,13 @@ public class SystemDuanSun extends SystemEos {
         }
     }
 
+    /**
+     * <p>Constructor for SystemDuanSun.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemDuanSun(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
@@ -79,6 +95,7 @@ public class SystemDuanSun extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemDuanSun clone() {
         SystemDuanSun clonedSystem = null;
@@ -91,6 +108,11 @@ public class SystemDuanSun extends SystemEos {
         return clonedSystem;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface fluid1 = new SystemSrkCPA(298.15, 10.0);
 

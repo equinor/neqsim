@@ -12,17 +12,24 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Water_MDEA1 class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Water_MDEA1 {
 
     static Logger logger = LogManager.getLogger(Water_MDEA1.class);
 
+    /**
+     * <p>Constructor for Water_MDEA1.</p>
+     */
     public Water_MDEA1() {
     }
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {

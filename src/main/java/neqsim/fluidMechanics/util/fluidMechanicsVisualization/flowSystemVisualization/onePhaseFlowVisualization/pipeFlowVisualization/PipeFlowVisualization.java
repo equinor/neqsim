@@ -7,9 +7,9 @@
 package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.onePhaseFlowVisualization.pipeFlowVisualization;
 
 /**
+ * <p>PipeFlowVisualization class.</p>
  *
  * @author esol
- * @version
  */
 public class PipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.onePhaseFlowVisualization.OnePhaseFlowVisualization {
@@ -24,10 +24,18 @@ public class PipeFlowVisualization extends
     double[] timeArray = new double[10];
     neqsim.dataPresentation.visAD.visAdInterface plot;
 
-    /** Creates new PipeFlowVisualization */
+    /**
+     * Creates new PipeFlowVisualization
+     */
     public PipeFlowVisualization() {
     }
 
+    /**
+     * <p>Constructor for PipeFlowVisualization.</p>
+     *
+     * @param nodes a int
+     * @param timeSteps a int
+     */
     public PipeFlowVisualization(int nodes, int timeSteps) {
         flowSystem = new neqsim.fluidMechanics.flowSystem.FlowSystemInterface[timeSteps];
         flowNodes = new neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.onePhasePipeFlowNodeVisualization.OnePhasePipeFlowNodeVisualization[timeSteps][nodes];
@@ -41,6 +49,7 @@ public class PipeFlowVisualization extends
         System.out.println("times " + time);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setPoints() {
         pressurePoint = new double[time][flowNodes[0].length];
@@ -64,6 +73,11 @@ public class PipeFlowVisualization extends
         }
     }
 
+    /**
+     * <p>calcPoints.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void calcPoints(String name) {
         double[][] points = new double[1][1];
         setPoints();
@@ -102,6 +116,7 @@ public class PipeFlowVisualization extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void displayResult(String name) {
         double[][] points = new double[1][1];
@@ -142,6 +157,7 @@ public class PipeFlowVisualization extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void createNetCdfFile(String name) {
         calcPoints(name);

@@ -7,12 +7,17 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.BinaryEosFunction;
 
 /**
+ * <p>TestBinaryEosParameterFit class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class TestBinaryEosParameterFit {
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         LevenbergMarquardt optim = new LevenbergMarquardt();

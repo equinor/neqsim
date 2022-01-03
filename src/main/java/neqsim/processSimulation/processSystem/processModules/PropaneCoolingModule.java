@@ -10,12 +10,16 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>PropaneCoolingModule class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PropaneCoolingModule extends ProcessModuleBaseClass {
 
     /**
+     * <p>Setter for the field <code>condenserTemperature</code>.</p>
+     *
      * @param condenserTemperature the condenserTemperature to set
      */
     public void setCondenserTemperature(double condenserTemperature) {
@@ -23,6 +27,8 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     }
 
     /**
+     * <p>Setter for the field <code>vaporizerTemperature</code>.</p>
+     *
      * @param vaporizerTemperature the vaporizerTemperature to set
      */
     public void setVaporizerTemperature(double vaporizerTemperature) {
@@ -35,6 +41,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
     private double condenserTemperature = 273.15 + 30.0; // Kelvin
     private double vaporizerTemperature = 273.15 - 40.0; // Kelvin
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("refrigerant")) {
@@ -42,6 +49,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -56,6 +64,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -98,6 +107,7 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         System.out.println("finished adding operations....");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -109,27 +119,32 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         // gasExitStream = secondStageAfterCooler.getOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here //
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here //
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("vaporizerTemperature")) {
@@ -139,6 +154,11 @@ public class PropaneCoolingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
 
         neqsim.thermo.system.SystemInterface testSystem =

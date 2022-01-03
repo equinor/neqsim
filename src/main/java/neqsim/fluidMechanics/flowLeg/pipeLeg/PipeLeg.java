@@ -10,9 +10,9 @@ import neqsim.fluidMechanics.flowLeg.FlowLeg;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
+ * <p>PipeLeg class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class PipeLeg extends FlowLeg {
 
@@ -20,11 +20,14 @@ public class PipeLeg extends FlowLeg {
 
     // FlowNodeInterface[] node;
 
-    /** Creates new PipeLeg */
+    /**
+     * Creates new PipeLeg
+     */
     public PipeLeg() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createFlowNodes(FlowNodeInterface initNode) {
         heightChangePerNode =

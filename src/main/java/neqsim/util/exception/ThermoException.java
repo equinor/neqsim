@@ -7,9 +7,9 @@
 package neqsim.util.exception;
 
 /**
+ * <p>ThermoException class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ThermoException extends java.lang.Exception {
 
@@ -23,7 +23,7 @@ public class ThermoException extends java.lang.Exception {
 
     /**
      * Constructs an <code>ThermoException</code> with the specified detail message.
-     * 
+     *
      * @param msg the detail message.
      */
     public ThermoException(String msg) {

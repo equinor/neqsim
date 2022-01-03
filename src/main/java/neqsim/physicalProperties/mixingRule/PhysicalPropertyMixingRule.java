@@ -11,8 +11,9 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>PhysicalPropertyMixingRule class.</p>
+ *
  * @author  esol
- * @version
  */
 public class PhysicalPropertyMixingRule
         implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface {
@@ -28,6 +29,7 @@ public class PhysicalPropertyMixingRule
     public PhysicalPropertyMixingRule() {
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhysicalPropertyMixingRule clone() {
         PhysicalPropertyMixingRule mixRule = null;
@@ -46,20 +48,28 @@ public class PhysicalPropertyMixingRule
         return mixRule;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getViscosityGij(int i, int j) {
         return Gij[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setViscosityGij(double val, int i, int j) {
         Gij[i][j] = val;
     }
 
+    /**
+     * <p>getPhysicalPropertyMixingRule.</p>
+     *
+     * @return a {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface} object
+     */
     public PhysicalPropertyMixingRuleInterface getPhysicalPropertyMixingRule() {
         return this;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initMixingRules(PhaseInterface phase) {
         // logger.info("reading mix Gij viscosity..");

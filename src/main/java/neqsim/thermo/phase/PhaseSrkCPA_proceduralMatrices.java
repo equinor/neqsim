@@ -18,6 +18,7 @@ import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
 /**
+ * <p>PhaseSrkCPA_proceduralMatrices class.</p>
  *
  * @author Even Solbraa
  * @version Modified to use procedural oriented ejml matrices by Marlene Lund
@@ -54,6 +55,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseSrkCPA clone() {
         PhaseSrkCPA clonedPhase = null;
@@ -69,12 +71,14 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(1, this);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase, double beta) { // type = 0
                                                                                                             // start
@@ -167,6 +171,9 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
+    /**
+     * <p>calcDelta.</p>
+     */
     public void calcDelta() {
         for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
             for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
@@ -177,6 +184,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
+    /**
+     * <p>initCPAMatrix.</p>
+     *
+     * @param type a int
+     */
     public void initCPAMatrix(int type) {
         if (getTotalNumberOfAccociationSites() == 0) {
             FCPA = 0.0;
@@ -496,27 +508,32 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void addcomponent(String componentName, double moles, double molesInPhase, int compNumber) {
         super.addcomponent(componentName, moles, molesInPhase, compNumber);
         componentArray[compNumber] = new ComponentSrkCPA(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdTdV() {
         return super.dFdTdV() + cpaon * dFCPAdTdV();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdV() {
         double dv2 = dFCPAdV();
@@ -524,21 +541,29 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     }
 
     // @Override
+    /** {@inheritDoc} */
     @Override
 	public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
     }
 
+    /**
+     * <p>FCPA.</p>
+     *
+     * @return a double
+     */
     public double FCPA() {
         /*
          * double tot = 0.0; double ans = 0.0; for (int i = 0; i < numberOfComponents;
@@ -551,18 +576,33 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return FCPA;
     }
 
+    /**
+     * <p>dFCPAdV.</p>
+     *
+     * @return a double
+     */
     public double dFCPAdV() {
         // return 1.0 / (2.0 * getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav())
         // * hcpatot;
         return dFCPAdV;
     }
 
+    /**
+     * <p>dFCPAdVdV.</p>
+     *
+     * @return a double
+     */
     public double dFCPAdVdV() {
         // double sum1 = -1.0 / 2.0 * gcpavv * hcpatot;
         // return -1.0 / getTotalVolume() * dFCPAdV() + sum1;
         return dFCPAdVdV;
     }
 
+    /**
+     * <p>dFCPAdVdVdV.</p>
+     *
+     * @return a double
+     */
     public double dFCPAdVdVdV() {
         return dFCPAdVdVdV;
         // return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 /
@@ -572,6 +612,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         // - gcpavv);
     }
 
+    /**
+     * <p>dFCPAdT.</p>
+     *
+     * @return a double
+     */
     public double dFCPAdT() {
         /*
          * double tot = 0.0; double ans = 0.0; for (int i = 0; i < numberOfComponents;
@@ -586,10 +631,20 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return dFCPAdT;
     }
 
+    /**
+     * <p>dFCPAdTdT.</p>
+     *
+     * @return a double
+     */
     public double dFCPAdTdT() {
         return dFCPAdTdT;
     }
 
+    /**
+     * <p>dFCPAdTdV.</p>
+     *
+     * @return a double
+     */
     public double dFCPAdTdV() {
         // System.out.println("dFCPAdTdV1 " + dFCPAdTdV + " dFCPAdTdV " +( 1.0 / (2.0 *
         // getTotalVolume()) * (1.0 - getTotalVolume() * getGcpav()) * hcpatotdT));
@@ -601,6 +656,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
          */
     }
 
+    /**
+     * <p>calc_hCPA.</p>
+     *
+     * @return a double
+     */
     public double calc_hCPA() {
         double htot = 0.0;
         double tot = 0.0;
@@ -614,12 +674,22 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return tot;
     }
 
+    /**
+     * <p>calc_g.</p>
+     *
+     * @return a double
+     */
     public double calc_g() {
         double temp = 1.0 - getb() / 4.0 / getMolarVolume();
         double g = (2.0 - getb() / 4.0 / getMolarVolume()) / (2.0 * temp * temp * temp);
         return g;
     }
 
+    /**
+     * <p>calc_lngV.</p>
+     *
+     * @return a double
+     */
     public double calc_lngV() {
         double gv2 = 0.0;
         // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() /
@@ -631,6 +701,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return gv2;
     }
 
+    /**
+     * <p>calc_lngVV.</p>
+     *
+     * @return a double
+     */
     public double calc_lngVV() {
         double gvv = 2.0
                 * (640.0 * Math.pow(getTotalVolume(), 3.0) - 216.0 * getB() * getTotalVolume() * getTotalVolume()
@@ -640,6 +715,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return gvv;
     }
 
+    /**
+     * <p>calc_lngVVV.</p>
+     *
+     * @return a double
+     */
     public double calc_lngVVV() {
         double gvvv = 4.0
                 * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB()
@@ -651,12 +731,20 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return gvvv;
     }
 
+    /**
+     * <p>calcXsitedV.</p>
+     */
     public void calcXsitedV() {
         if (getTotalNumberOfAccociationSites() > 0) {
             initCPAMatrix(1);
         }
     }
 
+    /**
+     * <p>solveX.</p>
+     *
+     * @return a boolean
+     */
     public boolean solveX() {
         if (getTotalNumberOfAccociationSites() == 0) {
             return true;
@@ -758,6 +846,12 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return true;
     }
 
+    /**
+     * <p>solveX2.</p>
+     *
+     * @param maxIter a int
+     * @return a boolean
+     */
     public boolean solveX2(int maxIter) {
         double err = .0;
         int iter = 0;
@@ -791,11 +885,11 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return false;
     }
 
-    /**
-     * Getter for property hcpatot.
-     *
-     * @return Value of property hcpatot.
-     */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Getter for property hcpatot.
+	 */
     @Override
 	public double getHcpatot() {
         return hcpatot;
@@ -810,11 +904,18 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         this.hcpatot = hcpatot;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGcpa() {
         return gcpa;
     }
 
+    /**
+     * <p>calcRootVolFinder.</p>
+     *
+     * @param phase a int
+     * @return a double
+     */
     public double calcRootVolFinder(int phase) {
         double solvedBonVHigh = 0.0;
         double solvedBonVlow = 1.0;
@@ -884,6 +985,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double molarVolume(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -1017,6 +1119,18 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return getMolarVolume();
     }
 
+    /**
+     * <p>molarVolumeChangePhase.</p>
+     *
+     * @param pressure a double
+     * @param temperature a double
+     * @param A a double
+     * @param B a double
+     * @param phasetype a int
+     * @return a double
+     * @throws neqsim.util.exception.IsNaNException if any.
+     * @throws neqsim.util.exception.TooManyIterationsException if any.
+     */
     public double molarVolumeChangePhase(double pressure, double temperature, double A, double B, int phasetype)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
 
@@ -1142,6 +1256,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return getMolarVolume();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
@@ -1184,20 +1299,28 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return getMolarVolume();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGcpav() {
         return gcpav;
     }
 
+    /**
+     * <p>Setter for the field <code>gcpav</code>.</p>
+     *
+     * @param gcpav a double
+     */
     public void setGcpav(double gcpav) {
         this.gcpav = gcpav;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double calcPressure() {
         gcpa = calc_g();
@@ -1213,6 +1336,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         return super.calcPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
@@ -1222,6 +1346,13 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
         }
     }
 
+    /**
+     * <p>croeneckerProduct.</p>
+     *
+     * @param a an array of {@link double} objects
+     * @param b an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[][] croeneckerProduct(double[][] a, double[][] b) {
         int aLength = a.length;
         int aCols = a[0].length;
@@ -1241,17 +1372,13 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
     }
 
-    /**
-     * @return the totalNumberOfAccociationSites
-     */
+	/** {@inheritDoc} */
     @Override
 	public int getTotalNumberOfAccociationSites() {
         return totalNumberOfAccociationSites;
     }
 
-    /**
-     * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
-     */
+	/** {@inheritDoc} */
     @Override
 	public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;

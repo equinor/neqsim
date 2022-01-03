@@ -16,8 +16,9 @@ import neqsim.thermo.ThermodynamicModelSettings;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>TPmultiflash class.</p>
+ *
  * @author Even Solbraa
- * @version
  */
 public class TPmultiflash extends TPflash {
 
@@ -41,11 +42,22 @@ public class TPmultiflash extends TPflash {
      */
     public TPmultiflash() {}
 
+    /**
+     * <p>Constructor for TPmultiflash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public TPmultiflash(SystemInterface system) {
         super(system);
         Erow = new double[system.getPhase(0).getNumberOfComponents()];
     }
 
+    /**
+     * <p>Constructor for TPmultiflash.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param check a boolean
+     */
     public TPmultiflash(SystemInterface system, boolean check) {
         super(system, check);
         Erow = new double[system.getPhase(0).getNumberOfComponents()];
@@ -53,13 +65,22 @@ public class TPmultiflash extends TPflash {
         multTerm2 = new double[system.getPhase(0).getNumberOfComponents()];
     }
 
+    /**
+     * <p>calcMultiPhaseBeta.</p>
+     */
     public void calcMultiPhaseBeta() {}
 
+    /**
+     * <p>setDoubleArrays.</p>
+     */
     public void setDoubleArrays() {
         dQdbeta = new double[system.getNumberOfPhases()][1];
         Qmatrix = new double[system.getNumberOfPhases()][system.getNumberOfPhases()];
     }
 
+    /**
+     * <p>setXY.</p>
+     */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases(); k++) {
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -84,6 +105,9 @@ public class TPmultiflash extends TPflash {
         }
     }
 
+    /**
+     * <p>calcE.</p>
+     */
     public void calcE() {
         // E = new double[system.getPhase(0).getNumberOfComponents()];
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -95,6 +119,11 @@ public class TPmultiflash extends TPflash {
         }
     }
 
+    /**
+     * <p>calcQ.</p>
+     *
+     * @return a double
+     */
     public double calcQ() {
         /*
          * double betaTotal = 0; for (int k = 0; k < system.getNumberOfPhases(); k++) { betaTotal +=
@@ -135,6 +164,11 @@ public class TPmultiflash extends TPflash {
         return Q;
     }
 
+    /**
+     * <p>solveBeta.</p>
+     *
+     * @return a double
+     */
     public double solveBeta() {
         SimpleMatrix betaMatrix = new SimpleMatrix(1, system.getNumberOfPhases());
         SimpleMatrix ans = null;
@@ -179,6 +213,7 @@ public class TPmultiflash extends TPflash {
         return err;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void stabilityAnalysis() {
         double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
@@ -514,6 +549,9 @@ public class TPmultiflash extends TPflash {
         // system.display();
     }
 
+    /**
+     * <p>stabilityAnalysis2.</p>
+     */
     public void stabilityAnalysis2() {
         double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
         double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
@@ -846,6 +884,7 @@ public class TPmultiflash extends TPflash {
         // system.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         int aqueousPhaseNumber = 0;

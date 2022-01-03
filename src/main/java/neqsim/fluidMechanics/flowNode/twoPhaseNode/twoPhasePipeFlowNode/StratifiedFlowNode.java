@@ -8,13 +8,28 @@ import neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>StratifiedFlowNode class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class StratifiedFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for StratifiedFlowNode.</p>
+     */
     public StratifiedFlowNode() {
         this.flowNodeType = "stratified";
     }
 
+    /**
+     * <p>Constructor for StratifiedFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public StratifiedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "stratified";
@@ -24,6 +39,13 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
                         this);
     }
 
+    /**
+     * <p>Constructor for StratifiedFlowNode.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public StratifiedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -34,6 +56,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
                         this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public StratifiedFlowNode clone() {
         StratifiedFlowNode clonedSystem = null;
@@ -46,6 +69,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         inclination = 0.0;
@@ -54,6 +78,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcContactLength() {
         double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0)
@@ -66,6 +91,7 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
         StratifiedFlowNode newNode = (StratifiedFlowNode) this.clone();
@@ -78,6 +104,11 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         // SystemInterface testSystem = new SystemSrkEos(273.15 + 11.0, 60.0);

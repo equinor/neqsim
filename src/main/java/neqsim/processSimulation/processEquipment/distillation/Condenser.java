@@ -4,7 +4,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Condenser class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Condenser extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
 
@@ -14,10 +17,15 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     boolean refluxIsSet = false;
     double duty = 0.0;
 
+    /**
+     * <p>Constructor for Condenser.</p>
+     */
     public Condenser() {
     }
 
     /**
+     * <p>Getter for the field <code>refluxRatio</code>.</p>
+     *
      * @return the refluxRatio
      */
     public double getRefluxRatio() {
@@ -25,6 +33,8 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
     }
 
     /**
+     * <p>Setter for the field <code>refluxRatio</code>.</p>
+     *
      * @param refluxRatio the refluxRatio to set
      */
     public void setRefluxRatio(double refluxRatio) {
@@ -32,11 +42,17 @@ public class Condenser extends neqsim.processSimulation.processEquipment.distill
         refluxIsSet = true;
     }
 
+    /**
+     * <p>Getter for the field <code>duty</code>.</p>
+     *
+     * @return a double
+     */
     public double getDuty() {
         // return calcMixStreamEnthalpy();
         return duty;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double oldTemp = getTemperature();

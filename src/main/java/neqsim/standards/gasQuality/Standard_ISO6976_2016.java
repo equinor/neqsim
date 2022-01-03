@@ -13,7 +13,10 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>Standard_ISO6976_2016 class.</p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
@@ -45,6 +48,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
     /**
      * Creates a new instance of Standard_ISO1992
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
     public Standard_ISO6976_2016(SystemInterface thermoSystem) {
         super(thermoSystem);
@@ -152,6 +157,14 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
 
     }
 
+    /**
+     * <p>Constructor for Standard_ISO6976_2016.</p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param volumetricReferenceTemperaturedegC a double
+     * @param energyReferenceTemperaturedegC a double
+     * @param calculationType a {@link java.lang.String} object
+     */
     public Standard_ISO6976_2016(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
             double energyReferenceTemperaturedegC, String calculationType) {
         this(thermoSystem);
@@ -160,6 +173,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         energyRefT = energyReferenceTemperaturedegC;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calculate() {
         Zmix0 = 1.0;
@@ -214,6 +228,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         // System.out.println("molRefm3 " + molRefm3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("GCV")) {
@@ -325,11 +340,13 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getUnit(String returnParameter) {
         if (returnParameter.equals("CompressionFactor")) {

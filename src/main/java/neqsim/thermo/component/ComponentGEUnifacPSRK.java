@@ -9,9 +9,9 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>ComponentGEUnifacPSRK class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
@@ -26,21 +26,46 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
     public ComponentGEUnifacPSRK() {
     }
 
+    /**
+     * <p>Constructor for ComponentGEUnifacPSRK.</p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGEUnifacPSRK(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
     }
 
+    /**
+     * <p>calcaij.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double calcaij(PhaseInterface phase, int i, int j) {
         return ((PhaseGEUnifac) phase).getAij(i, j) + ((PhaseGEUnifac) phase).getBij(i, j) * phase.getTemperature()
                 + ((PhaseGEUnifac) phase).getCij(i, j) * Math.pow(phase.getTemperature(), 2.0);
     }
 
+    /**
+     * <p>calcaijdT.</p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double calcaijdT(PhaseInterface phase, int i, int j) {
         return ((PhaseGEUnifac) phase).getBij(i, j)
                 + 2.0 * ((PhaseGEUnifac) phase).getCij(i, j) * phase.getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
@@ -73,6 +98,12 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         getUnifacGroup(k).setLnGammaMix(tempGammaMix);
     }
 
+    /**
+     * <p>calclnGammakdT.</p>
+     *
+     * @param k a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calclnGammakdT(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
         double sum3Comp = 0.0, sum3Mix = 0.0;
@@ -104,6 +135,7 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
         getUnifacGroup(k).setLnGammaMixdT(tempGammaMix);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
             int phasetype) {

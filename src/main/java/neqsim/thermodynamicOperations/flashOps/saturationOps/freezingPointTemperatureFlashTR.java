@@ -12,6 +12,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>freezingPointTemperatureFlashTR class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
 
@@ -25,22 +31,42 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
     public boolean CCequation = true;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashTR.class);
 
+    /**
+     * <p>Constructor for freezingPointTemperatureFlashTR.</p>
+     */
     public freezingPointTemperatureFlashTR() {
     }
 
+    /**
+     * <p>Constructor for freezingPointTemperatureFlashTR.</p>
+     *
+     * @param Freeze a boolean
+     */
     public freezingPointTemperatureFlashTR(boolean Freeze) {
         noFreezeFlash = Freeze;
     }
 
+    /**
+     * <p>Constructor for freezingPointTemperatureFlashTR.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public freezingPointTemperatureFlashTR(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>Constructor for freezingPointTemperatureFlashTR.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Freeze a boolean
+     */
     public freezingPointTemperatureFlashTR(SystemInterface system, boolean Freeze) {
         super(system);
         noFreezeFlash = Freeze;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -189,6 +215,7 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         // logger.info("max freezing temp " + maxTemperature);
     }
 
+    /** {@inheritDoc} */
     @Override
 	public void printToFile(String name) {
 
@@ -218,6 +245,11 @@ public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlas
         }
     }
 
+    /**
+     * <p>getNiterations.</p>
+     *
+     * @return a int
+     */
     public int getNiterations() {
         return Niterations;
     }

@@ -18,6 +18,11 @@ class CompressorTest {
     ProcessSystem processOps = null;
     neqsim.processSimulation.processEquipment.compressor.Compressor compressor1 = null;
 
+    /**
+     * <p>setUp.</p>
+     *
+     * @throws java.lang.Exception if any.
+     */
     @BeforeEach
     public void setUp() throws Exception {
         testSystem = new SystemSrkEos(298.0, 10.0);
@@ -35,6 +40,9 @@ class CompressorTest {
 
     }
 
+    /**
+     * <p>testCompressorSchultzMethod.</p>
+     */
     @Test
     public void testCompressorSchultzMethod() {
         compressor1.setPolytropicEfficiency(polytropicEff);
@@ -46,6 +54,9 @@ class CompressorTest {
                 "Test case for compressor Schultz method polytropic calculation should return approximate 4.67 MW");
     }
 
+    /**
+     * <p>testCompressorRigorousMethod.</p>
+     */
     @Test
     public void testCompressorRigorousMethod() {
         compressor1.setPolytropicEfficiency(polytropicEff);
@@ -57,6 +68,9 @@ class CompressorTest {
                 "Test case for rigorous polytropic compressor calculation should return approximate 4.66 MW");
     }
 
+    /**
+     * <p>testIsentropicCalcMethod.</p>
+     */
     @Test
     public void testIsentropicCalcMethod() {
         compressor1.setIsentropicEfficiency(polytropicEff);

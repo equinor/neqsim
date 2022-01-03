@@ -7,8 +7,9 @@
 package neqsim.MathLib.nonLinearSolver;
 
 /**
+ * <p>newtonRhapson class.</p>
+ *
  * @author  Even Solbraa
- * @version
  */
 public class newtonRhapson implements java.io.Serializable {
 
@@ -20,19 +21,37 @@ public class newtonRhapson implements java.io.Serializable {
     private int maxIterations = 500, times = 0;
     double xNew = 0, xNew2, x = 0;
 
-    /** Creates new newtonRhapson */
+    /**
+     * Creates new newtonRhapson
+     */
     public newtonRhapson() {
     }
 
+    /**
+     * <p>Setter for the field <code>order</code>.</p>
+     *
+     * @param o a int
+     */
     public void setOrder(int o) {
         order = o;
         polyConstants = new double[order + 1];
     }
 
+    /**
+     * <p>setConstants.</p>
+     *
+     * @param constants an array of {@link double} objects
+     */
     public void setConstants(double[] constants) {
         System.arraycopy(constants, 0, polyConstants, 0, constants.length);
     }
 
+    /**
+     * <p>funkValue.</p>
+     *
+     * @param x a double
+     * @return a double
+     */
     public double funkValue(double x) {
         funkVal = 0;
 
@@ -42,6 +61,12 @@ public class newtonRhapson implements java.io.Serializable {
         return funkVal;
     }
 
+    /**
+     * <p>derivValue.</p>
+     *
+     * @param x a double
+     * @return a double
+     */
     public double derivValue(double x) {
         derivVal = 0;
 
@@ -52,6 +77,12 @@ public class newtonRhapson implements java.io.Serializable {
         return derivVal;
     }
 
+    /**
+     * <p>dubDerivValue.</p>
+     *
+     * @param x a double
+     * @return a double
+     */
     public double dubDerivValue(double x) {
         dubDerivVal = 0;
 
@@ -62,6 +93,12 @@ public class newtonRhapson implements java.io.Serializable {
         return dubDerivVal;
     }
 
+    /**
+     * <p>solve.</p>
+     *
+     * @param xin a double
+     * @return a double
+     */
     public double solve(double xin) {
         int iterations = 0;
 
@@ -112,6 +149,12 @@ public class newtonRhapson implements java.io.Serializable {
         return xNew;
     }
 
+    /**
+     * <p>solve1order.</p>
+     *
+     * @param xin a double
+     * @return a double
+     */
     public double solve1order(double xin) {
         int iterations = 0;
 
@@ -137,6 +180,11 @@ public class newtonRhapson implements java.io.Serializable {
         return xNew;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         newtonRhapson test = new newtonRhapson();
         test.setOrder(3);

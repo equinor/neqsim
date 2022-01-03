@@ -3,9 +3,9 @@ package neqsim.PVTsimulation.util.parameterfitting;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>DensityFunction class.</p>
  *
  * @author Even Solbraa
- * @version
  */
 public class DensityFunction extends LevenbergMarquardtFunction {
 
@@ -13,10 +13,14 @@ public class DensityFunction extends LevenbergMarquardtFunction {
 
     double molarMass = 0.0;
 
+    /**
+     * <p>Constructor for DensityFunction.</p>
+     */
     public DensityFunction() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
@@ -27,6 +31,7 @@ public class DensityFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getPhysicalProperties().getDensity();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
