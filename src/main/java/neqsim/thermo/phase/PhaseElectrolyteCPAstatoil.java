@@ -8,17 +8,26 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentElectrolyteCPAstatoil;
 
 /**
+ * <p>
+ * PhaseElectrolyteCPAstatoil class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new PhaseElectrolyteCPAstatoil */
+    /**
+     * <p>
+     * Constructor for PhaseElectrolyteCPAstatoil.
+     * </p>
+     */
     public PhaseElectrolyteCPAstatoil() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -27,6 +36,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
                 new ComponentElectrolyteCPAstatoil(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseElectrolyteCPAstatoil clone() {
         PhaseElectrolyteCPAstatoil clonedPhase = null;
@@ -38,6 +48,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_g() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -46,6 +57,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
         return g;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_lngV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -53,6 +65,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
         return -gv;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_lngVV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -69,6 +82,7 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
         // return gvv;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_lngVVV() {
         double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0)

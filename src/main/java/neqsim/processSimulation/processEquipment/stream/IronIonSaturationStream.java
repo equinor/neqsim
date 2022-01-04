@@ -10,31 +10,63 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * IronIonSaturationStream class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IronIonSaturationStream extends Stream {
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
 
-    /** Creates new IronIonSaturationStream */
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     */
     public IronIonSaturationStream() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public IronIonSaturationStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
 
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public IronIonSaturationStream(StreamInterface stream) {
         super(stream);
     }
 
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public IronIonSaturationStream(String name, SystemInterface thermoSystem) {
         super(name, thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public IronIonSaturationStream clone() {
         IronIonSaturationStream clonedSystem = null;
@@ -46,6 +78,7 @@ public class IronIonSaturationStream extends Stream {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         System.out.println("start flashing stream... " + streamNumber);
@@ -77,6 +110,7 @@ public class IronIonSaturationStream extends Stream {
         System.out.println("beta: " + reactiveThermoSystem.getBeta());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         reactiveThermoSystem.display(name);

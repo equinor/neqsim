@@ -6,17 +6,37 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * freezingPointTemperatureFlashOld class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlashOld.class);
 
-    public freezingPointTemperatureFlashOld() {
-    }
+    /**
+     * <p>
+     * Constructor for freezingPointTemperatureFlashOld.
+     * </p>
+     */
+    public freezingPointTemperatureFlashOld() {}
 
+    /**
+     * <p>
+     * Constructor for freezingPointTemperatureFlashOld.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public freezingPointTemperatureFlashOld(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -96,7 +116,7 @@ public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFla
         // logger.info("max freezing temp " + maxTemperature);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 }

@@ -9,11 +9,21 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermo.system.SystemUNIFACpsrk;
 
 /**
+ * <p>
+ * TestBinaryHVfitToActivityUNIFAC class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class TestBinaryHVfitToActivityUNIFAC {
+public class TestBinaryHVfitToActivityUNIFAC implements Cloneable {
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

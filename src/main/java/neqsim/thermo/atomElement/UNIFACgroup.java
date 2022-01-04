@@ -7,11 +7,19 @@ import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
 /**
+ * <p>
+ * UNIFACgroup class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable {
     /**
+     * <p>
+     * getQMixdN.
+     * </p>
+     *
      * @return the QMixdN
      */
     public double[] getQMixdN() {
@@ -19,6 +27,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
+     * <p>
+     * setQMixdN.
+     * </p>
+     *
      * @param QMixdN the QMixdN to set
      */
     public void setQMixdN(double[] QMixdN) {
@@ -44,10 +56,20 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     static Logger logger = LogManager.getLogger(UNIFACgroup.class);
 
     /**
-     * Creates new Element
+     * <p>
+     * Constructor for UNIFACgroup.
+     * </p>
      */
     public UNIFACgroup() {}
 
+    /**
+     * <p>
+     * Constructor for UNIFACgroup.
+     * </p>
+     *
+     * @param groupNumber a int
+     * @param temp a int
+     */
     public UNIFACgroup(int groupNumber, int temp) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         try {
@@ -192,48 +214,38 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
-     * Compares this object with the specified object for order. Returns a negative integer, zero,
-     * or a positive integer as this object is less than, equal to, or greater than the specified
-     * object.
-     * <p>
+     * {@inheritDoc} Compares this object with the specified object for order. Returns a negative
+     * integer, zero, or a positive integer as this object is less than, equal to, or greater than
+     * the specified object. In the foregoing description, the notation
+     * <code>sgn(</code><i>expression</i><code>)</code> designates the mathematical <i>signum</i>
+     * function, which is defined to return one of <code>-1</code>, <code>0</code>, or
+     * <code>1</code> according to whether the value of <i>expression</i> is negative, zero or
+     * positive.
      *
-     * In the foregoing description, the notation <tt>sgn(</tt><i>expression</i><tt>)</tt>
-     * designates the mathematical <i>signum</i> function, which is defined to return one of
-     * <tt>-1</tt>, <tt>0</tt>, or <tt>1</tt> according to whether the value of <i>expression</i> is
-     * negative, zero or positive.
-     * 
-     * The implementor must ensure <tt>sgn(x.compareTo(y)) ==
-     * -sgn(y.compareTo(x))</tt> for all <tt>x</tt> and <tt>y</tt>. (This implies that
-     * <tt>x.compareTo(y)</tt> must throw an exception iff <tt>y.compareTo(x)</tt> throws an
+     * The implementor must ensure <code>sgn(x.compareTo(y)) ==
+     * -sgn(y.compareTo(x))</code> for all <code>x</code> and <code>y</code>. (This implies that
+     * <code>x.compareTo(y)</code> must throw an exception iff <code>y.compareTo(x)</code> throws an
      * exception.)
-     * <p>
      *
      * The implementor must also ensure that the relation is transitive:
-     * <tt>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</tt> implies
-     * <tt>x.compareTo(z)&gt;0</tt>.
-     * <p>
+     * <code>(x.compareTo(y)&gt;0 &amp;&amp; y.compareTo(z)&gt;0)</code> implies
+     * <code>x.compareTo(z)&gt;0</code>.
      *
-     * Finally, the implementer must ensure that <tt>x.compareTo(y)==0</tt> implies that
-     * <tt>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</tt>, for all <tt>z</tt>.
-     * <p>
+     * Finally, the implementer must ensure that <code>x.compareTo(y)==0</code> implies that
+     * <code>sgn(x.compareTo(z)) == sgn(y.compareTo(z))</code>, for all <code>z</code>.
      *
      * It is strongly recommended, but <i>not</i> strictly required that
-     * <tt>(x.compareTo(y)==0) == (x.equals(y))</tt>. Generally speaking, any class that implements
-     * the <tt>Comparable</tt> interface and violates this condition should clearly indicate this
-     * fact. The recommended language is "Note: this class has a natural ordering that is
-     * inconsistent with equals."
-     *
-     * @param o the Object to be compared.
-     * @return a negative integer, zero, or a positive integer as this object is less than, equal
-     *         to, or greater than the specified object.
-     * @throws ClassCastException if the specified object's type prevents it from being compared to
-     *         this Object.
+     * <code>(x.compareTo(y)==0) == (x.equals(y))</code>. Generally speaking, any class that
+     * implements the <code>Comparable</code> interface and violates this condition should clearly
+     * indicate this fact. The recommended language is "Note: this class has a natural ordering that
+     * is inconsistent with equals."
      */
     @Override
     public boolean equals(Object o) {
         return ((UNIFACgroup) o).getSubGroup() == getSubGroup();
     }
 
+    /** {@inheritDoc} */
     @Override
     public int compareTo(java.lang.Object o) {
         if (((UNIFACgroup) o).getSubGroup() < getSubGroup()) {
@@ -249,6 +261,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
      * Getter for property xComp.
      *
      * @return Value of property xComp.
+     * @param component a {@link neqsim.thermo.component.ComponentGEUnifac} object
      */
     public double calcXComp(ComponentGEUnifac component) {
         double temp = 0.0;
@@ -270,6 +283,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
      * xMix = temp2 / temp; return xMix; }
      */
 
+    /**
+     * <p>
+     * calcQComp.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentGEUnifac} object
+     * @return a double
+     */
     public double calcQComp(ComponentGEUnifac component) {
         double temp = 0.0;
         for (int i = 0; i < component.getNumberOfUNIFACgroups(); i++) {
@@ -283,6 +304,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         return QComp;
     }
 
+    /**
+     * <p>
+     * calcQMix.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
+     * @return a double
+     */
     public double calcQMix(PhaseGEUnifac phase) {
         ComponentGEUnifac component;
         double temp = 0.0, temp2 = 0.0, tempVar, numberOfMoles;
@@ -306,6 +335,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         return QMix;
     }
 
+    /**
+     * <p>
+     * calcQMixdN.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
+     * @return an array of {@link double} objects
+     */
     public double[] calcQMixdN(PhaseGEUnifac phase) {
         setQMixdN(new double[phase.getNumberOfComponents()]);
         ComponentGEUnifac component;
@@ -342,6 +379,14 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         return getQMixdN();
     }
 
+    /**
+     * <p>
+     * getQMixdN.
+     * </p>
+     *
+     * @param comp a int
+     * @return a double
+     */
     public double getQMixdN(int comp) {
         return QMixdN[comp];
     }
@@ -351,6 +396,13 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
      * public void setXMixdN(double[] xMixdN) { this.xMixdN = xMixdN; }
      */
 
+    /**
+     * <p>
+     * Getter for the field <code>xComp</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getXComp() {
         return xComp;
     }
@@ -364,11 +416,6 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         this.xComp = xComp;
     }
 
-    /**
-     * Getter for property xMix.
-     *
-     * @return Value of property xMix.
-     */
     /**
      * Getter for property QComp.
      *
@@ -450,10 +497,26 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
         return lnGammaMix;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>lnGammaMixdn</code>.
+     * </p>
+     *
+     * @param compNumb a int
+     * @return a double
+     */
     public double getLnGammaMixdn(int compNumb) {
         return lnGammaMixdn[compNumb];
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>lnGammaMixdn</code>.
+     * </p>
+     *
+     * @param lnGammaMixdn1 a double
+     * @param compNumb a int
+     */
     public void setLnGammaMixdn(double lnGammaMixdn1, int compNumb) {
         lnGammaMixdn[compNumb] = lnGammaMixdn1;
     }
@@ -504,6 +567,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
+     * <p>
+     * Getter for the field <code>lnGammaCompdTdT</code>.
+     * </p>
+     *
      * @return the lnGammaCompdTdT
      */
     public double getLnGammaCompdTdT() {
@@ -511,6 +578,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
+     * <p>
+     * Setter for the field <code>lnGammaCompdTdT</code>.
+     * </p>
+     *
      * @param lnGammaCompdTdT the lnGammaCompdTdT to set
      */
     public void setLnGammaCompdTdT(double lnGammaCompdTdT) {
@@ -518,6 +589,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
+     * <p>
+     * Getter for the field <code>lnGammaMixdTdT</code>.
+     * </p>
+     *
      * @return the lnGammaMixdTdT
      */
     public double getLnGammaMixdTdT() {
@@ -525,6 +600,10 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable 
     }
 
     /**
+     * <p>
+     * Setter for the field <code>lnGammaMixdTdT</code>.
+     * </p>
+     *
      * @param lnGammaMixdTdT the lnGammaMixdTdT to set
      */
     public void setLnGammaMixdTdT(double lnGammaMixdTdT) {

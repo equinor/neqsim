@@ -13,9 +13,12 @@ import neqsim.thermo.mixingRule.CPAMixing;
 import neqsim.thermo.mixingRule.CPAMixingInterface;
 
 /**
+ * <p>
+ * PhasePCSAFTa class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     private static final long serialVersionUID = 1000;
@@ -31,11 +34,16 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     int[][][][] crossAccociationScheme = null;
     static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
-    /** Creates new PhaseSrkEos */
+    /**
+     * <p>
+     * Constructor for PhasePCSAFTa.
+     * </p>
+     */
     public PhasePCSAFTa() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhasePCSAFTa clone() {
         PhasePCSAFTa clonedPhase = null;
@@ -49,12 +57,14 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(3, this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void volInit() {
         super.volInit();
@@ -67,6 +77,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         gcpavvv = 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
             double beta) { // type = 0
@@ -89,6 +100,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         } while (!solveX());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -97,21 +109,25 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
                 new ComponentPCSAFTa(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getF() {
         return super.getF() + cpaon * FCPA();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdT() {
         return super.dFdT() + cpaon * dFCPAdT();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdTdV() {
         return super.dFdTdV();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdV() {
         double dv2 = dFCPAdV();
@@ -119,21 +135,31 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return super.dFdV() + cpaon * dv2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdVdV() {
         return super.dFdVdV() + cpaon * dFCPAdVdV();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdVdVdV() {
         return super.dFdVdVdV() + cpaon * dFCPAdVdVdV();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdTdT() {
         return super.dFdTdT() + cpaon * dFCPAdTdT();
     }
 
+    /**
+     * <p>
+     * FCPA.
+     * </p>
+     *
+     * @return a double
+     */
     public double FCPA() {
         double tot = 0.0;
         double ans = 0.0;
@@ -148,15 +174,36 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return ans;
     }
 
+    /**
+     * <p>
+     * dFCPAdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dFCPAdV() {
         return 1.0 / (2.0 * getTotalVolume()) * (1.0 - getTotalVolume() * gcpav * 1.0E-5) * hcpatot;
     }
 
+    /**
+     * <p>
+     * dFCPAdVdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dFCPAdVdV() {
         return -1.0 / getTotalVolume() * dFCPAdV() + hcpatot / (2.0 * getTotalVolume())
                 * (-gcpav * 1.0E-5 - getTotalVolume() * gcpavv * 1.0E-10);
     }
 
+    /**
+     * <p>
+     * dFCPAdVdVdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dFCPAdVdVdV() {
         return -1.0 / getTotalVolume() * dFCPAdVdV()
                 + 1.0 / Math.pow(getTotalVolume(), 2.0) * dFCPAdV()
@@ -166,14 +213,35 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
                         - getTotalVolume() * gcpavvv * 1.0E-10 - gcpavv * 1.0E-10);
     }
 
+    /**
+     * <p>
+     * dFCPAdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double dFCPAdT() {
         return -1.0 / 2.0 * hcpatotdT;
     }
 
+    /**
+     * <p>
+     * dFCPAdTdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double dFCPAdTdT() {
         return -1.0 / 2.0 * hcpatotdTdT;
     }
 
+    /**
+     * <p>
+     * calc_hCPA.
+     * </p>
+     *
+     * @return a double
+     */
     public double calc_hCPA() {
         double htot = 0.0;
         double tot = 0.0;
@@ -188,6 +256,13 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return tot;
     }
 
+    /**
+     * <p>
+     * calc_hCPAdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calc_hCPAdT() {
         double htot = 0.0;
         double tot = 0.0;
@@ -211,6 +286,13 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return tot / getTotalVolume();
     }
 
+    /**
+     * <p>
+     * calc_hCPAdTdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calc_hCPAdTdT() {
         double htot = 0.0;
         double tot = 0.0;
@@ -234,6 +316,13 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return tot / getTotalVolume();
     }
 
+    /**
+     * <p>
+     * solveX.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean solveX() {
         double err = .0;
         int iter = 0;
@@ -257,9 +346,9 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property hcpatot.
-     * 
-     * @return Value of property hcpatot.
      */
     @Override
     public double getHcpatot() {
@@ -268,22 +357,32 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
     /**
      * Setter for property hcpatot.
-     * 
+     *
      * @param hcpatot New value of property hcpatot.
      */
     public void setHcpatot(double hcpatot) {
         this.hcpatot = hcpatot;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGcpa() {
         return gcpa;
     }
 
+    /**
+     * <p>
+     * calc_lngni.
+     * </p>
+     *
+     * @param comp a int
+     * @return a double
+     */
     public double calc_lngni(int comp) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
@@ -340,7 +439,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):pressure*getB()/(numberOfMolesInPhase*temperature*R);
             // }
             // }
-
+            //
             // if(BonV>1){
             // BonV=1.0-1.0e-6;
             // BonVold=10;
@@ -374,16 +473,19 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return getMolarVolume();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGcpav() {
         return gcpav;
     }
 
+    /** {@inheritDoc} */
     @Override
     public CPAMixingInterface getCpamix() {
         return cpamix;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
         if (comp1 == comp2) {
@@ -392,17 +494,13 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         return crossAccociationScheme[comp1][comp2][site1][site2];
     }
 
-    /**
-     * @return the totalNumberOfAccociationSites
-     */
+    /** {@inheritDoc} */
     @Override
     public int getTotalNumberOfAccociationSites() {
         return totalNumberOfAccociationSites;
     }
 
-    /**
-     * @param totalNumberOfAccociationSites the totalNumberOfAccociationSites to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;

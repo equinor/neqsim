@@ -18,8 +18,12 @@ import neqsim.processSimulation.processEquipment.valve.ValveInterface;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * DPCUModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class DPCUModule extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
@@ -41,6 +45,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
     Mixer mixer;
     DistillationColumn distColumn;
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
@@ -51,6 +56,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -69,6 +75,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -187,6 +194,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -200,26 +208,31 @@ public class DPCUModule extends ProcessModuleBaseClass {
         liquidDistColumnExit = distColumn.getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("pressure after reduction valve")) {
@@ -229,6 +242,7 @@ public class DPCUModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         System.out.println("compressor power " + compressor1.getEnergy());
@@ -236,6 +250,13 @@ public class DPCUModule extends ProcessModuleBaseClass {
         valve1.displayResult();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos(273.15 + 7.5, 110.0);

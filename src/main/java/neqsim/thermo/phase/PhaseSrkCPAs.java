@@ -10,20 +10,26 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSrkCPAs;
 
 /**
+ * <p>
+ * PhaseSrkCPAs class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseSrkCPAs extends PhaseSrkCPA {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhaseSrkEos
+     * <p>
+     * Constructor for PhaseSrkCPAs.
+     * </p>
      */
     public PhaseSrkCPAs() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseSrkCPAs clone() {
         PhaseSrkCPAs clonedPhase = null;
@@ -35,6 +41,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -43,6 +50,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
                 new ComponentSrkCPAs(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_g() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -51,6 +59,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
         return g;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_lngV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -58,6 +67,7 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
         return -gv;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_lngVV() {
         double x = 1.9 / 4.0 * getB() / getTotalVolume();
@@ -67,13 +77,14 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
         double val = -x / (getTotalVolume() * getTotalVolume() * u) + xV / (getTotalVolume() * u)
                 - x / (getTotalVolume() * u * u) * (-1.0) * xV;
         return -val;
-
+        //
         // double gvv
         // =0.225625/Math.pow(1.0-0.475*getB()/getTotalVolume(),2.0)*Math.pow(getB(),2.0)/(Math.pow(getTotalVolume(),4.0))+0.95/(1.0-0.475*getB()/getTotalVolume())*getB()/(Math.pow(getTotalVolume(),3.0));
         // System.out.println("val2 " + gvv);
         // return gvv;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calc_lngVVV() {
         double totVol = getTotalVolume();

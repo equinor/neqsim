@@ -11,17 +11,34 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.fluidBoundarySystemReactive.FluidBoundarySystemReactive;
 
 /**
+ * <p>
+ * EnhancementFactorNumeric class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class EnhancementFactorNumeric extends EnhancementFactor {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for EnhancementFactorNumeric.
+     * </p>
+     */
     public EnhancementFactorNumeric() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for EnhancementFactorNumeric.
+     * </p>
+     *
+     * @param fluidBoundary a
+     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+     *        object
+     */
     public EnhancementFactorNumeric(FluidBoundaryInterface fluidBoundary) {
         super(fluidBoundary);
         // fluidBoundary.setNumericSolve(true);
@@ -32,6 +49,13 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
         // numericInterface.createSystem();
     }
 
+    /**
+     * <p>
+     * calcEnhancementMatrix.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void calcEnhancementMatrix(int phase) {
         reactiveInterface.createSystem();
         nonReactiveInterface.createSystem();

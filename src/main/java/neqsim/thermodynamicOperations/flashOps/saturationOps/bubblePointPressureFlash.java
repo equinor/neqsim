@@ -10,17 +10,37 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * bubblePointPressureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class bubblePointPressureFlash extends constantDutyPressureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointPressureFlash.class);
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for bubblePointPressureFlash.
+     * </p>
+     */
     public bubblePointPressureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for bubblePointPressureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public bubblePointPressureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -144,6 +164,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
                 }
                 // logger.info("iter in bub calc " + iterations + " pres " +
                 // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
+
             } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
                     || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
                     && (iterations < maxNumberOfIterations)) || iterations < 5);
@@ -155,6 +176,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
             }
             // logger.info("iter in bub calc " + iterations + " pres " +
             // system.getPressure()+ " chem iter " + chemIter);
+
         } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2
                 || !chemSolved) && chemIter < 20);
         // if(system.getPressure()>300) system.setPressure(300.0);
@@ -169,6 +191,7 @@ public class bubblePointPressureFlash extends constantDutyPressureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

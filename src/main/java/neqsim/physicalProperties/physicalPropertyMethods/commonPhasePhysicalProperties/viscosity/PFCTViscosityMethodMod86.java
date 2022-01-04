@@ -9,6 +9,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * PFCTViscosityMethodMod86 class.
+ * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -27,8 +30,22 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
             4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
     double viscRefK[] = {-9.74602, 18.0834, -4126.66, 44.6055, 0.976544, 81.8134, 15649.9};
 
+    /**
+     * <p>
+     * Constructor for PFCTViscosityMethodMod86.
+     * </p>
+     */
     public PFCTViscosityMethodMod86() {}
 
+    /**
+     * <p>
+     * Constructor for PFCTViscosityMethodMod86.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public PFCTViscosityMethodMod86(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -38,18 +55,15 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
-        int phaseTypeNumb = 0;
-        // if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;
-
         double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC(),
                 Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC(),
                 M0 = referenceSystem.getPhase(0).getComponent(0).getMolarMass() * 1e3;
 
         double PCmix = 0.0, TCmix = 0.0, Mmix = 0.0;
         double alfa0 = 1.0, alfaMix = 1.0;
-        double par1 = 0.0, par2 = 0.0, par3 = 0.0, par4 = 0.0;
         double tempTC1 = 0.0, tempTC2 = 0.0;
         double tempPC1 = 0.0, tempPC2 = 0.0;
         double Mwtemp = 0.0, Mmtemp = 0.0;
@@ -116,6 +130,15 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
         return viscosity;
     }
 
+    /**
+     * <p>
+     * getRefComponentViscosity.
+     * </p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double getRefComponentViscosity(double temp, double pres) {
         referenceSystem.setTemperature(temp);
         // System.out.println("ref temp " + temp);

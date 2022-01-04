@@ -12,9 +12,25 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * EclipseFluidReadWrite class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class EclipseFluidReadWrite {
     static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
 
+    /**
+     * <p>
+     * read.
+     * </p>
+     *
+     * @param inputFile a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public static SystemInterface read(String inputFile) {
         neqsim.thermo.system.SystemInterface fluid =
                 new neqsim.thermo.system.SystemSrkEos(288.15, 1.01325);
@@ -232,6 +248,14 @@ public class EclipseFluidReadWrite {
         return fluid;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     * @throws java.lang.Exception if any.
+     */
     public static void main(String[] args) throws Exception {
         neqsim.thermo.system.SystemInterface fluid = EclipseFluidReadWrite.read(
                 "C:\\\\Users\\\\esol\\\\OneDrive - Equinor\\\\programming\\\\neqsim\\\\src\\\\main\\\\java\\\\neqsim\\\\thermo\\\\util\\\\readwrite\\\\examplefileMet.txt");
@@ -243,5 +267,4 @@ public class EclipseFluidReadWrite {
         // new neqsim.thermo.ThermodynamicModelTest(fluid);
         // testModel.runTest();
     }
-
 }

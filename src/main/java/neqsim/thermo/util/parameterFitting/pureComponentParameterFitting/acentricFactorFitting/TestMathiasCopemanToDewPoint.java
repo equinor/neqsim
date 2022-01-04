@@ -12,13 +12,23 @@ import neqsim.thermo.system.SystemSrkMathiasCopeman;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestMathiasCopemanToDewPoint class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestMathiasCopemanToDewPoint {
     static Logger logger = LogManager.getLogger(TestMathiasCopemanToDewPoint.class);
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

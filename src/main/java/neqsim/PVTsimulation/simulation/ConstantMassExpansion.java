@@ -9,8 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * ConstantMassExpansion class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ConstantMassExpansion extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
@@ -26,10 +30,22 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     private double saturationIsoThermalCompressibility = 0.0;
     double[] temperatures = null;
 
+    /**
+     * <p>
+     * Constructor for ConstantMassExpansion.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ConstantMassExpansion(SystemInterface tempSystem) {
         super(tempSystem);
     }
 
+    /**
+     * <p>
+     * calcSaturationConditions.
+     * </p>
+     */
     public void calcSaturationConditions() {
         getThermoSystem().setPressure(1.0);
         do {
@@ -63,11 +79,17 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         saturationConditionFound = true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getSaturationPressure() {
         return saturationPressure;
     }
 
+    /**
+     * <p>
+     * runCalc.
+     * </p>
+     */
     public void runCalc() {
         saturationConditionFound = false;
         relativeVolume = new double[pressures.length];
@@ -151,6 +173,11 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         System.out.println("test finished");
     }
 
+    /**
+     * <p>
+     * runTuning.
+     * </p>
+     */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -195,6 +222,13 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         // optim.displayCurveFit();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 73.0, 10.0);
         tempSystem.addComponent("nitrogen", 0.972);
@@ -244,6 +278,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>relativeVolume</code>.
+     * </p>
+     *
      * @return the relativeVolume
      */
     public double[] getRelativeVolume() {
@@ -251,6 +289,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>liquidRelativeVolume</code>.
+     * </p>
+     *
      * @return the liquidRelativeVolume
      */
     public double[] getLiquidRelativeVolume() {
@@ -258,6 +300,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getZgas.
+     * </p>
+     *
      * @return the Zgas
      */
     public double[] getZgas() {
@@ -265,6 +311,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getYfactor.
+     * </p>
+     *
      * @return the Yfactor
      */
     public double[] getYfactor() {
@@ -272,6 +322,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>density</code>.
+     * </p>
+     *
      * @return the density
      */
     public double[] getDensity() {
@@ -279,6 +333,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>viscosity</code>.
+     * </p>
+     *
      * @return the gas viscosity
      */
     public double[] getViscosity() {
@@ -286,6 +344,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getBg.
+     * </p>
+     *
      * @return the gas volume formation factor
      */
     public double[] getBg() {
@@ -293,6 +355,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>isoThermalCompressibility</code>.
+     * </p>
+     *
      * @return the isoThermalCompressibility
      */
     public double[] getIsoThermalCompressibility() {
@@ -300,12 +366,24 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>saturationIsoThermalCompressibility</code>.
+     * </p>
+     *
      * @return the saturationIsoThermalCompressibility
      */
     public double getSaturationIsoThermalCompressibility() {
         return saturationIsoThermalCompressibility;
     }
 
+    /**
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
         this.pressures = pressure;
         this.temperatures = temperature;

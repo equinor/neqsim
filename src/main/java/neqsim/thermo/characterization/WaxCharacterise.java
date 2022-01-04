@@ -5,7 +5,12 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * WaxCharacterise class.
+ * </p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class WaxCharacterise implements java.io.Serializable, Cloneable {
     private static final long serialVersionUID = 1000;
@@ -14,10 +19,18 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
     String name = "";
     protected WaxModelInterface model = new PedersenWaxModel();
 
+    /**
+     * <p>
+     * Constructor for WaxCharacterise.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public WaxCharacterise(SystemInterface system) {
         thermoSystem = system;
     }
 
+    /** {@inheritDoc} */
     @Override
     public WaxCharacterise clone() {
         WaxCharacterise clonedSystem = null;
@@ -241,6 +254,14 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>model</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
+     */
     public WaxModelInterface getModel(String name) {
         this.name = name;
         if (name.equals("PedersenWax")) {
@@ -249,6 +270,13 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         return new PedersenWaxModel();
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>model</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setModel(String name) {
         this.name = name;
         if (name.equals("PedersenWax")) {
@@ -257,10 +285,24 @@ public class WaxCharacterise implements java.io.Serializable, Cloneable {
         model = new PedersenWaxModel();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>model</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.characterization.WaxModelInterface} object
+     */
     public WaxModelInterface getModel() {
         return model;
     }
 
+    /**
+     * <p>
+     * setModelName.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setModelName(String name) {
         this.name = name;
     }

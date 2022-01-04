@@ -1,18 +1,34 @@
 package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.diffusivity;
 
 /**
+ * <p>
+ * CorrespondingStatesDiffusivity class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CorrespondingStatesDiffusivity extends Diffusivity {
     private static final long serialVersionUID = 1000;
 
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
 
-    /** Creates new Conductivity */
+    /**
+     * <p>
+     * Constructor for CorrespondingStatesDiffusivity.
+     * </p>
+     */
     public CorrespondingStatesDiffusivity() {}
 
+    /**
+     * <p>
+     * Constructor for CorrespondingStatesDiffusivity.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public CorrespondingStatesDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -20,6 +36,7 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
                 .getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         if (phase.getPhase().getPhaseType() == 0) {

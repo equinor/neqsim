@@ -6,13 +6,23 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * TBPfractionModel class.
+ * </p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class TBPfractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     String name = "";
     static Logger logger = LogManager.getLogger(TBPfractionModel.class);
 
+    /**
+     * <p>
+     * Constructor for TBPfractionModel.
+     * </p>
+     */
     public TBPfractionModel() {}
 
     public abstract class TBPBaseModel
@@ -296,6 +306,14 @@ public class TBPfractionModel implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * getModel.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.characterization.TBPModelInterface} object
+     */
     public TBPModelInterface getModel(String name) {
         this.name = name;
         if (name.equals("PedersenSRK")) {

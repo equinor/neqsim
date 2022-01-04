@@ -7,22 +7,39 @@ import java.io.FileOutputStream;
 import java.text.DecimalFormat;
 
 /**
+ * <p>
+ * dataHandeling class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class dataHandeling {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new dataRepresentation */
+    /**
+     * <p>
+     * Constructor for dataHandeling.
+     * </p>
+     */
     public dataHandeling() {}
 
+    /**
+     * <p>
+     * getXValue.
+     * </p>
+     *
+     * @param series a int
+     * @param item a int
+     * @return a {@link java.lang.Number} object
+     */
     public Number getXValue(int series, int item) {
         return Double.valueOf(-10.0 + (item * 0.2));
     }
 
     /**
      * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @param item The index (zero-based) of the required item;
      * @return The y-value for the specified series and item.
@@ -37,7 +54,7 @@ public class dataHandeling {
 
     /**
      * Returns the number of series in the data source.
-     * 
+     *
      * @return The number of series in the data source.
      */
     public int getSeriesCount() {
@@ -46,7 +63,7 @@ public class dataHandeling {
 
     /**
      * Returns the name of the series.
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @return The name of the series.
      */
@@ -62,7 +79,7 @@ public class dataHandeling {
 
     /**
      * Returns the number of items in the specified series.
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @return The number of items in the specified series.
      */
@@ -70,10 +87,24 @@ public class dataHandeling {
         return 81;
     }
 
+    /**
+     * <p>
+     * getLegendItemCount.
+     * </p>
+     *
+     * @return a int
+     */
     public int getLegendItemCount() {
         return 2;
     }
 
+    /**
+     * <p>
+     * getLegendItemLabels.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getLegendItemLabels() {
         String[] str = new String[2];
         str[1] = "";
@@ -81,6 +112,14 @@ public class dataHandeling {
         return str;
     }
 
+    /**
+     * <p>
+     * printToFile.
+     * </p>
+     *
+     * @param points an array of {@link double} objects
+     * @param filename a {@link java.lang.String} object
+     */
     public void printToFile(double[][] points, String filename) {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);

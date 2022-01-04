@@ -12,17 +12,28 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Water_MDEA1 class.
+ * </p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Water_MDEA1 {
-
     static Logger logger = LogManager.getLogger(Water_MDEA1.class);
 
-    public Water_MDEA1() {
-    }
+    /**
+     * <p>
+     * Constructor for Water_MDEA1.
+     * </p>
+     */
+    public Water_MDEA1() {}
 
     /**
+     * <p>
+     * main.
+     * </p>
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {
@@ -61,7 +72,8 @@ public class Water_MDEA1 {
              * logger.info("Excess Heat kJ "+testSystem.getPhase(1).getComponent(1).
              * getHresTP(temperature)/1000);
              */
-            try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                 // p.println(x+" "+testSystem.getPhase(0).getComponent(0).getx()+"
                 // "+testSystem.getPhase(0).getComponent(1).getx());
                 p.println(x + " " + testSystem.getPhase(0).getComponent(1).getx() + " "

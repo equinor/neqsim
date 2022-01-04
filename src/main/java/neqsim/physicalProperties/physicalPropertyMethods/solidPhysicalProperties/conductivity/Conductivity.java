@@ -9,9 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * Conductivity class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Conductivity extends
         neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
@@ -23,15 +26,27 @@ public class Conductivity extends
     double conductivity = 0;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
      */
     public Conductivity() {}
 
+    /**
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
+     *
+     * @param solidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public Conductivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface solidPhase) {
         super(solidPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public Conductivity clone() {
         Conductivity properties = null;
@@ -45,6 +60,7 @@ public class Conductivity extends
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcConductivity() {
         // using default value of parafin wax

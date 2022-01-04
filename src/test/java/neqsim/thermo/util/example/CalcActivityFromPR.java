@@ -4,10 +4,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPCSAFT;
 
 /**
+ * <p>CalcActivityFromPR class.</p>
  *
  * @author esol
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class CalcActivityFromPR {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemPCSAFT(150.0, 10.0);
         testSystem.addComponent("methane", 1.0);

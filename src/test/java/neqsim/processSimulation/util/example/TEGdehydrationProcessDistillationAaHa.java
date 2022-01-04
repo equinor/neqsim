@@ -18,7 +18,19 @@ import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
+/**
+ * <p>TEGdehydrationProcessDistillationAaHa class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TEGdehydrationProcessDistillationAaHa {
+        /**
+         * <p>getProcess.</p>
+         *
+         * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+         */
         public static neqsim.processSimulation.processSystem.ProcessSystem getProcess() {
                 neqsim.thermo.system.SystemInterface feedGas =
                                 new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
@@ -287,6 +299,11 @@ public class TEGdehydrationProcessDistillationAaHa {
                 return operations;
         }
 
+        /**
+         * <p>main.</p>
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
         @SuppressWarnings("unused")
         public static void main(String[] args) {
                 neqsim.processSimulation.processSystem.ProcessSystem operations =

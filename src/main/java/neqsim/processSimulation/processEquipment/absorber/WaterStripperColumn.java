@@ -21,8 +21,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * WaterStripperColumn class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class WaterStripperColumn extends SimpleAbsorber {
     private static final long serialVersionUID = 1000;
@@ -41,22 +45,33 @@ public class WaterStripperColumn extends SimpleAbsorber {
     int solventStreamNumber = 0;
 
     /**
-     * Creates new staticMixer
+     * <p>
+     * Constructor for WaterStripperColumn.
+     * </p>
      */
     public WaterStripperColumn() {
         mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
+    /**
+     * <p>
+     * Constructor for WaterStripperColumn.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public WaterStripperColumn(String name) {
         this.name = name;
         mechanicalDesign = new AbsorberMechanicalDesign(this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addStream(StreamInterface newStream) {
         streams.add(newStream);
@@ -71,12 +86,28 @@ public class WaterStripperColumn extends SimpleAbsorber {
         numberOfInputStreams++;
     }
 
+    /**
+     * <p>
+     * addGasInStream.
+     * </p>
+     *
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void addGasInStream(StreamInterface newStream) {
         gasInStream = (Stream) newStream;
         gasOutStream = (Stream) newStream.clone();
         addStream(newStream);
     }
 
+    /**
+     * <p>
+     * addSolventInStream.
+     * </p>
+     *
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void addSolventInStream(StreamInterface newStream) {
         solventInStream = (Stream) newStream;
         solventOutStream = (Stream) newStream.clone();
@@ -84,18 +115,31 @@ public class WaterStripperColumn extends SimpleAbsorber {
         solventStreamNumber = streams.size() - 1;
     }
 
+    /**
+     * <p>
+     * replaceSolventInStream.
+     * </p>
+     *
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void replaceSolventInStream(StreamInterface newStream) {
         solventInStream = (Stream) newStream;
         streams.set(solventStreamNumber, solventInStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPressure(double pressure) {
         this.pressure = pressure;
     }
 
+    /**
+     * <p>
+     * mixStream.
+     * </p>
+     */
     public void mixStream() {
-        int index = 0;
         String compName = new String();
 
         for (int k = 1; k < streams.size(); k++) {
@@ -106,7 +150,6 @@ public class WaterStripperColumn extends SimpleAbsorber {
                         streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
                                 .getName();
                 // System.out.println("adding: " + componentName);
-                int numberOfPhases = streams.get(k).getThermoSystem().getNumberOfPhases();
 
                 double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
                         .getNumberOfmoles();
@@ -117,8 +160,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
                     if (mixedStream.getThermoSystem().getPhases()[0].getComponents()[p].getName()
                             .equals(componentName)) {
                         gotComponent = true;
-                        index = streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
-                                .getComponentNumber();
+
                         compName =
                                 streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                                         .getComponentName();
@@ -141,6 +183,13 @@ public class WaterStripperColumn extends SimpleAbsorber {
         mixedStream.getThermoSystem().init(2);
     }
 
+    /**
+     * <p>
+     * guessTemperature.
+     * </p>
+     *
+     * @return a double
+     */
     public double guessTemperature() {
         double gtemp = 0;
         for (int k = 0; k < streams.size(); k++) {
@@ -151,6 +200,13 @@ public class WaterStripperColumn extends SimpleAbsorber {
         return gtemp;
     }
 
+    /**
+     * <p>
+     * calcMixStreamEnthalpy.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcMixStreamEnthalpy() {
         double enthalpy = 0;
         for (int k = 0; k < streams.size(); k++) {
@@ -163,33 +219,52 @@ public class WaterStripperColumn extends SimpleAbsorber {
         return enthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getOutStream() {
         return mixedStream;
     }
 
+    /**
+     * <p>
+     * getInStream.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getInStream() {
         return gasInStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getGasOutStream() {
         return gasOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getLiquidOutStream() {
         return solventOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Stream getSolventInStream() {
         return solventInStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {}
 
+    /**
+     * <p>
+     * calcEa.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcEa() {
         double A = mixedStream.getThermoSystem().getPhase(1).getNumberOfMolesInPhase()
                 / mixedStream.getThermoSystem().getPhase(0).getNumberOfMolesInPhase() / kwater;
@@ -198,20 +273,46 @@ public class WaterStripperColumn extends SimpleAbsorber {
         return absorptionEfficiency;
     }
 
+    /**
+     * <p>
+     * calcX0.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcX0() {
         return 0.0;
     }
 
+    /**
+     * <p>
+     * calcNumberOfTheoreticalStages.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcNumberOfTheoreticalStages() {
         setNumberOfTheoreticalStages(getStageEfficiency() * getNumberOfStages());
         return getNumberOfTheoreticalStages();
     }
 
+    /**
+     * <p>
+     * calcNTU.
+     * </p>
+     *
+     * @param y0 a double
+     * @param y1 a double
+     * @param yb a double
+     * @param ymix a double
+     * @return a double
+     */
     public double calcNTU(double y0, double y1, double yb, double ymix) {
         double NTU = Math.log((yb - ymix) / (y1 - y0));
         return NTU;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         try {
@@ -302,6 +403,7 @@ public class WaterStripperColumn extends SimpleAbsorber {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         SystemInterface thermoSystem = mixedStream.getThermoSystem();
@@ -403,28 +505,66 @@ public class WaterStripperColumn extends SimpleAbsorber {
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>waterDewPointTemperature</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getWaterDewPointTemperature() {
         return waterDewPointTemperature;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>waterDewPointTemperature</code>.
+     * </p>
+     *
+     * @param waterDewPointTemperature a double
+     * @param dewPressure a double
+     */
     public void setWaterDewPointTemperature(double waterDewPointTemperature, double dewPressure) {
         this.waterDewPointTemperature = waterDewPointTemperature;
         this.dewPressure = dewPressure;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>gasOutStream</code>.
+     * </p>
+     *
+     * @param gasOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public void setGasOutStream(Stream gasOutStream) {
         this.gasOutStream = gasOutStream;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>solventOutStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public Stream getSolventOutStream() {
         return solventOutStream;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>solventOutStream</code>.
+     * </p>
+     *
+     * @param solventOutStream a {@link neqsim.processSimulation.processEquipment.stream.Stream}
+     *        object
+     */
     public void setSolventOutStream(Stream solventOutStream) {
         this.solventOutStream = solventOutStream;
     }

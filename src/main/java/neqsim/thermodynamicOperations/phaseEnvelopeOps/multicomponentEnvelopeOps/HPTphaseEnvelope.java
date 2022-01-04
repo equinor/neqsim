@@ -17,8 +17,12 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * HPTphaseEnvelope class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class HPTphaseEnvelope extends BaseOperation {
     private static final long serialVersionUID = 1000;
@@ -32,9 +36,20 @@ public class HPTphaseEnvelope extends BaseOperation {
     double startPressure = 1, endPressure = 0, startTemperature = 160, endTemperature = 0;
     static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
 
-    /** Creates new HPTphaseEnvelope */
+    /**
+     * <p>
+     * Constructor for HPTphaseEnvelope.
+     * </p>
+     */
     public HPTphaseEnvelope() {}
 
+    /**
+     * <p>
+     * Constructor for HPTphaseEnvelope.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public HPTphaseEnvelope(SystemInterface system) {
         testOps = new ThermodynamicOperations(system);
         this.system = system;
@@ -52,6 +67,7 @@ public class HPTphaseEnvelope extends BaseOperation {
         mainFrame.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         int np = 0;
@@ -73,6 +89,7 @@ public class HPTphaseEnvelope extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         try {
@@ -87,22 +104,27 @@ public class HPTphaseEnvelope extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return points;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;

@@ -1,19 +1,17 @@
-/*
- * Class.java
- *
- * Created on 19. november 2001, 11:43
- */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
-import org.apache.logging.log4j.*;
-
 /**
+ * <p>
+ * ComponentHydratePVTsim class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class ComponentHydratePVTsim extends ComponentHydrate {
     private static final long serialVersionUID = 1000;
@@ -22,8 +20,23 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     double Bk[][] = new double[2][2]; // [structure][cavitytype]
     static Logger logger = LogManager.getLogger(ComponentHydratePVTsim.class);
 
+    /**
+     * <p>
+     * Constructor for ComponentHydratePVTsim.
+     * </p>
+     */
     public ComponentHydratePVTsim() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentHydratePVTsim.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentHydratePVTsim(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
@@ -41,6 +54,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                     } else {
                         dataSet = database.getResultSet(
                                 ("SELECT * FROM comp WHERE name='" + component_name + "'"));
+
                     }
                     dataSet.next();
                 } catch (Exception e) {
@@ -72,12 +86,15 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure());
+
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
@@ -132,8 +149,6 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
                     double tempy = 1.0;
 
-                    double tempfugcoef = -1.0e50;
-
                     for (int cavType = 0; cavType < 2; cavType++) {
                         tempy = 0.0;
 
@@ -170,6 +185,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -183,6 +199,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             if (phase.getComponent(i).isHydrateFormer()) {
                 temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType,
                         phase) * reffug[i];
+
             }
             // System.out.println("reffug " + reffug[i]);
             // System.out.println("temp " + temp);
@@ -192,8 +209,10 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
         return yki / temp;
         // }
         // else return 0.0;
+
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         // this is equation 8.8
@@ -204,6 +223,18 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
                 * Math.exp(Bk[stucture][cavityType] / (phase.getTemperature()));
     }
 
+    /**
+     * <p>
+     * calcDeltaChemPot.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @param hydrateStruct a int
+     * @return a double
+     */
     public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp,
             double pres, int hydrateStruct) {
         double dGf = 0.0, dHf = 0.0;

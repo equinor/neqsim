@@ -10,19 +10,37 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * waterDewPointTemperatureMultiphaseFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(waterDewPointTemperatureMultiphaseFlash.class);
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for waterDewPointTemperatureMultiphaseFlash.
+     * </p>
      */
     public waterDewPointTemperatureMultiphaseFlash() {}
 
+    /**
+     * <p>
+     * Constructor for waterDewPointTemperatureMultiphaseFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public waterDewPointTemperatureMultiphaseFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         ThermodynamicOperations TPflashOps = new ThermodynamicOperations(system);
@@ -53,6 +71,7 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         // system.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

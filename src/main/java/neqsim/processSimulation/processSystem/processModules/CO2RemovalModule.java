@@ -6,8 +6,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * CO2RemovalModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class CO2RemovalModule extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
@@ -17,9 +21,12 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
 
     protected Separator inletSeparator = null;
 
-    /** Creates a new instance of SnohvitCO2RemovalModule */
+    /**
+     * Creates a new instance of SnohvitCO2RemovalModule
+     */
     public CO2RemovalModule() {}
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("streamToAbsorber")) {
@@ -27,6 +34,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -39,6 +47,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -56,6 +65,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         streamFromAbsorber.getThermoSystem().init(1);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
@@ -70,6 +80,7 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -78,16 +89,19 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
         getOperations().add(inletSeparator);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here

@@ -3,12 +3,21 @@ package neqsim.processSimulation.measurementDevice.online;
 import java.util.Date;
 
 /**
+ * <p>
+ * OnlineSignal class.
+ * </p>
+ *
  * @author esol
+ * @version $Id: $Id
  */
 public class OnlineSignal implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     /**
+     * <p>
+     * Getter for the field <code>unit</code>.
+     * </p>
+     *
      * @return the unit
      */
     public String getUnit() {
@@ -16,6 +25,10 @@ public class OnlineSignal implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>unit</code>.
+     * </p>
+     *
      * @param unit the unit to set
      */
     public void setUnit(String unit) {
@@ -31,6 +44,14 @@ public class OnlineSignal implements java.io.Serializable {
     private String unit = "C";
     neqsim.util.database.AspenIP21Database database = null;
 
+    /**
+     * <p>
+     * Constructor for OnlineSignal.
+     * </p>
+     *
+     * @param plantName a {@link java.lang.String} object
+     * @param transmitterName a {@link java.lang.String} object
+     */
     public OnlineSignal(String plantName, String transmitterName) {
         this.plantName = plantName;
         this.transmitterName = transmitterName;
@@ -38,6 +59,13 @@ public class OnlineSignal implements java.io.Serializable {
         connect();
     }
 
+    /**
+     * <p>
+     * connect.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean connect() {
         if (plantName.equals("Karsto")) {
             database = new neqsim.util.database.AspenIP21Database();
@@ -56,10 +84,24 @@ public class OnlineSignal implements java.io.Serializable {
         return true;
     }
 
+    /**
+     * <p>
+     * getTimeStamp.
+     * </p>
+     *
+     * @return a {@link java.util.Date} object
+     */
     public Date getTimeStamp() {
         return dateStamp;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>value</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getValue() {
         try {
             // System.out.println("reading online vale from: " + transmitterName );

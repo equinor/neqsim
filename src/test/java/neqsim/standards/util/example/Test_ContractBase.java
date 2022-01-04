@@ -7,11 +7,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Test_ContractBase class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class Test_ContractBase {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemGERGwaterEos(273.15 - 5.0, 20.0);

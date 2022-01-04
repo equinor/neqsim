@@ -10,9 +10,12 @@ import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGeNRTL;
 
 /**
+ * <p>
+ * PhaseGENRTL class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseGENRTL extends PhaseGE {
     private static final long serialVersionUID = 1000;
@@ -23,12 +26,26 @@ public class PhaseGENRTL extends PhaseGE {
     double[][] Dij;
     double GE = 0.0;
 
-    /** Creates new PhaseGENRTLmodifiedHV */
-
+    /**
+     * <p>
+     * Constructor for PhaseGENRTL.
+     * </p>
+     */
     public PhaseGENRTL() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for PhaseGENRTL.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param alpha an array of {@link double} objects
+     * @param Dij an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @param intparam an array of {@link double} objects
+     */
     public PhaseGENRTL(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
             double[][] intparam) {
         super();
@@ -47,6 +64,7 @@ public class PhaseGENRTL extends PhaseGE {
         setMixingRule(2);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -55,6 +73,7 @@ public class PhaseGENRTL extends PhaseGE {
                 new ComponentGeNRTL(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -64,6 +83,7 @@ public class PhaseGENRTL extends PhaseGE {
         this.Dij = mixSelect.getNRTLDij();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setAlpha(double[][] alpha) {
         for (int i = 0; i < alpha.length; i++) {
@@ -71,6 +91,7 @@ public class PhaseGENRTL extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDij(double[][] Dij) {
         for (int i = 0; i < Dij.length; i++) {
@@ -78,6 +99,7 @@ public class PhaseGENRTL extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype) {
@@ -91,11 +113,13 @@ public class PhaseGENRTL extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,

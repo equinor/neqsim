@@ -20,7 +20,11 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new SystemModifiedFurstElectrolyteEos */
+    /**
+     * <p>
+     * Constructor for SystemElectrolyteCPAstatoil.
+     * </p>
+     */
     public SystemElectrolyteCPAstatoil() {
         super();
         modelName = "Electrolyte-CPA-EOS-statoil";
@@ -32,6 +36,14 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(true);
     }
 
+    /**
+     * <p>
+     * Constructor for SystemElectrolyteCPAstatoil.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemElectrolyteCPAstatoil(double T, double P) {
         super(T, P);
         attractiveTermNumber = 15;
@@ -45,6 +57,7 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
         this.useVolumeCorrection(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemElectrolyteCPAstatoil clone() {
         SystemElectrolyteCPAstatoil clonedSystem = null;

@@ -10,9 +10,12 @@ import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
 
 /**
+ * <p>
+ * PhaseGENRTLmodifiedHV class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     private static final long serialVersionUID = 1000;
@@ -20,13 +23,27 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
     double[][] DijT;
     int type = 0;
 
-    /** Creates new PhaseGENRTLmodifiedHV */
-
+    /**
+     * <p>
+     * Constructor for PhaseGENRTLmodifiedHV.
+     * </p>
+     */
     public PhaseGENRTLmodifiedHV() {
         super();
         mixRuleEos = mixSelect.getMixingRule(1);
     }
 
+    /**
+     * <p>
+     * Constructor for PhaseGENRTLmodifiedHV.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param alpha an array of {@link double} objects
+     * @param Dij an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @param intparam an array of {@link double} objects
+     */
     public PhaseGENRTLmodifiedHV(PhaseInterface phase, double[][] alpha, double[][] Dij,
             String[][] mixRule, double[][] intparam) {
         super(phase, alpha, Dij, mixRule, intparam);
@@ -40,6 +57,18 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for PhaseGENRTLmodifiedHV.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param alpha an array of {@link double} objects
+     * @param Dij an array of {@link double} objects
+     * @param DijT an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @param intparam an array of {@link double} objects
+     */
     public PhaseGENRTLmodifiedHV(PhaseInterface phase, double[][] alpha, double[][] Dij,
             double[][] DijT, String[][] mixRule, double[][] intparam) {
         super(phase, alpha, Dij, mixRule, intparam);
@@ -54,6 +83,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -62,6 +92,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
                 new ComponentGENRTLmodifiedHV(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -72,6 +103,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         this.Dij = mixSelect.getHVDij();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
             String[][] mixRule, double[][] intparam) {
@@ -83,6 +115,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         this.intparam = intparam;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDijT(double[][] DijT) {
         for (int i = 0; i < DijT.length; i++) {
@@ -90,6 +123,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype) {
@@ -110,6 +144,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         return (R * phase.getTemperature() * GE) * phase.getNumberOfMolesInPhase();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGibbsEnergy() {
         double val = 0.0;
@@ -120,6 +155,7 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHresTP() {
         double val = 0.0;

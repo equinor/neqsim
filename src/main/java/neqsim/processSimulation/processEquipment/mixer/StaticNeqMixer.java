@@ -10,19 +10,35 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * StaticNeqMixer class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class StaticNeqMixer extends StaticMixer {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new StaticNeqMixer */
+    /**
+     * <p>
+     * Constructor for StaticNeqMixer.
+     * </p>
+     */
     public StaticNeqMixer() {}
 
+    /**
+     * <p>
+     * Constructor for StaticNeqMixer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public StaticNeqMixer(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void mixStream() {
         int index = 0;
@@ -54,6 +70,7 @@ public class StaticNeqMixer extends StaticMixer {
                         compName =
                                 streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                                         .getComponentName();
+
                     }
                 }
 
@@ -76,6 +93,7 @@ public class StaticNeqMixer extends StaticMixer {
         mixedStream.getThermoSystem().init(2);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double enthalpy = 0.0;
@@ -110,6 +128,7 @@ public class StaticNeqMixer extends StaticMixer {
         // mixedStream.getThermoSystem().getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;

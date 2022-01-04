@@ -6,9 +6,12 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.conductivity;
 
 /**
+ * <p>
+ * ChungConductivityMethod class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ChungConductivityMethod extends Conductivity {
     private static final long serialVersionUID = 1000;
@@ -16,16 +19,28 @@ public class ChungConductivityMethod extends Conductivity {
     public double[] pureComponentConductivity;
 
     /**
-     * Creates new Conductivity
+     * <p>
+     * Constructor for ChungConductivityMethod.
+     * </p>
      */
     public ChungConductivityMethod() {}
 
+    /**
+     * <p>
+     * Constructor for ChungConductivityMethod.
+     * </p>
+     *
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public ChungConductivityMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
         pureComponentConductivity = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcConductivity() {
         calcPureComponentConductivity();
@@ -55,6 +70,11 @@ public class ChungConductivityMethod extends Conductivity {
         return conductivity;
     }
 
+    /**
+     * <p>
+     * calcPureComponentConductivity.
+     * </p>
+     */
     public void calcPureComponentConductivity() {
         double tempVar2 = 0;
         double tempBeta = 0, tempAlpha = 0, tempZ = 0;

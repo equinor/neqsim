@@ -13,8 +13,12 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
+ * <p>
+ * SetPoint class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000;
@@ -27,13 +31,36 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
     static Logger logger = LogManager.getLogger(SetPoint.class);
 
-    /** Creates new staticMixer */
+    /**
+     * <p>
+     * Constructor for SetPoint.
+     * </p>
+     */
     public SetPoint() {}
 
+    /**
+     * <p>
+     * Constructor for SetPoint.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public SetPoint(String name) {
         super(name);
     }
 
+    /**
+     * <p>
+     * Constructor for SetPoint.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param sourceEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public SetPoint(String name, ProcessEquipmentInterface targetEquipment, String targetVariable,
             ProcessEquipmentInterface sourceEquipment) {
         this.targetEquipment = targetEquipment;
@@ -42,16 +69,44 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         run();
     }
 
+    /**
+     * <p>
+     * setSourceVariable.
+     * </p>
+     *
+     * @param adjustedEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param adjstedVariable a {@link java.lang.String} object
+     */
     public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment,
             String adjstedVariable) {
         this.sourceEquipment = adjustedEquipment;
         this.sourceVarialble = adjstedVariable;
     }
 
+    /**
+     * <p>
+     * setSourceVariable.
+     * </p>
+     *
+     * @param adjustedEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public void setSourceVariable(ProcessEquipmentInterface adjustedEquipment) {
         this.sourceEquipment = adjustedEquipment;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param targetValue a double
+     * @param targetUnit a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
             double targetValue, String targetUnit) {
         this.targetEquipment = targetEquipment;
@@ -60,12 +115,33 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.targetUnit = targetUnit;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment,
             String targetVariable) {
         this.targetEquipment = targetEquipment;
         this.targetVariable = targetVariable;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param targetValue a double
+     * @param targetUnit a {@link java.lang.String} object
+     * @param targetPhase a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
             double targetValue, String targetUnit, String targetPhase) {
         this.targetEquipment = targetEquipment;
@@ -75,6 +151,19 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.targetPhase = targetPhase;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param targetValue a double
+     * @param targetUnit a {@link java.lang.String} object
+     * @param targetPhase a {@link java.lang.String} object
+     * @param targetComponent a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
             double targetValue, String targetUnit, String targetPhase, String targetComponent) {
         this.targetEquipment = targetEquipment;
@@ -85,10 +174,16 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         this.targetComponent = targetComponent;
     }
 
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
     public void runTransient() {
         run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (targetVariable.equals("pressure")) {
@@ -107,9 +202,17 @@ public class SetPoint extends ProcessEquipmentBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // test code for adjuster...
         neqsim.thermo.system.SystemInterface testSystem =

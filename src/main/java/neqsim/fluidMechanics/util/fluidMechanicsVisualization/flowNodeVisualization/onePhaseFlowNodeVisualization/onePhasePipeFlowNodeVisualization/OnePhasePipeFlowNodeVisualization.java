@@ -10,16 +10,24 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.onePhaseFlowNodeVisualization.OnePhaseFlowNodeVisualization;
 
 /**
+ * <p>
+ * OnePhasePipeFlowNodeVisualization class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class OnePhasePipeFlowNodeVisualization extends OnePhaseFlowNodeVisualization {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new OnePhasePipeFlowNodeVisualization */
+    /**
+     * <p>
+     * Constructor for OnePhasePipeFlowNodeVisualization.
+     * </p>
+     */
     public OnePhasePipeFlowNodeVisualization() {}
 
+    /** {@inheritDoc} */
     @Override
     public void setData(FlowNodeInterface node) {
         super.setData(node);

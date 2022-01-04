@@ -3,8 +3,12 @@ package neqsim.PVTsimulation.modelTuning;
 import neqsim.PVTsimulation.simulation.SimulationInterface;
 
 /**
+ * <p>
+ * BaseTuningClass class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class BaseTuningClass implements TuningInterface {
     private static final long serialVersionUID = 1000;
@@ -15,20 +19,31 @@ public class BaseTuningClass implements TuningInterface {
     public double saturationTemperature = 273.15;
     public double saturationPressure = 273.15;
 
+    /**
+     * <p>
+     * Constructor for BaseTuningClass.
+     * </p>
+     */
     public BaseTuningClass() {}
 
+    /**
+     * <p>
+     * Constructor for BaseTuningClass.
+     * </p>
+     *
+     * @param simulationClass a {@link neqsim.PVTsimulation.simulation.SimulationInterface} object
+     */
     public BaseTuningClass(SimulationInterface simulationClass) {
         this.simulation = simulationClass;
     }
 
-    /**
-     * @return the simulationClass
-     */
+    /** {@inheritDoc} */
     @Override
     public SimulationInterface getSimulation() {
         return simulation;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSaturationConditions(double temperature, double pressure) {
         saturationTemperature = temperature;
@@ -36,6 +51,10 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
+     * <p>
+     * isTunePlusMolarMass.
+     * </p>
+     *
      * @return the tunePlusMolarMass
      */
     public boolean isTunePlusMolarMass() {
@@ -43,6 +62,10 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>tunePlusMolarMass</code>.
+     * </p>
+     *
      * @param tunePlusMolarMass the tunePlusMolarMass to set
      */
     public void setTunePlusMolarMass(boolean tunePlusMolarMass) {
@@ -50,6 +73,10 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
+     * <p>
+     * isTuneVolumeCorrection.
+     * </p>
+     *
      * @return the tuneVolumeCorrection
      */
     public boolean isTuneVolumeCorrection() {
@@ -57,12 +84,17 @@ public class BaseTuningClass implements TuningInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>tuneVolumeCorrection</code>.
+     * </p>
+     *
      * @param tuneVolumeCorrection the tuneVolumeCorrection to set
      */
     public void setTuneVolumeCorrection(boolean tuneVolumeCorrection) {
         this.tuneVolumeCorrection = tuneVolumeCorrection;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {}
 }

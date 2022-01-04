@@ -12,8 +12,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * ChemicalReaction class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
@@ -28,9 +32,26 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
     double G = 0, lnK = 0;
     int numberOfReactants = 0;
 
-    /** Creates new chemicalReaction */
+    /**
+     * <p>
+     * Constructor for ChemicalReaction.
+     * </p>
+     */
     public ChemicalReaction() {}
 
+    /**
+     * <p>
+     * Constructor for ChemicalReaction.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param names an array of {@link java.lang.String} objects
+     * @param stocCoefs an array of {@link double} objects
+     * @param K an array of {@link double} objects
+     * @param r a double
+     * @param activationEnergy a double
+     * @param refT a double
+     */
     public ChemicalReaction(String name, String[] names, double[] stocCoefs, double[] K, double r,
             double activationEnergy, double refT) {
         /*
@@ -74,23 +95,48 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>reactantNames</code>.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getReactantNames() {
         return reactantNames;
     }
 
     /**
      * reaction constant at reference temperature
+     *
+     * @return a double
      */
     public double getRateFactor() {
         return rateFactor;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>rateFactor</code>.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getRateFactor(PhaseInterface phase) {
         // return rateFactor * Math.exp(-activationEnergy/R*(1.0/phase.getTemperature()
         // - 1.0/refT));
         return 2.576e9 * Math.exp(-6024.0 / phase.getTemperature()) / 1000.0;
     }
 
+    /**
+     * <p>
+     * getK.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getK(PhaseInterface phase) {
         double temperature = phase.getTemperature();
         lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
@@ -101,18 +147,48 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         return Math.exp(lnK);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>stocCoefs</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getStocCoefs() {
         return this.stocCoefs;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>productNames</code>.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getProductNames() {
         return productNames;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>names</code>.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getNames() {
         return names;
     }
 
+    /**
+     * <p>
+     * calcKx.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double calcKx(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         double kx = 1.0;
         for (int i = 0; i < names.length; i++) {
@@ -122,6 +198,15 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         return kx;
     }
 
+    /**
+     * <p>
+     * calcKgamma.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double calcKgamma(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         double kgamma = 1.0;
         for (int i = 0; i < names.length; i++) {
@@ -136,6 +221,15 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         return kgamma;
     }
 
+    /**
+     * <p>
+     * getSaturationRatio.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double getSaturationRatio(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         double ksp = 1.0;
         for (int i = 0; i < names.length; i++) {
@@ -149,12 +243,26 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         return ksp;
     }
 
+    /**
+     * <p>
+     * calcK.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumb a int
+     * @return a double
+     */
     public double calcK(neqsim.thermo.system.SystemInterface system, int phaseNumb) {
         return calcKx(system, phaseNumb) * calcKgamma(system, phaseNumb);
     }
 
     /**
      * Generaters initial estimates for the molenumbers
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
+     * @param Amatrix an array of {@link double} objects
+     * @param chemRefPot an array of {@link double} objects
      */
     public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
             double[][] Amatrix, double[] chemRefPot) {
@@ -213,6 +321,13 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         // tempAReacmatrix.print(10,2);
     }
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void init(PhaseInterface phase) {
         double temperature = phase.getTemperature();
         lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
@@ -239,6 +354,13 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         }
     }
 
+    /**
+     * <p>
+     * checkK.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void checkK(SystemInterface system) {
         // double cK=Math.log(getK(system.getTemperature()));
         // for(int i=0;i<names.length;i++){
@@ -248,6 +370,14 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
         // System.out.println("ck: " +cK);
     }
 
+    /**
+     * <p>
+     * reactantsContains.
+     * </p>
+     *
+     * @param names an array of {@link java.lang.String} objects
+     * @return a boolean
+     */
     public boolean reactantsContains(String[] names) {
         boolean test = false;
         /*
@@ -290,7 +420,7 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Setter for property rateFactor.
-     * 
+     *
      * @param rateFactor New value of property rateFactor.
      */
     public void setRateFactor(double rateFactor) {
@@ -299,7 +429,7 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Getter for property activationEnergy.
-     * 
+     *
      * @return Value of property activationEnergy.
      */
     public double getActivationEnergy() {
@@ -308,7 +438,7 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Setter for property activationEnergy.
-     * 
+     *
      * @param activationEnergy New value of property activationEnergy.
      */
     public void setActivationEnergy(double activationEnergy) {
@@ -317,8 +447,9 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Getter for property reactionHeat. Van't HOffs equation dh = d lnK/dT * R * T^2
-     * 
+     *
      * @return Value of property reactionHeat.
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      */
     public double getReactionHeat(PhaseInterface phase) {
         double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0)
@@ -329,7 +460,7 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Getter for property k.
-     * 
+     *
      * @return Value of property k.
      */
     public double[] getK() {
@@ -338,20 +469,28 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Setter for property k.
-     * 
+     *
      * @param k New value of property k.
      */
     public void setK(double[] k) {
         this.K = k;
     }
 
+    /**
+     * <p>
+     * setK.
+     * </p>
+     *
+     * @param i a int
+     * @param Kd a double
+     */
     public void setK(int i, double Kd) {
         this.K[i] = Kd;
     }
 
     /**
      * Getter for property name.
-     * 
+     *
      * @return Value of property name.
      */
     public java.lang.String getName() {
@@ -360,7 +499,7 @@ public class ChemicalReaction implements neqsim.thermo.ThermodynamicConstantsInt
 
     /**
      * Setter for property name.
-     * 
+     *
      * @param name New value of property name.
      */
     public void setName(java.lang.String name) {

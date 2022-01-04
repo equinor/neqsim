@@ -12,8 +12,10 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>MixerGasProcessingModule class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
@@ -30,6 +32,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
     Pump oilPump;
     Cooler secondStageAfterCooler;
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("feed stream")) {
@@ -40,6 +43,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -58,6 +62,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -122,6 +127,7 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         getOperations().add(secondStageAfterCooler);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -134,26 +140,31 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         glycolExitStream = glycolScrubber.getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("inlet separation temperature")) {
@@ -173,6 +184,11 @@ public class MixerGasProcessingModule extends ProcessModuleBaseClass {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =

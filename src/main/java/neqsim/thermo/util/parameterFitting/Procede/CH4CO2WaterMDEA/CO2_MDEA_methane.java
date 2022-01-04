@@ -14,15 +14,22 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>CO2_MDEA_methane class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class CO2_MDEA_methane {
     static Logger logger = LogManager.getLogger(CO2_MDEA_methane.class);
 
+    /**
+     * <p>Constructor for CO2_MDEA_methane.</p>
+     */
     public CO2_MDEA_methane() {}
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     @SuppressWarnings("unused")

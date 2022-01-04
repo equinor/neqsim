@@ -10,9 +10,18 @@ import neqsim.processSimulation.processEquipment.stream.NeqStream;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
+/**
+ * <p>OffshoreProcess class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class OffshoreProcess {
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         double fakt = 1000.0 / 3600.0;

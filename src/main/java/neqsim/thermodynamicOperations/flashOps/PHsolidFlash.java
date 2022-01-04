@@ -11,8 +11,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * PHsolidFlash class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PHsolidFlash extends Flash {
     private static final long serialVersionUID = 1000;
@@ -22,15 +26,28 @@ public class PHsolidFlash extends Flash {
     int refluxPhase = 0;
     double enthalpyspec = 0.5;
 
-    /** Creates new PHsolidFlash */
+    /**
+     * <p>
+     * Constructor for PHsolidFlash.
+     * </p>
+     */
     public PHsolidFlash() {}
 
+    /**
+     * <p>
+     * Constructor for PHsolidFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param ent a double
+     */
     public PHsolidFlash(SystemInterface system, double ent) {
         this.system = system;
         this.tpFlash = new TPflash(this.system, true);
         this.enthalpyspec = ent;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // logger.info("enthalpy: " + system.getEnthalpy());
@@ -72,6 +89,7 @@ public class PHsolidFlash extends Flash {
         } while (Math.abs(dt) > 1e-8 && iter < 200);
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

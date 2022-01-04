@@ -19,8 +19,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.OperationInterface;
 
 /**
+ * <p>
+ * pLoadingCurve class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class pLoadingCurve implements OperationInterface {
     private static final long serialVersionUID = 1000;
@@ -44,13 +48,23 @@ public class pLoadingCurve implements OperationInterface {
     double[][] points = new double[35][];
 
     boolean moreLines = false;
-    int np = 0;
     // points[2] = new double[1000];
     int speceq = 0;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for pLoadingCurve.
+     * </p>
+     */
     public pLoadingCurve() {}
 
+    /**
+     * <p>
+     * Constructor for pLoadingCurve.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public pLoadingCurve(SystemInterface system) {
         this.system = system;
         lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -72,6 +86,7 @@ public class pLoadingCurve implements OperationInterface {
         mainFrame.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         int numbPoints = 50;
@@ -108,6 +123,7 @@ public class pLoadingCurve implements OperationInterface {
         mainFrame.setVisible(false);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -125,6 +141,7 @@ public class pLoadingCurve implements OperationInterface {
         graph2.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {
         neqsim.dataPresentation.dataHandeling printDat =
@@ -132,11 +149,13 @@ public class pLoadingCurve implements OperationInterface {
         printDat.printToFile(points, name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return points;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
         NetCdf2D file = new NetCdf2D();
@@ -153,26 +172,31 @@ public class pLoadingCurve implements OperationInterface {
         file.createFile();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return system;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addData(String name, double[][] data) {}
 }

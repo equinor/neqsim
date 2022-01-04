@@ -4,6 +4,14 @@ import Jama.Matrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * ChemicalEquilibrium class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class ChemicalEquilibrium implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
@@ -43,6 +51,17 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     Matrix chem_pot_Jama_Matrix;
     int phasenumb = 1;
 
+    /**
+     * <p>
+     * Constructor for ChemicalEquilibrium.
+     * </p>
+     *
+     * @param A_matrix an array of {@link double} objects
+     * @param b_element an array of {@link double} objects
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
+     * @param phase a int
+     */
     public ChemicalEquilibrium(double[][] A_matrix, double b_element[], SystemInterface system,
             ComponentInterface[] components, int phase) {
         this.system = system;
@@ -77,6 +96,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * calcRefPot.
+     * </p>
+     */
     public void calcRefPot() {
         for (int i = 0; i < components.length; i++) {
             // calculates the reduced chemical potential mu/RT
@@ -93,6 +117,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * chemSolve.
+     * </p>
+     */
     public void chemSolve() {
         n_t = system.getPhase(phasenumb).getNumberOfMolesInPhase();
 
@@ -208,6 +237,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         d_n = dn_matrix.transpose().getArray()[0];
     }
 
+    /**
+     * <p>
+     * updateMoles.
+     * </p>
+     */
     public void updateMoles() {
         upMoles++;
         double changeMoles = 0.0;
@@ -224,6 +258,13 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         system.init_x_y();
     }
 
+    /**
+     * <p>
+     * solve.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean solve() {
         double error = 1e10, errOld = 1e10, thisError = 0;
         double p = 1.0;
@@ -300,6 +341,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         return error < maxError;
     }
 
+    /**
+     * <p>
+     * printComp.
+     * </p>
+     */
     public void printComp() {
         for (int j = 0; j < NSPEC; j++) {
             System.out.println(" SVAR : " + n_mol[j]);
@@ -309,10 +355,24 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * getMoles.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getMoles() {
         return n_mol;
     }
 
+    /**
+     * <p>
+     * step.
+     * </p>
+     *
+     * @return a double
+     */
     public double step() {
         double step = 1.0;
         int i, check = 0;
@@ -390,6 +450,18 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         return 1.0;
     }
 
+    /**
+     * <p>
+     * innerStep.
+     * </p>
+     *
+     * @param i a int
+     * @param n_omega an array of {@link double} objects
+     * @param check a int
+     * @param step a double
+     * @param test a boolean
+     * @return a double
+     */
     public double innerStep(int i, double[] n_omega, int check, double step, boolean test) {
         if (test) {
             agemo = (-n_mol[i] / d_n[i]) * (1.0 - 0.03);

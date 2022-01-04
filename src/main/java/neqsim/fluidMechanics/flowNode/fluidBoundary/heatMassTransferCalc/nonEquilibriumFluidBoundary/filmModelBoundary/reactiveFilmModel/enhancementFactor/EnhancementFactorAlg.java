@@ -9,21 +9,39 @@ package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEqu
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface;
 
 /**
+ * <p>
+ * EnhancementFactorAlg class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class EnhancementFactorAlg extends EnhancementFactor {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for EnhancementFactorAlg.
+     * </p>
+     */
     public EnhancementFactorAlg() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for EnhancementFactorAlg.
+     * </p>
+     *
+     * @param fluidBoundary a
+     *        {@link neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundaryInterface}
+     *        object
+     */
     public EnhancementFactorAlg(FluidBoundaryInterface fluidBoundary) {
         super(fluidBoundary);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcEnhancementVec(int phase) {
         double hatta = 0.0;

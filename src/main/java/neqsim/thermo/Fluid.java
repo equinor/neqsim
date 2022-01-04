@@ -6,8 +6,12 @@ package neqsim.thermo;
 import org.apache.logging.log4j.*;
 
 /**
- * @author esol
+ * <p>
+ * Fluid class.
+ * </p>
  *
+ * @author esol
+ * @version $Id: $Id
  */
 public class Fluid {
     private static final long serialVersionUID = 1000;
@@ -33,7 +37,25 @@ public class Fluid {
     private static void setMixingRule() {
         fluid.setMixingRule(getThermoMixingRule());
     }
+    
+    public static neqsim.thermo.system.SystemInterface create2(String[] componentNames) {
+        double[] comp = new double[componentNames.length];
+        for(int i=0; i<componentNames.length; i++) {
+        	comp[i]=1.0;
+        }
+        return create2(componentNames, comp, "mol/sec");
+    }
 
+    /**
+     * <p>
+     * create2.
+     * </p>
+     *
+     * @param componentNames an array of {@link java.lang.String} objects
+     * @param flowrate an array of {@link double} objects
+     * @param unit a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public static neqsim.thermo.system.SystemInterface create2(String[] componentNames,
             double[] flowrate, String unit) {
         setThermoModel();
@@ -52,6 +74,14 @@ public class Fluid {
         return fluid;
     }
 
+    /**
+     * <p>
+     * create.
+     * </p>
+     *
+     * @param fluidType a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public static neqsim.thermo.system.SystemInterface create(String fluidType) {
         String[] compNames = null;
         double[] flowrate = null;
@@ -167,6 +197,16 @@ public class Fluid {
         return fluid;
     }
 
+    /**
+     * <p>
+     * addCharacterized.
+     * </p>
+     *
+     * @param charNames an array of {@link java.lang.String} objects
+     * @param charFlowrate an array of {@link double} objects
+     * @param molarMass an array of {@link double} objects
+     * @param relativedensity an array of {@link double} objects
+     */
     public static void addCharacterized(String[] charNames, double[] charFlowrate,
             double[] molarMass, double[] relativedensity) {
         if (charNames.length != charFlowrate.length) {
@@ -177,6 +217,18 @@ public class Fluid {
         }
     }
 
+    /**
+     * <p>
+     * addOilFractions.
+     * </p>
+     *
+     * @param charNames an array of {@link java.lang.String} objects
+     * @param charFlowrate an array of {@link double} objects
+     * @param molarMass an array of {@link double} objects
+     * @param relativedensity an array of {@link double} objects
+     * @param lastIsPlusFraction a boolean
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public static neqsim.thermo.system.SystemInterface addOilFractions(String[] charNames,
             double[] charFlowrate, double[] molarMass, double[] relativedensity,
             boolean lastIsPlusFraction) {
@@ -205,6 +257,16 @@ public class Fluid {
         return fluid;
     }
 
+    /**
+     * <p>
+     * createFluid.
+     * </p>
+     *
+     * @param componentNames an array of {@link java.lang.String} objects
+     * @param flowrate an array of {@link double} objects
+     * @param unit a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public static neqsim.thermo.system.SystemInterface createFluid(String[] componentNames,
             double[] flowrate, String unit) {
         if (componentNames.length != flowrate.length) {
@@ -218,6 +280,13 @@ public class Fluid {
         return fluid;
     }
 
+    /**
+     * <p>
+     * addComponment.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public static void addComponment(String name) {
         fluid.addComponent(name, 1.0);
         fluid.createDatabase(true);
@@ -229,7 +298,11 @@ public class Fluid {
     }
 
     /**
-     * @param args
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
         neqsim.thermo.Fluid.setHasWater(true);
@@ -246,34 +319,90 @@ public class Fluid {
         fluid3.getNumberOfComponents();
     }
 
+    /**
+     * <p>
+     * isHasWater.
+     * </p>
+     *
+     * @return a boolean
+     */
     public static boolean isHasWater() {
         return hasWater;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>hasWater</code>.
+     * </p>
+     *
+     * @param hasWater a boolean
+     */
     public static void setHasWater(boolean hasWater) {
         Fluid.hasWater = hasWater;
     }
 
+    /**
+     * <p>
+     * isAutoSelectModel.
+     * </p>
+     *
+     * @return a boolean
+     */
     public static boolean isAutoSelectModel() {
         return autoSelectModel;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>autoSelectModel</code>.
+     * </p>
+     *
+     * @param autoSelectModel a boolean
+     */
     public static void setAutoSelectModel(boolean autoSelectModel) {
         Fluid.autoSelectModel = autoSelectModel;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>thermoModel</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public static String getThermoModel() {
         return thermoModel;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>thermoModel</code>.
+     * </p>
+     *
+     * @param thermoModel a {@link java.lang.String} object
+     */
     public static void setThermoModel(String thermoModel) {
         Fluid.thermoModel = thermoModel;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>thermoMixingRule</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public static String getThermoMixingRule() {
         return thermoMixingRule;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>thermoMixingRule</code>.
+     * </p>
+     *
+     * @param thermoMixingRule a {@link java.lang.String} object
+     */
     public static void setThermoMixingRule(String thermoMixingRule) {
         Fluid.thermoMixingRule = thermoMixingRule;
     }

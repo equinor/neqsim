@@ -1,15 +1,24 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
+ * <p>
+ * BinaryHVparameterFitToActivityCoefficientFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVidalFunction {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for BinaryHVparameterFitToActivityCoefficientFunction.
+     * </p>
+     */
     public BinaryHVparameterFitToActivityCoefficientFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -22,6 +31,7 @@ public class BinaryHVparameterFitToActivityCoefficientFunction extends HuronVida
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;

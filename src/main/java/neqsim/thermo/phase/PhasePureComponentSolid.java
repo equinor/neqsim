@@ -7,18 +7,26 @@
 package neqsim.thermo.phase;
 
 /**
+ * <p>
+ * PhasePureComponentSolid class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class PhasePureComponentSolid extends PhaseSolid {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new PhasePureComponentSolid */
+    /**
+     * <p>
+     * Constructor for PhasePureComponentSolid.
+     * </p>
+     */
     public PhasePureComponentSolid() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhasePureComponentSolid clone() {
         PhasePureComponentSolid clonedPhase = null;
@@ -31,6 +39,7 @@ public class PhasePureComponentSolid extends PhaseSolid {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
             double beta) { // type = 0

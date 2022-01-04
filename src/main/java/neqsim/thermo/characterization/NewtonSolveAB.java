@@ -5,6 +5,12 @@ import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>NewtonSolveAB class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class NewtonSolveAB implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
     int iter = 0;
@@ -17,8 +23,17 @@ public class NewtonSolveAB implements java.io.Serializable {
 
     SystemInterface system = null;
 
+    /**
+     * <p>Constructor for NewtonSolveAB.</p>
+     */
     public NewtonSolveAB() {}
 
+    /**
+     * <p>Constructor for NewtonSolveAB.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
+     */
     public NewtonSolveAB(SystemInterface system, TBPCharacterize characterizeClass) {
         this.system = system;
         this.characterizeClass = characterizeClass;
@@ -30,6 +45,9 @@ public class NewtonSolveAB implements java.io.Serializable {
         sol.set(1, 0, characterizeClass.getPlusCoefs(1));
     }
 
+    /**
+     * <p>Setter for the field <code>fvec</code>.</p>
+     */
     public void setfvec() {
         double f0 = -characterizeClass.getZPlus();
         for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
@@ -49,6 +67,9 @@ public class NewtonSolveAB implements java.io.Serializable {
         fvec.set(1, 0, f0);
     }
 
+    /**
+     * <p>setJac.</p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -86,6 +107,9 @@ public class NewtonSolveAB implements java.io.Serializable {
         Jac.set(1, 1, f0 + (0.0));
     }
 
+    /**
+     * <p>solve.</p>
+     */
     public void solve() {
         do {
             iter++;

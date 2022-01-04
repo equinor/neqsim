@@ -2,27 +2,40 @@ package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * VapourPressureTTest class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class VapourPressureTTest {
     static SystemInterface thermoSystem = null;
 
+    /**
+     * <p>
+     * setUp.
+     * </p>
+     */
     @BeforeAll
     public static void setUp() {
-        thermoSystem = new SystemSrkEos(128.0, 10.0);
-        thermoSystem.addComponent("methane", 10.0);
-        thermoSystem.createDatabase(true);
-        thermoSystem.setMixingRule(2);
+        thermoSystem = new SystemSrkCPAstatoil(313.0, 1.0);
+        thermoSystem.addComponent("propane", 10.0);
+        thermoSystem.setMixingRule(10);
     }
 
+    /**
+     * <p>
+     * testDewBubblePointT.
+     * </p>
+     */
     @Test
     public void testDewBubblePointT() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -39,13 +52,5 @@ public class VapourPressureTTest {
         }
 
         assertTrue(Math.abs(bubblePointT - dewPointT) < 1e-2);
-    }
-
-    @Disabled
-    @Test
-    public void testSaturateWIthWater() {
-        ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
-        testOps.saturateWithWater();
-        assertTrue(thermoSystem.getPhase(0).hasComponent("water"));
     }
 }

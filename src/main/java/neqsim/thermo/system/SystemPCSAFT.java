@@ -24,6 +24,11 @@ public class SystemPCSAFT extends SystemSrkEos {
     static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
 
     // SystemSrkEos clonedSystem;
+    /**
+     * <p>
+     * Constructor for SystemPCSAFT.
+     * </p>
+     */
     public SystemPCSAFT() {
         super();
         modelName = "PCSAFT-EOS";
@@ -37,6 +42,14 @@ public class SystemPCSAFT extends SystemSrkEos {
         commonInitialization();
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPCSAFT.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPCSAFT(double T, double P) {
         super(T, P);
         modelName = "PCSAFT-EOS";
@@ -50,6 +63,15 @@ public class SystemPCSAFT extends SystemSrkEos {
         commonInitialization();
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPCSAFT.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPCSAFT(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "PCSAFT-EOS";
@@ -81,6 +103,7 @@ public class SystemPCSAFT extends SystemSrkEos {
         this.useVolumeCorrection(false);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemPCSAFT clone() {
         SystemPCSAFT clonedSystem = null;
@@ -98,6 +121,7 @@ public class SystemPCSAFT extends SystemSrkEos {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass,
             double density) {
@@ -122,6 +146,11 @@ public class SystemPCSAFT extends SystemSrkEos {
         }
     }
 
+    /**
+     * <p>
+     * commonInitialization.
+     * </p>
+     */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(false);
         setImplementedPressureDeriativesofFugacity(false);

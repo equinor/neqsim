@@ -2,26 +2,63 @@ package neqsim.fluidMechanics.geometryDefinitions.reactor;
 
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
+/**
+ * <p>
+ * ReactorData class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class ReactorData extends GeometryDefinition {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
+     */
     public ReactorData() {}
 
+    /**
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
+     *
+     * @param diameter a double
+     */
     public ReactorData(double diameter) {
         super(diameter);
     }
 
+    /**
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
+     *
+     * @param diameter a double
+     * @param roughness a double
+     */
     public ReactorData(double diameter, double roughness) {
         super(diameter, roughness);
         packing =
                 new neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings.PallRingPacking();
     }
 
+    /**
+     * <p>
+     * Constructor for ReactorData.
+     * </p>
+     *
+     * @param diameter a double
+     * @param packingType a int
+     */
     public ReactorData(double diameter, int packingType) {
         super(diameter);
         setPackingType(packingType);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPackingType(int i) {
         // if(i!=100){
@@ -30,6 +67,13 @@ public class ReactorData extends GeometryDefinition {
         // }
     }
 
+    /**
+     * <p>
+     * setPackingType.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setPackingType(String name) {
         if (name.equals("pallring")) {
             packing =
@@ -47,6 +91,7 @@ public class ReactorData extends GeometryDefinition {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPackingType(String name, String material, int size) {
         if (name.equals("pallring")) {
@@ -65,11 +110,13 @@ public class ReactorData extends GeometryDefinition {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public ReactorData clone() {
         ReactorData clonedPipe = null;

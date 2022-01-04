@@ -8,10 +8,18 @@ import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
+ * <p>propaneCoolingCycle class.</p>
  *
  * @author esol
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class propaneCoolingCycle {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.700);
         testSystem.addComponent("propane", 4759.0, "kg/hr");

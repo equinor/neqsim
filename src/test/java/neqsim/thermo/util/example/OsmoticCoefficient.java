@@ -9,11 +9,18 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>OsmoticCoefficient class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class OsmoticCoefficient {
+        /**
+         * <p>main.</p>
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
         @SuppressWarnings("unused")
         public static void main(String args[]) {
                 SystemInterface testSystem = new SystemElectrolyteCPAstatoil(298.0, 1.01325);

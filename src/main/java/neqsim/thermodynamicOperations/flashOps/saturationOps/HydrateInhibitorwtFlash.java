@@ -11,6 +11,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * HydrateInhibitorwtFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
 
@@ -20,20 +28,37 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for HydrateInhibitorwtFlash.
+     * </p>
      */
     public HydrateInhibitorwtFlash() {}
 
+    /**
+     * <p>
+     * Constructor for HydrateInhibitorwtFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param inhibitor a {@link java.lang.String} object
+     * @param wtfr a double
+     */
     public HydrateInhibitorwtFlash(SystemInterface system, String inhibitor, double wtfr) {
         super(system);
         wtfrac = wtfr;
         this.inhibitor = inhibitor;
     }
 
+    /**
+     * <p>
+     * stop.
+     * </p>
+     */
     public void stop() {
         system = null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -85,6 +110,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                                     + system.getPhase("aqueous").getComponent("water").getx()
                                             * system.getPhase("aqueous").getComponent("water")
                                                     .getMolarMass());
+
                 }
                 error = -(wtp - wtfrac);
 
@@ -96,9 +122,17 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         // system.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 0, 100.0);
 

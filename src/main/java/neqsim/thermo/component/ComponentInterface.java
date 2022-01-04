@@ -11,509 +11,2179 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentInterface interface.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public interface ComponentInterface extends ThermodynamicConstantsInterface, Cloneable {
-        public boolean isInert();
+    /**
+     * <p>
+     * isInert.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isInert();
 
-        public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation);
+    /**
+     * <p>
+     * setIdealGasEnthalpyOfFormation.
+     * </p>
+     *
+     * @param idealGasEnthalpyOfFormation a double
+     */
+    public void setIdealGasEnthalpyOfFormation(double idealGasEnthalpyOfFormation);
 
-        public String getFormulae();
+    /**
+     * <p>
+     * getFormulae.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
+    public String getFormulae();
 
-        public double getVolumeCorrectionT();
+    /**
+     * <p>
+     * getVolumeCorrectionT.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getVolumeCorrectionT();
 
-        public void setVolumeCorrectionT(double volumeCorrectionT);
-
+    /**
+     * <p>
+     * setVolumeCorrectionT.
+     * </p>
+     *
+     * @param volumeCorrectionT a double
+     */
     public void setVolumeCorrectionT(double volumeCorrectionT);
-    
+
+    /**
+     * <p>
+     * getVolumeCorrectionConst.
+     * </p>
+     *
+     * @return a double
+     */
     public double getVolumeCorrectionConst();
 
+    /**
+     * <p>
+     * getCASnumber.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getCASnumber();
-    
+
+    /**
+     * <p>
+     * setVolumeCorrectionConst.
+     * </p>
+     *
+     * @param volumeCorrection a double
+     */
     public void setVolumeCorrectionConst(double volumeCorrection);
 
-        public double getPureComponentCpSolid(double temperature);
+    /**
+     * <p>
+     * getPureComponentCpLiquid.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getPureComponentCpLiquid(double temperature);
 
-        public double getdrhodN();
+    /**
+     * <p>
+     * getPureComponentCpSolid.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getPureComponentCpSolid(double temperature);
 
-        public double getVolumeCorrectionT_CPA();
+    /**
+     * <p>
+     * getdrhodN.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getdrhodN();
 
-        /**
-         * method to return flow rate of a component
-         *
-         * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
-         *        m3/hr, mole/sec, mole/min, mole/hr
-         * @return flow rate in specified unit
-         */
-        public double getFlowRate(String flowunit);
+    /**
+     * <p>
+     * getVolumeCorrectionT_CPA.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getVolumeCorrectionT_CPA();
 
     /**
      * method to return flow rate of a component
      *
-     * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                  m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr
-     * @return          flow rate in specified unit
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
+     *        m3/hr, mole/sec, mole/min, mole/hr
+     * @return flow rate in specified unit
      */
     public double getFlowRate(String flowunit);
-    
+
     /**
      * method to return total flow rate of a component
      *
-     * @param  flowunit The unit as a string. Supported units are kg/sec, kg/min,
-     *                  mole/sec, mole/min, mole/hr
-     * @return          flow rate in specified unit
+     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, mole/sec, mole/min,
+     *        mole/hr
+     * @return flow rate in specified unit
      */
     public double getTotalFlowRate(String flowunit);
 
-        public void setNumberOfAssociationSites(int numb);
+    /**
+     * <p>
+     * setVolumeCorrectionT_CPA.
+     * </p>
+     *
+     * @param volumeCorrectionT_CPA a double
+     */
+    public void setVolumeCorrectionT_CPA(double volumeCorrectionT_CPA);
 
-        public void setCASnumber(String CASnumber);
+    /**
+     * <p>
+     * setNumberOfAssociationSites.
+     * </p>
+     *
+     * @param numb a int
+     */
+    public void setNumberOfAssociationSites(int numb);
 
-        public void setFormulae(String formulae);
+    /**
+     * <p>
+     * setCASnumber.
+     * </p>
+     *
+     * @param CASnumber a {@link java.lang.String} object
+     */
+    public void setCASnumber(String CASnumber);
 
-        public void insertComponentIntoDatabase(String databaseName);
+    /**
+     * <p>
+     * setFormulae.
+     * </p>
+     *
+     * @param formulae a {@link java.lang.String} object
+     */
+    public void setFormulae(String formulae);
 
-        public int getOrginalNumberOfAssociationSites();
+    /**
+     * <p>
+     * insertComponentIntoDatabase.
+     * </p>
+     *
+     * @param databaseName a {@link java.lang.String} object
+     */
+    public void insertComponentIntoDatabase(String databaseName);
 
-        public void createComponent(String component_name, double moles, double molesInPhase,
-                        int compnumber);
+    /**
+     * <p>
+     * getOrginalNumberOfAssociationSites.
+     * </p>
+     *
+     * @return a int
+     */
+    public int getOrginalNumberOfAssociationSites();
 
-        public double getRacketZCPA();
+    /**
+     * <p>
+     * createComponent.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
+    public void createComponent(String component_name, double moles, double molesInPhase,
+            int compnumber);
 
-        public void setRacketZCPA(double racketZCPA);
+    /**
+     * <p>
+     * getRacketZCPA.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getRacketZCPA();
 
-        public boolean isHydrocarbon();
+    /**
+     * <p>
+     * setRacketZCPA.
+     * </p>
+     *
+     * @param racketZCPA a double
+     */
+    public void setRacketZCPA(double racketZCPA);
 
-        public void setComponentName(String componentName);
+    /**
+     * <p>
+     * isHydrocarbon.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isHydrocarbon();
 
-        public double getChemicalPotentialdP();
+    /**
+     * <p>
+     * setComponentName.
+     * </p>
+     *
+     * @param componentName a {@link java.lang.String} object
+     */
+    public void setComponentName(String componentName);
 
-        public void setHeatOfFusion(double heatOfFusion);
+    /**
+     * <p>
+     * getChemicalPotentialdP.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getChemicalPotentialdP();
 
-        public double getChemicalPotentialIdealReference(PhaseInterface phase);
+    /**
+     * <p>
+     * setHeatOfFusion.
+     * </p>
+     *
+     * @param heatOfFusion a double
+     */
+    public void setHeatOfFusion(double heatOfFusion);
 
-        public double getHeatOfFusion();
+    /**
+     * <p>
+     * getChemicalPotentialIdealReference.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getChemicalPotentialIdealReference(PhaseInterface phase);
 
-        public void setSurfTensInfluenceParam(int factNum, double val);
+    /**
+     * <p>
+     * getHeatOfFusion.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getHeatOfFusion();
 
-        public boolean isWaxFormer();
+    /**
+     * <p>
+     * setSurfTensInfluenceParam.
+     * </p>
+     *
+     * @param factNum a int
+     * @param val a double
+     */
+    public void setSurfTensInfluenceParam(int factNum, double val);
 
-        public void setWaxFormer(boolean waxFormer);
+    /**
+     * <p>
+     * isWaxFormer.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isWaxFormer();
 
-        public double getSurfTensInfluenceParam(int factNum);
+    /**
+     * <p>
+     * setWaxFormer.
+     * </p>
+     *
+     * @param waxFormer a boolean
+     */
+    public void setWaxFormer(boolean waxFormer);
 
-        public double getChemicalPotentialdN(int i, PhaseInterface phase);
+    /**
+     * <p>
+     * getSurfTensInfluenceParam.
+     * </p>
+     *
+     * @param factNum a int
+     * @return a double
+     */
+    public double getSurfTensInfluenceParam(int factNum);
 
-        public double getChemicalPotential(PhaseInterface phase);
+    /**
+     * <p>
+     * getChemicalPotentialdN.
+     * </p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getChemicalPotentialdN(int i, PhaseInterface phase);
 
-        public double getChemicalPotentialdT(PhaseInterface phase);
+    /**
+     * <p>
+     * getChemicalPotential.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getChemicalPotential(PhaseInterface phase);
 
-        public double getChemicalPotentialdNTV(int i, PhaseInterface phase);
+    /**
+     * <p>
+     * getChemicalPotentialdT.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getChemicalPotentialdT(PhaseInterface phase);
 
-        public void setTriplePointTemperature(double triplePointTemperature);
+    /**
+     * <p>
+     * getChemicalPotentialdNTV.
+     * </p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getChemicalPotentialdNTV(int i, PhaseInterface phase);
 
-        public void setComponentType(String componentType);
+    /**
+     * <p>
+     * setTriplePointTemperature.
+     * </p>
+     *
+     * @param triplePointTemperature a double
+     */
+    public void setTriplePointTemperature(double triplePointTemperature);
 
-        public void seta(double a);
+    /**
+     * <p>
+     * setComponentType.
+     * </p>
+     *
+     * @param componentType a {@link java.lang.String} object
+     */
+    public void setComponentType(String componentType);
 
-        public double getSphericalCoreRadius();
+    /**
+     * <p>
+     * seta.
+     * </p>
+     *
+     * @param a a double
+     */
+    public void seta(double a);
 
-        public void setb(double b);
+    /**
+     * <p>
+     * getSphericalCoreRadius.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getSphericalCoreRadius();
 
-        public int getNumberOfAssociationSites();
+    /**
+     * <p>
+     * setb.
+     * </p>
+     *
+     * @param b a double
+     */
+    public void setb(double b);
 
-        public java.lang.String getComponentType();
+    /**
+     * <p>
+     * getNumberOfAssociationSites.
+     * </p>
+     *
+     * @return a int
+     */
+    public int getNumberOfAssociationSites();
 
-        public double getRate(String unitName);
+    /**
+     * <p>
+     * getComponentType.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
+    public java.lang.String getComponentType();
 
-        public double fugcoef(PhaseInterface phase);
+    /**
+     * <p>
+     * getRate.
+     * </p>
+     *
+     * @param unitName a {@link java.lang.String} object
+     * @return a double
+     */
+    public double getRate(String unitName);
 
-        public double logfugcoefdT(PhaseInterface phase);
+    /**
+     * <p>
+     * fugcoef.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double fugcoef(PhaseInterface phase);
 
-        public double logfugcoefdNi(PhaseInterface phase, int k);
+    /**
+     * <p>
+     * logfugcoefdT.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double logfugcoefdT(PhaseInterface phase);
 
-        public void setStokesCationicDiameter(double stokesCationicDiameter);
+    /**
+     * <p>
+     * logfugcoefdNi.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param k a int
+     * @return a double
+     */
+    public double logfugcoefdNi(PhaseInterface phase, int k);
 
-        public double logfugcoefdP(PhaseInterface phase);
+    /**
+     * <p>
+     * setStokesCationicDiameter.
+     * </p>
+     *
+     * @param stokesCationicDiameter a double
+     */
+    public void setStokesCationicDiameter(double stokesCationicDiameter);
 
-        public double[] logfugcoefdN(PhaseInterface phase);
+    /**
+     * <p>
+     * logfugcoefdP.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double logfugcoefdP(PhaseInterface phase);
 
-        public void setProperties(ComponentInterface component);
+    /**
+     * <p>
+     * logfugcoefdN.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return an array of {@link double} objects
+     */
+    public double[] logfugcoefdN(PhaseInterface phase);
 
-        public double getTripplePointDensity();
+    /**
+     * <p>
+     * setProperties.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentInterface} object
+     */
+    public void setProperties(ComponentInterface component);
 
-        public void setFugacityCoefficient(double val);
+    /**
+     * <p>
+     * getTripplePointDensity.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getTripplePointDensity();
 
-        public double getCriticalCompressibilityFactor();
+    /**
+     * <p>
+     * setFugacityCoefficient.
+     * </p>
+     *
+     * @param val a double
+     */
+    public void setFugacityCoefficient(double val);
 
-        public void setCriticalCompressibilityFactor(double criticalCompressibilityFactor);
+    /**
+     * <p>
+     * getCriticalCompressibilityFactor.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCriticalCompressibilityFactor();
 
-        public void setMolarMass(double molarMass);
+    /**
+     * <p>
+     * setCriticalCompressibilityFactor.
+     * </p>
+     *
+     * @param criticalCompressibilityFactor a double
+     */
+    public void setCriticalCompressibilityFactor(double criticalCompressibilityFactor);
 
-        public boolean calcActivity();
+    /**
+     * <p>
+     * setMolarMass.
+     * </p>
+     *
+     * @param molarMass a double
+     */
+    public void setMolarMass(double molarMass);
 
-        public double getMolality(PhaseInterface phase);
+    /**
+     * <p>
+     * calcActivity.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean calcActivity();
 
-        public double getFugasityCoefficient();
+    /**
+     * <p>
+     * getMolality.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getMolality(PhaseInterface phase);
 
-        public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter);
+    /**
+     * <p>
+     * getFugasityCoefficient.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getFugasityCoefficient();
 
-        public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter);
+    /**
+     * <p>
+     * setLennardJonesMolecularDiameter.
+     * </p>
+     *
+     * @param lennardJonesMolecularDiameter a double
+     */
+    public void setLennardJonesMolecularDiameter(double lennardJonesMolecularDiameter);
 
-        public void setSphericalCoreRadius(double sphericalCoreRadius);
+    /**
+     * <p>
+     * setLennardJonesEnergyParameter.
+     * </p>
+     *
+     * @param lennardJonesEnergyParameter a double
+     */
+    public void setLennardJonesEnergyParameter(double lennardJonesEnergyParameter);
 
-        public double getTriplePointPressure();
+    /**
+     * <p>
+     * setSphericalCoreRadius.
+     * </p>
+     *
+     * @param sphericalCoreRadius a double
+     */
+    public void setSphericalCoreRadius(double sphericalCoreRadius);
 
-        public double getTriplePointTemperature();
+    /**
+     * <p>
+     * getTriplePointPressure.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getTriplePointPressure();
 
-        public double getMeltingPointTemperature();
+    /**
+     * <p>
+     * getTriplePointTemperature.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getTriplePointTemperature();
 
-        public double getIdealGasEnthalpyOfFormation();
+    /**
+     * <p>
+     * getMeltingPointTemperature.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getMeltingPointTemperature();
 
-        public void addMolesChemReac(double dn, double totdn);
+    /**
+     * <p>
+     * getIdealGasEnthalpyOfFormation.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getIdealGasEnthalpyOfFormation();
 
-        public double getIdealGasGibsEnergyOfFormation();
+    /**
+     * <p>
+     * addMolesChemReac.
+     * </p>
+     *
+     * @param dn a double
+     * @param totdn a double
+     */
+    public void addMolesChemReac(double dn, double totdn);
 
-        public void setTC(double val);
+    /**
+     * <p>
+     * getIdealGasGibsEnergyOfFormation.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getIdealGasGibsEnergyOfFormation();
 
+    /**
+     * <p>
+     * setTC.
+     * </p>
+     *
+     * @param val a double
+     */
     public void setTC(double val);
-    
+
+    /**
+     * <p>
+     * setPC.
+     * </p>
+     *
+     * @param val a double
+     */
     public void setPC(double val);
-    
+
+    /**
+     * <p>
+     * getDiElectricConstantdTdT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double getDiElectricConstantdTdT(double temperature);
 
-        public double getDiElectricConstantdT(double temperature);
+    /**
+     * <p>
+     * getIdealGasAbsoluteEntropy.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getIdealGasAbsoluteEntropy();
 
-        public void init(double temperature, double pressure, double totalNumberOfMoles,
-                        double beta, int type);
+    /**
+     * <p>
+     * getDiElectricConstantdT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getDiElectricConstantdT(double temperature);
 
-        public void Finit(PhaseInterface phase, double temperature, double pressure,
-                        double totalNumberOfMoles, double beta, int numberOfComponents, int type);
+    /**
+     * <p>
+     * init.
+     * </p>
+     *
+     * @param temperature a double
+     * @param pressure a double
+     * @param totalNumberOfMoles a double
+     * @param beta a double
+     * @param type a int
+     */
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type);
 
-        public double getx();
+    /**
+     * <p>
+     * Finit.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param temperature a double
+     * @param pressure a double
+     * @param totalNumberOfMoles a double
+     * @param beta a double
+     * @param numberOfComponents a int
+     * @param type a int
+     */
+    public void Finit(PhaseInterface phase, double temperature, double pressure,
+            double totalNumberOfMoles, double beta, int numberOfComponents, int type);
 
-        public double getz();
+    /**
+     * <p>
+     * getx.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getx();
 
-        public double getK();
+    /**
+     * <p>
+     * getz.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getz();
 
-        public double getTC();
+    /**
+     * <p>
+     * getK.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getK();
 
-        public double getNormalBoilingPoint();
+    /**
+     * <p>
+     * getTC.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getTC();
 
-        public void setNormalBoilingPoint(double normalBoilingPoint);
+    /**
+     * <p>
+     * getNormalBoilingPoint.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getNormalBoilingPoint();
 
-        public double getPC();
+    /**
+     * <p>
+     * setNormalBoilingPoint.
+     * </p>
+     *
+     * @param normalBoilingPoint a double
+     */
+    public void setNormalBoilingPoint(double normalBoilingPoint);
 
-        public void setComponentNumber(int numb);
+    /**
+     * <p>
+     * getPC.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getPC();
 
-        public void setViscosityAssociationFactor(double val);
+    /**
+     * <p>
+     * setComponentNumber.
+     * </p>
+     *
+     * @param numb a int
+     */
+    public void setComponentNumber(int numb);
 
-        public int getIndex();
+    /**
+     * <p>
+     * setViscosityAssociationFactor.
+     * </p>
+     *
+     * @param val a double
+     */
+    public void setViscosityAssociationFactor(double val);
 
-        public String getReferenceStateType();
+    /**
+     * <p>
+     * getIndex.
+     * </p>
+     *
+     * @return a int
+     */
+    public int getIndex();
 
-        public void setLiquidConductivityParameter(double number, int i);
+    /**
+     * <p>
+     * getReferenceStateType.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
+    public String getReferenceStateType();
 
-        public double getLiquidConductivityParameter(int i);
+    /**
+     * <p>
+     * setLiquidConductivityParameter.
+     * </p>
+     *
+     * @param number a double
+     * @param i a int
+     */
+    public void setLiquidConductivityParameter(double number, int i);
 
-        public double getNormalLiquidDensity();
+    /**
+     * <p>
+     * getLiquidConductivityParameter.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
+    public double getLiquidConductivityParameter(int i);
 
-        public String getComponentName();
+    /**
+     * <p>
+     * getNormalLiquidDensity.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getNormalLiquidDensity();
 
-        public int getComponentNumber();
+    /**
+     * <p>
+     * getComponentName.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
+    public String getComponentName();
 
-        public void addMolesChemReac(double dn);
+    /**
+     * <p>
+     * getComponentNumber.
+     * </p>
+     *
+     * @return a int
+     */
+    public int getComponentNumber();
 
-        public double getHeatOfVapourization(double temp);
+    /**
+     * <p>
+     * addMolesChemReac.
+     * </p>
+     *
+     * @param dn a double
+     */
+    public void addMolesChemReac(double dn);
 
-        public double getNumberOfmoles();
+    /**
+     * <p>
+     * getHeatOfVapourization.
+     * </p>
+     *
+     * @param temp a double
+     * @return a double
+     */
+    public double getHeatOfVapourization(double temp);
 
-        public void addMoles(double dn);
+    /**
+     * <p>
+     * getNumberOfmoles.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getNumberOfmoles();
 
-        public double getGibbsEnergyOfFormation();
+    /**
+     * <p>
+     * addMoles.
+     * </p>
+     *
+     * @param dn a double
+     */
+    public void addMoles(double dn);
 
-        public double getReferencePotential();
+    /**
+     * <p>
+     * getGibbsEnergyOfFormation.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getGibbsEnergyOfFormation();
 
-        public double getLogFugasityCoeffisient();
+    /**
+     * <p>
+     * getReferencePotential.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getReferencePotential();
 
-        public void setReferencePotential(double ref);
+    /**
+     * <p>
+     * getLogFugasityCoeffisient.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getLogFugasityCoeffisient();
 
-        public double getNumberOfMolesInPhase();
+    /**
+     * <p>
+     * setReferencePotential.
+     * </p>
+     *
+     * @param ref a double
+     */
+    public void setReferencePotential(double ref);
 
-        public void setNumberOfMolesInPhase(double moles);
+    /**
+     * <p>
+     * getNumberOfMolesInPhase.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getNumberOfMolesInPhase();
 
-        public double getIdEntropy(double temperature);
+    /**
+     * <p>
+     * setNumberOfMolesInPhase.
+     * </p>
+     *
+     * @param moles a double
+     */
+    public void setNumberOfMolesInPhase(double moles);
 
-        public void setx(double newx);
+    /**
+     * <p>
+     * getIdEntropy.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getIdEntropy(double temperature);
 
-        public void setz(double newz);
+    /**
+     * <p>
+     * setx.
+     * </p>
+     *
+     * @param newx a double
+     */
+    public void setx(double newx);
 
-        public void setK(double newK);
+    /**
+     * <p>
+     * setz.
+     * </p>
+     *
+     * @param newz a double
+     */
+    public void setz(double newz);
 
-        public double getDiElectricConstant(double temperature);
+    /**
+     * <p>
+     * setK.
+     * </p>
+     *
+     * @param newK a double
+     */
+    public void setK(double newK);
 
-        public double getIonicCharge();
+    /**
+     * <p>
+     * getDiElectricConstant.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getDiElectricConstant(double temperature);
 
-        public double getdfugdt();
+    /**
+     * <p>
+     * getIonicCharge.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getIonicCharge();
 
-        public double getdfugdp();
+    /**
+     * <p>
+     * getdfugdt.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getdfugdt();
 
-        public double getSolidVaporPressure(double temperature);
+    /**
+     * <p>
+     * getdfugdp.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getdfugdp();
 
-        /**
-         * @param temperature
-         * @return ideal gas Cp for the component in the specific phase [J/molK]
-         */
-        public double getCp0(double temperature);
+    /**
+     * <p>
+     * getSolidVaporPressure.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getSolidVaporPressure(double temperature);
 
-        /**
-         * @param temperature
-         * @return ideal gas Cv for the component in the specific phase [J/molK]
-         */
-        public double getCv0(double temperature);
+    /**
+     * <p>
+     * getCp0.
+     * </p>
+     *
+     * @param temperature a double
+     * @return ideal gas Cp for the component in the specific phase [J/molK]
+     */
+    public double getCp0(double temperature);
 
-        public double getHID(double T);
+    /**
+     * <p>
+     * getCv0.
+     * </p>
+     *
+     * @param temperature a double
+     * @return ideal gas Cv for the component in the specific phase [J/molK]
+     */
+    public double getCv0(double temperature);
 
-        public double getEnthalpy(double temperature);
+    /**
+     * <p>
+     * getHID.
+     * </p>
+     *
+     * @param T a double
+     * @return a double
+     */
+    public double getHID(double T);
 
-        public double getMolarMass();
+    /**
+     * <p>
+     * getEnthalpy.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getEnthalpy(double temperature);
 
-        public double getLennardJonesMolecularDiameter();
+    /**
+     * <p>
+     * getMolarMass.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getMolarMass();
 
-        public double getLennardJonesEnergyParameter();
+    /**
+     * <p>
+     * getLennardJonesMolecularDiameter.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getLennardJonesMolecularDiameter();
 
-        public double getEntropy(double temperature, double pressure);
+    /**
+     * <p>
+     * getLennardJonesEnergyParameter.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getLennardJonesEnergyParameter();
 
-        public double getdfugdx(int i);
+    /**
+     * <p>
+     * getEntropy.
+     * </p>
+     *
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
+    public double getEntropy(double temperature, double pressure);
 
-        public double getdfugdn(int i);
+    /**
+     * <p>
+     * getdfugdx.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
+    public double getdfugdx(int i);
 
-        public double getHresTP(double temperature);
+    /**
+     * <p>
+     * getdfugdn.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
+    public double getdfugdn(int i);
 
-        public double getGresTP(double temperature);
+    /**
+     * <p>
+     * getHresTP.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getHresTP(double temperature);
 
-        public double getSresTP(double temperature);
+    /**
+     * <p>
+     * getGresTP.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getGresTP(double temperature);
 
-        public double getFugasityCoeffisient();
+    /**
+     * <p>
+     * getSresTP.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getSresTP(double temperature);
 
-        public double getAcentricFactor();
+    /**
+     * <p>
+     * getFugasityCoeffisient.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getFugasityCoeffisient();
 
-        public void setAtractiveTerm(int i);
+    /**
+     * <p>
+     * getAcentricFactor.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAcentricFactor();
 
-        public AtractiveTermInterface getAtractiveTerm();
+    /**
+     * <p>
+     * setAtractiveTerm.
+     * </p>
+     *
+     * @param i a int
+     */
+    public void setAtractiveTerm(int i);
 
-        public void setNumberOfmoles(double newmoles);
+    /**
+     * <p>
+     * getAtractiveTerm.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.component.atractiveEosTerm.AtractiveTermInterface} object
+     */
+    public AtractiveTermInterface getAtractiveTerm();
 
-        public double getAntoineVaporPressure(double temp);
+    /**
+     * <p>
+     * setNumberOfmoles.
+     * </p>
+     *
+     * @param newmoles a double
+     */
+    public void setNumberOfmoles(double newmoles);
 
-        public double getAntoineVaporTemperature(double pres);
+    /**
+     * <p>
+     * getAntoineVaporPressure.
+     * </p>
+     *
+     * @param temp a double
+     * @return a double
+     */
+    public double getAntoineVaporPressure(double temp);
 
-        public double getSolidVaporPressuredT(double temperature);
+    /**
+     * <p>
+     * getAntoineVaporTemperature.
+     * </p>
+     *
+     * @param pres a double
+     * @return a double
+     */
+    public double getAntoineVaporTemperature(double pres);
 
-        public double getChemicalPotential(double temperature, double pressure);
-        // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
-        // temperature, double pressure);
-        // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
-        // double temperature, double pressure);
-        // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
-        // double temperature, double pressure);
-        // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
-        // double temperature, double pressure);
+    /**
+     * <p>
+     * getSolidVaporPressuredT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getSolidVaporPressuredT(double temperature);
 
-        public double getGibbsEnergy(double temperature, double pressure);
+    /**
+     * <p>
+     * getChemicalPotential.
+     * </p>
+     *
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
+    public double getChemicalPotential(double temperature, double pressure);
+    // public double fugcoef(PhaseInterface phase, int numberOfComponents, double
+    // temperature, double pressure);
+    // public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents,
+    // double temperature, double pressure);
+    // public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents,
+    // double temperature, double pressure);
+    // public double[] fugcoefDiffN(PhaseInterface phase, int numberOfComponents,
+    // double temperature, double pressure);
 
-        public Object clone();
+    /**
+     * <p>
+     * getGibbsEnergy.
+     * </p>
+     *
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
+    public double getGibbsEnergy(double temperature, double pressure);
 
+    /**
+     * <p>
+     * clone.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.component.ComponentInterface} object
+     */
     public ComponentInterface clone();
 
-        public double getViscosityCorrectionFactor();
-
-        public double getCriticalVolume();
-
-        public double getRacketZ();
-
-        public String getName();
-
-        public double getLiquidViscosityParameter(int i);
-
-        public int getLiquidViscosityModel();
-
-        public void setAcentricFactor(double val);
-
-        public double getVolumeCorrection();
-
-        public void setRacketZ(double val);
-
-        public void setLiquidViscosityModel(int modelNumber);
-
-        public void setLiquidViscosityParameter(double number, int i);
-
-        public Element getElements();
-
-        public double[] getSchwartzentruberParams();
-
-        public void setSchwartzentruberParams(int i, double param);
-
-        public double[] getTwuCoonParams();
-
-        public void setTwuCoonParams(int i, double param);
-
-        public double getParachorParameter();
-
-        public void setParachorParameter(double parachorParameter);
-
-        public double getPureComponentSolidDensity(double temperature);
-
-        public double getPureComponentLiquidDensity(double temperature);
-
-        public double getChemicalPotentialdV(PhaseInterface phase);
-
-        public double getPureComponentHeatOfVaporization(double temperature);
-
-        public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
-                        double temperature, double pressure);
-
-        public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
-                        double temperature, double pressure);
-
-        public void setdfugdt(double val);
-
-        public void setdfugdp(double val);
-
-        public void setdfugdn(int i, double val);
-
-        public void setdfugdx(int i, double val);
-
-        public double getPaulingAnionicDiameter();
-
-        public double getStokesCationicDiameter();
-
-        public int getAtractiveTermNumber();
-
-        public double getVoli();
-
-        public double getAntoineVaporPressuredT(double temp);
-
-        public double[] getMatiascopemanParams();
-
-        public void setMatiascopemanParams(int index, double matiascopemanParams);
-
-        public void setMatiascopemanParams(double[] matiascopemanParams);
-
-        public double getAssociationVolume();
-
-        public void setAssociationVolume(double associationVolume);
-
-        public double getAssociationEnergy();
-
-        public void setAssociationEnergy(double associationEnergy);
-
-        public double getAntoineASolid();
-
-        public void setAntoineASolid(double AntoineASolid);
-
-        public double getAntoineBSolid();
-
-        public void setAntoineBSolid(double AntoineBSolid);
-
-        public boolean isIsTBPfraction();
-
-        public void setIsTBPfraction(boolean isTBPfraction);
-
-        public boolean isIsPlusFraction();
-
-        public void setIsPlusFraction(boolean isPlusFraction);
-
-        public boolean isIsNormalComponent();
-
-        public void setIsNormalComponent(boolean isNormalComponent);
-
-        public boolean isIsIon();
-
-        public void setIsIon(boolean isIon);
-
-        public void setNormalLiquidDensity(double normalLiquidDensity);
-
-        public boolean doSolidCheck();
-
-        public void setSolidCheck(boolean solidCheck);
-
-        public java.lang.String getAssociationScheme();
-
-        public void setAssociationScheme(java.lang.String associationScheme);
-
-        public double getAntoineCSolid();
-
-        public void setAntoineCSolid(double AntoineCSolid);
-
-        public double getCCsolidVaporPressure(double temperature);
-
-        public double getCCsolidVaporPressuredT(double temperature);
-
-        public double getHsub();
-
-        public double[] getHenryCoefParameter();
-
-        public void setHenryCoefParameter(double[] henryCoefParameter);
-
-        public double getHenryCoef(double temperature);
-
-        public double getHenryCoefdT(double temperature);
-
-        public double[] getMatiascopemanSolidParams();
-
-        public void setCriticalVolume(double criticalVolume);
-
-        public double getCriticalViscosity();
-
-        public void setCriticalViscosity(double criticalViscosity);
-
-        public double getMolarity(PhaseInterface phase);
-
-        public boolean isHydrateFormer();
-
-        public void setIsHydrateFormer(boolean isHydrateFormer);
-
-        public double getmSAFTi();
-
-        public void setmSAFTi(double mSAFTi);
-
-        public double getSigmaSAFTi();
-
-        public void setSigmaSAFTi(double sigmaSAFTi);
-
-        public double getEpsikSAFT();
-
-        public void setEpsikSAFT(double epsikSAFT);
-
-        public double getAssociationVolumeSAFT();
-
-        public void setAssociationVolumeSAFT(double associationVolumeSAFT);
-
-        public double getAssociationEnergySAFT();
-
-        public void setAssociationEnergySAFT(double associationEnergySAFT);
-
-        public double getSurfaceTenisionInfluenceParameter(double temperature);
-
-        public double getCpA();
-
-        public void setCpA(double CpA);
-
-        public double getCpB();
-
-        public void setCpB(double CpB);
-
-        public double getCpC();
-
-        public void setCpC(double CpC);
-
-        public double getCpD();
-
-        public void setCpD(double CpD);
-
-        public double getCpE();
-
-        public void setCpE(double CpE);
+    /**
+     * <p>
+     * getDebyeDipoleMoment.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getDebyeDipoleMoment();
+
+    /**
+     * <p>
+     * getViscosityCorrectionFactor.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getViscosityCorrectionFactor();
+
+    /**
+     * <p>
+     * getCriticalVolume.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCriticalVolume();
+
+    /**
+     * <p>
+     * getRacketZ.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getRacketZ();
+
+    /**
+     * <p>
+     * getName.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
+    public String getName();
+
+    /**
+     * <p>
+     * getLiquidViscosityParameter.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
+    public double getLiquidViscosityParameter(int i);
+
+    /**
+     * <p>
+     * getLiquidViscosityModel.
+     * </p>
+     *
+     * @return a int
+     */
+    public int getLiquidViscosityModel();
+
+    /**
+     * <p>
+     * setAcentricFactor.
+     * </p>
+     *
+     * @param val a double
+     */
+    public void setAcentricFactor(double val);
+
+    /**
+     * <p>
+     * getVolumeCorrection.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getVolumeCorrection();
+
+    /**
+     * <p>
+     * setRacketZ.
+     * </p>
+     *
+     * @param val a double
+     */
+    public void setRacketZ(double val);
+
+    /**
+     * <p>
+     * setLiquidViscosityModel.
+     * </p>
+     *
+     * @param modelNumber a int
+     */
+    public void setLiquidViscosityModel(int modelNumber);
+
+    /**
+     * <p>
+     * setLiquidViscosityParameter.
+     * </p>
+     *
+     * @param number a double
+     * @param i a int
+     */
+    public void setLiquidViscosityParameter(double number, int i);
+
+    /**
+     * <p>
+     * getElements.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.atomElement.Element} object
+     */
+    public Element getElements();
+
+    /**
+     * <p>
+     * getSchwartzentruberParams.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
+    public double[] getSchwartzentruberParams();
+
+    /**
+     * <p>
+     * setSchwartzentruberParams.
+     * </p>
+     *
+     * @param i a int
+     * @param param a double
+     */
+    public void setSchwartzentruberParams(int i, double param);
+
+    /**
+     * <p>
+     * getTwuCoonParams.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
+    public double[] getTwuCoonParams();
+
+    /**
+     * <p>
+     * setTwuCoonParams.
+     * </p>
+     *
+     * @param i a int
+     * @param param a double
+     */
+    public void setTwuCoonParams(int i, double param);
+
+    /**
+     * <p>
+     * getParachorParameter.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getParachorParameter();
+
+    /**
+     * <p>
+     * setParachorParameter.
+     * </p>
+     *
+     * @param parachorParameter a double
+     */
+    public void setParachorParameter(double parachorParameter);
+
+    /**
+     * <p>
+     * getPureComponentSolidDensity.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getPureComponentSolidDensity(double temperature);
+
+    /**
+     * <p>
+     * getPureComponentLiquidDensity.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getPureComponentLiquidDensity(double temperature);
+
+    /**
+     * <p>
+     * getChemicalPotentialdV.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getChemicalPotentialdV(PhaseInterface phase);
+
+    /**
+     * <p>
+     * getPureComponentHeatOfVaporization.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getPureComponentHeatOfVaporization(double temperature);
+
+    /**
+     * <p>
+     * fugcoefDiffPresNumeric.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
+    public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure);
+
+    /**
+     * <p>
+     * fugcoefDiffTempNumeric.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
+    public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure);
+
+    /**
+     * <p>
+     * setdfugdt.
+     * </p>
+     *
+     * @param val a double
+     */
+    public void setdfugdt(double val);
+
+    /**
+     * <p>
+     * setdfugdp.
+     * </p>
+     *
+     * @param val a double
+     */
+    public void setdfugdp(double val);
+
+    /**
+     * <p>
+     * setdfugdn.
+     * </p>
+     *
+     * @param i a int
+     * @param val a double
+     */
+    public void setdfugdn(int i, double val);
+
+    /**
+     * <p>
+     * setdfugdx.
+     * </p>
+     *
+     * @param i a int
+     * @param val a double
+     */
+    public void setdfugdx(int i, double val);
+
+    /**
+     * <p>
+     * getPaulingAnionicDiameter.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getPaulingAnionicDiameter();
+
+    /**
+     * <p>
+     * getStokesCationicDiameter.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getStokesCationicDiameter();
+
+    /**
+     * <p>
+     * getAtractiveTermNumber.
+     * </p>
+     *
+     * @return a int
+     */
+    public int getAtractiveTermNumber();
+
+    /**
+     * <p>
+     * getVoli.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getVoli();
+
+    /**
+     * <p>
+     * getAntoineVaporPressuredT.
+     * </p>
+     *
+     * @param temp a double
+     * @return a double
+     */
+    public double getAntoineVaporPressuredT(double temp);
+
+    /**
+     * <p>
+     * getMatiascopemanParams.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
+    public double[] getMatiascopemanParams();
+
+    /**
+     * <p>
+     * setMatiascopemanParams.
+     * </p>
+     *
+     * @param index a int
+     * @param matiascopemanParams a double
+     */
+    public void setMatiascopemanParams(int index, double matiascopemanParams);
+
+    /**
+     * <p>
+     * setMatiascopemanParams.
+     * </p>
+     *
+     * @param matiascopemanParams an array of {@link double} objects
+     */
+    public void setMatiascopemanParams(double[] matiascopemanParams);
+
+    /**
+     * <p>
+     * getAssociationVolume.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAssociationVolume();
+
+    /**
+     * <p>
+     * setAssociationVolume.
+     * </p>
+     *
+     * @param associationVolume a double
+     */
+    public void setAssociationVolume(double associationVolume);
+
+    /**
+     * <p>
+     * getAssociationEnergy.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAssociationEnergy();
+
+    /**
+     * <p>
+     * setAssociationEnergy.
+     * </p>
+     *
+     * @param associationEnergy a double
+     */
+    public void setAssociationEnergy(double associationEnergy);
+
+    /**
+     * <p>
+     * getAntoineASolid.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAntoineASolid();
+
+    /**
+     * <p>
+     * setAntoineASolid.
+     * </p>
+     *
+     * @param AntoineASolid a double
+     */
+    public void setAntoineASolid(double AntoineASolid);
+
+    /**
+     * <p>
+     * getAntoineBSolid.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAntoineBSolid();
+
+    /**
+     * <p>
+     * setAntoineBSolid.
+     * </p>
+     *
+     * @param AntoineBSolid a double
+     */
+    public void setAntoineBSolid(double AntoineBSolid);
+
+    /**
+     * <p>
+     * isIsTBPfraction.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isIsTBPfraction();
+
+    /**
+     * <p>
+     * setIsTBPfraction.
+     * </p>
+     *
+     * @param isTBPfraction a boolean
+     */
+    public void setIsTBPfraction(boolean isTBPfraction);
+
+    /**
+     * <p>
+     * isIsPlusFraction.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isIsPlusFraction();
+
+    /**
+     * <p>
+     * setIsPlusFraction.
+     * </p>
+     *
+     * @param isPlusFraction a boolean
+     */
+    public void setIsPlusFraction(boolean isPlusFraction);
+
+    /**
+     * <p>
+     * isIsNormalComponent.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isIsNormalComponent();
+
+    /**
+     * <p>
+     * setIsNormalComponent.
+     * </p>
+     *
+     * @param isNormalComponent a boolean
+     */
+    public void setIsNormalComponent(boolean isNormalComponent);
+
+    /**
+     * <p>
+     * isIsIon.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isIsIon();
+
+    /**
+     * <p>
+     * setIsIon.
+     * </p>
+     *
+     * @param isIon a boolean
+     */
+    public void setIsIon(boolean isIon);
+
+    /**
+     * <p>
+     * setNormalLiquidDensity.
+     * </p>
+     *
+     * @param normalLiquidDensity a double
+     */
+    public void setNormalLiquidDensity(double normalLiquidDensity);
+
+    /**
+     * <p>
+     * doSolidCheck.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean doSolidCheck();
+
+    /**
+     * <p>
+     * setSolidCheck.
+     * </p>
+     *
+     * @param solidCheck a boolean
+     */
+    public void setSolidCheck(boolean solidCheck);
+
+    /**
+     * <p>
+     * getAssociationScheme.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
+    public java.lang.String getAssociationScheme();
+
+    /**
+     * <p>
+     * setAssociationScheme.
+     * </p>
+     *
+     * @param associationScheme a {@link java.lang.String} object
+     */
+    public void setAssociationScheme(java.lang.String associationScheme);
+
+    /**
+     * <p>
+     * getAntoineCSolid.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAntoineCSolid();
+
+    /**
+     * <p>
+     * setAntoineCSolid.
+     * </p>
+     *
+     * @param AntoineCSolid a double
+     */
+    public void setAntoineCSolid(double AntoineCSolid);
+
+    /**
+     * <p>
+     * getCCsolidVaporPressure.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getCCsolidVaporPressure(double temperature);
+
+    /**
+     * <p>
+     * getCCsolidVaporPressuredT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getCCsolidVaporPressuredT(double temperature);
+
+    /**
+     * <p>
+     * getHsub.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getHsub();
+
+    /**
+     * <p>
+     * getHenryCoefParameter.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
+    public double[] getHenryCoefParameter();
+
+    /**
+     * <p>
+     * setHenryCoefParameter.
+     * </p>
+     *
+     * @param henryCoefParameter an array of {@link double} objects
+     */
+    public void setHenryCoefParameter(double[] henryCoefParameter);
+
+    /**
+     * <p>
+     * getHenryCoef.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getHenryCoef(double temperature);
+
+    /**
+     * <p>
+     * getHenryCoefdT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getHenryCoefdT(double temperature);
+
+    /**
+     * <p>
+     * getMatiascopemanSolidParams.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
+    public double[] getMatiascopemanSolidParams();
+
+    /**
+     * <p>
+     * setCriticalVolume.
+     * </p>
+     *
+     * @param criticalVolume a double
+     */
+    public void setCriticalVolume(double criticalVolume);
+
+    /**
+     * <p>
+     * getCriticalViscosity.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCriticalViscosity();
+
+    /**
+     * <p>
+     * setCriticalViscosity.
+     * </p>
+     *
+     * @param criticalViscosity a double
+     */
+    public void setCriticalViscosity(double criticalViscosity);
+
+    /**
+     * <p>
+     * getMolarity.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
+    public double getMolarity(PhaseInterface phase);
+
+    /**
+     * <p>
+     * isHydrateFormer.
+     * </p>
+     *
+     * @return a boolean
+     */
+    public boolean isHydrateFormer();
+
+    /**
+     * <p>
+     * setIsHydrateFormer.
+     * </p>
+     *
+     * @param isHydrateFormer a boolean
+     */
+    public void setIsHydrateFormer(boolean isHydrateFormer);
+
+    /**
+     * <p>
+     * getmSAFTi.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getmSAFTi();
+
+    /**
+     * <p>
+     * setmSAFTi.
+     * </p>
+     *
+     * @param mSAFTi a double
+     */
+    public void setmSAFTi(double mSAFTi);
+
+    /**
+     * <p>
+     * getSigmaSAFTi.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getSigmaSAFTi();
+
+    /**
+     * <p>
+     * setSigmaSAFTi.
+     * </p>
+     *
+     * @param sigmaSAFTi a double
+     */
+    public void setSigmaSAFTi(double sigmaSAFTi);
+
+    /**
+     * <p>
+     * getEpsikSAFT.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getEpsikSAFT();
+
+    /**
+     * <p>
+     * setEpsikSAFT.
+     * </p>
+     *
+     * @param epsikSAFT a double
+     */
+    public void setEpsikSAFT(double epsikSAFT);
+
+    /**
+     * <p>
+     * getAssociationVolumeSAFT.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAssociationVolumeSAFT();
+
+    /**
+     * <p>
+     * setAssociationVolumeSAFT.
+     * </p>
+     *
+     * @param associationVolumeSAFT a double
+     */
+    public void setAssociationVolumeSAFT(double associationVolumeSAFT);
+
+    /**
+     * <p>
+     * getAssociationEnergySAFT.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getAssociationEnergySAFT();
+
+    /**
+     * <p>
+     * setAssociationEnergySAFT.
+     * </p>
+     *
+     * @param associationEnergySAFT a double
+     */
+    public void setAssociationEnergySAFT(double associationEnergySAFT);
+
+    /**
+     * <p>
+     * getSurfaceTenisionInfluenceParameter.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
+    public double getSurfaceTenisionInfluenceParameter(double temperature);
+
+    /**
+     * <p>
+     * getCpA.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCpA();
+
+    /**
+     * <p>
+     * setCpA.
+     * </p>
+     *
+     * @param CpA a double
+     */
+    public void setCpA(double CpA);
+
+    /**
+     * <p>
+     * getCpB.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCpB();
+
+    /**
+     * <p>
+     * setCpB.
+     * </p>
+     *
+     * @param CpB a double
+     */
+    public void setCpB(double CpB);
+
+    /**
+     * <p>
+     * getCpC.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCpC();
+
+    /**
+     * <p>
+     * setCpC.
+     * </p>
+     *
+     * @param CpC a double
+     */
+    public void setCpC(double CpC);
+
+    /**
+     * <p>
+     * getCpD.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCpD();
+
+    /**
+     * <p>
+     * setCpD.
+     * </p>
+     *
+     * @param CpD a double
+     */
+    public void setCpD(double CpD);
+
+    /**
+     * <p>
+     * getCpE.
+     * </p>
+     *
+     * @return a double
+     */
+    public double getCpE();
+
+    /**
+     * <p>
+     * setCpE.
+     * </p>
+     *
+     * @param CpE a double
+     */
+    public void setCpE(double CpE);
 }

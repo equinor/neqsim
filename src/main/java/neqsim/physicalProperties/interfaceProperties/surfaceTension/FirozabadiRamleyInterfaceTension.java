@@ -8,23 +8,37 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * FirozabadiRamleyInterfaceTension class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new GasLiquidSurfaceTension
+     * <p>
+     * Constructor for FirozabadiRamleyInterfaceTension.
+     * </p>
      */
     public FirozabadiRamleyInterfaceTension() {}
 
+    /**
+     * <p>
+     * Constructor for FirozabadiRamleyInterfaceTension.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public FirozabadiRamleyInterfaceTension(SystemInterface system) {
         super(system);
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Calculates the pure component surfacetension using the Macleod/Sugden method
      */
     @Override
@@ -46,6 +60,8 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Calculates the surfacetension using the Firozabadi Ramley (1988) method for mixtures Units:
      * N/m
      */

@@ -9,8 +9,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * WaxFractionSim class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class WaxFractionSim extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
@@ -24,6 +28,13 @@ public class WaxFractionSim extends BasePVTsimulation {
     private double[] GOR = null;
     double oilVolumeStdCond = 0;
 
+    /**
+     * <p>
+     * Constructor for WaxFractionSim.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public WaxFractionSim(SystemInterface tempSystem) {
         super(tempSystem);
         temperature = new double[1];
@@ -32,12 +43,25 @@ public class WaxFractionSim extends BasePVTsimulation {
         pressure[0] = tempSystem.getPressure();
     }
 
+    /**
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
     }
 
+    /**
+     * <p>
+     * runTuning.
+     * </p>
+     */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -91,6 +115,11 @@ public class WaxFractionSim extends BasePVTsimulation {
         // optim.displayCurveFit();
     }
 
+    /**
+     * <p>
+     * runCalc.
+     * </p>
+     */
     public void runCalc() {
         Sm3gas = new double[pressure.length];
         m3oil = new double[pressure.length];
@@ -111,6 +140,13 @@ public class WaxFractionSim extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         NeqSimDataBase.setConnectionString(
                 "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
@@ -153,6 +189,10 @@ public class WaxFractionSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getGOR.
+     * </p>
+     *
      * @return the GOR
      */
     public double[] getGOR() {
@@ -160,6 +200,10 @@ public class WaxFractionSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getBofactor.
+     * </p>
+     *
      * @return the Bofactor
      */
     public double[] getBofactor() {
@@ -167,6 +211,10 @@ public class WaxFractionSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>waxFraction</code>.
+     * </p>
+     *
      * @return the waxFraction
      */
     public double[] getWaxFraction() {

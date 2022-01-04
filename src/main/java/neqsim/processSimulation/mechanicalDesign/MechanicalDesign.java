@@ -20,12 +20,21 @@ import neqsim.processSimulation.mechanicalDesign.designStandards.SeparatorDesign
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 
 /**
+ * <p>
+ * MechanicalDesign class.
+ * </p>
+ *
  * @author esol
+ * @version $Id: $Id
  */
 public class MechanicalDesign implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
     /**
+     * <p>
+     * Getter for the field <code>materialPipeDesignStandard</code>.
+     * </p>
+     *
      * @return the materialPipeDesignStandard
      */
     public MaterialPipeDesignStandard getMaterialPipeDesignStandard() {
@@ -33,6 +42,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>materialPipeDesignStandard</code>.
+     * </p>
+     *
      * @param materialPipeDesignStandard the materialPipeDesignStandard to set
      */
     public void setMaterialPipeDesignStandard(
@@ -41,6 +54,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * getMaterialDesignStandard.
+     * </p>
+     *
      * @return the materialDesignStandard
      */
     public MaterialPlateDesignStandard getMaterialDesignStandard() {
@@ -48,6 +65,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * setMaterialDesignStandard.
+     * </p>
+     *
      * @param materialDesignStandard the materialDesignStandard to set
      */
     public void setMaterialDesignStandard(MaterialPlateDesignStandard materialDesignStandard) {
@@ -90,29 +111,64 @@ public class MechanicalDesign implements java.io.Serializable {
             new Hashtable<String, DesignStandard>();
     public UnitCostEstimateBaseClass costEstimate = null;
 
+    /**
+     * <p>
+     * Constructor for MechanicalDesign.
+     * </p>
+     *
+     * @param processEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public MechanicalDesign(ProcessEquipmentInterface processEquipment) {
         this.processEquipment = processEquipment;
         costEstimate = new UnitCostEstimateBaseClass(this);
     }
 
     /**
+     * <p>
+     * Getter for the field <code>maxOperationPressure</code>.
+     * </p>
+     *
      * @return the maxPressure
      */
     public double getMaxOperationPressure() {
         return maxOperationPressure;
     }
 
+    /**
+     * <p>
+     * getMaxDesignPressure.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMaxDesignPressure() {
         return getMaxOperationPressure() * (1.0 + pressureMarginFactor);
     }
 
+    /**
+     * <p>
+     * getMinDesignPressure.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMinDesignPressure() {
         return getMinOperationPressure() * (1.0 - pressureMarginFactor);
     }
 
+    /**
+     * <p>
+     * readDesignSpecifications.
+     * </p>
+     */
     public void readDesignSpecifications() {}
 
     /**
+     * <p>
+     * Setter for the field <code>maxOperationPressure</code>.
+     * </p>
+     *
      * @param maxPressure the maxPressure to set
      */
     public void setMaxOperationPressure(double maxPressure) {
@@ -120,6 +176,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>minOperationPressure</code>.
+     * </p>
+     *
      * @return the minPressure
      */
     public double getMinOperationPressure() {
@@ -127,6 +187,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>minOperationPressure</code>.
+     * </p>
+     *
      * @param minPressure the minPressure to set
      */
     public void setMinOperationPressure(double minPressure) {
@@ -134,6 +198,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>maxOperationTemperature</code>.
+     * </p>
+     *
      * @return the maxTemperature
      */
     public double getMaxOperationTemperature() {
@@ -141,6 +209,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>maxOperationTemperature</code>.
+     * </p>
+     *
      * @param maxTemperature the maxTemperature to set
      */
     public void setMaxOperationTemperature(double maxTemperature) {
@@ -148,6 +220,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>minOperationTemperature</code>.
+     * </p>
+     *
      * @return the minTemperature
      */
     public double getMinOperationTemperature() {
@@ -155,6 +231,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>minOperationTemperature</code>.
+     * </p>
+     *
      * @param minTemperature the minTemperature to set
      */
     public void setMinOperationTemperature(double minTemperature) {
@@ -162,6 +242,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>processEquipment</code>.
+     * </p>
+     *
      * @return the processEquipment
      */
     public ProcessEquipmentInterface getProcessEquipment() {
@@ -169,12 +253,21 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>processEquipment</code>.
+     * </p>
+     *
      * @param processEquipment the processEquipment to set
      */
     public void setProcessEquipment(ProcessEquipmentInterface processEquipment) {
         this.processEquipment = processEquipment;
     }
 
+    /**
+     * <p>
+     * calcDesign.
+     * </p>
+     */
     public void calcDesign() {
         System.out.println("reading design paramters for: " + processEquipment.getName());
         if (!hasSetCompanySpecificDesignStandards) {
@@ -183,12 +276,21 @@ public class MechanicalDesign implements java.io.Serializable {
         readDesignSpecifications();
     }
 
+    /**
+     * <p>
+     * setDesign.
+     * </p>
+     */
     public void setDesign() {
         System.out.println("reading design paramters for: " + processEquipment.getName());
         readDesignSpecifications();
     }
 
     /**
+     * <p>
+     * Getter for the field <code>tensileStrength</code>.
+     * </p>
+     *
      * @return the tensileStrength
      */
     public double getTensileStrength() {
@@ -196,6 +298,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>tensileStrength</code>.
+     * </p>
+     *
      * @param tensileStrength the tensileStrength to set
      */
     public void setTensileStrength(double tensileStrength) {
@@ -203,6 +309,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>construtionMaterial</code>.
+     * </p>
+     *
      * @return the construtionMaterial
      */
     public String getConstrutionMaterial() {
@@ -210,6 +320,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>construtionMaterial</code>.
+     * </p>
+     *
      * @param construtionMaterial the construtionMaterial to set
      */
     public void setConstrutionMaterial(String construtionMaterial) {
@@ -217,17 +331,32 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>jointEfficiency</code>.
+     * </p>
+     *
      * @return the jointEfficiency
      */
     public double getJointEfficiency() {
         return jointEfficiency;
     }
 
+    /**
+     * <p>
+     * getMaxAllowableStress.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMaxAllowableStress() {
         return tensileStrength / 3.5;
     }
 
     /**
+     * <p>
+     * Setter for the field <code>jointEfficiency</code>.
+     * </p>
+     *
      * @param jointEfficiency the jointEfficiency to set
      */
     public void setJointEfficiency(double jointEfficiency) {
@@ -235,6 +364,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>corrosionAllowanse</code>.
+     * </p>
+     *
      * @return the corrosionAllowanse
      */
     public double getCorrosionAllowanse() {
@@ -242,6 +375,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>corrosionAllowanse</code>.
+     * </p>
+     *
      * @param corrosionAllowanse the corrosionAllowanse to set
      */
     public void setCorrosionAllowanse(double corrosionAllowanse) {
@@ -249,6 +386,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureMarginFactor</code>.
+     * </p>
+     *
      * @return the pressureMarginFactor
      */
     public double getPressureMarginFactor() {
@@ -256,17 +397,32 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureMarginFactor</code>.
+     * </p>
+     *
      * @param pressureMarginFactor the pressureMarginFactor to set
      */
     public void setPressureMarginFactor(double pressureMarginFactor) {
         this.pressureMarginFactor = pressureMarginFactor;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outerDiameter</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getOuterDiameter() {
         return 1.0;// processEquipment.getInternalDiameter();
     }
 
     /**
+     * <p>
+     * Getter for the field <code>companySpecificDesignStandards</code>.
+     * </p>
+     *
      * @return the companySpecificDesignStandards
      */
     public String getCompanySpecificDesignStandards() {
@@ -274,6 +430,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>companySpecificDesignStandards</code>.
+     * </p>
+     *
      * @param companySpecificDesignStandards the companySpecificDesignStandards to set
      */
     public void setCompanySpecificDesignStandards(String companySpecificDesignStandards) {
@@ -328,6 +488,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>innerDiameter</code>.
+     * </p>
+     *
      * @return the innerDiameter
      */
     public double getInnerDiameter() {
@@ -335,6 +499,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>innerDiameter</code>.
+     * </p>
+     *
      * @param innerDiameter the innerDiameter to set
      */
     public void setInnerDiameter(double innerDiameter) {
@@ -342,6 +510,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>outerDiameter</code>.
+     * </p>
+     *
      * @param outerDiameter the outerDiameter to set
      */
     public void setOuterDiameter(double outerDiameter) {
@@ -349,6 +521,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>wallThickness</code>.
+     * </p>
+     *
      * @return the wallThickness
      */
     public double getWallThickness() {
@@ -356,6 +532,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>wallThickness</code>.
+     * </p>
+     *
      * @param wallThickness the wallThickness to set
      */
     public void setWallThickness(double wallThickness) {
@@ -363,6 +543,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>tantanLength</code>.
+     * </p>
+     *
      * @return the tantanLength
      */
     public double getTantanLength() {
@@ -370,6 +554,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>tantanLength</code>.
+     * </p>
+     *
      * @param tantanLength the tantanLength to set
      */
     public void setTantanLength(double tantanLength) {
@@ -377,6 +565,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weightTotal</code>.
+     * </p>
+     *
      * @return the weightTotal
      */
     public double getWeightTotal() {
@@ -384,6 +576,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weightTotal</code>.
+     * </p>
+     *
      * @param weightTotal the weightTotal to set
      */
     public void setWeightTotal(double weightTotal) {
@@ -391,6 +587,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weigthInternals</code>.
+     * </p>
+     *
      * @return the wigthInternals
      */
     public double getWeigthInternals() {
@@ -398,6 +598,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weigthInternals</code>.
+     * </p>
+     *
      * @param weigthInternals the weigthInternals to set
      */
     public void setWeigthInternals(double weigthInternals) {
@@ -405,6 +609,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weightVessel</code>.
+     * </p>
+     *
      * @return the weightShell
      */
     public double getWeightVessel() {
@@ -412,6 +620,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weightVessel</code>.
+     * </p>
+     *
      * @param weightVessel the weightShell to set
      */
     public void setWeightVessel(double weightVessel) {
@@ -419,6 +631,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weightNozzle</code>.
+     * </p>
+     *
      * @return the weightNozzle
      */
     public double getWeightNozzle() {
@@ -426,6 +642,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weightNozzle</code>.
+     * </p>
+     *
      * @param weightNozzle the weightNozzle to set
      */
     public void setWeightNozzle(double weightNozzle) {
@@ -433,6 +653,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weightPiping</code>.
+     * </p>
+     *
      * @return the weightPiping
      */
     public double getWeightPiping() {
@@ -440,6 +664,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weightPiping</code>.
+     * </p>
+     *
      * @param weightPiping the weightPiping to set
      */
     public void setWeightPiping(double weightPiping) {
@@ -447,6 +675,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weightElectroInstrument</code>.
+     * </p>
+     *
      * @return the weightElectroInstrument
      */
     public double getWeightElectroInstrument() {
@@ -454,6 +686,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weightElectroInstrument</code>.
+     * </p>
+     *
      * @param weightElectroInstrument the weightElectroInstrument to set
      */
     public void setWeightElectroInstrument(double weightElectroInstrument) {
@@ -461,6 +697,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weightStructualSteel</code>.
+     * </p>
+     *
      * @return the weightStructualSteel
      */
     public double getWeightStructualSteel() {
@@ -468,6 +708,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weightStructualSteel</code>.
+     * </p>
+     *
      * @param weightStructualSteel the weightStructualSteel to set
      */
     public void setWeightStructualSteel(double weightStructualSteel) {
@@ -475,6 +719,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>weigthVesselShell</code>.
+     * </p>
+     *
      * @return the weigthVesselShell
      */
     public double getWeigthVesselShell() {
@@ -482,6 +730,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>weigthVesselShell</code>.
+     * </p>
+     *
      * @param weigthVesselShell the weigthVesselShell to set
      */
     public void setWeigthVesselShell(double weigthVesselShell) {
@@ -489,6 +741,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>moduleHeight</code>.
+     * </p>
+     *
      * @return the moduleHeight
      */
     public double getModuleHeight() {
@@ -496,6 +752,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>moduleHeight</code>.
+     * </p>
+     *
      * @param moduleHeight the moduleHeight to set
      */
     public void setModuleHeight(double moduleHeight) {
@@ -503,6 +763,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>moduleWidth</code>.
+     * </p>
+     *
      * @return the moduleWidth
      */
     public double getModuleWidth() {
@@ -510,6 +774,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>moduleWidth</code>.
+     * </p>
+     *
      * @param moduleWidth the moduleWidth to set
      */
     public void setModuleWidth(double moduleWidth) {
@@ -517,6 +785,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>moduleLength</code>.
+     * </p>
+     *
      * @return the moduleLength
      */
     public double getModuleLength() {
@@ -524,6 +796,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>moduleLength</code>.
+     * </p>
+     *
      * @param moduleLength the moduleLength to set
      */
     public void setModuleLength(double moduleLength) {
@@ -531,6 +807,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>designStandard</code>.
+     * </p>
+     *
      * @return the designStandard
      */
     public Hashtable<String, DesignStandard> getDesignStandard() {
@@ -538,6 +818,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>designStandard</code>.
+     * </p>
+     *
      * @param designStandard the designStandard to set
      */
     public void setDesignStandard(Hashtable<String, DesignStandard> designStandard) {
@@ -545,6 +829,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>maxDesignVolumeFlow</code>.
+     * </p>
+     *
      * @return the maxDesignVolumeFlow
      */
     public double getMaxDesignVolumeFlow() {
@@ -552,6 +840,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>maxDesignVolumeFlow</code>.
+     * </p>
+     *
      * @param maxDesignVolumeFlow the maxDesignVolumeFlow to set
      */
     public void setMaxDesignVolumeFlow(double maxDesignVolumeFlow) {
@@ -559,6 +851,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>minDesignVolumeFLow</code>.
+     * </p>
+     *
      * @return the minDesignVolumeFLow
      */
     public double getMinDesignVolumeFLow() {
@@ -566,6 +862,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>minDesignVolumeFLow</code>.
+     * </p>
+     *
      * @param minDesignVolumeFLow the minDesignVolumeFLow to set
      */
     public void setMinDesignVolumeFLow(double minDesignVolumeFLow) {
@@ -573,6 +873,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>maxDesignGassVolumeFlow</code>.
+     * </p>
+     *
      * @return the maxDesignGassVolumeFlow
      */
     public double getMaxDesignGassVolumeFlow() {
@@ -580,6 +884,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>maxDesignGassVolumeFlow</code>.
+     * </p>
+     *
      * @param maxDesignGassVolumeFlow the maxDesignGassVolumeFlow to set
      */
     public void setMaxDesignGassVolumeFlow(double maxDesignGassVolumeFlow) {
@@ -587,6 +895,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>minDesignGassVolumeFLow</code>.
+     * </p>
+     *
      * @return the minDesignGassVolumeFLow
      */
     public double getMinDesignGassVolumeFLow() {
@@ -594,6 +906,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>minDesignGassVolumeFLow</code>.
+     * </p>
+     *
      * @param minDesignGassVolumeFLow the minDesignGassVolumeFLow to set
      */
     public void setMinDesignGassVolumeFLow(double minDesignGassVolumeFLow) {
@@ -601,6 +917,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>maxDesignOilVolumeFlow</code>.
+     * </p>
+     *
      * @return the maxDesignOilVolumeFlow
      */
     public double getMaxDesignOilVolumeFlow() {
@@ -608,6 +928,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>maxDesignOilVolumeFlow</code>.
+     * </p>
+     *
      * @param maxDesignOilVolumeFlow the maxDesignOilVolumeFlow to set
      */
     public void setMaxDesignOilVolumeFlow(double maxDesignOilVolumeFlow) {
@@ -615,6 +939,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>minDesignOilFLow</code>.
+     * </p>
+     *
      * @return the minDesignOilFLow
      */
     public double getMinDesignOilFLow() {
@@ -622,6 +950,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>minDesignOilFLow</code>.
+     * </p>
+     *
      * @param minDesignOilFLow the minDesignOilFLow to set
      */
     public void setMinDesignOilFLow(double minDesignOilFLow) {
@@ -629,6 +961,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>maxDesignWaterVolumeFlow</code>.
+     * </p>
+     *
      * @return the maxDesignWaterVolumeFlow
      */
     public double getMaxDesignWaterVolumeFlow() {
@@ -636,6 +972,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>maxDesignWaterVolumeFlow</code>.
+     * </p>
+     *
      * @param maxDesignWaterVolumeFlow the maxDesignWaterVolumeFlow to set
      */
     public void setMaxDesignWaterVolumeFlow(double maxDesignWaterVolumeFlow) {
@@ -643,6 +983,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>minDesignWaterVolumeFLow</code>.
+     * </p>
+     *
      * @return the minDesignWaterVolumeFLow
      */
     public double getMinDesignWaterVolumeFLow() {
@@ -650,12 +994,21 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>minDesignWaterVolumeFLow</code>.
+     * </p>
+     *
      * @param minDesignWaterVolumeFLow the minDesignWaterVolumeFLow to set
      */
     public void setMinDesignWaterVolumeFLow(double minDesignWaterVolumeFLow) {
         this.minDesignWaterVolumeFLow = minDesignWaterVolumeFLow;
     }
 
+    /**
+     * <p>
+     * displayResults.
+     * </p>
+     */
     public void displayResults() {
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
@@ -675,6 +1028,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>volumeTotal</code>.
+     * </p>
+     *
      * @return the volumeTotal
      */
     public double getVolumeTotal() {
@@ -682,6 +1039,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * isHasSetCompanySpecificDesignStandards.
+     * </p>
+     *
      * @return the hasSetCompanySpecificDesignStandards
      */
     public boolean isHasSetCompanySpecificDesignStandards() {
@@ -689,6 +1050,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>hasSetCompanySpecificDesignStandards</code>.
+     * </p>
+     *
      * @param hasSetCompanySpecificDesignStandards the hasSetCompanySpecificDesignStandards to set
      */
     public void setHasSetCompanySpecificDesignStandards(
@@ -697,6 +1062,10 @@ public class MechanicalDesign implements java.io.Serializable {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>costEstimate</code>.
+     * </p>
+     *
      * @return the costEstimate
      */
     public UnitCostEstimateBaseClass getCostEstimate() {

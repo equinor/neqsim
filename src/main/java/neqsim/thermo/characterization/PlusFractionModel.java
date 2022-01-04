@@ -3,7 +3,12 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PlusFractionModel class.
+ * </p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PlusFractionModel implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -16,6 +21,13 @@ public class PlusFractionModel implements java.io.Serializable {
     private double maxPlusMolarMass = 1000.0;
     double[] z, M, dens, TC, PC, acs;
 
+    /**
+     * <p>
+     * Constructor for PlusFractionModel.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public PlusFractionModel(SystemInterface system) {
         this.system = system;
     }
@@ -273,6 +285,14 @@ public class PlusFractionModel implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * getModel.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
+     */
     public PlusFractionModelInterface getModel(String name) {
         if (name.equals("heavyOil")) {
             return new PedersenHeavyOilPlusModel();

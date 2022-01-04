@@ -7,9 +7,12 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties;
 
 /**
+ * <p>
+ * GasPhysicalPropertyMethod class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class GasPhysicalPropertyMethod
         extends neqsim.physicalProperties.physicalPropertyMethods.PhysicalPropertyMethod {
@@ -20,10 +23,24 @@ public class GasPhysicalPropertyMethod
     public double binaryEnergyParameter[][];
     public double binaryMolecularMass[][];
 
+    /**
+     * <p>
+     * Constructor for GasPhysicalPropertyMethod.
+     * </p>
+     */
     public GasPhysicalPropertyMethod() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for GasPhysicalPropertyMethod.
+     * </p>
+     *
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public GasPhysicalPropertyMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super();
@@ -53,6 +70,7 @@ public class GasPhysicalPropertyMethod
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPhase(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {

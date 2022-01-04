@@ -7,12 +7,24 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * SolidFlash class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class SolidFlash {
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 - 30, 18.0);
         // testSystem.addComponent("nitrogen", 83.33);

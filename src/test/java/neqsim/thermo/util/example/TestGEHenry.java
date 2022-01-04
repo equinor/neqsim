@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TestGEHenry class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestGEHenry {
     static Logger logger = LogManager.getLogger(TestGEHenry.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemGEWilson(273.15 + 55.0, 1.301325);
         // SystemInterface testSystem = new SystemNRTL(273.15 + 55.0,1.301325);

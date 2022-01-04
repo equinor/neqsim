@@ -8,8 +8,12 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * TVflash class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TVflash extends Flash {
     private static final long serialVersionUID = 1000;
@@ -17,15 +21,34 @@ public class TVflash extends Flash {
     double Vspec = 0;
     Flash tpFlash;
 
-    /** Creates new TVflash */
+    /**
+     * <p>
+     * Constructor for TVflash.
+     * </p>
+     */
     public TVflash() {}
 
+    /**
+     * <p>
+     * Constructor for TVflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Vspec a double
+     */
     public TVflash(SystemInterface system, double Vspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
         this.Vspec = Vspec;
     }
 
+    /**
+     * <p>
+     * calcdQdVV.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdVV() {
         double dQdVV = 0.0;
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -35,11 +58,25 @@ public class TVflash extends Flash {
         return dQdVV;
     }
 
+    /**
+     * <p>
+     * calcdQdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdV() {
         double dQ = system.getVolume() - Vspec;
         return dQ;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldPres = system.getPressure(), nyPres = system.getPressure();
         double iterations = 1;
@@ -61,6 +98,7 @@ public class TVflash extends Flash {
         return nyPres;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
@@ -71,6 +109,7 @@ public class TVflash extends Flash {
         // System.out.println("Temperature: " + system.getTemperature());
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

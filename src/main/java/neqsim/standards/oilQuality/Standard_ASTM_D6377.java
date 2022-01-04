@@ -5,18 +5,30 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Standard_ASTM_D6377 class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     private static final long serialVersionUID = 1000;
     String unit = "bara";
     double RVP = 1.0;
 
+    /**
+     * <p>
+     * Constructor for Standard_ASTM_D6377.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public Standard_ASTM_D6377(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calculate() {
         this.thermoSystem.setTemperature(273.15 + 37.8);
@@ -29,38 +41,49 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
         }
         double TVP = this.thermoSystem.getPressure();
         double liquidVolume = thermoSystem.getVolume();
-        
+
         this.thermoSystem.setPressure(0.9);
         try {
-            this.thermoOps.TVflash(liquidVolume*4.0);
+            this.thermoOps.TVflash(liquidVolume * 4.0);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        RVP = (0.752 * (100.0*this.thermoSystem.getPressure()) + 6.07)/100.0;
+
+        RVP = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isOnSpec() {
         return true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getUnit(String returnParameter) {
         return unit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter, java.lang.String returnUnit) {
         return RVP;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter) {
         return RVP;
     }
-    
+
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 2.0, 1.0);
         testSystem.addComponent("methane", 0.0006538);
@@ -72,6 +95,6 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
         Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(testSystem);
         standard.calculate();
         System.out.println("RVP " + standard.getValue("RVP", "bara"));
-       
+
     }
 }

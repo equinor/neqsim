@@ -8,25 +8,51 @@ package neqsim.processSimulation.processEquipment.heatExchanger;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
+ * <p>
+ * Cooler class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Cooler extends Heater {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for Cooler.
+     * </p>
+     */
     public Cooler() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for Cooler.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Cooler(StreamInterface inStream) {
         super(inStream);
     }
 
+    /**
+     * <p>
+     * Constructor for Cooler.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Cooler(String name, StreamInterface inStream) {
         super(name, inStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         //

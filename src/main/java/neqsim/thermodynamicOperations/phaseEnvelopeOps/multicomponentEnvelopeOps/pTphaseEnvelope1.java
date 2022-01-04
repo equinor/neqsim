@@ -18,8 +18,12 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * pTphaseEnvelope1 class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class pTphaseEnvelope1 extends BaseOperation {
     private static final long serialVersionUID = 1000;
@@ -62,9 +66,24 @@ public class pTphaseEnvelope1 extends BaseOperation {
     // points[2] = new double[1000];
     int speceq = 0;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for pTphaseEnvelope1.
+     * </p>
+     */
     public pTphaseEnvelope1() {}
 
+    /**
+     * <p>
+     * Constructor for pTphaseEnvelope1.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param lowPres a double
+     * @param bubfirst a boolean
+     */
     public pTphaseEnvelope1(SystemInterface system, String name, double phaseFraction,
             double lowPres, boolean bubfirst) {
         this.bubblePointFirst = bubfirst;
@@ -94,6 +113,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
         mainFrame.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         try {
@@ -316,6 +336,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -363,9 +384,11 @@ public class pTphaseEnvelope1 extends BaseOperation {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
@@ -383,11 +406,13 @@ public class pTphaseEnvelope1 extends BaseOperation {
         return graph2.getChart();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return points2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         if (name.equals("bubT")) {
@@ -430,6 +455,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
         fileName = name;
@@ -437,7 +463,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
 
     /**
      * Getter for property bubblePointFirst.
-     * 
+     *
      * @return Value of property bubblePointFirst.
      */
     public boolean isBubblePointFirst() {
@@ -446,13 +472,14 @@ public class pTphaseEnvelope1 extends BaseOperation {
 
     /**
      * Setter for property bubblePointFirst.
-     * 
+     *
      * @param bubblePointFirst New value of property bubblePointFirst.
      */
     public void setBubblePointFirst(boolean bubblePointFirst) {
         this.bubblePointFirst = bubblePointFirst;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;

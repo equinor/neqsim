@@ -10,6 +10,14 @@ import neqsim.fluidMechanics.util.timeSeries.TimeSeries;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * Abstract FlowSystem class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public abstract class FlowSystem implements FlowSystemInterface, java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
@@ -31,31 +39,52 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     double inletMolarLiquidFlowRate = 0, inletMolarGasFlowRate = 0;
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
 
+    /**
+     * <p>
+     * Constructor for FlowSystem.
+     * </p>
+     */
     public FlowSystem() {}
 
+    /**
+     * <p>
+     * Constructor for FlowSystem.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public FlowSystem(SystemInterface system) {
         System.out.println("Hei der");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {}
 
+    /** {@inheritDoc} */
     @Override
     public void createSystem() {
         thermoOperations = new ThermodynamicOperations(thermoSystem);
         this.flowLegInit();
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowSolverInterface getSolver() {
         return flowSolver;
     }
 
+    /** {@inheritDoc} */
     @Override
     public TimeSeries getTimeSeries() {
         return timeSeries;
     }
 
+    /**
+     * <p>
+     * flowLegInit.
+     * </p>
+     */
     public void flowLegInit() {
         for (int i = 0; i < numberOfFlowLegs; i++) {
             this.flowLeg[i].setThermoSystem(thermoSystem);
@@ -76,6 +105,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         System.out.println("total number of nodes : " + totalNumberOfNodes);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNodes() {
         flowNode[0].setDistanceToCenterOfNode(0.0);
@@ -100,6 +130,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         flowNode[totalNumberOfNodes - 1].init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInletThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
@@ -107,11 +138,19 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         this.inletTemperature = thermoSystem.getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getSystemLength() {
         return systemLength;
     }
 
+    /**
+     * <p>
+     * calcTotalNumberOfNodes.
+     * </p>
+     *
+     * @return a int
+     */
     public int calcTotalNumberOfNodes() {
         int number = 0;
         for (int i = 0; i < this.numberOfFlowLegs; i++) {
@@ -121,61 +160,73 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         return this.totalNumberOfNodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getTotalNumberOfNodes() {
         return this.totalNumberOfNodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getInletTemperature() {
         return this.inletTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setEquipmentGeometry(GeometryDefinitionInterface[] equipmentGeometry) {
         this.equipmentGeometry = equipmentGeometry;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setEndPressure(double endPressure) {
         this.endPressure = endPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getInletPressure() {
         return this.inletPressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfLegs(int numberOfFlowLegs) {
         this.numberOfFlowLegs = numberOfFlowLegs;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNode(int i) {
         return this.flowNode[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface[] getFlowNodes() {
         return this.flowNode;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfLegs() {
         return this.numberOfFlowLegs;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowSystemVisualizationInterface getDisplay() {
         return display;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FileWriterInterface getFileWriter(int i) {
         return fileWriter[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfNodesInLeg(int numberOfNodesInLeg) {
         this.numberOfNodesInLeg = new int[this.getNumberOfLegs()];
@@ -185,42 +236,50 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         totalNumberOfNodes = numberOfNodesInLeg * this.getNumberOfLegs() + 2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfNodesInLeg(int i) {
         return this.numberOfNodesInLeg[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLegHeights(double[] legHeights) {
         this.legHeights = legHeights;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLegPositions(double[] legPositions) {
         this.legPositions = legPositions;
         this.systemLength = legPositions[legPositions.length - 1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLegOuterTemperatures(double[] temps) {
         this.legOuterTemperatures = temps;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLegOuterHeatTransferCoefficients(double[] coefs) {
         this.legOuterHeatTransferCoefficients = coefs;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLegWallHeatTransferCoefficients(double[] coefs) {
         this.legWallHeatTransferCoefficients = coefs;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getLegHeights() {
         return this.legHeights;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void print() {
         for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
@@ -234,15 +293,29 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcFluxes() {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         System.out.println("Hei der!");
     }
 
+    /**
+     * <p>
+     * solveTransient.
+     * </p>
+     */
     public void solveTransient() {}
 
+    /** {@inheritDoc} */
     @Override
     public double getTotalMolarMassTransferRate(int component) {
         double tot = 0.0;
@@ -253,6 +326,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         return tot;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getTotalMolarMassTransferRate(int component, int lastNode) {
         double tot = 0.0;
@@ -263,23 +337,27 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         return tot;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getTotalPressureDrop() {
         return flowNode[0].getBulkSystem().getPressure()
                 - flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getTotalPressureDrop(int lastNode) {
         return flowNode[0].getBulkSystem().getPressure()
                 - flowNode[lastNode].getBulkSystem().getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInitialFlowPattern(String flowPattern) {
         this.initFlowPattern = flowPattern;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFlowPattern(String flowPattern) {
         this.initFlowPattern = flowPattern;
@@ -288,6 +366,14 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
     }
 
+    /**
+     * <p>
+     * setEquilibriumMassTransferModel.
+     * </p>
+     *
+     * @param startNode a int
+     * @param endNode a int
+     */
     public void setEquilibriumMassTransferModel(int startNode, int endNode) {
         for (int i = startNode; i < endNode; i++) {
             if (flowNode[i].getBulkSystem().isChemicalSystem()) {
@@ -299,6 +385,14 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
     }
 
+    /**
+     * <p>
+     * setNonEquilibriumMassTransferModel.
+     * </p>
+     *
+     * @param startNode a int
+     * @param endNode a int
+     */
     public void setNonEquilibriumMassTransferModel(int startNode, int endNode) {
         for (int i = startNode; i < endNode; i++) {
             if (flowNode[i].getBulkSystem().isChemicalSystem()) {
@@ -310,18 +404,35 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
     }
 
+    /**
+     * <p>
+     * setNonEquilibriumHeatTransferModel.
+     * </p>
+     *
+     * @param startNode a int
+     * @param endNode a int
+     */
     public void setNonEquilibriumHeatTransferModel(int startNode, int endNode) {
         for (int i = startNode; i < endNode; i++) {
             flowNode[i].getFluidBoundary().setHeatTransferCalc(true);
         }
     }
 
+    /**
+     * <p>
+     * setEquilibriumHeatTransferModel.
+     * </p>
+     *
+     * @param startNode a int
+     * @param endNode a int
+     */
     public void setEquilibriumHeatTransferModel(int startNode, int endNode) {
         for (int i = startNode; i < endNode; i++) {
             flowNode[i].getFluidBoundary().setHeatTransferCalc(false);
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setEquilibriumMassTransfer(boolean test) {
         equilibriumMassTransfer = test;
@@ -332,6 +443,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setEquilibriumHeatTransfer(boolean test) {
         equilibriumHeatTransfer = test;

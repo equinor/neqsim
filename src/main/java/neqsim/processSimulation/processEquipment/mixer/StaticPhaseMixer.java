@@ -9,20 +9,35 @@ package neqsim.processSimulation.processEquipment.mixer;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * StaticPhaseMixer class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class StaticPhaseMixer extends StaticMixer {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new staticMixer */
+    /**
+     * <p>
+     * Constructor for StaticPhaseMixer.
+     * </p>
+     */
     public StaticPhaseMixer() {}
 
+    /**
+     * <p>
+     * Constructor for StaticPhaseMixer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public StaticPhaseMixer(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void mixStream() {
         int index = 0;
@@ -63,6 +78,7 @@ public class StaticPhaseMixer extends StaticMixer {
                         compName =
                                 streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                                         .getComponentName();
+
                     }
                 }
 
@@ -93,6 +109,7 @@ public class StaticPhaseMixer extends StaticMixer {
         mixedStream.getThermoSystem().init(2);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double enthalpy = 0.0;
@@ -112,6 +129,7 @@ public class StaticPhaseMixer extends StaticMixer {
         mixedStream.getThermoSystem().init(3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;

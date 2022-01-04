@@ -8,9 +8,12 @@ package neqsim.physicalProperties.interfaceProperties.surfaceTension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * LGTSurfaceTension class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class LGTSurfaceTension extends SurfaceTension {
     private static final long serialVersionUID = 1000;
@@ -21,14 +24,27 @@ public class LGTSurfaceTension extends SurfaceTension {
     double[] z_step = null;
     double[] pressure_interface = null;
 
-    /** Creates new GasLiquidSurfaceTension */
+    /**
+     * <p>
+     * Constructor for LGTSurfaceTension.
+     * </p>
+     */
     public LGTSurfaceTension() {}
 
+    /**
+     * <p>
+     * Constructor for LGTSurfaceTension.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public LGTSurfaceTension(SystemInterface system) {
         super(system);
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Calculates the surfacetension using the Gradient Theory for mixtures Units: N/m
      */
     @Override
@@ -199,6 +215,14 @@ public class LGTSurfaceTension extends SurfaceTension {
         return Math.abs(surdenstemp);
     }
 
+    /**
+     * <p>
+     * getMolarDensity.
+     * </p>
+     *
+     * @param compnum a int
+     * @return an array of {@link double} objects
+     */
     public double[] getMolarDensity(int compnum) {
         double[] temp = new double[ite_step];
         for (int i = 0; i < ite_step; i++) {
@@ -207,6 +231,13 @@ public class LGTSurfaceTension extends SurfaceTension {
         return temp;
     }
 
+    /**
+     * <p>
+     * getMolarDensityTotal.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getMolarDensityTotal() {
         double[] temp = new double[ite_step];
         for (int i = 0; i < ite_step; i++) {
@@ -217,10 +248,24 @@ public class LGTSurfaceTension extends SurfaceTension {
         return temp;
     }
 
+    /**
+     * <p>
+     * getz.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getz() {
         return z_step;
     }
 
+    /**
+     * <p>
+     * getPressure.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getPressure() {
         return pressure_interface;
     }

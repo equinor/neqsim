@@ -8,17 +8,25 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunction_CO2 class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction_CO2.class);
 
-    /** Creates new Test */
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunction_CO2.
+     * </p>
+     */
     public IonicInteractionParameterFittingFunction_CO2() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -29,11 +37,13 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -197,6 +207,14 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams5.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams5(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
@@ -283,6 +301,14 @@ public class IonicInteractionParameterFittingFunction_CO2 extends LevenbergMarqu
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams3.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams3(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;

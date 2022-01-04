@@ -22,20 +22,36 @@ package neqsim.dataPresentation;
  * <P>
  * Note that the aim of this class is to create a self-contained data source for demo purposes - it
  * is NOT intended to show how you should go about writing your own data sources.
+ *
+ * @author asmund
+ * @version $Id: $Id
  */
 public class SampleXYDataSource {
     private static final long serialVersionUID = 1000;
-
+    // implements XYDataSource, java.io.Serializable {
     double[][] points;
     int numberOfSeries;
     int[] items = new int[10];
     String[] seriesName;
 
-    /** Default constructor. */
+    /**
+     * Default constructor.
+     */
     public SampleXYDataSource() {
         // items=0;
     }
 
+    /**
+     * <p>
+     * Constructor for SampleXYDataSource.
+     * </p>
+     *
+     * @param p an array of {@link double} objects
+     * @param name an array of {@link java.lang.String} objects
+     * @param title a {@link java.lang.String} object
+     * @param xaxis a {@link java.lang.String} object
+     * @param yaxsis a {@link java.lang.String} object
+     */
     public SampleXYDataSource(double[][] p, String[] name, String title, String xaxis,
             String yaxsis) {
         // items = p[0].length;
@@ -54,7 +70,7 @@ public class SampleXYDataSource {
 
     /**
      * Returns the x-value for the specified series and item. Series are numbered 0, 1, ...
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @param item The index (zero-based) of the required item;
      * @return The x-value for the specified series and item.
@@ -65,7 +81,7 @@ public class SampleXYDataSource {
 
     /**
      * Returns the y-value for the specified series and item. Series are numbered 0, 1, ...
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @param item The index (zero-based) of the required item;
      * @return The y-value for the specified series and item.
@@ -76,7 +92,7 @@ public class SampleXYDataSource {
 
     /**
      * Returns the number of series in the data source.
-     * 
+     *
      * @return The number of series in the data source.
      */
     public int getSeriesCount() {
@@ -85,7 +101,7 @@ public class SampleXYDataSource {
 
     /**
      * Returns the name of the series.
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @return The name of the series.
      */
@@ -95,7 +111,7 @@ public class SampleXYDataSource {
 
     /**
      * Returns the number of items in the specified series.
-     * 
+     *
      * @param series The index (zero-based) of the series;
      * @return The number of items in the specified series.
      */

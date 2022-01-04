@@ -4,15 +4,30 @@ import neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * SolidPhysicalProperties class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class SolidPhysicalProperties extends PhysicalProperties {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for SolidPhysicalProperties.
+     * </p>
+     */
     public SolidPhysicalProperties() {}
 
+    /**
+     * <p>
+     * Constructor for SolidPhysicalProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public SolidPhysicalProperties(PhaseInterface phase) {
         super(phase);
         conductivityCalc =

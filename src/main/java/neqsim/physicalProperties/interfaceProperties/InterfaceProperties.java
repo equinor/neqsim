@@ -18,8 +18,12 @@ import neqsim.physicalProperties.interfaceProperties.surfaceTension.SurfaceTensi
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * InterfaceProperties class.
+ * </p>
+ *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class InterfaceProperties implements InterphasePropertiesInterface, java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -35,10 +39,19 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     static Logger logger = LogManager.getLogger(InterfaceProperties.class);
 
     /**
-     * Creates new InterfaceProperties
+     * <p>
+     * Constructor for InterfaceProperties.
+     * </p>
      */
     public InterfaceProperties() {}
 
+    /**
+     * <p>
+     * Constructor for InterfaceProperties.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public InterfaceProperties(SystemInterface system) {
         numberOfInterfaces = system.getNumberOfPhases() - 1;
         this.system = system;
@@ -48,6 +61,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         // FirozabadiRamleyInterfaceTension(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public InterfaceProperties clone() {
         InterfaceProperties clonedSystem = null;
@@ -62,12 +76,14 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(SystemInterface system) {
         this.system = system;
         init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         numberOfInterfaces = system.getNumberOfPhases() - 1;
@@ -81,6 +97,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         // + 1);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initAdsorption() {
         setAdsorptionCalc(new AdsorptionInterface[system.getNumberOfPhases()]);
@@ -90,6 +107,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSolidAdsorbentMaterial(String material) {
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -97,6 +115,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcAdsorption() {
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
@@ -108,6 +127,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
      * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
      * else { return surfaceTension[numb]; } }
      */
+    /** {@inheritDoc} */
     @Override
     public double getSurfaceTension(int numb1, int numb2) {
         if (system.getPhase(numb1).getPhaseTypeName().equals("gas")
@@ -122,6 +142,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
     }
 
     // TODO add unit conversion implementation to interfacial tension
+    /** {@inheritDoc} */
     @Override
     public double getSurfaceTension(int numb1, int numb2, String unit) {
         double val = getSurfaceTension(numb1, numb2);
@@ -129,6 +150,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SurfaceTensionInterface getSurfaceTensionModel(int i) {
         if (system.getPhase(i).getPhaseTypeName().equals("gas")) {
@@ -138,17 +160,13 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         }
     }
 
-    /**
-     * @return the interfacialTensionModel
-     */
+    /** {@inheritDoc} */
     @Override
     public int getInterfacialTensionModel() {
         return interfacialTensionModel;
     }
 
-    /**
-     * @param interfacialTensionModel the interfacialTensionModel to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setInterfacialTensionModel(String phase1, String phase2, String model) {
         SurfaceTensionInterface surfTensModel = null;
@@ -175,6 +193,7 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInterfacialTensionModel(int interfacialTensionModel) {
         this.interfacialTensionModel = interfacialTensionModel;
@@ -212,16 +231,19 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public AdsorptionInterface[] getAdsorptionCalc() {
         return adsorptionCalc;
     }
 
+    /** {@inheritDoc} */
     @Override
     public AdsorptionInterface getAdsorptionCalc(String phaseName) {
         return adsorptionCalc[system.getPhaseNumberOfPhase(phaseName)];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setAdsorptionCalc(AdsorptionInterface[] adsorptionCalc) {
         this.adsorptionCalc = adsorptionCalc;

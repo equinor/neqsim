@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TestPCSAFT1 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestPCSAFT1 {
     static Logger logger = LogManager.getLogger(TestPCSAFT1.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         double pressure = 0.0;
         // String[] componentName = {"nitrogen", "CO2", "methane", "ethane", "propane",

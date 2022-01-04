@@ -12,8 +12,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * SimpleAdsorber class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     private static final long serialVersionUID = 1000;
@@ -32,12 +36,22 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     private double stageEfficiency = 0.25;
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for SimpleAdsorber.
+     * </p>
      */
     public SimpleAdsorber() {
         mechanicalDesign = new AdsorberMechanicalDesign(this);
     }
 
+    /**
+     * <p>
+     * Constructor for SimpleAdsorber.
+     * </p>
+     *
+     * @param inStream1 a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public SimpleAdsorber(StreamInterface inStream1) {
         mechanicalDesign = new AdsorberMechanicalDesign(this);
 
@@ -65,6 +79,7 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         outStream[1].run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         outStream[0].setName(name + "_Sout1");
@@ -72,26 +87,63 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         this.name = name;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dT</code>.
+     * </p>
+     *
+     * @param dT a double
+     */
     public void setdT(double dT) {
         this.dT = dT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutStream(int i) {
         return outStream[i];
     }
 
+    /**
+     * <p>
+     * setOutTemperature.
+     * </p>
+     *
+     * @param temperature a double
+     */
     public void setOutTemperature(double temperature) {
         this.temperatureOut = temperature;
     }
 
+    /**
+     * <p>
+     * getOutTemperature.
+     * </p>
+     *
+     * @param i a int
+     */
     public void getOutTemperature(int i) {
         outStream[i].getThermoSystem().getTemperature();
     }
 
+    /**
+     * <p>
+     * getInTemperature.
+     * </p>
+     *
+     * @param i a int
+     */
     public void getInTemperature(int i) {
         inStream[i].getThermoSystem().getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         SystemInterface systemOut1 = (SystemInterface) inStream[1].getThermoSystem().clone();
@@ -135,59 +187,143 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
                 && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         outStream[0].displayResult();
         outStream[1].displayResult();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
     public void runTransient() {}
 
+    /**
+     * <p>
+     * setAproachToEquilibrium.
+     * </p>
+     *
+     * @param eff a double
+     */
     public void setAproachToEquilibrium(double eff) {
         this.absorptionEfficiency = eff;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>numberOfTheoreticalStages</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getNumberOfTheoreticalStages() {
         return numberOfTheoreticalStages;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>numberOfTheoreticalStages</code>.
+     * </p>
+     *
+     * @param numberOfTheoreticalStages a double
+     */
     public void setNumberOfTheoreticalStages(double numberOfTheoreticalStages) {
         this.numberOfTheoreticalStages = numberOfTheoreticalStages;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>numberOfStages</code>.
+     * </p>
+     *
+     * @return a int
+     */
     public int getNumberOfStages() {
         return numberOfStages;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>numberOfStages</code>.
+     * </p>
+     *
+     * @param numberOfStages a int
+     */
     public void setNumberOfStages(int numberOfStages) {
         this.numberOfStages = numberOfStages;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>stageEfficiency</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getStageEfficiency() {
         return stageEfficiency;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>stageEfficiency</code>.
+     * </p>
+     *
+     * @param stageEfficiency a double
+     */
     public void setStageEfficiency(double stageEfficiency) {
         this.stageEfficiency = stageEfficiency;
     }
 
+    /**
+     * <p>
+     * getHTU.
+     * </p>
+     *
+     * @return a double
+     */
     public double getHTU() {
         return HTU;
     }
 
+    /**
+     * <p>
+     * setHTU.
+     * </p>
+     *
+     * @param HTU a double
+     */
     public void setHTU(double HTU) {
         this.HTU = HTU;
     }
 
+    /**
+     * <p>
+     * getNTU.
+     * </p>
+     *
+     * @return a double
+     */
     public double getNTU() {
         return NTU;
     }
 
+    /**
+     * <p>
+     * setNTU.
+     * </p>
+     *
+     * @param NTU a double
+     */
     public void setNTU(double NTU) {
         this.NTU = NTU;
     }

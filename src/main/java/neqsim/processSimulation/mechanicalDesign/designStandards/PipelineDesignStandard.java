@@ -3,14 +3,27 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>
+ * PipelineDesignStandard class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PipelineDesignStandard extends DesignStandard {
     private static final long serialVersionUID = 1000;
 
     double safetyFactor = 1.0;
 
+    /**
+     * <p>
+     * Constructor for PipelineDesignStandard.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
+     */
     public PipelineDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
@@ -50,6 +63,13 @@ public class PipelineDesignStandard extends DesignStandard {
         }
     }
 
+    /**
+     * <p>
+     * calcPipelineWallThickness.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcPipelineWallThickness() {
         if (standardName.equals("StatoilTR")) {
             return 0.11 * safetyFactor;

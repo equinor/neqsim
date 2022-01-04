@@ -7,8 +7,12 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * SaturateWithWater class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class SaturateWithWater extends QfuncFlash {
     private static final long serialVersionUID = 1000;
@@ -16,13 +20,26 @@ public class SaturateWithWater extends QfuncFlash {
 
     Flash tpFlash;
 
+    /**
+     * <p>
+     * Constructor for SaturateWithWater.
+     * </p>
+     */
     public SaturateWithWater() {}
 
+    /**
+     * <p>
+     * Constructor for SaturateWithWater.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SaturateWithWater(SystemInterface system) {
         this.system = system;
         this.tpFlash = new TPflash(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!system.getPhase(0).hasComponent("water")) {
@@ -76,6 +93,13 @@ public class SaturateWithWater extends QfuncFlash {
         tpFlash.run();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 70.0, 150.0);
 

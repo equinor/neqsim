@@ -12,9 +12,12 @@ import neqsim.thermo.phase.PhaseBWRSEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentBWRS class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ComponentBWRS extends ComponentSrk {
     private static final long serialVersionUID = 1000;
@@ -39,14 +42,33 @@ public class ComponentBWRS extends ComponentSrk {
     static Logger logger = LogManager.getLogger(ComponentBWRS.class);
 
     /**
-     * Creates new System_SRK_EOS Ev liten fil ja.
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
      */
     public ComponentBWRS() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
+     *
+     * @param moles a double
+     */
     public ComponentBWRS(double moles) {
         numberOfMoles = moles;
     }
 
+    /**
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentBWRS(String component_name, double moles, double molesInPhase, int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
@@ -83,13 +105,25 @@ public class ComponentBWRS extends ComponentSrk {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
+     *
+     * @param number a int
+     * @param TC a double
+     * @param PC a double
+     * @param M a double
+     * @param a a double
+     * @param moles a double
+     */
     public ComponentBWRS(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentBWRS clone() {
-
         ComponentBWRS clonedComponent = null;
         try {
             clonedComponent = (ComponentBWRS) super.clone();
@@ -100,6 +134,7 @@ public class ComponentBWRS extends ComponentSrk {
         return clonedComponent;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int type) {
@@ -173,6 +208,7 @@ public class ComponentBWRS extends ComponentSrk {
         BEdTdT[5] = 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature,
             double pressure) {
@@ -193,6 +229,17 @@ public class ComponentBWRS extends ComponentSrk {
         // + getFexpdn(phase, numberOfComponentphases, temperature, pressure));
     }
 
+    /**
+     * <p>
+     * getFpoldn.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponentphases a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double getFpoldn(PhaseInterface phase, int numberOfComponentphases, double temperature,
             double pressure) {
         double temp = 0.0;
@@ -205,11 +252,33 @@ public class ComponentBWRS extends ComponentSrk {
                 + ((PhaseBWRSEos) phase).getFpol() / phase.getNumberOfMolesInPhase();
     }
 
+    /**
+     * <p>
+     * getdRhodn.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponentphases a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double getdRhodn(PhaseInterface phase, int numberOfComponentphases, double temperature,
             double pressure) {
         return ((PhaseBWRSEos) phase).getMolarDensity() / phase.getNumberOfMolesInPhase();
     }
 
+    /**
+     * <p>
+     * getELdn.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponentphases a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double getELdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
             double pressure) {
         return -2.0 * ((PhaseBWRSEos) phase).getMolarDensity() * getGammaBWRS()
@@ -218,6 +287,17 @@ public class ComponentBWRS extends ComponentSrk {
                 * getdRhodn(phase, numberOfComponentphases, temperature, pressure);
     }
 
+    /**
+     * <p>
+     * getFexpdn.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponentphases a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double getFexpdn(PhaseInterface phase, int numberOfComponentphases, double temperature,
             double pressure) {
         double oldTemp = 0.0, temp = 0.0;
@@ -244,23 +324,29 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Getter for property aBWRS.
-     * 
-     * @return Value of property aBWRS.
      *
+     * @return Value of property aBWRS.
      */
     public double[] getABWRS() {
         return this.aBWRS;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>aBWRS</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getABWRS(int i) {
         return this.aBWRS[i];
     }
 
     /**
      * Setter for property aBWRS.
-     * 
-     * @param aBWRS New value of property aBWRS.
      *
+     * @param aBWRS New value of property aBWRS.
      */
     public void setABWRS(double[] aBWRS) {
         this.aBWRS = aBWRS;
@@ -268,8 +354,9 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Getter for property BP.
-     * 
+     *
      * @return Value of property BP. public double[] getBPdT() { return this.BPdT; }
+     * @param i a int
      */
     public double getBP(int i) {
         return this.BP[i];
@@ -277,9 +364,8 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Setter for property BP.
-     * 
-     * @param BP New value of property BP.
      *
+     * @param BP New value of property BP.
      */
     public void setBP(double[] BP) {
         this.BP = BP;
@@ -287,37 +373,49 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Getter for property BE.
-     * 
-     * @return Value of property BE.
      *
+     * @return Value of property BE.
      */
     public double[] getBE() {
         return this.BE;
     }
 
+    /**
+     * <p>
+     * getBE.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getBE(int i) {
         return this.BE[i];
     }
 
     /**
      * Setter for property BE.
-     * 
-     * @param BE New value of property BE.
      *
+     * @param BE New value of property BE.
      */
     public void setBE(double[] BE) {
         this.BE = BE;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>refPhaseBWRS</code>.
+     * </p>
+     *
+     * @param refPhaseBWRS a {@link neqsim.thermo.phase.PhaseBWRSEos} object
+     */
     public void setRefPhaseBWRS(neqsim.thermo.phase.PhaseBWRSEos refPhaseBWRS) {
         this.refPhaseBWRS = refPhaseBWRS;
     }
 
     /**
      * Getter for property gammaBWRS.
-     * 
-     * @return Value of property gammaBWRS.
      *
+     * @return Value of property gammaBWRS.
      */
     public double getGammaBWRS() {
         return gammaBWRS;
@@ -325,9 +423,8 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Setter for property gammaBWRS.
-     * 
-     * @param gammaBWRS New value of property gammaBWRS.
      *
+     * @param gammaBWRS New value of property gammaBWRS.
      */
     public void setGammaBWRS(double gammaBWRS) {
         this.gammaBWRS = gammaBWRS;
@@ -335,23 +432,29 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Getter for property BPdT.
-     * 
-     * @return Value of property BPdT.
      *
+     * @return Value of property BPdT.
      */
     public double[] getBPdT() {
         return this.BPdT;
     }
 
+    /**
+     * <p>
+     * getBPdT.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getBPdT(int i) {
         return this.BPdT[i];
     }
 
     /**
      * Setter for property BPdT.
-     * 
-     * @param BPdT New value of property BPdT.
      *
+     * @param BPdT New value of property BPdT.
      */
     public void setBPdT(double[] BPdT) {
         this.BPdT = BPdT;
@@ -359,23 +462,29 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Getter for property BEdT.
-     * 
-     * @return Value of property BEdT.
      *
+     * @return Value of property BEdT.
      */
     public double[] getBEdT() {
         return this.BEdT;
     }
 
+    /**
+     * <p>
+     * getBEdT.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getBEdT(int i) {
         return this.BEdT[i];
     }
 
     /**
      * Setter for property BEdT.
-     * 
-     * @param BEdT New value of property BEdT.
      *
+     * @param BEdT New value of property BEdT.
      */
     public void setBEdT(double[] BEdT) {
         this.BEdT = BEdT;
@@ -383,9 +492,8 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Getter for property rhoc.
-     * 
-     * @return Value of property rhoc.
      *
+     * @return Value of property rhoc.
      */
     public double getRhoc() {
         return rhoc;
@@ -393,9 +501,8 @@ public class ComponentBWRS extends ComponentSrk {
 
     /**
      * Setter for property rhoc.
-     * 
-     * @param rhoc New value of property rhoc.
      *
+     * @param rhoc New value of property rhoc.
      */
     public void setRhoc(double rhoc) {
         this.rhoc = rhoc;

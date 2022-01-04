@@ -10,17 +10,37 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * WATcalc class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class WATcalc extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WATcalc.class);
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for WATcalc.
+     * </p>
+     */
     public WATcalc() {}
 
+    /**
+     * <p>
+     * Constructor for WATcalc.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public WATcalc(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double sumx = 0.0;
@@ -67,6 +87,7 @@ public class WATcalc extends constantDutyTemperatureFlash {
         system.init(3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

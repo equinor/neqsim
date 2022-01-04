@@ -7,9 +7,12 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * BinaryHVParameterFittingFunction_N2O class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
@@ -17,14 +20,27 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_N2O.class);
 
-    /** Creates new Test */
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingFunction_N2O.
+     * </p>
+     */
     public BinaryHVParameterFittingFunction_N2O() {}
 
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingFunction_N2O.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public BinaryHVParameterFittingFunction_N2O(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -36,11 +52,13 @@ public class BinaryHVParameterFittingFunction_N2O extends LevenbergMarquardtFunc
                 * system.getPhase(0).getComponent(0).getFugasityCoeffisient());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return (val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

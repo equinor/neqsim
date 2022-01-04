@@ -12,13 +12,31 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestCPAParameterFittingToDewPointData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestCPAParameterFittingToDewPointData {
+    private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TestCPAParameterFittingToDewPointData.class);
 
+    /**
+     * <p>
+     * Constructor for TestCPAParameterFittingToDewPointData.
+     * </p>
+     */
+    public TestCPAParameterFittingToDewPointData() {}
+
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

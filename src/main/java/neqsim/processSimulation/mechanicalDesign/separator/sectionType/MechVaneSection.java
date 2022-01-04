@@ -3,16 +3,30 @@ package neqsim.processSimulation.mechanicalDesign.separator.sectionType;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
+ * <p>
+ * MechVaneSection class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class MechVaneSection extends SepDesignSection {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for MechVaneSection.
+     * </p>
+     *
+     * @param separatorSection a
+     *        {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *        object
+     */
     public MechVaneSection(SeparatorSection separatorSection) {
         super(separatorSection);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         double vesselDiameter =

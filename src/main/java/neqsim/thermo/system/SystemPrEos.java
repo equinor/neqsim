@@ -93,6 +93,7 @@ public class SystemPrEos extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemPrEos clone() {
         SystemPrEos clonedSystem = null;

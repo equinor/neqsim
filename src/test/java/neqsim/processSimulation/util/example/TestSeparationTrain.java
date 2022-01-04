@@ -11,10 +11,18 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
+ * <p>TestSeparationTrain class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class TestSeparationTrain {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         double inletPressure = 15.00; // bar
         double inletTemperatuure = 273.15 + 50.0; // K

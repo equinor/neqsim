@@ -4,18 +4,27 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * BinaryEosFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryEosFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for BinaryEosFunction.
+     * </p>
+     */
     public BinaryEosFunction() {
         params = new double[1];
         params[0] = -0.34;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
@@ -26,6 +35,7 @@ public class BinaryEosFunction extends LevenbergMarquardtFunction {
         return system.getPressure() * system.getPhases()[0].getComponents()[0].getx();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -35,21 +45,25 @@ public class BinaryEosFunction extends LevenbergMarquardtFunction {
                 1, value);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFittingParams(int i) {
         return params[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] getFittingParams() {
         return params;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfFittingParams() {
         return params.length;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(double[] value) {
         for (int i = 0; i < value.length; i++) {

@@ -12,8 +12,12 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * TPmultiflash_1 class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TPmultiflash_1 extends TPflash {
     private static final long serialVersionUID = 1000;
@@ -26,19 +30,48 @@ public class TPmultiflash_1 extends TPflash {
     double E[];
     double Q = 0;
 
-    /** Creates new TPmultiflash_1 */
+    /**
+     * <p>
+     * Constructor for TPmultiflash_1.
+     * </p>
+     */
     public TPmultiflash_1() {}
 
+    /**
+     * <p>
+     * Constructor for TPmultiflash_1.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public TPmultiflash_1(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>
+     * Constructor for TPmultiflash_1.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param check a boolean
+     */
     public TPmultiflash_1(SystemInterface system, boolean check) {
         super(system, check);
     }
 
+    /**
+     * <p>
+     * calcMultiPhaseBeta.
+     * </p>
+     */
     public void calcMultiPhaseBeta() {}
 
+    /**
+     * <p>
+     * setXY.
+     * </p>
+     */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases(); k++) {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -50,6 +83,11 @@ public class TPmultiflash_1 extends TPflash {
         }
     }
 
+    /**
+     * <p>
+     * calcE.
+     * </p>
+     */
     public void calcE() {
         E = new double[system.getPhases()[0].getNumberOfComponents()];
 
@@ -61,6 +99,13 @@ public class TPmultiflash_1 extends TPflash {
         }
     }
 
+    /**
+     * <p>
+     * calcQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcQ() {
         Q = 0;
         double betaTotal = 0;
@@ -99,6 +144,11 @@ public class TPmultiflash_1 extends TPflash {
         return Q;
     }
 
+    /**
+     * <p>
+     * solveBeta.
+     * </p>
+     */
     public void solveBeta() {
         double oldBeta[] = new double[system.getNumberOfPhases()];
         double newBeta[] = new double[system.getNumberOfPhases()];
@@ -138,6 +188,7 @@ public class TPmultiflash_1 extends TPflash {
         } while (ans.norm2() > 1e-6);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void stabilityAnalysis() {
         double[] logWi = new double[system.getPhases()[1].getNumberOfComponents()];
@@ -255,6 +306,7 @@ public class TPmultiflash_1 extends TPflash {
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);*/
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         logger.info("Starting multiphase-flash....");

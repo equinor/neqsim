@@ -14,8 +14,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * AdiabaticPipe class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class AdiabaticPipe extends Pipeline {
     private static final long serialVersionUID = 1000;
@@ -34,42 +38,84 @@ public class AdiabaticPipe extends Pipeline {
     String pipeSpecification = "AP02";
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for AdiabaticPipe.
+     * </p>
      */
     public AdiabaticPipe() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>pipeSpecification</code>.
+     * </p>
+     *
+     * @param nominalDiameter a double
+     * @param pipeSec a {@link java.lang.String} object
+     */
     public void setPipeSpecification(double nominalDiameter, String pipeSec) {
         pipeSpecification = pipeSec;
         insideDiameter = nominalDiameter / 1000.0;
     }
 
+    /**
+     * <p>
+     * Constructor for AdiabaticPipe.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public AdiabaticPipe(StreamInterface inStream) {
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>
+     * setOutTemperature.
+     * </p>
+     *
+     * @param temperature a double
+     */
     public void setOutTemperature(double temperature) {
         setTemperature = true;
         this.temperatureOut = temperature;
     }
 
+    /**
+     * <p>
+     * setOutPressure.
+     * </p>
+     *
+     * @param pressure a double
+     */
     public void setOutPressure(double pressure) {
         setPressureOut = true;
         this.pressureOut = pressure;
     }
 
+    /**
+     * <p>
+     * calcWallFrictionFactor.
+     * </p>
+     *
+     * @param reynoldsNumber a double
+     * @return a double
+     */
     public double calcWallFrictionFactor(double reynoldsNumber) {
         double relativeRoughnes = getPipeWallRoughness() / insideDiameter;
         if (Math.abs(reynoldsNumber) < 2000) {
@@ -84,6 +130,13 @@ public class AdiabaticPipe extends Pipeline {
         }
     }
 
+    /**
+     * <p>
+     * calcPressureOut.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcPressureOut() {
         double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
         velocity = system.getPhase(0).getTotalVolume() / area / 1.0e5;
@@ -109,6 +162,13 @@ public class AdiabaticPipe extends Pipeline {
         return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp) / 1.0e5 + dp_gravity / 1.0e5;
     }
 
+    /**
+     * <p>
+     * calcFlow.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcFlow() {
         double averagePressue = (inletPressure + pressureOut) / 2.0;
         system.setPressure(averagePressue);
@@ -138,6 +198,7 @@ public class AdiabaticPipe extends Pipeline {
         return flow;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -171,30 +232,39 @@ public class AdiabaticPipe extends Pipeline {
         outStream.setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         system.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {
         run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowSystemInterface getPipe() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInitialFlowPattern(String flowPattern) {}
 
     /**
+     * <p>
+     * Getter for the field <code>length</code>.
+     * </p>
+     *
      * @return the length
      */
     public double getLength() {
@@ -202,6 +272,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>length</code>.
+     * </p>
+     *
      * @param length the length to set
      */
     public void setLength(double length) {
@@ -209,6 +283,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * getDiameter.
+     * </p>
+     *
      * @return the diameter
      */
     public double getDiameter() {
@@ -216,6 +294,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * setDiameter.
+     * </p>
+     *
      * @param diameter the diameter to set
      */
     public void setDiameter(double diameter) {
@@ -223,6 +305,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pipeWallRoughness</code>.
+     * </p>
+     *
      * @return the pipeWallRoughness
      */
     public double getPipeWallRoughness() {
@@ -230,6 +316,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pipeWallRoughness</code>.
+     * </p>
+     *
      * @param pipeWallRoughness the pipeWallRoughness to set
      */
     public void setPipeWallRoughness(double pipeWallRoughness) {
@@ -237,6 +327,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>inletElevation</code>.
+     * </p>
+     *
      * @return the inletElevation
      */
     public double getInletElevation() {
@@ -244,6 +338,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>inletElevation</code>.
+     * </p>
+     *
      * @param inletElevation the inletElevation to set
      */
     public void setInletElevation(double inletElevation) {
@@ -251,6 +349,10 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>outletElevation</code>.
+     * </p>
+     *
      * @return the outletElevation
      */
     public double getOutletElevation() {
@@ -258,12 +360,23 @@ public class AdiabaticPipe extends Pipeline {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>outletElevation</code>.
+     * </p>
+     *
      * @param outletElevation the outletElevation to set
      */
     public void setOutletElevation(double outletElevation) {
         this.outletElevation = outletElevation;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param name an array of {@link java.lang.String} objects
+     */
     public static void main(String[] name) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 220.00);

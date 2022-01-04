@@ -12,13 +12,19 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestCPA class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestCPA {
     static Logger logger = LogManager.getLogger(TestCPA.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

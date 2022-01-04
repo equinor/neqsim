@@ -9,6 +9,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * PFCTConductivityMethodMod86 class.
+ * </p>
  *
  * @author esol
  * @version Method was revised by Even Solbraa 21.01.2019
@@ -16,6 +19,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class PFCTConductivityMethodMod86 extends Conductivity {
     private static final long serialVersionUID = 1000;
 
+    /** Constant <code>referenceSystem</code> */
     public static SystemInterface referenceSystem = new SystemSrkEos(273.0, 1.01325);
     double[] GVcoef = {-2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2,
             3.778439e1, -2.320481, 5.311764e-2};
@@ -27,10 +31,21 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     double PCmix = 0.0, TCmix = 0.0, Mmix = 0.0;
 
     /**
-     * Creates new ChungViscosityMethod
+     * <p>
+     * Constructor for PFCTConductivityMethodMod86.
+     * </p>
      */
     public PFCTConductivityMethodMod86() {}
 
+    /**
+     * <p>
+     * Constructor for PFCTConductivityMethodMod86.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public PFCTConductivityMethodMod86(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -40,6 +55,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcConductivity() {
         double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC(),
@@ -167,6 +183,15 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         return conductivity;
     }
 
+    /**
+     * <p>
+     * getRefComponentConductivity.
+     * </p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double getRefComponentConductivity(double temp, double pres) {
         referenceSystem.setTemperature(temp);
         referenceSystem.setPressure(pres);
@@ -174,8 +199,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         double molDens = 1.0 / referenceSystem.getLowestGibbsEnergyPhase().getMolarVolume() * 100.0; // mol/dm^3
         double critMolDens = 10.15;
         double redMolDens = (molDens - critMolDens) / critMolDens;
-        molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3; // density
-                                                                                   // in
+        molDens = referenceSystem.getLowestGibbsEnergyPhase().getDensity() * 1e-3; // density in
                                                                                    // gr/cm^3
 
         double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
@@ -217,6 +241,15 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         return refCond;
     }
 
+    /**
+     * <p>
+     * getRefComponentViscosity.
+     * </p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double getRefComponentViscosity(double temp, double pres) {
         double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3,
                 1.219979e3, -9.627993e1, 4.274152, -8.141531e-2};
@@ -227,7 +260,6 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
 
         double molDens = 101325.0 / 8.315 / phase.getPhase().getTemperature() / 1.0e3;
         double critMolDens = 10.15;
-        double redDens = molDens / critMolDens;
         double redMolDens = (molDens - critMolDens) / critMolDens;
         double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
                 + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3]
@@ -254,6 +286,13 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
         return refVisc;
     }
 
+    /**
+     * <p>
+     * calcMixLPViscosity.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcMixLPViscosity() {
         double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC(),
                 Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC(),
