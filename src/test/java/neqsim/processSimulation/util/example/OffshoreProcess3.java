@@ -15,20 +15,37 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>OffshoreProcess3 class.</p>
+ * <p>
+ * OffshoreProcess3 class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class OffshoreProcess3 {
-	/**
-	 * <p>main.</p>
-	 *
-	 * @param args an array of {@link java.lang.String} objects
-	 */
-	public static void main(String[] args) {
-		neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(354.2, 120.0);
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
+    public static void main(String[] args) {
+        neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(354.2, 120.0);
+
+        testSystem.addComponent("nitrogen", 1.0);
+        testSystem.addComponent("CO2", 1.42);
+        testSystem.addComponent("methane", 60.88);
+        testSystem.addComponent("ethane", 8.07);
+        testSystem.addComponent("propane", 3.54);
+        testSystem.addComponent("i-butane", 0.54);
+        testSystem.addComponent("n-butane", 0.2);
+        testSystem.addComponent("i-pentane", 0.21);
+        testSystem.addComponent("n-pentane", 0.19);
+        testSystem.addComponent("n-hexane", 0.28);
+        testSystem.addComponent("n-heptane", 5.0);
+        testSystem.addComponent("water", 1.5);
 
         testSystem.createDatabase(true);
         testSystem.setMixingRule(2);
@@ -348,11 +365,7 @@ public class OffshoreProcess3 {
         System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
         System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
 
-		System.out.println("Cooler Duty " + operations.getCoolerDuty("J/sec") / 1.0e6 + " MW");
-		System.out.println("Heater Duty " + operations.getHeaterDuty("J/sec") / 1.0e6 + " MW");
-		System.out.println("Power " + operations.getPower("W") / 1.0e6 + " MW");
-
-		System.out.println("exergy change " + operations.getExergyChange("J"));
+        System.out.println("exergy change " + operations.getExergyChange("J"));
         System.out.println("total weight " + operations.getMechanicalWeight("kg") + " kg");
-	}
+    }
 }
