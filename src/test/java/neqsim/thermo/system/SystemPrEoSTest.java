@@ -7,20 +7,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-class SystemUMRPRUMCEosNewTest {
+class SystemPrEoSTest {
     static neqsim.thermo.system.SystemInterface testSystem = null;
     static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
     @BeforeAll
     public static void setUp() {
-        testSystem = new neqsim.thermo.system.SystemUMRPRUMCEosNew(298.0, 10.0);
+        testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
         testSystem.addComponent("nitrogen", 0.01);
         testSystem.addComponent("CO2", 0.01);
         testSystem.addComponent("methane", 0.68);
         testSystem.addComponent("ethane", 0.1);
         testSystem.addComponent("n-heptane", 0.2);
-        testSystem.createDatabase(true);
-        testSystem.setMixingRule("HV", "UNIFAC_UMRPRU");
+        testSystem.setMixingRule("classic");
         testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         testOps.TPflash();
@@ -73,6 +72,17 @@ class SystemUMRPRUMCEosNewTest {
     @DisplayName("calculate compressibility of gas phase")
     public void checkCompressibility() {
         System.out.println("gas compressibility " + testSystem.getPhase("gas").getZ());
-        assertTrue(testSystem.getPhase("gas").getZ() == 0.9711401538454589);
+        assertEquals(testSystem.getPhase("gas").getZ(), 0.9708455641951108, 1e-5);
+    }
+    
+    @Test
+    @DisplayName("calculate properties when flow rate is 0")
+    public void calcProperties() {
+    	testSystem.setTotalFlowRate(0.0, "mol/sec");
+    	 ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    	 testOps.TPflash();
+         testSystem.initProperties();
+         System.out.print("enthalpy " + testSystem.getEnthalpy("kJ/kg"));
+    	assertEquals(testSystem.getEnthalpy("kJ/kg"), -165.60627184389855, Math.abs(-165.60627184389855/1000.0));
     }
 }

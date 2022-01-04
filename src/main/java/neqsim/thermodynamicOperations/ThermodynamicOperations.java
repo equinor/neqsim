@@ -111,7 +111,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         double flowRate = system.getTotalNumberOfMoles();
         double minimumFlowRate = 1e-50;
         if (flowRate < 1e-3) {
-            system.setTotalFlowRate(1.0, "mol/sec");
+        	system.setTotalNumberOfMoles(1.0);
         }
         operation = new neqsim.thermodynamicOperations.flashOps.TPflash(system,
                 system.doSolidPhaseCheck());
