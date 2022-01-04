@@ -51,14 +51,14 @@ public class OffshoreProcess {
         testSystem.addComponent("toluene", (14.5174 + 7.61) * fakt);
         testSystem.addComponent("22-DM-C5", (7.57 + 2.86) * fakt);
         testSystem.addComponent("M-cy-C5", (7.51 + 2.6357) * fakt);
-        //
+
         testSystem.addComponent("m-Xylene", (5.5397 + 1.36) * fakt);
         testSystem.addComponent("2-M-C8", (2.8017 + 0.5818) * fakt);
         testSystem.addComponent("n-nonane", (1.5738 + 0.258) * fakt);
-        //
+
         testSystem.addComponent("p-Xylene", (1.93 + 1.02) * fakt);
         testSystem.addComponent("o-Xylene", (1.1343 + 0.27) * fakt);
-        // //
+
         testSystem.addComponent("nC10", (1.5464 + 0.145) * fakt);
         testSystem.addComponent("nC12", (0.2741 + 7.8295e-3) * fakt);
 

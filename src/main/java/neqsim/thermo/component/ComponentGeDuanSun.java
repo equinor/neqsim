@@ -14,7 +14,8 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentGeDuanSun extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
-    double r = 0, q = 0;
+        /** Creates new ComponentGENRTLmodifiedHV */
+        public ComponentGeDuanSun() {}
 
     /**
      * <p>
@@ -92,49 +93,51 @@ public class ComponentGeDuanSun extends ComponentGE {
         dA6dTetter = 0;
         double dA2dT = 0, dA3dT = 0, dA4dT = 0, dA5dT = 0, dA6dT = 0;
 
-        // PhaseGEEosInterface phaseny = (PhaseGEEosInterface) phase.getPhase();
-        // PhaseGEInterface GEPhase = phaseny.getGEphase();
+                // PhaseGEEosInterface phaseny = (PhaseGEEosInterface) phase.getPhase();
+                // PhaseGEInterface GEPhase = phaseny.getGEphase();
 
-        // ComponentGeNRTLInterface[] compArray = (ComponentGeNRTLInterface[])
-        // GEPhase.getcomponentArray();
-        // PhaseGEInterface GEphase = new PhaseGEInterface();
-        // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
+                // ComponentGeNRTLInterface[] compArray = (ComponentGeNRTLInterface[])
+                // GEPhase.getcomponentArray();
+                // PhaseGEInterface GEphase = new PhaseGEInterface();
+                // PhaseGEInterface phaseny = (PhaseGEInterface) phase.getPhase();
 
-        for (j = 0; j < numberOfComponents; j++) {
-            Dij = HVgij[this.getComponentNumber()][j];
-            Dji = HVgij[j][this.getComponentNumber()];
-            // gji = HVgij[j][this.getComponentNumber()];
-            // gjj = HVgii[j][j];
-            alpha = HValpha[j][this.getComponentNumber()];
-            tau = Dji / (temperature);
-            tau2 = Dij / (temperature);
-            dtaudt = -tau / temperature;
-            dtau2dt = -tau2 / temperature;
-            // System.out.println("method GE1" + tau);
+                for (j = 0; j < numberOfComponents; j++) {
+                        Dij = HVgij[this.getComponentNumber()][j];
+                        Dji = HVgij[j][this.getComponentNumber()];
+                        // gji = HVgij[j][this.getComponentNumber()];
+                        // gjj = HVgii[j][j];
+                        alpha = HValpha[j][this.getComponentNumber()];
+                        tau = Dji / (temperature);
+                        tau2 = Dij / (temperature);
+                        dtaudt = -tau / temperature;
+                        dtau2dt = -tau2 / temperature;
+                        // System.out.println("method GE1" + tau);
 
-            // System.out.println("error in NRTL here ......");
-            G = Math.exp(-alpha * tau);// comp_Array[j].getb()*Math.exp(-alpha*tau);
-            dGdt = dtaudt * -alpha * G;
-            G2 = Math.exp(-alpha * tau2);// comp_Array[this.getComponentNumber()].getb()*Math.exp(-alpha*tau2);
-            dG2dt = dtau2dt * -alpha * G2;
+                        // System.out.println("error in NRTL here ......");
+                        G = Math.exp(-alpha * tau);// comp_Array[j].getb()*Math.exp(-alpha*tau);
+                        dGdt = dtaudt * -alpha * G;
+                        G2 = Math.exp(-alpha * tau2);// comp_Array[this.getComponentNumber()].getb()*Math.exp(-alpha*tau2);
+                        dG2dt = dtau2dt * -alpha * G2;
 
-            A += tau * G * comp_Array[j].getx();
-            dAdT = dAdT + comp_Array[j].getx() * dGdt * tau + comp_Array[j].getx() * G * dtaudt;
-            dA2dT = comp_Array[j].getx() * dG2dt * tau2 + comp_Array[j].getx() * G2 * dtau2dt;
-            dA3dT = tau2 * G2 * comp_Array[j].getx();
-            dA4dT = 2 * comp_Array[j].getx() * G2;
-            dA5dT = comp_Array[j].getx() * dG2dt;
-            dA6dT = comp_Array[j].getx() * G2;
-            B += G * comp_Array[j].getx();
-            dBdT += dGdt * comp_Array[j].getx();
-            E = G2 * comp_Array[j].getx();
-            dEdT = dG2dt * comp_Array[j].getx();
+                        A += tau * G * comp_Array[j].getx();
+                        dAdT = dAdT + comp_Array[j].getx() * dGdt * tau
+                                        + comp_Array[j].getx() * G * dtaudt;
+                        dA2dT = comp_Array[j].getx() * dG2dt * tau2
+                                        + comp_Array[j].getx() * G2 * dtau2dt;
+                        dA3dT = tau2 * G2 * comp_Array[j].getx();
+                        dA4dT = 2 * comp_Array[j].getx() * G2;
+                        dA5dT = comp_Array[j].getx() * dG2dt;
+                        dA6dT = comp_Array[j].getx() * G2;
+                        B += G * comp_Array[j].getx();
+                        dBdT += dGdt * comp_Array[j].getx();
+                        E = G2 * comp_Array[j].getx();
+                        dEdT = dG2dt * comp_Array[j].getx();
 
-            C = 0;
-            D = 0;
-            dCdT = 0;
-            dDdT = 0;
-            // System.out.println("hei");
+                        C = 0;
+                        D = 0;
+                        dCdT = 0;
+                        dDdT = 0;
+                        // System.out.println("hei");
 
             for (l = 0; l < numberOfComponents; l++) {
                 Dij = HVgij[l][j];
@@ -142,23 +145,21 @@ public class ComponentGeDuanSun extends ComponentGE {
                 tau = Dij / (temperature);
                 dtaudt = -tau / temperature;
 
-                // System.out.println("error in NRTL comp here....");
-                G = Math.exp(-alpha * tau);// comp_Array[l].getb()*Math.exp(-alpha*tau);
-                dGdt = dtaudt * -alpha * G;
-                Gmatrix[l][j] = G;
-                tauMatrix[l][j] = tau;
+                                C += G * comp_Array[l].getx();
+                                dCdT += dGdt * comp_Array[l].getx();
+                                D += G * tau * comp_Array[l].getx();
+                                dDdT += comp_Array[l].getx() * dGdt * tau
+                                                + comp_Array[l].getx() * G * dtaudt;
+                        }
+                        dA2dTetter += dA2dT / C;
+                        dA3dTetter += dA3dT * dCdT / (C * C);
 
-                C += G * comp_Array[l].getx();
-                dCdT += dGdt * comp_Array[l].getx();
-                D += G * tau * comp_Array[l].getx();
-                dDdT += comp_Array[l].getx() * dGdt * tau + comp_Array[l].getx() * G * dtaudt;
-            }
-            dA2dTetter += dA2dT / C;
-            dA3dTetter += dA3dT * dCdT / (C * C);
+                        dA4dTetter += dA4dT * dCdT * D / (C * C * C);
+                        dA5dTetter += dA5dT * D / (C * C);
+                        dA6dTetter += dA6dT * dDdT / (C * C);
 
-            dA4dTetter += dA4dT * dCdT * D / (C * C * C);
-            dA5dTetter += dA5dT * D / (C * C);
-            dA6dTetter += dA6dT * dDdT / (C * C);
+                        tau2 = HVgij[this.getComponentNumber()][j] / (temperature);
+                        dtau2dt = -tau2 / temperature;
 
             tau2 = HVgij[this.getComponentNumber()][j] / (temperature);
             dtau2dt = -tau2 / temperature;
@@ -490,7 +491,25 @@ public class ComponentGeDuanSun extends ComponentGE {
         // double gammaO2=Math.exp(2.0*S*lamdaO2Na+Math.pow(S,2.0)*zetaO2NaCl);
         // gamma=1.0;
 
-        lngamma = Math.log(gamma);
+                        // Born function
+                        double BORN = 0.0;
+                        double EPS = 0.0;
+                        double EPS1000 = 0.0;
+                        double CB = 0.0;
+                        double BB = 0.0;
+                        EPS1000 = 3.4279 * Math.pow(10.0, 2.0) * Math.exp((-5.0866
+                                        * Math.pow(10.0, -3.0) * phase.getTemperature()
+                                        + 9.469 * Math.pow(10.0, -7.0)
+                                                        * Math.pow(phase.getTemperature(), 2.0)));
+                        CB = -2.0525 + 3.1159 * Math.pow(10.0, 3.0)
+                                        / (phase.getTemperature() - 1.8289 * Math.pow(10.0, 2.0));
+                        BB = -8.0325 * Math.pow(10.0, -3.0)
+                                        + 4.21452 * Math.pow(10.0, 6.0) / phase.getTemperature()
+                                        + 2.1417 * phase.getTemperature();
+                        EPS = EPS1000 + CB * Math.log((BB + phase.getPressure()) / BB + 1000.0);
+                        BORN = (1.0 / EPS) * (CB / ((phase.getPressure() + BB)
+                                        * (CB * Math.log((phase.getPressure() + BB) / (BB + 1000.0))
+                                                        + EPS)));
 
         // System.out.println("gamma CO2 = " + gammaCO2);
         // System.out.println("gamma N2 = " + gammaN2);

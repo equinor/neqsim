@@ -74,8 +74,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
             volumeSafetyFactor =
                     ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
                             .getVolumetricDesignFactor();
-            retentionTime = 120.0;// ((SeparatorDesignStandard) getDesignStandard().get("separator
-                                  // process
+            retentionTime = 120.0;// ((SeparatorDesignStandard)
+                                  // getDesignStandard().get("separator process
                                   // design")).getLiquidRetentionTime("API12J", this);
         } else {
             System.out.println("no separator process design specified......");

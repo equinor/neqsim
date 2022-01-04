@@ -239,7 +239,7 @@ public class LinearProgrammingChemicalEquilibrium
      * 
      * 
      * Matrix alphaTemp = betaTemp.copy(); for(int j=0;j<Amatrix[0].length;j++){
-     * alphaTemp.set(0,j,atemp.get(0,j)); } // System.out.println("alphaTemp: "); //
+     * alphaTemp.set(0,j,atemp.get(0,j)); } // System.out.println("alphaTemp: ");
      * alphaTemp.print(10,10);
      * 
      * 

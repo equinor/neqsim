@@ -98,12 +98,12 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     /** {@inheritDoc} */
     @Override
     public void calcDesign() {
-        // design is done here //
+        // design is done here
     }
 
     /** {@inheritDoc} */
     @Override
     public void setDesign() {
-        // set design is done here //
+        // set design is done here
     }
 }

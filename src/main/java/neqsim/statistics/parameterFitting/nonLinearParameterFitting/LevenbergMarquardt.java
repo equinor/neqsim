@@ -132,8 +132,8 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
          * SampleValue(5.51,0.1,sample3);
          * 
          * SampleSet sampleSet = new SampleSet(sample); sampleSet =
-         * sampleSet.createNewNormalDistributedSet(); optim.setSampleSet(sampleSet); //
-         * optim.solve(); optim.runMonteCarloSimulation();
+         * sampleSet.createNewNormalDistributedSet(); optim.setSampleSet(sampleSet); optim.solve();
+         * optim.runMonteCarloSimulation();
          */
     }
 

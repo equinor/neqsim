@@ -16,7 +16,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version
  */
 /**
- * <p>TestVHflash class.</p>
+ * <p>
+ * TestVHflash class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,7 +28,9 @@ public class TestVHflash {
     static Logger logger = LogManager.getLogger(TestVHflash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -112,13 +116,13 @@ public class TestVHflash {
 // testSystem.setMultiPhaseCheck(true);
 // testOps.setSystem(testSystem);
 //
-//        logger.info("new model name " + testSystem.getModelName());
-//        try{
-//            testOps.TPflash();
-//            testSystem.display();
-//        }
-//        catch(Exception e){
-//            logger.info(e.toString());
-//        }
-//    }
-//}
+// logger.info("new model name " + testSystem.getModelName());
+// try{
+// testOps.TPflash();
+// testSystem.display();
+// }
+// catch(Exception e){
+// logger.info(e.toString());
+// }
+// }
+// }

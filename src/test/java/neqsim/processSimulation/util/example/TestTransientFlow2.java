@@ -36,7 +36,7 @@ public class TestTransientFlow2 {
 
         Separator separator_1 = new Separator();
         separator_1.addStream(valve_1.getOutStream());
-        //
+
         ThrottlingValve valve_2 = new ThrottlingValve(separator_1.getLiquidOutStream());
         valve_2.setOutletPressure(1.0);
         valve_2.setPercentValveOpening(50);

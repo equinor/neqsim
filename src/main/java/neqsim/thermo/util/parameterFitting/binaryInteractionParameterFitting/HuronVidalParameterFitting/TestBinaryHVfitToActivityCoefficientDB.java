@@ -47,8 +47,10 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
                 SystemInterface testSystem = new SystemSrkSchwartzentruberEos(
                         Double.parseDouble(dataSet.getString("Temperature")),
                         Double.parseDouble(dataSet.getString("Pressure")));
-                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger til
-                                                                              // komponenter til
+                testSystem.addComponent(dataSet.getString("Component1"), x1); // legger
+                                                                              // til
+                                                                              // komponenter
+                                                                              // til
                                                                               // systemet
                 testSystem.addComponent(dataSet.getString("Component2"),
                         Double.parseDouble(dataSet.getString("x2")) * 100);
@@ -65,7 +67,8 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(testSystem.getTemperature()));
                 // function.setDatabaseParameters();
-                // double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398,
+                // double guess[] = {-1466.3924707953, 1197.4327552750,
+                // 5.9188456398,
                 // -7.2410712156, 0.2127650110};
                 double guess[] = {-1460.6790723030, 1200.6447170870, 5.8929954883, -7.2400706727,
                         0.2131035181};
@@ -83,7 +86,8 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
         try {
             while (!dataSet.next()) {
                 FreezeSolidFunction function = new FreezeSolidFunction();
-                // double guess[] = {-1466.3924707953, 1197.4327552750, 5.9188456398,
+                // double guess[] = {-1466.3924707953, 1197.4327552750,
+                // 5.9188456398,
                 // -7.2410712156, 0.2127650110};
                 double guess[] = {-1460.6790723030, 1200.6447170870, 5.8929954883, -7.2400706727,
                         0.2131035181};
@@ -100,7 +104,9 @@ public class TestBinaryHVfitToActivityCoefficientDB implements Cloneable {
                 testSystem.setMixingRule(4);
                 testSystem.init(0);
                 double sample1[] = {testSystem.getPhase(0).getComponent(0).getz()}; // temperature
-                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev temperature // presure
+                double standardDeviation1[] = {0.1, 0.1, 0.1}; // std.dev
+                                                               // temperature //
+                                                               // presure
                                                                // std.dev pressure
                 double val = Double.parseDouble(dataSet.getString("FreezingTemperature"));
                 testSystem.setTemperature(val);

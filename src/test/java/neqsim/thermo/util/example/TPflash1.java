@@ -26,9 +26,8 @@ public class TPflash1 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);//
-        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 100.0, 0.5);//
-
+        // SystemInterface testSystem = new SystemSrkEos(288.15 + 5, 165.01325);
+        SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 100.0, 0.5);
         // testSystem.addComponent("CO2", 10.01);
         testSystem.addComponent("water", 10.000083156844);
 

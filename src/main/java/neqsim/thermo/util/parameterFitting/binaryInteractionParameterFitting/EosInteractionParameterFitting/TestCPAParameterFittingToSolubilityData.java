@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.EosInteractionParameterFitting;
 
 import java.sql.ResultSet;

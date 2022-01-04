@@ -38,14 +38,19 @@ public class TEGAbsorberTest {
         testSystem2.addComponent("TEG", 0.10);
         testSystem2.setMixingRule(2);
 
-        Stream fluidStreamIn = new Stream("stream to scrubber", testSystem);
+                Stream TEGstreamIn = new Stream("TEGstreamIn", testSystem2);
 
-        Separator gasScrubber = new GasScrubberSimple("gasInletScrubber", fluidStreamIn);
+                SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("SimpleTEGAbsorber");
+                absorber.addGasInStream(gasToAbsorber);
+                absorber.addSolventInStream(TEGstreamIn);
+                absorber.setNumberOfStages(5);
+                absorber.setStageEfficiency(0.5);
 
-        Stream gasToAbsorber = new Stream(gasScrubber.getGasOutStream());
-        gasToAbsorber.setName("gas from scrubber");
+                Stream gasStreamOut = new Stream(absorber.getGasOutStream());
+                gasStreamOut.setName("gasStreamOut");
 
-        Stream TEGstreamIn = new Stream("TEGstreamIn", testSystem2);
+                Stream TEGStreamOut = new Stream(absorber.getSolventOutStream());
+                TEGStreamOut.setName("TEGStreamOut");
 
         SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("SimpleTEGAbsorber");
         absorber.addGasInStream(gasToAbsorber);
@@ -59,13 +64,14 @@ public class TEGAbsorberTest {
         Stream TEGStreamOut = new Stream(absorber.getSolventOutStream());
         TEGStreamOut.setName("TEGStreamOut");
 
-        ThrottlingValve TEG_HPLP_valve = new ThrottlingValve("ventil", TEGStreamOut);
-        TEG_HPLP_valve.setOutletPressure(10.0);
+                Separator MPseparator =
+                                new Separator("Separator_MP", TEG_HPLP_valve.getOutStream());
 
-        Separator MPseparator = new Separator("Separator_MP", TEG_HPLP_valve.getOutStream());
+                StreamInterface MPstreamGas = MPseparator.getGasOutStream();
+                MPstreamGas.setName("MPGasStream");
 
-        StreamInterface MPstreamGas = MPseparator.getGasOutStream();
-        MPstreamGas.setName("MPGasStream");
+                StreamInterface MPstreamLiq = MPseparator.getLiquidOutStream();
+                MPstreamLiq.setName("MPLiqStream");
 
         StreamInterface MPstreamLiq = MPseparator.getLiquidOutStream();
         MPstreamLiq.setName("MPLiqStream");
@@ -73,8 +79,8 @@ public class TEGAbsorberTest {
         ThrottlingValve LP_valve = new ThrottlingValve("LPventil", MPstreamLiq);
         LP_valve.setOutletPressure(1.5);
 
-        ReBoiler reboiler = new ReBoiler(LP_valve.getOutStream());
-        reboiler.setReboilerDuty(20000.0);
+                ReBoiler reboiler = new ReBoiler(LP_valve.getOutStream());
+                reboiler.setReboilerDuty(20000.0);
 
         neqsim.thermo.system.SystemSrkEos testSystem3 =
                 new neqsim.thermo.system.SystemSrkSchwartzentruberEos((273.15 + 20.0), 1.500);
@@ -84,11 +90,11 @@ public class TEGAbsorberTest {
         testSystem3.createDatabase(true);
         testSystem3.setMixingRule(2);
 
-        Stream mixStream = new Stream(testSystem3);
+                Stream mixStream = new Stream(testSystem3);
 
-        Mixer mix = new Mixer("mixer");
-        mix.addStream(reboiler.getOutStream());
-        mix.addStream(mixStream);
+                Mixer mix = new Mixer("mixer");
+                mix.addStream(reboiler.getOutStream());
+                mix.addStream(mixStream);
 
         Stream ReboilLiqStream = mix.getOutStream();
         ReboilLiqStream.setName("ReboilLiqStream");

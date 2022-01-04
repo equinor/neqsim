@@ -3,7 +3,6 @@
  *
  * Created on 11. desember 2000, 17:47
  */
-
 package neqsim.fluidMechanics.flowLeg;
 
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;

@@ -3,7 +3,6 @@
  *
  * Created on 10. oktober 2006, 19:59
  */
-
 package neqsim.processSimulation.controllerDevice;
 
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;

@@ -263,7 +263,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
                 thermoSystem.initPhysicalProperties();
                 /*
                  * ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-                 * ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity(); //
+                 * ROL[i][j] = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
                  * DROGDP[i][j] = thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] =
                  * thermoSystem.getPhase(1).getdrhodP(); // DROGDT[i][j] =
                  * thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] =

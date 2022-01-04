@@ -33,7 +33,8 @@ public class TestBinaryHVfitToActivityCPA implements Cloneable {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
-        // double parameterGuess[] ={2012.8210952954, -1074.4698351045, 5.5675858688, -1.0503110172,
+        // double parameterGuess[] ={2012.8210952954, -1074.4698351045, 5.5675858688,
+        // -1.0503110172,
         // -0.0082939895};//, 1.3505557460};//, 0.1169806819}; /SRK-EOS
         // double parameterGuess[] ={1506.3, -863.3, 4.11, -0.603, -0.0145};//,
         // 1.3505557460};//, 0.1169806819}; /PR-EOS

@@ -135,8 +135,7 @@ public class pTphaseEnvelope1 extends BaseOperation {
 
             pres = lowPres;
             temp = system.getPhase(0).getComponent(speceq).getAntoineVaporTemperature(pres);
-            // temp = system.getTemperature();//
-
+            // temp = system.getTemperature();
             system.setPressure(pres);
 
             system.setBeta(1e-10);

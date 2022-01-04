@@ -177,7 +177,6 @@ public class ThreePhaseSeparator extends Separator {
         // thermoSystem.init(3);
         // thermoSystem.setMultiPhaseCheck(false);
 
-        //
         // //gasSystem = (SystemInterface) thermoSystem.phaseToSystem(0);
         // //gasOutStream.setThermoSystem(gasSystem);
         if (thermoSystem.hasPhaseType("gas")) {
@@ -186,7 +185,7 @@ public class ThreePhaseSeparator extends Separator {
             gasOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
         }
         // //gasOutStream.run();
-        //
+
         //// liquidSystem = (SystemInterface) thermoSystem.phaseToSystem(1);
         //// liquidOutStream.setThermoSystem(liquidSystem);
         if (thermoSystem.hasPhaseType("oil")) {
@@ -197,7 +196,7 @@ public class ThreePhaseSeparator extends Separator {
             liquidOutStream.setThermoSystem(thermoSystem.getEmptySystemClone());
         }
         // //liquidOutStream.run();
-        //
+
         //// waterSystem = (SystemInterface) thermoSystem.phaseToSystem(2);
         //// waterOutStream.setThermoSystem(waterSystem);
         if (thermoSystem.hasPhaseType("aqueous")) {

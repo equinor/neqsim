@@ -1,8 +1,3 @@
-/*
- * TPflash.java
- *
- * Created on 2. oktober 2000, 22:26
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import org.apache.logging.log4j.LogManager;

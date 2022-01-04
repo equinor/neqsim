@@ -57,7 +57,7 @@ public class TestHydrateFunction {
 
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM HydratePureComp WHERE GuestMolecule='methane' AND Type<>'IHV' AND Pressure<57  AND Temperature>273.15");
-        //
+
         int numb = 0;
         try {
             logger.info("adding....");

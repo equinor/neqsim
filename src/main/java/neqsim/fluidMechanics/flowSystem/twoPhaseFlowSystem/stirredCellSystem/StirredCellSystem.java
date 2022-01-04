@@ -37,7 +37,7 @@ public class StirredCellSystem
                         thermoSystem, equipmentGeometry[0]);
 
         flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
-        //
+
         super.createSystem();
         this.setNodes();
     }

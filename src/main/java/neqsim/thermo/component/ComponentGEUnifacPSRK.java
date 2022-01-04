@@ -19,9 +19,6 @@ import neqsim.thermo.phase.PhaseInterface;
 public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
     private static final long serialVersionUID = 1000;
 
-    double[][] bij = new double[1][1];
-    double[][] cij = new double[1][1];
-
     /**
      * <p>
      * Constructor for ComponentGEUnifacPSRK.
@@ -194,25 +191,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
             calclnGammak(i, phase);
-        }
-
-        lngammaResidual = 0.0;
-        for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
-            lngammaResidual += getUnifacGroup(i).getN()
-                    * (getUnifacGroup(i).getLnGammaMix() - getUnifacGroup(i).getLnGammaComp());
-        }
-
-        lngamma = lngammaResidual + lngammaCombinational;
-        gamma = Math.exp(lngamma);
-
-        if (initType > 1) {
-            lngammaResidualdT = 0.0;
-            for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
-                calclnGammakdT(i, phase);
-                lngammaResidualdT += getUnifacGroup(i).getN() * (getUnifacGroup(i).getLnGammaMixdT()
-                        - getUnifacGroup(i).getLnGammaCompdT());
-            }
-            dlngammadt = lngammaResidualdT;
         }
 
         return gamma;

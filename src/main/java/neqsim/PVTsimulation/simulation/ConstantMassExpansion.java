@@ -258,9 +258,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
          * tempSystem.addComponent("methane", 74.16); tempSystem.addComponent("ethane", 7.9);
          * tempSystem.addComponent("propane", 4.15); tempSystem.addComponent("i-butane", 0.71);
          * tempSystem.addComponent("n-butane", 0.71); tempSystem.addComponent("i-pentane", 0.66);
-         * tempSystem.addComponent("n-pentane", 0.66); tempSystem.addComponent("n-hexane", 0.81); //
-         * tempSystem.addTBPfraction("C7", 1.2, 91.0 / 1000.0, 0.746); //
-         * tempSystem.addTBPfraction("C8", 1.15, 104.0 / 1000.0, 0.770); //
+         * tempSystem.addComponent("n-pentane", 0.66); tempSystem.addComponent("n-hexane", 0.81);
+         * tempSystem.addTBPfraction("C7", 1.2, 91.0 / 1000.0, 0.746);
+         * tempSystem.addTBPfraction("C8", 1.15, 104.0 / 1000.0, 0.770);
          * tempSystem.addTBPfraction("C9", 5.15, 125.0 / 1000.0, 0.8);
          */
 

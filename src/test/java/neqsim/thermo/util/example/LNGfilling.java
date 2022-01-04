@@ -40,9 +40,8 @@ public class LNGfilling {
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // SystemInterface testSystem = new SystemSrkCPAs(273.15+68.0, 170.0);
 
-        testSystem.addComponent("nitrogen", 0.616);
-        testSystem.addComponent("water", 0.616);
-        // testSystem.addComponent("TEG", 5.9622);
+                // testSystem.setMultiPhaseCheck(true);
+                testSystem.setHydrateCheck(true);
 
         // testSystem.addComponent("methanol", 4.0378);
         // testSystem.addComponent("CO2", 4.0378);

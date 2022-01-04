@@ -51,7 +51,7 @@ public class AmineFlash {
                 + loading * molprMDEA / testSystem.getPhase(1).getMolarMass() * density / 1e3);
         logger.info("pressure " + testSystem.getPressure());
         logger.info("pH " + testSystem.getPhase(1).getpH());
-        logger.info("Henrys Constant CO2 " + testSystem.calcHenrysConstant("CO2"));//
+        logger.info("Henrys Constant CO2 " + testSystem.calcHenrysConstant("CO2"));
         testSystem.display();
     }
 }

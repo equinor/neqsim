@@ -3,7 +3,9 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>expander1 class.</p>
+ * <p>
+ * expander1 class.
+ * </p>
  *
  * @author asmund
  * @version $Id: $Id

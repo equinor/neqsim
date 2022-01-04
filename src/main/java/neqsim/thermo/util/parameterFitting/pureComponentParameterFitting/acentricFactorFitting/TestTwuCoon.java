@@ -1,4 +1,3 @@
-
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.acentricFactorFitting;
 
 import java.util.ArrayList;
@@ -58,7 +57,7 @@ public class TestTwuCoon {
             // // PROPANE chi sqr 0.57
             // double guess[] ={0.33180058324421624,0.8546927333111055,1.8658288576964368} ;
             // // n-butane chi sqr 0.66
-            // double guess[] ={0.2179712800665,0.8488910728515817,2.284036968290834}; //
+            // double guess[] ={0.2179712800665,0.8488910728515817,2.284036968290834};
             // i-butane chi sqr 0.64
             // double guess[] ={0.3426699116420882,0.8518937813463485,1.9218752789862321} ;
             // // i-pentane chi sqr 1.71

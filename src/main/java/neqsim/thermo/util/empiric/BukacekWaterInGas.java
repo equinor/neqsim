@@ -7,7 +7,6 @@ package neqsim.thermo.util.empiric;
  * @version $Id: $Id
  */
 public class BukacekWaterInGas {
-	
 	/*
      * Calculates the ppm(mol) water content of a gas at its water dew point                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
      */
@@ -47,12 +46,13 @@ public class BukacekWaterInGas {
 	public static double waterDewPointTemperature(double moleFractionWaterInGas, double pressure) {
 		int iter = 0;
 		double newppm, newTemp = 273.15;
-		  do {
-	            iter++;
-	            //
-	            newppm = getWaterInGas(newTemp, pressure);
-	            newTemp -= (newppm - moleFractionWaterInGas)*1e5;
-	        } while (Math.abs((newppm - moleFractionWaterInGas) / moleFractionWaterInGas) > 1e-8 && iter < 1000);
+		do {
+			iter++;
+
+			newppm = getWaterInGas(newTemp, pressure);
+			newTemp -= (newppm - moleFractionWaterInGas) * 1e5;
+		} while (Math.abs((newppm - moleFractionWaterInGas) / moleFractionWaterInGas) > 1e-8
+				&& iter < 1000);
 		return newTemp;
 	}
 

@@ -46,7 +46,7 @@ public class TestClassicAcentricPlusDens_1 {
         // ORDER BY Temperature ASC");
         ResultSet dataSet = database.getResultSet(
                 "SELECT * FROM PureComponentVapourPressures WHERE ComponentName='MDEA' ORDER BY Reference,Temperature");
-        double guess[] = {1.242};//
+        double guess[] = {1.242};
         try {
             logger.info("adding....");
             while (dataSet.next()) {
@@ -123,7 +123,7 @@ public class TestClassicAcentricPlusDens_1 {
         optim.setSampleSet(sampleSet);
 
         // do simulations
-        //
+
         // optim.solve();
         // optim.runMonteCarloSimulation();
         optim.displayCurveFit();

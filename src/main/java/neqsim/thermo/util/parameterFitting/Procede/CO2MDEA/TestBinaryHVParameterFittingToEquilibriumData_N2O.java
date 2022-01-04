@@ -1,7 +1,5 @@
+// To find HV parameters for CO2 - MDEA system
 package neqsim.thermo.util.parameterFitting.Procede.CO2MDEA;
-
-// To find HV parameters for CO2 - MDEA systempackage
-// neqsim.thermo.util.parameterFitting.Procede.CO2MDEA;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;

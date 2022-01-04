@@ -360,7 +360,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
         int i, j;
         double delta_muref;
-        double cref, sqrtcref, sqrtci, scale;
+        double sqrtcref, sqrtci, scale;
 
         delta_muref = (this.mueq[this.refcomp] - mu[this.refcomp]);
         sqrtcref = Math.sqrt(this.ci[this.refcomp]);
@@ -369,7 +369,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             sqrtci = Math.sqrt(this.ci[i]);
             f[i] = scale * (sqrtci * delta_muref - sqrtcref * (this.mueq[i] - mu[i]));
             for (j = 0; j < this.ncomp; j++) {
-                double tmp1, tmp2;
                 jac[i][j] = scale
                         * (sqrtci * (-dmu_drho[this.refcomp][j]) - sqrtcref * (-dmu_drho[i][j]));
             }

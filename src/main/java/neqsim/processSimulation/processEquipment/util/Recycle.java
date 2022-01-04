@@ -6,7 +6,6 @@
 package neqsim.processSimulation.processEquipment.util;
 
 import java.util.ArrayList;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.mixer.MixerInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;

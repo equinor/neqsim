@@ -3,7 +3,6 @@
  *
  * Created on 2. oktober 2000, 22:26
  */
-
 package neqsim.thermodynamicOperations.flashOps;
 
 import java.util.ArrayList;
@@ -302,7 +301,6 @@ public class TPmultiflash_1 extends TPflash {
                 return;
             }
         }
-        //
 
         // logger.info("STABILITY ANALYSIS: ");
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);*/

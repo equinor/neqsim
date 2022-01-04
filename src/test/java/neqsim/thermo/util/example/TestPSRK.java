@@ -31,8 +31,6 @@ public class TestPSRK {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        //
-
         // SystemInterface testSystem = new SystemSrkEos(325.8, 10.0);
         // SystemInterface testSystem = new SystemCSPsrkEos(245.8, 70.0);
         // SystemInterface testSystem = new SystemSrkEos(265.8, 20.0);

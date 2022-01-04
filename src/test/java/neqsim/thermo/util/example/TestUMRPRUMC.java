@@ -81,7 +81,6 @@ public class TestUMRPRUMC {
          */
         // testSystem.addComponent("water", 10.0);
         // testSystem.addComponent("n-octane", 10.0);
-        //
 
         // testSystem.addTBPfraction("C8", 1.0, 100.0 / 1000.0, 0.8);
         // testSystem.addTBPfraction("LP_C17", 0.03, 238.779998779297 / 1000.0,

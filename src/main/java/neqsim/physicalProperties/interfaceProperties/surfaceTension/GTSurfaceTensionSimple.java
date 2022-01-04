@@ -323,7 +323,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             // den_interface[j][0] / den_interface[j][1]);
         }
 
-        // System.out.println("end ");//
+        // System.out.println("end ");
         return Math.abs(surdenstemp);
     }
 

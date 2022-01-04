@@ -1,4 +1,3 @@
-
 // To find the Rackett constant for Water and MDEA
 package neqsim.thermo.util.parameterFitting.Procede.Density;
 

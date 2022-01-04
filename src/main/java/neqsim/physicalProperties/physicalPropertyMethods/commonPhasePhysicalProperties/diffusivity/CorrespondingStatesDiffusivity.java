@@ -51,11 +51,13 @@ public class CorrespondingStatesDiffusivity extends Diffusivity {
                                     * phase.getPhase().getComponents()[j].getMolarMass() * 1000,
                             0.265)
                     * phase.getPhase().getTemperature();
-            // System.out.println("liq diffusivity " +binaryDiffusionCoeffisients[i][j] );
+            // System.out.println("liq diffusivity " +binaryDiffusionCoeffisients[i][j]
+            // );
             return binaryDiffusionCoeffisients[i][j];
         } else {
             binaryDiffusionCoeffisients[i][j] = 1.8e-5 / phase.getPhase().getPressure();
-            // System.out.println("gas diffusivity " +binaryDiffusionCoeffisients[i][j] );
+            // System.out.println("gas diffusivity " +binaryDiffusionCoeffisients[i][j]
+            // );
             return binaryDiffusionCoeffisients[i][j];
         }
     }

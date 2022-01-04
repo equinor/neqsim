@@ -3,7 +3,6 @@
  *
  * Created on 29. oktober 2001, 14:08
  */
-
 package neqsim.thermo.util.constants;
 
 /**

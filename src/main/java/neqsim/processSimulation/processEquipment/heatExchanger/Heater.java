@@ -321,7 +321,6 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
-        //
         double entrop = 0.0;
 
         inStream.run();

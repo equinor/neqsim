@@ -3,7 +3,6 @@
  *
  * Created on 30. juli 2007, 18:49
  */
-
 package neqsim.processSimulation.util.example;
 
 import neqsim.processSimulation.measurementDevice.VolumeFlowTransmitter;
@@ -41,9 +40,10 @@ public class TestSlugcatcher {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(7);
 
+
         Stream stream_1 = new Stream("Stream1", testSystem);
         ThreePhaseSeparator separator = new ThreePhaseSeparator("Separator 1", stream_1);
-        //
+
         ThrottlingValve valve1 =
                 new ThrottlingValve("snohvit valve", separator.getWaterOutStream());
         valve1.setOutletPressure(1.4);

@@ -581,9 +581,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                     - pipe.getNode(i - 1).getVerticalPositionOfNode();
             double nodeLength = pipe.getNode(i - 1).getGeometry().getNodeLength();
             double interfaceFricition = pipe.getNode(i - 1).getInterPhaseFrictionFactor();
-            // System.out.println(" dif: " + (-pipe.getNode(i-1).getWallContactLength(phase)
-            // * nodeLength* meanDensity * meanFrik*Math.abs(meanVelocity)*meanVelocity/8.0
-            // - pipe.getNode(i-1).getInterphaseContactLength(0)*nodeLength* meanDensity *
+            // System.out.println(" dif: " +
+            // (-pipe.getNode(i-1).getWallContactLength(phase)
+            // * nodeLength* meanDensity *
+            // meanFrik*Math.abs(meanVelocity)*meanVelocity/8.0
+            // - pipe.getNode(i-1).getInterphaseContactLength(0)*nodeLength* meanDensity
+            // *
             // interfaceFricition*Math.abs(pipe.getNode(i).getVelocity(0) -
             // pipe.getNode(i).getVelocity(1))*(pipe.getNode(i).getVelocity(0) -
             // pipe.getNode(i).getVelocity(1))/8.0*sign));

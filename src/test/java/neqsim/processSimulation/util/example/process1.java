@@ -28,24 +28,32 @@ public class process1 {
         testSystem.setMultiPhaseCheck(true);
         testSystem.setMixingRule(10);
 
-        testSystem.setPressure(20.0, "bara");
-        testSystem.setTemperature(20.0, "C");
-        testSystem.setTotalFlowRate(100.0, "Am3/hr");
+                double actFLowRate = testSystem.getFlowRate("m3/hr");
 
-        testSystem.useVolumeCorrection(false);
+                System.out.println("actual flow 2 " + actFLowRate);
 
-        ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
-        ops.TPflash();
-        System.out.println("actual flow 1 " + testSystem.getFlowRate("m3/hr"));
-        double stdflowrate = testSystem.getFlowRate("Sm3/day");
-        testSystem.setTotalFlowRate(stdflowrate, "Sm3/day");
-        ops.TPflash();
+                Stream stream_1 = new Stream("Stream1", testSystem);
 
-        double actFLowRate = testSystem.getFlowRate("m3/hr");
+                neqsim.processSimulation.processEquipment.compressor.Compressor compr =
+                                new neqsim.processSimulation.processEquipment.compressor.Compressor(
+                                                stream_1);
+                compr.setOutletPressure(80.0);
+                compr.setOutTemperature(345.0);
+                compr.setUsePolytropicCalc(true);
+                // compr.setNumberOfCompresorCalcSteps(10);
 
-        System.out.println("actual flow 2 " + actFLowRate);
+                neqsim.processSimulation.processSystem.ProcessSystem operations =
+                                new neqsim.processSimulation.processSystem.ProcessSystem();
+                operations.add(stream_1);
+                operations.add(compr);
 
-        Stream stream_1 = new Stream("Stream1", testSystem);
+                operations.run();
+                compr.displayResult();
+                System.out.println("polytropic head "
+                                + stream_1.getThermoSystem().getFlowRate("m3/hr") + " m3/hr");
+                System.out.println(
+                                "polytropic head " + compr.getPolytropicHead("kJ/kg") + " kJ/kg");
+                System.out.println("polytropic efficiency " + compr.getPolytropicEfficiency());
 
         neqsim.processSimulation.processEquipment.compressor.Compressor compr =
                 new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);

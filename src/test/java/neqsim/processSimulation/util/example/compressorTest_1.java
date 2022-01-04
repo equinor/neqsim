@@ -25,13 +25,16 @@ public class compressorTest_1 {
         testSystem.createDatabase(true);
         testSystem.setMixingRule(9);
 
-        Stream stream_1 = new Stream("Stream1", testSystem);
+                neqsim.processSimulation.processSystem.ProcessSystem operations =
+                                new neqsim.processSimulation.processSystem.ProcessSystem();
+                operations.add(stream_1);
+                operations.add(comp_1);
 
-        Compressor comp_1 = new Compressor("compressor", stream_1);
-        comp_1.setOutletPressure(40.0);
-        comp_1.setUsePolytropicCalc(true);
+                operations.run();
 
-        comp_1.setPolytropicEfficiency(0.74629255);
+                // comp_1.solvePolytropicEfficiency(380.0);
+                // operations.displayResult();
+                System.out.println("power " + comp_1.getTotalWork());
 
         neqsim.processSimulation.processSystem.ProcessSystem operations =
                 new neqsim.processSimulation.processSystem.ProcessSystem();
