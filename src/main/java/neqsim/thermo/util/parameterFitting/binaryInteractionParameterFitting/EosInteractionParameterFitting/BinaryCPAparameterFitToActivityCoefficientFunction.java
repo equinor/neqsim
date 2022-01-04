@@ -3,17 +3,25 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Eo
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * BinaryCPAparameterFitToActivityCoefficientFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryCPAparameterFitToActivityCoefficientFunction
         extends EosInteractionParameterFittingFunction {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for BinaryCPAparameterFitToActivityCoefficientFunction.
+     * </p>
+     */
     public BinaryCPAparameterFitToActivityCoefficientFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -27,11 +35,13 @@ public class BinaryCPAparameterFitToActivityCoefficientFunction
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -11,15 +11,22 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>H2S_Water class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class H2S_Water {
     static Logger logger = LogManager.getLogger(H2S_Water.class);
 
+    /**
+     * <p>Constructor for H2S_Water.</p>
+     */
     public H2S_Water() {}
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     @SuppressWarnings("unused")

@@ -9,11 +9,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * ConstantVolumeDepletion class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ConstantVolumeDepletion extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     // double temperature = 273.15 + 150.5;
@@ -27,20 +30,38 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     double[] pressure = null;
 
+    /**
+     * <p>
+     * Constructor for ConstantVolumeDepletion.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ConstantVolumeDepletion(SystemInterface tempSystem) {
         super(tempSystem);
     }
 
+    /**
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperatures = temperature;
         experimentalData = new double[temperature.length][1];
 
     }
 
+    /**
+     * <p>
+     * calcSaturationConditions.
+     * </p>
+     */
     public void calcSaturationConditions() {
-
         getThermoSystem().setPressure(1.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
@@ -71,6 +92,11 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         saturationConditionFound = true;
     }
 
+    /**
+     * <p>
+     * runCalc.
+     * </p>
+     */
     public void runCalc() {
         saturationConditionFound = false;
         relativeVolume = new double[pressures.length];
@@ -135,6 +161,11 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         System.out.println("test finished");
     }
 
+    /**
+     * <p>
+     * runTuning.
+     * </p>
+     */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -178,6 +209,13 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         // optim.displayCurveFit();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 211.0);
         /*
@@ -243,21 +281,27 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>relativeVolume</code>.
+     * </p>
+     *
      * @return the relativeVolume
      */
     public double[] getRelativeVolume() {
         return relativeVolume;
     }
 
-    /**
-     * @return the saturationPressure
-     */
+    /** {@inheritDoc} */
     @Override
     public double getSaturationPressure() {
         return saturationPressure;
     }
 
     /**
+     * <p>
+     * getZmix.
+     * </p>
+     *
      * @return the Zmix
      */
     public double[] getZmix() {
@@ -265,6 +309,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * getZgas.
+     * </p>
+     *
      * @return the Zgas
      */
     public double[] getZgas() {
@@ -272,6 +320,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>liquidRelativeVolume</code>.
+     * </p>
+     *
      * @return the liquidRelativeVolume
      */
     public double[] getLiquidRelativeVolume() {
@@ -279,6 +331,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>cummulativeMolePercDepleted</code>.
+     * </p>
+     *
      * @return the cummulativeMolePercDepleted
      */
     public double[] getCummulativeMolePercDepleted() {

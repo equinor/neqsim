@@ -12,16 +12,23 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>N2O class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class N2O {
     static Logger logger = LogManager.getLogger(N2O.class);
 
+    /**
+     * <p>Constructor for N2O.</p>
+     */
     public N2O() {
     }
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {

@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseSrkCPAs;
  * This class defines a thermodynamic system using the CPA-EOS of Equinor equation of state
  */
 public class SystemSrkCPAstatoil extends SystemSrkCPAs {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     // SystemSrkEos clonedSystem;
@@ -82,6 +81,7 @@ public class SystemSrkCPAstatoil extends SystemSrkCPAs {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemSrkCPAstatoil clone() {
         SystemSrkCPAstatoil clonedSystem = null;

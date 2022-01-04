@@ -8,33 +8,56 @@ package neqsim.processSimulation.processEquipment.valve;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
+ * <p>
+ * SafetyValve class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class SafetyValve extends ThrottlingValve {
-
     private static final long serialVersionUID = 1000;
 
     private double pressureSpec = 10.0;
     private double fullOpenPressure = 10.0;
 
     /**
-     * Creates new ThrottelValve
+     * <p>
+     * Constructor for SafetyValve.
+     * </p>
      */
     public SafetyValve() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for SafetyValve.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public SafetyValve(Stream inletStream) {
         super(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for SafetyValve.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public SafetyValve(String name, Stream inletStream) {
         super(name, inletStream);
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureSpec</code>.
+     * </p>
+     *
      * @return the pressureSpec
      */
     public double getPressureSpec() {
@@ -42,6 +65,10 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureSpec</code>.
+     * </p>
+     *
      * @param pressureSpec the pressureSpec to set
      */
     public void setPressureSpec(double pressureSpec) {
@@ -49,6 +76,10 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>fullOpenPressure</code>.
+     * </p>
+     *
      * @return the fullOpenPressure
      */
     public double getFullOpenPressure() {
@@ -56,10 +87,13 @@ public class SafetyValve extends ThrottlingValve {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>fullOpenPressure</code>.
+     * </p>
+     *
      * @param fullOpenPressure the fullOpenPressure to set
      */
     public void setFullOpenPressure(double fullOpenPressure) {
         this.fullOpenPressure = fullOpenPressure;
     }
-
 }

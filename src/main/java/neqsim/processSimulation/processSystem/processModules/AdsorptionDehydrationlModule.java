@@ -8,11 +8,14 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * AdsorptionDehydrationlModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface gasStreamToAdsorber = null, gasStreamFromAdsorber = null;
@@ -29,6 +32,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
      */
     public AdsorptionDehydrationlModule() {}
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("gasStreamToAdsorber")) {
@@ -36,6 +40,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -48,6 +53,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public ProcessEquipmentInterface getUnit(String unitName) {
         if (unitName.equals("adorber_0")) {
@@ -61,6 +67,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -78,6 +85,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         // gasStreamFromAdsorber.getThermoSystem().init(1);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
@@ -93,6 +101,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -100,11 +109,13 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         getOperations().add(gasStreamToAdsorber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setSpecification(String specificationName, double value) {
         if (specificationName.equals("water dew point temperature")) {
@@ -126,12 +137,11 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         if (specificationName.equals("regenerationCycleTime")) {
             regenerationCycleTime = value;
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
-
         Stream tempStream = (Stream) gasStreamToAdsorber.clone();
         tempStream.getThermoSystem().setPressure(designAdsorptionPressure);
         tempStream.getThermoSystem().setTemperature(designAdsorptionTemperature);
@@ -167,6 +177,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
         // design is done here //
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         for (int i = 0; i < numberOfAdorptionBeds; i++) {
@@ -177,8 +188,14 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
 
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
 

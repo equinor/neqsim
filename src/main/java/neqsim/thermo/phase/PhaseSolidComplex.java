@@ -1,21 +1,26 @@
 package neqsim.thermo.phase;
 
 /**
+ * <p>
+ * PhaseSolidComplex class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class PhaseSolidComplex extends PhaseSolid {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new PhaseSolidComplex
+     * <p>
+     * Constructor for PhaseSolidComplex.
+     * </p>
      */
     public PhaseSolidComplex() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseSolidComplex clone() {
         PhaseSolidComplex clonedPhase = null;
@@ -28,9 +33,14 @@ public class PhaseSolidComplex extends PhaseSolid {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) {
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         phaseTypeName = "solidComplex";
     }

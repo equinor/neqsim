@@ -3,22 +3,40 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PHflashSingleComp class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PHflashSingleComp extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Hspec = 0;
 
+    /**
+     * <p>
+     * Constructor for PHflashSingleComp.
+     * </p>
+     */
     public PHflashSingleComp() {}
 
+    /**
+     * <p>
+     * Constructor for PHflashSingleComp.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Hspec a double
+     * @param type a int
+     */
     public PHflashSingleComp(SystemInterface system, double Hspec, int type) {
         this.system = system;
         this.Hspec = Hspec;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         neqsim.thermodynamicOperations.ThermodynamicOperations bubOps =
@@ -70,6 +88,7 @@ public class PHflashSingleComp extends Flash {
         system.init(3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

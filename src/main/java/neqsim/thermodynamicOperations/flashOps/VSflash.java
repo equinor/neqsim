@@ -5,19 +5,36 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * VSflash class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class VSflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
     double Vspec = 0;
     Flash tpFlash;
 
+    /**
+     * <p>
+     * Constructor for VSflash.
+     * </p>
+     */
     public VSflash() {}
 
+    /**
+     * <p>
+     * Constructor for VSflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Vspec a double
+     * @param Sspec a double
+     */
     public VSflash(SystemInterface system, double Vspec, double Sspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -27,6 +44,13 @@ public class VSflash extends Flash {
         // System.out.println("volume " + Vspec);
     }
 
+    /**
+     * <p>
+     * calcdQdPP.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdPP() {
         double dQdVV = (system.getVolume() - Vspec)
                 / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
@@ -37,6 +61,13 @@ public class VSflash extends Flash {
         return dQdVV;
     }
 
+    /**
+     * <p>
+     * calcdQdTT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
         if (system.getNumberOfPhases() == 1) {
             return -system.getPhase(0).getCp() / system.getTemperature()
@@ -50,18 +81,39 @@ public class VSflash extends Flash {
         return dQdTT / neqsim.thermo.ThermodynamicConstantsInterface.R;
     }
 
+    /**
+     * <p>
+     * calcdQdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQdT =
                 (Sspec - system.getEntropy()) / (neqsim.thermo.ThermodynamicConstantsInterface.R);
         return dQdT;
     }
 
+    /**
+     * <p>
+     * calcdQdP.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdP() {
         double dQdP = system.getPressure() * (system.getVolume() - Vspec)
                 / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
         return dQdP;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldPres = system.getPressure(), nyPres = system.getPressure(),
                 nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
@@ -90,6 +142,7 @@ public class VSflash extends Flash {
         return nyPres;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
@@ -97,11 +150,19 @@ public class VSflash extends Flash {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 55, 50.0);
 
@@ -122,6 +183,5 @@ public class VSflash extends Flash {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

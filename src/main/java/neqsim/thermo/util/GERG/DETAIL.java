@@ -8,8 +8,10 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
 /**
- * @author esol
+ * <p>DETAIL class.</p>
  *
+ * @author esol
+ * @version $Id: $Id
  */
 public class DETAIL {
     // The compositions in the x() array use the following order and must be sent as
@@ -78,10 +80,22 @@ public class DETAIL {
     static double K3;
     static double dPdDsave;
 
+    /**
+     * <p>sq.</p>
+     *
+     * @param x a double
+     * @return a double
+     */
     static public double sq(double x) {
         return x * x;
     }
 
+    /**
+     * <p>MolarMassDetail.</p>
+     *
+     * @param x an array of {@link double} objects
+     * @param Mm a {@link org.netlib.util.doubleW} object
+     */
     public static void MolarMassDetail(double[] x, doubleW Mm) {
         // Calculate molar mass of the mixture with the compositions contained in the
         // x() input array
@@ -102,6 +116,15 @@ public class DETAIL {
         }
     }
 
+    /**
+     * <p>PressureDetail.</p>
+     *
+     * @param T a double
+     * @param D a double
+     * @param x an array of {@link double} objects
+     * @param P a {@link org.netlib.util.doubleW} object
+     * @param Z a {@link org.netlib.util.doubleW} object
+     */
     public static void PressureDetail(double T, double D, double[] x, doubleW P, doubleW Z) {
         // Sub Pressure(T, D, x, P, Z)
 
@@ -140,6 +163,16 @@ public class DETAIL {
                                                                   // iteration
     }
 
+    /**
+     * <p>DensityDetail.</p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param x an array of {@link double} objects
+     * @param D a {@link org.netlib.util.doubleW} object
+     * @param ierr a {@link org.netlib.util.intW} object
+     * @param herr a {@link org.netlib.util.StringW} object
+     */
     public static void DensityDetail(double T, double P, double[] x, doubleW D, intW ierr,
             StringW herr) {
         // Sub DensityDetail(T, P, x, D, ierr, herr)
@@ -216,6 +249,28 @@ public class DETAIL {
         return;
     }
 
+    /**
+     * <p>PropertiesDetail.</p>
+     *
+     * @param T a double
+     * @param D a double
+     * @param x an array of {@link double} objects
+     * @param P a {@link org.netlib.util.doubleW} object
+     * @param Z a {@link org.netlib.util.doubleW} object
+     * @param dPdD a {@link org.netlib.util.doubleW} object
+     * @param d2PdD2 a {@link org.netlib.util.doubleW} object
+     * @param d2PdTD a {@link org.netlib.util.doubleW} object
+     * @param dPdT a {@link org.netlib.util.doubleW} object
+     * @param U a {@link org.netlib.util.doubleW} object
+     * @param H a {@link org.netlib.util.doubleW} object
+     * @param S a {@link org.netlib.util.doubleW} object
+     * @param Cv a {@link org.netlib.util.doubleW} object
+     * @param Cp a {@link org.netlib.util.doubleW} object
+     * @param W a {@link org.netlib.util.doubleW} object
+     * @param G a {@link org.netlib.util.doubleW} object
+     * @param JT a {@link org.netlib.util.doubleW} object
+     * @param Kappa a {@link org.netlib.util.doubleW} object
+     */
     public static void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z,
             doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H,
             doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa) {
@@ -585,6 +640,9 @@ public class DETAIL {
     }
 
     /// The following routine must be called once before any other routine.
+    /**
+     * <p>SetupDetail.</p>
+     */
     public static void SetupDetail() {
         // Initialize all the constants and parameters in the DETAIL model.
         // Some values are modified for calculations that do not depend on T, D, and x
@@ -1424,6 +1482,11 @@ public class DETAIL {
         // }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         DETAIL test = new DETAIL();

@@ -12,10 +12,18 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
+ * <p>TestSlugcatcher class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class TestSlugcatcher {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         double reservoirTemperatureSnohvit = 273.15 + 10.0; // K
         double reservoirPressureSnohvit = 5.0; // bar

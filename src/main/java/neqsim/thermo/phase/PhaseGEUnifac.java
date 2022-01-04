@@ -9,14 +9,19 @@ import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUniquac;
 
 /**
+ * <p>
+ * PhaseGEUnifac class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseGEUnifac extends PhaseGEUniquac {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     *
+     */
     double[][] aij = new double[1][1];
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
@@ -24,13 +29,26 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
     static Logger logger = LogManager.getLogger(PhaseGEUnifac.class);
 
     /**
-     * Creates new PhaseGEUnifac
+     * <p>
+     * Constructor for PhaseGEUnifac.
+     * </p>
      */
     public PhaseGEUnifac() {
         super();
         componentArray = new ComponentGEUnifac[MAX_NUMBER_OF_COMPONENTS];
     }
 
+    /**
+     * <p>
+     * Constructor for PhaseGEUnifac.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param alpha an array of {@link double} objects
+     * @param Dij an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @param intparam an array of {@link double} objects
+     */
     public PhaseGEUnifac(PhaseInterface phase, double[][] alpha, double[][] Dij, String[][] mixRule,
             double[][] intparam) {
         super(phase, alpha, Dij, mixRule, intparam);
@@ -43,6 +61,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -51,6 +70,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
                 new ComponentGEUnifac(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -61,6 +81,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         calcaij();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
             double beta) {
@@ -71,6 +92,11 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         }
     }
 
+    /**
+     * <p>
+     * calcaij.
+     * </p>
+     */
     public void calcaij() {
         aij = new double[((ComponentGEUnifac) getComponent(0))
                 .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
@@ -123,6 +149,11 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         logger.info("finished finding interaction coefficient...A");
     }
 
+    /**
+     * <p>
+     * checkGroups.
+     * </p>
+     */
     public void checkGroups() {
         ArrayList<neqsim.thermo.atomElement.UNIFACgroup> unifacGroups =
                 new ArrayList<UNIFACgroup>();
@@ -168,6 +199,7 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         checkedGroups = true;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype) {
@@ -180,11 +212,13 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy() {
         return getExessGibbsEnergy(this, numberOfComponents, temperature, pressure, phaseType);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGibbsEnergy() {
         double val = 0.0;
@@ -195,26 +229,80 @@ public class PhaseGEUnifac extends PhaseGEUniquac {
         return R * temperature * ((val) + Math.log(pressure) * numberOfMolesInPhase);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>aij</code>.
+     * </p>
+     *
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double getAij(int i, int j) {
         return aij[i][j];
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>aij</code>.
+     * </p>
+     *
+     * @param i a int
+     * @param j a int
+     * @param val a double
+     */
     public void setAij(int i, int j, double val) {
         aij[i][j] = val;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>bij</code>.
+     * </p>
+     *
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double getBij(int i, int j) {
         return bij[i][j];
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>bij</code>.
+     * </p>
+     *
+     * @param i a int
+     * @param j a int
+     * @param val a double
+     */
     public void setBij(int i, int j, double val) {
         bij[i][j] = val;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>cij</code>.
+     * </p>
+     *
+     * @param i a int
+     * @param j a int
+     * @return a double
+     */
     public double getCij(int i, int j) {
         return cij[i][j];
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>cij</code>.
+     * </p>
+     *
+     * @param i a int
+     * @param j a int
+     * @param val a double
+     */
     public void setCij(int i, int j, double val) {
         cij[i][j] = val;
     }

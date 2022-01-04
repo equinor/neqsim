@@ -10,9 +10,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 *
 * @author esol @version
 */
+/**
+ * <p>TPflash2 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TPflash2 {
     static Logger logger = LogManager.getLogger(TPflash2.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 80.0, 1.01325);//
         testSystem.addComponent("nitrogen", 8.71604938);

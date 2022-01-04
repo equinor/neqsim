@@ -16,7 +16,6 @@ import neqsim.thermodynamicOperations.BaseOperation;
  * @version
  */
 abstract class Flash extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Flash.class);
 
@@ -37,10 +36,19 @@ abstract class Flash extends BaseOperation {
     boolean findLowesGibsPhaseIsChecked = false;
 
     /**
-     * Creates new Flash
+     * <p>
+     * Constructor for Flash.
+     * </p>
      */
     public Flash() {}
 
+    /**
+     * <p>
+     * findLowestGibbsEnergyPhase.
+     * </p>
+     *
+     * @return a int
+     */
     public int findLowestGibbsEnergyPhase() {
         if (!findLowesGibsPhaseIsChecked) {
             minimumGibbsEnergySystem = (SystemInterface) system.clone();
@@ -58,6 +66,14 @@ abstract class Flash extends BaseOperation {
         return lowestGibbsEnergyPhase;
     }
 
+    /**
+     * <p>
+     * stabilityAnalysis.
+     * </p>
+     *
+     * @throws neqsim.util.exception.IsNaNException if any.
+     * @throws neqsim.util.exception.TooManyIterationsException if any.
+     */
     public void stabilityAnalysis() throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
         double[] logWi = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -141,7 +157,6 @@ abstract class Flash extends BaseOperation {
 
                 if ((iterations <= maxiterations - 10)
                         || !system.isImplementedCompositionDeriativesofFugacity()) {
-
                     clonedSystem.init(1, j);
                     fNormOld = fNorm;
                     for (int i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -293,6 +308,13 @@ abstract class Flash extends BaseOperation {
         // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
     }
 
+    /**
+     * <p>
+     * stabilityCheck.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean stabilityCheck() {
         boolean stable = false;
         // logger.info("starting stability analysis....");
@@ -321,7 +343,6 @@ abstract class Flash extends BaseOperation {
             if (solidCheck && !system.doMultiPhaseCheck()) {
                 this.solidPhaseFlash();
             }
-
         } else {
             try {
                 system.calcBeta();
@@ -335,11 +356,17 @@ abstract class Flash extends BaseOperation {
         return stable;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         system.display();
     }
 
+    /**
+     * <p>
+     * solidPhaseFlash.
+     * </p>
+     */
     public void solidPhaseFlash() {
         boolean solidPhase = false;
         double frac = 0;
@@ -418,34 +445,35 @@ abstract class Flash extends BaseOperation {
                 // solidPhaseFlash();
                 // solid-vapor flash
             }
-
         } else {
             // system.setPhaseIndex(system.getNumberOfPhases() - 1,
             // system.getNumberOfPhases() - 1);
             system.setNumberOfPhases(system.getNumberOfPhases() - 1);
             // logger.info("no solid phase will form..");
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

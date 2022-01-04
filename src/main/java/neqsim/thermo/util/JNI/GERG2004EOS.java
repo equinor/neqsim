@@ -6,77 +6,442 @@
 package neqsim.thermo.util.JNI;
 
 /**
+ * <p>GERG2004EOS class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class GERG2004EOS {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>POTDX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @return a double
+     */
     public static native double POTDX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20);
 
+    /**
+     * <p>ZOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double ZOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>HOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double HOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>SOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double SOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>CPOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double CPOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>WOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double WOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>RJTOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double RJTOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>GOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double GOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>UOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double UOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>AOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double AOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>SFUGOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return an array of {@link double} objects
+     */
     public static native double[] SFUGOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>SPHIOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return an array of {@link double} objects
+     */
     public static native double[] SPHIOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>CVOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return a double
+     */
     public static native double CVOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
             double c20, int IPHASE);
 
+    /**
+     * <p>SALLOTPX.</p>
+     *
+     * @param c1 a double
+     * @param c2 a double
+     * @param c3 a double
+     * @param c4 a double
+     * @param c5 a double
+     * @param c6 a double
+     * @param c7 a double
+     * @param c8 a double
+     * @param c9 a double
+     * @param c10 a double
+     * @param c11 a double
+     * @param c12 a double
+     * @param c13 a double
+     * @param c14 a double
+     * @param c15 a double
+     * @param c16 a double
+     * @param c17 a double
+     * @param c18 a double
+     * @param c19 a double
+     * @param c20 a double
+     * @param IPHASE a int
+     * @return an array of {@link double} objects
+     */
     public static native double[] SALLOTPX(double c1, double c2, double c3, double c4, double c5,
             double c6, double c7, double c8, double c9, double c10, double c11, double c12,
             double c13, double c14, double c15, double c16, double c17, double c18, double c19,
@@ -88,10 +453,18 @@ public class GERG2004EOS {
             "i-butane", "n-pentane", "i-pentane", "n-hexane", "n-heptane", "n-octane", "hydrogen",
             "oxygen", "CO", "water", "helium", "argon"};
 
+    /**
+     * <p>Constructor for GERG2004EOS.</p>
+     */
     public GERG2004EOS() {
         System.loadLibrary("test2");
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         GERG2004EOS gergEOS = new GERG2004EOS();
@@ -110,6 +483,11 @@ public class GERG2004EOS {
         // System.out.println("potdx " + a);
     }
 
+    /**
+     * <p>Getter for the field <code>nameList</code>.</p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public String[] getNameList() {
         return nameList;
     }

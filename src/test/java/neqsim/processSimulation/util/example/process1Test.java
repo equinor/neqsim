@@ -10,6 +10,9 @@ class process1Test {
     static neqsim.thermo.system.SystemInterface testSystem;
     static neqsim.processSimulation.processSystem.ProcessSystem operations;
 
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {
         testSystem = new neqsim.thermo.system.SystemSrkCPA((273.15 + 25.0), 50.00);

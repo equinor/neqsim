@@ -16,7 +16,19 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
+/**
+ * <p>TEGdehydrationProcessDistillation3 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TEGdehydrationProcessDistillation3 {
+        /**
+         * <p>main.</p>
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
         @SuppressWarnings("unused")
         public static void main(String[] args) {
                 // Create the input fluid to the TEG process and saturate it with water at

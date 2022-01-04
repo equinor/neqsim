@@ -7,11 +7,14 @@
 package neqsim.MathLib.nonLinearSolver;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * newtonRhapson class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class newtonRhapson implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     int order;
@@ -20,19 +23,44 @@ public class newtonRhapson implements java.io.Serializable {
     private int maxIterations = 500, times = 0;
     double xNew = 0, xNew2, x = 0;
 
-    /** Creates new newtonRhapson */
-    public newtonRhapson() {
-    }
+    /**
+     * <p>
+     * Constructor for newtonRhapson.
+     * </p>
+     */
+    public newtonRhapson() {}
 
+    /**
+     * <p>
+     * Setter for the field <code>order</code>.
+     * </p>
+     *
+     * @param o a int
+     */
     public void setOrder(int o) {
         order = o;
         polyConstants = new double[order + 1];
     }
 
+    /**
+     * <p>
+     * setConstants.
+     * </p>
+     *
+     * @param constants an array of {@link double} objects
+     */
     public void setConstants(double[] constants) {
         System.arraycopy(constants, 0, polyConstants, 0, constants.length);
     }
 
+    /**
+     * <p>
+     * funkValue.
+     * </p>
+     *
+     * @param x a double
+     * @return a double
+     */
     public double funkValue(double x) {
         funkVal = 0;
 
@@ -42,6 +70,14 @@ public class newtonRhapson implements java.io.Serializable {
         return funkVal;
     }
 
+    /**
+     * <p>
+     * derivValue.
+     * </p>
+     *
+     * @param x a double
+     * @return a double
+     */
     public double derivValue(double x) {
         derivVal = 0;
 
@@ -52,16 +88,33 @@ public class newtonRhapson implements java.io.Serializable {
         return derivVal;
     }
 
+    /**
+     * <p>
+     * dubDerivValue.
+     * </p>
+     *
+     * @param x a double
+     * @return a double
+     */
     public double dubDerivValue(double x) {
         dubDerivVal = 0;
 
         for (int i = 0; i < polyConstants.length - 2; i++) {
-            dubDerivVal += (order - 1 - i) * (order - i) * polyConstants[i] * Math.pow(x, order - 2 - i);
+            dubDerivVal +=
+                    (order - 1 - i) * (order - i) * polyConstants[i] * Math.pow(x, order - 2 - i);
         }
 
         return dubDerivVal;
     }
 
+    /**
+     * <p>
+     * solve.
+     * </p>
+     *
+     * @param xin a double
+     * @return a double
+     */
     public double solve(double xin) {
         int iterations = 0;
 
@@ -83,10 +136,12 @@ public class newtonRhapson implements java.io.Serializable {
             }
             if (derivValue(x) * derivValue(x) - 2.0 * funkValue(x) * dubDerivValue(x) > 0) {
                 xNew = x - derivValue(x) / dubDerivValue(x)
-                        + Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
+                        + Math.sqrt(
+                                derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
                                 / dubDerivValue(x);
                 xNew2 = x - derivValue(x) / dubDerivValue(x)
-                        - Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
+                        - Math.sqrt(
+                                derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
                                 / dubDerivValue(x);
             } else {
                 // System.out.println("using first order newton-rhapson...........");
@@ -112,6 +167,14 @@ public class newtonRhapson implements java.io.Serializable {
         return xNew;
     }
 
+    /**
+     * <p>
+     * solve1order.
+     * </p>
+     *
+     * @param xin a double
+     * @return a double
+     */
     public double solve1order(double xin) {
         int iterations = 0;
 
@@ -137,11 +200,18 @@ public class newtonRhapson implements java.io.Serializable {
         return xNew;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         newtonRhapson test = new newtonRhapson();
         test.setOrder(3);
 
-        double[] constants = new double[] { -0.003058, -0.01806, -0.266, -0.2999 };
+        double[] constants = new double[] {-0.003058, -0.01806, -0.266, -0.2999};
         test.setConstants(constants);
 
         System.out.println("val : " + test.funkValue(-0.0));

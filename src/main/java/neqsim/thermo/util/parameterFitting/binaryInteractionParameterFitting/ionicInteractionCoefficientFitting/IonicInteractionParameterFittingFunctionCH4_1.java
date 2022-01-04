@@ -1,18 +1,25 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.ionicInteractionCoefficientFitting;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunctionCH4_1 class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCH4_1
         extends IonicInteractionParameterFittingFunctionCH4 {
-
     private static final long serialVersionUID = 1000;
 
-
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4_1.
+     * </p>
+     */
     public IonicInteractionParameterFittingFunctionCH4_1() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -24,5 +31,4 @@ public class IonicInteractionParameterFittingFunctionCH4_1
         }
         return system.getPressure() * system.getPhase(0).getComponent(1).getx();
     }
-
 }

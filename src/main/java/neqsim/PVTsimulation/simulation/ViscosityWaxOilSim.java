@@ -9,8 +9,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>ViscosityWaxOilSim class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ViscosityWaxOilSim extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
@@ -24,6 +26,11 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     private double[] aqueousViscosity;
     private double[] shareRate;
 
+    /**
+     * <p>Constructor for ViscosityWaxOilSim.</p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ViscosityWaxOilSim(SystemInterface tempSystem) {
         super(tempSystem);
         temperature = new double[1];
@@ -32,12 +39,21 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
         pressure[0] = tempSystem.getPressure();
     }
 
+    /**
+     * <p>setTemperaturesAndPressures.</p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
     }
 
+    /**
+     * <p>runTuning.</p>
+     */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -79,6 +95,9 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
         optimizer.displayCurveFit();
     }
 
+    /**
+     * <p>runCalc.</p>
+     */
     public void runCalc() {
         gasViscosity = new double[pressure.length];
         oilViscosity = new double[pressure.length];
@@ -115,6 +134,11 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
@@ -151,6 +175,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>waxFraction</code>.</p>
+     *
      * @return the waxFraction
      */
     public double[] getWaxFraction() {
@@ -158,6 +184,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>gasViscosity</code>.</p>
+     *
      * @return the gasViscosity
      */
     public double[] getGasViscosity() {
@@ -165,6 +193,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>oilViscosity</code>.</p>
+     *
      * @return the oilViscosity
      */
     public double[] getOilViscosity() {
@@ -172,6 +202,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>aqueousViscosity</code>.</p>
+     *
      * @return the aqueousViscosity
      */
     public double[] getAqueousViscosity() {
@@ -179,6 +211,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>shareRate</code>.</p>
+     *
      * @return the shareRate
      */
     public double[] getShareRate() {
@@ -186,6 +220,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Setter for the field <code>shareRate</code>.</p>
+     *
      * @param shareRate the shareRate to set
      */
     public void setShareRate(double[] shareRate) {
@@ -193,6 +229,8 @@ public class ViscosityWaxOilSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>oilwaxDispersionViscosity</code>.</p>
+     *
      * @return the oilwaxDispersionViscosity
      */
     public double[] getOilwaxDispersionViscosity() {

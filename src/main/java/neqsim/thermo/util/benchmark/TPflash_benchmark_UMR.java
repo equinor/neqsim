@@ -6,11 +6,19 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>TPflash_benchmark_UMR class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class TPflash_benchmark_UMR {
     static Logger logger = LogManager.getLogger(TPflash_benchmark_UMR.class);
 
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     @SuppressWarnings("unused")
     public static void main(String args[]) {

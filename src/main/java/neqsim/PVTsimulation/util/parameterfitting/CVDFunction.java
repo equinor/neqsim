@@ -4,22 +4,36 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * CVDFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CVDFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
     double saturationVolume = 0, saturationPressure = 0;
     double Zsaturation = 0;
 
+    /**
+     * <p>
+     * Constructor for CVDFunction.
+     * </p>
+     */
     public CVDFunction() {
         params = new double[3];
     }
 
+    /**
+     * <p>
+     * calcSaturationConditions.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void calcSaturationConditions(SystemInterface system) {
         do {
             system.setPressure(system.getPressure() + 10.0);
@@ -44,6 +58,7 @@ public class CVDFunction extends LevenbergMarquardtFunction {
         Zsaturation = system.getZ();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         int plusNumber = 0;
@@ -79,6 +94,7 @@ public class CVDFunction extends LevenbergMarquardtFunction {
         return totalVolume / saturationVolume; // %wax
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

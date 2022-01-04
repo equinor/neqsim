@@ -12,12 +12,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>ScalePotentialCheck class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class ScalePotentialCheck {
     static Logger logger = LogManager.getLogger(ScalePotentialCheck.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // SystemInterface testSystem = new Ele(273.15+10.0,10.0);
         SystemInterface testSystem = new SystemElectrolyteCPAstatoil(273.15 + 25.0, 10.0);

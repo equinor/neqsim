@@ -11,11 +11,14 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * BestPracticeHydrocarbonDewPoint class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
     String dewPointTemperatureUnit = "C", pressureUnit = "bar";
     double dewPointTemperature = 273.0, dewPointTemperatureSpec = -12.0;
@@ -24,12 +27,21 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
     SystemInterface thermoSystem;
     ThermodynamicOperations thermoOps;
 
-    /** Creates a new instance of Standard_ISO1992 */
+    /**
+     * Creates a new instance of Standard_ISO1992
+     */
     public BestPracticeHydrocarbonDewPoint() {
         name = "StatoilBestPracticeHydrocarbonDewPoint";
         standardDescription = "hydrocarbon dew point calculation method";
     }
 
+    /**
+     * <p>
+     * Constructor for BestPracticeHydrocarbonDewPoint.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public BestPracticeHydrocarbonDewPoint(SystemInterface thermoSystem) {
         this();
 
@@ -49,8 +61,9 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         this.thermoOps = new ThermodynamicOperations(this.thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calculate() {
+    public void calculate() {
         this.thermoSystem.setTemperature(initTemperature);
         this.thermoSystem.setPressure(specPressure);
         try {
@@ -61,8 +74,9 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         dewPointTemperature = this.thermoSystem.getTemperature() - 273.15;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperature;
         } else {
@@ -70,8 +84,9 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperature;
         }
@@ -82,8 +97,9 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         if (returnParameter.equals("hydrocarbondewpointTemperature")) {
             return dewPointTemperatureUnit;
         }
@@ -94,8 +110,9 @@ public class BestPracticeHydrocarbonDewPoint extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return dewPointTemperature < getSalesContract().getWaterDewPointTemperature();
     }
 }

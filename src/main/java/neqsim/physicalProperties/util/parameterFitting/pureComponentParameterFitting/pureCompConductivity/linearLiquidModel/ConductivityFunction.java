@@ -3,20 +3,26 @@ package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFi
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * /**
+ * <p>
+ * ConductivityFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ConductivityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new ViscosityFunction */
+    /**
+     * <p>
+     * Constructor for ConductivityFunction.
+     * </p>
+     */
     public ConductivityFunction() {
         params = new double[3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.setTemperature(dependentValues[0]);
@@ -25,6 +31,7 @@ public class ConductivityFunction extends LevenbergMarquardtFunction {
         return system.getPhases()[1].getPhysicalProperties().getConductivity();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

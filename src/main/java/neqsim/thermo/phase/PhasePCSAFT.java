@@ -6,12 +6,14 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentPCSAFT;
 
 /**
+ * <p>
+ * PhasePCSAFT class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhasePCSAFT extends PhaseSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     double nSAFT = 1.0;
@@ -52,10 +54,16 @@ public class PhasePCSAFT extends PhaseSrkEos {
             F1dispI1dVdV = 0.0;
     static Logger logger = LogManager.getLogger(PhasePCSAFT.class);
 
+    /**
+     * <p>
+     * Constructor for PhasePCSAFT.
+     * </p>
+     */
     public PhasePCSAFT() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhasePCSAFT clone() {
         PhasePCSAFT clonedPhase = null;
@@ -68,6 +76,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -76,9 +85,14 @@ public class PhasePCSAFT extends PhaseSrkEos {
                 new ComponentPCSAFT(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) {
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         if (type > 0) {
             for (int i = 0; i < numberOfComponents; i++) {
                 componentArray[i].Finit(this, temperature, pressure, totalNumberOfMoles, beta,
@@ -88,6 +102,11 @@ public class PhasePCSAFT extends PhaseSrkEos {
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
+    /**
+     * <p>
+     * volInit.
+     * </p>
+     */
     public void volInit() {
         volumeSAFT = getVolume() * 1.0e-5;
         setDmeanSAFT(calcdmeanSAFT());
@@ -159,6 +178,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         F2dispZHCdVdV = F2dispZHCdNdN * getDnSAFTdV() * getDnSAFTdV() + F2dispZHCdN * dnSAFTdVdV; // F2dispZHCdNdN*dnSAFTdVdV*0;
     }
 
+    /**
+     * <p>
+     * calcF2dispZHC.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispZHC() {
         double temp = 1.0
                 + getmSAFT() * (8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0))
@@ -170,6 +196,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return 1.0 / temp;
     }
 
+    /**
+     * <p>
+     * calcF2dispZHCdm.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispZHCdm() {
         double temp = -Math.pow(F2dispZHC, 2.0);
         return temp * ((8.0 * getNSAFT() - 2.0 * Math.pow(getNSAFT(), 2.0))
@@ -179,6 +212,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         / Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0));
     }
 
+    /**
+     * <p>
+     * calcF2dispZHCdN.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispZHCdN() {
         double temp0 = -Math.pow(F2dispZHC, 2.0);
         double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
@@ -199,6 +239,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         / Math.pow(temp1, 2.0));
     }
 
+    /**
+     * <p>
+     * calcF2dispZHCdNdN.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispZHCdNdN() {
         double temp0 = 2.0 * Math.pow(F2dispZHC, 3.0);
         double temp1 = Math.pow((1.0 - getNSAFT()) * (2.0 - getNSAFT()), 2.0);
@@ -256,6 +303,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp0 * Math.pow(temp3, 2.0) + temp4 * dZdndn;
     }
 
+    /**
+     * <p>
+     * calcmSAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcmSAFT() {
         double temp2 = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -266,6 +320,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp2;
     }
 
+    /**
+     * <p>
+     * calcF1dispSumTerm.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF1dispSumTerm() {
         double temp1 = 0.0;
 
@@ -284,6 +345,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
     }
 
+    /**
+     * <p>
+     * calcF2dispSumTerm.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispSumTerm() {
         double temp1 = 0.0;
 
@@ -301,6 +369,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1 / Math.pow(getNumberOfMolesInPhase(), 2.0);
     }
 
+    /**
+     * <p>
+     * calcF1dispI1dN.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF1dispI1dN() {
         double temp1 = 0.0;
         for (int i = 1; i < 7; i++) {
@@ -309,6 +384,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF1dispI1dNdN.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF1dispI1dNdN() {
         double temp1 = 0.0;
         for (int i = 2; i < 7; i++) {
@@ -318,6 +400,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF1dispI1dm.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF1dispI1dm() {
         double temp1 = 0.0;
         for (int i = 0; i < 7; i++) {
@@ -326,6 +415,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF2dispI2dN.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispI2dN() {
         double temp1 = 0.0;
         for (int i = 1; i < 7; i++) {
@@ -334,6 +430,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF2dispI2dNdN.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispI2dNdN() {
         double temp1 = 0.0;
         for (int i = 2; i < 7; i++) {
@@ -343,6 +446,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF2dispI2dm.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispI2dm() {
         double temp1 = 0.0;
         for (int i = 0; i < 7; i++) {
@@ -351,6 +461,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF1dispI1.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF1dispI1() {
         double temp1 = 0.0;
         for (int i = 0; i < 7; i++) {
@@ -359,6 +476,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * calcF2dispI2.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcF2dispI2() {
         double temp1 = 0.0;
         for (int i = 0; i < 7; i++) {
@@ -367,16 +491,43 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp1;
     }
 
+    /**
+     * <p>
+     * getaSAFT.
+     * </p>
+     *
+     * @param i a int
+     * @param m a double
+     * @param ab an array of {@link double} objects
+     * @return a double
+     */
     public double getaSAFT(int i, double m, double ab[][]) {
         return ab[0][i] + (m - 1.0) / m * ab[1][i] + (m - 1.0) / m * (m - 2.0) / m * ab[2][i];
     }
 
+    /**
+     * <p>
+     * getaSAFTdm.
+     * </p>
+     *
+     * @param i a int
+     * @param m a double
+     * @param ab an array of {@link double} objects
+     * @return a double
+     */
     public double getaSAFTdm(int i, double m, double ab[][]) {
         return (m - (m - 1.0)) / (m * m) * ab[1][i]
                 + ((2.0 * m - 3.0) * m * m - 2 * m * (m * m - 3 * m + 2)) / Math.pow(m, 4.0)
                         * ab[2][i];
     }
 
+    /**
+     * <p>
+     * calcmdSAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcmdSAFT() {
         double temp2 = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -388,6 +539,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp2;
     }
 
+    /**
+     * <p>
+     * calcmmin1SAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcmmin1SAFT() {
         double temp2 = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -398,6 +556,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp2;
     }
 
+    /**
+     * <p>
+     * calcdmeanSAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdmeanSAFT() {
         double temp = 0.0, temp2 = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -408,6 +573,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return Math.pow(temp / temp2, 1.0 / 3.0);
     }
 
+    /**
+     * <p>
+     * calcdSAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdSAFT() {
         double temp = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -418,40 +590,103 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return temp / getNumberOfMolesInPhase();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>nSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getNSAFT() {
         return nSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>nSAFT</code>.
+     * </p>
+     *
+     * @param nSAFT a double
+     */
     public void setNSAFT(double nSAFT) {
         this.nSAFT = nSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDSAFT() {
         return dSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dSAFT</code>.
+     * </p>
+     *
+     * @param dSAFT a double
+     */
     public void setDSAFT(double dSAFT) {
         this.dSAFT = dSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>ghsSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getGhsSAFT() {
         return ghsSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>ghsSAFT</code>.
+     * </p>
+     *
+     * @param ghsSAFT a double
+     */
     public void setGhsSAFT(double ghsSAFT) {
         this.ghsSAFT = ghsSAFT;
     }
 
+    /**
+     * <p>
+     * F_HC_SAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double F_HC_SAFT() {
         return getNumberOfMolesInPhase()
                 * (getmSAFT() * getAHSSAFT() - getMmin1SAFT() * Math.log(getGhsSAFT()));/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_HC_SAFTdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_HC_SAFTdV() {
         return getNumberOfMolesInPhase() * (getmSAFT() * daHSSAFTdN * getDnSAFTdV()
                 - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * getDnSAFTdV());/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_HC_SAFTdVdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_HC_SAFTdVdV() {
         return getNumberOfMolesInPhase()
                 * (getmSAFT() * daHSSAFTdNdN * getDnSAFTdV() * getDnSAFTdV()
@@ -463,15 +698,36 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         - getMmin1SAFT() * 1.0 / getGhsSAFT() * getDgHSSAFTdN() * dnSAFTdVdV); // (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_HC_SAFTdVdVdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_HC_SAFTdVdVdV() {
         return 0.0;
     }
 
+    /**
+     * <p>
+     * F_DISP1_SAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double F_DISP1_SAFT() {
         return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi
                 * getF1dispVolTerm() * getF1dispSumTerm() * getF1dispI1());/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_DISP1_SAFTdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_DISP1_SAFTdV() {
         return getNumberOfMolesInPhase() * (-2.0 * ThermodynamicConstantsInterface.pi
                 * F1dispVolTermdV * getF1dispSumTerm() * getF1dispI1()
@@ -479,6 +735,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         * F1dispI1dV);/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_DISP1_SAFTdVdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_DISP1_SAFTdVdV() {
         return getNumberOfMolesInPhase() * ((-2.0 * ThermodynamicConstantsInterface.pi
                 * F1dispVolTermdVdV * getF1dispSumTerm() * getF1dispI1())
@@ -490,11 +753,25 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         * F1dispI1dVdV));
     }
 
+    /**
+     * <p>
+     * F_DISP2_SAFT.
+     * </p>
+     *
+     * @return a double
+     */
     public double F_DISP2_SAFT() {
         return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT()
                 * getF1dispVolTerm() * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC());/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_DISP2_SAFTdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_DISP2_SAFTdV() {
         return getNumberOfMolesInPhase() * (-ThermodynamicConstantsInterface.pi * getmSAFT()
                 * F1dispVolTermdV * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC()
@@ -504,6 +781,13 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         * getF2dispSumTerm() * getF2dispI2() * F2dispZHCdV);/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_DISP2_SAFTdVdV.
+     * </p>
+     *
+     * @return a double
+     */
     public double dF_DISP2_SAFTdVdV() {
         return getNumberOfMolesInPhase() * ((-ThermodynamicConstantsInterface.pi * getmSAFT()
                 * F1dispVolTermdVdV * getF2dispSumTerm() * getF2dispI2() * getF2dispZHC())
@@ -525,6 +809,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
                         * getF2dispSumTerm() * getF2dispI2() * F2dispZHCdVdV));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getF() {
         // System.out.println("F-HC " + useHS*F_HC_SAFT());
@@ -535,6 +820,7 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return useHS * F_HC_SAFT() + useDISP1 * F_DISP1_SAFT() + useDISP2 * F_DISP2_SAFT();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdV() {
         // System.out.println("N-saft " + getNSAFT());
@@ -547,112 +833,294 @@ public class PhasePCSAFT extends PhaseSrkEos {
                 + useDISP2 * dF_DISP2_SAFTdV()) * 1.0e-5;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdVdV() {
         return (useHS * dF_HC_SAFTdVdV() + useDISP1 * dF_DISP1_SAFTdVdV()
                 + useDISP2 * dF_DISP2_SAFTdVdV()) * 1.0e-10;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>mdSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getmdSAFT() {
         return mdSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>mdSAFT</code>.
+     * </p>
+     *
+     * @param mdSAFT a double
+     */
     public void setmdSAFT(double mdSAFT) {
         this.mdSAFT = mdSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>mSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getmSAFT() {
         return mSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>mSAFT</code>.
+     * </p>
+     *
+     * @param mSAFT a double
+     */
     public void setmSAFT(double mSAFT) {
         this.mSAFT = mSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>aHSSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getAHSSAFT() {
         return aHSSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>aHSSAFT</code>.
+     * </p>
+     *
+     * @param aHSSAFT a double
+     */
     public void setAHSSAFT(double aHSSAFT) {
         this.aHSSAFT = aHSSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>mmin1SAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMmin1SAFT() {
         return mmin1SAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>mmin1SAFT</code>.
+     * </p>
+     *
+     * @param mmin1SAFT a double
+     */
     public void setMmin1SAFT(double mmin1SAFT) {
         this.mmin1SAFT = mmin1SAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>volumeSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getVolumeSAFT() {
         return volumeSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>volumeSAFT</code>.
+     * </p>
+     *
+     * @param volumeSAFT a double
+     */
     public void setVolumeSAFT(double volumeSAFT) {
         this.volumeSAFT = volumeSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dgHSSAFTdN</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDgHSSAFTdN() {
         return dgHSSAFTdN;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dgHSSAFTdN</code>.
+     * </p>
+     *
+     * @param dgHSSAFTdN a double
+     */
     public void setDgHSSAFTdN(double dgHSSAFTdN) {
         this.dgHSSAFTdN = dgHSSAFTdN;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dnSAFTdV</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDnSAFTdV() {
         return dnSAFTdV;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dnSAFTdV</code>.
+     * </p>
+     *
+     * @param dnSAFTdV a double
+     */
     public void setDnSAFTdV(double dnSAFTdV) {
         this.dnSAFTdV = dnSAFTdV;
     }
 
+    /**
+     * <p>
+     * getF1dispVolTerm.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF1dispVolTerm() {
         return F1dispVolTerm;
     }
 
+    /**
+     * <p>
+     * setF1dispVolTerm.
+     * </p>
+     *
+     * @param F1dispVolTerm a double
+     */
     public void setF1dispVolTerm(double F1dispVolTerm) {
         this.F1dispVolTerm = F1dispVolTerm;
     }
 
+    /**
+     * <p>
+     * getF1dispSumTerm.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF1dispSumTerm() {
         return F1dispSumTerm;
     }
 
+    /**
+     * <p>
+     * getF1dispI1.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF1dispI1() {
         return F1dispI1;
     }
 
+    /**
+     * <p>
+     * getF2dispI2.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF2dispI2() {
         return F2dispI2;
     }
 
+    /**
+     * <p>
+     * setF2dispI2.
+     * </p>
+     *
+     * @param F2dispI2 a double
+     */
     public void setF2dispI2(double F2dispI2) {
         this.F2dispI2 = F2dispI2;
     }
 
+    /**
+     * <p>
+     * getF2dispZHC.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF2dispZHC() {
         return F2dispZHC;
     }
 
+    /**
+     * <p>
+     * setF2dispZHC.
+     * </p>
+     *
+     * @param F2dispZHC a double
+     */
     public void setF2dispZHC(double F2dispZHC) {
         this.F2dispZHC = F2dispZHC;
     }
 
+    /**
+     * <p>
+     * getF2dispZHCdN.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF2dispZHCdN() {
         return F2dispZHCdN;
     }
 
+    /**
+     * <p>
+     * getF2dispZHCdm.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF2dispZHCdm() {
         return F2dispZHCdm;
     }
 
+    /**
+     * <p>
+     * molarVolume22.
+     * </p>
+     *
+     * @param pressure a double
+     * @param temperature a double
+     * @param A a double
+     * @param B a double
+     * @param phase a int
+     * @return a double
+     * @throws neqsim.util.exception.IsNaNException if any.
+     * @throws neqsim.util.exception.TooManyIterationsException if any.
+     */
     public double molarVolume22(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double volume =
                 phase == 0 ? getB() / (2.0 / (2.0 + temperature / getPseudoCriticalTemperature()))
                         : (numberOfMolesInPhase * temperature * R) / pressure;
@@ -681,11 +1149,11 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return getMolarVolume();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double BonV = phase== 0 ? 0.99:1e-5;
@@ -751,30 +1219,79 @@ public class PhasePCSAFT extends PhaseSrkEos {
         return getMolarVolume();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dmeanSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDmeanSAFT() {
         return dmeanSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dmeanSAFT</code>.
+     * </p>
+     *
+     * @param dmeanSAFT a double
+     */
     public void setDmeanSAFT(double dmeanSAFT) {
         this.dmeanSAFT = dmeanSAFT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>nmSAFT</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getNmSAFT() {
         return nmSAFT;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>nmSAFT</code>.
+     * </p>
+     *
+     * @param nmSAFT a double
+     */
     public void setNmSAFT(double nmSAFT) {
         this.nmSAFT = nmSAFT;
     }
 
+    /**
+     * <p>
+     * getF2dispSumTerm.
+     * </p>
+     *
+     * @return a double
+     */
     public double getF2dispSumTerm() {
         return F2dispSumTerm;
     }
 
+    /**
+     * <p>
+     * setF2dispSumTerm.
+     * </p>
+     *
+     * @param F2dispSumTerm a double
+     */
     public void setF2dispSumTerm(double F2dispSumTerm) {
         this.F2dispSumTerm = F2dispSumTerm;
     }
 
+    /**
+     * <p>
+     * setF2dispZHCdm.
+     * </p>
+     *
+     * @param F2dispZHCdm a double
+     */
     public void setF2dispZHCdm(double F2dispZHCdm) {
         this.F2dispZHCdm = F2dispZHCdm;
     }

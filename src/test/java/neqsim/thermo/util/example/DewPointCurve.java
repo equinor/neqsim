@@ -7,13 +7,24 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * DewPointCurve class.
+ * </p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class DewPointCurve {
     static Logger logger = LogManager.getLogger(DewPointCurve.class);
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemPrEos(260.0, 5.0);
         // testSystem = new SystemCSPsrkEos(290,50.6);

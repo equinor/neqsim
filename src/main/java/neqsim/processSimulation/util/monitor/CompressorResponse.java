@@ -2,6 +2,12 @@ package neqsim.processSimulation.util.monitor;
 
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
 
+/**
+ * <p>CompressorResponse class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class CompressorResponse {
     public String name = "test";
 
@@ -21,9 +27,17 @@ public class CompressorResponse {
     public Double massflow;
     public Integer speed;
 
+    /**
+     * <p>Constructor for CompressorResponse.</p>
+     */
     public CompressorResponse() {
     }
 
+    /**
+     * <p>Constructor for CompressorResponse.</p>
+     *
+     * @param inputCompressor a {@link neqsim.processSimulation.processEquipment.compressor.Compressor} object
+     */
     public CompressorResponse(Compressor inputCompressor){
         name = inputCompressor.getName();
         molarMass = inputCompressor.getInStream().getFluid().getMolarMass();

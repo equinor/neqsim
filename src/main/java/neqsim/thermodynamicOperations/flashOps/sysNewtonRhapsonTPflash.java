@@ -3,8 +3,15 @@ package neqsim.thermodynamicOperations.flashOps;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * sysNewtonRhapsonTPflash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class sysNewtonRhapsonTPflash implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -23,10 +30,21 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
     Matrix dx;
     Matrix xcoef;
 
+    /**
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflash.
+     * </p>
+     */
     public sysNewtonRhapsonTPflash() {}
 
     /**
-     * Creates new nonlin
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
      */
     public sysNewtonRhapsonTPflash(SystemInterface system, int numberOfPhases,
             int numberOfComponents) {
@@ -42,9 +60,13 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
         // System.out.println("Spec : " +speceq);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
+     */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
-
             fvec.set(i, 0, Math
                     .log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
                             * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
@@ -54,6 +76,11 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * setJac.
+     * </p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -75,12 +102,22 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>u</code>.
+     * </p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, system.getBeta() * system.getPhase(0).getComponents()[i].getx());
         }
     }
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     */
     public void init() {
         double temp = 0;
 
@@ -104,6 +141,14 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
         system.init(3);
     }
 
+    /**
+     * <p>
+     * solve.
+     * </p>
+     *
+     * @return a double
+     * @throws java.lang.Exception if any.
+     */
     public double solve() throws Exception {
         try {
             iter++;

@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 
 abstract class Phase implements PhaseInterface {
-
     private static final long serialVersionUID = 1000;
 
     public ComponentInterface[] componentArray;
@@ -44,14 +43,24 @@ abstract class Phase implements PhaseInterface {
     static Logger logger = LogManager.getLogger(Phase.class);
 
     /**
-     * Creates new Phase
+     * <p>
+     * Constructor for Phase.
+     * </p>
      */
     public Phase() {
         componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
     }
 
+    /**
+     * <p>
+     * Constructor for Phase.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.Phase} object
+     */
     public Phase(Phase phase) {}
 
+    /** {@inheritDoc} */
     @Override
     public Phase clone() {
         Phase clonedPhase = null;
@@ -76,11 +85,19 @@ abstract class Phase implements PhaseInterface {
         return clonedPhase;
     }
 
+    /**
+     * <p>
+     * addcomponent.
+     * </p>
+     *
+     * @param moles a double
+     */
     public void addcomponent(double moles) {
         numberOfMolesInPhase += moles;
         numberOfComponents++;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void removeComponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -107,6 +124,7 @@ abstract class Phase implements PhaseInterface {
         numberOfComponents--;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setEmptyFluid() {
         numberOfMolesInPhase = 0.0;
@@ -116,18 +134,21 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addMoles(int component, double dn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMoles(dn);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addMolesChemReac(int component, double dn) {
         numberOfMolesInPhase += dn;
         componentArray[component].addMolesChemReac(dn);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addMolesChemReac(int component, double dn, double totdn) {
         numberOfMolesInPhase += dn;
@@ -146,6 +167,7 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setProperties(PhaseInterface phase) {
         this.phaseType = phase.getPhaseType();
@@ -159,11 +181,13 @@ abstract class Phase implements PhaseInterface {
         this.setPressure(phase.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentInterface[] getcomponentArray() {
         return componentArray;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getAntoineVaporPressure(double temp) {
         double pres = 0;
@@ -174,17 +198,20 @@ abstract class Phase implements PhaseInterface {
         return pres;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWtFrac(String componentName) {
         return getWtFrac(getComponent(componentName).getComponentNumber());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWtFrac(int component) {
         return getComponent(component).getMolarMass() * getComponent(component).getx()
                 / this.getMolarMass();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPseudoCriticalTemperature() {
         double temp = 0;
@@ -194,6 +221,7 @@ abstract class Phase implements PhaseInterface {
         return temp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPseudoCriticalPressure() {
         double pres = 0;
@@ -203,6 +231,7 @@ abstract class Phase implements PhaseInterface {
         return pres;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void normalize() {
         double sumx = 0;
@@ -214,6 +243,7 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMoleFractions(double[] x) {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -222,15 +252,16 @@ abstract class Phase implements PhaseInterface {
         normalize();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getTemperature() {
         return temperature;
     }
 
     /**
-     * method to return pressure of a phase
+     * {@inheritDoc}
      *
-     * @return pressure in unit bara
+     * method to return pressure of a phase
      */
     @Override
     public double getPressure() {
@@ -238,10 +269,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return pressure in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are bara, barg, Pa and MPa
-     * @return pressure in specified unit
+     * method to return pressure in a given unit
      */
     @Override
     public final double getPressure(String unit) {
@@ -250,12 +280,15 @@ abstract class Phase implements PhaseInterface {
         return presConversion.getValue(unit);
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getInitType() {
         return initType;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Returns the mole composition vector in unit mole fraction
      */
     @Override
@@ -269,6 +302,8 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Returns the composition vector in unit molefraction/wtfraction/molespersec/volumefraction
      */
     @Override
@@ -288,6 +323,7 @@ abstract class Phase implements PhaseInterface {
         return comp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMixGibbsEnergy() {
         double gmix = 0.0;
@@ -297,6 +333,7 @@ abstract class Phase implements PhaseInterface {
         return getExessGibbsEnergy() + R * temperature * gmix * numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy() {
         double GE = 0.0;
@@ -309,6 +346,7 @@ abstract class Phase implements PhaseInterface {
         return R * temperature * numberOfMolesInPhase * GE;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergySymetric() {
         double GE = 0.0;
@@ -321,26 +359,29 @@ abstract class Phase implements PhaseInterface {
         return R * temperature * numberOfMolesInPhase * GE;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getZ() {
         return Z;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPressure(double pres) {
         this.pressure = pres;
     }
 
     /**
-     * method to set the temperature of a phase
+     * {@inheritDoc}
      *
-     * @param temp in unit Kelvin
+     * method to set the temperature of a phase
      */
     @Override
     public void setTemperature(double temp) {
         this.temperature = temp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperties() {
         if (physicalPropertyHandler == null) {
@@ -351,11 +392,13 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         init(numberOfMolesInPhase / beta, numberOfComponents, initType, phaseType, beta);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
             double beta) {
@@ -373,6 +416,7 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPhysicalProperties() {
         // System.out.println("Physical properties: Default model");
@@ -382,6 +426,8 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * specify the type model for the physical properties you want to use. Type: Model 0
      * Orginal/default 1 Water 2 Glycol 3 Amine
      */
@@ -394,11 +440,13 @@ abstract class Phase implements PhaseInterface {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void resetPhysicalProperties() {
         physicalPropertyHandler = null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initPhysicalProperties() {
         if (physicalPropertyHandler == null) {
@@ -411,6 +459,7 @@ abstract class Phase implements PhaseInterface {
         getPhysicalProperties().init(this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initPhysicalProperties(String type) {
         if (physicalPropertyHandler == null) {
@@ -429,73 +478,96 @@ abstract class Phase implements PhaseInterface {
         getPhysicalProperties().init(this, type);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double geta(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getb(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcA(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcB(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getg() {
         return 1;
     }
 
+    /**
+     * <p>
+     * calcA.
+     * </p>
+     *
+     * @param comp a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param temperature a double
+     * @param pressure a double
+     * @param numbcomp a int
+     * @return a double
+     */
     public double calcA(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAi(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAiT(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
-
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcAij(int compNumb, int j, PhaseInterface phase, double temperature,
             double pressure, int numbcomp) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBij(int compNumb, int j, PhaseInterface phase, double temperature,
             double pressure, int numbcomp) {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBi(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setAtractiveTerm(int i) {
         for (int k = 0; k < numberOfComponents; k++) {
@@ -504,267 +576,347 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return molar volume of the phase note: without Peneloux volume correction
+     * {@inheritDoc}
      *
-     * @return molar volume volume in unit m3/mol*1e5
+     * method to return molar volume of the phase note: without Peneloux volume correction
      */
     @Override
     public double getMolarVolume() {
         return molarVolume;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfComponents() {
         return numberOfComponents;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getA() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getB() {
         return 0;
     }
 
+    /**
+     * <p>
+     * getBi.
+     * </p>
+     *
+     * @return a double
+     */
     public double getBi() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getAT() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getATT() {
         return 0;
     }
 
+    /**
+     * <p>
+     * getAiT.
+     * </p>
+     *
+     * @return a double
+     */
     public double getAiT() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseInterface getPhase() {
         return this;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getNumberOfMolesInPhase() {
         return numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentInterface[] getComponents() {
         return componentArray;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setComponentArray(ComponentInterface[] components) {
         this.componentArray = components;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcR() {
-
         double R = 8.314 / getMolarMass();
 
         return R;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double Fn() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FT() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FD() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FB() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gb() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fb() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fv() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FnV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FnB() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FTT() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FBT() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FDT() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FBV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FBB() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FDV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FBD() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FTV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double FVV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gVV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gBV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double gBB() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fVV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fBV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fBB() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdT() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdTdV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdVdV() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdTdT() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getCpres() {
         return 1;
     }
 
+    /**
+     * <p>
+     * getCvres.
+     * </p>
+     *
+     * @return a double
+     */
     public double getCvres() {
         return 1;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHresTP() {
         logger.error("error Hres");
         return 0;
     }
 
+    /**
+     * <p>
+     * getHresdP.
+     * </p>
+     *
+     * @return a double
+     */
     public double getHresdP() {
         logger.error(" getHresdP error Hres - not implemented?");
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGresTP() {
         logger.error("error Gres");
         return 0;
     }
 
+    /**
+     * <p>
+     * getSresTV.
+     * </p>
+     *
+     * @return a double
+     */
     public double getSresTV() {
         logger.error("error Hres");
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getSresTP() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getCp0() {
         double tempVar = 0.0;
@@ -775,6 +927,13 @@ abstract class Phase implements PhaseInterface {
     }
 
     // Integral av Cp0 mhp T
+    /**
+     * <p>
+     * getHID.
+     * </p>
+     *
+     * @return a double
+     */
     public double getHID() {
         double tempVar = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -784,9 +943,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return specific heat capacity (Cp)
+     * {@inheritDoc}
      *
-     * @return Cp in unit J/K
+     * method to return specific heat capacity (Cp)
      */
     @Override
     public double getCp() {
@@ -795,10 +954,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return specific heat capacity (Cp) in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
-     * @return Cp in specified unit
+     * method to return specific heat capacity (Cp) in a given unit
      */
     @Override
     public double getCp(String unit) {
@@ -822,9 +980,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return specific heat capacity (Cv)
+     * {@inheritDoc}
      *
-     * @return Cv in unit J/K
+     * method to return specific heat capacity (Cv)
      */
     @Override
     public double getCv() {
@@ -832,10 +990,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return specific heat capacity (Cv) in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are J/K, J/molK, J/kgK and kJ/kgK
-     * @return Cv in specified unit
+     * method to return specific heat capacity (Cv) in a given unit
      */
     @Override
     public double getCv(String unit) {
@@ -859,9 +1016,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return heat capacity ratio/adiabatic index/Poisson constant
+     * {@inheritDoc}
      *
-     * @return kappa
+     * method to return heat capacity ratio/adiabatic index/Poisson constant
      */
     @Override
     public double getKappa() {
@@ -869,10 +1026,10 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to return heat capacity ratio/adiabatic index/Poisson constant. The method calculates
      * it as Cp (real) /Cv (real)
-     *
-     * @return gamma
      */
     @Override
     public double getGamma() {
@@ -880,9 +1037,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return heat capacity ratio calculated as Cp/(Cp-R)
+     * {@inheritDoc}
      *
-     * @return kappa
+     * method to return heat capacity ratio calculated as Cp/(Cp-R)
      */
     @Override
     public double getGamma2() {
@@ -891,6 +1048,8 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to return enthalpy of a phase in unit Joule
      */
     @Override
@@ -899,10 +1058,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return phase enthalpy in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are J, J/mol, J/kg and kJ/kg
-     * @return enthalpy in specified unit
+     * method to return phase enthalpy in a given unit
      */
     @Override
     public double getEnthalpy(String unit) {
@@ -925,21 +1083,25 @@ abstract class Phase implements PhaseInterface {
         return refEnthalpy * conversionFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEnthalpydP() {
         return this.getHresdP();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEnthalpydT() {
         return getCp();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfComponents(int numberOfComponents) {
         this.numberOfComponents = numberOfComponents;
     }
 
+    /** {@inheritDoc} */
     @Override
     public final int getNumberOfMolecularComponents() {
         int mol = 0;
@@ -951,6 +1113,7 @@ abstract class Phase implements PhaseInterface {
         return mol;
     }
 
+    /** {@inheritDoc} */
     @Override
     public final int getNumberOfIonicComponents() {
         int ion = 0;
@@ -963,6 +1126,8 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to return entropy of the phase
      */
     @Override
@@ -985,11 +1150,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return entropy of the phase
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are J/K, J/moleK, J/kgK and kJ/kgK
-     * @return entropy in specified unit
-     * 
+     * method to return entropy of the phase
      */
     @Override
     public double getEntropy(String unit) {
@@ -1012,20 +1175,22 @@ abstract class Phase implements PhaseInterface {
         return refEntropy * conversionFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropydP() {
         return getdPdTVn() / getdPdVTn();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropydT() {
         return getCp() / temperature;
     }
 
     /**
-     * method to return viscosity of the phase
+     * {@inheritDoc}
      *
-     * @return viscosity in unit kg/msec
+     * method to return viscosity of the phase
      */
     @Override
     public double getViscosity() {
@@ -1033,11 +1198,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return viscosity og the phase in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are kg/msec, cP (centipoise)
-     * @return viscosity in specified unit
-     * 
+     * method to return viscosity og the phase in a given unit
      */
     @Override
     public double getViscosity(String unit) {
@@ -1057,9 +1220,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return conductivity of a phase
+     * {@inheritDoc}
      *
-     * @return conductivity in unit W/m*K
+     * method to return conductivity of a phase
      */
     @Override
     public double getThermalConductivity() {
@@ -1067,9 +1230,10 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return conductivity of a phase
+     * {@inheritDoc}
      *
-     * @return conductivity in unit W/m*K
+     * method to return conductivity of a phase
+     * 
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
@@ -1079,10 +1243,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return conductivity in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     * @return conductivity in specified unit
+     * method to return conductivity in a given unit
      */
     @Override
     public double getThermalConductivity(String unit) {
@@ -1102,10 +1265,10 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return conductivity in a given unit
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are W/mK, W/cmK
-     * @return conductivity in specified unit
+     * method to return conductivity in a given unit
+     * 
      * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override
@@ -1126,6 +1289,7 @@ abstract class Phase implements PhaseInterface {
         return refConductivity * conversionFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initRefPhases(boolean onlyPure) {
         if (refPhase == null) {
@@ -1133,6 +1297,14 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /**
+     * <p>
+     * initRefPhases.
+     * </p>
+     *
+     * @param onlyPure a boolean
+     * @param name a {@link java.lang.String} object
+     */
     public void initRefPhases(boolean onlyPure, String name) {
         refPhase = new PhaseInterface[numberOfComponents];
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1186,6 +1358,15 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /**
+     * <p>
+     * getLogPureComponentFugacity.
+     * </p>
+     *
+     * @param k a int
+     * @param pure a boolean
+     * @return a double
+     */
     public double getLogPureComponentFugacity(int k, boolean pure) {
         if (refPhase == null) {
             initRefPhases(pure);
@@ -1197,21 +1378,25 @@ abstract class Phase implements PhaseInterface {
         return refPhase[k].getComponent(0).getLogFugasityCoeffisient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getLogPureComponentFugacity(int p) {
         return getLogPureComponentFugacity(p, false);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentFugacity(int p) {
         return Math.exp(getLogPureComponentFugacity(p));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentFugacity(int p, boolean pure) {
         return Math.exp(getLogPureComponentFugacity(p, pure));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getLogInfiniteDiluteFugacity(int k, int p) {
         if (refPhase == null) {
@@ -1224,6 +1409,7 @@ abstract class Phase implements PhaseInterface {
         return refPhase[k].getComponent(0).getLogFugasityCoeffisient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getLogInfiniteDiluteFugacity(int k) {
         PhaseInterface dilphase = (PhaseInterface) this.clone();
@@ -1235,15 +1421,25 @@ abstract class Phase implements PhaseInterface {
         return dilphase.getComponent(k).getLogFugasityCoeffisient();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getInfiniteDiluteFugacity(int k, int p) {
         return Math.exp(getLogInfiniteDiluteFugacity(k, p));
     }
 
+    /**
+     * <p>
+     * getInfiniteDiluteFugacity.
+     * </p>
+     *
+     * @param k a int
+     * @return a double
+     */
     public double getInfiniteDiluteFugacity(int k) {
         return Math.exp(getLogInfiniteDiluteFugacity(k));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getLogActivityCoefficient(int k, int p) {
         double fug = 0.0;
@@ -1256,6 +1452,7 @@ abstract class Phase implements PhaseInterface {
         return oldFug - fug;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getActivityCoefficient(int k, int p) {
         double fug = 0.0;
@@ -1268,6 +1465,7 @@ abstract class Phase implements PhaseInterface {
         return Math.exp(oldFug - fug);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getActivityCoefficient(int k) {
         double fug = 0.0;
@@ -1281,6 +1479,7 @@ abstract class Phase implements PhaseInterface {
         return Math.exp(oldFug - fug);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getActivityCoefficientSymetric(int k) {
         if (refPhase == null) {
@@ -1292,6 +1491,7 @@ abstract class Phase implements PhaseInterface {
         return Math.exp(oldFug - fug);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getActivityCoefficientUnSymetric(int k) {
         double fug = 0.0;
@@ -1300,6 +1500,7 @@ abstract class Phase implements PhaseInterface {
         return Math.exp(oldFug - fug);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMolalMeanIonicActivity(int comp1, int comp2) {
         double act1 = 0.0;
@@ -1332,6 +1533,7 @@ abstract class Phase implements PhaseInterface {
                 * 1.0 / (1.0 + val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getOsmoticCoefficientOfWater() {
         int watNumb = 0;
@@ -1343,6 +1545,7 @@ abstract class Phase implements PhaseInterface {
         return getOsmoticCoefficient(watNumb);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getOsmoticCoefficient(int watNumb) {
         double oldFug = getComponent(watNumb).getFugasityCoeffisient();
@@ -1373,6 +1576,7 @@ abstract class Phase implements PhaseInterface {
     // }
     // else return getOsmoticCoefficient(watNumb);
     // }
+    /** {@inheritDoc} */
     @Override
     public double getMeanIonicActivity(int comp1, int comp2) {
         double act1 = 0.0;
@@ -1394,27 +1598,33 @@ abstract class Phase implements PhaseInterface {
                 + Math.abs(getComponent(comp2).getIonicCharge())));
     }
 
+    /** {@inheritDoc} */
     @Override
     public final int getPhaseType() {
         return phaseType;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGibbsEnergy() {
         return getEnthalpy() - temperature * getEntropy();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getInternalEnergy() {
         return getEnthalpy() - pressure * getMolarVolume() * numberOfMolesInPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getHelmholtzEnergy() {
         return getInternalEnergy() - temperature * getEntropy();
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Returns the molar mass of the phase. Unit: kg/mol
      */
     @Override
@@ -1427,10 +1637,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
-     * 
-     * @param unit The unit as a string. Supported units are K/bar, C/bar
-     * @return Joule Thomson coefficient in given unit
      */
     @Override
     public double getJouleThomsonCoefficient(String unit) {
@@ -1448,9 +1657,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
+     * {@inheritDoc}
      *
-     * @return Joule Thomson coefficient in K/bar
+     * method to get the Joule Thomson Coefficient of a phase note: implemented in phaseEos
      */
     @Override
     public double getJouleThomsonCoefficient() {
@@ -1458,9 +1667,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to get density of a phase note: does not use Peneloux volume correction
+     * {@inheritDoc}
      *
-     * @return density with unit kg/m3
+     * method to get density of a phase note: does not use Peneloux volume correction
      */
     @Override
     public double getDensity() {
@@ -1468,10 +1677,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to get density of a fluid note: with Peneloux volume correction
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are kg/m3, mol/m3
-     * @return density in specified unit
+     * method to get density of a fluid note: with Peneloux volume correction
      */
     @Override
     public double getDensity(String unit) {
@@ -1491,41 +1699,56 @@ abstract class Phase implements PhaseInterface {
         return refDensity * conversionFactor;
     }
 
+    /** {@inheritDoc} */
     @Override
     public final double getPhaseFraction() {
         return getBeta();
     }
 
+    /** {@inheritDoc} */
     @Override
     public final double getBeta() {
         return this.beta;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getdPdrho() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getdrhodP() {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getdrhodT() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getdrhodN() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         mixingRuleNumber = type;
     }
 
+    /**
+     * <p>
+     * calcDiElectricConstant.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double calcDiElectricConstant(double temperature) {
         double tempVar = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1535,6 +1758,14 @@ abstract class Phase implements PhaseInterface {
         return tempVar / numberOfMolesInPhase;
     }
 
+    /**
+     * <p>
+     * calcDiElectricConstantdT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double calcDiElectricConstantdT(double temperature) {
         double tempVar = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1544,6 +1775,14 @@ abstract class Phase implements PhaseInterface {
         return tempVar / numberOfMolesInPhase;
     }
 
+    /**
+     * <p>
+     * calcDiElectricConstantdTdT.
+     * </p>
+     *
+     * @param temperature a double
+     * @return a double
+     */
     public double calcDiElectricConstantdTdT(double temperature) {
         double tempVar = 0;
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1553,20 +1792,30 @@ abstract class Phase implements PhaseInterface {
         return tempVar / numberOfMolesInPhase;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>diElectricConstant</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public final double getDiElectricConstant() {
         return diElectricConstant;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getdPdTVn() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getdPdVTn() {
         return 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getpH() {
         return getpH_old();
@@ -1582,6 +1831,13 @@ abstract class Phase implements PhaseInterface {
         // return 7.0;
     }
 
+    /**
+     * <p>
+     * getpH_old.
+     * </p>
+     *
+     * @return a double
+     */
     public double getpH_old() {
         for (int i = 0; i < numberOfComponents; i++) {
             if (componentArray[i].getName().equals("H3O+")) {
@@ -1596,11 +1852,13 @@ abstract class Phase implements PhaseInterface {
         return 7.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentInterface getComponent(int i) {
         return componentArray[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentInterface getComponent(String name) {
         try {
@@ -1617,6 +1875,7 @@ abstract class Phase implements PhaseInterface {
         return componentArray[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean hasComponent(String name) {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1628,9 +1887,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Getter for property mixingRuleNumber.
+     * {@inheritDoc}
      *
-     * @return Value of property mixingRuleNumber.
+     * Getter for property mixingRuleNumber.
      */
     @Override
     public final int getMixingRuleNumber() {
@@ -1638,10 +1897,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Indexed getter for property refPhase.
+     * {@inheritDoc}
      *
-     * @param index Index of the property.
-     * @return Value of the property at <CODE>index</CODE>.
+     * Indexed getter for property refPhase.
      */
     @Override
     public neqsim.thermo.phase.PhaseInterface getRefPhase(int index) {
@@ -1652,9 +1910,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Getter for property refPhase.
+     * {@inheritDoc}
      *
-     * @return Value of property refPhase.
+     * Getter for property refPhase.
      */
     @Override
     public neqsim.thermo.phase.PhaseInterface[] getRefPhase() {
@@ -1665,10 +1923,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Indexed setter for property refPhase.
+     * {@inheritDoc}
      *
-     * @param index Index of the property.
-     * @param refPhase New value of the property at <CODE>index</CODE>.
+     * Indexed setter for property refPhase.
      */
     @Override
     public void setRefPhase(int index, neqsim.thermo.phase.PhaseInterface refPhase) {
@@ -1679,9 +1936,9 @@ abstract class Phase implements PhaseInterface {
     // return numberOfMolesInPhase * getMolarVolume();
     // }
     /**
-     * Setter for property refPhase.
+     * {@inheritDoc}
      *
-     * @param refPhase New value of property refPhase.
+     * Setter for property refPhase.
      */
     @Override
     public void setRefPhase(neqsim.thermo.phase.PhaseInterface[] refPhase) {
@@ -1689,9 +1946,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Getter for property physicalPropertyType.
+     * {@inheritDoc}
      *
-     * @return Value of property physicalPropertyType.
+     * Getter for property physicalPropertyType.
      */
     @Override
     public final int getPhysicalPropertyType() {
@@ -1699,29 +1956,33 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Setter for property physicalPropertyType.
+     * {@inheritDoc}
      *
-     * @param physicalPropertyType New value of property physicalPropertyType.
+     * Setter for property physicalPropertyType.
      */
     @Override
     public void setPhysicalPropertyType(int physicalPropertyType) {
         this.physicalPropertyType = physicalPropertyType;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setParams(PhaseInterface phase, double[][] alpha, double[][] Dij, double[][] DijT,
             String[][] mixRule, double[][] intparam) {}
 
+    /** {@inheritDoc} */
     @Override
     public final boolean useVolumeCorrection() {
         return useVolumeCorrection;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void useVolumeCorrection(boolean volcor) {
         useVolumeCorrection = volcor;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFugacity(int compNumb) {
         // System.out.println("fugcoef" +
@@ -1730,12 +1991,20 @@ abstract class Phase implements PhaseInterface {
                 * this.getComponent(compNumb).getFugasityCoefficient() * pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFugacity(String compName) {
         return this.getComponent(compName).getx()
                 * this.getComponent(compName).getFugasityCoefficient() * pressure;
     }
 
+    /**
+     * <p>
+     * groupTBPfractions.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] groupTBPfractions() {
         double[] TPBfrac = new double[20];
 
@@ -1777,23 +2046,23 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Setter for property beta.
+     * {@inheritDoc}
      *
-     * @param beta New value of property beta.
+     * Setter for property beta.
      */
     @Override
     public final void setBeta(double beta) {
         this.beta = beta;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRuleGEModel(String name) {}
 
-
     /**
-     * Getter for property phaseTypeName.
+     * {@inheritDoc}
      *
-     * @return Value of property phaseTypeName.
+     * Getter for property phaseTypeName.
      */
     @Override
     public java.lang.String getPhaseTypeName() {
@@ -1801,9 +2070,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Setter for property phaseTypeName.
+     * {@inheritDoc}
      *
-     * @param phaseTypeName New value of property phaseTypeName.
+     * Setter for property phaseTypeName.
      */
     @Override
     public void setPhaseTypeName(java.lang.String phaseTypeName) {
@@ -1811,9 +2080,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Getter for property mixingRuleDefined.
+     * {@inheritDoc}
      *
-     * @return Value of property mixingRuleDefined.
+     * Getter for property mixingRuleDefined.
      */
     @Override
     public boolean isMixingRuleDefined() {
@@ -1821,9 +2090,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Setter for property mixingRuleDefined.
+     * {@inheritDoc}
      *
-     * @param mixingRuleDefined New value of property mixingRuleDefined.
+     * Setter for property mixingRuleDefined.
      */
     @Override
     public void setMixingRuleDefined(boolean mixingRuleDefined) {
@@ -1831,34 +2100,37 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * Setter for property phaseType.
+     * {@inheritDoc}
      *
-     * @param phaseType New value of property phaseType.
+     * Setter for property phaseType.
      */
     @Override
     public final void setPhaseType(int phaseType) {
         this.phaseType = phaseType;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMolarVolume(double molarVolume) {
         this.molarVolume = molarVolume;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcMolarVolume(boolean test) {
         this.calcMolarVolume = test;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setTotalVolume(double volume) {
         phaseVolume = volume;
     }
 
     /**
-     * method to return phase volume note: without Peneloux volume correction
+     * {@inheritDoc}
      *
-     * @return volume in unit m3*1e5
+     * method to return phase volume note: without Peneloux volume correction
      */
     @Override
     public double getTotalVolume() {
@@ -1869,9 +2141,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return phase volume note: without Peneloux volume correction
+     * {@inheritDoc}
      *
-     * @return volume in unit m3*1e5
+     * method to return phase volume note: without Peneloux volume correction
      */
     @Override
     public double getVolume() {
@@ -1879,10 +2151,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to return fluid volume
+     * {@inheritDoc}
      *
-     * @param unit The unit as a string. Supported units are m3, litre
-     * @return volume in specified unit
+     * method to return fluid volume
      */
     @Override
     public double getVolume(String unit) {
@@ -1899,16 +2170,17 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to return phase volume with Peneloux volume correction need to call
      * initPhysicalProperties() before this method is called
-     *
-     * @return volume in unit m3
      */
     @Override
     public double getCorrectedVolume() {
         return getMolarMass() / getPhysicalProperties().getDensity() * getNumberOfMolesInPhase();
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean hasPlusFraction() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1919,6 +2191,7 @@ abstract class Phase implements PhaseInterface {
         return false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean hasTBPFraction() {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1929,31 +2202,35 @@ abstract class Phase implements PhaseInterface {
         return false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isConstantPhaseVolume() {
         return constantPhaseVolume;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setConstantPhaseVolume(boolean constantPhaseVolume) {
         this.constantPhaseVolume = constantPhaseVolume;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMass() {
         return getMolarMass() * numberOfMolesInPhase;
     }
 
     /**
-     * method to get the speed of sound of a phase note: implemented in phaseEos
+     * {@inheritDoc}
      *
-     * @return speed of sound in m/s
+     * method to get the speed of sound of a phase note: implemented in phaseEos
      */
     @Override
     public double getSoundSpeed() {
         return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentInterface getComponentWithIndex(int index) {
         for (int i = 0; i < numberOfComponents; i++) {
@@ -1964,24 +2241,25 @@ abstract class Phase implements PhaseInterface {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWtFraction(SystemInterface system) {
         return getBeta() * getMolarMass() / system.getMolarMass();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMoleFraction() {
         return beta;
     }
 
-    /**
-     * @param initType the initType to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setInitType(int initType) {
         this.initType = initType;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getWtFractionOfWaxFormingComponents() {
         double wtFrac = 0.0;
@@ -1996,9 +2274,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to get density of a phase using the GERG-2008 EoS
+     * {@inheritDoc}
      *
-     * @return density with unit kg/m3
+     * method to get density of a phase using the GERG-2008 EoS
      */
     @Override
     public double getDensity_GERG2008() {
@@ -2008,9 +2286,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to get GERG properties of a phase using the GERG-2008 EoS
+     * {@inheritDoc}
      *
-     * @return double array [Pressure [kPa], Compressibility factor, d(P)/d(rho) [kPa/(mol/l), ..]
+     * method to get GERG properties of a phase using the GERG-2008 EoS
      */
     @Override
     public double[] getProperties_GERG2008() {
@@ -2020,9 +2298,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
-     * method to get density of a phase using the AGA8-Detail EoS
+     * {@inheritDoc}
      *
-     * @return density with unit kg/m3
+     * method to get density of a phase using the AGA8-Detail EoS
      */
     @Override
     public double getDensity_AGA8() {
@@ -2032,12 +2310,9 @@ abstract class Phase implements PhaseInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * method to return flow rate of phase
-     *
-     * @param flowunit The unit as a string. Supported units are kg/sec, kg/min, m3/sec, m3/min,
-     *        m3/hr, mole/sec, mole/min, mole/hr
-     *
-     * @return flow rate in specified unit
      */
     @Override
     public double getFlowRate(String flowunit) {
@@ -2064,6 +2339,13 @@ abstract class Phase implements PhaseInterface {
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>thermoPropertyModelName</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getThermoPropertyModelName() {
         return thermoPropertyModelName;
     }

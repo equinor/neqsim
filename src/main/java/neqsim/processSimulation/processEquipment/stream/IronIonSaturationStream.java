@@ -10,32 +10,63 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * IronIonSaturationStream class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class IronIonSaturationStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
 
-    /** Creates new IronIonSaturationStream */
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     */
     public IronIonSaturationStream() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public IronIonSaturationStream(SystemInterface thermoSystem) {
         super(thermoSystem);
     }
 
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     *
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public IronIonSaturationStream(StreamInterface stream) {
         super(stream);
     }
 
+    /**
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public IronIonSaturationStream(String name, SystemInterface thermoSystem) {
         super(name, thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public IronIonSaturationStream clone() {
         IronIonSaturationStream clonedSystem = null;
@@ -47,6 +78,7 @@ public class IronIonSaturationStream extends Stream {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         System.out.println("start flashing stream... " + streamNumber);
@@ -54,7 +86,8 @@ public class IronIonSaturationStream extends Stream {
             thermoSystem = (SystemInterface) this.stream.getThermoSystem().clone();
         }
         if (stream != null) {
-            reactiveThermoSystem = this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
+            reactiveThermoSystem =
+                    this.stream.getThermoSystem().setModel("Electrolyte-CPA-EOS-statoil");
         }
         reactiveThermoSystem.addComponent("Fe++", 1e-6);
         // reactiveThermoSystem.chemicalReactionInit();
@@ -65,8 +98,10 @@ public class IronIonSaturationStream extends Stream {
         thermoOps.TPflash();
         reactiveThermoSystem.display();
         try {
-            System.out.println("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
-            thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"), "FeCO3", "Fe++");
+            System.out.println("aqueous phase number "
+                    + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
+            thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
+                    "FeCO3", "Fe++");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -75,9 +110,9 @@ public class IronIonSaturationStream extends Stream {
         System.out.println("beta: " + reactiveThermoSystem.getBeta());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         reactiveThermoSystem.display(name);
     }
-
 }

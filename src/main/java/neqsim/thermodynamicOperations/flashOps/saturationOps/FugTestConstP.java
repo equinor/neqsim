@@ -9,14 +9,16 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-
 /**
+ * <p>
+ * FugTestConstP class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
-public class FugTestConstP extends constantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
-
+public class FugTestConstP extends constantDutyTemperatureFlash
+        implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FugTestConstP.class);
     public double temp = 0.0, pres = 0.0;
@@ -26,16 +28,34 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
     public String compName;
     public boolean compNameGiven = false;
 
-    /** Creates new FugTestdT */
-    public FugTestConstP() {
-    }
+    /**
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
+     */
+    public FugTestConstP() {}
 
+    /**
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public FugTestConstP(SystemInterface system) {
         this.testSystem = system;
         this.testOps = new ThermodynamicOperations(testSystem);
         this.pres = testSystem.getPressure();
     }
 
+    /**
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pres a double
+     */
     public FugTestConstP(SystemInterface system, double pres) {
         this.testSystem = system;
         this.testOps = new ThermodynamicOperations(testSystem);
@@ -43,6 +63,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
     }
 
     // initializing reference system for pure vapor fugacity
+    /**
+     * <p>
+     * initTestSystem2.
+     * </p>
+     *
+     * @param K a int
+     */
     public void initTestSystem2(int K) {
         this.testSystem2 = new SystemSrkSchwartzentruberEos(temp, pres);
         this.testSystem2.addComponent(compName, 1);
@@ -50,8 +77,9 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
         this.testOps2 = new ThermodynamicOperations(testSystem2);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0;
         // double dfugdt = 0.0;
         double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
@@ -80,13 +108,16 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                     }
                     // Vapor pressure estiamtion
                     if (CCequation) {
-                        Pvapsolid = testSystem.getPhase(0).getComponent(k).getCCsolidVaporPressure(temp);
+                        Pvapsolid = testSystem.getPhase(0).getComponent(k)
+                                .getCCsolidVaporPressure(temp);
                         logger.info("pvap solid CC " + Pvapsolid);
                     } else {
-                        Pvapsolid = testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
+                        Pvapsolid =
+                                testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
                         logger.info("pvap solid Antonie " + Pvapsolid);
                     }
-                    soldens = testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
+                    soldens = testSystem.getPhase(0).getComponent(k)
+                            .getPureComponentSolidDensity(temp) * 1000;
                     if (soldens > 2000) {
                         soldens = 1000;
                     }
@@ -99,7 +130,8 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                     testOps.TPflash();
                     testOps2.TPflash();
 
-                    SolVapFugCoeff = testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient();
+                    SolVapFugCoeff =
+                            testSystem2.getPhase(0).getComponent(0).getFugasityCoeffisient();
 
                     Fug[3][i] = testSystem.getPhase(0).getFugacity(k);
                     Fug[1][i] = SolidFug * SolVapFugCoeff;
@@ -118,19 +150,27 @@ public class FugTestConstP extends constantDutyTemperatureFlash implements Therm
                 title[0] = "Solid Fugacity";
                 title[1] = "Fluid Fugacity";
 
-                graph2b graffug = new graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
-                        "Temperature [K]", "Fugacity [bar]");
+                graph2b graffug =
+                        new graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
+                                "Temperature [K]", "Fugacity [bar]");
                 graffug.setVisible(true);
                 String[] title2 = new String[1];
                 title2[0] = "Solid/Fluid";
 
-                graph2b grafvapor = new graph2b(Fugrel, title2, compName + " Fugacity Ratio", "Temperature [K]",
-                        "Fsolid/Ffluid");
+                graph2b grafvapor = new graph2b(Fugrel, title2, compName + " Fugacity Ratio",
+                        "Temperature [K]", "Fsolid/Ffluid");
                 grafvapor.setVisible(true);
             } // end solidcheck lokke
         } // end komponent lokke
     } // end run
 
+    /**
+     * <p>
+     * PrintToFile.
+     * </p>
+     *
+     * @param FileName a {@link java.lang.String} object
+     */
     public void PrintToFile(String FileName) {
         // String myFile = "/java/fugcoeff_C02_ N2.dat";
         // try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))){

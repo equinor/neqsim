@@ -11,11 +11,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * TPflash class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TPflash extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash.class);
 
@@ -24,10 +27,19 @@ public class TPflash extends Flash {
     double presdiff = 1.0;
 
     /**
-     * Creates new TPflash
+     * <p>
+     * Constructor for TPflash.
+     * </p>
      */
     public TPflash() {}
 
+    /**
+     * <p>
+     * Constructor for TPflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public TPflash(SystemInterface system) {
         this.system = system;
         lnOldOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -39,11 +51,24 @@ public class TPflash extends Flash {
         deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
     }
 
+    /**
+     * <p>
+     * Constructor for TPflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param solCheck a boolean
+     */
     public TPflash(SystemInterface system, boolean solCheck) {
         this(system);
         solidCheck = solCheck;
     }
 
+    /**
+     * <p>
+     * sucsSubs.
+     * </p>
+     */
     public void sucsSubs() {
         deviation = 0;
 
@@ -86,6 +111,11 @@ public class TPflash extends Flash {
 
     }
 
+    /**
+     * <p>
+     * accselerateSucsSubs.
+     * </p>
+     */
     public void accselerateSucsSubs() {
         double prod1 = 0.0, prod2 = 0.0;
 
@@ -120,6 +150,11 @@ public class TPflash extends Flash {
         // sucsSubs();
     }
 
+    /**
+     * <p>
+     * setNewK.
+     * </p>
+     */
     public void setNewK() {
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             lnOldOldOldK[i] = lnOldOldK[i];
@@ -134,6 +169,11 @@ public class TPflash extends Flash {
         }
     }
 
+    /**
+     * <p>
+     * resetK.
+     * </p>
+     */
     public void resetK() {
         for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             lnK[i] = lnOldK[i];
@@ -149,6 +189,7 @@ public class TPflash extends Flash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (system.isForcePhaseTypes() && system.getMaxNumberOfPhases() == 1) {
@@ -408,7 +449,6 @@ public class TPflash extends Flash {
                                 Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx())
                                         / xchem[i];
                     }
-
                 }
                 diffChem = Math.abs(oldChemDiff - chemdev);
             }
@@ -461,6 +501,7 @@ public class TPflash extends Flash {
         system.init(1);
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

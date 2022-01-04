@@ -1,12 +1,19 @@
 package neqsim.util.unit;
 
 /**
+ * <p>
+ * NeqSimUnitSet class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class NeqSimUnitSet {
-
     /**
+     * <p>
+     * Getter for the field <code>componentConcentrationUnit</code>.
+     * </p>
+     *
      * @return the componentConcentrationUnit
      */
     public String getComponentConcentrationUnit() {
@@ -14,6 +21,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>componentConcentrationUnit</code>.
+     * </p>
+     *
      * @param componentConcentrationUnit the componentConcentrationUnit to set
      */
     public void setComponentConcentrationUnit(String componentConcentrationUnit) {
@@ -23,6 +34,10 @@ public class NeqSimUnitSet {
     private static final long serialVersionUID = 1000;
 
     /**
+     * <p>
+     * Getter for the field <code>flowRateUnit</code>.
+     * </p>
+     *
      * @return the flowRateUnit
      */
     public String getFlowRateUnit() {
@@ -30,6 +45,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>flowRateUnit</code>.
+     * </p>
+     *
      * @param flowRateUnit the flowRateUnit to set
      */
     public void setFlowRateUnit(String flowRateUnit) {
@@ -37,6 +56,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureUnit</code>.
+     * </p>
+     *
      * @return the pressureUnit
      */
     public String getPressureUnit() {
@@ -44,6 +67,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureUnit</code>.
+     * </p>
+     *
      * @param pressureUnit the pressureUnit to set
      */
     public void setPressureUnit(String pressureUnit) {
@@ -51,6 +78,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>temperatureUnit</code>.
+     * </p>
+     *
      * @return the temperatureUnit
      */
     public String getTemperatureUnit() {
@@ -58,6 +89,10 @@ public class NeqSimUnitSet {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>temperatureUnit</code>.
+     * </p>
+     *
      * @param temperatureUnit the temperatureUnit to set
      */
     public void setTemperatureUnit(String temperatureUnit) {

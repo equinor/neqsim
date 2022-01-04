@@ -2,7 +2,6 @@ package neqsim.processSimulation.processEquipment.powerGeneration;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.mechanicalDesign.compressor.CompressorMechanicalDesign;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.compressor.Compressor;
@@ -14,8 +13,15 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * <p>
+ * GasTurbine class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class GasTurbine extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
 
@@ -32,6 +38,11 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
     public double power = 0.0;
 
+    /**
+     * <p>
+     * Constructor for GasTurbine.
+     * </p>
+     */
     public GasTurbine() {
         // needs to be changed to gas tubing mechanical design
         mechanicalDesign = new CompressorMechanicalDesign(this);
@@ -46,21 +57,53 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         airCompressor = new Compressor(airStream);
     }
 
+    /**
+     * <p>
+     * Constructor for GasTurbine.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public GasTurbine(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for GasTurbine.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public GasTurbine(String name, StreamInterface inletStream) {
         this();
         this.name = name;
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>power</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPower() {
         return power;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>inletStream</code>.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
         try {
@@ -70,8 +113,9 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         // System.out.println("compressor running..");
         double heatOfCombustion = inletStream.LCV() * inletStream.getFlowRate("mole/sec");
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -115,12 +159,22 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
         power = expanderPower - compressorPower;
         setHeat(cooler1.getDuty());
-
     }
 
-    public void runTransient() {
-    }
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
+    public void runTransient() {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // test code;....
         neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(298.15, 1.0);
@@ -142,12 +196,25 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>heat</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getHeat() {
         return heat;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>heat</code>.
+     * </p>
+     *
+     * @param heat a double
+     */
     public void setHeat(double heat) {
         this.heat = heat;
     }
-
 }

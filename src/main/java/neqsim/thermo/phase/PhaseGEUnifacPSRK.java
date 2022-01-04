@@ -7,21 +7,38 @@ import neqsim.thermo.component.ComponentGEUnifacPSRK;
 import neqsim.thermo.component.ComponentGEUniquac;
 
 /**
+ * <p>
+ * PhaseGEUnifacPSRK class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhaseGEUnifacPSRK.class);
 
-    /** Creates new PhaseGEUnifacPSRK */
+    /**
+     * <p>
+     * Constructor for PhaseGEUnifacPSRK.
+     * </p>
+     */
     public PhaseGEUnifacPSRK() {
         super();
         componentArray = new ComponentGEUnifacPSRK[MAX_NUMBER_OF_COMPONENTS];
     }
 
+    /**
+     * <p>
+     * Constructor for PhaseGEUnifacPSRK.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param alpha an array of {@link double} objects
+     * @param Dij an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @param intparam an array of {@link double} objects
+     */
     public PhaseGEUnifacPSRK(PhaseInterface phase, double[][] alpha, double[][] Dij,
             String[][] mixRule, double[][] intparam) {
         super(phase, alpha, Dij, mixRule, intparam);
@@ -35,6 +52,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         this.setMixingRule(2);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -43,6 +61,7 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
                 new ComponentGEUnifacPSRK(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -53,12 +72,18 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         calccij();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double totalNumberOfMoles, int numberOfComponents, int type, int phase,
-            double beta) {
+            double beta) { // type = 0
+                           // start
+                           // init type
+                           // =1 gi nye
+                           // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype) {
@@ -71,6 +96,11 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         return R * phase.getTemperature() * GE * phase.getNumberOfMolesInPhase();// phase.getNumberOfMolesInPhase()*
     }
 
+    /**
+     * <p>
+     * calcbij.
+     * </p>
+     */
     public void calcbij() {
         bij = new double[((ComponentGEUnifac) getComponent(0))
                 .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
@@ -117,6 +147,11 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         logger.info("finished finding interaction coefficient...B");
     }
 
+    /**
+     * <p>
+     * calccij.
+     * </p>
+     */
     public void calccij() {
         cij = new double[((ComponentGEUnifac) getComponent(0))
                 .getNumberOfUNIFACgroups()][((ComponentGEUnifac) getComponent(0))
@@ -162,5 +197,4 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         }
         logger.info("finished finding interaction coefficient...C");
     }
-
 }

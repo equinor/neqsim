@@ -5,29 +5,42 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * CPAParameterFittingToSolubilityData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;
     int component = 0;
 
     /**
-     * Creates new Test
+     * <p>
+     * Constructor for CPAParameterFittingToSolubilityData.
+     * </p>
      */
     public CPAParameterFittingToSolubilityData() {
         params = new double[1];
     }
 
+    /**
+     * <p>
+     * Constructor for CPAParameterFittingToSolubilityData.
+     * </p>
+     *
+     * @param phase a int
+     * @param component a int
+     */
     public CPAParameterFittingToSolubilityData(int phase, int component) {
         this.phase = phase;
         this.component = component;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
@@ -38,11 +51,13 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -86,6 +101,14 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams3.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams3(int i, double value) {
         params[i] = value;
         if (i == 0) {
@@ -116,6 +139,14 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams2.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams2(int i, double value) {
         params[i] = value;
 
@@ -149,6 +180,5 @@ public class CPAParameterFittingToSolubilityData extends LevenbergMarquardtFunct
             ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
                     .setHValphaParameter(1, 0, value);
         }
-
     }
 }

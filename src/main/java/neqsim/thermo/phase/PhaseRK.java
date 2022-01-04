@@ -3,14 +3,21 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentRK;
 
 /**
+ * <p>
+ * PhaseRK class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseRK extends PhaseEos {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for PhaseRK.
+     * </p>
+     */
     public PhaseRK() {
         super();
         // mixRule = mixSelect.getMixingRule(2);
@@ -20,6 +27,7 @@ public class PhaseRK extends PhaseEos {
         delta2 = 0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhaseRK clone() {
         PhaseRK clonedPhase = null;
@@ -32,6 +40,7 @@ public class PhaseRK extends PhaseEos {
         return clonedPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -39,5 +48,4 @@ public class PhaseRK extends PhaseEos {
         componentArray[compNumber] =
                 new ComponentRK(componentName, moles, molesInPhase, compNumber);
     }
-
 }

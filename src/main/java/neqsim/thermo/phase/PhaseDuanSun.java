@@ -3,12 +3,14 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentGeDuanSun;
 
 /**
+ * <p>
+ * PhaseDuanSun class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PhaseDuanSun extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double[][] alpha;
@@ -17,11 +19,16 @@ public class PhaseDuanSun extends PhaseGE {
     double[][] Dij;
     double GE = 0.0;
 
-    /** Creates new PhaseDuanSun */
+    /**
+     * <p>
+     * Constructor for PhaseDuanSun.
+     * </p>
+     */
     public PhaseDuanSun() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addcomponent(String componentName, double moles, double molesInPhase,
             int compNumber) {
@@ -30,6 +37,7 @@ public class PhaseDuanSun extends PhaseGE {
                 new ComponentGeDuanSun(componentName, moles, molesInPhase, compNumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setMixingRule(int type) {
         super.setMixingRule(type);
@@ -37,6 +45,7 @@ public class PhaseDuanSun extends PhaseGE {
         this.Dij = mixSelect.getNRTLDij();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setAlpha(double[][] alpha) {
         for (int i = 0; i < alpha.length; i++) {
@@ -44,6 +53,7 @@ public class PhaseDuanSun extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDij(double[][] Dij) {
         for (int i = 0; i < Dij.length; i++) {
@@ -51,6 +61,7 @@ public class PhaseDuanSun extends PhaseGE {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype) {
@@ -90,16 +101,17 @@ public class PhaseDuanSun extends PhaseGE {
         return R * temperature * numberOfMolesInPhase * GE;// phase.getNumberOfMolesInPhase()*
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGibbsEnergy() {
         return R * temperature * numberOfMolesInPhase * (GE + Math.log(pressure));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExessGibbsEnergy() {
         // double GE = getExessGibbsEnergy(this, numberOfComponents, temperature,
         // pressure, phaseType);
         return GE;
     }
-
 }

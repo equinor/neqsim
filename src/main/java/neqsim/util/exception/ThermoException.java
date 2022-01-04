@@ -7,23 +7,26 @@
 package neqsim.util.exception;
 
 /**
+ * <p>
+ * ThermoException class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ThermoException extends java.lang.Exception {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new <code>ThermoException</code> without detail message.
+     * <p>
+     * Constructor for ThermoException.
+     * </p>
      */
-    public ThermoException() {
-    }
+    public ThermoException() {}
 
     /**
      * Constructs an <code>ThermoException</code> with the specified detail message.
-     * 
+     *
      * @param msg the detail message.
      */
     public ThermoException(String msg) {

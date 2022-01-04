@@ -12,6 +12,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
+ * <p>
+ * NeqSimFluidDataBase class.
+ * </p>
  *
  * @author esol
  * @version The database is used for storing fluid info and recreating a fluid it uses the database
@@ -19,16 +22,20 @@ import java.sql.Statement;
  */
 public class NeqSimFluidDataBase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     static boolean started = false;
     protected Connection databaseConnection;
+    /** Constant <code>useOnlineBase=false</code> */
     public static boolean useOnlineBase = false;
     static int numb = 0;
     Statement statement = null;
 
-    /** Creates new testPointbase */
+    /**
+     * <p>
+     * Constructor for NeqSimFluidDataBase.
+     * </p>
+     */
     public NeqSimFluidDataBase() {
         try {
             if (useOnlineBase) {
@@ -47,8 +54,16 @@ public class NeqSimFluidDataBase
         }
     }
 
-    /** Creates new FluidDatabase */
-
+    /**
+     * <p>
+     * openConnection.
+     * </p>
+     *
+     * @param database a {@link java.lang.String} object
+     * @return a Connection object
+     * @throws java.sql.SQLException if any.
+     * @throws java.lang.ClassNotFoundException if any.
+     */
     public Connection openConnection(String database) throws SQLException, ClassNotFoundException {
         if (useOnlineBase) {
             Class.forName("org.gjt.mm.mysql.Driver");
@@ -67,10 +82,26 @@ public class NeqSimFluidDataBase
         }
     }
 
+    /**
+     * <p>
+     * getConnection.
+     * </p>
+     *
+     * @return a Connection object
+     */
     public Connection getConnection() {
         return databaseConnection;
     }
 
+    /**
+     * <p>
+     * getResultSet.
+     * </p>
+     *
+     * @param database a {@link java.lang.String} object
+     * @param sqlString a {@link java.lang.String} object
+     * @return a ResultSet object
+     */
     public ResultSet getResultSet(String database, String sqlString) {
         try {
             ResultSet result = statement.executeQuery(sqlString);
@@ -82,10 +113,25 @@ public class NeqSimFluidDataBase
         return null;
     }
 
+    /**
+     * <p>
+     * getResultSet.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     * @return a ResultSet object
+     */
     public ResultSet getResultSet(String sqlString) {
         return this.getResultSet("FluidDatabase", sqlString);
     }
 
+    /**
+     * <p>
+     * execute.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     */
     public void execute(String sqlString) {
         try {
             if (databaseConnection == null) {
@@ -99,6 +145,13 @@ public class NeqSimFluidDataBase
         }
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         NeqSimFluidDataBase database = new NeqSimFluidDataBase();
         ResultSet dataSet =

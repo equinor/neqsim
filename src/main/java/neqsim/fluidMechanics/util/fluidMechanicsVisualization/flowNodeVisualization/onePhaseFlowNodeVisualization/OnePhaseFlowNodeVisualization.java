@@ -9,16 +9,20 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualiza
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualization.FlowNodeVisualization;
 
 /**
+ * <p>
+ * OnePhaseFlowNodeVisualization class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class OnePhaseFlowNodeVisualization extends FlowNodeVisualization {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new OnePhaseFlowNodeVisualization */
-    public OnePhaseFlowNodeVisualization() {
-    }
-
+    /**
+     * <p>
+     * Constructor for OnePhaseFlowNodeVisualization.
+     * </p>
+     */
+    public OnePhaseFlowNodeVisualization() {}
 }

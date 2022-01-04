@@ -5,30 +5,58 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * SolidComplexTemperatureCalc class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
     String comp1, comp2;
+    /** Constant <code>Kcomplex=0.133736021815520500</code> */
     public static double Kcomplex = 0.133736021815520500;
+    /** Constant <code>HrefComplex=4598.717135</code> */
     public static double HrefComplex = 4598.717135;
+    /** Constant <code>TrefComplex=244.19</code> */
     public static double TrefComplex = 244.19;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for SolidComplexTemperatureCalc.
+     * </p>
      */
-    public SolidComplexTemperatureCalc() {
-    }
+    public SolidComplexTemperatureCalc() {}
 
+    /**
+     * <p>
+     * Constructor for SolidComplexTemperatureCalc.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SolidComplexTemperatureCalc(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>
+     * Constructor for SolidComplexTemperatureCalc.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param comp1 a {@link java.lang.String} object
+     * @param comp2 a {@link java.lang.String} object
+     */
     public SolidComplexTemperatureCalc(SystemInterface system, String comp1, String comp2) {
         this(system);
         this.comp1 = comp1;
@@ -54,9 +82,13 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             HrefComplex = 8540.0;
             TrefComplex = 171.25;
         }
-
     }
 
+    /**
+     * <p>
+     * runOld.
+     * </p>
+     */
     public void runOld() {
         double sumx = 0.0;
         // system.setHydrateCheck(true);
@@ -111,8 +143,9 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
         system.init(3);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         double sumx = 0.0;
         // system.setHydrateCheck(true);
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -135,17 +168,19 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
             // reading activity coefficients
 
-            double complexActivity = system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1)
-                    * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
-                    * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
-                    * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
+            double complexActivity =
+                    system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_1)
+                            * system.getPhaseOfType("aqueous").getComponent(compNumber_1).getx()
+                            * system.getPhaseOfType("aqueous").getActivityCoefficient(compNumber_2)
+                            * system.getPhaseOfType("aqueous").getComponent(compNumber_2).getx();
 
             if (complexActivity < 1e-5) {
                 complexActivity = 1e-5;
             }
             // logger.info("activityMix.... " + complexActivity);
 
-            double rightSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
+            double rightSide =
+                    neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(complexActivity);
             // logger.info("right.... " + rightSide);
             double leftSide = neqsim.thermo.ThermodynamicConstantsInterface.R * Math.log(Kcomplex)
                     + HrefComplex * (1.0 / TrefComplex - 1.0 / system.getTemperature());
@@ -172,11 +207,15 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
 
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
     /**
+     * <p>
+     * getKcomplex.
+     * </p>
+     *
      * @return the Kcomplex
      */
     public double getKcomplex() {
@@ -184,6 +223,10 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     }
 
     /**
+     * <p>
+     * setKcomplex.
+     * </p>
+     *
      * @param Kcomplex the Kcomplex to set
      */
     public void setKcomplex(double Kcomplex) {
@@ -191,6 +234,10 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     }
 
     /**
+     * <p>
+     * getHrefComplex.
+     * </p>
+     *
      * @return the HrefComplex
      */
     public double getHrefComplex() {
@@ -198,6 +245,10 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     }
 
     /**
+     * <p>
+     * setHrefComplex.
+     * </p>
+     *
      * @param HrefComplex the HrefComplex to set
      */
     public void setHrefComplex(double HrefComplex) {
@@ -205,6 +256,10 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     }
 
     /**
+     * <p>
+     * getTrefComplex.
+     * </p>
+     *
      * @return the TrefComplex
      */
     public double getTrefComplex() {
@@ -212,6 +267,10 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     }
 
     /**
+     * <p>
+     * setTrefComplex.
+     * </p>
+     *
      * @param TrefComplex the TrefComplex to set
      */
     public void setTrefComplex(double TrefComplex) {

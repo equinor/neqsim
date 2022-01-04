@@ -9,8 +9,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>ViscositySim class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class ViscositySim extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
@@ -23,6 +25,11 @@ public class ViscositySim extends BasePVTsimulation {
     private double[] aqueousViscosity;
     ViscosityFunction function;
 
+    /**
+     * <p>Constructor for ViscositySim.</p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public ViscositySim(SystemInterface tempSystem) {
         super(tempSystem);
         temperature = new double[1];
@@ -31,12 +38,21 @@ public class ViscositySim extends BasePVTsimulation {
         pressure[0] = tempSystem.getPressure();
     }
 
+    /**
+     * <p>setTemperaturesAndPressures.</p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
     }
 
+    /**
+     * <p>runTuning.</p>
+     */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -78,6 +94,9 @@ public class ViscositySim extends BasePVTsimulation {
         // optimizer.displayCurveFit();
     }
 
+    /**
+     * <p>runCalc.</p>
+     */
     public void runCalc() {
         gasViscosity = new double[pressure.length];
         oilViscosity = new double[pressure.length];
@@ -105,6 +124,11 @@ public class ViscositySim extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
@@ -142,6 +166,8 @@ public class ViscositySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>gasViscosity</code>.</p>
+     *
      * @return the gasViscosity
      */
     public double[] getGasViscosity() {
@@ -149,6 +175,8 @@ public class ViscositySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>oilViscosity</code>.</p>
+     *
      * @return the oilViscosity
      */
     public double[] getOilViscosity() {
@@ -156,6 +184,8 @@ public class ViscositySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>aqueousViscosity</code>.</p>
+     *
      * @return the aqueousViscosity
      */
     public double[] getAqueousViscosity() {

@@ -9,11 +9,14 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * TPgradientFlash class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TPgradientFlash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface localSystem = null, tempSystem = null;
@@ -25,9 +28,22 @@ public class TPgradientFlash extends Flash {
     Matrix dx;
     Matrix uold;
 
-    /** Creates new TPgradientFlash */
+    /**
+     * <p>
+     * Constructor for TPgradientFlash.
+     * </p>
+     */
     public TPgradientFlash() {}
 
+    /**
+     * <p>
+     * Constructor for TPgradientFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param height a double
+     * @param temperature a double
+     */
     public TPgradientFlash(SystemInterface system, double height, double temperature) {
         this.system = system;
         this.temperature = temperature;
@@ -38,6 +54,11 @@ public class TPgradientFlash extends Flash {
 
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
+     */
     public void setfvec() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             fvec.set(i, 0, Math
@@ -67,6 +88,11 @@ public class TPgradientFlash extends Flash {
         }
     }
 
+    /**
+     * <p>
+     * setJac.
+     * </p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -90,6 +116,11 @@ public class TPgradientFlash extends Flash {
         }
     }
 
+    /**
+     * <p>
+     * setNewX.
+     * </p>
+     */
     public void setNewX() {
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             localSystem.getPhase(0).getComponent(i)
@@ -98,6 +129,7 @@ public class TPgradientFlash extends Flash {
         localSystem.getPhase(0).normalize();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tempSystem = (SystemInterface) system.clone();
@@ -127,11 +159,13 @@ public class TPgradientFlash extends Flash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return localSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

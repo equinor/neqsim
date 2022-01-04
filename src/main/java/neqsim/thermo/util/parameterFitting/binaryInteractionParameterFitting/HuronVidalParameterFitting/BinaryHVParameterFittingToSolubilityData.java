@@ -4,29 +4,43 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * BinaryHVParameterFittingToSolubilityData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToSolubilityData.class);
 
     int phase = 1;
     int type = 1;
 
-
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingToSolubilityData.
+     * </p>
+     */
     public BinaryHVParameterFittingToSolubilityData() {}
 
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingToSolubilityData.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public BinaryHVParameterFittingToSolubilityData(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
-
         if (type == 1) {
             thermoOps.TPflash();
             // system.display();
@@ -46,6 +60,7 @@ public class BinaryHVParameterFittingToSolubilityData extends HuronVidalFunction
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;

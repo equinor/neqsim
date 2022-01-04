@@ -14,17 +14,25 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction.class);
 
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunction.
+     * </p>
+     */
     public IonicInteractionParameterFittingFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -37,11 +45,13 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         return system.getPressure() * system.getPhases()[0].getComponent(0).getx();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -228,6 +238,14 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams5.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams5(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
@@ -314,6 +332,14 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams3.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams3(int i, double value) {
         params[i] = value;
         int MDEAplusNumb = 0, MDEANumb = 0, CO2Numb = 0, HCO3numb = 0, Waternumb = 0;
@@ -354,5 +380,4 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
                     .setWijParameter(MDEAplusNumb, CO2Numb, value);
         }
     }
-
 }

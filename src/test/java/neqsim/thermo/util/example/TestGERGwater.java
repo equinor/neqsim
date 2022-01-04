@@ -7,13 +7,24 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * TestGERGwater class.
+ * </p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class TestGERGwater {
     static Logger logger = LogManager.getLogger(TestGERGwater.class);
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemGERGwaterEos(273.15-20.0, 100.0);
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 20.0, 100.0);
@@ -44,6 +55,5 @@ public class TestGERGwater {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }
