@@ -10,23 +10,40 @@ import java.text.DecimalFormatSymbols;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * calcIonicComposition class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class calcIonicComposition extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     int phaseNumber;
     String[][] resultTable = null;
 
+    /**
+     * <p>
+     * Constructor for calcIonicComposition.
+     * </p>
+     */
     public calcIonicComposition() {}
 
+    /**
+     * <p>
+     * Constructor for calcIonicComposition.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phase a int
+     */
     public calcIonicComposition(SystemInterface system, int phase) {
         this.system = system;
         phaseNumber = phase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         resultTable = new String[system.getPhase(0).getNumberOfComponents() + 2][4];
@@ -68,11 +85,13 @@ public class calcIonicComposition extends Flash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return resultTable;

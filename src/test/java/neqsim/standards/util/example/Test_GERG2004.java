@@ -7,11 +7,18 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Test_GERG2004 class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class Test_GERG2004 {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 20.0, 200.0);

@@ -5,9 +5,18 @@ import neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe;
 import neqsim.processSimulation.processEquipment.pipeline.OnePhasePipeLine;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
+/**
+ * <p>gasPipeline class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class gasPipeline {
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem =

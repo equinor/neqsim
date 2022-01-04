@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TestElectrolyteCPAstatoil class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestElectrolyteCPAstatoil {
     static Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 4.0, 100);
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 10.0, 3.0);

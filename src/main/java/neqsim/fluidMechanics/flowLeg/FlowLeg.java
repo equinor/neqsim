@@ -11,11 +11,14 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * Abstract FlowLeg class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeInterface[] flowNode;
@@ -31,11 +34,16 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
             temperatureChangePerNode = 0;
     protected FlowNodeSelector nodeSelector = new FlowNodeSelector();
 
-    /** Creates new FlowLeg */
+    /**
+     * <p>
+     * Constructor for FlowLeg.
+     * </p>
+     */
     public FlowLeg() {
         flowNode = new FlowNodeInterface[this.getNumberOfNodes()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createFlowNodes() {
         temperatureChangePerNode =
@@ -74,8 +82,12 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
         }
     }
 
+    /**
+     * <p>
+     * setFlowNodeTypes.
+     * </p>
+     */
     public void setFlowNodeTypes() {
-
         nodeSelector.getFlowNodeType(flowNode);
 
         for (int i = 0; i < getNumberOfNodes(); i++) {
@@ -90,6 +102,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFlowPattern(String flowPattern) {
         nodeSelector.setFlowPattern(flowNode, flowPattern);
@@ -113,32 +126,38 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = (SystemInterface) thermoSystem.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setEquipmentGeometry(GeometryDefinitionInterface equipmentGeometry) {
         this.equipmentGeometry = (GeometryDefinitionInterface) equipmentGeometry.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfNodes(int numberOfNodes) {
         this.numberOfNodes = numberOfNodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfNodes() {
         return this.numberOfNodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHeightCoordinates(double startHeightCoordinate, double endHeightCoordinate) {
         this.startHeightCoordinate = startHeightCoordinate;
         this.endHeightCoordinate = endHeightCoordinate;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOuterHeatTransferCOefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient) {
@@ -146,6 +165,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
         this.endOuterHeatTransferCoefficient = endHeatTransferCoefficient;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setWallHeatTransferCOefficients(double startHeatTransferCoefficient,
             double endHeatTransferCoefficient) {
@@ -153,6 +173,7 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
         this.endWallHeatTransferCOefficients = endHeatTransferCoefficient;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLongitudionalCoordinates(double startLongitudionalCoordinate,
             double endLongitudionalCoordinate) {
@@ -160,17 +181,20 @@ public abstract class FlowLeg implements FlowLegInterface, java.io.Serializable 
         this.endLongitudionalCoordinate = endLongitudionalCoordinate;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOuterTemperatures(double startTemperature, double endTemperature) {
         this.startOuterTemperature = startTemperature;
         this.endOuterTemperature = endTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface[] getFlowNodes() {
         return flowNode;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNode(int i) {
         return flowNode[i];

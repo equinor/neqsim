@@ -7,13 +7,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>H2Sdistribution class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class H2Sdistribution {
     static Logger logger = LogManager.getLogger(H2Sdistribution.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemElectrolyteCPAstatoil(308.3, 32.8);
         testSystem.addComponent("H2S", 3100.0e-6);

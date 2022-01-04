@@ -4,25 +4,45 @@ import java.io.File;
 import java.io.FileWriter;
 
 /**
+ * <p>
+ * TextFile class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class TextFile implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/example.txt";
     String[][] values;
     // NetcdfFileWriteable ncfile;
 
-    /** Creates new NetCdf */
+    /**
+     * <p>
+     * Constructor for TextFile.
+     * </p>
+     */
     public TextFile() {}
 
+    /**
+     * <p>
+     * setOutputFileName.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setOutputFileName(String name) {
         this.fileName = name;
     }
 
+    /**
+     * <p>
+     * newFile.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void newFile(String name) {
         try (FileWriter out = new FileWriter(new File(name))) {
             out.write("");
@@ -31,11 +51,25 @@ public class TextFile implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>values</code>.
+     * </p>
+     *
+     * @param values an array of {@link java.lang.String} objects
+     */
     public void setValues(String[][] values) {
         System.out.println("writing " + values[0][0] + "  data");
         this.values = values;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>values</code>.
+     * </p>
+     *
+     * @param valuesloca an array of {@link double} objects
+     */
     public void setValues(double[][] valuesloca) {
         values = new String[valuesloca[0].length][valuesloca.length];
         // System.out.println("writing " + values[0][0] + " data");
@@ -46,6 +80,11 @@ public class TextFile implements java.io.Serializable {
         }
     }
 
+    /**
+     * <p>
+     * createFile.
+     * </p>
+     */
     public void createFile() {
         System.out.println("writing " + values[0][0] + "  data");
         System.out.println("length " + values.length);

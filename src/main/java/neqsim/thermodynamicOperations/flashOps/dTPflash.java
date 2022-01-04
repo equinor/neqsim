@@ -12,29 +12,43 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * dTPflash class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class dTPflash extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(dTPflash.class);
     String[] flashComp = null;
 
     // SystemInterface clonedSystem;
 
-    /** Creates new dTPflash */
-    public dTPflash() {
-    }
+    /**
+     * <p>
+     * Constructor for dTPflash.
+     * </p>
+     */
+    public dTPflash() {}
 
+    /**
+     * <p>
+     * Constructor for dTPflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param comps an array of {@link java.lang.String} objects
+     */
     public dTPflash(SystemInterface system, String[] comps) {
         this.system = system;
         this.flashComp = comps;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
-
         iterations = 0;
         double diff = 0.0;
         double fracdiff = 0.0;
@@ -53,17 +67,18 @@ public class dTPflash extends TPflash {
                                 * system.getPhase(1).getComponent(i).getFugasityCoefficient()
                                 * system.getPhase(1).getPressure())
                                 - (system.getPhase(0).getComponent(i).getx()
-                                        * system.getPhase(0).getComponent(i).getFugasityCoefficient()
+                                        * system.getPhase(0).getComponent(i)
+                                                .getFugasityCoefficient()
                                         * system.getPhase(0).getPressure()));
-                        system.getPhase(
-                                1).getComponent(
-                                        i)
+                        system.getPhase(1).getComponent(i)
                                 .setx(system.getPhase(1).getComponent(i).getx()
                                         * (system.getPhase(0).getComponent(i).getx()
-                                                * system.getPhase(0).getComponent(i).getFugasityCoefficient()
+                                                * system.getPhase(0).getComponent(i)
+                                                        .getFugasityCoefficient()
                                                 * system.getPhase(0).getPressure())
                                         / (system.getPhase(1).getComponent(i).getx()
-                                                * system.getPhase(1).getComponent(i).getFugasityCoefficient()
+                                                * system.getPhase(1).getComponent(i)
+                                                        .getFugasityCoefficient()
                                                 * system.getPhase(1).getPressure()));
                         fracdiff += system.getPhase(1).getComponent(i).getz()
                                 - system.getPhase(1).getComponent(i).getx();
@@ -83,6 +98,5 @@ public class dTPflash extends TPflash {
         if (diff > 1e-10) {
             logger.error("not able to converge dPflash....continuing....");
         }
-
     }
 }

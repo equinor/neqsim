@@ -13,11 +13,14 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * pTphaseEnvelopeNew class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class pTphaseEnvelopeNew extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelopeNew.class);
 
@@ -49,12 +52,25 @@ public class pTphaseEnvelopeNew extends BaseOperation {
     int np = 0;
     int speceq = 0;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for pTphaseEnvelopeNew.
+     * </p>
+     */
     public pTphaseEnvelopeNew() {}
 
+    /**
+     * <p>
+     * Constructor for pTphaseEnvelopeNew.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param lowPres a double
+     */
     public pTphaseEnvelopeNew(SystemInterface system, String name, double phaseFraction,
             double lowPres) {
-
         this.system = system;
         this.phaseFraction = phaseFraction;
 
@@ -79,11 +95,10 @@ public class pTphaseEnvelopeNew extends BaseOperation {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
-
         try {
-
             points[0] = new double[10000];
             points[1] = new double[10000];
 
@@ -105,7 +120,6 @@ public class pTphaseEnvelopeNew extends BaseOperation {
             nonLinSolver.calcInc(1);
 
             for (np = 1; np < 5; np++) {
-
                 if (np % 5 == 0) {
                     monitor.setValue(np);
                     monitor.setString("Calculated points: " + np);
@@ -271,6 +285,7 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -318,9 +333,11 @@ public class pTphaseEnvelopeNew extends BaseOperation {
          */
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         DecimalFormat nf = new DecimalFormat();
@@ -338,11 +355,13 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         return graph2.getChart();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return points2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         if (name.equals("bubT")) {
@@ -385,11 +404,13 @@ public class pTphaseEnvelopeNew extends BaseOperation {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {
         fileName = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;

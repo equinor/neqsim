@@ -12,19 +12,36 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * VUflashQfunc class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class VUflashQfunc extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VUflashQfunc.class);
 
     double Vspec = 0, Uspec = 0.0;
     Flash tpFlash;
 
+    /**
+     * <p>
+     * Constructor for VUflashQfunc.
+     * </p>
+     */
     public VUflashQfunc() {}
 
+    /**
+     * <p>
+     * Constructor for VUflashQfunc.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Vspec a double
+     * @param Uspec a double
+     */
     public VUflashQfunc(SystemInterface system, double Vspec, double Uspec) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -32,6 +49,13 @@ public class VUflashQfunc extends Flash {
         this.Uspec = Uspec;
     }
 
+    /**
+     * <p>
+     * calcdQdPP.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdPP() {
         double dQdVV = (system.getVolume() - Vspec)
                 / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
@@ -41,26 +65,53 @@ public class VUflashQfunc extends Flash {
         return dQdVV;
     }
 
+    /**
+     * <p>
+     * calcdQdTT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdTT() {
-
         double dQdTT = -system.getCp()
                 / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
                 - calcdQdT() / system.getTemperature();
         return dQdTT;
     }
 
+    /**
+     * <p>
+     * calcdQdT.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdT() {
         double dQdT = (Uspec + system.getPressure() * Vspec - system.getEnthalpy())
                 / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R);
         return dQdT;
     }
 
+    /**
+     * <p>
+     * calcdQdP.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdQdP() {
         double dQdP = system.getPressure() * (system.getVolume() - Vspec)
                 / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
         return dQdP;
     }
 
+    /**
+     * <p>
+     * solveQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double solveQ() {
         double oldPres = system.getPressure(), nyPres = system.getPressure(),
                 nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
@@ -89,6 +140,7 @@ public class VUflashQfunc extends Flash {
         return nyPres;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         tpFlash.run();
@@ -98,11 +150,19 @@ public class VUflashQfunc extends Flash {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(273.15 + 55, 50.0);
 

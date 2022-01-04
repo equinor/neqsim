@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,10 +20,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemGERGwaterEos extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemPrEos clonedSystem;
+    /**
+     * <p>
+     * Constructor for SystemGERGwaterEos.
+     * </p>
+     */
     public SystemGERGwaterEos() {
         super();
         modelName = "GERG-water-EOS";
@@ -35,6 +39,14 @@ public class SystemGERGwaterEos extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemGERGwaterEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemGERGwaterEos(double T, double P) {
         super(T, P);
         modelName = "GERG-water-EOS";
@@ -46,6 +58,15 @@ public class SystemGERGwaterEos extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemGERGwaterEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemGERGwaterEos(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "GERG-water-EOS";
@@ -77,6 +98,7 @@ public class SystemGERGwaterEos extends SystemPrEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemGERGwaterEos clone() {
         SystemGERGwaterEos clonedSystem = null;
@@ -93,5 +115,4 @@ public class SystemGERGwaterEos extends SystemPrEos {
 
         return clonedSystem;
     }
-
 }

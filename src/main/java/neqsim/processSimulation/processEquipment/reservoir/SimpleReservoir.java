@@ -14,11 +14,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * SimpleReservoir class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -41,12 +44,21 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     double time = 0.0;
 
     /**
-     * Creates new SimpleReservoir
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
      */
     public SimpleReservoir() {
         super();
     }
 
+    /**
+     * <p>
+     * getReservoirFluid.
+     * </p>
+     *
+     * @return a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SystemInterface getReservoirFluid() {
         return thermoSystem;
     }
@@ -59,15 +71,31 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * public StreamInterface getOilOutStream() { return oilOutStream; }
      */
 
+    /**
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public SimpleReservoir(String name) {
         super(name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getFluid() {
         return thermoSystem;
     }
 
+    /**
+     * <p>
+     * addGasProducer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addGasProducer(String name) {
         Well newWell = new Well(name);
         gasProducer.add(newWell);
@@ -78,6 +106,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * addOilProducer.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addOilProducer(String name) {
         Well newWell = new Well(name);
         oilProducer.add(newWell);
@@ -88,6 +124,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * addWaterInjector.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addWaterInjector(String name) {
         Well newWell = new Well(name);
         waterInjector.add(newWell);
@@ -99,6 +143,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * addGasInjector.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface addGasInjector(String name) {
         Well newWell = new Well(name);
         gasInjector.add(newWell);
@@ -109,6 +161,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return newWell.getStream();
     }
 
+    /**
+     * <p>
+     * getGasInPlace.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getGasInPlace(String unit) {
         SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
         locStream.setTemperature(288.15);
@@ -126,6 +186,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return volume;
     }
 
+    /**
+     * <p>
+     * getOilInPlace.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOilInPlace(String unit) {
         SystemInterface locStream = (SystemInterface) (thermoSystem).clone();
         locStream.setTemperature(288.15);
@@ -143,14 +211,38 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return volume;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasProducer</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
     public Well getGasProducer(int i) {
         return gasProducer.get(i);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>oilProducer</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
     public Well getOilProducer(int i) {
         return oilProducer.get(i);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>oilProducer</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a {@link neqsim.processSimulation.processEquipment.reservoir.Well} object
+     */
     public Well getOilProducer(String name) {
         for (int i = 0; i < oilProducer.size(); i++) {
             if (oilProducer.get(i).getName().equals(name)) {
@@ -160,6 +252,16 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return null;
     }
 
+    /**
+     * <p>
+     * setReservoirFluid.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param gasVolume a double
+     * @param oilVolume a double
+     * @param waterVolume a double
+     */
     public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume,
             double waterVolume) {
         this.thermoSystem = thermoSystem;
@@ -219,6 +321,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         lowPressureLimit = 50.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         System.out.println("gas volume " + thermoSystem.getPhase("gas").getVolume("m3"));
@@ -243,8 +346,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
     }
 
+    /**
+     * <p>
+     * GORprodution.
+     * </p>
+     *
+     * @return a double
+     */
     public double GORprodution() {
-
         double GOR = 0.0;
         double flow = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -260,6 +369,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return GOR / flow;
     }
 
+    /**
+     * <p>
+     * getGasProdution.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getGasProdution(String unit) {
         double volume = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -275,6 +392,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return volume;
     }
 
+    /**
+     * <p>
+     * getOilProdution.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOilProdution(String unit) {
         double volume = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -290,6 +415,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return volume;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         time = getTime() + dt;
@@ -389,14 +515,21 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         for (int k = 0; k < gasInjector.size(); k++) {
             gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         thermoSystem.display();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 200.00);
@@ -529,9 +662,16 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
                     + producedOilStream.getPressure("bara") + " pipe out pres "
                     + testPipe.getOutStream().getFluid().getPressure());
         }
-
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasProductionTotal</code>.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getGasProductionTotal(String unit) {
         if (unit.equals("MSm3"))
             return gasProductionTotal / 1e6;
@@ -540,12 +680,28 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return gasProductionTotal;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>oilProductionTotal</code>.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOilProductionTotal(String unit) {
         if (unit.equals("MSm3"))
             return oilProductionTotal / 1e6;
         return oilProductionTotal;
     }
 
+    /**
+     * <p>
+     * getProductionTotal.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getProductionTotal(String unit) {
         double prod = getOilProductionTotal("Sm3") + getGasProductionTotal("Sm3") / 1.0e3;
         if (unit.equals("MSm3 oe"))
@@ -553,20 +709,42 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         return prod;
     }
 
+    /**
+     * <p>
+     * getOOIP.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOOIP(String unit) {
         if (unit.equals("MSm3"))
             return OOIP / 1.0e6;
         return OOIP;
     }
 
+    /**
+     * <p>
+     * getOGIP.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getOGIP(String unit) {
         if (unit.equals("GSm3"))
             return OGIP / 1.0e9;
         return OGIP;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>time</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTime() {
         return time;
     }
-
 }

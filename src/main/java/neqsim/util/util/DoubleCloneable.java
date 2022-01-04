@@ -7,23 +7,37 @@
 package neqsim.util.util;
 
 /**
- * @author  esol
- * @version
+ * <p>
+ * DoubleCloneable class.
+ * </p>
+ *
+ * @author esol
+ * @version $Id: $Id
  */
 public class DoubleCloneable implements Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     double doubleValue;
 
-    /** Creates new DoubleCloneable */
-    public DoubleCloneable() {
-    }
+    /**
+     * <p>
+     * Constructor for DoubleCloneable.
+     * </p>
+     */
+    public DoubleCloneable() {}
 
+    /**
+     * <p>
+     * Constructor for DoubleCloneable.
+     * </p>
+     *
+     * @param val a double
+     */
     public DoubleCloneable(double val) {
         this.doubleValue = val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public DoubleCloneable clone() {
         DoubleCloneable clonedSystem = null;
@@ -35,10 +49,24 @@ public class DoubleCloneable implements Cloneable {
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * set.
+     * </p>
+     *
+     * @param val a double
+     */
     public void set(double val) {
         doubleValue = val;
     }
 
+    /**
+     * <p>
+     * doubleValue.
+     * </p>
+     *
+     * @return a double
+     */
     public double doubleValue() {
         return doubleValue;
     }

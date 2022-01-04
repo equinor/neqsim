@@ -8,9 +8,18 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>HeatExchanger2 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class HeatExchanger2 {
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem =

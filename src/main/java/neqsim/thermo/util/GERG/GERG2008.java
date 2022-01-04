@@ -8,8 +8,10 @@ import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 
 /**
- * @author esol
+ * <p>GERG2008 class.</p>
  *
+ * @author esol
+ * @version $Id: $Id
  */
 public class GERG2008 {
     // Variables containing the common parameters in the GERG-2008 equations
@@ -58,6 +60,12 @@ public class GERG2008 {
     static double[][] taupijk = new double[MaxFlds + 1][MaxTrmM + 1];
     static double dPdDsave;
 
+    /**
+     * <p>MolarMassGERG.</p>
+     *
+     * @param x an array of {@link double} objects
+     * @param Mm a {@link org.netlib.util.doubleW} object
+     */
     public static void MolarMassGERG(double[] x, doubleW Mm) {
         // Sub MolarMassGERG(x, Mm)
 
@@ -80,6 +88,15 @@ public class GERG2008 {
         }
     }
 
+    /**
+     * <p>PressureGERG.</p>
+     *
+     * @param T a double
+     * @param D a double
+     * @param x an array of {@link double} objects
+     * @param P a {@link org.netlib.util.doubleW} object
+     * @param Z a {@link org.netlib.util.doubleW} object
+     */
     public static void PressureGERG(double T, double D, double[] x, doubleW P, doubleW Z) {
         // Sub PressureGERG(T, D, x, P, Z)
 
@@ -116,6 +133,17 @@ public class GERG2008 {
         dPdDsave = RGERG * T * (1 + 2 * ar[0][1].val + ar[0][2].val);
     }
 
+    /**
+     * <p>DensityGERG.</p>
+     *
+     * @param iFlag a int
+     * @param T a double
+     * @param P a double
+     * @param x an array of {@link double} objects
+     * @param D a {@link org.netlib.util.doubleW} object
+     * @param ierr a {@link org.netlib.util.intW} object
+     * @param herr a {@link org.netlib.util.StringW} object
+     */
     public static void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
             StringW herr) {
         // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
@@ -271,6 +299,29 @@ public class GERG2008 {
         D.val = P / RGERG / T;
     }
 
+    /**
+     * <p>PropertiesGERG.</p>
+     *
+     * @param T a double
+     * @param D a double
+     * @param x an array of {@link double} objects
+     * @param P a {@link org.netlib.util.doubleW} object
+     * @param Z a {@link org.netlib.util.doubleW} object
+     * @param dPdD a {@link org.netlib.util.doubleW} object
+     * @param d2PdD2 a {@link org.netlib.util.doubleW} object
+     * @param d2PdTD a {@link org.netlib.util.doubleW} object
+     * @param dPdT a {@link org.netlib.util.doubleW} object
+     * @param U a {@link org.netlib.util.doubleW} object
+     * @param H a {@link org.netlib.util.doubleW} object
+     * @param S a {@link org.netlib.util.doubleW} object
+     * @param Cv a {@link org.netlib.util.doubleW} object
+     * @param Cp a {@link org.netlib.util.doubleW} object
+     * @param W a {@link org.netlib.util.doubleW} object
+     * @param G a {@link org.netlib.util.doubleW} object
+     * @param JT a {@link org.netlib.util.doubleW} object
+     * @param Kappa a {@link org.netlib.util.doubleW} object
+     * @param A a {@link org.netlib.util.doubleW} object
+     */
     public static void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z,
             doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H,
             doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa,
@@ -699,6 +750,9 @@ public class GERG2008 {
     }
 
     // The following routine must be called once before any other routine.
+    /**
+     * <p>SetupGERG.</p>
+     */
     public static void SetupGERG() {
         // Initialize all the constants and parameters in the GERG-2008 model.
         // Some values are modified for calculations that do not depend on T, D, and x in order to
@@ -3087,7 +3141,9 @@ public class GERG2008 {
     }
 
     /**
-     * @param args
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     @SuppressWarnings("unused")
     public static void main(String[] args) {

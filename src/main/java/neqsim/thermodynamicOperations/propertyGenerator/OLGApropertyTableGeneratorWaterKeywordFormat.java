@@ -13,12 +13,15 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * OLGApropertyTableGeneratorWaterKeywordFormat class.
+ * </p>
  *
  * @author Kjetil Raul
+ * @version $Id: $Id
  */
 public class OLGApropertyTableGeneratorWaterKeywordFormat
         extends neqsim.thermodynamicOperations.BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(OLGApropertyTableGeneratorWaterKeywordFormat.class);
 
@@ -40,11 +43,27 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
     String[] units;
     String[] namesKeyword;
 
+    /**
+     * <p>
+     * Constructor for OLGApropertyTableGeneratorWaterKeywordFormat.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public OLGApropertyTableGeneratorWaterKeywordFormat(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
     }
 
+    /**
+     * <p>
+     * setPressureRange.
+     * </p>
+     *
+     * @param minPressure a double
+     * @param maxPressure a double
+     * @param numberOfSteps a int
+     */
     public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
         pressures = new double[numberOfSteps];
         pressureLOG = new double[numberOfSteps];
@@ -55,6 +74,15 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         }
     }
 
+    /**
+     * <p>
+     * setTemperatureRange.
+     * </p>
+     *
+     * @param minTemperature a double
+     * @param maxTemperature a double
+     * @param numberOfSteps a int
+     */
     public void setTemperatureRange(double minTemperature, double maxTemperature,
             int numberOfSteps) {
         temperatures = new double[numberOfSteps];
@@ -66,6 +94,11 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         }
     }
 
+    /**
+     * <p>
+     * calcPhaseEnvelope.
+     * </p>
+     */
     public void calcPhaseEnvelope() {
         try {
             thermoOps.calcPTphaseEnvelope();
@@ -80,11 +113,18 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         // thermoOps.ge
     }
 
+    /**
+     * <p>
+     * calcBubP.
+     * </p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubP(double[] temperatures) {
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.bubblePointPressureFlash(false);
@@ -98,11 +138,18 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         return bubP;
     }
 
+    /**
+     * <p>
+     * calcDewP.
+     * </p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcDewP(double[] temperatures) {
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
         for (int i = 0; i < temperatures.length; i++) {
-
             thermoSystem.setTemperature(temperatures[i]);
             try {
                 thermoOps.dewPointPressureFlash();
@@ -116,11 +163,18 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         return dewP;
     }
 
+    /**
+     * <p>
+     * calcBubT.
+     * </p>
+     *
+     * @param pressures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubT(double[] pressures) {
         double[] bubT = new double[pressures.length];
         bubTLOG = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
-
             thermoSystem.setPressure(pressures[i]);
             try {
                 thermoOps.bubblePointTemperatureFlash();
@@ -134,8 +188,12 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         return bubT;
     }
 
+    /**
+     * <p>
+     * initCalc.
+     * </p>
+     */
     public void initCalc() {
-
         double standgasdens, standliqdens, TC, PC;
 
         molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -144,7 +202,6 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         components = new String[thermoSystem.getPhase(0).getNumberOfComponents()];
 
         for (int i = 0; i < molfracs.length; i++) {
-
             molfracs[i] = thermoSystem.getPhase(0).getComponent(i).getz();
             components[i] = thermoSystem.getPhase(0).getComponent(i).getComponentName();
             MW[i] = thermoSystem.getPhase(0).getComponent(i).getMolarMass() * 1000;
@@ -167,6 +224,11 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
 
     }
 
+    /**
+     * <p>
+     * calcRSWTOB.
+     * </p>
+     */
     public void calcRSWTOB() {
         thermoSystem.init(0);
         thermoSystem.init(1);
@@ -177,9 +239,9 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
-
         logger.info("Start creating arrays");
         calcRSWTOB();
         nProps = 29;
@@ -416,6 +478,7 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         initCalc();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
@@ -439,10 +502,16 @@ public class OLGApropertyTableGeneratorWaterKeywordFormat
         writeOLGAinpFile("");
     }
 
+    /**
+     * <p>
+     * writeOLGAinpFile.
+     * </p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile(String filename) {
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(
-                        "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
+                "C:/Users/Kjetil Raul/Documents/Master KRB/3phaseTables/testCrazyFluidKeyWaterCPA.tab"),
                 "utf-8"))) {
             writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = THREE"
                     + ",\\" + "\n");

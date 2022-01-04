@@ -7,35 +7,57 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>EquilibriumFluidBoundary class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class EquilibriumFluidBoundary
         extends neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundary {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
+     */
     public EquilibriumFluidBoundary() {}
 
+    /**
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public EquilibriumFluidBoundary(SystemInterface system) {
         super(system);
         interphaseOps = new ThermodynamicOperations(interphaseSystem);
         // interphaseOps.TPflash();
     }
 
+    /**
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
+     *
+     * @param flowNode a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public EquilibriumFluidBoundary(FlowNodeInterface flowNode) {
         super(flowNode);
         interphaseOps = new ThermodynamicOperations(interphaseSystem);
         // interphaseOps.TPflash();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void solve() {
         getInterphaseOpertions().TPflash();
         getBulkSystemOpertions().TPflash();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] calcFluxes() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfComponents(); i++) {
@@ -44,6 +66,11 @@ public class EquilibriumFluidBoundary
         return nFlux.getArray()[0];
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         System.out.println("Starter.....");

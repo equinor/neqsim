@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,10 +20,14 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemPrGassemEos extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemPrEos clonedSystem;
+    /**
+     * <p>
+     * Constructor for SystemPrGassemEos.
+     * </p>
+     */
     public SystemPrGassemEos() {
         super();
         modelName = "PR-Gassem-EOS";
@@ -35,6 +39,14 @@ public class SystemPrGassemEos extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPrGassemEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemPrGassemEos(double T, double P) {
         super(T, P);
         modelName = "PR-Gassem-EOS";
@@ -46,6 +58,15 @@ public class SystemPrGassemEos extends SystemPrEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemPrGassemEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemPrGassemEos(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "PR-Gassem-EOS";
@@ -77,6 +98,7 @@ public class SystemPrGassemEos extends SystemPrEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemPrGassemEos clone() {
         SystemPrGassemEos clonedSystem = null;
@@ -93,5 +115,4 @@ public class SystemPrGassemEos extends SystemPrEos {
 
         return clonedSystem;
     }
-
 }

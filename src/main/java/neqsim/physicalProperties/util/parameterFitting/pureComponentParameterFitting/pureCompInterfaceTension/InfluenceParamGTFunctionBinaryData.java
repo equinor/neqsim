@@ -9,25 +9,33 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * InfluenceParamGTFunctionBinaryData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(InfluenceParamGTFunctionBinaryData.class);
 
+    /**
+     * <p>
+     * Constructor for InfluenceParamGTFunctionBinaryData.
+     * </p>
+     */
     public InfluenceParamGTFunctionBinaryData() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(3);
         try {
-            thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(), "dewPointTemperature",
-                    system.getTemperature());
+            thermoOps.dewPointMach(system.getPhase(0).getComponent(1).getComponentName(),
+                    "dewPointTemperature", system.getTemperature());
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -35,8 +43,9 @@ public class InfluenceParamGTFunctionBinaryData extends LevenbergMarquardtFuncti
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         for (int kk = 0; kk < system.getPhase(0).getNumberOfComponents(); kk++) {
             system.getPhases()[0].getComponent(kk).setSurfTensInfluenceParam(i, value);

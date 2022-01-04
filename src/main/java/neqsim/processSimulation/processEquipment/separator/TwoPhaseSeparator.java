@@ -11,11 +11,14 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * TwoPhaseSeparator class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class TwoPhaseSeparator extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -24,24 +27,46 @@ public class TwoPhaseSeparator extends Separator {
     StreamInterface liquidOutStream;
     String name = new String();
 
-    /** Creates new Separator */
-    public TwoPhaseSeparator() {
-    }
+    /**
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
+     */
+    public TwoPhaseSeparator() {}
 
+    /**
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public TwoPhaseSeparator(StreamInterface inletStream) {
         this.setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public TwoPhaseSeparator(String name, StreamInterface inletStream) {
         this.name = name;
         this.setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         this.name = name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -55,26 +80,31 @@ public class TwoPhaseSeparator extends Separator {
         liquidOutStream = new Stream(liquidSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getGas() {
         return getGasOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -88,16 +118,20 @@ public class TwoPhaseSeparator extends Separator {
         liquidOutStream.setThermoSystem(liquidSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-    }
+    public void displayResult() {}
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
-    public void runTransient() {
-    }
-
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
+    public void runTransient() {}
 }

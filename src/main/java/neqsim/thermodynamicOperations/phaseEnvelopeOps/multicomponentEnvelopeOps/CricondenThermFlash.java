@@ -1,16 +1,22 @@
 /*
  * Cricondenbar point
  *
- * Created on 14. may 2019
- * by Nefeli
+ * Created on 14. may 2019 by Nefeli
  */
 package neqsim.thermodynamicOperations.phaseEnvelopeOps.multicomponentEnvelopeOps;
 
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * CricondenThermFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class CricondenThermFlash extends pTphaseEnvelope {
-
     private static final long serialVersionUID = 1000;
     int neq = 0;
     // double beta = 0;
@@ -46,11 +52,27 @@ public class CricondenThermFlash extends pTphaseEnvelope {
     // double [] cricondenBarX = new double [100] ;
     // double [] cricondenBarY = new double [100] ;
 
-    public CricondenThermFlash() {
-    }
+    /**
+     * <p>
+     * Constructor for CricondenThermFlash.
+     * </p>
+     */
+    public CricondenThermFlash() {}
 
-    public CricondenThermFlash(SystemInterface system, String name, double phaseFraction, double[] cricondenTherm,
-            double[] cricondenThermX, double[] cricondenThermY) {
+    /**
+     * <p>
+     * Constructor for CricondenThermFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     * @param phaseFraction a double
+     * @param cricondenTherm an array of {@link double} objects
+     * @param cricondenThermX an array of {@link double} objects
+     * @param cricondenThermY an array of {@link double} objects
+     */
+    public CricondenThermFlash(SystemInterface system, String name, double phaseFraction,
+            double[] cricondenTherm, double[] cricondenThermX, double[] cricondenThermY) {
         this.system = system;
         this.numberOfComponents = system.getPhase(0).getNumberOfComponents();
         u = new Matrix(numberOfComponents, 1); // this is the K values
@@ -60,9 +82,9 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         bubblePointFirst = false;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         // input values
         T = cricondenTherm[0];
         P = cricondenTherm[1];
@@ -88,18 +110,16 @@ public class CricondenThermFlash extends pTphaseEnvelope {
          * uold = u.copy(); init(); setNewK(); setNewX();
          * 
          * double sumK=0.; for (int i=0 ; i < numberOfComponents ; i++ ){ sumK=
-         * sumK+(uold.get(i,0)-u.get(i,0))*(uold.get(i,0)-u.get(i,0)); } if (iterX ==
-         * 10000 ){ ITERX=-1; u=uini.copy(); setNewX(); break; } if (sumK <= 1E-7){
-         * ITERX=iterX; setNewX(); break; } }
+         * sumK+(uold.get(i,0)-u.get(i,0))*(uold.get(i,0)-u.get(i,0)); } if (iterX == 10000 ){
+         * ITERX=-1; u=uini.copy(); setNewX(); break; } if (sumK <= 1E-7){ ITERX=iterX; setNewX();
+         * break; } }
          * 
          */
         // starting loops
         for (int iter = 0; iter < 1000; iter++) {
-
             // iter P
             // solve dQ/dP=0 with Newton method, numerical derivatives
             for (int iterP = 0; iterP <= 1000; iterP++) {
-
                 system.setTemperature(T);
                 system.setPressure(P);
                 init();
@@ -139,7 +159,6 @@ public class CricondenThermFlash extends pTphaseEnvelope {
             // iter T,X
             // solve Q=0 with Newton method, numerical derivatives
             for (int iterT = 0; iterT <= 10000; iterT++) {
-
                 system.setTemperature(T);
                 system.setPressure(P);
 
@@ -187,41 +206,43 @@ public class CricondenThermFlash extends pTphaseEnvelope {
 
             if (Math.abs(dfuncdP) <= 1E-7 && Math.abs(funcT) <= 1E-7 && Math.abs(dfuncdT) >= 1E-7) {
                 /*
-                 * System.out.println("T        :  " + T); System.out.println("P        :  " +
-                 * P); System.out.println("dfuncdT  :  " + dfuncdT);
-                 * System.out.println("dfuncdP  :  " + dfuncdP);
-                 * System.out.println("funcT    :  " + funcT); System.out.println("funcP    :  "
-                 * + funcP);
+                 * System.out.println("T        :  " + T); System.out.println("P        :  " + P);
+                 * System.out.println("dfuncdT  :  " + dfuncdT); System.out.println("dfuncdP  :  " +
+                 * dfuncdP); System.out.println("funcT    :  " + funcT);
+                 * System.out.println("funcP    :  " + funcP);
                  * 
-                 * System.out.println(ITERX); System.out.println(ITER);
-                 * System.out.println(ITERT); System.out.println(ITERP);
+                 * System.out.println(ITERX); System.out.println(ITER); System.out.println(ITERT);
+                 * System.out.println(ITERP);
                  */
 
                 cricondenTherm[0] = T;
                 cricondenTherm[1] = P;
 
                 break;
-            } else if (Math.abs(dfuncdP) <= 1E-7 && Math.abs(funcT) <= 1E-7 && Math.abs(dfuncdT) <= 1E-7) {
+            } else if (Math.abs(dfuncdP) <= 1E-7 && Math.abs(funcT) <= 1E-7
+                    && Math.abs(dfuncdT) <= 1E-7) {
                 T = -1;
                 P = -1;
                 /*
-                 * System.out.println("T        :  " + T); System.out.println("P        :  " +
-                 * P); System.out.println("dfuncdT  :  " + dfuncdT);
-                 * System.out.println("dfuncdP  :  " + dfuncdP);
-                 * System.out.println("funcT    :  " + funcT); System.out.println("funcP    :  "
-                 * + funcP);
+                 * System.out.println("T        :  " + T); System.out.println("P        :  " + P);
+                 * System.out.println("dfuncdT  :  " + dfuncdT); System.out.println("dfuncdP  :  " +
+                 * dfuncdP); System.out.println("funcT    :  " + funcT);
+                 * System.out.println("funcP    :  " + funcP);
                  */
                 cricondenTherm[0] = T;
                 cricondenTherm[1] = P;
 
                 break;
             }
-
         }
     }
 
+    /**
+     * <p>
+     * setNewK.
+     * </p>
+     */
     public void setNewK() {
-
         for (int j = 0; j < numberOfComponents; j++) {
             double kap = system.getPhase(0).getComponent(j).getFugasityCoeffisient()
                     / system.getPhase(1).getComponent(j).getFugasityCoeffisient();
@@ -230,6 +251,11 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>
+     * setNewX.
+     * </p>
+     */
     public void setNewX() {
         double sumx = 0.;
         double sumy = 0.;
@@ -242,10 +268,11 @@ public class CricondenThermFlash extends pTphaseEnvelope {
             yy[j] = system.getPhase(1).getComponents()[j].getz() * u.get(j, 0)
                     / (1.0 - system.getBeta() + system.getBeta() * u.get(j, 0));
 
-            xx[j] = system.getPhase(0).getComponents()[j].getz()
-                    / (1.0 - system.getBeta() + system.getBeta() * system.getPhase(0).getComponents()[j].getK());
-            yy[j] = system.getPhase(1).getComponents()[j].getz() * system.getPhase(0).getComponents()[j].getK()
-                    / (1.0 - system.getBeta() + system.getBeta() * system.getPhase(0).getComponents()[j].getK());
+            xx[j] = system.getPhase(0).getComponents()[j].getz() / (1.0 - system.getBeta()
+                    + system.getBeta() * system.getPhase(0).getComponents()[j].getK());
+            yy[j] = system.getPhase(1).getComponents()[j].getz()
+                    * system.getPhase(0).getComponents()[j].getK() / (1.0 - system.getBeta()
+                            + system.getBeta() * system.getPhase(0).getComponents()[j].getK());
 
             sumx = sumx + xx[j];
             sumy = sumy + yy[j];
@@ -259,17 +286,25 @@ public class CricondenThermFlash extends pTphaseEnvelope {
             yy[j] = system.getPhase(1).getComponents()[j].getx();
 
         }
-
     }
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     */
     public void init() {
         // setNewX();
         system.init(3);
 
     }
 
+    /**
+     * <p>
+     * funcT.
+     * </p>
+     */
     public void funcT() {
-
         funcT = -1.0;
         dfuncdT = 0.0;
 
@@ -295,8 +330,12 @@ public class CricondenThermFlash extends pTphaseEnvelope {
         }
     }
 
+    /**
+     * <p>
+     * funcP.
+     * </p>
+     */
     public void funcP() {
-
         funcP = -1.0;
         dfuncdP = 0.0;
 
@@ -315,5 +354,4 @@ public class CricondenThermFlash extends pTphaseEnvelope {
 
         }
     }
-
 }

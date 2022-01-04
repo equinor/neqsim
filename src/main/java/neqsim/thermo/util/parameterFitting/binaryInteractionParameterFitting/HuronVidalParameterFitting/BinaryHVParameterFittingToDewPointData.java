@@ -5,26 +5,41 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * BinaryHVParameterFittingToDewPointData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingToDewPointData.class);
 
     int phase = 1;
     int type = 1;
 
-
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingToDewPointData.
+     * </p>
+     */
     public BinaryHVParameterFittingToDewPointData() {}
 
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingToDewPointData.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public BinaryHVParameterFittingToDewPointData(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -33,18 +48,19 @@ public class BinaryHVParameterFittingToDewPointData extends HuronVidalFunction {
             } else {
                 thermoOps.freezingPointTemperatureFlash();
             }
-
         } catch (Exception e) {
             logger.error("err dew pont");
         }
         return system.getTemperature();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

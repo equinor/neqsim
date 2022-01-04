@@ -12,18 +12,25 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestBinaryWSParameterFittingToSolubilityData_Lucia class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestBinaryWSParameterFittingToSolubilityData_Lucia {
-
     static Logger logger =
             LogManager.getLogger(TestBinaryWSParameterFittingToSolubilityData_Lucia.class);
 
-
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

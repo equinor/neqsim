@@ -9,20 +9,26 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentDefault class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ComponentDefault extends Component {
-
     private static final long serialVersionUID = 1000;
 
-    public ComponentDefault() {
-    }
+    /**
+     * <p>
+     * Constructor for ComponentDefault.
+     * </p>
+     */
+    public ComponentDefault() {}
 
+    /** {@inheritDoc} */
     @Override
-	public double fugcoef(PhaseInterface phase) {
+    public double fugcoef(PhaseInterface phase) {
         return 0.0;
     }
-
 }

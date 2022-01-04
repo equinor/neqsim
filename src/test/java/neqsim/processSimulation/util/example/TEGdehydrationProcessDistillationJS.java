@@ -17,6 +17,13 @@ import neqsim.processSimulation.processEquipment.util.SetPoint;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
+/**
+ * <p>TEGdehydrationProcessDistillationJS class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TEGdehydrationProcessDistillationJS {
     /**
      * The flow rate of gas from the scrubber controlling the dew point (MSm3/hr)
@@ -143,8 +150,16 @@ public class TEGdehydrationProcessDistillationJS {
      */
     public double coldTEGpumpIsentropicEfficiency = 0.75;
 
+    /**
+     * <p>Constructor for TEGdehydrationProcessDistillationJS.</p>
+     */
     public TEGdehydrationProcessDistillationJS() {}
 
+    /**
+     * <p>getProcess.</p>
+     *
+     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+     */
     public neqsim.processSimulation.processSystem.ProcessSystem getProcess() {
         // Create the input fluid to the TEG process and saturate it with water at
         // scrubber conditions
@@ -402,6 +417,11 @@ public class TEGdehydrationProcessDistillationJS {
         return operations;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         TEGdehydrationProcessDistillationJS tempClass = new TEGdehydrationProcessDistillationJS();
         neqsim.processSimulation.processSystem.ProcessSystem operations = tempClass.getProcess();

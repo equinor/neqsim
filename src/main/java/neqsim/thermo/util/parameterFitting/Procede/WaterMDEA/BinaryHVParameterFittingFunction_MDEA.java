@@ -7,25 +7,40 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * BinaryHVParameterFittingFunction_MDEA class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(BinaryHVParameterFittingFunction_MDEA.class);
 
-
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingFunction_MDEA.
+     * </p>
+     */
     public BinaryHVParameterFittingFunction_MDEA() {}
 
+    /**
+     * <p>
+     * Constructor for BinaryHVParameterFittingFunction_MDEA.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public BinaryHVParameterFittingFunction_MDEA(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         double aMDEAold, aWaterold, aMDEAnew, aWaternew, daMDEAdT, daWaterdT, H;
@@ -79,11 +94,13 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
         return (0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return (val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -127,7 +144,6 @@ public class BinaryHVParameterFittingFunction_MDEA extends LevenbergMarquardtFun
             ((HVmixingRuleInterface) ((PhaseEosInterface) system.getPhases()[1]).getMixingRule())
                     .setHVDijTParameter(1, 0, value);
         }
-
     }
 
 }

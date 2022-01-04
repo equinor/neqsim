@@ -10,25 +10,42 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * Density class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class Density
-        extends neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
-        implements neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
-
+public class Density extends
+        neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
+        implements
+        neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
-    /** Creates new Density */
-    public Density() {
-    }
+    /**
+     * <p>
+     * Constructor for Density.
+     * </p>
+     */
+    public Density() {}
 
-    public Density(neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
+    /**
+     * <p>
+     * Constructor for Density.
+     * </p>
+     *
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
+    public Density(
+            neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         this.solidPhase = liquidPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Density clone() {
         Density properties = null;
@@ -43,11 +60,12 @@ public class Density
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Returns the density of the phase. Unit: kg/m^3
      */
     @Override
-	public double calcDensity() {
-
+    public double calcDensity() {
         double tempVar = 0.0;
         if (solidPhase.getPhase().useVolumeCorrection()) {
             for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -58,6 +76,7 @@ public class Density
             }
         }
         // System.out.println("density correction tempvar " + tempVar);
-        return 1.0 / (solidPhase.getPhase().getMolarVolume() - tempVar) * solidPhase.getPhase().getMolarMass() * 1e5;
+        return 1.0 / (solidPhase.getPhase().getMolarVolume() - tempVar)
+                * solidPhase.getPhase().getMolarMass() * 1e5;
     }
 }

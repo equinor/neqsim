@@ -12,11 +12,14 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
+ * <p>
+ * Adjuster class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
@@ -31,19 +34,50 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     static Logger logger = LogManager.getLogger(Adjuster.class);
 
-    /** Creates new staticMixer */
+    /**
+     * <p>
+     * Constructor for Adjuster.
+     * </p>
+     */
     public Adjuster() {}
 
+    /**
+     * <p>
+     * Constructor for Adjuster.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public Adjuster(String name) {
         super(name);
     }
 
+    /**
+     * <p>
+     * setAdjustedVariable.
+     * </p>
+     *
+     * @param adjustedEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param adjstedVariable a {@link java.lang.String} object
+     */
     public void setAdjustedVariable(ProcessEquipmentInterface adjustedEquipment,
             String adjstedVariable) {
         this.adjustedEquipment = adjustedEquipment;
         this.adjustedVarialble = adjstedVariable;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param targetValue a double
+     * @param targetUnit a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
             double targetValue, String targetUnit) {
         this.targetEquipment = targetEquipment;
@@ -52,6 +86,18 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         this.targetUnit = targetUnit;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param targetValue a double
+     * @param targetUnit a {@link java.lang.String} object
+     * @param targetPhase a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
             double targetValue, String targetUnit, String targetPhase) {
         this.targetEquipment = targetEquipment;
@@ -61,6 +107,19 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         this.targetPhase = targetPhase;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>targetVariable</code>.
+     * </p>
+     *
+     * @param targetEquipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param targetVariable a {@link java.lang.String} object
+     * @param targetValue a double
+     * @param targetUnit a {@link java.lang.String} object
+     * @param targetPhase a {@link java.lang.String} object
+     * @param targetComponent a {@link java.lang.String} object
+     */
     public void setTargetVariable(ProcessEquipmentInterface targetEquipment, String targetVariable,
             double targetValue, String targetUnit, String targetPhase, String targetComponent) {
         this.targetEquipment = targetEquipment;
@@ -71,10 +130,16 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         this.targetComponent = targetComponent;
     }
 
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
     public void runTransient() {
         run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         oldError = error;
@@ -134,6 +199,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         oldInputValue = inputValue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean solved() {
         if (Math.abs(error) < tolerance)
@@ -142,16 +208,26 @@ public class Adjuster extends ProcessEquipmentBaseClass {
             return false;
     }
 
+    /** {@inheritDoc} */
     @Override
-    public void displayResult() {
+    public void displayResult() {}
 
-    }
-
+    /**
+     * <p>
+     * Getter for the field <code>tolerance</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTolerance() {
         return tolerance;
     }
 
     /**
+     * <p>
+     * Setter for the field <code>tolerance</code>.
+     * </p>
+     *
      * @param tolerance the tolerance to set
      */
     public void setTolerance(double tolerance) {
@@ -159,6 +235,10 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>error</code>.
+     * </p>
+     *
      * @return the error
      */
     public double getError() {
@@ -166,12 +246,23 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>error</code>.
+     * </p>
+     *
      * @param error the error to set
      */
     public void setError(double error) {
         this.error = error;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // test code for adjuster...
         neqsim.thermo.system.SystemInterface testSystem =
@@ -193,12 +284,25 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         operations.run();
     }
 
+    /**
+     * <p>
+     * isActivateWhenLess.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean isActivateWhenLess() {
         return activateWhenLess;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>activateWhenLess</code>.
+     * </p>
+     *
+     * @param activateWhenLess a boolean
+     */
     public void setActivateWhenLess(boolean activateWhenLess) {
         this.activateWhenLess = activateWhenLess;
     }
-
 }

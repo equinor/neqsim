@@ -10,9 +10,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author esol @version
  */
+/**
+ * <p>TestmercuryTPflash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestmercuryTPflash {
     static Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkTwuCoonStatoilEos(273.15 - 172.0, 1.0);
 

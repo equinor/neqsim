@@ -4,9 +4,18 @@ import neqsim.thermo.ThermodynamicModelTest;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * <p>ConsistencyTest class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class ConsistencyTest {
     /**
      * A easy implementation to test a thermodyanmic model
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(310.0, 10);

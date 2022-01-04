@@ -12,16 +12,23 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Jamal class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Jamal {
     static Logger logger = LogManager.getLogger(Jamal.class);
 
+    /**
+     * <p>Constructor for Jamal.</p>
+     */
     public Jamal() {
     }
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {

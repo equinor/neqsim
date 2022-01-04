@@ -10,11 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * SampleValue class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class SampleValue implements Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     protected FunctionInterface testFunction;
@@ -33,10 +36,22 @@ public class SampleValue implements Cloneable {
      */
     double[] standardDeviations;
 
-    /** Creates new SampleValue */
-    public SampleValue() {
-    }
+    /**
+     * <p>
+     * Constructor for SampleValue.
+     * </p>
+     */
+    public SampleValue() {}
 
+    /**
+     * <p>
+     * Constructor for SampleValue.
+     * </p>
+     *
+     * @param sampleValue a double
+     * @param standardDeviation a double
+     * @param dependentValues an array of {@link double} objects
+     */
     public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues) {
         this.dependentValues = new double[dependentValues.length];
         this.sampleValue = sampleValue;
@@ -44,12 +59,23 @@ public class SampleValue implements Cloneable {
         System.arraycopy(dependentValues, 0, this.dependentValues, 0, dependentValues.length);
     }
 
+    /**
+     * <p>
+     * Constructor for SampleValue.
+     * </p>
+     *
+     * @param sampleValue a double
+     * @param standardDeviation a double
+     * @param dependentValues an array of {@link double} objects
+     * @param standardDeviations an array of {@link double} objects
+     */
     public SampleValue(double sampleValue, double standardDeviation, double[] dependentValues,
             double[] standardDeviations) {
         this(sampleValue, standardDeviation, dependentValues);
         this.standardDeviations = standardDeviations;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SampleValue clone() {
         SampleValue clonedValue = null;
@@ -62,56 +88,130 @@ public class SampleValue implements Cloneable {
         // clonedValue.system = (SystemInterface) system.clone();
         clonedValue.testFunction = (FunctionInterface) testFunction.clone();
         clonedValue.dependentValues = this.dependentValues.clone();
-        System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0, dependentValues.length);
+        System.arraycopy(dependentValues, 0, clonedValue.dependentValues, 0,
+                dependentValues.length);
 
         return clonedValue;
     }
 
+    /**
+     * <p>
+     * setThermodynamicSystem.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public void setThermodynamicSystem(SystemInterface system) {
         this.system = system;// (SystemInterface) system.clone();
         thermoOps = new ThermodynamicOperations(system);
         this.getFunction().setThermodynamicSystem(this.system);
     }
 
+    /**
+     * <p>
+     * setFunction.
+     * </p>
+     *
+     * @param function a {@link neqsim.statistics.parameterFitting.BaseFunction} object
+     */
     public void setFunction(BaseFunction function) {
         testFunction = function;
     }
 
+    /**
+     * <p>
+     * getFunction.
+     * </p>
+     *
+     * @return a {@link neqsim.statistics.parameterFitting.FunctionInterface} object
+     */
     public FunctionInterface getFunction() {
         return testFunction;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>standardDeviation</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getStandardDeviation() {
         return standardDeviation;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>standardDeviation</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getStandardDeviation(int i) {
         return standardDeviations[i];
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>sampleValue</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getSampleValue() {
         return sampleValue;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dependentValues</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getDependentValues() {
         return dependentValues;
     }
 
+    /**
+     * <p>
+     * getDependentValue.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getDependentValue(int i) {
         return dependentValues[i];
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dependentValues</code>.
+     * </p>
+     *
+     * @param vals an array of {@link double} objects
+     */
     public void setDependentValues(double[] vals) {
         System.arraycopy(vals, 0, this.dependentValues, 0, dependentValues.length);
     }
 
+    /**
+     * <p>
+     * setDependentValue.
+     * </p>
+     *
+     * @param i a int
+     * @param val a double
+     */
     public void setDependentValue(int i, double val) {
         this.dependentValues[i] = val;
     }
 
     /**
      * Getter for property reference.
-     * 
+     *
      * @return Value of property reference.
      */
     public java.lang.String getReference() {
@@ -120,7 +220,7 @@ public class SampleValue implements Cloneable {
 
     /**
      * Setter for property reference.
-     * 
+     *
      * @param reference New value of property reference.
      */
     public void setReference(java.lang.String reference) {
@@ -129,7 +229,7 @@ public class SampleValue implements Cloneable {
 
     /**
      * Getter for property description.
-     * 
+     *
      * @return Value of property description.
      */
     public java.lang.String getDescription() {
@@ -138,7 +238,7 @@ public class SampleValue implements Cloneable {
 
     /**
      * Setter for property description.
-     * 
+     *
      * @param description New value of property description.
      */
     public void setDescription(java.lang.String description) {

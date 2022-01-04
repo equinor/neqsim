@@ -9,12 +9,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>OffshoreProcess2 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class OffshoreProcess2 {
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     @SuppressWarnings("unused")
-
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPA(273.15 + 20.0, 31.0);
         // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15+20.0,

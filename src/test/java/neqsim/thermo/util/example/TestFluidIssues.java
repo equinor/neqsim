@@ -6,11 +6,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>TestFluidIssues class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestFluidIssues {
     static Logger logger = LogManager.getLogger(TestFluidIssues.class);
 
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkEos(303.15, 10.01325);

@@ -4,18 +4,26 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * EosInteractionParameterFittingFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for EosInteractionParameterFittingFunction.
+     * </p>
+     */
     public EosInteractionParameterFittingFunction() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         double calcK = 0;
@@ -41,6 +49,7 @@ public class EosInteractionParameterFittingFunction extends LevenbergMarquardtFu
         return diff;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

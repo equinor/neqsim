@@ -8,6 +8,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>GORfitter class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class GORfitter extends ProcessEquipmentBaseClass {
 	private static final long serialVersionUID = 1000;
 
@@ -19,12 +25,17 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 	String unitT = "C", unitP = "bara";
 
 	/**
-     * Creates a new instance of GORfitter
-     */
+	 * Creates a new instance of GORfitter
+	 */
 	public GORfitter() {
         this.name = "GOR fitter";
 	}
 
+	/**
+	 * <p>Constructor for GORfitter.</p>
+	 *
+	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public GORfitter(StreamInterface stream) {
 		this();
 		name = "GOR fitter";
@@ -32,11 +43,22 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		this.outletStream = (StreamInterface) stream.clone();
 	}
 
+	/**
+	 * <p>Constructor for GORfitter.</p>
+	 *
+	 * @param name a {@link java.lang.String} object
+	 * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public GORfitter(String name, StreamInterface stream) {
 		this(stream);
 		this.name = name;
 	}
 
+	/**
+	 * <p>Setter for the field <code>inletStream</code>.</p>
+	 *
+	 * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public void setInletStream(StreamInterface inletStream) {
 		this.inletStream = inletStream;
 		try {
@@ -46,28 +68,56 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		}
 	}
 
+	/**
+	 * <p>getOutStream.</p>
+	 *
+	 * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+	 */
 	public StreamInterface getOutStream() {
 		return outletStream;
 	}
 
+	/**
+	 * <p>Getter for the field <code>pressure</code>.</p>
+	 *
+	 * @return a double
+	 */
 	public double getPressure() {
 		return pressure;
 	}
 
+	/**
+	 * <p>Setter for the field <code>pressure</code>.</p>
+	 *
+	 * @param pressure a double
+	 * @param unitP a {@link java.lang.String} object
+	 */
 	public void setPressure(double pressure, String unitP) {
 		this.pressure = pressure;
 		this.unitP = unitP;
 	}
 
+	/**
+	 * <p>getTemperautre.</p>
+	 *
+	 * @return a double
+	 */
 	public double getTemperautre() {
 		return pressure;
 	}
 
+	/**
+	 * <p>Setter for the field <code>temperature</code>.</p>
+	 *
+	 * @param temperature a double
+	 * @param unitT a {@link java.lang.String} object
+	 */
 	public void setTemperature(double temperature, String unitT) {
 		this.temperature = temperature;
 		this.unitT = unitT;
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public void run() {
 		SystemInterface tempFluid = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -112,6 +162,11 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		return;
 	}
 
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 */
 	public static void main(String[] args) {
 		SystemInterface testFluid = new SystemSrkEos(338.15, 50.0);
 		testFluid.addComponent("nitrogen", 1.205);
@@ -161,10 +216,20 @@ public class GORfitter extends ProcessEquipmentBaseClass {
 		System.out.println("stream_2 flow " + stream_2.getFlowRate("kg/hr"));
 	}
 
+	/**
+	 * <p>getGOR.</p>
+	 *
+	 * @return a double
+	 */
 	public double getGOR() {
 		return GOR;
 	}
 
+	/**
+	 * <p>setGOR.</p>
+	 *
+	 * @param gOR a double
+	 */
 	public void setGOR(double gOR) {
         this.GOR = gOR;
 	}

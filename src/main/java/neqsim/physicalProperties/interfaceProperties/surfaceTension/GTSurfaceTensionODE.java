@@ -13,16 +13,21 @@ import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * @brief ODE-system for integrating the surface tension in cases where the a reference component
- *        number mole density can be used as integration variable.
+ * <p>
+ * GTSurfaceTensionODE class.
  *
- *        This method can only be used when the reference component density varies monotonically
- *        over the interface, and where there are no binary interaction parameters for the
- *        attractive parameter in the EOS.
- * @author Olaf Trygve Berglihn <olaf.trygve.berglihn@sintef.no>
+ * ODE-system for integrating the surface tension in cases where the a reference component number
+ * mole density can be used as integration variable.
+ *
+ * This method can only be used when the reference component density varies monotonically over the
+ * interface, and where there are no binary interaction parameters for the attractive parameter in
+ * the EOS.
+ * </p>
+ *
+ * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
+ * @version $Id: $Id
  */
 public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionODE.class);
 
@@ -47,6 +52,17 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     public double abstol = 1e-6;
     public int maxit = 40;
 
+    /**
+     * <p>
+     * Constructor for GTSurfaceTensionODE.
+     * </p>
+     *
+     * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phase1 a int
+     * @param phase2 a int
+     * @param referenceComponent a int
+     * @param yscale a double
+     */
     public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2,
             int referenceComponent, double yscale) {
         int i, idx = 0;
@@ -137,6 +153,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Return the dimension of the ODE problem to the solver.
      */
     @Override
@@ -145,11 +163,9 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     }
 
     /**
-     * Compute the ODE differential ydot = f(t, y)
+     * {@inheritDoc}
      *
-     * @param t normalized density of the reference component
-     * @param y scaled surface tension
-     * @param yDot scaled surface tension differential
+     * Compute the ODE differential ydot = f(t, y)
      */
     @Override
     public void computeDerivatives(double t, double[] y, double[] yDot) {
@@ -226,13 +242,12 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             y[0] = 0.0;
             // throw new RuntimeException("Negative surface tension.");
         }
-
     }
 
     /**
-     * @brief Solve for the equilibrium density in the interface.
+     * SolveRho. Solve for the equilibrium density in the interface.
      *
-     *        Solves the equilibrium relations with the Newton-Raphson method.
+     * Solves the equilibrium relations with the Newton-Raphson method.
      * 
      * @param[in,out] rho Number density [mol/m3]
      * @param[out] mu Chemical potential [J/mol]
@@ -243,7 +258,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      */
     private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
             double[][] jac) {
-
         double normf, norm0, norm, rho_ref, s;
         int i, j, k, iter;
         DMatrixRMaj A = new DMatrixRMaj(this.ncomp - 1, this.ncomp - 1);
@@ -297,7 +311,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             double delta;
 
             for (i = 0; i < this.ncomp - 1; i++) {
-
                 delta = x.get(i, 0);
                 if ((rho[this.algidx[i]] + s * delta) < 0) {
                     s = Math.min(s, -0.5 * rho[this.algidx[i]] / delta);
@@ -305,7 +318,6 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
                 }
             }
             for (i = 0; i < this.ncomp - 1; i++) {
-
                 delta = x.get(i, 0);
                 rho[this.algidx[i]] += s * delta;
                 x0.set(i, 0, rho[this.algidx[i]]);
@@ -337,16 +349,15 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
             }
             throw new RuntimeException("Failed to solve for density");
         }
-
     }
 
     /**
      * Residual function for the algebraic equilibrium equations.
      *
-     * @param[in] mu Chemical potential
-     * @param[in] dmu_drho Chemical potential derivative with respect to component number density.
-     * @param[out] f Residual function.
-     * @param[out] jac Redidual function Jacobian.
+     * @param mu an array of {@link double} objects
+     * @param dmu_drho an array of {@link double} objects
+     * @param f an array of {@link double} objects
+     * @param jac an array of {@link double} objects
      */
     public void fjacfun(double[] mu, double[][] dmu_drho, double[] f, double[][] jac) {
         int i, j;

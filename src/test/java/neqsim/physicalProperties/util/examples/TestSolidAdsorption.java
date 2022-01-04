@@ -7,12 +7,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>TestSolidAdsorption class.</p>
  *
  * @author esol //
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class TestSolidAdsorption {
     static Logger logger = LogManager.getLogger(TestSolidAdsorption.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(288.15, 1.4);
         testSystem.addComponent("methane", 1.0);

@@ -12,24 +12,41 @@ import neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalPropertie
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * LiquidPhysicalProperties class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-public class LiquidPhysicalProperties extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
-
+public class LiquidPhysicalProperties
+        extends neqsim.physicalProperties.physicalPropertySystem.PhysicalProperties {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LiquidPhysicalProperties.class);
 
-    public LiquidPhysicalProperties() {
-    }
+    /**
+     * <p>
+     * Constructor for LiquidPhysicalProperties.
+     * </p>
+     */
+    public LiquidPhysicalProperties() {}
 
+    /**
+     * <p>
+     * Constructor for LiquidPhysicalProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public LiquidPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
         // conductivityCalc = new Conductivity(this);
-        conductivityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
-                this);
+        conductivityCalc =
+                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
+                        this);
         // viscosityCalc = new Viscosity(this);
         // viscosityCalc = new
         // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.FrictionTheoryViscosityMethod(this);
@@ -37,15 +54,17 @@ public class LiquidPhysicalProperties extends neqsim.physicalProperties.physical
         // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodMod86(this);
         // viscosityCalc = new
         // neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.LBCViscosityMethod(this);
-        viscosityCalc = new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
-                this);
+        viscosityCalc =
+                new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.viscosity.PFCTViscosityMethodHeavyOil(
+                        this);
 
         diffusivityCalc = new SiddiqiLucasMethod(this);
         densityCalc = new Density(this);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public LiquidPhysicalProperties clone() {
+    public LiquidPhysicalProperties clone() {
         LiquidPhysicalProperties properties = null;
 
         try {
@@ -55,5 +74,4 @@ public class LiquidPhysicalProperties extends neqsim.physicalProperties.physical
         }
         return properties;
     }
-
 }

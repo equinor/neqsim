@@ -16,8 +16,10 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>OLGApropertyTableGeneratorWaterStudents class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class OLGApropertyTableGeneratorWaterStudents
         extends neqsim.thermodynamicOperations.BaseOperation {
@@ -61,6 +63,11 @@ public class OLGApropertyTableGeneratorWaterStudents
     Matrix s = new Matrix(1, 4);
     String fileName = "c:/Appl/OLGAneqsim.tab";
 
+    /**
+     * <p>Constructor for OLGApropertyTableGeneratorWaterStudents.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public OLGApropertyTableGeneratorWaterStudents(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -88,10 +95,22 @@ public class OLGApropertyTableGeneratorWaterStudents
         oilSystem.setNumberOfPhases(1);
     }
 
+    /**
+     * <p>Setter for the field <code>fileName</code>.</p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setFileName(String name) {
         fileName = name;
     }
 
+    /**
+     * <p>setPressureRange.</p>
+     *
+     * @param minPressure a double
+     * @param maxPressure a double
+     * @param numberOfSteps a int
+     */
     public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
         pressures = new double[numberOfSteps];
         pressureLOG = new double[numberOfSteps];
@@ -102,6 +121,13 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
     }
 
+    /**
+     * <p>setTemperatureRange.</p>
+     *
+     * @param minTemperature a double
+     * @param maxTemperature a double
+     * @param numberOfSteps a int
+     */
     public void setTemperatureRange(double minTemperature, double maxTemperature,
             int numberOfSteps) {
         temperatures = new double[numberOfSteps];
@@ -113,6 +139,9 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
     }
 
+    /**
+     * <p>calcPhaseEnvelope.</p>
+     */
     public void calcPhaseEnvelope() {
         try {
             thermoOps.calcPTphaseEnvelope();
@@ -123,6 +152,12 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
     }
 
+    /**
+     * <p>calcBubP.</p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubP(double[] temperatures) {
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
@@ -141,6 +176,12 @@ public class OLGApropertyTableGeneratorWaterStudents
         return bubP;
     }
 
+    /**
+     * <p>calcDewP.</p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcDewP(double[] temperatures) {
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
@@ -160,6 +201,12 @@ public class OLGApropertyTableGeneratorWaterStudents
         return dewP;
     }
 
+    /**
+     * <p>calcBubT.</p>
+     *
+     * @param pressures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubT(double[] pressures) {
         double[] bubTemps = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
@@ -175,6 +222,9 @@ public class OLGApropertyTableGeneratorWaterStudents
         return bubTemps;
     }
 
+    /**
+     * <p>initCalc.</p>
+     */
     public void initCalc() {
         double stdTemp = 288.15, stdPres = 1.01325;
         double GOR, GLR, standgasdens, standliqdens, TC, PC;
@@ -199,6 +249,9 @@ public class OLGApropertyTableGeneratorWaterStudents
         GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
     }
 
+    /**
+     * <p>calcRSWTOB.</p>
+     */
     public void calcRSWTOB() {
         thermoSystem.init(0);
         thermoSystem.init(1);
@@ -211,6 +264,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     @SuppressWarnings("empty-statement")
     public void run() {
@@ -1256,6 +1310,7 @@ public class OLGApropertyTableGeneratorWaterStudents
         // logger.info("interpolated value " + funcGasDens.value(40, 298.0));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         // logger.info("TC " + TC + " PC " + PC);
@@ -1269,6 +1324,11 @@ public class OLGApropertyTableGeneratorWaterStudents
         writeOLGAinpFile(fileName);
     }
 
+    /**
+     * <p>writeOLGAinpFile2.</p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile2(String filename) {
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
@@ -1353,6 +1413,11 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
     }
 
+    /**
+     * <p>writeOLGAinpFile.</p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile(String filename) {
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
@@ -1831,6 +1896,9 @@ public class OLGApropertyTableGeneratorWaterStudents
         }
     }
 
+    /**
+     * <p>extrapolateTable.</p>
+     */
     public void extrapolateTable() {
         for (int j = 0; j < temperatures.length; j++) {
             for (int i = 0; i < pressures.length; i++) {

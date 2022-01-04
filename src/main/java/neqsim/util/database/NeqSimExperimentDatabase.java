@@ -1,10 +1,5 @@
 package neqsim.util.database;
 
-/*
- * testPointbase.java
- *
- * Created on 1. november 2001, 08:56
- */
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -14,13 +9,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * NeqSimExperimentDatabase class.
+ * </p>
+ *
  * @author Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimExperimentDatabase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
+     * <p>
+     * createTemporaryTables.
+     * </p>
+     *
      * @return the createTemporaryTables
      */
     public boolean createTemporaryTables() {
@@ -28,6 +30,10 @@ public class NeqSimExperimentDatabase
     }
 
     /**
+     * <p>
+     * Setter for the field <code>createTemporaryTables</code>.
+     * </p>
+     *
      * @param createTemporaryTables the createTemporaryTables to set
      */
     public void setCreateTemporaryTables(boolean createTemporaryTables) {
@@ -35,12 +41,21 @@ public class NeqSimExperimentDatabase
     }
 
     private static final long serialVersionUID = 1000;
+    /** Constant <code>dataBasePath=""</code> */
     public static String dataBasePath = "";
+    /** Constant <code>username=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
+    /** Constant <code>password=""</code> */
     public static String username = "", password = "";
     static Logger logger = LogManager.getLogger(NeqSimExperimentDatabase.class);
     private static boolean createTemporaryTables = false;
 
     private static String dataBaseType = "MSAccessUCanAccess";
+    /** Constant <code>connectionString="jdbc:ucanaccess://C:/Users/esol/OneDriv"{trunked}</code> */
     public static String connectionString =
             "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
 
@@ -48,10 +63,11 @@ public class NeqSimExperimentDatabase
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimExperimentDatabase.
+     * </p>
      */
     public NeqSimExperimentDatabase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -65,7 +81,13 @@ public class NeqSimExperimentDatabase
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>
+     * openConnection.
+     * </p>
+     *
+     * @return a Connection object
+     * @throws java.sql.SQLException if any.
+     * @throws java.lang.ClassNotFoundException if any.
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
         javax.naming.InitialContext ctx = null;
@@ -101,10 +123,25 @@ public class NeqSimExperimentDatabase
         }
     }
 
+    /**
+     * <p>
+     * getConnection.
+     * </p>
+     *
+     * @return a Connection object
+     */
     public Connection getConnection() {
         return databaseConnection;
     }
 
+    /**
+     * <p>
+     * getResultSet.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     * @return a ResultSet object
+     */
     public ResultSet getResultSet(String sqlString) {
         try {
             ResultSet result = getStatement().executeQuery(sqlString);
@@ -115,6 +152,13 @@ public class NeqSimExperimentDatabase
         }
     }
 
+    /**
+     * <p>
+     * execute.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     */
     public void execute(String sqlString) {
         try {
             if (databaseConnection == null) {
@@ -129,14 +173,36 @@ public class NeqSimExperimentDatabase
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public static String getDataBaseType() {
         return dataBaseType;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType) {
         setDataBaseType(aDataBaseType, null);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     * @param connectionString a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType, String connectionString) {
         dataBaseType = aDataBaseType;
 
@@ -176,17 +242,35 @@ public class NeqSimExperimentDatabase
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
+     *
+     * @return a Statement object
+     */
     public Statement getStatement() {
         return statement;
 
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
+     *
+     * @param statement a Statement object
+     */
     public void setStatement(Statement statement) {
         this.statement = statement;
 
     }
 
     /**
+     * <p>
+     * Setter for the field <code>username</code>.
+     * </p>
+     *
      * @param aUsername the username to set
      */
     public static void setUsername(String aUsername) {
@@ -194,6 +278,10 @@ public class NeqSimExperimentDatabase
     }
 
     /**
+     * <p>
+     * Setter for the field <code>password</code>.
+     * </p>
+     *
      * @param aPassword the password to set
      */
     public static void setPassword(String aPassword) {
@@ -201,6 +289,10 @@ public class NeqSimExperimentDatabase
     }
 
     /**
+     * <p>
+     * Getter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @return the connectionString
      */
     public static String getConnectionString() {
@@ -208,6 +300,10 @@ public class NeqSimExperimentDatabase
     }
 
     /**
+     * <p>
+     * Setter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @param aConnectionString the connectionString to set
      */
     public static void setConnectionString(String aConnectionString) {

@@ -1,14 +1,18 @@
 package neqsim.physicalProperties.interfaceProperties.solidAdsorption;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * PotentialTheoryAdsorption class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PotentialTheoryAdsorption implements AdsorptionInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PotentialTheoryAdsorption.class);
 
@@ -23,12 +27,24 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
     double[] pressureField, surfaceExcess, surfaceExcessMolFraction, deltaz;
     String solidMaterial = "AC";
 
-    public PotentialTheoryAdsorption() {
-    }
+    /**
+     * <p>
+     * Constructor for PotentialTheoryAdsorption.
+     * </p>
+     */
+    public PotentialTheoryAdsorption() {}
 
+    /**
+     * <p>
+     * Constructor for PotentialTheoryAdsorption.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public PotentialTheoryAdsorption(SystemInterface system) {
         this.system = system;
-        compositionSurface = new double[integrationSteps][system.getPhase(0).getNumberOfComponents()];
+        compositionSurface =
+                new double[integrationSteps][system.getPhase(0).getNumberOfComponents()];
         pressureField = new double[integrationSteps];
         zField = new double[system.getPhase(0).getNumberOfComponents()][integrationSteps];
         epsField = new double[system.getPhase(0).getNumberOfComponents()][integrationSteps];
@@ -37,13 +53,15 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
 
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void setSolidMaterial(String solidM) {
+    public void setSolidMaterial(String solidM) {
         solidMaterial = solidM;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void calcAdorption(int phase) {
+    public void calcAdorption(int phase) {
         SystemInterface tempSystem = (SystemInterface) system.clone();
         tempSystem.init(3);
         double[] bulkFug = new double[system.getPhase(phase).getNumberOfComponents()];
@@ -65,11 +83,11 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
             zField[comp][0] = z0[comp];
             for (int i = 0; i < integrationSteps; i++) {
                 zField[comp][i] = zField[comp][0] - deltaz[comp] * i;
-                epsField[comp][i] = eps0[comp] * Math.pow(Math.log(z0[comp] / zField[comp][i]), 1.0 / beta[comp]);
+                epsField[comp][i] = eps0[comp]
+                        * Math.pow(Math.log(z0[comp] / zField[comp][i]), 1.0 / beta[comp]);
             }
         }
         for (int i = 0; i < integrationSteps; i++) {
-            double error = 0;
             int iter = 0;
             double sumx = 0, pressure = 0;
             do {
@@ -77,13 +95,15 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 sumx = 0.0;
                 pressure = 0.0;
                 for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
-                    double correction = Math.exp(epsField[comp][i] / R / system.getPhase(phase).getTemperature());
+                    double correction = Math
+                            .exp(epsField[comp][i] / R / system.getPhase(phase).getTemperature());
                     fugacityField[comp][i] = correction * bulkFug[comp];
-                    double fugComp = tempSystem.getPhase(phase).getComponent(comp).getFugasityCoefficient()
-                            * tempSystem.getPhase(phase).getPressure();
+                    double fugComp =
+                            tempSystem.getPhase(phase).getComponent(comp).getFugasityCoefficient()
+                                    * tempSystem.getPhase(phase).getPressure();
                     corrx[comp] = fugacityField[comp][i] / fugComp;
-                    pressure += fugacityField[comp][i]
-                            / tempSystem.getPhase(phase).getComponent(comp).getFugasityCoefficient();
+                    pressure += fugacityField[comp][i] / tempSystem.getPhase(phase)
+                            .getComponent(comp).getFugasityCoefficient();
                 }
                 for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
                     tempSystem.getPhase(phase).getComponent(comp).setx(corrx[comp]);
@@ -98,10 +118,11 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
             } while (Math.abs(sumx - 1.0) > 1e-12 && iter < 100);
 
             for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
-                surfaceExcess[comp] += deltaz[comp] * (1.0e5 / tempSystem.getPhase(phase).getMolarVolume()
-                        * tempSystem.getPhase(phase).getComponent(comp).getx()
-                        - 1.0e5 / system.getPhase(phase).getMolarVolume()
-                                * system.getPhase(phase).getComponent(comp).getx());
+                surfaceExcess[comp] +=
+                        deltaz[comp] * (1.0e5 / tempSystem.getPhase(phase).getMolarVolume()
+                                * tempSystem.getPhase(phase).getComponent(comp).getx()
+                                - 1.0e5 / system.getPhase(phase).getMolarVolume()
+                                        * system.getPhase(phase).getComponent(comp).getx());
             }
         }
 
@@ -116,20 +137,26 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSurfaceExcess(String componentName) {
+    public double getSurfaceExcess(String componentName) {
         int componentNumber = system.getPhase(0).getComponent(componentName).getComponentNumber();
         return surfaceExcess[componentNumber];
     }
 
+    /**
+     * <p>
+     * readDBParameters.
+     * </p>
+     */
     public void readDBParameters() {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
             try {
                 dataSet = database.getResultSet(("SELECT * FROM adsorptionparameters WHERE name='"
-                        + system.getPhase(0).getComponent(comp).getComponentName() + "' AND Solid='" + solidMaterial
-                        + "'"));
+                        + system.getPhase(0).getComponent(comp).getComponentName() + "' AND Solid='"
+                        + solidMaterial + "'"));
                 dataSet.next();
 
                 eps0[comp] = Double.parseDouble(dataSet.getString("eps"));
@@ -137,10 +164,12 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 z0[comp] = Double.parseDouble(dataSet.getString("beta"));
 
                 logger.info("adsorption parameters read ok for "
-                        + system.getPhase(0).getComponent(comp).getComponentName() + " eps " + eps0[comp]);
+                        + system.getPhase(0).getComponent(comp).getComponentName() + " eps "
+                        + eps0[comp]);
             } catch (Exception e) {
                 logger.info("Component not found in adsorption DB "
-                        + system.getPhase(0).getComponent(comp).getComponentName() + " on solid " + solidMaterial);
+                        + system.getPhase(0).getComponent(comp).getComponentName() + " on solid "
+                        + solidMaterial);
                 logger.info("using default parameters");
                 eps0[comp] = 7.2;
                 beta[comp] = 2.0;
@@ -154,13 +183,13 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 } catch (Exception e) {
                     logger.error("error closing adsorption database.....", e);
                 }
-
             }
         }
     }
 
+    /** {@inheritDoc} */
     @Override
-	public double getSurfaceExess(int component) {
+    public double getSurfaceExess(int component) {
         return 1.0;
     }
 }

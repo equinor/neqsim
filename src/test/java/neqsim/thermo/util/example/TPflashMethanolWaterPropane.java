@@ -11,9 +11,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @author  esol
  * @version
  */
+/**
+ * <p>TPflashMethanolWaterPropane class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TPflashMethanolWaterPropane {
     static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPA(300, 10.01325);
 

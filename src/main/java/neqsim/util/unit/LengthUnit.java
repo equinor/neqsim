@@ -7,16 +7,20 @@
 package neqsim.util.unit;
 
 /**
+ * <p>
+ * LengthUnit class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class LengthUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new LengthUnit */
-    public LengthUnit() {
-    }
-
+    /**
+     * <p>
+     * Constructor for LengthUnit.
+     * </p>
+     */
+    public LengthUnit() {}
 }

@@ -12,14 +12,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestIonicInteractionParameterFitting_Sleipnernoacid class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestIonicInteractionParameterFitting_Sleipnernoacid {
     static Logger logger =
             LogManager.getLogger(TestIonicInteractionParameterFitting_Sleipnernoacid.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();

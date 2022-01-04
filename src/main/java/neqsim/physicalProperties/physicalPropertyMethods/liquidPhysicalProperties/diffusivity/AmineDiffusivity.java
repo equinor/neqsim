@@ -4,24 +4,39 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * AmineDiffusivity class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class AmineDiffusivity extends SiddiqiLucasMethod {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AmineDiffusivity.class);
 
-    /** Creates new Conductivity */
-
+    /**
+     * <p>
+     * Constructor for AmineDiffusivity.
+     * </p>
+     */
     public AmineDiffusivity() {}
 
+    /**
+     * <p>
+     * Constructor for AmineDiffusivity.
+     * </p>
+     *
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public AmineDiffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcEffectiveDiffusionCoeffisients() {
         super.calcEffectiveDiffusionCoeffisients();
@@ -50,6 +65,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         calcEffectiveDiffusionCoeffisients();
@@ -62,6 +78,7 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
@@ -79,5 +96,4 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
         return binaryDiffusionCoeffisients;
     }
-
 }

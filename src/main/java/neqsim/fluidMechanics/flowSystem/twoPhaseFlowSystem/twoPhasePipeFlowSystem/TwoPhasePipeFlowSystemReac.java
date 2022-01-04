@@ -4,16 +4,35 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * TwoPhasePipeFlowSystemReac class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
-
     private static final long serialVersionUID = 1000;
 
-    public TwoPhasePipeFlowSystemReac() {
-    }
+    /**
+     * <p>
+     * Constructor for TwoPhasePipeFlowSystemReac.
+     * </p>
+     */
+    public TwoPhasePipeFlowSystemReac() {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // Initierer et nyt rorsystem
-        neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystemReac();
+        neqsim.fluidMechanics.flowSystem.FlowSystemInterface pipe =
+                new TwoPhasePipeFlowSystemReac();
 
         SystemInterface testSystem = new SystemFurstElectrolyteEos(295.3, 50.01325);
         testSystem.addComponent("methane", 50.11152187, "Nlitre/min", 0);
@@ -33,23 +52,27 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
 
         pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
         pipe.setNumberOfLegs(3); // deler inn roret i et gitt antall legger
-        pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr. leg
+        pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
+                                        // leg
 
-        double[] height = { 0, 0, 0, 0, 0, 0 };
-        double[] length = { 0.0, 0.03, 0.07, 0.13, 2.5, 3.7 };
-        double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0 };
+        double[] height = {0, 0, 0, 0, 0, 0};
+        double[] length = {0.0, 0.03, 0.07, 0.13, 2.5, 3.7};
+        double[] outerTemperature =
+                {278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 278.0, 275.0, 275.0, 275.0, 275.0};
 
         pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
         pipe.setLegPositions(length); // setter avstand til hver leg-ende
         pipe.setLegOuterTemperatures(outerTemperature);
 
-        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[5]; // Deffinerer
-                                                                                                                                                                // geometrien
-                                                                                                                                                                // for
-                                                                                                                                                                // roret
-        double[] pipeDiameter = { 0.025, 0.025, 0.025, 0.025, 0.025 };
+        neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface[] pipeGemometry =
+                new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData[5]; // Deffinerer
+                                                                                // geometrien
+                                                                                // for
+                                                                                // roret
+        double[] pipeDiameter = {0.025, 0.025, 0.025, 0.025, 0.025};
         for (int i = 0; i < pipeDiameter.length; i++) {
-            pipeGemometry[i] = new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
+            pipeGemometry[i] =
+                    new neqsim.fluidMechanics.geometryDefinitions.pipe.PipeData(pipeDiameter[i]);
         }
         pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
         // utforer bergninger
@@ -59,7 +82,8 @@ public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {
         pipe.init();
 
         pipe.solveSteadyState(2);
-        ThermodynamicOperations testOps = new ThermodynamicOperations(pipe.getNode(2).getBulkSystem());
+        ThermodynamicOperations testOps =
+                new ThermodynamicOperations(pipe.getNode(2).getBulkSystem());
         testOps.TPflash();
 
         // pipe.calcFluxes();

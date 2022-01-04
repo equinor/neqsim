@@ -7,23 +7,38 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * constantDutyTemperatureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class constantDutyTemperatureFlash extends constantDutyFlash {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for constantDutyTemperatureFlash.
+     * </p>
      */
-    public constantDutyTemperatureFlash() {
-    }
+    public constantDutyTemperatureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for constantDutyTemperatureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public constantDutyTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         system.init(0);
         system.init(2);
 
@@ -38,10 +53,12 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
                 system.getPhases()[0].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                                / system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                                / system.getPhases()[1].getComponents()[i]
+                                        .getFugasityCoeffisient());
                 system.getPhases()[1].getComponents()[i]
                         .setK(system.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
-                                / system.getPhases()[1].getComponents()[i].getFugasityCoeffisient());
+                                / system.getPhases()[1].getComponents()[i]
+                                        .getFugasityCoeffisient());
             }
 
             system.calc_x_y_nonorm();
@@ -55,8 +72,12 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
                         * system.getPhases()[0].getComponents()[i].getK();
                 // dxidt=-system.getPhases()[0].getComponents()[i].getx() *
                 // system.getPhases()[0].getComponents()[i].getx()*1.0/system.getPhases()[0].getComponents()[i].getz()*system.getBeta()*dkidt;
-                dxidt = -system.getPhases()[0].getComponents()[i].getz() * system.getBeta() * dkidt / Math.pow(
-                        1.0 - system.getBeta() + system.getBeta() * system.getPhases()[0].getComponents()[i].getK(), 2);
+                dxidt = -system.getPhases()[0].getComponents()[i].getz() * system.getBeta() * dkidt
+                        / Math.pow(
+                                1.0 - system.getBeta()
+                                        + system.getBeta()
+                                                * system.getPhases()[0].getComponents()[i].getK(),
+                                2);
                 dyidt = dkidt * system.getPhases()[0].getComponents()[i].getx()
                         + system.getPhases()[0].getComponents()[i].getK() * dxidt;
                 funk = funk + system.getPhases()[1].getComponents()[i].getx()
@@ -68,21 +89,23 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
             system.setTemperature((Told - funk / deriv * 0.7));
             // System.out.println("Temp: " + system.getTemperature() + " funk " + funk);
 
-        } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7 && iterations < 300)
-                || iterations < 3);
+        } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7
+                && iterations < 300) || iterations < 3);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void printToFile(String name) {
-    }
+    public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
-	public org.jfree.chart.JFreeChart getJFreeChart(String name) {
+    public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return system;
     }
 }

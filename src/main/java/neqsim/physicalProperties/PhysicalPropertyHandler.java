@@ -6,10 +6,14 @@ import neqsim.physicalProperties.physicalPropertySystem.solidPhysicalProperties.
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * PhysicalPropertyHandler class.
+ * </p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable {
-
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhysicalProperties =
             null;
     private neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface oilPhysicalProperties =
@@ -22,10 +26,21 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
     static Logger logger = LogManager.getLogger(PhysicalPropertyHandler.class);
     private static final long serialVersionUID = 1000;
 
-    public PhysicalPropertyHandler() {
+    /**
+     * <p>
+     * Constructor for PhysicalPropertyHandler.
+     * </p>
+     */
+    public PhysicalPropertyHandler() {}
 
-    }
-
+    /**
+     * <p>
+     * setPhysicalProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param type a int
+     */
     public void setPhysicalProperties(PhaseInterface phase, int type) {
         switch (type) {
             case 0:
@@ -109,6 +124,16 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
 
     }
 
+    /**
+     * <p>
+     * getPhysicalProperty.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a
+     *         {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *         object
+     */
     public neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface getPhysicalProperty(
             PhaseInterface phase) {
         switch (phase.getPhaseTypeName()) {
@@ -129,6 +154,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public PhysicalPropertyHandler clone() {
         PhysicalPropertyHandler clonedHandler = null;

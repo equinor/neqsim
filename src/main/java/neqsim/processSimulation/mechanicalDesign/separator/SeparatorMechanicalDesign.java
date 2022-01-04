@@ -16,25 +16,36 @@ import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
+ * <p>
+ * SeparatorMechanicalDesign class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     double wallThickness = 0.0;
     private double outerDiameter = 0.0;
     double gasLoadFactor = 1.0, volumeSafetyFactor = 1.0, Fg = 1.0, retentionTime = 60.0;
 
+    /**
+     * <p>
+     * Constructor for SeparatorMechanicalDesign.
+     * </p>
+     *
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
         costEstimate = new SeparatorCostEstimate(this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void readDesignSpecifications() {
-
         super.readDesignSpecifications();
         if (getDesignStandard().containsKey("material plate design codes")) {
             ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
@@ -70,12 +81,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
             System.out.println("no separator process design specified......");
             return;
         }
-
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResults() {
-
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
@@ -130,6 +140,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         super.calcDesign();
@@ -251,6 +262,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
@@ -258,33 +270,27 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
         // this method will be implemented to set calculated design...
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getOuterDiameter() {
         return outerDiameter;
     }
 
-    /**
-     * @return the wallThickness
-     */
+    /** {@inheritDoc} */
     @Override
     public double getWallThickness() {
         return wallThickness;
     }
 
-    /**
-     * @param wallThickness the wallThickness to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setWallThickness(double wallThickness) {
         this.wallThickness = wallThickness;
     }
 
-    /**
-     * @param outerDiameter the outerDiameter to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
-
 }

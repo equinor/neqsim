@@ -2,6 +2,12 @@ package neqsim.processSimulation.util.monitor;
 
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
+/**
+ * <p>StreamResponse class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class StreamResponse {
     public String name;
     public Fluid fluid;
@@ -15,9 +21,17 @@ public class StreamResponse {
     public Double massflowOil;
     public Double massflowAqueous;
 
+    /**
+     * <p>Constructor for StreamResponse.</p>
+     */
     public StreamResponse() {
     }
 
+    /**
+     * <p>Constructor for StreamResponse.</p>
+     *
+     * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamResponse(StreamInterface inputStream){
         name = inputStream.getName();
         fluid = new Fluid(inputStream.getFluid());
@@ -48,6 +62,9 @@ public class StreamResponse {
         }
     }
 
+    /**
+     * <p>print.</p>
+     */
     public void print(){
     }
 }

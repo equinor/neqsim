@@ -9,8 +9,10 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>DensitySim class.</p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class DensitySim extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
@@ -23,6 +25,11 @@ public class DensitySim extends BasePVTsimulation {
     private double[] oilDensity;
     private double[] aqueousDensity;
 
+    /**
+     * <p>Constructor for DensitySim.</p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public DensitySim(SystemInterface tempSystem) {
         super(tempSystem);
         temperature = new double[1];
@@ -31,12 +38,21 @@ public class DensitySim extends BasePVTsimulation {
         pressure[0] = tempSystem.getPressure();
     }
 
+    /**
+     * <p>setTemperaturesAndPressures.</p>
+     *
+     * @param temperature an array of {@link double} objects
+     * @param pressure an array of {@link double} objects
+     */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
         this.pressure = pressure;
         this.temperature = temperature;
         experimentalData = new double[temperature.length][1];
     }
 
+    /**
+     * <p>runTuning.</p>
+     */
     public void runTuning() {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -79,6 +95,9 @@ public class DensitySim extends BasePVTsimulation {
         optimizer.displayCurveFit();
     }
 
+    /**
+     * <p>runCalc.</p>
+     */
     public void runCalc() {
         gasDensity = new double[pressure.length];
         oilDensity = new double[pressure.length];
@@ -107,6 +126,11 @@ public class DensitySim extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
@@ -142,6 +166,8 @@ public class DensitySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>waxFraction</code>.</p>
+     *
      * @return the waxFraction
      */
     public double[] getWaxFraction() {
@@ -149,6 +175,8 @@ public class DensitySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>gasDensity</code>.</p>
+     *
      * @return the gasViscosity
      */
     public double[] getGasDensity() {
@@ -156,6 +184,8 @@ public class DensitySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>oilDensity</code>.</p>
+     *
      * @return the oilViscosity
      */
     public double[] getOilDensity() {
@@ -163,6 +193,8 @@ public class DensitySim extends BasePVTsimulation {
     }
 
     /**
+     * <p>Getter for the field <code>aqueousDensity</code>.</p>
+     *
      * @return the aqueousViscosity
      */
     public double[] getAqueousDensity() {

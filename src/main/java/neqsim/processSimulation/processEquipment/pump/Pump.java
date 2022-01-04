@@ -15,12 +15,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Pump class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -40,19 +42,39 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     private PumpChart pumpChart = new PumpChart();
 
     /**
-     * Creates new Pump
+     * <p>
+     * Constructor for Pump.
+     * </p>
      */
     public Pump() {}
 
+    /**
+     * <p>
+     * Constructor for Pump.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Pump(StreamInterface inletStream) {
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for Pump.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Pump(String name, StreamInterface inletStream) {
         super(name);
         setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInletStream(StreamInterface inletStream) {
         this.inStream = inletStream;
@@ -60,21 +82,32 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         this.outStream = (StreamInterface) inletStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutletPressure(double pressure) {
         this.pressure = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEnergy() {
         return dH;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPower() {
         return dH;
     }
 
+    /**
+     * <p>
+     * getPower.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getPower(String unit) {
         if (unit.equals("W")) {
             return dH;
@@ -86,19 +119,35 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         return dH;
     }
 
+    /**
+     * <p>
+     * getDuty.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDuty() {
         return dH;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>
+     * calculateAsCompressor.
+     * </p>
+     *
+     * @param setPumpCalcType a boolean
+     */
     public void calculateAsCompressor(boolean setPumpCalcType) {
         calculateAsCompressor = setPumpCalcType;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // System.out.println("pump running..");
@@ -170,6 +219,7 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         // outStream.run();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -269,23 +319,43 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {}
 
+    /**
+     * <p>
+     * Getter for the field <code>molarFlow</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMolarFlow() {
         return molarFlow;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>molarFlow</code>.
+     * </p>
+     *
+     * @param molarFlow a double
+     */
     public void setMolarFlow(double molarFlow) {
         this.molarFlow = molarFlow;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
     /**
+     * <p>
+     * Getter for the field <code>isentropicEfficiency</code>.
+     * </p>
+     *
      * @return the isentropicEfficientcy
      */
     public double getIsentropicEfficiency() {
@@ -293,12 +363,23 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>isentropicEfficiency</code>.
+     * </p>
+     *
      * @param isentropicEfficientcy the isentropicEfficientcy to set
      */
     public void setIsentropicEfficiency(double isentropicEfficientcy) {
         this.isentropicEfficiency = isentropicEfficientcy;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outTemperature</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getOutTemperature() {
         if (useOutTemperature)
             return outTemperature;
@@ -306,39 +387,84 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
             return getThermoSystem().getTemperature();
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>outTemperature</code>.
+     * </p>
+     *
+     * @param outTemperature a double
+     */
     public void setOutTemperature(double outTemperature) {
         useOutTemperature = true;
         this.outTemperature = outTemperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit)
                 - inStream.getThermoSystem().getEntropy(unit);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPressure(double pressure) {
         setOutletPressure(pressure);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>pressure</code>.
+     * </p>
+     *
+     * @param pressure a double
+     * @param unit a {@link java.lang.String} object
+     */
     public void setPressure(double pressure, String unit) {
         setOutletPressure(pressure);
         pressureUnit = unit;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>speed</code>.
+     * </p>
+     *
+     * @param speed a double
+     */
     public void setSpeed(double speed) {
         this.speed = speed;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>speed</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getSpeed() {
         return speed;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>pumpChart</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.pump.PumpChart} object
+     */
     public PumpChart getPumpChart() {
         return pumpChart;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>inStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getInStream() {
         return inStream;
     }

@@ -17,11 +17,14 @@ import Jama.Matrix;
 import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * Abstract StatisticsBaseClass class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected SampleSet sampleSet = new SampleSet();
@@ -41,11 +44,13 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     protected double absStdDev = 0.0, biasdev = 0.0, incompleteGammaComplemented = 0.0;
 
     /**
-     * Creates new LevenbergMarquardt
+     * <p>
+     * Constructor for StatisticsBaseClass.
+     * </p>
      */
-    public StatisticsBaseClass() {
-    }
+    public StatisticsBaseClass() {}
 
+    /** {@inheritDoc} */
     @Override
     public StatisticsBaseClass clone() {
         StatisticsBaseClass clonedClass = null;
@@ -60,14 +65,29 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         return clonedClass;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>sampleSet</code>.
+     * </p>
+     *
+     * @param sampleSet a {@link neqsim.statistics.parameterFitting.SampleSet} object
+     */
     public void setSampleSet(SampleSet sampleSet) {
         this.sampleSet = sampleSet;
     }
 
+    /**
+     * <p>
+     * addSampleSet.
+     * </p>
+     *
+     * @param sampleSet a {@link neqsim.statistics.parameterFitting.SampleSet} object
+     */
     public void addSampleSet(SampleSet sampleSet) {
         this.sampleSet.addSampleSet(sampleSet);
     }
 
+    /** {@inheritDoc} */
     @Override
     public StatisticsBaseClass createNewRandomClass() {
         StatisticsBaseClass newClass = (StatisticsBaseClass) this.clone();
@@ -75,22 +95,41 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         return newClass;
     }
 
+    /**
+     * <p>
+     * calcValue.
+     * </p>
+     *
+     * @param sample a {@link neqsim.statistics.parameterFitting.SampleValue} object
+     * @return a double
+     */
     public double calcValue(SampleValue sample) {
         return sample.getFunction().calcValue(sample.getDependentValues());
     }
 
+    /**
+     * <p>
+     * checkBounds.
+     * </p>
+     *
+     * @param newParameters a {@link Jama.Matrix} object
+     */
     public void checkBounds(Matrix newParameters) {
         String okstring = "";
         int errors = 0;
         if (sampleSet.getSample(0).getFunction().getBounds() != null) {
             for (int i = 0; i < newParameters.getColumnDimension(); i++) {
-                if (newParameters.get(0, i) < sampleSet.getSample(0).getFunction().getLowerBound(i)) {
-                    okstring += "parameter " + i + " lower than bound: " + newParameters.get(0, i) + "\n";
+                if (newParameters.get(0, i) < sampleSet.getSample(0).getFunction()
+                        .getLowerBound(i)) {
+                    okstring += "parameter " + i + " lower than bound: " + newParameters.get(0, i)
+                            + "\n";
                     errors++;
                     newParameters.set(0, i, sampleSet.getSample(0).getFunction().getLowerBound(i));
                 }
-                if (newParameters.get(0, i) > sampleSet.getSample(0).getFunction().getUpperBound(i)) {
-                    okstring += "parameter " + i + " higher than bound: " + newParameters.get(0, i) + "\n";
+                if (newParameters.get(0, i) > sampleSet.getSample(0).getFunction()
+                        .getUpperBound(i)) {
+                    okstring += "parameter " + i + " higher than bound: " + newParameters.get(0, i)
+                            + "\n";
                     errors++;
                     newParameters.set(0, i, sampleSet.getSample(0).getFunction().getUpperBound(i));
                 }
@@ -100,37 +139,86 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         }
     }
 
+    /**
+     * <p>
+     * calcTrueValue.
+     * </p>
+     *
+     * @param sample a {@link neqsim.statistics.parameterFitting.SampleValue} object
+     * @return a double
+     */
     public double calcTrueValue(SampleValue sample) {
         return sample.getFunction().calcTrueValue(calcValue(sample));
     }
 
+    /**
+     * <p>
+     * calcTrueValue.
+     * </p>
+     *
+     * @param val a double
+     * @param sample a {@link neqsim.statistics.parameterFitting.SampleValue} object
+     * @return a double
+     */
     public double calcTrueValue(double val, SampleValue sample) {
         return sample.getFunction().calcTrueValue(val);
     }
 
+    /**
+     * <p>
+     * setFittingParameters.
+     * </p>
+     *
+     * @param parameterVals an array of {@link double} objects
+     */
     public void setFittingParameters(double[] parameterVals) {
         for (int i = 0; i < sampleSet.getLength(); i++) {
-            for (int k = 0; k < sampleSet.getSample(i).getFunction().getFittingParams().length; k++) {
+            for (int k =
+                    0; k < sampleSet.getSample(i).getFunction().getFittingParams().length; k++) {
                 sampleSet.getSample(i).getFunction().setFittingParams(k, parameterVals[k]);
             }
         }
     }
 
+    /**
+     * <p>
+     * setFittingParameter.
+     * </p>
+     *
+     * @param parameterNumber a int
+     * @param parameterVal a double
+     */
     public void setFittingParameter(int parameterNumber, double parameterVal) {
         for (int i = 0; i < sampleSet.getLength(); i++) {
             sampleSet.getSample(i).getFunction().setFittingParams(parameterNumber, parameterVal);
         }
     }
 
+    /**
+     * <p>
+     * getSample.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.statistics.parameterFitting.SampleValue} object
+     */
     public SampleValue getSample(int i) {
         return sampleSet.getSample(i);
     }
 
+    /** {@inheritDoc} */
     @Override
     public SampleSet getSampleSet() {
         return sampleSet;
     }
 
+    /**
+     * <p>
+     * calcChiSquare.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcChiSquare() {
         calcVal = new double[sampleSet.getLength()];
         double chiSquare = 0;
@@ -142,9 +230,17 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         return chiSquare;
     }
 
+    /**
+     * <p>
+     * calcAlphaMatrix.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[][] calcAlphaMatrix() {
-        double[][] alpha = new double[sampleSet.getSample(0).getFunction().getFittingParams().length][sampleSet
-                .getSample(0).getFunction().getFittingParams().length];
+        double[][] alpha =
+                new double[sampleSet.getSample(0).getFunction().getFittingParams().length][sampleSet
+                        .getSample(0).getFunction().getFittingParams().length];
         for (int i = 0; i < alpha.length; i++) {
             for (int j = 0; j < alpha[0].length; j++) {
                 alpha[i][j] = 0.0;
@@ -160,6 +256,13 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         return alpha;
     }
 
+    /**
+     * <p>
+     * calcBetaMatrix.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] calcBetaMatrix() {
         double[] beta = new double[sampleSet.getSample(0).getFunction().getFittingParams().length];
         for (int i = 0; i < beta.length; i++) {
@@ -172,11 +275,20 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         return beta;
     }
 
+    /**
+     * <p>
+     * calcDerivatives.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[][] calcDerivatives() {
-        dyda = new double[sampleSet.getLength()][sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
+        dyda = new double[sampleSet.getLength()][sampleSet.getSample(0).getFunction()
+                .getNumberOfFittingParams()];
 
         for (int i = 0; i < sampleSet.getLength(); i++) {
-            for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
+            for (int j = 0; j < sampleSet.getSample(0).getFunction()
+                    .getNumberOfFittingParams(); j++) {
                 dyda[i][j] = NumericalDerivative.calcDerivative(this, i, j);
             }
         }
@@ -196,24 +308,35 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     // parameterStandardDeviation[j] = Math.sqrt(parameterStandardDeviation[j]);
     // }
     // }
+    /**
+     * <p>
+     * calcParameterStandardDeviation.
+     * </p>
+     */
     public void calcParameterStandardDeviation() {
-        parameterStandardDeviation = new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
+        parameterStandardDeviation =
+                new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
         for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
             parameterStandardDeviation[j] = Math.sqrt(coVarianceMatrix.get(j, j));
         }
     }
 
     /**
-     * Calculates the confidence interval given by 95.4%. See Numerical Recepies in
-     * C. p. 697
+     * Calculates the confidence interval given by 95.4%. See Numerical Recepies in C. p. 697
      */
     public void calcParameterUncertainty() {
-        parameterUncertainty = new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
+        parameterUncertainty =
+                new double[sampleSet.getSample(0).getFunction().getNumberOfFittingParams()];
         for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
             parameterUncertainty[j] = Math.sqrt(4.0) * Math.sqrt(coVarianceMatrix.get(j, j));
         }
     }
 
+    /**
+     * <p>
+     * calcCoVarianceMatrix.
+     * </p>
+     */
     public void calcCoVarianceMatrix() {
         double old = multiFactor;
         multiFactor = 0.0;
@@ -222,11 +345,18 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         multiFactor = old;
     }
 
+    /**
+     * <p>
+     * calcCorrelationMatrix.
+     * </p>
+     */
     public void calcCorrelationMatrix() {
-        parameterCorrelationMatrix = new Matrix(sampleSet.getSample(0).getFunction().getNumberOfFittingParams(),
-                sampleSet.getSample(0).getFunction().getNumberOfFittingParams());
+        parameterCorrelationMatrix =
+                new Matrix(sampleSet.getSample(0).getFunction().getNumberOfFittingParams(),
+                        sampleSet.getSample(0).getFunction().getNumberOfFittingParams());
         for (int i = 0; i < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); i++) {
-            for (int j = 0; j < sampleSet.getSample(0).getFunction().getNumberOfFittingParams(); j++) {
+            for (int j = 0; j < sampleSet.getSample(0).getFunction()
+                    .getNumberOfFittingParams(); j++) {
                 double temp = coVarianceMatrix.get(i, j)
                         / Math.sqrt(coVarianceMatrix.get(j, j) * coVarianceMatrix.get(i, i));
                 parameterCorrelationMatrix.set(i, j, temp);
@@ -234,28 +364,42 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public abstract void init();
 
+    /** {@inheritDoc} */
     @Override
     public abstract void solve();
 
+    /**
+     * <p>
+     * runMonteCarloSimulation.
+     * </p>
+     */
     public void runMonteCarloSimulation() {
-        neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
-                this, 10);
+        neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim =
+                new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(this, 10);
         montCarlSim.runSimulation();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runMonteCarloSimulation(int numRuns) {
-        neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim = new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(
-                this, numRuns);
+        neqsim.statistics.monteCarloSimulation.MonteCarloSimulation montCarlSim =
+                new neqsim.statistics.monteCarloSimulation.MonteCarloSimulation(this, numRuns);
         montCarlSim.runSimulation();
     }
 
+    /**
+     * <p>
+     * calcAbsDev.
+     * </p>
+     */
     public void calcAbsDev() {
         setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
-        xVal = new double[sampleSet.getSample(0).getDependentValues().length][sampleSet.getLength()];
+        xVal = new double[sampleSet.getSample(0).getDependentValues().length][sampleSet
+                .getLength()];
         expVal = new double[sampleSet.getLength()];
         absDev = new double[sampleSet.getLength()];
         calcVal = new double[sampleSet.getLength()];
@@ -268,17 +412,18 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         absStdDev = 0.0;
 
         for (int i = 0; i < sampleSet.getLength(); i++) {
-
-            expVal[i] = this.calcTrueValue(sampleSet.getSample(i).getSampleValue(), sampleSet.getSample(i));
+            expVal[i] = this.calcTrueValue(sampleSet.getSample(i).getSampleValue(),
+                    sampleSet.getSample(i));
             calcVal[i] = this.calcTrueValue(sampleSet.getSample(i));
-            shiSq += Math.pow((calcVal[i] - expVal[i]) / sampleSet.getSample(i).getStandardDeviation(), 2.0);
+            shiSq += Math.pow(
+                    (calcVal[i] - expVal[i]) / sampleSet.getSample(i).getStandardDeviation(), 2.0);
             absDev[i] = Math.abs((calcVal[i] - expVal[i]) / expVal[i] * 100.0);
             dev = Math.abs((calcVal[i] - expVal[i]) / expVal[i] * 100.0);
             dev2 = Math.pow(calcVal[i] - expVal[i], 2.0);
             absStdDev += dev;
             rmsDev += dev2;
-            System.out.println("x " + sampleSet.getSample(i).getDependentValue(0) + "  val: " + calcVal[i] + " exp val "
-                    + expVal[i] + "  deviation " + dev);
+            System.out.println("x " + sampleSet.getSample(i).getDependentValue(0) + "  val: "
+                    + calcVal[i] + " exp val " + expVal[i] + "  deviation " + dev);
             for (int j = 0; j < sampleSet.getSample(0).getDependentValues().length; j++) {
                 xVal[j][i] = sampleSet.getSample(i).getDependentValue(j);
             }
@@ -295,6 +440,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         System.out.println("rms dev " + rmsDev * 100);
     }
 
+    /**
+     * <p>
+     * displayValues.
+     * </p>
+     */
     public void displayValues() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -303,8 +453,9 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new FlowLayout());
 
-        valTable = new String[sampleSet.getLength() + 10][sampleSet.getSample(0).getDependentValues().length + 7];
-        String[] names = { "point", "x", "expY", "calcY", "abs dev [%]", "reference", "description" };
+        valTable = new String[sampleSet.getLength()
+                + 10][sampleSet.getSample(0).getDependentValues().length + 7];
+        String[] names = {"point", "x", "expY", "calcY", "abs dev [%]", "reference", "description"};
         valTable[0][0] = "";
         valTable[0][1] = "";
         valTable[0][2] = "";
@@ -330,7 +481,8 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         for (int j = 0; j < sampleSet.getLength(); j++) {
             for (int i = 0; i < sampleSet.getSample(j).getDependentValues().length; i++) {
                 buf = new StringBuffer();
-                valTable[j + 1][7 + i] = nf.format(sampleSet.getSample(j).getDependentValue(i), buf, test).toString();
+                valTable[j + 1][7 + i] = nf
+                        .format(sampleSet.getSample(j).getDependentValue(i), buf, test).toString();
             }
         }
 
@@ -341,6 +493,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -351,7 +504,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         dialogContentPane.setLayout(new FlowLayout());
 
         String[][] table = new String[15][5];
-        String[] names = { "Parameter", "Value", "Standard deviation", "Uncertatnty ", "--" };
+        String[] names = {"Parameter", "Value", "Standard deviation", "Uncertatnty ", "--"};
         table[0][0] = "";
         table[0][1] = "";
         table[0][2] = "";
@@ -362,8 +515,9 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         for (int j = 0; j < sampleSet.getSample(0).getFunction().getFittingParams().length; j++) {
             table[j + 1][0] = "parameter " + j;
             buf = new StringBuffer();
-            table[j + 1][1] = nf.format(sampleSet.getSample(0).getFunction().getFittingParams()[j], buf, test)
-                    .toString();
+            table[j + 1][1] =
+                    nf.format(sampleSet.getSample(0).getFunction().getFittingParams()[j], buf, test)
+                            .toString();
         }
 
         int numb = sampleSet.getSample(0).getFunction().getFittingParams().length;
@@ -391,6 +545,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         dialog.setVisible(true);
     }
 
+    /**
+     * <p>
+     * displayResultWithDeviation.
+     * </p>
+     */
     public void displayResultWithDeviation() {
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
@@ -402,7 +561,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         dialogContentPane.setLayout(new FlowLayout());
 
         String[][] table = new String[15][5];
-        String[] names = { "Parameter", "Value", "Standard deviation", "Uncertatnty ", "--" };
+        String[] names = {"Parameter", "Value", "Standard deviation", "Uncertatnty ", "--"};
         table[0][0] = "";
         table[0][1] = "";
         table[0][2] = "";
@@ -413,8 +572,9 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         for (int j = 0; j < sampleSet.getSample(0).getFunction().getFittingParams().length; j++) {
             table[j + 1][0] = "parameter " + j;
             buf = new StringBuffer();
-            table[j + 1][1] = nf.format(sampleSet.getSample(0).getFunction().getFittingParams()[j], buf, test)
-                    .toString();
+            table[j + 1][1] =
+                    nf.format(sampleSet.getSample(0).getFunction().getFittingParams()[j], buf, test)
+                            .toString();
             buf = new StringBuffer();
             table[j + 1][2] = nf.format(parameterStandardDeviation[j], buf, test).toString();
             buf = new StringBuffer();
@@ -458,6 +618,15 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         // parameterUncertaintyMatrix.display("Param. uncertatnty",5);
     }
 
+    /**
+     * <p>
+     * displayMatrix.
+     * </p>
+     *
+     * @param coVarianceMatrix a {@link Jama.Matrix} object
+     * @param name a {@link java.lang.String} object
+     * @param d a int
+     */
     public void displayMatrix(Matrix coVarianceMatrix, String name, int d) {
         int m = coVarianceMatrix.getRowDimension();
         int n = coVarianceMatrix.getColumnDimension();
@@ -489,6 +658,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         dialog.setVisible(true);
     }
 
+    /**
+     * <p>
+     * calcDeviation.
+     * </p>
+     */
     public void calcDeviation() {
         setFittingParameters(sampleSet.getSample(0).getFunction().getFittingParams());
         init();
@@ -513,12 +687,17 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         calcCorrelationMatrix();
 
         incompleteGammaComplemented = cern.jet.stat.Gamma.incompleteGammaComplement(
-                (sampleSet.getLength() - sampleSet.getSample(0).getFunction().getFittingParams().length) / 2.0,
+                (sampleSet.getLength()
+                        - sampleSet.getSample(0).getFunction().getFittingParams().length) / 2.0,
                 0.5 * chiSquare);
     }
 
+    /**
+     * <p>
+     * displayGraph.
+     * </p>
+     */
     public void displayGraph() {
-
         try {
             if (sampleSet.getSample(0).getDependentValues().length <= 1) {
                 lineFitPlot plot = new lineFitPlot("test", "test");
@@ -537,9 +716,11 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void writeToCdfFile(String name) {
-        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file = new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
+        neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D file =
+                new neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D.NetCdf2D();
         file.setOutputFileName(name);
         file.setXvalues(xVal[0], "x", "sec");
         file.setYvalues(expVal, "experimental", "meter");
@@ -547,14 +728,21 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         file.createFile();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void writeToTextFile(String name) {
-        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempfile = new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
+        neqsim.dataPresentation.fileHandeling.createTextFile.TextFile tempfile =
+                new neqsim.dataPresentation.fileHandeling.createTextFile.TextFile();
         tempfile.setOutputFileName(name);
         tempfile.setValues(valTable);
         tempfile.createFile();
     }
 
+    /**
+     * <p>
+     * displaySimple.
+     * </p>
+     */
     public void displaySimple() {
         calcAbsDev();
         try {
@@ -577,6 +765,7 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayCurveFit() {
         calcAbsDev();
@@ -606,17 +795,13 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         }
     }
 
-    /**
-     * @return the numberOfTuningParameters
-     */
+    /** {@inheritDoc} */
     @Override
     public int getNumberOfTuningParameters() {
         return numberOfTuningParameters;
     }
 
-    /**
-     * @param numberOfTuningParameters the numberOfTuningParameters to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfTuningParameters(int numberOfTuningParameters) {
         this.numberOfTuningParameters = numberOfTuningParameters;

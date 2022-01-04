@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,12 +20,12 @@ import neqsim.thermo.phase.PhaseSrkEos;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemUNIFACpsrk extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
-
     public SystemUNIFACpsrk() {
         super();
         modelName = "UNIFAC-GE-model";
@@ -36,6 +36,14 @@ public class SystemUNIFACpsrk extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemUNIFACpsrk.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemUNIFACpsrk(double T, double P) {
         super(T, P);
         attractiveTermNumber = 0;
@@ -50,6 +58,15 @@ public class SystemUNIFACpsrk extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemUNIFACpsrk.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemUNIFACpsrk(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
@@ -76,6 +93,7 @@ public class SystemUNIFACpsrk extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemUNIFACpsrk clone() {
         SystemUNIFACpsrk clonedSystem = null;
@@ -85,9 +103,9 @@ public class SystemUNIFACpsrk extends SystemEos {
             logger.error("Cloning failed.", e);
         }
 
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }

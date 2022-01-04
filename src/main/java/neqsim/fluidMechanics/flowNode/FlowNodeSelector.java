@@ -3,12 +3,31 @@ package neqsim.fluidMechanics.flowNode;
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.AnnularFlow;
 import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.StratifiedFlowNode;
 
+/**
+ * <p>
+ * FlowNodeSelector class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class FlowNodeSelector {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for FlowNodeSelector.
+     * </p>
+     */
     public FlowNodeSelector() {}
 
+    /**
+     * <p>
+     * getFlowNodeType.
+     * </p>
+     *
+     * @param flowNode an array of {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} objects
+     */
     public void getFlowNodeType(FlowNodeInterface[] flowNode) {
         System.out.println("forskjell: " + Math.abs(flowNode[0].getVerticalPositionOfNode()
                 - flowNode[flowNode.length - 1].getVerticalPositionOfNode()));
@@ -27,6 +46,14 @@ public class FlowNodeSelector {
         }
     }
 
+    /**
+     * <p>
+     * setFlowPattern.
+     * </p>
+     *
+     * @param flowNode an array of {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} objects
+     * @param flowPattern a {@link java.lang.String} object
+     */
     public void setFlowPattern(FlowNodeInterface[] flowNode, String flowPattern) {
         System.out.println("pattern er " + flowPattern);
         if (flowPattern.equals("annular")) {
@@ -43,5 +70,4 @@ public class FlowNodeSelector {
             }
         }
     }
-
 }

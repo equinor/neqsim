@@ -5,18 +5,26 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * CPAParameterFittingToSolubilityData_Vap class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for CPAParameterFittingToSolubilityData_Vap.
+     * </p>
+     */
     public CPAParameterFittingToSolubilityData_Vap() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         thermoOps.TPflash();
@@ -29,6 +37,7 @@ public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtF
     // return val;
     // }
     //
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -60,6 +69,14 @@ public class CPAParameterFittingToSolubilityData_Vap extends LevenbergMarquardtF
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams2.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams2(int i, double value) {
         params[i] = value;
 

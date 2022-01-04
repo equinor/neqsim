@@ -25,11 +25,14 @@ import visad.VisADException;
 import visad.java2d.DisplayImplJ2D;
 
 /**
- * @author  Even Solbraa
- * @version
+ * <p>
+ * lineFitPlot class.
+ * </p>
+ *
+ * @author Even Solbraa
+ * @version $Id: $Id
  */
 public class lineFitPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType x, y, index;
@@ -54,9 +57,17 @@ public class lineFitPlot {
     float[][] x_line_samples, y_line_samples;
     float[][] xy_disc_samples;
 
-    /** Creates new visAdContourPlot */
+    /**
+     * <p>
+     * Constructor for lineFitPlot.
+     * </p>
+     *
+     * @param firstax a {@link java.lang.String} object
+     * @param yax a {@link java.lang.String} object
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public lineFitPlot(String firstax, String yax) throws RemoteException, VisADException {
-
         x = RealType.getRealType("test1");
         y = RealType.getRealType("test");
 
@@ -71,6 +82,16 @@ public class lineFitPlot {
     // xy_samples = vals;
     // }
 
+    /**
+     * <p>
+     * setXYVals.
+     * </p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYVals(double[] xvals, double[] yvals) throws RemoteException, VisADException {
         xy_samples = new float[2][xvals.length];
         minX = (float) xvals[0];
@@ -89,6 +110,16 @@ public class lineFitPlot {
         }
     }
 
+    /**
+     * <p>
+     * setXYVals2.
+     * </p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setXYVals2(double[] xvals, double[] yvals) throws RemoteException, VisADException {
         scatter = true;
         y_line_samples = new float[1][yvals.length];
@@ -105,6 +136,16 @@ public class lineFitPlot {
         }
     }
 
+    /**
+     * <p>
+     * setLineXYVals.
+     * </p>
+     *
+     * @param xvals an array of {@link double} objects
+     * @param yvals an array of {@link double} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void setLineXYVals(double[] xvals, double[] yvals)
             throws RemoteException, VisADException {
         y_line_samples = new float[1][yvals.length];
@@ -129,8 +170,15 @@ public class lineFitPlot {
      * System.arraycopy(vals,0,xy_samples[1],0,vals.length); }
      */
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     *
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public void init() throws RemoteException, VisADException {
-
         index_set = new Integer1DSet(index, xy_samples[0].length);
         points_ff = new FlatField(func_i_tuple, index_set);
         points_ff.setSamples(xy_samples);
@@ -188,8 +236,16 @@ public class lineFitPlot {
         jframe.setVisible(true);
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     * @throws java.rmi.RemoteException if any.
+     * @throws visad.VisADException if any.
+     */
     public static void main(String[] args) throws RemoteException, VisADException {
-
         lineFitPlot plot = new lineFitPlot("long", "alt");
 
         double[][] z = {{0, 0.5, 1, 3, 1}, {2, 6, 4, 1, 3}, {1, 3, 2, 1, 1}, {3, 2, 1, 3, 2},

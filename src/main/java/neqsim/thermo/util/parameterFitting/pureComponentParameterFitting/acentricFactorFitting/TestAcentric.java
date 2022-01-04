@@ -13,19 +13,31 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 /**
+ * <p>
+ * TestAcentric class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestAcentric {
-
     private static final long serialVersionUID = 1000;
 
-    /** Creates new TestAcentric */
+    /**
+     * <p>
+     * Constructor for TestAcentric.
+     * </p>
+     */
     public TestAcentric() {}
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
 
         AcentricFunction function = new AcentricFunction();
