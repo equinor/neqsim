@@ -10,8 +10,12 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
+ * <p>
+ * MEGReclaimerModule class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class MEGReclaimerModule extends ProcessModuleBaseClass {
     private static final long serialVersionUID = 1000;
@@ -29,9 +33,12 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
 
     double reclaimerPressure = 0.17;
 
-    /** Creates a new instance of SnohvitCO2RemovalModule */
+    /**
+     * Creates a new instance of SnohvitCO2RemovalModule
+     */
     public MEGReclaimerModule() {}
 
+    /** {@inheritDoc} */
     @Override
     public void addInputStream(String streamName, StreamInterface stream) {
         if (streamName.equals("streamToReclaimer")) {
@@ -39,6 +46,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutputStream(String streamName) {
         if (!isInitializedStreams) {
@@ -51,6 +59,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeStreams() {
         isInitializedStreams = true;
@@ -68,6 +77,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initializeModule() {
         isInitializedModule = true;
@@ -106,6 +116,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         getOperations().add(recircValve);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!isInitializedModule) {
@@ -121,15 +132,30 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         streamToWaterRemoval = flashSeparator.getGasOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         getOperations().runTransient();
     }
 
+    /**
+     * <p>
+     * setOperationPressure.
+     * </p>
+     *
+     * @param pressure a double
+     */
     public void setOperationPressure(double pressure) {
         reclaimerPressure = pressure;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
@@ -152,11 +178,13 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
         // reclaimer.displayResult();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         // design is done here //
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setDesign() {
         // set design is done here //

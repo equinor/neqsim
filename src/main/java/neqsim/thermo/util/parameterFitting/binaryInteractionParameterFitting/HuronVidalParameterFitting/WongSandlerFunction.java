@@ -12,8 +12,14 @@ import neqsim.thermo.phase.PhaseEosInterface;
 abstract class WongSandlerFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for WongSandlerFunction.
+     * </p>
+     */
     public WongSandlerFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public void setDatabaseParameters() {
         params = new double[5];
@@ -29,6 +35,7 @@ abstract class WongSandlerFunction extends LevenbergMarquardtFunction {
                 .getMixingRule()).getKijWongSandler(1, 0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

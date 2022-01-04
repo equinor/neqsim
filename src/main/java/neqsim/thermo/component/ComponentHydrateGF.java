@@ -1,19 +1,16 @@
-/*
- * Class.java
- *
- * Created on 19. november 2001, 11:43
- */
 package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentHydrateGF class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class ComponentHydrateGF extends ComponentHydrate {
     private static final long serialVersionUID = 1000;
@@ -22,8 +19,23 @@ public class ComponentHydrateGF extends ComponentHydrate {
     double Bk[][] = new double[2][2]; // [structure][cavitytype]
     static Logger logger = LogManager.getLogger(ComponentHydrateGF.class);
 
+    /**
+     * <p>
+     * Constructor for ComponentHydrateGF.
+     * </p>
+     */
     public ComponentHydrateGF() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentHydrateGF.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentHydrateGF(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
@@ -37,9 +49,11 @@ public class ComponentHydrateGF extends ComponentHydrate {
                     dataSet = database.getResultSet(
                             ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
+                    dataSet.close();
                 } catch (Exception e) {
                     logger.info("no parameters in tempcomp -- trying comp.. " + component_name);
-                    dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + component_name + "'"));
+                    dataSet = database.getResultSet(
+                            ("SELECT * FROM comp WHERE name='" + component_name + "'"));
                     dataSet.next();
                 }
                 Ak[0][0] = Double.parseDouble(dataSet.getString("A1_SmallGF"));
@@ -51,6 +65,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
                 Bk[1][0] = Double.parseDouble(dataSet.getString("B2_SmallGF"));
                 Ak[1][1] = Double.parseDouble(dataSet.getString("A2_LargeGF"));
                 Bk[1][1] = Double.parseDouble(dataSet.getString("B2_LargeGF"));
+                dataSet.close();
             } catch (Exception e) {
                 logger.error("error in ComponentHydrateGF", e);
             } finally {
@@ -65,12 +80,24 @@ public class ComponentHydrateGF extends ComponentHydrate {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure());
     }
 
+    /**
+     * <p>
+     * fugcoef2.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double fugcoef2(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         // this is empty hydrate latice fugacity coefficient equation 8.9
         if (componentName.equals("water")) {
@@ -133,6 +160,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         double maxFug = 1.0e100;
@@ -229,6 +257,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
     // public int getHydrateStructure() {
     // return this.getHydrateStructure();
     // }
+    /** {@inheritDoc} */
     @Override
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -252,6 +281,7 @@ public class ComponentHydrateGF extends ComponentHydrate {
         return yki / temp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         // this is equation 8.8

@@ -9,8 +9,12 @@ package neqsim.statistics.dataAnalysis.dataSmoothing;
 import Jama.*;
 
 /**
+ * <p>
+ * DataSmoothor class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class DataSmoothor {
     private static final long serialVersionUID = 1000;
@@ -22,9 +26,24 @@ public class DataSmoothor {
     double[] b;
     double sum = 0, fac = 0;
 
-    /** Creates new DataSmoothor */
+    /**
+     * <p>
+     * Constructor for DataSmoothor.
+     * </p>
+     */
     public DataSmoothor() {}
 
+    /**
+     * <p>
+     * Constructor for DataSmoothor.
+     * </p>
+     *
+     * @param nonSmoothedNumbers an array of {@link double} objects
+     * @param nl a int
+     * @param nr a int
+     * @param ld a int
+     * @param m a int
+     */
     public DataSmoothor(double[] nonSmoothedNumbers, int nl, int nr, int ld, int m) {
         this.nonSmoothedNumbers = new double[nonSmoothedNumbers.length];
         this.smoothedNumbers = new double[nonSmoothedNumbers.length];
@@ -37,11 +56,21 @@ public class DataSmoothor {
         this.m = m;
     }
 
+    /**
+     * <p>
+     * runSmoothing.
+     * </p>
+     */
     public void runSmoothing() {
         findCoefs();
         setSmoothedNumbers();
     }
 
+    /**
+     * <p>
+     * findCoefs.
+     * </p>
+     */
     public void findCoefs() {
         if (nonSmoothedNumbers.length < (nl + nr + 1) || nl < 0 || nr < 0 || ld > m
                 || nl + nr < m) {
@@ -102,6 +131,11 @@ public class DataSmoothor {
         // new Matrix(cCoef,1).print(10,2);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>smoothedNumbers</code>.
+     * </p>
+     */
     public void setSmoothedNumbers() {
         for (int i = nl; i < nonSmoothedNumbers.length - nr; i++) {
             smoothedNumbers[i] = 0;
@@ -116,10 +150,24 @@ public class DataSmoothor {
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>smoothedNumbers</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getSmoothedNumbers() {
         return smoothedNumbers;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         double[] numbers = {10, 11, 12, 13, 14, 15, 15.5, 15, 19, 14, 14, 13, 12, 12, 11, 10, 9, 8};
         DataSmoothor test = new DataSmoothor(numbers, 3, 3, 0, 4);

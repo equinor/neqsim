@@ -13,13 +13,19 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
+ * <p>TestCPAParameterFittingToSolubilityData class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestCPAParameterFittingToSolubilityData {
     static Logger logger = LogManager.getLogger(TestCPAParameterFittingToSolubilityData.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

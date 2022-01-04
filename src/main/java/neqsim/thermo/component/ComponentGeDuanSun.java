@@ -4,24 +4,41 @@ import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentGeDuanSun class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-
 public class ComponentGeDuanSun extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
     double r = 0, q = 0;
 
-    /** Creates new ComponentGENRTLmodifiedHV */
+    /**
+     * <p>
+     * Constructor for ComponentGeDuanSun.
+     * </p>
+     */
     public ComponentGeDuanSun() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentGeDuanSun.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGeDuanSun(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
@@ -30,6 +47,20 @@ public class ComponentGeDuanSun extends ComponentGE {
                 HVgij);
     }
 
+    /**
+     * <p>
+     * getGammaNRTL.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @param HValpha an array of {@link double} objects
+     * @param HVgij an array of {@link double} objects
+     * @return a double
+     */
     public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
         double type = phase.getInitType();
@@ -216,6 +247,20 @@ public class ComponentGeDuanSun extends ComponentGE {
         return gamma;
     }
 
+    /**
+     * <p>
+     * getGamma.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @param HValpha an array of {@link double} objects
+     * @param HVgij an array of {@link double} objects
+     * @return a double
+     */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
         if (componentName.equals("CO2")) {
@@ -235,6 +280,7 @@ public class ComponentGeDuanSun extends ComponentGE {
      * 
      * }
      */
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
         logger.info("fug coef "
@@ -393,6 +439,19 @@ public class ComponentGeDuanSun extends ComponentGE {
     }
 
     /////////////////////////////////////////////////////
+    /**
+     * <p>
+     * getGammaPitzer.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @param salinity a double
+     * @return a double
+     */
     public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double salinity) {
         double P = pressure;
@@ -459,19 +518,32 @@ public class ComponentGeDuanSun extends ComponentGE {
      * numberOfComponents, temperature-0.01, pressure, phasetype)))/0.02; return dfugdt; }
      */
 
+    /**
+     * <p>
+     * Getter for the field <code>r</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getr() {
         return r;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>q</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getq() {
         return q;
     }
 
     /**
      * Getter for property lngamma.
-     * 
-     * @return Value of property lngamma.
      *
+     * @return Value of property lngamma.
      */
     public double getLngamma() {
         return lngamma;

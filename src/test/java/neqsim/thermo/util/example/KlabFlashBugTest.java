@@ -27,6 +27,9 @@ class KlabFlashBugTest {
     static double[] errH = new double[P_bar.length];
     static double[] errS = new double[P_bar.length];
 
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {
         fluid1 = new SystemSrkEos(298.0, 10.0);
@@ -49,6 +52,9 @@ class KlabFlashBugTest {
         }
     }
 
+    /**
+     * <p>testPHflash.</p>
+     */
     @Test
     public void testPHflash() {
         for (int i = 0; i < P_bar.length; i++) {
@@ -60,6 +66,9 @@ class KlabFlashBugTest {
         }
     }
 
+    /**
+     * <p>testPSflash.</p>
+     */
     @Test
     public void testPSflash() {
         for (int i = 0; i < P_bar.length; i++) {

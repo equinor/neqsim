@@ -10,6 +10,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * PFCTViscosityMethod class.
+ * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -26,9 +29,22 @@ public class PFCTViscosityMethod extends Viscosity {
     double viscRefJ[] = {-1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2,
             4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
 
-    /** Creates new ChungViscosityMethod */
+    /**
+     * <p>
+     * Constructor for PFCTViscosityMethod.
+     * </p>
+     */
     public PFCTViscosityMethod() {}
 
+    /**
+     * <p>
+     * Constructor for PFCTViscosityMethod.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public PFCTViscosityMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
@@ -36,6 +52,7 @@ public class PFCTViscosityMethod extends Viscosity {
         referenceSystem.init(0);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
         int phaseTypeNumb = 0;
@@ -47,7 +64,6 @@ public class PFCTViscosityMethod extends Viscosity {
 
         double PCmix = 0.0, TCmix = 0.0, Mmix = 0.0;
         double alfa0 = 1.0, alfaMix = 1.0;
-        double par1 = 0.0, par2 = 0.0, par3 = 0.0, par4 = 0.0;
         double tempTC1 = 0.0, tempTC2 = 0.0;
         double tempPC1 = 0.0, tempPC2 = 0.0;
         double Mwtemp = 0.0, Mmtemp = 0.0;
@@ -106,11 +122,21 @@ public class PFCTViscosityMethod extends Viscosity {
         return viscosity;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentViscosity(int i) {
         return 0;
     }
 
+    /**
+     * <p>
+     * getRefComponentViscosity.
+     * </p>
+     *
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double getRefComponentViscosity(double temp, double pres) {
         referenceSystem.setTemperature(temp);
         // System.out.println("ref temp " + temp);

@@ -8,8 +8,12 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * PVrefluxflash class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class PVrefluxflash extends Flash {
     private static final long serialVersionUID = 1000;
@@ -18,8 +22,22 @@ public class PVrefluxflash extends Flash {
     int refluxPhase = 0;
     double refluxSpec = 0.5;
 
+    /**
+     * <p>
+     * Constructor for PVrefluxflash.
+     * </p>
+     */
     public PVrefluxflash() {}
 
+    /**
+     * <p>
+     * Constructor for PVrefluxflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param refluxSpec a double
+     * @param refluxPhase a int
+     */
     public PVrefluxflash(SystemInterface system, double refluxSpec, int refluxPhase) {
         this.system = system;
         this.tpFlash = new TPflash(system);
@@ -27,6 +45,7 @@ public class PVrefluxflash extends Flash {
         this.refluxPhase = refluxPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // System.out.println("enthalpy: " + system.getEnthalpy());
@@ -69,6 +88,7 @@ public class PVrefluxflash extends Flash {
         } while (Math.abs(dt) > 1e-8 && Math.abs(f_func) > 1e-6 && iter < 1000);
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

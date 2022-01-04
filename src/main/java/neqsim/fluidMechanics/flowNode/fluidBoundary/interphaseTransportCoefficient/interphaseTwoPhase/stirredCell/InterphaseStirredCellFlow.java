@@ -10,23 +10,34 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficient.interphaseTwoPhase.interphasePipeFlow.InterphaseStratifiedFlow;
 
 /**
+ * <p>
+ * InterphaseStirredCellFlow class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new FrictionFactorBaseClass All frictionfactors are the fanning frictionfactor.
+     *
+     * frictionfactor.
      */
-
     public InterphaseStirredCellFlow() {}
 
+    /**
+     * <p>
+     * Constructor for InterphaseStirredCellFlow.
+     * </p>
+     *
+     * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public InterphaseStirredCellFlow(FlowNodeInterface node) {
         // flowNode = node;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber,
             FlowNodeInterface node) {
@@ -46,6 +57,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber,
             FlowNodeInterface node) {
@@ -65,6 +77,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWallMassTransferCoefficient(int phase, double schmidtNumber,
             FlowNodeInterface node) {
@@ -79,6 +92,7 @@ public class InterphaseStirredCellFlow extends InterphaseStratifiedFlow {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,
             FlowNodeInterface node) {

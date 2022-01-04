@@ -7,19 +7,27 @@
 package neqsim.dataPresentation.visAD;
 
 import java.rmi.RemoteException;
-import visad.*;
+import visad.VisADException;
 
 /**
+ * <p>
+ * visAdBaseClass class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class visAdBaseClass implements visAdInterface, java.io.Serializable {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new visAdBaseClass */
+    /**
+     * <p>
+     * Constructor for visAdBaseClass.
+     * </p>
+     */
     public visAdBaseClass() {}
 
+    /** {@inheritDoc} */
     @Override
     public void init() throws RemoteException, VisADException {}
 }

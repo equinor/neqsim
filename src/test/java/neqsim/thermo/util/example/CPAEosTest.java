@@ -9,12 +9,22 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * CPAEosTest class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class CPAEosTest {
     static SystemInterface thermoSystem = null;
 
+    /**
+     * <p>
+     * setUp.
+     * </p>
+     */
     @BeforeAll
     public static void setUp() {
         thermoSystem = new SystemSrkCPAstatoil(298.0, 10.0);
@@ -26,6 +36,11 @@ public class CPAEosTest {
         thermoSystem.setMixingRule(10);
     }
 
+    /**
+     * <p>
+     * testTPflash.
+     * </p>
+     */
     @Ignore
     public void testTPflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -33,6 +48,11 @@ public class CPAEosTest {
         assertEquals(thermoSystem.getNumberOfPhases(), 2);
     }
 
+    /**
+     * <p>
+     * initPhysicalProperties.
+     * </p>
+     */
     @Test
     public void initPhysicalProperties() {
         thermoSystem.initPhysicalProperties();
@@ -40,6 +60,11 @@ public class CPAEosTest {
                 thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
     }
 
+    /**
+     * <p>
+     * testPHflash.
+     * </p>
+     */
     @Test
     public void testPHflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -54,6 +79,11 @@ public class CPAEosTest {
         assertEquals(Math.round(enthalpy + 10.0), Math.round(enthalpy2));
     }
 
+    /**
+     * <p>
+     * testPSflash.
+     * </p>
+     */
     @Test
     public void testPSflash() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);

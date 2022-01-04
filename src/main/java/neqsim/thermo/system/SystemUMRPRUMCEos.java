@@ -17,9 +17,10 @@ package neqsim.thermo.system;
 public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
-
     public SystemUMRPRUMCEos() {
         super();
         setBmixType(1);
@@ -27,6 +28,14 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
         attractiveTermNumber = 13;
     }
 
+    /**
+     * <p>
+     * Constructor for SystemUMRPRUMCEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemUMRPRUMCEos(double T, double P) {
         super(T, P);
         setBmixType(1);
@@ -40,6 +49,15 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
                 "heatCapacityCp", "heatCapacityCv", "density", "volume"};
     }
 
+    /**
+     * <p>
+     * Constructor for SystemUMRPRUMCEos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemUMRPRUMCEos(double T, double P, boolean solidCheck) {
         super(T, P, solidCheck);
         setBmixType(1);
@@ -47,6 +65,7 @@ public class SystemUMRPRUMCEos extends SystemUMRPRUEos {
         modelName = "UMR-PRU-MC-EoS";
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemUMRPRUMCEos clone() {
         SystemUMRPRUMCEos clonedSystem = null;

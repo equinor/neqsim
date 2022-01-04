@@ -92,6 +92,7 @@ public class SystemSrkEos extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemSrkEos clone() {
         SystemSrkEos clonedSystem = null;

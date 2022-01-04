@@ -20,8 +20,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Separator class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
     private static final long serialVersionUID = 1000;
@@ -45,23 +49,50 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
     /**
-     * Creates new Separator
+     * <p>
+     * Constructor for Separator.
+     * </p>
      */
     public Separator() {
         super();
         mechanicalDesign = new SeparatorMechanicalDesign(this);
     }
 
+    /**
+     * <p>
+     * Constructor for Separator.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Separator(StreamInterface inletStream) {
         this();
         addStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for Separator.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Separator(String name, StreamInterface inletStream) {
         this(inletStream);
         this.name = name;
     }
 
+    /**
+     * <p>
+     * setInletStream.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void setInletStream(StreamInterface inletStream) {
         inletStreamMixer.addStream(inletStream);
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -73,6 +104,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidOutStream = new Stream(liquidSystem);
     }
 
+    /**
+     * <p>
+     * addStream.
+     * </p>
+     *
+     * @param newStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void addStream(StreamInterface newStream) {
         if (numberOfInputStreams == 0) {
             setInletStream(newStream);
@@ -82,27 +121,57 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         numberOfInputStreams++;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>liquidOutStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getLiquidOutStream() {
         return liquidOutStream;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasOutStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getGasOutStream() {
         return gasOutStream;
     }
 
+    /**
+     * <p>
+     * getGas.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getGas() {
         return getGasOutStream();
     }
 
+    /**
+     * <p>
+     * getLiquid.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getLiquid() {
         return getLiquidOutStream();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         inletStreamMixer.run();
@@ -171,16 +240,19 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         thermoSystem = thermoSystem2;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         thermoSystem.display();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return thermoSystem.getResultTable();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {
         inletStreamMixer.run();
@@ -225,6 +297,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                 * getInternalDiameter() * getSeparatorLength();
     }
 
+    /**
+     * <p>
+     * setTempPres.
+     * </p>
+     *
+     * @param temp a double
+     * @param pres a double
+     */
     public void setTempPres(double temp, double pres) {
         gasOutStream.getThermoSystem().setTemperature(temp);
         liquidOutStream.getThermoSystem().setTemperature(temp);
@@ -238,35 +318,88 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidOutStream.run();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>efficiency</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getEfficiency() {
         return efficiency;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>efficiency</code>.
+     * </p>
+     *
+     * @param efficiency a double
+     */
     public void setEfficiency(double efficiency) {
         this.efficiency = efficiency;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>liquidCarryoverFraction</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getLiquidCarryoverFraction() {
         return liquidCarryoverFraction;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>liquidCarryoverFraction</code>.
+     * </p>
+     *
+     * @param liquidCarryoverFraction a double
+     */
     public void setLiquidCarryoverFraction(double liquidCarryoverFraction) {
         this.liquidCarryoverFraction = liquidCarryoverFraction;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>gasCarryunderFraction</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getGasCarryunderFraction() {
         return gasCarryunderFraction;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>gasCarryunderFraction</code>.
+     * </p>
+     *
+     * @param gasCarryunderFraction a double
+     */
     public void setGasCarryunderFraction(double gasCarryunderFraction) {
         this.gasCarryunderFraction = gasCarryunderFraction;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>liquidLevel</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getLiquidLevel() {
         return liquidLevel;
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureDrop</code>.
+     * </p>
+     *
      * @return the pressureDrop
      */
     public double getPressureDrop() {
@@ -274,6 +407,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureDrop</code>.
+     * </p>
+     *
      * @param pressureDrop the pressureDrop to set
      */
     public void setPressureDrop(double pressureDrop) {
@@ -281,26 +418,42 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Getter for the field <code>internalDiameter</code>.
+     * </p>
+     *
      * @return the diameter
      */
     public double getInternalDiameter() {
         return internalDiameter;
     }
 
-    /**
-     * @param diameter the diameter to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setInternalDiameter(double diameter) {
         this.internalDiameter = diameter;
     }
 
+    /**
+     * <p>
+     * getGasSuperficialVelocity.
+     * </p>
+     *
+     * @return a double
+     */
     public double getGasSuperficialVelocity() {
         return thermoSystem.getPhase(0).getTotalVolume() / 1e5
                 / (neqsim.thermo.ThermodynamicConstantsInterface.pi * getInternalDiameter()
                         * getInternalDiameter() / 4.0);
     }
 
+    /**
+     * <p>
+     * getGasLoadFactor.
+     * </p>
+     *
+     * @return a double
+     */
     public double getGasLoadFactor() {
         thermoSystem.initPhysicalProperties();
         double term1 = (thermoSystem.getPhase(1).getPhysicalProperties().getDensity()
@@ -309,6 +462,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
     }
 
+    /**
+     * <p>
+     * getGasLoadFactor.
+     * </p>
+     *
+     * @param phaseNumber a int
+     * @return a double
+     */
     public double getGasLoadFactor(int phaseNumber) {
         double gasAreaFraction = 1.0;
         if (orientation.equals("horizontal")) {
@@ -322,6 +483,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
     }
 
+    /**
+     * <p>
+     * getDeRatedGasLoadFactor.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDeRatedGasLoadFactor() {
         thermoSystem.initPhysicalProperties();
         double derating = 1.0;
@@ -336,6 +504,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         return derating * getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
     }
 
+    /**
+     * <p>
+     * getDeRatedGasLoadFactor.
+     * </p>
+     *
+     * @param phase a int
+     * @return a double
+     */
     public double getDeRatedGasLoadFactor(int phase) {
         thermoSystem.initPhysicalProperties();
         double derating = 1.0;
@@ -352,6 +528,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Getter for the field <code>orientation</code>.
+     * </p>
+     *
      * @return the orientation
      */
     public String getOrientation() {
@@ -359,6 +539,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Setter for the field <code>orientation</code>.
+     * </p>
+     *
      * @param orientation the orientation to set
      */
     public void setOrientation(String orientation) {
@@ -366,6 +550,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Getter for the field <code>separatorLength</code>.
+     * </p>
+     *
      * @return the separatorLength
      */
     public double getSeparatorLength() {
@@ -373,16 +561,40 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Setter for the field <code>separatorLength</code>.
+     * </p>
+     *
      * @param separatorLength the separatorLength to set
      */
     public void setSeparatorLength(double separatorLength) {
         this.separatorLength = separatorLength;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>separatorSection</code>.
+     * </p>
+     *
+     * @param i a int
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *         object
+     */
     public SeparatorSection getSeparatorSection(int i) {
         return separatorSection.get(i);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>separatorSection</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *         object
+     */
     public SeparatorSection getSeparatorSection(String name) {
         for (SeparatorSection sec : separatorSection) {
             if (sec.getName().equals(name)) {
@@ -393,10 +605,25 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         return null;
     }
 
+    /**
+     * <p>
+     * getSeparatorSections.
+     * </p>
+     *
+     * @return a {@link java.util.ArrayList} object
+     */
     public ArrayList<SeparatorSection> getSeparatorSections() {
         return separatorSection;
     }
 
+    /**
+     * <p>
+     * addSeparatorSection.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param type a {@link java.lang.String} object
+     */
     public void addSeparatorSection(String name, String type) {
         if (type.equals("vane")) {
             separatorSection.add(new SeparatorSection(name, type, this));
@@ -414,6 +641,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
+     * <p>
+     * Getter for the field <code>designLiquidLevelFraction</code>.
+     * </p>
+     *
      * @return the designGasLevelFraction
      */
     public double getDesignLiquidLevelFraction() {
@@ -421,17 +652,23 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     }
 
     /**
-     * @param designGasLevelFraction the designGasLevelFraction to set
+     * <p>
+     * Setter for the field <code>designLiquidLevelFraction</code>.
+     * </p>
+     *
+     * @param designLiquidLevelFraction a double
      */
     public void setDesignLiquidLevelFraction(double designLiquidLevelFraction) {
         this.designLiquidLevelFraction = designLiquidLevelFraction;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPressure() {
         return getThermoSystem().getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         //
@@ -454,6 +691,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                 + getGasOutStream().getThermoSystem().getEntropy(unit) - entrop;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMassBalance(String unit) {
         //
@@ -468,6 +706,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                 + getGasOutStream().getThermoSystem().getFlowRate(unit) - flow;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
         //

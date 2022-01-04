@@ -11,9 +11,12 @@ import neqsim.MathLib.generalMath.TDMAsolve;
 import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
 
 /**
+ * <p>
+ * TwoPhaseFixedStaggeredGridSolver class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -32,14 +35,36 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     protected double oldImpuls[][];
     protected double oldEnergy[][];
 
-    /** Creates new steadstateOnePhasePipeFlowSolver */
+    /**
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
+     */
     public TwoPhaseFixedStaggeredGridSolver() {}
 
-    /** Creates new nonlin */
+    /**
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
+     * @param length a double
+     * @param nodes a int
+     */
     public TwoPhaseFixedStaggeredGridSolver(FlowSystemInterface pipe, double length, int nodes) {
         super(pipe, length, nodes);
     }
 
+    /**
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
+     * @param length a double
+     * @param nodes a int
+     * @param dynamic a boolean
+     */
     public TwoPhaseFixedStaggeredGridSolver(FlowSystemInterface pipe, double length, int nodes,
             boolean dynamic) {
         super(pipe, length, nodes);
@@ -58,6 +83,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         numberOfVelocityNodes = nodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public TwoPhaseFixedStaggeredGridSolver clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
@@ -69,6 +95,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * initProfiles.
+     * </p>
+     */
     public void initProfiles() {
         double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
 
@@ -167,6 +198,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
          */
     }
 
+    /**
+     * <p>
+     * initMatrix.
+     * </p>
+     */
     public void initMatrix() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -202,6 +238,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initPressure.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initPressure(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -213,6 +256,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initVelocity.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initVelocity(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).setVelocityIn(phase,
@@ -228,6 +278,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initTemperature.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initTemperature(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -244,6 +301,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initPhaseFraction.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initPhaseFraction(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).setPhaseFraction(phase,
@@ -253,6 +317,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initComposition.
+     * </p>
+     *
+     * @param phase a int
+     * @param comp a int
+     */
     public void initComposition(int phase, int comp) {
         for (int j = 0; j < numberOfNodes; j++) {
             if ((pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getx()
@@ -297,6 +369,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * setMassConservationMatrix.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void setMassConservationMatrix(int phase) {
         if (!dynamic) {
             double SU = 0;
@@ -372,6 +451,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>
+     * setPhaseFractionMatrix.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void setPhaseFractionMatrix(int phase) {
         if (!dynamic) {
             double SU = 0;
@@ -454,6 +540,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>
+     * setImpulsMatrixTDMA.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void setImpulsMatrixTDMA(int phase) {
         double sign = (phase == 0) ? 1.0 : -1.0;
         double SU = 0.0, SP = 0.0;
@@ -581,6 +674,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         c[numberOfNodes - 1] = -c[numberOfNodes - 1];
     }
 
+    /**
+     * <p>
+     * setEnergyMatrixTDMA.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void setEnergyMatrixTDMA(int phase) {
         double sign = (phase == 0) ? 1.0 : -1.0;
 
@@ -700,6 +800,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>
+     * setComponentConservationMatrix2.
+     * </p>
+     *
+     * @param phase a int
+     * @param componentNumber a int
+     */
     public void setComponentConservationMatrix2(int phase, int componentNumber) {
         double SU = 0;
         double sign = (phase == 0) ? 1.0 : 1.0;
@@ -766,6 +874,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         r[numberOfNodes - 1] = 0;// SU;
     }
 
+    /**
+     * <p>
+     * setComponentConservationMatrix.
+     * </p>
+     *
+     * @param phase a int
+     * @param componentNumber a int
+     */
     public void setComponentConservationMatrix(int phase, int componentNumber) {
         double sign = (phase == 0) ? -1.0 : 1.0;
         double SU = 0;
@@ -855,6 +971,13 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         c[i] = -c[i];
     }
 
+    /**
+     * <p>
+     * initFinalResults.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initFinalResults(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn().doubleValue();
@@ -875,18 +998,29 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * calcFluxes.
+     * </p>
+     */
     public void calcFluxes() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).calcFluxes();
         }
     }
 
+    /**
+     * <p>
+     * initNodes.
+     * </p>
+     */
     public void initNodes() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void solveTDMA() {
         double d[];

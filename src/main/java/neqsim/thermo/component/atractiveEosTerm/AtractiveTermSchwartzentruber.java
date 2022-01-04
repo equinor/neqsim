@@ -9,23 +9,39 @@ package neqsim.thermo.component.atractiveEosTerm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
+ * <p>
+ * AtractiveTermSchwartzentruber class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
     private static final long serialVersionUID = 1000;
 
     private double c = 0.0, d = 0.0;
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * <p>
+     * Constructor for AtractiveTermSchwartzentruber.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     */
     public AtractiveTermSchwartzentruber(ComponentEosInterface component) {
         super(component);
         m = (0.48508 + 1.55191 * component.getAcentricFactor()
                 - 0.15613 * component.getAcentricFactor() * component.getAcentricFactor());
     }
 
-    /** Creates new AtractiveTermSrk */
+    /**
+     * <p>
+     * Constructor for AtractiveTermSchwartzentruber.
+     * </p>
+     *
+     * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
+     * @param params an array of {@link double} objects
+     */
     public AtractiveTermSchwartzentruber(ComponentEosInterface component, double[] params) {
         this(component);
         System.arraycopy(params, 0, this.parameters, 0, params.length);
@@ -33,6 +49,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         c = 1.0 - 1.0 / d;
     }
 
+    /** {@inheritDoc} */
     @Override
     public AtractiveTermSchwartzentruber clone() {
         AtractiveTermSchwartzentruber atractiveTerm = null;
@@ -45,12 +62,14 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         return atractiveTerm;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         m = (0.48508 + 1.55191 * getComponent().getAcentricFactor() - 0.15613
                 * getComponent().getAcentricFactor() * getComponent().getAcentricFactor());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double alpha(double temperature) {
         // System.out.println("alpha here " + Math.pow( 1.0 +
@@ -95,6 +114,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                         * Math.pow(temperature / TC, 1.0 * d) * d / (temperature * temperature);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -104,6 +124,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffalphaT(double temperature) {
         return 2.0
@@ -124,6 +145,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                                         / (getComponent().getTC() * getComponent().getTC())));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffdiffalphaT(double temperature) {
         return 2.0 * Math.pow(
@@ -156,6 +178,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
                                         / (getComponent().getTC() * getComponent().getTC()));
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {
@@ -165,6 +188,7 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double diffdiffaT(double temperature) {
         if (temperature / getComponent().getTC() > 100.0) {

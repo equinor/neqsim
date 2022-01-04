@@ -12,15 +12,22 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>Acids class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Acids {
     static Logger logger = LogManager.getLogger(Acids.class);
 
+    /**
+     * <p>Constructor for Acids.</p>
+     */
     public Acids() {}
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     @SuppressWarnings("unused")

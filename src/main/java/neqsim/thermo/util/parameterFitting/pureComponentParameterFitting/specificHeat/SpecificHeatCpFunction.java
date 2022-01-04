@@ -4,14 +4,28 @@ import org.apache.logging.log4j.*;
 
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
+/**
+ * <p>
+ * SpecificHeatCpFunction class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SpecificHeatCpFunction.class);
 
+    /**
+     * <p>
+     * Constructor for SpecificHeatCpFunction.
+     * </p>
+     */
     public SpecificHeatCpFunction() {
         params = new double[4];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -25,6 +39,7 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getCp("kJ/kgK");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

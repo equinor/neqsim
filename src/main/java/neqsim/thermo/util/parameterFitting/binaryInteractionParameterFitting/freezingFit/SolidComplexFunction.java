@@ -5,15 +5,25 @@ import neqsim.thermodynamicOperations.flashOps.saturationOps.SolidComplexTempera
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * SolidComplexFunction class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class SolidComplexFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexFunction.class);
 
+    /**
+     * <p>
+     * Constructor for SolidComplexFunction.
+     * </p>
+     */
     public SolidComplexFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -26,6 +36,7 @@ public class SolidComplexFunction extends LevenbergMarquardtFunction {
         // return system.getPhases()[0].getComponents()[1].getx(); // for MEG
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -15,9 +15,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * ExpanderOld class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderInterface {
     private static final long serialVersionUID = 1000;
@@ -30,19 +33,38 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     double pressure = 0.0;
 
     /**
-     * Creates new ThrottelValve
+     * <p>
+     * Constructor for ExpanderOld.
+     * </p>
      */
     public ExpanderOld() {}
 
+    /**
+     * <p>
+     * Constructor for ExpanderOld.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public ExpanderOld(Stream inletStream) {
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for ExpanderOld.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public ExpanderOld(String name, StreamInterface inletStream) {
         this.name = name;
         setInletStream(inletStream);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -51,21 +73,25 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         outStream = (StreamInterface) inletStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutletPressure(double pressure) {
         this.pressure = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEnergy() {
         return dH;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         System.out.println("expander running..");
@@ -81,6 +107,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         outStream.setThermoSystem(thermoSystem);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         DecimalFormat nf = new DecimalFormat();
@@ -180,6 +207,7 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {}
 }

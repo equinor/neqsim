@@ -11,8 +11,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * NeqHeater class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class NeqHeater extends Heater {
     private static final long serialVersionUID = 1000;
@@ -22,25 +26,39 @@ public class NeqHeater extends Heater {
     SystemInterface system;
     double dH = 0.0;
 
-    /** Creates new Heater */
+    /**
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
+     */
     public NeqHeater() {}
 
+    /**
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public NeqHeater(Stream inStream) {
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutTemperature(double temperature) {
         this.setTemperature = true;
         this.temperatureOut = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -59,6 +77,7 @@ public class NeqHeater extends Heater {
         outStream.setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         System.out.println("heater dH: " + dH);

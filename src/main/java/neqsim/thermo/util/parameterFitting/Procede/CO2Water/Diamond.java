@@ -14,16 +14,23 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>Diamond class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class Diamond {
     static Logger logger = LogManager.getLogger(Diamond.class);
 
+    /**
+     * <p>Constructor for Diamond.</p>
+     */
     public Diamond() {
     }
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     public static void main(String[] args) {

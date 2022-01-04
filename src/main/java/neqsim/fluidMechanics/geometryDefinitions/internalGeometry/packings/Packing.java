@@ -7,8 +7,12 @@
 package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
 
 /**
+ * <p>
+ * Packing class.
+ * </p>
+ *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class Packing implements PackingInterface {
     private static final long serialVersionUID = 1000;
@@ -16,9 +20,20 @@ public class Packing implements PackingInterface {
     double voidFractionPacking = 0.951, size = 0, surfaceAreaPrVolume = 112.6;
     String name = null;
 
-    /** Creates new Packing */
+    /**
+     * <p>
+     * Constructor for Packing.
+     * </p>
+     */
     public Packing() {}
 
+    /**
+     * <p>
+     * Constructor for Packing.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public Packing(String name) {
         this.name = name;
         try {
@@ -40,6 +55,15 @@ public class Packing implements PackingInterface {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for Packing.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param material a {@link java.lang.String} object
+     * @param size a int
+     */
     public Packing(String name, String material, int size) {
         this.name = name;
         try {
@@ -61,15 +85,16 @@ public class Packing implements PackingInterface {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getSurfaceAreaPrVolume() {
         return surfaceAreaPrVolume;
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property voidFractionPacking.
-     * 
-     * @return Value of property voidFractionPacking.
      */
     @Override
     public double getVoidFractionPacking() {
@@ -77,9 +102,9 @@ public class Packing implements PackingInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Setter for property voidFractionPacking.
-     * 
-     * @param voidFractionPacking New value of property voidFractionPacking.
      */
     @Override
     public void setVoidFractionPacking(double voidFractionPacking) {
@@ -88,7 +113,7 @@ public class Packing implements PackingInterface {
 
     /**
      * Setter for property size.
-     * 
+     *
      * @param size New value of property size.
      */
     public void setSize(double size) {
@@ -96,9 +121,9 @@ public class Packing implements PackingInterface {
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Get size in mm
-     * 
-     * @param size
      */
     @Override
     public double getSize() {

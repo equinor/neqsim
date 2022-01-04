@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TPflashMembrane class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TPflashMembrane {
     static Logger logger = LogManager.getLogger(TPflashMembrane.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem2 = (SystemInterface)
         // util.serialization.SerializationManager.open("c:/test.fluid");

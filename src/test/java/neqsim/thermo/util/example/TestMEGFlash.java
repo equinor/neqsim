@@ -6,9 +6,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>TestMEGFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestMEGFlash {
     static Logger logger = LogManager.getLogger(TestMEGFlash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAs(273.15 + 20, 10.0);
 

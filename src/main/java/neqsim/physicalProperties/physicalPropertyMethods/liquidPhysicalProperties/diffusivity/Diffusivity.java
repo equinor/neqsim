@@ -17,10 +17,22 @@ abstract class Diffusivity extends
     double[][] binaryDiffusionCoeffisients;
     double[] effectiveDiffusionCoefficient;
 
-    /** Creates new Conductivity */
-
+    /**
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
+     */
     public Diffusivity() {}
 
+    /**
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
+     *
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public Diffusivity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
@@ -29,6 +41,7 @@ abstract class Diffusivity extends
         effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public Diffusivity clone() {
         Diffusivity properties = null;
@@ -48,11 +61,10 @@ abstract class Diffusivity extends
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-        double tempVar = 0, tempVar2 = 0;
-
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
                 binaryDiffusionCoeffisients[i][j] =
@@ -75,6 +87,7 @@ abstract class Diffusivity extends
         return binaryDiffusionCoeffisients;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcEffectiveDiffusionCoeffisients() {
         double sum = 0;
@@ -93,16 +106,19 @@ abstract class Diffusivity extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j) {
         return binaryDiffusionCoeffisients[i][j];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEffectiveDiffusionCoefficient(int i) {
         return effectiveDiffusionCoefficient[i];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getFickBinaryDiffusionCoefficient(int i, int j) {
         double temp = (i == j) ? 1.0 : 0.0;

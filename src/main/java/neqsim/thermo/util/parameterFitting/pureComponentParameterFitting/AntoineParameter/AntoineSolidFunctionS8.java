@@ -5,18 +5,27 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>
+ * AntoineSolidFunctionS8 class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunctionS8.class);
 
+    /**
+     * <p>
+     * Constructor for AntoineSolidFunctionS8.
+     * </p>
+     */
     public AntoineSolidFunctionS8() {
         params = new double[2];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -28,6 +37,7 @@ public class AntoineSolidFunctionS8 extends LevenbergMarquardtFunction {
         return system.getPhase(0).getComponent(0).getSolidVaporPressure(dependentValues[0]);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

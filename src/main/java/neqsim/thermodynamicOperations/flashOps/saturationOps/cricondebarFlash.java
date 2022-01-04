@@ -10,6 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * cricondebarFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class cricondebarFlash extends constantDutyPressureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(constantDutyFlash.class);
@@ -17,10 +25,19 @@ public class cricondebarFlash extends constantDutyPressureFlash {
     Matrix Jac, fvec;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for cricondebarFlash.
+     * </p>
      */
     public cricondebarFlash() {}
 
+    /**
+     * <p>
+     * Constructor for cricondebarFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public cricondebarFlash(SystemInterface system) {
         super(system);
         Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1,
@@ -28,6 +45,13 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         fvec = new Matrix(system.getPhase(0).getNumberOfComponents() + 1, 1);
     }
 
+    /**
+     * <p>
+     * calcx.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcx() {
         double ktot = 0.0, xtotal = 0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
@@ -50,6 +74,13 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         return xtotal;
     }
 
+    /**
+     * <p>
+     * initMoleFraction.
+     * </p>
+     *
+     * @return a double
+     */
     public double initMoleFraction() {
         double[] XI = new double[system.getPhase(0).getNumberOfComponents()];
         double sumX = 0.0;
@@ -66,6 +97,11 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         return tempSumXI;
     }
 
+    /**
+     * <p>
+     * run2.
+     * </p>
+     */
     public void run2() {
         ThermodynamicOperations localOperation = new ThermodynamicOperations(system);
 
@@ -151,6 +187,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         } while (Math.abs(oldIterTemp - system.getTemperature()) > 1e-3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         ThermodynamicOperations localOperation = new ThermodynamicOperations(system);
@@ -204,6 +241,9 @@ public class cricondebarFlash extends constantDutyPressureFlash {
 
                 logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
                         + " pressure " + system.getPressure());
+
+                logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
+                        + " pressure " + system.getPressure());
             } while (Math.abs(Q1) > 1e-10 && iterations < 15);// maxNumberOfIterations);
             logger.info("temp " + system.getTemperature() + " Q1 " + Q1);
             // if(ii<2) system.setTemperature(dewTemp-);
@@ -211,6 +251,11 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         }
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
+     */
     public void setfvec() {
         double sumxx = 0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -222,11 +267,17 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                     - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
+
         }
         fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
         // logger.info("sumx" + sumxx);//
     }
 
+    /**
+     * <p>
+     * setJac.
+     * </p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -252,6 +303,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

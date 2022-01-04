@@ -8,16 +8,36 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * constantDutyPressureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class constantDutyPressureFlash extends constantDutyFlash {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for constantDutyPressureFlash.
+     * </p>
+     */
     public constantDutyPressureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for constantDutyPressureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public constantDutyPressureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // system.calc_x_y();
@@ -72,16 +92,20 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             system.setPressure(pres);
         } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10
                 && iterations < 300) || iterations < 3);
+
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return system;

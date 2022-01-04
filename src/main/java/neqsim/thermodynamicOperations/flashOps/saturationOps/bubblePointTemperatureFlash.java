@@ -8,19 +8,37 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * bubblePointTemperatureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointTemperatureFlash.class);
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for bubblePointTemperatureFlash.
+     * </p>
      */
     public bubblePointTemperatureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for bubblePointTemperatureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public bubblePointTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         int iterations = 0, maxNumberOfIterations = 10000;
@@ -60,6 +78,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                                             .getFugasityCoeffisient()
                                     / system.getPhases()[0].getComponents()[i]
                                             .getFugasityCoeffisient());
+
                 } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
                         && (iterations < maxNumberOfIterations));
 
@@ -79,6 +98,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
         } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

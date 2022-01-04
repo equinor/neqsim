@@ -9,8 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import org.apache.commons.math3.linear.*;
 
 /**
+ * <p>
+ * UKspecifications_ICF_SI class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     private static final long serialVersionUID = 1000;
@@ -19,24 +23,35 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
     Standard_ISO6976 iso6976 = null;
     double propaneNumber = 0.0;
 
-    /** Creates a new instance of Standard_ISO1992 */
+    /**
+     * Creates a new instance of Standard_ISO1992
+     */
     public UKspecifications_ICF_SI() {
         name = "UKspecifications_ICF_SI";
         standardDescription = "UKspecifications_ICF_SI";
     }
 
+    /**
+     * <p>
+     * Constructor for UKspecifications_ICF_SI.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public UKspecifications_ICF_SI(SystemInterface thermoSystem) {
         super(thermoSystem);
         name = "UKspecifications_ICF_SI";
         iso6976 = new Standard_ISO6976(thermoSystem, 15, 15, "volume");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calculate() {
         iso6976.calculate();
         propaneNumber = calcPropaneNumber();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter, java.lang.String returnUnit) {
         if (returnParameter.equals("PropaneNumber")) {
@@ -56,21 +71,31 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter) {
         return thermoSystem.getPhase(0).getComponent(componentName).getz();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getUnit(String returnParameter) {
         return unit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isOnSpec() {
         return true;
     }
 
+    /**
+     * <p>
+     * calcPropaneNumber.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcPropaneNumber() {
         double avgCarbon = iso6976.getAverageCarbonNumber();
 
@@ -100,6 +125,13 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
         return 1.0;
     }
 
+    /**
+     * <p>
+     * calcWithNitrogenAsInert.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcWithNitrogenAsInert() {
         SystemInterface tempThermo = (SystemInterface) thermoSystem.clone();
         Standard_ISO6976 localIso6976 = new Standard_ISO6976(tempThermo);

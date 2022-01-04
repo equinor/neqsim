@@ -10,24 +10,35 @@ import neqsim.MathLib.generalMath.GeneralMath;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 
 /**
+ * <p>
+ * InterphaseStratifiedFlow class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new FrictionFactorBaseClass All frictionfactors are the fanning frictionfactor.
+     *
+     * frictionfactor.
      */
-
     public InterphaseStratifiedFlow() {}
 
+    /**
+     * <p>
+     * Constructor for InterphaseStratifiedFlow.
+     * </p>
+     *
+     * @param node a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
+     */
     public InterphaseStratifiedFlow(FlowNodeInterface node) {
         // flowNode = node;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {
         if (Math.abs(node.getReynoldsNumber(phase)) < 2000) {
@@ -40,11 +51,13 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcInterPhaseFrictionFactor(int phase, FlowNodeInterface node) {
         return (1.0 + 75.0 * node.getPhaseFraction(1)) * calcWallFrictionFactor(0, node);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWallHeatTransferCoefficient(int phase, double prandtlNumber,
             FlowNodeInterface node) {
@@ -64,6 +77,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcInterphaseHeatTransferCoefficient(int phase, double prandtlNumber,
             FlowNodeInterface node) {
@@ -85,6 +99,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcWallMassTransferCoefficient(int phase, double schmidtNumber,
             FlowNodeInterface node) {
@@ -99,6 +114,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcInterphaseMassTransferCoefficient(int phase, double schmidtNumber,
             FlowNodeInterface node) {

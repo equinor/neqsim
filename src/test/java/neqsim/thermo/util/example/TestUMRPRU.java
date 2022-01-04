@@ -10,9 +10,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author esol @version
  */
+/**
+ * <p>TestUMRPRU class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestUMRPRU {
     static Logger logger = LogManager.getLogger(TestUMRPRU.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         // SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 3.5, 33.0);
         // SystemInterface testSystem = new SystemUMRPRUMCEos(273.15 + 20.5, 70.0);

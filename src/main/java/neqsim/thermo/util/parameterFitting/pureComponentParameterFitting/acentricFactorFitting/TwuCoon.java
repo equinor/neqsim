@@ -5,18 +5,27 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
+ * <p>
+ * TwuCoon class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TwuCoon extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TwuCoon.class);
 
+    /**
+     * <p>
+     * Constructor for TwuCoon.
+     * </p>
+     */
     public TwuCoon() {
         params = new double[3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         // System.out.println("dep " + dependentValues[0]);
@@ -34,11 +43,13 @@ public class TwuCoon extends LevenbergMarquardtFunction {
         return Math.log(system.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return Math.exp(val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -7,7 +7,12 @@ import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * CriticalPointFlash class.
+ * </p>
+ *
  * @author esol
+ * @version $Id: $Id
  */
 public class CriticalPointFlash extends Flash {
     private static final long serialVersionUID = 1000;
@@ -21,6 +26,13 @@ public class CriticalPointFlash extends Flash {
     double Vc0, Tc0;
     // SystemInterface clonedsystem;
 
+    /**
+     * <p>
+     * Constructor for CriticalPointFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public CriticalPointFlash(SystemInterface system) {
         this.system = system;
         // clonedsystem = (SystemInterface) system.clone();
@@ -31,6 +43,11 @@ public class CriticalPointFlash extends Flash {
         fmatrix = new SimpleMatrix(numberOfComponents, 1);
     }
 
+    /**
+     * <p>
+     * calcMmatrixHeidemann.
+     * </p>
+     */
     public void calcMmatrixHeidemann() {
         Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
         Vc0 = 4 * system.getPhase(0).getB() / system.getPhase(0).getNumberOfMolesInPhase();
@@ -72,6 +89,11 @@ public class CriticalPointFlash extends Flash {
         }
     }
 
+    /**
+     * <p>
+     * calcMmatrix.
+     * </p>
+     */
     public void calcMmatrix() {
         double dij = 0;
         double tempJ = 0;
@@ -94,6 +116,13 @@ public class CriticalPointFlash extends Flash {
         }
     }
 
+    /**
+     * <p>
+     * calcdpd.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcdpd() {
         double[] oldz = system.getMolarRate();
         i = Mmatrix.eig().getNumberOfEigenvalues();
@@ -130,6 +159,7 @@ public class CriticalPointFlash extends Flash {
         return dtpddsss;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system.init(0);
@@ -204,6 +234,7 @@ public class CriticalPointFlash extends Flash {
                         + valstart + " pressure " + system.getPressure());
             } while (Math.abs(dVc) > 1e-5 && iter < 112
                     && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
+
         }
         system.display();
         // solve(fmatrix);

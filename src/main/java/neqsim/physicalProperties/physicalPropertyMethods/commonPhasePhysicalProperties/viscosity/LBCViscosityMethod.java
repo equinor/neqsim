@@ -9,6 +9,9 @@ package neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalPro
 import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * LBCViscosityMethod class.
+ * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -19,14 +22,28 @@ public class LBCViscosityMethod extends Viscosity {
 
     double a[] = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
-    /** Creates new ChungViscosityMethod */
+    /**
+     * <p>
+     * Constructor for LBCViscosityMethod.
+     * </p>
+     */
     public LBCViscosityMethod() {}
 
+    /**
+     * <p>
+     * Constructor for LBCViscosityMethod.
+     * </p>
+     *
+     * @param phase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public LBCViscosityMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface phase) {
         super(phase);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
         double viscosity = 0.0, lowPresVisc = 0.0, temp = 0.0, temp2 = 0.0, temp3 = 0.0,
@@ -71,6 +88,7 @@ public class LBCViscosityMethod extends Viscosity {
         return viscosity;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentViscosity(int i) {
         return 0;

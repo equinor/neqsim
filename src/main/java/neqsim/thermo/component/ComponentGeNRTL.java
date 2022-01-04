@@ -9,24 +9,41 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentGeNRTL class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
-
 public class ComponentGeNRTL extends ComponentGE {
     private static final long serialVersionUID = 1000;
 
     double r = 0, q = 0;
 
-    /** Creates new ComponentGENRTLmodifiedHV */
+    /**
+     * <p>
+     * Constructor for ComponentGeNRTL.
+     * </p>
+     */
     public ComponentGeNRTL() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentGeNRTL.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGeNRTL(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
@@ -227,19 +244,32 @@ public class ComponentGeNRTL extends ComponentGE {
      * numberOfComponents, temperature-0.01, pressure, phasetype)))/0.02; return dfugdt; }
      */
 
+    /**
+     * <p>
+     * Getter for the field <code>r</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getr() {
         return r;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>q</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getq() {
         return q;
     }
 
     /**
      * Getter for property lngamma.
-     * 
-     * @return Value of property lngamma.
      *
+     * @return Value of property lngamma.
      */
     public double getLngamma() {
         return lngamma;

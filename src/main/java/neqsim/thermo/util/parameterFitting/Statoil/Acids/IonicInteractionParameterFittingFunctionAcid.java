@@ -6,9 +6,12 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunctionAcid class.
+ * </p>
  *
  * @author Neeraj
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
@@ -16,13 +19,27 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionAcid.class);
 
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionAcid.
+     * </p>
+     */
     public IonicInteractionParameterFittingFunctionAcid() {}
 
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionAcid.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public IonicInteractionParameterFittingFunctionAcid(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -34,11 +51,13 @@ public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarqu
         return system.getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

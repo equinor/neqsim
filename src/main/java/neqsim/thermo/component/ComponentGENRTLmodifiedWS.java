@@ -9,31 +9,51 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentGENRTLmodifiedWS class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new ComponentGENRTLmodifiedHV */
+    /**
+     * <p>
+     * Constructor for ComponentGENRTLmodifiedWS.
+     * </p>
+     */
     public ComponentGENRTLmodifiedWS() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentGENRTLmodifiedWS.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGENRTLmodifiedWS(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getlnGammadt() {
         return dlngammadt;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getlnGammadn(int k) {
         return dlngammadn[k];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] WSalpha, double[][] WSgij,
@@ -43,6 +63,23 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
                 WSgijT, intparam, mixRule);
     }
 
+    /**
+     * <p>
+     * getGamma.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @param WSalpha an array of {@link double} objects
+     * @param WSgij an array of {@link double} objects
+     * @param WSgijT an array of {@link double} objects
+     * @param intparam an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @return a double
+     */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
             double[][] intparam, String[][] mixRule) {

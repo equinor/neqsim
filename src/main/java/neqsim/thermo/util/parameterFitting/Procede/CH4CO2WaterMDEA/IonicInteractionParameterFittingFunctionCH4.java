@@ -7,9 +7,12 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>
+ * IonicInteractionParameterFittingFunctionCH4 class.
+ * </p>
  *
  * @author Neeraj
- * @version
+ * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
@@ -17,13 +20,27 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionCH4.class);
 
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4.
+     * </p>
+     */
     public IonicInteractionParameterFittingFunctionCH4() {}
 
+    /**
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionCH4.
+     * </p>
+     *
+     * @param phase a int
+     * @param type a int
+     */
     public IonicInteractionParameterFittingFunctionCH4(int phase, int type) {
         this.phase = phase;
         this.type = type;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -41,11 +58,13 @@ public class IonicInteractionParameterFittingFunctionCH4 extends LevenbergMarqua
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return (val);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

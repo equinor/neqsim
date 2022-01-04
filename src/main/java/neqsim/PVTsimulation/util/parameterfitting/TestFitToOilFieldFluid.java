@@ -8,12 +8,23 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>
+ * TestFitToOilFieldFluid class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class TestFitToOilFieldFluid {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

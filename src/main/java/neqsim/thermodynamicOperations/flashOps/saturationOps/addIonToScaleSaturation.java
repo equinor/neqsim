@@ -10,6 +10,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * addIonToScaleSaturation class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
@@ -17,9 +25,23 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     int phaseNumber = 1;
     String[][] resultTable = null;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for addIonToScaleSaturation.
+     * </p>
+     */
     public addIonToScaleSaturation() {}
 
+    /**
+     * <p>
+     * Constructor for addIonToScaleSaturation.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param phaseNumber a int
+     * @param scaleSaltName a {@link java.lang.String} object
+     * @param nameOfIonToBeAdded a {@link java.lang.String} object
+     */
     public addIonToScaleSaturation(SystemInterface system, int phaseNumber, String scaleSaltName,
             String nameOfIonToBeAdded) {
         super(system);
@@ -29,6 +51,7 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         logger.info("ok ");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -160,9 +183,11 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         logger.info("checking table...scale " + resultTable[0][0]);

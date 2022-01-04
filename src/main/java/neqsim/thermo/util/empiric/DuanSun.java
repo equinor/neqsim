@@ -4,13 +4,36 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * DuanSun class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class DuanSun {
     private static final long serialVersionUID = 1000;
     double[] c = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
     double[] d = new double[] {0.1, 0.2, 0.3, 0.4, 0.5};
 
+    /**
+     * <p>
+     * Constructor for DuanSun.
+     * </p>
+     */
     public DuanSun() {}
 
+    /**
+     * <p>
+     * bublePointPressure.
+     * </p>
+     *
+     * @param temperature a double
+     * @param x_CO2 a double
+     * @param salinity a double
+     * @return a double
+     */
     public double bublePointPressure(double temperature, double x_CO2, double salinity) {
         // Type manually the pressure limits according to the expected pressure
         double P = 9.0, Pold = 9.0, Poldold = 9.0;
@@ -348,6 +371,16 @@ public class DuanSun {
         return P;
     }
 
+    /**
+     * <p>
+     * calcCO2solubility.
+     * </p>
+     *
+     * @param temperature a double
+     * @param pressure a double
+     * @param salinity a double
+     * @return a double
+     */
     public double calcCO2solubility(double temperature, double pressure, double salinity) {
         double T = temperature;
         double P = pressure;
@@ -594,6 +627,13 @@ public class DuanSun {
         return xCO2;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         DuanSun testDuanSun = new DuanSun();
 
@@ -627,15 +667,21 @@ public class DuanSun {
         try {
             thermoOPs.TPflash();
             // fluid1.init(0);
-}
-    Exception e)
-    {
-        e.printStackTrace();
-    }
-    String fluidname = "" + "";fluid1.saveObjectToFile(fluidname,fluidname);
+            fluid1.display();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String fluidname = "" + "";
+        fluid1.saveObjectToFile(fluidname, fluidname);
 
-    fluid1.setPhaseIndex(0,1);
-    // fluid1.save
-    System.out.println("CO2 in liquid "+fluid1.getPhase(0).getComponent(0).getLogFugasityCoeffisient());System.out.println("CO2 in liquid "+fluid1.getPhase(0).getComponent(0).getFugasityCoeffisient());System.out.println("CO2 in liquid "+fluid1.getPhase("aqueous").getComponent("CO2").getx());
-}
+        fluid1.setPhaseIndex(0, 1);
+        // fluid1.save
+        System.out.println(
+                "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getLogFugasityCoeffisient());
+        System.out.println(
+                "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugasityCoeffisient());
+        System.out
+                .println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
+
+    }
 }

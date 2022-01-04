@@ -12,8 +12,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Heater class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
     private static final long serialVersionUID = 1000;
@@ -31,16 +35,35 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     double coolingMediumTemperature = 278.15;
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for Heater.
+     * </p>
      */
     public Heater() {}
 
+    /**
+     * <p>
+     * Constructor for Heater.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Heater(StreamInterface inStream) {
         this.inStream = inStream;
         system = (SystemInterface) inStream.getThermoSystem().clone();
         outStream = new Stream(system);
     }
 
+    /**
+     * <p>
+     * Constructor for Heater.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Heater(String name, StreamInterface inStream) {
         super(name);
         this.inStream = inStream;
@@ -48,24 +71,47 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         outStream = new Stream(system);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>inStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getInStream() {
         return inStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setdT(double dT) {
         this.dT = dT;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>
+     * setOutPressure.
+     * </p>
+     *
+     * @param pressure a double
+     */
     public void setOutPressure(double pressure) {
         setOutPressure = true;
         this.pressureOut = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutPressure(double pressure, String unit) {
         setOutPressure = true;
@@ -73,12 +119,20 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         this.pressureUnit = unit;
     }
 
+    /**
+     * <p>
+     * setOutTemperature.
+     * </p>
+     *
+     * @param temperature a double
+     */
     public void setOutTemperature(double temperature) {
         setTemperature = true;
         setEnergyInput = false;
         this.temperatureOut = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutTemperature(double temperature, String unit) {
         setTemperature = true;
@@ -87,6 +141,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         this.temperatureOut = temperature;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutTP(double temperature, double pressure) {
         setTemperature = true;
@@ -96,6 +151,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         this.pressureOut = pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -139,48 +195,101 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         getOutStream().setThermoSystem(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         // System.out.println("heater dH: " + energyInput);
         getOutStream().displayResult();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
     public void runTransient() {
         run();
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>energyInput</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getEnergyInput() {
         return energyInput;
     }
 
+    /**
+     * <p>
+     * getDuty.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDuty() {
         return energyInput;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>energyInput</code>.
+     * </p>
+     *
+     * @param energyInput a double
+     */
     public void setEnergyInput(double energyInput) {
         this.energyInput = energyInput;
         setTemperature = false;
         setEnergyInput = true;
     }
 
+    /**
+     * <p>
+     * setDuty.
+     * </p>
+     *
+     * @param energyInput a double
+     */
     public void setDuty(double energyInput) {
         setEnergyInput(energyInput);
     }
 
+    /**
+     * <p>
+     * isSetEnergyInput.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean isSetEnergyInput() {
         return setEnergyInput;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>setEnergyInput</code>.
+     * </p>
+     *
+     * @param setEnergyInput a boolean
+     */
     public void setSetEnergyInput(boolean setEnergyInput) {
         this.setEnergyInput = setEnergyInput;
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressureDrop</code>.
+     * </p>
+     *
      * @return the pressureDrop
      */
     public double getPressureDrop() {
@@ -188,6 +297,10 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressureDrop</code>.
+     * </p>
+     *
      * @param pressureDrop the pressureDrop to set
      */
     public void setPressureDrop(double pressureDrop) {
@@ -195,12 +308,17 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     }
 
     /**
+     * <p>
+     * Setter for the field <code>outStream</code>.
+     * </p>
+     *
      * @param outStream the outStream to set
      */
     public void setOutStream(Stream outStream) {
         this.outStream = outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         //
@@ -217,6 +335,7 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
         return entrop;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
         double entrop = 0.0;

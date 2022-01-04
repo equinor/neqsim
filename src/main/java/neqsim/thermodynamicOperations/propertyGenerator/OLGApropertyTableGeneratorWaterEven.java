@@ -5,16 +5,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * OLGApropertyTableGeneratorWaterEven class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class OLGApropertyTableGeneratorWaterEven
         extends neqsim.thermodynamicOperations.BaseOperation {
@@ -42,15 +44,38 @@ public class OLGApropertyTableGeneratorWaterEven
     boolean[][][] hasValue;
     String fileName = "c:/temp/OLGAneqsim.tab";
 
+    /**
+     * <p>
+     * Constructor for OLGApropertyTableGeneratorWaterEven.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public OLGApropertyTableGeneratorWaterEven(SystemInterface system) {
         this.thermoSystem = system;
         thermoOps = new ThermodynamicOperations(thermoSystem);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>fileName</code>.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void setFileName(String name) {
         fileName = name;
     }
 
+    /**
+     * <p>
+     * setPressureRange.
+     * </p>
+     *
+     * @param minPressure a double
+     * @param maxPressure a double
+     * @param numberOfSteps a int
+     */
     public void setPressureRange(double minPressure, double maxPressure, int numberOfSteps) {
         pressures = new double[numberOfSteps];
         pressureLOG = new double[numberOfSteps];
@@ -61,6 +86,15 @@ public class OLGApropertyTableGeneratorWaterEven
         }
     }
 
+    /**
+     * <p>
+     * setTemperatureRange.
+     * </p>
+     *
+     * @param minTemperature a double
+     * @param maxTemperature a double
+     * @param numberOfSteps a int
+     */
     public void setTemperatureRange(double minTemperature, double maxTemperature,
             int numberOfSteps) {
         temperatures = new double[numberOfSteps];
@@ -72,6 +106,11 @@ public class OLGApropertyTableGeneratorWaterEven
         }
     }
 
+    /**
+     * <p>
+     * calcPhaseEnvelope.
+     * </p>
+     */
     public void calcPhaseEnvelope() {
         try {
             thermoOps.calcPTphaseEnvelope();
@@ -82,6 +121,14 @@ public class OLGApropertyTableGeneratorWaterEven
         }
     }
 
+    /**
+     * <p>
+     * calcBubP.
+     * </p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubP(double[] temperatures) {
         double[] bubP = new double[temperatures.length];
         bubPLOG = new double[temperatures.length];
@@ -99,6 +146,14 @@ public class OLGApropertyTableGeneratorWaterEven
         return bubP;
     }
 
+    /**
+     * <p>
+     * calcDewP.
+     * </p>
+     *
+     * @param temperatures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcDewP(double[] temperatures) {
         double[] dewP = new double[temperatures.length];
         dewPLOG = new double[temperatures.length];
@@ -116,6 +171,14 @@ public class OLGApropertyTableGeneratorWaterEven
         return dewP;
     }
 
+    /**
+     * <p>
+     * calcBubT.
+     * </p>
+     *
+     * @param pressures an array of {@link double} objects
+     * @return an array of {@link double} objects
+     */
     public double[] calcBubT(double[] pressures) {
         double[] bubTemps = new double[pressures.length];
         for (int i = 0; i < pressures.length; i++) {
@@ -131,6 +194,11 @@ public class OLGApropertyTableGeneratorWaterEven
         return bubTemps;
     }
 
+    /**
+     * <p>
+     * initCalc.
+     * </p>
+     */
     public void initCalc() {
         double stdTemp = 288.15, stdPres = 1.01325;
         double GOR, GLR, standgasdens, standliqdens, TC, PC;
@@ -155,6 +223,11 @@ public class OLGApropertyTableGeneratorWaterEven
         GLR = thermoSystem.getPhase(0).getTotalVolume() / thermoSystem.getPhase(1).getTotalVolume();
     }
 
+    /**
+     * <p>
+     * calcRSWTOB.
+     * </p>
+     */
     public void calcRSWTOB() {
         thermoSystem.init(0);
         thermoSystem.init(1);
@@ -167,6 +240,7 @@ public class OLGApropertyTableGeneratorWaterEven
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         calcRSWTOB();
@@ -664,6 +738,7 @@ public class OLGApropertyTableGeneratorWaterEven
         logger.info("Finished creating arrays");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         logger.info("TC " + TC + " PC " + PC);
@@ -687,8 +762,14 @@ public class OLGApropertyTableGeneratorWaterEven
         writeOLGAinpFile("");
     }
 
+    /**
+     * <p>
+     * writeOLGAinpFile2.
+     * </p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile2(String filename) {
-
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
          * FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/javacode_ROG55.txt" ),
@@ -772,6 +853,13 @@ public class OLGApropertyTableGeneratorWaterEven
         }
     }
 
+    /**
+     * <p>
+     * writeOLGAinpFile.
+     * </p>
+     *
+     * @param filename a {@link java.lang.String} object
+     */
     public void writeOLGAinpFile(String filename) {
         /*
          * try { writer = new BufferedWriter(new OutputStreamWriter( new
@@ -782,7 +870,8 @@ public class OLGApropertyTableGeneratorWaterEven
          * writer.write(")"); } catch (IOException ex) { // report } finally { try { }
          * writer.close(); } catch (Exception ex) { } }
          */
-        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
+        try (Writer writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(fileName), "utf-8"))) {
             writer.write("'WATER-OPTION ENTROPY NONEQ '" + "\n");
 
             writer.write(pressures.length + "   " + temperatures.length + "    " + RSWTOB + "\n");
@@ -1250,6 +1339,11 @@ public class OLGApropertyTableGeneratorWaterEven
         }
     }
 
+    /**
+     * <p>
+     * extrapolateTable.
+     * </p>
+     */
     public void extrapolateTable() {
         for (int j = 0; j < temperatures.length; j++) {
             for (int i = 0; i < pressures.length; i++) {

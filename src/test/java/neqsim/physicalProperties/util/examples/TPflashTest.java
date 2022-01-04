@@ -10,9 +10,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  *
  * @author esol @version
  */
+/**
+ * <p>TPflashTest class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TPflashTest {
     static Logger logger = LogManager.getLogger(TPflashTest.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 20, 30.0);

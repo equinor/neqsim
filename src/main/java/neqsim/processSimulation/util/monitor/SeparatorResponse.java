@@ -3,16 +3,36 @@ package neqsim.processSimulation.util.monitor;
 import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
 
+/**
+ * <p>
+ * SeparatorResponse class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class SeparatorResponse {
     public String name;
     public Double gasLoadFactor;
     public Double massflow;
     public Fluid gasFluid, oilFluid;
-    
-    public SeparatorResponse() {
-    }
 
-    public SeparatorResponse(ThreePhaseSeparator inputSeparator){
+    /**
+     * <p>
+     * Constructor for SeparatorResponse.
+     * </p>
+     */
+    public SeparatorResponse() {}
+
+    /**
+     * <p>
+     * Constructor for SeparatorResponse.
+     * </p>
+     *
+     * @param inputSeparator a
+     *        {@link neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator} object
+     */
+    public SeparatorResponse(ThreePhaseSeparator inputSeparator) {
         name = inputSeparator.getName();
         massflow = inputSeparator.getFluid().getFlowRate("kg/hr");
         gasLoadFactor = inputSeparator.getGasLoadFactor();
@@ -20,6 +40,14 @@ public class SeparatorResponse {
         gasFluid = new Fluid(inputSeparator.getGasOutStream().getFluid());
     }
 
+    /**
+     * <p>
+     * Constructor for SeparatorResponse.
+     * </p>
+     *
+     * @param inputSeparator a {@link neqsim.processSimulation.processEquipment.separator.Separator}
+     *        object
+     */
     public SeparatorResponse(Separator inputSeparator) {
         name = inputSeparator.getName();
         massflow = inputSeparator.getFluid().getFlowRate("kg/hr");

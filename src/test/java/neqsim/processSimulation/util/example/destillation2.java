@@ -3,9 +3,18 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.distillation.DistillationColumn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
+/**
+ * <p>destillation2 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class destillation2 {
     /**
      * This method is just meant to test the thermo package.
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 30.0), 50.00);

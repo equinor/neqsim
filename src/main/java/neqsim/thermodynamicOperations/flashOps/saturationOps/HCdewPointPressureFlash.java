@@ -5,20 +5,41 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * HCdewPointPressureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HCdewPointPressureFlash.class);
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for HCdewPointPressureFlash.
+     * </p>
+     */
     public HCdewPointPressureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for HCdewPointPressureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public HCdewPointPressureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -116,6 +137,7 @@ public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

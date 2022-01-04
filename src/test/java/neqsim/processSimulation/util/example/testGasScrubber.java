@@ -6,10 +6,18 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
+ * <p>testGasScrubber class.</p>
  *
  * @author esol
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class testGasScrubber {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 66.00);

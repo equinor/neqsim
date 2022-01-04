@@ -6,9 +6,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>SolidFlash class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class SolidFlash {
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(269.671, 1.00);
         // SystemInterface testSystem = new SystemSrkTwuCoonEos(273.15 - 165, 1.0);

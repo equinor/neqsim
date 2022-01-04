@@ -12,14 +12,24 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * TestBinaryHVParameterFittingToEquilibriumData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestBinaryHVParameterFittingToEquilibriumData {
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData.class);
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

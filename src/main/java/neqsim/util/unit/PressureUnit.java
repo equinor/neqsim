@@ -6,26 +6,36 @@
 package neqsim.util.unit;
 
 /**
+ * <p>
+ * PressureUnit class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class PressureUnit extends neqsim.util.unit.BaseUnit {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new LengthUnit
+     * <p>
+     * Constructor for PressureUnit.
+     * </p>
+     *
+     * @param value a double
+     * @param name a {@link java.lang.String} object
      */
     public PressureUnit(double value, String name) {
         super(value, name);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(double val, String fromunit, String tounit) {
         invalue = val;
         return getConversionFactor(fromunit) / getConversionFactor(tounit) * invalue;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String tounit) {
         if (tounit.equals("barg")) {
@@ -35,6 +45,14 @@ public class PressureUnit extends neqsim.util.unit.BaseUnit {
         }
     }
 
+    /**
+     * <p>
+     * getConversionFactor.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @return a double
+     */
     public double getConversionFactor(String name) {
         double conversionFactor = 1.0;
         switch (name) {

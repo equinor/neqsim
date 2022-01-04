@@ -9,6 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * Viscosity class.
+ * </p>
  *
  * @author Even Solbraa
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -23,18 +26,30 @@ public class Viscosity extends
     public double[] pureComponentViscosity;
 
     /**
-     * Creates new Viscosity class
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      */
     public Viscosity() {}
 
+    /**
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
+     *
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public Viscosity(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
         pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
-	public Viscosity clone() {
+    public Viscosity clone() {
         Viscosity properties = null;
 
         try {
@@ -46,6 +61,7 @@ public class Viscosity extends
         return properties;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
         double tempVar = 0, tempVar2 = 0;
@@ -78,6 +94,11 @@ public class Viscosity extends
         return viscosity;
     }
 
+    /**
+     * <p>
+     * calcPureComponentViscosity.
+     * </p>
+     */
     public void calcPureComponentViscosity() {
         pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -121,11 +142,20 @@ public class Viscosity extends
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
+    /**
+     * <p>
+     * getViscosityPressureCorrection.
+     * </p>
+     *
+     * @param i a int
+     * @return a double
+     */
     public double getViscosityPressureCorrection(int i) {
         double TR = liquidPhase.getPhase().getTemperature()
                 / liquidPhase.getPhase().getComponent(i).getTC();

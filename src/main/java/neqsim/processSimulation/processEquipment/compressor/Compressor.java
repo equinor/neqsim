@@ -18,9 +18,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Compressor class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
     private static final long serialVersionUID = 1000;
@@ -48,23 +51,49 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     private String polytropicMethod = "detailed";
 
     /**
-     * Creates new ThrottelValve
+     * <p>
+     * Constructor for Compressor.
+     * </p>
      */
     public Compressor() {
         mechanicalDesign = new CompressorMechanicalDesign(this);
     }
 
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     *
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Compressor(StreamInterface inletStream) {
         this();
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Compressor(String name, StreamInterface inletStream) {
         this();
         this.name = name;
         setInletStream(inletStream);
     }
 
+    /**
+     * <p>
+     * Constructor for Compressor.
+     * </p>
+     *
+     * @param interpolateMapLookup a boolean
+     */
     public Compressor(boolean interpolateMapLookup) {
         this();
         if (interpolateMapLookup) {
@@ -72,6 +101,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInletStream(StreamInterface inletStream) {
         this.inletStream = inletStream;
@@ -82,35 +112,72 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         }
     }
 
+    /**
+     * <p>
+     * solveAntiSurge.
+     * </p>
+     */
     public void solveAntiSurge() {
         if (getAntiSurge().isActive()) {
             // ....
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutletPressure(double pressure) {
         this.pressure = pressure;
     }
 
+    /**
+     * <p>
+     * setOutletPressure.
+     * </p>
+     *
+     * @param pressure a double
+     * @param unit a {@link java.lang.String} object
+     */
     public void setOutletPressure(double pressure, String unit) {
         this.pressure = pressure;
         this.pressureUnit = unit;
     }
 
+    /**
+     * <p>
+     * getOutletPressure.
+     * </p>
+     *
+     * @return a double
+     */
     public double getOutletPressure() {
         return pressure;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEnergy() {
         return getTotalWork();
     }
 
+    /**
+     * <p>
+     * getPower.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPower() {
         return getTotalWork();
     }
 
+    /**
+     * <p>
+     * getPower.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getPower(String unit) {
         double conversionFactor = 1.0;
         if (unit.equals("MW")) {
@@ -121,16 +188,31 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return conversionFactor * getPower();
     }
 
+    /**
+     * <p>
+     * setPower.
+     * </p>
+     *
+     * @param p a double
+     */
     public void setPower(double p) {
         powerSet = true;
         dH = p;
     }
 
+    /** {@inheritDoc} */
     @Override
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>
+     * getInStream.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getInStream() {
         return inletStream;
     }
@@ -138,6 +220,8 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     /**
      * Calculates polytropic or isentropic efficiency
      *
+     * @param outTemperature a double
+     * @return a double
      */
     public double solveEfficiency(double outTemperature) {
         double funk = 0.0, funkOld = 0.0;
@@ -175,6 +259,16 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return newPoly;
     }
 
+    /**
+     * <p>
+     * findOutPressure.
+     * </p>
+     *
+     * @param hinn a double
+     * @param hout a double
+     * @param polytropicEfficiency a double
+     * @return a double
+     */
     public double findOutPressure(double hinn, double hout, double polytropicEfficiency) {
         double entropy = getThermoSystem().getEntropy();
         getThermoSystem().setPressure(getThermoSystem().getPressure() + 1.0, pressureUnit);
@@ -189,6 +283,7 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         return getThermoSystem().getPressure();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
@@ -445,6 +540,11 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
     }
 
+    /**
+     * <p>
+     * generateCompressorCurves.
+     * </p>
+     */
     public void generateCompressorCurves() {
         double flowRef = getThermoSystem().getFlowRate("m3/hr");
         double factor = flowRef / 4000.0;
@@ -510,9 +610,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         getCompressorChart().setHeadUnit("kJ/kg");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
@@ -611,40 +711,50 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         dialog.setVisible(true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return thermoSystem.getResultTable();
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /**
+     * <p>
+     * getTotalWork.
+     * </p>
+     *
+     * @return a double
+     */
     public double getTotalWork() {
         return getThermoSystem().getEnthalpy() - inletEnthalpy;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {}
 
-    /**
-     * @return the isentropicEfficientcy
-     */
+    /** {@inheritDoc} */
     @Override
     public double getIsentropicEfficiency() {
         return isentropicEfficiency;
     }
 
-    /**
-     * @param isentropicEfficientcy the isentropicEfficientcy to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setIsentropicEfficiency(double isentropicEfficientcy) {
         this.isentropicEfficiency = isentropicEfficientcy;
     }
 
     /**
+     * <p>
+     * usePolytropicCalc.
+     * </p>
+     *
      * @return the usePolytropicCalc
      */
     public boolean usePolytropicCalc() {
@@ -652,70 +762,134 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     }
 
     /**
+     * <p>
+     * Setter for the field <code>usePolytropicCalc</code>.
+     * </p>
+     *
      * @param usePolytropicCalc the usePolytropicCalc to set
      */
     public void setUsePolytropicCalc(boolean usePolytropicCalc) {
         this.usePolytropicCalc = usePolytropicCalc;
     }
 
-    /**
-     * @return the polytropicEfficiency
-     */
+    /** {@inheritDoc} */
     @Override
     public double getPolytropicEfficiency() {
         return polytropicEfficiency;
     }
 
-    /**
-     * @param polytropicEfficiency the polytropicEfficiency to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setPolytropicEfficiency(double polytropicEfficiency) {
         this.polytropicEfficiency = polytropicEfficiency;
     }
 
-    /**
-     * @return the thermoSystem
-     */
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>compressorChart</code>.
+     * </p>
+     *
+     * @return a
+     *         {@link neqsim.processSimulation.processEquipment.compressor.CompressorChartInterface}
+     *         object
+     */
     public CompressorChartInterface getCompressorChart() {
         return compressorChart;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>compressorChart</code>.
+     * </p>
+     *
+     * @param compressorChart a
+     *        {@link neqsim.processSimulation.processEquipment.compressor.CompressorChart} object
+     */
     public void setCompressorChart(CompressorChart compressorChart) {
         this.compressorChart = compressorChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public AntiSurge getAntiSurge() {
         return antiSurge;
     }
 
+    /**
+     * <p>
+     * isSurge.
+     * </p>
+     *
+     * @param flow a double
+     * @param head a double
+     * @return a boolean
+     */
     public boolean isSurge(double flow, double head) {
         getAntiSurge().setSurge(getCompressorChart().getSurgeCurve().isSurge(flow, head));
         return getAntiSurge().isSurge();
     }
 
+    /**
+     * <p>
+     * isStoneWall.
+     * </p>
+     *
+     * @param flow a double
+     * @param head a double
+     * @return a boolean
+     */
     public boolean isStoneWall(double flow, double head) {
         return getCompressorChart().getStoneWallCurve().isStoneWall(flow, head);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>antiSurge</code>.
+     * </p>
+     *
+     * @param antiSurge a {@link neqsim.processSimulation.processEquipment.compressor.AntiSurge}
+     *        object
+     */
     public void setAntiSurge(AntiSurge antiSurge) {
         this.antiSurge = antiSurge;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>speed</code>.
+     * </p>
+     *
+     * @return a int
+     */
     public int getSpeed() {
         return speed;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>speed</code>.
+     * </p>
+     *
+     * @param speed a int
+     */
     public void setSpeed(int speed) {
         this.speed = speed;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>polytropicHead</code>.
+     * </p>
+     *
+     * @param unit a {@link java.lang.String} object
+     * @return a double
+     */
     public double getPolytropicHead(String unit) {
         if (unit.equals("kJ/kg"))
             return polytropicFluidHead;
@@ -725,26 +899,68 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
             return polytropicHead;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>polytropicHead</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPolytropicHead() {
         return polytropicHead;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>polytropicFluidHead</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPolytropicFluidHead() {
         return polytropicFluidHead;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>polytropicExponent</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPolytropicExponent() {
         return polytropicExponent;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>polytropicHeadMeter</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPolytropicHeadMeter() {
         return polytropicHeadMeter;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>polytropicHeadMeter</code>.
+     * </p>
+     *
+     * @param polytropicHeadMeter a double
+     */
     public void setPolytropicHeadMeter(double polytropicHeadMeter) {
         this.polytropicHeadMeter = polytropicHeadMeter;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outTemperature</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getOutTemperature() {
         if (useOutTemperature)
             return outTemperature;
@@ -752,57 +968,124 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
             return getThermoSystem().getTemperature();
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>outTemperature</code>.
+     * </p>
+     *
+     * @param outTemperature a double
+     */
     public void setOutTemperature(double outTemperature) {
         useOutTemperature = true;
         this.outTemperature = outTemperature;
     }
 
+    /**
+     * <p>
+     * useOutTemperature.
+     * </p>
+     *
+     * @param useOutTemperature a boolean
+     */
     public void useOutTemperature(boolean useOutTemperature) {
         this.useOutTemperature = useOutTemperature;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>numberOfCompresorCalcSteps</code>.
+     * </p>
+     *
+     * @return a int
+     */
     public int getNumberOfCompresorCalcSteps() {
         return numberOfCompresorCalcSteps;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>numberOfCompresorCalcSteps</code>.
+     * </p>
+     *
+     * @param numberOfCompresorCalcSteps a int
+     */
     public void setNumberOfCompresorCalcSteps(int numberOfCompresorCalcSteps) {
         this.numberOfCompresorCalcSteps = numberOfCompresorCalcSteps;
     }
 
+    /**
+     * <p>
+     * isUseRigorousPolytropicMethod.
+     * </p>
+     *
+     * @return a boolean
+     */
     public boolean isUseRigorousPolytropicMethod() {
         return useRigorousPolytropicMethod;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>useRigorousPolytropicMethod</code>.
+     * </p>
+     *
+     * @param useRigorousPolytropicMethod a boolean
+     */
     public void setUseRigorousPolytropicMethod(boolean useRigorousPolytropicMethod) {
         this.useRigorousPolytropicMethod = useRigorousPolytropicMethod;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPressure(double pressure) {
         setOutletPressure(pressure);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>pressure</code>.
+     * </p>
+     *
+     * @param pressure a double
+     * @param unit a {@link java.lang.String} object
+     */
     public void setPressure(double pressure, String unit) {
         setOutletPressure(pressure);
         pressureUnit = unit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit)
                 - inletStream.getThermoSystem().getEntropy(unit);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
         return outStream.getThermoSystem().getExergy(sourrondingTemperature, unit)
                 - inletStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>polytropicMethod</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public String getPolytropicMethod() {
         return polytropicMethod;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>polytropicMethod</code>.
+     * </p>
+     *
+     * @param polytropicMethod a {@link java.lang.String} object
+     */
     public void setPolytropicMethod(String polytropicMethod) {
         this.polytropicMethod = polytropicMethod;
     }

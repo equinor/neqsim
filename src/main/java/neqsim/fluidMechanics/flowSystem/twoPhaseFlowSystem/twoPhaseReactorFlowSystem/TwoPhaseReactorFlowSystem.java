@@ -2,13 +2,26 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhaseReactorFlowS
 
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization;
 
-
+/**
+ * <p>
+ * TwoPhaseReactorFlowSystem class.
+ * </p>
+ *
+ * @author esol
+ * @version $Id: $Id
+ */
 public class TwoPhaseReactorFlowSystem
         extends neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.TwoPhaseFlowSystem {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for TwoPhaseReactorFlowSystem.
+     * </p>
+     */
     public TwoPhaseReactorFlowSystem() {}
 
+    /** {@inheritDoc} */
     @Override
     public void createSystem() {
         // thermoSystem.init(1);
@@ -28,6 +41,7 @@ public class TwoPhaseReactorFlowSystem
         this.setNodes();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         for (int j = 0; j < getTotalNumberOfNodes(); j++) {
@@ -50,6 +64,7 @@ public class TwoPhaseReactorFlowSystem
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void solveSteadyState(int solverType) {
         double[] times = {0.0};
@@ -70,6 +85,7 @@ public class TwoPhaseReactorFlowSystem
         display.setNextData(this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void solveTransient(int type) {
         // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
@@ -77,6 +93,13 @@ public class TwoPhaseReactorFlowSystem
         // pipeSolve.solveTDMA();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         // Initierer et nyt rorsystem

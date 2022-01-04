@@ -15,10 +15,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
+ * <p>OffshoreProcess3 class.</p>
  *
  * @author esol
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class OffshoreProcess3 {
+	/**
+	 * <p>main.</p>
+	 *
+	 * @param args an array of {@link java.lang.String} objects
+	 */
 	public static void main(String[] args) {
 		neqsim.thermo.system.SystemInterface testSystem = new SystemSrkEos(354.2, 120.0);
 

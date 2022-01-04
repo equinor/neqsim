@@ -9,22 +9,47 @@ import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
+/**
+ * <p>
+ * SubseaWell class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class SubseaWell extends ProcessEquipmentBaseClass {
     protected StreamInterface inStream;
     private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
     AdiabaticTwoPhasePipe pipeline;
 
+    /**
+     * <p>
+     * Constructor for SubseaWell.
+     * </p>
+     *
+     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public SubseaWell(StreamInterface instream) {
         this.inStream = instream;
         setOutStream((StreamInterface) instream.clone());
         pipeline = new AdiabaticTwoPhasePipe(instream);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>pipeline</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe}
+     *         object
+     */
     public AdiabaticTwoPhasePipe getPipeline() {
         return pipeline;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         pipeline.run();
@@ -49,6 +74,13 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
          */
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);
@@ -140,10 +172,25 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;
     }

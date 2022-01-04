@@ -12,8 +12,12 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * dTPflash class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class dTPflash extends TPflash {
     private static final long serialVersionUID = 1000;
@@ -22,14 +26,27 @@ public class dTPflash extends TPflash {
 
     // SystemInterface clonedSystem;
 
-    /** Creates new dTPflash */
+    /**
+     * <p>
+     * Constructor for dTPflash.
+     * </p>
+     */
     public dTPflash() {}
 
+    /**
+     * <p>
+     * Constructor for dTPflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param comps an array of {@link java.lang.String} objects
+     */
     public dTPflash(SystemInterface system, String[] comps) {
         this.system = system;
         this.flashComp = comps;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         iterations = 0;

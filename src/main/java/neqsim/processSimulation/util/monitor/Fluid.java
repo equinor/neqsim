@@ -4,6 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * Fluid class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class Fluid {
     public String name;
 
@@ -12,19 +20,28 @@ public class Fluid {
     public Double massDensity;
     public Double massflow;
 
-    public Map <String, Double> compProp;
- 
+    public Map<String, Double> compProp;
+
     public Map<String, Map<String, Double>> definedComponent;
     public Map<String, Map<String, Double>> oilComponent;
 
-    public Map<String, Map> definedComponent;
-    public Map<String, Map> oilComponent;
-
+    /**
+     * <p>
+     * Constructor for Fluid.
+     * </p>
+     */
     public Fluid() {
         this.definedComponent = new HashMap<>();
         this.oilComponent = new HashMap<>();
     }
 
+    /**
+     * <p>
+     * Constructor for Fluid.
+     * </p>
+     *
+     * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public Fluid(SystemInterface inputFluid) {
         this.definedComponent = new HashMap<>();
         this.oilComponent = new HashMap<>();
@@ -75,6 +92,10 @@ public class Fluid {
         return tempFluid;
     }
 
-    public void print(){
-    }
+    /**
+     * <p>
+     * print.
+     * </p>
+     */
+    public void print() {}
 }

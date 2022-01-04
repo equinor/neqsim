@@ -1,25 +1,38 @@
-/*
- * Class.java
- *
- * Created on 19. november 2001, 11:43
- */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
+ * <p>
+ * ComponentHydrateBallard class.
+ * </p>
  *
  * @author esol
- * @versionz
+ * @version $Id: $Id
  */
 public class ComponentHydrateBallard extends ComponentHydrate {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
 
-    /** Creates new Class */
+    /**
+     * <p>
+     * Constructor for ComponentHydrateBallard.
+     * </p>
+     */
     public ComponentHydrateBallard() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentHydrateBallard.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentHydrateBallard(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
@@ -42,12 +55,14 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
@@ -61,9 +76,6 @@ public class ComponentHydrateBallard extends ComponentHydrate {
             fugasityCoeffisient = -1e50;
             double val = 0.0;
             double tempy = 1.0;
-            double fugold = 0.0;
-            double tempfugcoef = -1.0e50;
-            fugold = fugasityCoeffisient;
 
             for (int cavType = 0; cavType < 2; cavType++) {
                 tempy = 0.0;
@@ -94,6 +106,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -117,6 +130,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         // else return 0.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
@@ -128,6 +142,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return cki / 1.0e30;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
         double val = 0.0;
@@ -152,6 +167,7 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
         double pot = 2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameter()
@@ -178,6 +194,17 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return pot;
     }
 
+    /**
+     * <p>
+     * delt.
+     * </p>
+     *
+     * @param n a double
+     * @param radius a double
+     * @param struccture a int
+     * @param cavityType a int
+     * @return a double
+     */
     public double delt(double n, double radius, int struccture, int cavityType) {
         double diff1 = (radius + getSphericalCoreRadius()) / cavRadius[struccture][cavityType];
         double diff2 = (radius - getSphericalCoreRadius()) / cavRadius[struccture][cavityType];

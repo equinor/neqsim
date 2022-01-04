@@ -7,8 +7,12 @@
 package neqsim.statistics.experimentalEquipmentData;
 
 /**
+ * <p>
+ * ExperimentalEquipmentData class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ExperimentalEquipmentData {
     private static final long serialVersionUID = 1000;
@@ -17,6 +21,10 @@ public class ExperimentalEquipmentData {
     protected double volume = 0;
     protected double diameterUncertaty = 0, lengthUncertanty = 0;
 
-    /** Creates new ExperimentalEquipmentData */
+    /**
+     * <p>
+     * Constructor for ExperimentalEquipmentData.
+     * </p>
+     */
     public ExperimentalEquipmentData() {}
 }

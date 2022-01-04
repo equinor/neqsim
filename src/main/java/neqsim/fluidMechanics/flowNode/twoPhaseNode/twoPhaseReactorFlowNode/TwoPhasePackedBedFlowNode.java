@@ -9,13 +9,35 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>
+ * TwoPhasePackedBedFlowNode class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for TwoPhasePackedBedFlowNode.
+     * </p>
+     */
     public TwoPhasePackedBedFlowNode() {
         this.flowNodeType = "packed bed";
     }
 
+    /**
+     * <p>
+     * Constructor for TwoPhasePackedBedFlowNode.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
+     */
     public TwoPhasePackedBedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "packed bed";
@@ -25,6 +47,16 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
                         this);
     }
 
+    /**
+     * <p>
+     * Constructor for TwoPhasePackedBedFlowNode.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
+     */
     public TwoPhasePackedBedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -35,6 +67,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
                         this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public TwoPhasePackedBedFlowNode clone() {
         TwoPhasePackedBedFlowNode clonedSystem = null;
@@ -47,6 +80,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         inclination = 0.0;
@@ -54,6 +88,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initFlowCalc() {
         phaseFraction[0] = 1.0;
@@ -62,11 +97,13 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         this.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcHydraulicDiameter() {
         return getGeometry().getDiameter();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcReynoldNumber() {
         reynoldsNumber[1] =
@@ -82,6 +119,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         return reynoldsNumber[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcContactLength() {
         interphaseContactArea =
@@ -89,12 +127,14 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcGasLiquidContactArea() {
         return pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea()
                 * 5.0;
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
         TwoPhasePackedBedFlowNode newNode = (TwoPhasePackedBedFlowNode) this.clone();
@@ -107,6 +147,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void update() {
         for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
@@ -167,6 +208,13 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
         getBulkSystem().init(3);
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemFurstElectrolyteEos(313.315, 50.01325);
         // SystemInterface testSystem = new SystemSrkEos(295.3, 100.01325);

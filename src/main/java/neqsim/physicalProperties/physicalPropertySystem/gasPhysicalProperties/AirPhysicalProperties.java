@@ -9,16 +9,32 @@ package neqsim.physicalProperties.physicalPropertySystem.gasPhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * AirPhysicalProperties class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class AirPhysicalProperties extends GasPhysicalProperties {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new AirPhysicalProperties */
+    /**
+     * <p>
+     * Constructor for AirPhysicalProperties.
+     * </p>
+     */
     public AirPhysicalProperties() {}
 
+    /**
+     * <p>
+     * Constructor for AirPhysicalProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param binaryDiffusionCoefficientMethod a int
+     * @param multicomponentDiffusionMethod a int
+     */
     public AirPhysicalProperties(PhaseInterface phase, int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
         super(phase, binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);

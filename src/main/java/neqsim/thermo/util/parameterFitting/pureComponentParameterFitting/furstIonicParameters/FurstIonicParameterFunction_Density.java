@@ -4,17 +4,26 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
+ * <p>
+ * FurstIonicParameterFunction_Density class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for FurstIonicParameterFunction_Density.
+     * </p>
+     */
     public FurstIonicParameterFunction_Density() {
         // params = new double[3];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(0);
@@ -24,11 +33,13 @@ public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunct
         return system.getPhase(1).getPhysicalProperties().getDensity();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcTrueValue(double val) {
         return val;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

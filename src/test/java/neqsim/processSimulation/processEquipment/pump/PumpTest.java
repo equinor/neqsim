@@ -3,6 +3,13 @@ package neqsim.processSimulation.processEquipment.pump;
 import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
+/**
+ * <p>PumpTest class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class PumpTest {
     @Test
     void testRun() {

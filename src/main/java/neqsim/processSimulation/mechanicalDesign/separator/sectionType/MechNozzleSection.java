@@ -3,17 +3,31 @@ package neqsim.processSimulation.mechanicalDesign.separator.sectionType;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
+ * <p>
+ * MechNozzleSection class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class MechNozzleSection extends SepDesignSection {
     private static final long serialVersionUID = 1000;
 
+    /**
+     * <p>
+     * Constructor for MechNozzleSection.
+     * </p>
+     *
+     * @param separatorSection a
+     *        {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *        object
+     */
     public MechNozzleSection(SeparatorSection separatorSection) {
         super(separatorSection);
         nominalSize = "DN 150";
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         if (nominalSize.equals("DN 50")) {

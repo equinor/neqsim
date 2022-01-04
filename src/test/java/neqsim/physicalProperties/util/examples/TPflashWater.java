@@ -12,9 +12,21 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * 
  * @version
  */
+/**
+ * <p>TPflashWater class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TPflashWater {
     static Logger logger = LogManager.getLogger(TPflashWater.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 40.0, 100.01325);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

@@ -12,19 +12,33 @@ import java.util.StringTokenizer;
 import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
 
 /**
+ * <p>
+ * WettedWallDataReader class.
+ * </p>
  *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class WettedWallDataReader extends DataReader {
-
-    /** Creates new WettedWallDataReader */
+    /**
+     * <p>
+     * Constructor for WettedWallDataReader.
+     * </p>
+     */
     public WettedWallDataReader() {}
 
+    /**
+     * <p>
+     * Constructor for WettedWallDataReader.
+     * </p>
+     *
+     * @param fileName a {@link java.lang.String} object
+     */
     public WettedWallDataReader(String fileName) {
         super(fileName);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void readData() {
         StringTokenizer tokenizer;
@@ -78,6 +92,13 @@ public class WettedWallDataReader extends DataReader {
         System.out.println(k + " datapoints imported from file");
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         WettedWallDataReader reader = new WettedWallDataReader("31011222");
         int i = 0;

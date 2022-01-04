@@ -1,8 +1,13 @@
 package neqsim.thermo.util.GERG;
 
+
 /**
+ * <p>
+ * NeqSimAGA8Detail class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 
 import neqsim.thermo.phase.PhaseInterface;
@@ -18,8 +23,20 @@ public class NeqSimAGA8Detail {
     double[] notNormalizedGERGComposition = new double[21 + 1];
     PhaseInterface phase = null;
 
+    /**
+     * <p>
+     * Constructor for NeqSimAGA8Detail.
+     * </p>
+     */
     public NeqSimAGA8Detail() {}
 
+    /**
+     * <p>
+     * Constructor for NeqSimAGA8Detail.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public NeqSimAGA8Detail(PhaseInterface phase) {
         this.setPhase(phase);
         if (Double.isNaN(DETAIL.RDetail) || DETAIL.RDetail == 0) {
@@ -27,22 +44,52 @@ public class NeqSimAGA8Detail {
         }
     }
 
+    /**
+     * <p>
+     * getMolarDensity.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getMolarDensity(PhaseInterface phase) {
         this.setPhase(phase);
         return getMolarDensity();
     }
 
+    /**
+     * <p>
+     * getDensity.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getDensity(PhaseInterface phase) {
         this.setPhase(phase);
         // return getMolarDensity() * getMolarMass() * 1000.0;
         return getMolarDensity() * phase.getMolarMass() * 1000.0;
     }
 
+    /**
+     * <p>
+     * getDensity.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDensity() {
         return getMolarDensity() * phase.getMolarMass() * 1000.0;
         // return getMolarDensity() * getMolarMass()* 1000.0;
     }
 
+    /**
+     * <p>
+     * getPressure.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPressure() {
         int d = 0;
         double moldens = getMolarDensity();
@@ -52,12 +99,26 @@ public class NeqSimAGA8Detail {
         return P.val;
     }
 
+    /**
+     * <p>
+     * getMolarMass.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMolarMass() {
         doubleW mm = new doubleW(0.0);
         neqsim.thermo.util.GERG.DETAIL.MolarMassDetail(normalizedGERGComposition, mm);
         return mm.val / 1.0e3;
     }
 
+    /**
+     * <p>
+     * getMolarDensity.
+     * </p>
+     *
+     * @return a double
+     */
     public double getMolarDensity() {
         int d = 0;
         int flag = 0;
@@ -71,11 +132,28 @@ public class NeqSimAGA8Detail {
         return D.val;
     }
 
+    /**
+     * <p>
+     * propertiesDetail.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return an array of {@link double} objects
+     */
     public double[] propertiesDetail(PhaseInterface phase) {
         this.setPhase(phase);
         return propertiesDetail();
     }
 
+    /**
+     * <p>
+     * getProperties.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param properties an array of {@link java.lang.String} objects
+     * @return an array of {@link double} objects
+     */
     public double[] getProperties(PhaseInterface phase, String[] properties) {
         double molarDens = getMolarDensity(phase);
         double[] allProperties = propertiesDetail();
@@ -100,6 +178,13 @@ public class NeqSimAGA8Detail {
         return returnProperties;
     }
 
+    /**
+     * <p>
+     * propertiesDetail.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] propertiesDetail() {
         int _x_offset = 0;
         doubleW p = new doubleW(0.0);
@@ -128,6 +213,13 @@ public class NeqSimAGA8Detail {
         return properties;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>phase</code>.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void setPhase(PhaseInterface phase) {
         this.phase = phase;
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
@@ -221,6 +313,11 @@ public class NeqSimAGA8Detail {
         normalizeComposition();
     }
 
+    /**
+     * <p>
+     * normalizeComposition.
+     * </p>
+     */
     public void normalizeComposition() {
         double result = 0;
         for (double value : notNormalizedGERGComposition) {
@@ -231,6 +328,13 @@ public class NeqSimAGA8Detail {
         }
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         // test HitHub
         SystemInterface fluid1 = new SystemSrkEos();

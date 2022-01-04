@@ -1,23 +1,39 @@
 package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.diffusivity;
 
 /**
+ * <p>
+ * CO2water class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CO2water extends Diffusivity {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new Conductivity */
-
+    /**
+     * <p>
+     * Constructor for CO2water.
+     * </p>
+     */
     public CO2water() {}
 
+    /**
+     * <p>
+     * Constructor for CO2water.
+     * </p>
+     *
+     * @param liquidPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public CO2water(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface liquidPhase) {
         super(liquidPhase);
     }
 
     // aqueous correlation
+    /** {@inheritDoc} */
     @Override
     public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
         binaryDiffusionCoeffisients[i][j] =

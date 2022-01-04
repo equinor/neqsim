@@ -8,23 +8,39 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentGENRTLmodifiedHV class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new ComponentGENRTLmodifiedHV
+     * <p>
+     * Constructor for ComponentGENRTLmodifiedHV.
+     * </p>
      */
     public ComponentGENRTLmodifiedHV() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentGENRTLmodifiedHV.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGENRTLmodifiedHV(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
@@ -34,6 +50,23 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
                 HVgijT, intparam, mixRule);
     }
 
+    /**
+     * <p>
+     * getGamma.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @param phasetype a int
+     * @param HValpha an array of {@link double} objects
+     * @param HVgij an array of {@link double} objects
+     * @param HVgijT an array of {@link double} objects
+     * @param intparam an array of {@link double} objects
+     * @param mixRule an array of {@link java.lang.String} objects
+     * @return a double
+     */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij, double[][] HVgijT,
             double[][] intparam, String[][] mixRule) {

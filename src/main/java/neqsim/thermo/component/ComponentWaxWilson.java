@@ -9,22 +9,41 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentWaxWilson class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class ComponentWaxWilson extends ComponentSolid {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new SolidComponent */
+    /**
+     * <p>
+     * Constructor for ComponentWaxWilson.
+     * </p>
+     */
     public ComponentWaxWilson() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentWaxWilson.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentWaxWilson(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Uses Claperyons equation to calculate the solid fugacity
      */
     @Override
@@ -37,6 +56,7 @@ public class ComponentWaxWilson extends ComponentSolid {
         return fugcoef2(phase1);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef2(PhaseInterface phase1) {
         refPhase.setTemperature(phase1.getTemperature());
@@ -84,6 +104,14 @@ public class ComponentWaxWilson extends ComponentSolid {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>
+     * getWilsonActivityCoeffisient.
+     * </p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWilsonActivityCoeffisient(PhaseInterface phase1) {
         double sum1 = 0.0;
         double sum2 = 0.0;
@@ -105,6 +133,16 @@ public class ComponentWaxWilson extends ComponentSolid {
         return Math.exp(1.0 - Math.log(sum1) - sum2);
     }
 
+    /**
+     * <p>
+     * getCharEnergyParamter.
+     * </p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param comp1 a int
+     * @param comp2 a int
+     * @return a double
+     */
     public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
         double param1 = 0.0; // ((ComponentWaxWilson)
                              // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
@@ -130,6 +168,14 @@ public class ComponentWaxWilson extends ComponentSolid {
                 -(param2 - param1) / (ThermodynamicConstantsInterface.R * phase1.getTemperature()));
     }
 
+    /**
+     * <p>
+     * getWilsonInteractionEnergy.
+     * </p>
+     *
+     * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getWilsonInteractionEnergy(PhaseInterface phase1) {
         double coordinationNumber = 6.0;
 

@@ -12,15 +12,30 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/**
+ * <p>AnnularFlow class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class AnnularFlow extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
     // ThermodynamicOperations interphaseOps = new ThermodynamicOperations();
     // double liquidFilmThickness=0;
 
+    /**
+     * <p>Constructor for AnnularFlow.</p>
+     */
     public AnnularFlow() {
         this.flowNodeType = "annular";
     }
 
+    /**
+     * <p>Constructor for AnnularFlow.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public AnnularFlow(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
         this.flowNodeType = "annular";
@@ -30,6 +45,13 @@ public class AnnularFlow extends TwoPhaseFlowNode {
                         this);
     }
 
+    /**
+     * <p>Constructor for AnnularFlow.</p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     */
     public AnnularFlow(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -40,6 +62,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
                         this);
     }
 
+    /** {@inheritDoc} */
     @Override
     public AnnularFlow clone() {
         AnnularFlow clonedSystem = null;
@@ -51,6 +74,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
         return clonedSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init() {
         inclination = 1.0;
@@ -58,6 +82,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
         super.init();
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcContactLength() {
         wallContactLength[1] = pi * pipe.getDiameter();
@@ -68,6 +93,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
         return wallContactLength[0];
     }
 
+    /** {@inheritDoc} */
     @Override
     public FlowNodeInterface getNextNode() {
         AnnularFlow newNode = (AnnularFlow) this.clone();
@@ -79,6 +105,11 @@ public class AnnularFlow extends TwoPhaseFlowNode {
         return newNode;
     }
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         System.out.println("Starter.....");

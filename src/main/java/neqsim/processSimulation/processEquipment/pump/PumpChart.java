@@ -11,6 +11,14 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
+/**
+ * <p>
+ * PumpChart class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class PumpChart implements PumpChartInterface, java.io.Serializable {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PumpChart.class);
@@ -42,14 +50,21 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
     double[][] redhead;
     double[][] redEfficiency;
 
+    /**
+     * <p>
+     * Constructor for PumpChart.
+     * </p>
+     */
     public PumpChart() {}
 
+    /** {@inheritDoc} */
     @Override
     public void addCurve(double speed, double[] flow, double[] head, double[] efficiency) {
         PumpCurve curve = new PumpCurve(speed, flow, head, efficiency);
         chartValues.add(curve);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
             double[][] head, double[][] efficiency) {
@@ -93,18 +108,26 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         setUsePumpChart(true);
     }
 
+    /**
+     * <p>
+     * fitReducedCurve.
+     * </p>
+     */
     public void fitReducedCurve() {}
 
+    /** {@inheritDoc} */
     @Override
     public double getHead(double flow, double speed) {
         return reducedHeadFitterFunc.value(flow / speed) * speed * speed;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEfficiency(double flow, double speed) {
         return reducedEfficiencyFunc.value(flow / speed);
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getSpeed(double flow, double head) {
         int iter = 1;
@@ -133,22 +156,59 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
     // return 100.0;
     // }
 
+    /**
+     * <p>
+     * efficiency.
+     * </p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a double
+     */
     public double efficiency(double flow, double speed) {
         return 100.0;
     }
 
+    /**
+     * <p>
+     * checkSurge1.
+     * </p>
+     *
+     * @param flow a double
+     * @param head a double
+     * @return a boolean
+     */
     public boolean checkSurge1(double flow, double head) {
         return false;
     }
 
+    /**
+     * <p>
+     * checkSurge2.
+     * </p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a boolean
+     */
     public boolean checkSurge2(double flow, double speed) {
         return false;
     }
 
+    /**
+     * <p>
+     * checkStoneWall.
+     * </p>
+     *
+     * @param flow a double
+     * @param speed a double
+     * @return a boolean
+     */
     public boolean checkStoneWall(double flow, double speed) {
         return false;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
             double refZ) {
@@ -158,6 +218,13 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         this.refZ = refZ;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
         testFluid.addComponent("water", 1.0);
@@ -240,36 +307,43 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
         System.out.println("pump power " + pump1.getPower());
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isUsePumpChart() {
         return usePumpChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setUsePumpChart(boolean usePumpChart) {
         this.usePumpChart = usePumpChart;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getHeadUnit() {
         return headUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHeadUnit(String headUnit) {
         this.headUnit = headUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean useRealKappa() {
         return useRealKappa;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setUseRealKappa(boolean useRealKappa) {
         this.useRealKappa = useRealKappa;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void plot() {
         neqsim.dataPresentation.JFreeChart.graph2b graph =

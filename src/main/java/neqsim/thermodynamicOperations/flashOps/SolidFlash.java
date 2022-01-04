@@ -6,8 +6,12 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * SolidFlash class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class SolidFlash extends TPflash {
     private static final long serialVersionUID = 1000;
@@ -23,23 +27,59 @@ public class SolidFlash extends TPflash {
     boolean hasRemovedPhase = false;
     boolean secondTime = false;
 
-    /** Creates new TPflash */
+    /**
+     * <p>
+     * Constructor for SolidFlash.
+     * </p>
+     */
     public SolidFlash() {}
 
+    /**
+     * <p>
+     * Constructor for SolidFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SolidFlash(SystemInterface system) {
         super(system);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>solidComponent</code>.
+     * </p>
+     *
+     * @param i a int
+     */
     public void setSolidComponent(int i) {
         solidComponent = i;
     }
 
+    /**
+     * <p>
+     * Constructor for SolidFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param check a boolean
+     */
     public SolidFlash(SystemInterface system, boolean check) {
         super(system, check);
     }
 
+    /**
+     * <p>
+     * calcMultiPhaseBeta.
+     * </p>
+     */
     public void calcMultiPhaseBeta() {}
 
+    /**
+     * <p>
+     * setXY.
+     * </p>
+     */
     public void setXY() {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -56,6 +96,11 @@ public class SolidFlash extends TPflash {
         }
     }
 
+    /**
+     * <p>
+     * checkX.
+     * </p>
+     */
     public void checkX() {
         for (int k = 0; k < system.getNumberOfPhases() - 1; k++) {
             double x = 0.0;
@@ -78,6 +123,11 @@ public class SolidFlash extends TPflash {
         }
     }
 
+    /**
+     * <p>
+     * calcE.
+     * </p>
+     */
     public void calcE() {
         E = new double[system.getPhases()[0].getNumberOfComponents()];
 
@@ -100,6 +150,13 @@ public class SolidFlash extends TPflash {
         // logger.info("zi " +system.getPhase(0).getComponent(solidComponent).getz());
     }
 
+    /**
+     * <p>
+     * calcQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double calcQ() {
         Q = 0;
         double betaTotal = 0;
@@ -145,6 +202,13 @@ public class SolidFlash extends TPflash {
         return Q;
     }
 
+    /**
+     * <p>
+     * solveBeta.
+     * </p>
+     *
+     * @param ideal a boolean
+     */
     public void solveBeta(boolean ideal) {
         double oldBeta[] = new double[system.getNumberOfPhases() - 1];
         double newBeta[] = new double[system.getNumberOfPhases() - 1];
@@ -225,6 +289,11 @@ public class SolidFlash extends TPflash {
         system.init(1);
     }
 
+    /**
+     * <p>
+     * checkGibbs.
+     * </p>
+     */
     public void checkGibbs() {
         double gibbs1 = 0, gibbs2 = 0;
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
@@ -243,6 +312,11 @@ public class SolidFlash extends TPflash {
         }
     }
 
+    /**
+     * <p>
+     * calcSolidBeta.
+     * </p>
+     */
     public void calcSolidBeta() {
         double tempVar = system.getPhase(0).getComponents()[solidComponent].getz();
         double beta = 1.0;
@@ -258,6 +332,7 @@ public class SolidFlash extends TPflash {
         // logger.info("beta " + tempVar);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         // logger.info("starting ");

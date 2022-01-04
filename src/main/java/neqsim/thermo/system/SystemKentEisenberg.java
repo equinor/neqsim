@@ -22,9 +22,10 @@ import neqsim.thermo.phase.PhaseSrkEos;
 public class SystemKentEisenberg extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
-
     public SystemKentEisenberg() {
         super();
         modelName = "Kent Eisenberg-model";
@@ -35,6 +36,14 @@ public class SystemKentEisenberg extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemKentEisenberg.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemKentEisenberg(double T, double P) {
         super(T, P);
         attractiveTermNumber = 0;
@@ -49,6 +58,15 @@ public class SystemKentEisenberg extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemKentEisenberg.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemKentEisenberg(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
@@ -75,6 +93,7 @@ public class SystemKentEisenberg extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemKentEisenberg clone() {
         SystemKentEisenberg clonedSystem = null;

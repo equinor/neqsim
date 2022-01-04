@@ -15,8 +15,12 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * Pipeline class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInterface {
     private static final long serialVersionUID = 1000;
@@ -40,18 +44,37 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     double[] wallHeatTransferCoeffs = {1e-5, 1e-5};// , 1e-5, 1e-5, 1e-5};
 
     /**
-     * Creates new Pipeline
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
      */
     public Pipeline() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
     }
 
+    /**
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Pipeline(StreamInterface inStream) {
         this();
         this.inStream = inStream;
         outStream = (Stream) inStream.clone();
     }
 
+    /**
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public Pipeline(String name, StreamInterface inStream) {
         this();
         this.name = name;
@@ -59,25 +82,36 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         outStream = (Stream) inStream.clone();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOutputFileName(String name) {
         this.fileName = name;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
+     *
+     * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     */
     public StreamInterface getOutStream() {
         return outStream;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfLegs(int number) {
         this.numberOfLegs = number;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setNumberOfNodesInLeg(int number) {
         this.numberOfNodesInLeg = number;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setHeightProfile(double[] heights) {
         if (heights.length != this.numberOfLegs + 1) {
@@ -91,6 +125,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(heights, 0, legHeights, 0, legHeights.length);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setLegPositions(double[] positions) {
         if (positions.length != this.numberOfLegs + 1) {
@@ -104,6 +139,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(positions, 0, legPositions, 0, legPositions.length);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPipeDiameters(double[] diameter) {
         if (diameter.length != this.numberOfLegs + 1) {
@@ -117,6 +153,13 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(diameter, 0, pipeDiameters, 0, pipeDiameters.length);
     }
 
+    /**
+     * <p>
+     * setPipeOuterHeatTransferCoefficients.
+     * </p>
+     *
+     * @param heatCoefs an array of {@link double} objects
+     */
     public void setPipeOuterHeatTransferCoefficients(double[] heatCoefs) {
         if (heatCoefs.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
@@ -129,6 +172,13 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(heatCoefs, 0, outerHeatTransferCoeffs, 0, outerHeatTransferCoeffs.length);
     }
 
+    /**
+     * <p>
+     * setPipeWallHeatTransferCoefficients.
+     * </p>
+     *
+     * @param heatCoefs an array of {@link double} objects
+     */
     public void setPipeWallHeatTransferCoefficients(double[] heatCoefs) {
         if (heatCoefs.length != this.numberOfLegs + 1) {
             System.out.println("Wrong number of diameters specified.");
@@ -141,6 +191,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(heatCoefs, 0, wallHeatTransferCoeffs, 0, wallHeatTransferCoeffs.length);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setPipeWallRoughness(double[] rough) {
         if (rough.length != this.numberOfLegs + 1) {
@@ -154,6 +205,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(rough, 0, pipeWallRoughness, 0, pipeWallRoughness.length);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setOuterTemperatures(double[] outerTemp) {
         if (outerTemp.length != this.numberOfLegs + 1) {
@@ -167,14 +219,29 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         System.arraycopy(outerTemp, 0, outerTemperature, 0, outerTemperature.length);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>equilibriumMassTransfer</code>.
+     * </p>
+     *
+     * @param test a boolean
+     */
     public void setEquilibriumMassTransfer(boolean test) {
         equilibriumMassTransfer = test;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>equilibriumHeatTransfer</code>.
+     * </p>
+     *
+     * @param test a boolean
+     */
     public void setEquilibriumHeatTransfer(boolean test) {
         equilibriumHeatTransfer = test;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = inStream.getThermoSystem();
@@ -198,29 +265,39 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         pipe.init();
     }
 
+    /**
+     * <p>
+     * runTransient.
+     * </p>
+     */
     public void runTransient() {
         pipe.solveTransient(2);
         pipe.getDisplay().createNetCdfFile(fileName);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {}
 
+    /** {@inheritDoc} */
     @Override
     public FlowSystemInterface getPipe() {
         return pipe;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setInitialFlowPattern(String flowPattern) {
         this.flowPattern = flowPattern;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getName() {
         return name;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setName(String name) {
         this.name = name;
@@ -235,6 +312,15 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         return this.times;
     }
 
+    /**
+     * <p>
+     * getSuperficialVelocity.
+     * </p>
+     *
+     * @param phase a int
+     * @param node a int
+     * @return a double
+     */
     public double getSuperficialVelocity(int phase, int node) {
         try {
             return outStream.getThermoSystem().getPhase(phase).getNumberOfMolesInPhase()
@@ -253,6 +339,8 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
      * Setter for property times.
      *
      * @param times New value of property times.
+     * @param systems an array of {@link neqsim.thermo.system.SystemInterface} objects
+     * @param timestepininterval a int
      */
     public void setTimeSeries(double[] times, SystemInterface[] systems, int timestepininterval) {
         this.times = times;
@@ -261,6 +349,7 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
         pipe.getTimeSeries().setNumberOfTimeStepsInInterval(timestepininterval);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getEntropyProduction(String unit) {
         return outStream.getThermoSystem().getEntropy(unit)

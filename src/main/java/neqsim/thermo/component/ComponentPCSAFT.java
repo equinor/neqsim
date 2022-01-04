@@ -12,9 +12,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePCSAFT;
 
 /**
+ * <p>
+ * ComponentPCSAFT class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ComponentPCSAFT extends ComponentSrk {
     private static final long serialVersionUID = 1000;
@@ -28,29 +31,59 @@ public class ComponentPCSAFT extends ComponentSrk {
     int useHS = 1, useDISP1 = 1, useDISP2 = 1;
 
     /**
-     * Creates new System_SRK_EOS Ev liten fil ja.
+     * <p>
+     * Constructor for ComponentPCSAFT.
+     * </p>
      */
-
     public ComponentPCSAFT() {
         super();
     }
 
+    /**
+     * <p>
+     * Constructor for ComponentPCSAFT.
+     * </p>
+     *
+     * @param moles a double
+     */
     public ComponentPCSAFT(double moles) {
         numberOfMoles = moles;
     }
 
+    /**
+     * <p>
+     * Constructor for ComponentPCSAFT.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentPCSAFT(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
     }
 
+    /**
+     * <p>
+     * Constructor for ComponentPCSAFT.
+     * </p>
+     *
+     * @param number a int
+     * @param TC a double
+     * @param PC a double
+     * @param M a double
+     * @param a a double
+     * @param moles a double
+     */
     public ComponentPCSAFT(int number, double TC, double PC, double M, double a, double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
+    /** {@inheritDoc} */
     @Override
     public ComponentPCSAFT clone() {
-
         ComponentPCSAFT clonedComponent = null;
         try {
             clonedComponent = (ComponentPCSAFT) super.clone();
@@ -61,6 +94,7 @@ public class ComponentPCSAFT extends ComponentSrk {
         return clonedComponent;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int type) {
@@ -68,6 +102,7 @@ public class ComponentPCSAFT extends ComponentSrk {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
             int numberOfComponents, int type) {
@@ -93,6 +128,7 @@ public class ComponentPCSAFT extends ComponentSrk {
         // System.out.println("fugasity " + getFugasityCoefficient());
     }
 
+    /** {@inheritDoc} */
     @Override
     public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure) {
@@ -111,6 +147,17 @@ public class ComponentPCSAFT extends ComponentSrk {
                 + useDISP2 * dF_DISP2_SAFTdN(phase, numberOfComponents, temperature, pressure);
     }
 
+    /**
+     * <p>
+     * dF_HC_SAFTdN.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double dF_HC_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure) {
         return ((PhasePCSAFT) phase).F_HC_SAFT() / phase.getNumberOfMolesInPhase() + phase
@@ -124,6 +171,17 @@ public class ComponentPCSAFT extends ComponentSrk {
                         - ((PhasePCSAFT) phase).getMmin1SAFT() * getDlogghsSAFTdi());/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * dF_DISP1_SAFTdN.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double dF_DISP1_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure) {
         return ((PhasePCSAFT) phase).F_DISP1_SAFT() / phase.getNumberOfMolesInPhase()
@@ -138,12 +196,34 @@ public class ComponentPCSAFT extends ComponentSrk {
                                 * ((PhasePCSAFT) phase).getF1dispSumTerm() * F1dispI1dn));/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * calcdmSAFTdi.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param nuberOfComponents a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double calcdmSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp,
             double pres) {
         return mSAFTi / phase.getNumberOfMolesInPhase()
                 - ((PhasePCSAFT) phase).getmSAFT() / phase.getNumberOfMolesInPhase();
     }
 
+    /**
+     * <p>
+     * dF_DISP2_SAFTdN.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double dF_DISP2_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure) {
         return ((PhasePCSAFT) phase).F_DISP2_SAFT() / phase.getNumberOfMolesInPhase()
@@ -169,6 +249,17 @@ public class ComponentPCSAFT extends ComponentSrk {
                                 * ((PhasePCSAFT) phase).getF2dispI2() * F2dispZHCdn));/// (ThermodynamicConstantsInterface.R*temperature);
     }
 
+    /**
+     * <p>
+     * calcF1dispSumTermdn.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double calcF1dispSumTermdn(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure) {
         double temp1 = 0.0;
@@ -187,6 +278,17 @@ public class ComponentPCSAFT extends ComponentSrk {
                 + 2.0 * temp1 / Math.pow(phase.getNumberOfMolesInPhase(), 2.0);
     }
 
+    /**
+     * <p>
+     * calcF2dispSumTermdn.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComponents a int
+     * @param temperature a double
+     * @param pressure a double
+     * @return a double
+     */
     public double calcF2dispSumTermdn(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure) {
         double temp1 = 0.0;
@@ -207,12 +309,34 @@ public class ComponentPCSAFT extends ComponentSrk {
                 + 2.0 * temp1 / Math.pow(phase.getNumberOfMolesInPhase(), 2.0);
     }
 
+    /**
+     * <p>
+     * calcdghsSAFTdi.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param nuberOfComponents a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double calcdghsSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp,
             double pres) {
         double temp1 = ((PhasePCSAFT) phase).getDgHSSAFTdN();
         return temp1 * getDnSAFTdi();
     }
 
+    /**
+     * <p>
+     * calcdahsSAFTdi.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param nuberOfComponents a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double calcdahsSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp,
             double pres) {
         double temp1 = ((4.0 - 6.0 * ((PhasePCSAFT) phase).getNSAFT())
@@ -223,6 +347,17 @@ public class ComponentPCSAFT extends ComponentSrk {
         return temp1 / Math.pow(1.0 - ((PhasePCSAFT) phase).getNSAFT(), 4.0) * getDnSAFTdi();
     }
 
+    /**
+     * <p>
+     * calcdnSAFTdi.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param nuberOfComponents a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double calcdnSAFTdi(PhaseInterface phase, int nuberOfComponents, double temp,
             double pres) {
         double temp1 = phase.getNumberOfMolesInPhase() / ((PhasePCSAFT) phase).getVolumeSAFT()
@@ -235,50 +370,134 @@ public class ComponentPCSAFT extends ComponentSrk {
                 * ThermodynamicConstantsInterface.avagadroNumber * (temp1);
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dSAFTi</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getdSAFTi() {
         return dSAFTi;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dSAFTi</code>.
+     * </p>
+     *
+     * @param di a double
+     */
     public void setdSAFTi(double di) {
         this.dSAFTi = di;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dghsSAFTdi</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDghsSAFTdi() {
         return dghsSAFTdi;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dghsSAFTdi</code>.
+     * </p>
+     *
+     * @param dghsSAFTdi a double
+     */
     public void setDghsSAFTdi(double dghsSAFTdi) {
         this.dghsSAFTdi = dghsSAFTdi;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dnSAFTdi</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDnSAFTdi() {
         return dnSAFTdi;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dnSAFTdi</code>.
+     * </p>
+     *
+     * @param dnSAFTdi a double
+     */
     public void setDnSAFTdi(double dnSAFTdi) {
         this.dnSAFTdi = dnSAFTdi;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dahsSAFTdi</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getdahsSAFTdi() {
         return dahsSAFTdi;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dahsSAFTdi</code>.
+     * </p>
+     *
+     * @param dahsSAFTdi a double
+     */
     public void setdahsSAFTdi(double dahsSAFTdi) {
         this.dahsSAFTdi = dahsSAFTdi;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dmSAFTdi</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDmSAFTdi() {
         return dmSAFTdi;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dmSAFTdi</code>.
+     * </p>
+     *
+     * @param dmSAFTdi a double
+     */
     public void setDmSAFTdi(double dmSAFTdi) {
         this.dmSAFTdi = dmSAFTdi;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dlogghsSAFTdi</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDlogghsSAFTdi() {
         return dlogghsSAFTdi;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dlogghsSAFTdi</code>.
+     * </p>
+     *
+     * @param dlogghsSAFTdi a double
+     */
     public void setDlogghsSAFTdi(double dlogghsSAFTdi) {
         this.dlogghsSAFTdi = dlogghsSAFTdi;
     }

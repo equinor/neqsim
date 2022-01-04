@@ -7,12 +7,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>TestSurfaceTensionOde class.</p>
  *
  * @author oberg
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class TestSurfaceTensionOde {
     static Logger logger = LogManager.getLogger(TestSurfaceTensionOde.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String args[]) {
         double yscale;

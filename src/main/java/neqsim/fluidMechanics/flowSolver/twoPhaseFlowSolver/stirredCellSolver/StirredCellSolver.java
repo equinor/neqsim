@@ -14,9 +14,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * StirredCellSolver class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class StirredCellSolver extends TwoPhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
@@ -35,14 +38,36 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
     protected double oldImpuls[][];
     protected double oldEnergy[][];
 
-    /** Creates new steadstateOnePhasePipeFlowSolver */
+    /**
+     * <p>
+     * Constructor for StirredCellSolver.
+     * </p>
+     */
     public StirredCellSolver() {}
 
-    /** Creates new nonlin */
+    /**
+     * <p>
+     * Constructor for StirredCellSolver.
+     * </p>
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
+     * @param length a double
+     * @param nodes a int
+     */
     public StirredCellSolver(FlowSystemInterface pipe, double length, int nodes) {
         super(pipe, length, nodes);
     }
 
+    /**
+     * <p>
+     * Constructor for StirredCellSolver.
+     * </p>
+     *
+     * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
+     * @param length a double
+     * @param nodes a int
+     * @param dynamic a boolean
+     */
     public StirredCellSolver(FlowSystemInterface pipe, double length, int nodes, boolean dynamic) {
         super(pipe, length, nodes);
         this.dynamic = dynamic;
@@ -60,6 +85,7 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         numberOfVelocityNodes = nodes;
     }
 
+    /** {@inheritDoc} */
     @Override
     public TwoPhaseFixedStaggeredGridSolver clone() {
         TwoPhaseFixedStaggeredGridSolver clonedSystem = null;
@@ -71,9 +97,12 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * initProfiles.
+     * </p>
+     */
     public void initProfiles() {
-        double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
-
         SystemInterface tempSyst = (SystemInterface) pipe.getNode(0).getBulkSystem().clone();
         ThermodynamicOperations testOps = new ThermodynamicOperations(tempSyst);
         testOps.TPflash();
@@ -145,6 +174,11 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         System.out.println("finisched initializing....");
     }
 
+    /**
+     * <p>
+     * initMatrix.
+     * </p>
+     */
     public void initMatrix() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -180,6 +214,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initPressure.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initPressure(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -191,6 +232,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initVelocity.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initVelocity(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).setVelocityIn(phase,
@@ -206,6 +254,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initTemperature.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initTemperature(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
@@ -222,6 +277,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initPhaseFraction.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initPhaseFraction(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).setPhaseFraction(phase,
@@ -231,6 +293,14 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initComposition.
+     * </p>
+     *
+     * @param phase a int
+     * @param comp a int
+     */
     public void initComposition(int phase, int comp) {
         for (int j = 0; j < numberOfNodes; j++) {
             if ((pipe.getNode(j).getBulkSystem().getPhases()[phase].getComponents()[comp].getx()
@@ -275,6 +345,13 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * initFinalResults.
+     * </p>
+     *
+     * @param phase a int
+     */
     public void initFinalResults(int phase) {
         for (int i = 0; i < numberOfNodes; i++) {
             oldVelocity[phase][i] = pipe.getNode(i).getVelocityIn().doubleValue();
@@ -293,18 +370,29 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
         }
     }
 
+    /**
+     * <p>
+     * calcFluxes.
+     * </p>
+     */
     public void calcFluxes() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).calcFluxes();
         }
     }
 
+    /**
+     * <p>
+     * initNodes.
+     * </p>
+     */
     public void initNodes() {
         for (int i = 0; i < numberOfNodes; i++) {
             pipe.getNode(i).init();
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void solveTDMA() {
         initProfiles();

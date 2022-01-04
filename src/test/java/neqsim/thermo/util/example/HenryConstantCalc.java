@@ -11,11 +11,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>HenryConstantCalc class.</p>
  *
  * @author esol
- * @version
+ * @since 2.2.3
+ * @version $Id: $Id
  */
 public class HenryConstantCalc {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemElectrolyteCPA(273.15 + 40.0, 10.0);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

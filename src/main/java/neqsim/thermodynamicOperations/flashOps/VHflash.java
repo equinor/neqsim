@@ -3,8 +3,12 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * <p>
+ * VHflash class.
+ * </p>
+ *
  * @author even solbraa
- * @version
+ * @version $Id: $Id
  */
 public class VHflash extends Flash {
     private static final long serialVersionUID = 1000;
@@ -13,8 +17,22 @@ public class VHflash extends Flash {
     double Vspec = 0;
     Flash pHFlash;
 
+    /**
+     * <p>
+     * Constructor for VHflash.
+     * </p>
+     */
     public VHflash() {}
 
+    /**
+     * <p>
+     * Constructor for VHflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param Hspec a double
+     * @param Vspec a double
+     */
     public VHflash(SystemInterface system, double Hspec, double Vspec) {
         this.system = system;
         this.pHFlash = new PHflash(system, Hspec, 0);
@@ -24,6 +42,7 @@ public class VHflash extends Flash {
         // System.out.println("volume " + Vspec);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double oldVol = system.getVolume(), newVol = system.getVolume();
@@ -68,6 +87,7 @@ public class VHflash extends Flash {
         // System.out.println("iterations " + iterations);
     }
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;

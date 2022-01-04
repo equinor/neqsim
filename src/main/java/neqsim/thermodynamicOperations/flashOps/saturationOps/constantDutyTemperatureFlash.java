@@ -7,18 +7,36 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * constantDutyTemperatureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class constantDutyTemperatureFlash extends constantDutyFlash {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new bubblePointFlash
+     * <p>
+     * Constructor for constantDutyTemperatureFlash.
+     * </p>
      */
     public constantDutyTemperatureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for constantDutyTemperatureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public constantDutyTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system.init(0);
@@ -70,18 +88,22 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
             Told = system.getTemperature();
             system.setTemperature((Told - funk / deriv * 0.7));
             // System.out.println("Temp: " + system.getTemperature() + " funk " + funk);
+
         } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7
                 && iterations < 300) || iterations < 3);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return system;

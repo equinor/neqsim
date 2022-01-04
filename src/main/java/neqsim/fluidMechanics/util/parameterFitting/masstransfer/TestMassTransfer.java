@@ -10,11 +10,17 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>TestMassTransfer class.</p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class TestMassTransfer {
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();

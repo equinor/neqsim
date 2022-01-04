@@ -14,9 +14,12 @@ import neqsim.chemicalReactions.chemicalReaction.ChemicalReaction;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * Kinetics class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class Kinetics implements java.io.Serializable {
     private static final long serialVersionUID = 1000;
@@ -24,15 +27,41 @@ public class Kinetics implements java.io.Serializable {
     double phiInfinite = 0.0;
     boolean isIrreversible;
 
-    /** Creates new Kinetics */
+    /**
+     * <p>
+     * Constructor for Kinetics.
+     * </p>
+     */
     public Kinetics() {}
 
+    /**
+     * <p>
+     * Constructor for Kinetics.
+     * </p>
+     *
+     * @param operations a {@link neqsim.chemicalReactions.ChemicalReactionOperations} object
+     */
     public Kinetics(ChemicalReactionOperations operations) {
         this.operations = operations;
     }
 
+    /**
+     * <p>
+     * calcKinetics.
+     * </p>
+     */
     public void calcKinetics() {}
 
+    /**
+     * <p>
+     * calcReacMatrix.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param comp a int
+     * @return a double
+     */
     public double calcReacMatrix(PhaseInterface phase, PhaseInterface interPhase, int comp) {
         ChemicalReaction reaction;
         double reacCoef = 0.0, irr = 0.0, ktemp = 0.0, exponent = 0.0;
@@ -96,10 +125,27 @@ public class Kinetics implements java.io.Serializable {
         return reacCoef;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>phiInfinite</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getPhiInfinite() {
         return phiInfinite;
     }
 
+    /**
+     * <p>
+     * getPseudoFirstOrderCoef.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param comp a int
+     * @return a double
+     */
     public double getPseudoFirstOrderCoef(PhaseInterface phase, PhaseInterface interPhase,
             int comp) {
         return calcReacMatrix(phase, interPhase, comp);
@@ -107,7 +153,7 @@ public class Kinetics implements java.io.Serializable {
 
     /**
      * Getter for property isIrreversible.
-     * 
+     *
      * @return Value of property isIrreversible.
      */
     public boolean isIrreversible() {

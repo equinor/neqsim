@@ -12,15 +12,22 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>CO2_MDEA_speciation class.</p>
  *
  * @author agrawalnj
+ * @version $Id: $Id
  */
 public class CO2_MDEA_speciation {
     static Logger logger = LogManager.getLogger(CO2_MDEA_speciation.class);
 
+    /**
+     * <p>Constructor for CO2_MDEA_speciation.</p>
+     */
     public CO2_MDEA_speciation() {}
 
     /**
+     * <p>main.</p>
+     *
      * @param args the command line arguments
      */
     @SuppressWarnings("unused")

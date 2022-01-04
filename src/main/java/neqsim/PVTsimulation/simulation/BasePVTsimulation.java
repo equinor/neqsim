@@ -5,8 +5,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * BasePVTsimulation class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class BasePVTsimulation implements SimulationInterface {
     private static final long serialVersionUID = 1000;
@@ -22,50 +26,70 @@ public class BasePVTsimulation implements SimulationInterface {
     double Zsaturation = 0;
     public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
+    /**
+     * <p>
+     * Constructor for BasePVTsimulation.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public BasePVTsimulation(SystemInterface tempSystem) {
         thermoSystem = tempSystem;// (SystemInterface) tempSystem.clone();
         thermoOps = new ThermodynamicOperations(getThermoSystem());
         baseThermoSystem = (SystemInterface) thermoSystem.clone();
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>experimentalData</code>.
+     * </p>
+     *
+     * @param expData an array of {@link double} objects
+     */
     public void setExperimentalData(double[][] expData) {
         experimentalData = expData;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>saturationPressure</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getSaturationPressure() {
         return saturationPressure;
     }
 
-    /**
-     * @return the thermoSystem
-     */
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
     }
 
-    /**
-     * @return the baseThermoSystem
-     */
+    /** {@inheritDoc} */
     @Override
     public SystemInterface getBaseThermoSystem() {
         return baseThermoSystem;
     }
 
-    /**
-     * @param thermoSystem the thermoSystem to set
-     */
+    /** {@inheritDoc} */
     @Override
     public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressure</code>.
+     * </p>
+     *
      * @return the pressure
      */
     public double getPressure() {
@@ -73,6 +97,10 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressure</code>.
+     * </p>
+     *
      * @param pressure the pressure to set
      */
     public void setPressure(double pressure) {
@@ -80,6 +108,10 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>temperature</code>.
+     * </p>
+     *
      * @return the temperature
      */
     public double getTemperature() {
@@ -87,6 +119,10 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>temperature</code>.
+     * </p>
+     *
      * @param temperature the temperature to set
      */
     public void setTemperature(double temperature) {
@@ -94,6 +130,10 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>pressures</code>.
+     * </p>
+     *
      * @return the pressures
      */
     public double[] getPressures() {
@@ -101,21 +141,27 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>pressures</code>.
+     * </p>
+     *
      * @param pressures the pressures to set
      */
     public void setPressures(double[] pressures) {
         this.pressures = pressures;
     }
 
-    /**
-     * @return the optimizer
-     */
+    /** {@inheritDoc} */
     @Override
     public LevenbergMarquardt getOptimizer() {
         return optimizer;
     }
 
     /**
+     * <p>
+     * getZsaturation.
+     * </p>
+     *
      * @return the Zsaturation
      */
     public double getZsaturation() {

@@ -13,9 +13,12 @@ import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
+ * <p>
+ * ComponentGEUnifac class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ComponentGEUnifac extends ComponentGEUniquac {
     private static final long serialVersionUID = 1000;
@@ -30,10 +33,22 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
     static Logger logger = LogManager.getLogger(ComponentGEUnifac.class);
 
     /**
-     * Creates new ComponentGEUniquac
+     * <p>
+     * Constructor for ComponentGEUnifac.
+     * </p>
      */
     public ComponentGEUnifac() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentGEUnifac.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentGEUnifac(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
@@ -80,11 +95,26 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         }
     }
 
+    /**
+     * <p>
+     * addUNIFACgroup.
+     * </p>
+     *
+     * @param p a int
+     * @param n a int
+     */
     public void addUNIFACgroup(int p, int n) {
         unifacGroups.add(new UNIFACgroup(p, n));
         unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     }
 
+    /**
+     * <p>
+     * getQ.
+     * </p>
+     *
+     * @return a double
+     */
     public double getQ() {
         double sum = 0.0;
 
@@ -99,7 +129,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * Getter for property R.
      *
      * @return Value of property R.
-     *
      */
     public double getR() {
         double sum = 0.0;
@@ -111,6 +140,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         return sum;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
@@ -120,6 +150,14 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>
+     * calclnGammak.
+     * </p>
+     *
+     * @param k a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void calclnGammak(int k, PhaseInterface phase) {
         double sum1Comp = 0.0, sum1Mix = 0.0;
         double sum3Comp = 0.0, sum3Mix = 0.0;
@@ -156,6 +194,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         getUnifacGroup(k).setLnGammaMix(tempGammaMix);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
@@ -205,6 +244,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         return gamma;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
@@ -216,6 +256,7 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
         return dfugdp;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype) {
@@ -249,20 +290,42 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * Getter for property unifacGroups.
      *
      * @return Value of property unifacGroups.
-     *
      */
     public ArrayList<UNIFACgroup> getUnifacGroups2() {
         return unifacGroups;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>unifacGroups</code>.
+     * </p>
+     *
+     * @return an array of {@link neqsim.thermo.atomElement.UNIFACgroup} objects
+     */
     public UNIFACgroup[] getUnifacGroups() {
         return unifacGroupsArray;
     }
 
+    /**
+     * <p>
+     * getUnifacGroup2.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.thermo.atomElement.UNIFACgroup} object
+     */
     public neqsim.thermo.atomElement.UNIFACgroup getUnifacGroup2(int i) {
         return unifacGroups.get(i);
     }
 
+    /**
+     * <p>
+     * getUnifacGroup.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.thermo.atomElement.UNIFACgroup} object
+     */
     public neqsim.thermo.atomElement.UNIFACgroup getUnifacGroup(int i) {
         return unifacGroupsArray[i];
     }
@@ -271,13 +334,19 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * Setter for property unifacGroups.
      *
      * @param unifacGroups New value of property unifacGroups.
-     *
      */
     public void setUnifacGroups(ArrayList<UNIFACgroup> unifacGroups) {
         this.unifacGroups = unifacGroups;
         unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
     }
 
+    /**
+     * <p>
+     * getNumberOfUNIFACgroups.
+     * </p>
+     *
+     * @return a int
+     */
     public int getNumberOfUNIFACgroups() {
         return unifacGroups.size();
     }
@@ -286,7 +355,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * Setter for property Q.
      *
      * @param Q New value of property Q.
-     *
      */
     public void setQ(double Q) {
         this.Q = Q;
@@ -296,7 +364,6 @@ public class ComponentGEUnifac extends ComponentGEUniquac {
      * Setter for property R.
      *
      * @param R New value of property R.
-     *
      */
     public void setR(double R) {
         this.R = R;

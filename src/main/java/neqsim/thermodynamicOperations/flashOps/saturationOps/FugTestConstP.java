@@ -9,11 +9,13 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-
 /**
+ * <p>
+ * FugTestConstP class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class FugTestConstP extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
@@ -26,15 +28,34 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     public String compName;
     public boolean compNameGiven = false;
 
-    /** Creates new FugTestdT */
+    /**
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
+     */
     public FugTestConstP() {}
 
+    /**
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public FugTestConstP(SystemInterface system) {
         this.testSystem = system;
         this.testOps = new ThermodynamicOperations(testSystem);
         this.pres = testSystem.getPressure();
     }
 
+    /**
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param pres a double
+     */
     public FugTestConstP(SystemInterface system, double pres) {
         this.testSystem = system;
         this.testOps = new ThermodynamicOperations(testSystem);
@@ -42,6 +63,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     }
 
     // initializing reference system for pure vapor fugacity
+    /**
+     * <p>
+     * initTestSystem2.
+     * </p>
+     *
+     * @param K a int
+     */
     public void initTestSystem2(int K) {
         this.testSystem2 = new SystemSrkSchwartzentruberEos(temp, pres);
         this.testSystem2.addComponent(compName, 1);
@@ -49,8 +77,9 @@ public class FugTestConstP extends constantDutyTemperatureFlash
         this.testOps2 = new ThermodynamicOperations(testSystem2);
     }
 
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         double SolidFug = 0.0, Pvapsolid = 0.0, SolVapFugCoeff = 0.0;
         // double dfugdt = 0.0;
         double solvol = 0.0, soldens = 0.0, trpTemp = 0.0;
@@ -134,6 +163,13 @@ public class FugTestConstP extends constantDutyTemperatureFlash
         } // end komponent lokke
     } // end run
 
+    /**
+     * <p>
+     * PrintToFile.
+     * </p>
+     *
+     * @param FileName a {@link java.lang.String} object
+     */
     public void PrintToFile(String FileName) {
         // String myFile = "/java/fugcoeff_C02_ N2.dat";
         // try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))){

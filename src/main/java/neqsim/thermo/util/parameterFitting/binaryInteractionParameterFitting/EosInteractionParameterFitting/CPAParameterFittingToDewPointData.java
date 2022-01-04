@@ -7,18 +7,27 @@ import neqsim.thermo.mixingRule.HVmixingRuleInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
+ * <p>
+ * CPAParameterFittingToDewPointData class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CPAParameterFittingToDewPointData.class);
 
+    /**
+     * <p>
+     * Constructor for CPAParameterFittingToDewPointData.
+     * </p>
+     */
     public CPAParameterFittingToDewPointData() {
         params = new double[1];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         try {
@@ -35,6 +44,7 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
     // return val;
     // }
     //
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -66,6 +76,14 @@ public class CPAParameterFittingToDewPointData extends LevenbergMarquardtFunctio
         }
     }
 
+    /**
+     * <p>
+     * setFittingParams2.
+     * </p>
+     *
+     * @param i a int
+     * @param value a double
+     */
     public void setFittingParams2(int i, double value) {
         params[i] = value;
 

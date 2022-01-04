@@ -7,12 +7,20 @@ import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>VLSolidTPFLash class.</p>
  *
  * @author ESOL
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class VLSolidTPFLash {
     static Logger logger = LogManager.getLogger(VLSolidTPFLash.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemPrEos(208.2, 18.34);
         testSystem.addComponent("nitrogen", 0.379);

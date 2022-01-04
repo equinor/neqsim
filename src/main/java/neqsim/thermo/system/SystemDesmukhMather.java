@@ -22,9 +22,10 @@ import neqsim.thermo.phase.PhaseSrkEos;
 public class SystemDesmukhMather extends SystemEos {
     private static final long serialVersionUID = 1000;
 
-    /** Creates a thermodynamic system using the SRK equation of state. */
+    /**
+     * Creates a thermodynamic system using the SRK equation of state.
+     */
     // SystemSrkEos clonedSystem;
-
     public SystemDesmukhMather() {
         super();
         modelName = "Desmukh-Mather-model";
@@ -35,6 +36,14 @@ public class SystemDesmukhMather extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemDesmukhMather.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemDesmukhMather(double T, double P) {
         super(T, P);
         attractiveTermNumber = 0;
@@ -49,6 +58,15 @@ public class SystemDesmukhMather extends SystemEos {
         }
     }
 
+    /**
+     * <p>
+     * Constructor for SystemDesmukhMather.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemDesmukhMather(double T, double P, boolean solidCheck) {
         this(T, P);
         attractiveTermNumber = 0;
@@ -75,6 +93,7 @@ public class SystemDesmukhMather extends SystemEos {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemDesmukhMather clone() {
         SystemDesmukhMather clonedSystem = null;

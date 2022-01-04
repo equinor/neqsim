@@ -40,6 +40,9 @@ class FlashOilTest {
     static double[] errH = new double[P_bar.length];
     static double[] errS = new double[P_bar.length];
 
+    /**
+     * <p>setUp.</p>
+     */
     @BeforeAll
     public static void setUp() {
         fluid1 = new SystemSrkEos(298.0, 10.0);
@@ -67,6 +70,9 @@ class FlashOilTest {
         }
     }
 
+    /**
+     * <p>testPHflash.</p>
+     */
     @Test
     public void testPHflash() {
         for (int i = 0; i < P_bar.length; i++) {
@@ -78,6 +84,9 @@ class FlashOilTest {
         }
     }
 
+    /**
+     * <p>testPSflash.</p>
+     */
     @Test
     public void testPSflash() {
         for (int i = 0; i < P_bar.length; i++) {

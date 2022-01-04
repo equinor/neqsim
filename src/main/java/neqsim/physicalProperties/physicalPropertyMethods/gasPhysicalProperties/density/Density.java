@@ -11,23 +11,40 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod;
 
 /**
+ * <p>
+ * Density class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class Density extends GasPhysicalPropertyMethod implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
-    /** Creates new Density */
+    /**
+     * <p>
+     * Constructor for Density.
+     * </p>
+     */
     public Density() {}
 
+    /**
+     * <p>
+     * Constructor for Density.
+     * </p>
+     *
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public Density(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         this.gasPhase = gasPhase;
     }
 
+    /** {@inheritDoc} */
     @Override
     public Density clone() {
         Density properties = null;
@@ -42,6 +59,8 @@ public class Density extends GasPhysicalPropertyMethod implements
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Returns the density of the phase. Unit: kg/m^3
      */
     @Override

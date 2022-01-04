@@ -21,6 +21,11 @@ public class SystemGERG2004Eos extends SystemEos {
     private static final long serialVersionUID = 1000;
 
     // SystemSrkEos clonedSystem;
+    /**
+     * <p>
+     * Constructor for SystemGERG2004Eos.
+     * </p>
+     */
     public SystemGERG2004Eos() {
         super();
         modelName = "GERG2004-EOS";
@@ -33,6 +38,14 @@ public class SystemGERG2004Eos extends SystemEos {
         commonInitialization();
     }
 
+    /**
+     * <p>
+     * Constructor for SystemGERG2004Eos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     */
     public SystemGERG2004Eos(double T, double P) {
         super(T, P);
         modelName = "GERG2004-EOS";
@@ -45,6 +58,15 @@ public class SystemGERG2004Eos extends SystemEos {
         commonInitialization();
     }
 
+    /**
+     * <p>
+     * Constructor for SystemGERG2004Eos.
+     * </p>
+     *
+     * @param T a double
+     * @param P a double
+     * @param solidCheck a boolean
+     */
     public SystemGERG2004Eos(double T, double P, boolean solidCheck) {
         this(T, P);
         modelName = "GERG2004-EOS";
@@ -77,6 +99,7 @@ public class SystemGERG2004Eos extends SystemEos {
         commonInitialization();
     }
 
+    /** {@inheritDoc} */
     @Override
     public SystemGERG2004Eos clone() {
         SystemGERG2004Eos clonedSystem = null;
@@ -89,6 +112,11 @@ public class SystemGERG2004Eos extends SystemEos {
         return clonedSystem;
     }
 
+    /**
+     * <p>
+     * commonInitialization.
+     * </p>
+     */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(false);
         setImplementedPressureDeriativesofFugacity(false);

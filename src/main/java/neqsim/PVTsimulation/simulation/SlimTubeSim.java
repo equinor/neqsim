@@ -5,8 +5,12 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * SlimTubeSim class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class SlimTubeSim extends BasePVTsimulation {
     private static final long serialVersionUID = 1000;
@@ -15,11 +19,20 @@ public class SlimTubeSim extends BasePVTsimulation {
     private int numberOfSlimTubeNodes = 200;
     SystemInterface[] slimTubeNodeSystem = null;
 
+    /**
+     * <p>
+     * Constructor for SlimTubeSim.
+     * </p>
+     *
+     * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
+     * @param injectionGas a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public SlimTubeSim(SystemInterface tempSystem, SystemInterface injectionGas) {
         super(tempSystem);
         inectionGasSystem = injectionGas;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         slimTubeNodeSystem = new SystemInterface[numberOfSlimTubeNodes + 1];
@@ -152,6 +165,7 @@ public class SlimTubeSim extends BasePVTsimulation {
                     + " total reference volume " + totalReferenceNodeVolumeAtStadardConditions);
             System.out.println("oil recovery ratio" + totalAccumulatedVolumeAtStadardConditions
                     / totalReferenceNodeVolumeAtStadardConditions);
+
         }
 
         slimTubeNodeSystem[numberOfSlimTubeNodes].setTemperature(288.15);
@@ -176,6 +190,13 @@ public class SlimTubeSim extends BasePVTsimulation {
         }
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         SystemInterface gasSystem = new SystemSrkEos(298.0, 200.0);
         gasSystem.addComponent("CO2", 10.0);
@@ -213,6 +234,10 @@ public class SlimTubeSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>numberOfSlimTubeNodes</code>.
+     * </p>
+     *
      * @return the numberOfSlimTubeNodes
      */
     public int getNumberOfSlimTubeNodes() {
@@ -220,6 +245,10 @@ public class SlimTubeSim extends BasePVTsimulation {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>numberOfSlimTubeNodes</code>.
+     * </p>
+     *
      * @param numberOfSlimTubeNodes the numberOfSlimTubeNodes to set
      */
     public void setNumberOfSlimTubeNodes(int numberOfSlimTubeNodes) {

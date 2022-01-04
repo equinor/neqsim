@@ -7,6 +7,9 @@
 package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.viscosity;
 
 /**
+ * <p>
+ * ChungViscosityMethod class.
+ * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -23,9 +26,22 @@ public class ChungViscosityMethod extends Viscosity {
                     {24.275, 3.450, -11.291, 69.35}, {0.7972, 1.117, 0.01235, -4.117},
                     {-0.2382, 0.06770, -0.8163, 4.025}, {0.06863, 0.3479, 0.5926, -0.727}};
 
-    /** Creates new ChungViscosityMethod */
+    /**
+     * <p>
+     * Constructor for ChungViscosityMethod.
+     * </p>
+     */
     public ChungViscosityMethod() {}
 
+    /**
+     * <p>
+     * Constructor for ChungViscosityMethod.
+     * </p>
+     *
+     * @param gasPhase a
+     *        {@link neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface}
+     *        object
+     */
     public ChungViscosityMethod(
             neqsim.physicalProperties.physicalPropertySystem.PhysicalPropertiesInterface gasPhase) {
         super(gasPhase);
@@ -35,6 +51,7 @@ public class ChungViscosityMethod extends Viscosity {
         omegaVisc = new double[gasPhase.getPhase().getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
         // Wilkes method p. 407 TPoLG
@@ -65,11 +82,17 @@ public class ChungViscosityMethod extends Viscosity {
         return viscosity;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getPureComponentViscosity(int i) {
         return pureComponentViscosity[i];
     }
 
+    /**
+     * <p>
+     * initChungPureComponentViscosity.
+     * </p>
+     */
     public void initChungPureComponentViscosity() {
         double tempVar = 0;
         double A = 1.16145, B = 0.14874, C = 0.52487, D = 0.77320, E = 2.16178, F = 2.43787;

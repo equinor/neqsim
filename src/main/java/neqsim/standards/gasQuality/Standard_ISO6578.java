@@ -12,8 +12,12 @@ import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 
 /**
+ * <p>
+ * Standard_ISO6578 class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Standard_ISO6578 extends neqsim.standards.Standard {
     private static final long serialVersionUID = 1000;
@@ -112,16 +116,35 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         setCorrectionFactors();
     }
 
+    /**
+     * <p>
+     * Constructor for Standard_ISO6578.
+     * </p>
+     *
+     * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public Standard_ISO6578(SystemInterface thermoSystem) {
         super(thermoSystem);
         setCorrectionFactors();
     }
 
+    /**
+     * <p>
+     * useISO6578VolumeCorrectionFacotrs.
+     * </p>
+     *
+     * @param useFactors a boolean
+     */
     public void useISO6578VolumeCorrectionFacotrs(boolean useFactors) {
         use6578volumeCorrectionFactors = useFactors;
         setCorrectionFactors();
     }
 
+    /**
+     * <p>
+     * setCorrectionFactors.
+     * </p>
+     */
     public void setCorrectionFactors() {
         BicubicInterpolator tempInterp = new BicubicInterpolator();
         if (use6578volumeCorrectionFactors) {
@@ -135,6 +158,7 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calculate() {
         double Vmix = 0.0;
@@ -236,30 +260,48 @@ public class Standard_ISO6578 extends neqsim.standards.Standard {
         // System.out.println("LNG density " + LNGdensity);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter, java.lang.String returnUnit) {
         return LNGdensity;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double getValue(String returnParameter) {
         return LNGdensity;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String getUnit(String returnParameter) {
         return densityUnit;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isOnSpec() {
         return true;
     }
 
+    /**
+     * <p>
+     * getCorrFactor1.
+     * </p>
+     *
+     * @return a double
+     */
     public double getCorrFactor1() {
         return KMcorrectionFactor1;
     }
 
+    /**
+     * <p>
+     * getCorrFactor2.
+     * </p>
+     *
+     * @return a double
+     */
     public double getCorrFactor2() {
         return KMcorrectionFactor2;
     }

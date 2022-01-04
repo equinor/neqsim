@@ -17,11 +17,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
+ * <p>
+ * NeqSimDataBase class.
+ * </p>
+ *
  * @author Even Solbraa
  * @version Dec 2018
  */
 public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
     /**
+     * <p>
+     * createTemporaryTables.
+     * </p>
+     *
      * @return the createTemporaryTables
      */
     public static boolean createTemporaryTables() {
@@ -29,6 +37,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Setter for the field <code>createTemporaryTables</code>.
+     * </p>
+     *
      * @param createTemporaryTables the createTemporaryTables to set
      */
     public static void setCreateTemporaryTables(boolean createTemporaryTables) {
@@ -36,6 +48,7 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     private static final long serialVersionUID = 1000;
+    /** Constant <code>dataBasePath=""</code> */
     public static String dataBasePath = "";
     static Logger logger = LogManager.getLogger(NeqSimDataBase.class);
     private static boolean createTemporaryTables = false;
@@ -54,7 +67,9 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     protected Connection databaseConnection = null;
 
     /**
-     * Creates new testPointbase
+     * <p>
+     * Constructor for NeqSimDataBase.
+     * </p>
      */
     public NeqSimDataBase() {
         setDataBaseType(dataBaseType);
@@ -69,7 +84,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
-     * Creates new NeqSimDataBase
+     * <p>
+     * openConnection.
+     * </p>
+     *
+     * @return a Connection object
+     * @throws java.sql.SQLException if any.
+     * @throws java.lang.ClassNotFoundException if any.
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
         javax.naming.InitialContext ctx = null;
@@ -120,10 +141,25 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * getConnection.
+     * </p>
+     *
+     * @return a Connection object
+     */
     public Connection getConnection() {
         return databaseConnection;
     }
 
+    /**
+     * <p>
+     * getResultSet.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     * @return a ResultSet object
+     */
     public ResultSet getResultSet(String sqlString) {
         try {
             ResultSet result = getStatement().executeQuery(sqlString);
@@ -134,6 +170,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * execute.
+     * </p>
+     *
+     * @param sqlString a {@link java.lang.String} object
+     */
     public void execute(String sqlString) {
         try {
             if (databaseConnection == null) {
@@ -148,14 +191,36 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @return a {@link java.lang.String} object
+     */
     public static String getDataBaseType() {
         return dataBaseType;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType) {
         setDataBaseType(aDataBaseType, null);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dataBaseType</code>.
+     * </p>
+     *
+     * @param aDataBaseType a {@link java.lang.String} object
+     * @param connectionString a {@link java.lang.String} object
+     */
     public static void setDataBaseType(String aDataBaseType, String connectionString) {
         dataBaseType = aDataBaseType;
 
@@ -195,15 +260,33 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>statement</code>.
+     * </p>
+     *
+     * @return a Statement object
+     */
     public Statement getStatement() {
         return statement;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>statement</code>.
+     * </p>
+     *
+     * @param statement a Statement object
+     */
     public void setStatement(Statement statement) {
         this.statement = statement;
     }
 
     /**
+     * <p>
+     * Setter for the field <code>username</code>.
+     * </p>
+     *
      * @param aUsername the username to set
      */
     public static void setUsername(String aUsername) {
@@ -211,6 +294,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Setter for the field <code>password</code>.
+     * </p>
+     *
      * @param aPassword the password to set
      */
     public static void setPassword(String aPassword) {
@@ -218,6 +305,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Getter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @return the connectionString
      */
     public static String getConnectionString() {
@@ -225,12 +316,23 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     }
 
     /**
+     * <p>
+     * Setter for the field <code>connectionString</code>.
+     * </p>
+     *
      * @param aConnectionString the connectionString to set
      */
     public static void setConnectionString(String aConnectionString) {
         connectionString = aConnectionString;
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String[] args) {
         NeqSimDataBase database = new NeqSimDataBase();
 
@@ -245,6 +347,13 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * getComponentNames.
+     * </p>
+     *
+     * @return an array of {@link java.lang.String} objects
+     */
     public static String[] getComponentNames() {
         NeqSimDataBase database = new NeqSimDataBase();
         try {
@@ -259,6 +368,14 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         }
     }
 
+    /**
+     * <p>
+     * hasComponent.
+     * </p>
+     *
+     * @param compName a {@link java.lang.String} object
+     * @return a boolean
+     */
     public static boolean hasComponent(String compName) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;

@@ -4,7 +4,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * Reboiler class.
+ * </p>
+ *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class Reboiler extends neqsim.processSimulation.processEquipment.distillation.SimpleTray {
     private static final long serialVersionUID = 1000;
@@ -13,9 +18,18 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
     boolean refluxIsSet = false;
     double duty = 0.0;
 
+    /**
+     * <p>
+     * Constructor for Reboiler.
+     * </p>
+     */
     public Reboiler() {}
 
     /**
+     * <p>
+     * Getter for the field <code>refluxRatio</code>.
+     * </p>
+     *
      * @return the refluxRatio
      */
     public double getRefluxRatio() {
@@ -23,6 +37,10 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
     }
 
     /**
+     * <p>
+     * Setter for the field <code>refluxRatio</code>.
+     * </p>
+     *
      * @param refluxRatio the refluxRatio to set
      */
     public void setRefluxRatio(double refluxRatio) {
@@ -30,11 +48,19 @@ public class Reboiler extends neqsim.processSimulation.processEquipment.distilla
         refluxIsSet = true;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>duty</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getDuty() {
         return duty;
         // return calcMixStreamEnthalpy();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (!refluxIsSet) {

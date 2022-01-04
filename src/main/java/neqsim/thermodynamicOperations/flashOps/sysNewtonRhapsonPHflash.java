@@ -7,6 +7,14 @@ import neqsim.MathLib.nonLinearSolver.newtonRhapson;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * sysNewtonRhapsonPHflash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPHflash.class);
@@ -35,9 +43,22 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     int type = 0;
     double dPdT = 0;
 
+    /**
+     * <p>
+     * Constructor for sysNewtonRhapsonPHflash.
+     * </p>
+     */
     public sysNewtonRhapsonPHflash() {}
 
-    /** Creates new nonlin */
+    /**
+     * <p>
+     * Constructor for sysNewtonRhapsonPHflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
+     */
     public sysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases,
             int numberOfComponents) {
         this.system = system;
@@ -56,16 +77,38 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         solver.setOrder(3);
     }
 
+    /**
+     * <p>
+     * Constructor for sysNewtonRhapsonPHflash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param numberOfPhases a int
+     * @param numberOfComponents a int
+     * @param type a int
+     */
     public sysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases,
             int numberOfComponents, int type) {
         this(system, numberOfPhases, numberOfComponents);
         this.type = type;
     }
 
+    /**
+     * <p>
+     * setSpec.
+     * </p>
+     *
+     * @param spec a double
+     */
     public void setSpec(double spec) {
         this.specVar = spec;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>fvec</code>.
+     * </p>
+     */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
             fvec.set(i, 0,
@@ -89,6 +132,11 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         fvec.set(numberOfComponents + 1, 0, rP);
     }
 
+    /**
+     * <p>
+     * setJac.
+     * </p>
+     */
     public void setJac() {
         Jac.timesEquals(0.0);
         double dij = 0.0;
@@ -135,6 +183,11 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         Jac.set(numberOfComponents + 1, numberOfComponents + 1, Epp);
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>u</code>.
+     * </p>
+     */
     public void setu() {
         for (int i = 0; i < numberOfComponents; i++) {
             u.set(i, 0, 0.0);
@@ -143,6 +196,11 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         u.set(numberOfComponents + 1, 0, 0.0);
     }
 
+    /**
+     * <p>
+     * init.
+     * </p>
+     */
     public void init() {
         double temp = system.getBeta();
 
@@ -180,6 +238,14 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         system.init(3);
     }
 
+    /**
+     * <p>
+     * solve.
+     * </p>
+     *
+     * @param np a int
+     * @return a int
+     */
     public int solve(int np) {
         Matrix dx;
         iter = 1;

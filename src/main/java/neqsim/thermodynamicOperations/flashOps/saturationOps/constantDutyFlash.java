@@ -11,6 +11,14 @@ import org.apache.logging.log4j.Logger;
 
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * Abstract constantDutyFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public abstract class constantDutyFlash implements constantDutyFlashInterface {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(constantDutyFlash.class);
@@ -27,9 +35,20 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
     double beta = 1e-5;
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for constantDutyFlash.
+     * </p>
+     */
     public constantDutyFlash() {}
 
+    /**
+     * <p>
+     * Constructor for constantDutyFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public constantDutyFlash(SystemInterface system) {
         this.system = system;
         lnOldOldK = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -39,11 +58,13 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
         deltalnK = new double[system.getPhases()[0].getNumberOfComponents()];
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setBeta(double beta) {
         this.beta = beta;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system.init(0);
@@ -93,28 +114,32 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
         } while (Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void createNetCdfFile(String name) {}
 
+    /** {@inheritDoc} */
     @Override
     public double[][] getPoints(int i) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] get(String name) {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void displayResult() {
         system.display();
     }
 
     /**
+     * {@inheritDoc}
+     *
      * Getter for property superCritical.
-     * 
-     * @return Value of property superCritical.
      */
     @Override
     public boolean isSuperCritical() {
@@ -123,18 +148,20 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
     /**
      * Setter for property superCritical.
-     * 
+     *
      * @param superCritical New value of property superCritical.
      */
     public void setSuperCritical(boolean superCritical) {
         this.superCritical = superCritical;
     }
 
+    /** {@inheritDoc} */
     @Override
     public String[][] getResultTable() {
         return null;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void addData(String name, double[][] data) {}
 }

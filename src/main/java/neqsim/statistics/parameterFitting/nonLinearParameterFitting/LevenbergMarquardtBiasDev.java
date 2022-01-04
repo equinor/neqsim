@@ -7,17 +7,26 @@
 package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
 
 /**
+ * <p>
+ * LevenbergMarquardtBiasDev class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new LevenbergMarquardt */
+    /**
+     * <p>
+     * Constructor for LevenbergMarquardtBiasDev.
+     * </p>
+     */
     public LevenbergMarquardtBiasDev() {
         super();
     }
 
+    /** {@inheritDoc} */
     @Override
     public LevenbergMarquardtBiasDev clone() {
         LevenbergMarquardtBiasDev clonedClass = null;
@@ -30,6 +39,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
         return clonedClass;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcChiSquare() {
         double chiSquare = 0;
@@ -41,6 +51,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
         return chiSquare;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[][] calcAlphaMatrix() {
         double[][] alpha =
@@ -61,6 +72,7 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
         return alpha;
     }
 
+    /** {@inheritDoc} */
     @Override
     public double[] calcBetaMatrix() {
         double[] beta = new double[sampleSet.getSample(0).getFunction().getFittingParams().length];

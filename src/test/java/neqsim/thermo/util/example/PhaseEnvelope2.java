@@ -10,14 +10,19 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * @author evensolbraa
+ * <p>PhaseEnvelope2 class.</p>
  *
+ * @author evensolbraa
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class PhaseEnvelope2 {
     static Logger logger = LogManager.getLogger(PhaseEnvelope2.class);
 
     /**
-     * @param args
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
         SystemInterface testSystem = new SystemSrkEos(280.0, 1.00);

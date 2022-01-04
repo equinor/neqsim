@@ -10,23 +10,43 @@ import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFl
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
+ * <p>
+ * OnePhasePipeLine class.
+ * </p>
  *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class OnePhasePipeLine extends Pipeline {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new OnePhasePipeLine */
+    /**
+     * <p>
+     * Constructor for OnePhasePipeLine.
+     * </p>
+     */
     public OnePhasePipeLine() {}
 
+    /**
+     * <p>
+     * Constructor for OnePhasePipeLine.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.Stream} object
+     */
     public OnePhasePipeLine(Stream inStream) {
         super(inStream);
         pipe = new PipeFlowSystem();
     }
 
+    /**
+     * <p>
+     * createSystem.
+     * </p>
+     */
     public void createSystem() {}
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         super.run();
@@ -36,6 +56,7 @@ public class OnePhasePipeLine extends Pipeline {
         outStream.setThermoSystem(pipe.getNode(pipe.getTotalNumberOfNodes() - 1).getBulkSystem());
     }
 
+    /** {@inheritDoc} */
     @Override
     public void runTransient() {
         super.runTransient();

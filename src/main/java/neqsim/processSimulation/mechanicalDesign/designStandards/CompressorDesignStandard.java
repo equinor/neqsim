@@ -3,14 +3,27 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
+ * <p>
+ * CompressorDesignStandard class.
+ * </p>
  *
  * @author esol
+ * @version $Id: $Id
  */
 public class CompressorDesignStandard extends DesignStandard {
     private static final long serialVersionUID = 1000;
 
     private double compressorFactor = 0.11;
 
+    /**
+     * <p>
+     * Constructor for CompressorDesignStandard.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
+     */
     public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
 
@@ -48,6 +61,10 @@ public class CompressorDesignStandard extends DesignStandard {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>compressorFactor</code>.
+     * </p>
+     *
      * @return the compressorFactor
      */
     public double getCompressorFactor() {
@@ -55,6 +72,10 @@ public class CompressorDesignStandard extends DesignStandard {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>compressorFactor</code>.
+     * </p>
+     *
      * @param compressorFactor the compressorFactor to set
      */
     public void setCompressorFactor(double compressorFactor) {

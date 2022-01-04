@@ -9,8 +9,12 @@ import neqsim.processSimulation.processEquipment.pipeline.Pipeline;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
+ * <p>
+ * PipelineMechanicalDeisgn class.
+ * </p>
  *
  * @author ESOL
+ * @version $Id: $Id
  */
 public class PipelineMechanicalDeisgn extends MechanicalDesign {
     private static final long serialVersionUID = 1000;
@@ -18,10 +22,19 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
     double innerDiameter = 1.0;
     String designStandardCode = "ANSI/ASME Standard B31.8";
 
+    /**
+     * <p>
+     * Constructor for PipelineMechanicalDeisgn.
+     * </p>
+     *
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     */
     public PipelineMechanicalDeisgn(ProcessEquipmentInterface equipment) {
         super(equipment);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void readDesignSpecifications() {
         super.readDesignSpecifications();
@@ -41,6 +54,7 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void calcDesign() {
         super.calcDesign();
@@ -87,6 +101,13 @@ public class PipelineMechanicalDeisgn extends MechanicalDesign {
         // double length = pipeline.getLength();
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 90.00);

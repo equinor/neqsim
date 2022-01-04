@@ -7,12 +7,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>TestSurfaceTenison class.</p>
  *
  * @author esol
+ * @version $Id: $Id
+ * @since 2.2.3
  */
 public class TestSurfaceTenison {
     static Logger logger = LogManager.getLogger(TestSurfaceTenison.class);
 
+    /**
+     * <p>main.</p>
+     *
+     * @param args an array of {@link java.lang.String} objects
+     */
     public static void main(String args[]) {
         SystemInterface testSystem = new SystemSrkEos(310.95, 20.00);
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);

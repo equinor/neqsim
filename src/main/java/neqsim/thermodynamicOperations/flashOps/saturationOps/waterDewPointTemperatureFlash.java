@@ -6,20 +6,41 @@
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * waterDewPointTemperatureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(waterDewPointTemperatureFlash.class);
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for waterDewPointTemperatureFlash.
+     * </p>
+     */
     public waterDewPointTemperatureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for waterDewPointTemperatureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public waterDewPointTemperatureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         int iterations = 0, maxNumberOfIterations = 15000;
@@ -90,6 +111,7 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
         // logger.info("max freezing temp " + maxTemperature);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

@@ -8,16 +8,36 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
 import neqsim.thermo.system.SystemInterface;
 
+/**
+ * <p>
+ * dewPointPressureFlash class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class dewPointPressureFlash extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for dewPointPressureFlash.
+     * </p>
+     */
     public dewPointPressureFlash() {}
 
+    /**
+     * <p>
+     * Constructor for dewPointPressureFlash.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     */
     public dewPointPressureFlash(SystemInterface system) {
         super(system);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         if (system.getPhase(0).getNumberOfComponents() == 1
@@ -102,6 +122,7 @@ public class dewPointPressureFlash extends constantDutyTemperatureFlash {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

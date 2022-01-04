@@ -8,19 +8,24 @@ package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFi
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * /**
+ * <p>
+ * ViscosityFunction class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
     private static final long serialVersionUID = 1000;
 
     /**
-     * Creates new ViscosityFunction
+     * <p>
+     * Constructor for ViscosityFunction.
+     * </p>
      */
     public ViscosityFunction() {}
 
+    /** {@inheritDoc} */
     @Override
     public double calcValue(double[] dependentValues) {
         system.init(1);
@@ -28,6 +33,7 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
         return system.getPhases()[1].getPhysicalProperties().getViscosity() * 1e3;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

@@ -9,20 +9,41 @@ package neqsim.thermodynamicOperations.flashOps.saturationOps;
 import neqsim.thermo.system.SystemInterface;
 import org.apache.logging.log4j.*;
 
+/**
+ * <p>
+ * calcSaltSatauration class.
+ * </p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ */
 public class calcSaltSatauration extends constantDutyTemperatureFlash {
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
     String saltName;
 
-    /** Creates new bubblePointFlash */
+    /**
+     * <p>
+     * Constructor for calcSaltSatauration.
+     * </p>
+     */
     public calcSaltSatauration() {}
 
+    /**
+     * <p>
+     * Constructor for calcSaltSatauration.
+     * </p>
+     *
+     * @param system a {@link neqsim.thermo.system.SystemInterface} object
+     * @param name a {@link java.lang.String} object
+     */
     public calcSaltSatauration(SystemInterface system, String name) {
         super(system);
         this.saltName = name;
         logger.info("ok ");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         double ksp = 0.0;
@@ -117,6 +138,7 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
         logger.info("solution found after " + iter + " iterations in calcSaltSatauration()");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
 }

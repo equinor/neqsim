@@ -15,8 +15,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * CPAMixing class.
+ * </p>
+ *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     private static final long serialVersionUID = 1000;
@@ -30,8 +34,14 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
     final int[] charge2A = {-1, -1};
     final int[] charge2B = {1, -1};
 
+    /**
+     * <p>
+     * Constructor for CPAMixing.
+     * </p>
+     */
     public CPAMixing() {}
 
+    /** {@inheritDoc} */
     @Override
     public CPAMixing clone() {
         CPAMixing clonedSystem = null;
@@ -583,6 +593,14 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
     }
 
+    /**
+     * <p>
+     * getMixingRule.
+     * </p>
+     *
+     * @param i a int
+     * @return a {@link neqsim.thermo.mixingRule.CPAMixingInterface} object
+     */
     public CPAMixingInterface getMixingRule(int i) {
         if (i == 1) {
             return new CPA_Radoch();
@@ -595,6 +613,15 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
     }
 
+    /**
+     * <p>
+     * getMixingRule.
+     * </p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a {@link neqsim.thermo.mixingRule.CPAMixingInterface} object
+     */
     public CPAMixingInterface getMixingRule(int i, PhaseInterface phase) {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         assosSchemeType = new int[phase.getNumberOfComponents()][phase.getNumberOfComponents()];
@@ -667,6 +694,15 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
     }
 
+    /**
+     * <p>
+     * resetMixingRule.
+     * </p>
+     *
+     * @param i a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a {@link neqsim.thermo.mixingRule.CPAMixingInterface} object
+     */
     public CPAMixingInterface resetMixingRule(int i, PhaseInterface phase) {
         if (i == 1) {
             return new CPA_Radoch();
@@ -679,6 +715,15 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
     }
 
+    /**
+     * <p>
+     * setAssociationScheme.
+     * </p>
+     *
+     * @param compnumb a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return an array of {@link int} objects
+     */
     public int[][] setAssociationScheme(int compnumb, PhaseInterface phase) {
         if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
             return getInteractionMatrix(charge4C, charge4C);
@@ -693,6 +738,16 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         }
     }
 
+    /**
+     * <p>
+     * setCrossAssociationScheme.
+     * </p>
+     *
+     * @param compnumb a int
+     * @param compnumb2 a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return an array of {@link int} objects
+     */
     public int[][] setCrossAssociationScheme(int compnumb, int compnumb2, PhaseInterface phase) {
         int[] comp1Scheme = new int[0];
         int[] comp2Scheme = new int[0];
@@ -729,6 +784,15 @@ public class CPAMixing implements Cloneable, ThermodynamicConstantsInterface {
         return getInteractionMatrix(comp1Scheme, comp2Scheme);
     }
 
+    /**
+     * <p>
+     * getInteractionMatrix.
+     * </p>
+     *
+     * @param comp1Scheme an array of {@link int} objects
+     * @param comp2Scheme an array of {@link int} objects
+     * @return an array of {@link int} objects
+     */
     public int[][] getInteractionMatrix(int[] comp1Scheme, int[] comp2Scheme) {
         int[][] intMatrix = new int[comp1Scheme.length][comp2Scheme.length];
         for (int i = 0; i < comp1Scheme.length; i++) {

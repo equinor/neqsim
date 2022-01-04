@@ -11,9 +11,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
+ * <p>
+ * IncompressiblePipeFlow class.
+ * </p>
  *
  * @author Even Solbraa
- * @version
+ * @version $Id: $Id
  */
 public class IncompressiblePipeFlow extends AdiabaticPipe {
     private static final long serialVersionUID = 1000;
@@ -23,22 +26,48 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     double momentum = 0;
 
     /**
-     * Creates new Heater
+     * <p>
+     * Constructor for IncompressiblePipeFlow.
+     * </p>
      */
     public IncompressiblePipeFlow() {}
 
+    /**
+     * <p>
+     * Constructor for IncompressiblePipeFlow.
+     * </p>
+     *
+     * @param inStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
+     */
     public IncompressiblePipeFlow(StreamInterface inStream) {
         super(inStream);
     }
 
+    /**
+     * <p>
+     * addFittingFromDatabase.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     */
     public void addFittingFromDatabase(String name) {
         fittings.add(name);
     }
 
+    /**
+     * <p>
+     * addFitting.
+     * </p>
+     *
+     * @param name a {@link java.lang.String} object
+     * @param LdivD a double
+     */
     public void addFitting(String name, double LdivD) {
         fittings.add(name, LdivD);
     }
 
+    /** {@inheritDoc} */
     @Override
     public double calcPressureOut() {
         setTotalEqLenth(length);
@@ -75,6 +104,7 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         return (system.getPressure() * 1e5 + dp) / 1.0e5;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void run() {
         system = (SystemInterface) inStream.getThermoSystem().clone();
@@ -93,6 +123,13 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
         outStream.setThermoSystem(system);
     }
 
+    /**
+     * <p>
+     * main.
+     * </p>
+     *
+     * @param name an array of {@link java.lang.String} objects
+     */
     public static void main(String[] name) {
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
@@ -125,6 +162,10 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     }
 
     /**
+     * <p>
+     * Getter for the field <code>totalEqLenth</code>.
+     * </p>
+     *
      * @return the totalEqLenth
      */
     public double getTotalEqLenth() {
@@ -132,6 +173,10 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     }
 
     /**
+     * <p>
+     * Setter for the field <code>totalEqLenth</code>.
+     * </p>
+     *
      * @param totalEqLenth the totalEqLenth to set
      */
     public void setTotalEqLenth(double totalEqLenth) {
