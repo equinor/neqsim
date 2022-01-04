@@ -3,14 +3,15 @@ package neqsim.thermo.util.example;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>SrkEoSTest class.</p>
+ * <p>
+ * SrkEoSTest class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -20,7 +21,9 @@ public class SrkEoSTest {
     static SystemInterface thermoSystem = null;
 
     /**
-     * <p>setUp.</p>
+     * <p>
+     * setUp.
+     * </p>
      */
     @BeforeAll
     public static void setUp() {
@@ -34,7 +37,9 @@ public class SrkEoSTest {
     }
 
     /**
-     * <p>testTPflash.</p>
+     * <p>
+     * testTPflash.
+     * </p>
      */
     @Test
     public void testTPflash() {
@@ -44,9 +49,10 @@ public class SrkEoSTest {
     }
 
     /**
-     * <p>testSaturateWIthWater.</p>
+     * <p>
+     * testSaturateWIthWater.
+     * </p>
      */
-    @Disabled
     @Test
     public void testSaturateWIthWater() {
         ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
@@ -55,7 +61,9 @@ public class SrkEoSTest {
     }
 
     /**
-     * <p>initPhysicalProperties.</p>
+     * <p>
+     * initPhysicalProperties.
+     * </p>
      */
     @Test
     public void initPhysicalProperties() {
@@ -65,7 +73,9 @@ public class SrkEoSTest {
     }
 
     /**
-     * <p>testPHflash.</p>
+     * <p>
+     * testPHflash.
+     * </p>
      */
     @Test
     public void testPHflash() {
@@ -82,7 +92,9 @@ public class SrkEoSTest {
     }
 
     /**
-     * <p>testPSflash.</p>
+     * <p>
+     * testPSflash.
+     * </p>
      */
     @Test
     public void testPSflash() {
