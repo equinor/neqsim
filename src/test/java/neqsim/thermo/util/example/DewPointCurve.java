@@ -13,7 +13,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 
 /**
- * <p>DewPointCurve class.</p>
+ * <p>
+ * DewPointCurve class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -23,7 +25,9 @@ public class DewPointCurve {
     static Logger logger = LogManager.getLogger(DewPointCurve.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
