@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * SolidComplexTemperatureCalc class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {

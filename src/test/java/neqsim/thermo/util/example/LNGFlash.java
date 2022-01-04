@@ -7,11 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * LNGFlash class.
- * </p>
+ * <p>LNGFlash class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,9 +17,7 @@ public class LNGFlash {
     static Logger logger = LogManager.getLogger(LNGFlash.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

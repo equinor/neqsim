@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * onePhasePipeFlowNode class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class onePhasePipeFlowNode extends onePhaseFlowNode {

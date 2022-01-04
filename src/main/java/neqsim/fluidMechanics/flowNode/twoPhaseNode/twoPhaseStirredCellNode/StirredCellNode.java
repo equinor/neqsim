@@ -10,11 +10,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * StirredCellNode class.
- * </p>
+ * <p>StirredCellNode class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class StirredCellNode extends TwoPhaseFlowNode {
@@ -24,22 +22,17 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     private double dt = 1.0;
 
     /**
-     * <p>
-     * Constructor for StirredCellNode.
-     * </p>
+     * <p>Constructor for StirredCellNode.</p>
      */
     public StirredCellNode() {
         this.flowNodeType = "stirred cell";
     }
 
     /**
-     * <p>
-     * Constructor for StirredCellNode.
-     * </p>
+     * <p>Constructor for StirredCellNode.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
-     *        object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
      */
     public StirredCellNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -51,14 +44,11 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * Constructor for StirredCellNode.
-     * </p>
+     * <p>Constructor for StirredCellNode.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
-     *        object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
      */
     public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
@@ -189,9 +179,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * setStirrerSpeed.
-     * </p>
+     * <p>setStirrerSpeed.</p>
      *
      * @param stirrerRate a double
      */
@@ -219,9 +207,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -272,9 +258,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * Setter for the field <code>stirrerDiameter</code>.
-     * </p>
+     * <p>Setter for the field <code>stirrerDiameter</code>.</p>
      *
      * @param stirrerDiameter a double
      */

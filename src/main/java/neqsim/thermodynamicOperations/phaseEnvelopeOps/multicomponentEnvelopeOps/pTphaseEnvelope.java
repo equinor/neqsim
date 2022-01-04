@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * pTphaseEnvelope class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class pTphaseEnvelope extends BaseOperation {

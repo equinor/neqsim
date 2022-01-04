@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * sysNewtonRhapsonPHflash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {

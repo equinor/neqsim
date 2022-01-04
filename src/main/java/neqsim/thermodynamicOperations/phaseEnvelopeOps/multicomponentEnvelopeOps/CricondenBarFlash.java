@@ -13,7 +13,7 @@ import neqsim.thermo.system.SystemInterface;
  * CricondenBarFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class CricondenBarFlash extends pTphaseEnvelope {

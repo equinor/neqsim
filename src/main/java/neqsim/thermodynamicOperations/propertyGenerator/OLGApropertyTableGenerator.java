@@ -219,6 +219,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicOperations.B
     public void writeOLGAinpFile(String filename) {
         try (Writer writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream("c:/temp/filename.txt"), "utf-8"))) {
+
             writer.write("PRESSURE= (");
             for (int i = 0; i < pressures.length; i++) {
                 thermoSystem.setPressure(pressures[i]);

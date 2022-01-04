@@ -9,11 +9,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * HeatExchanger2 class.
- * </p>
+ * <p>HeatExchanger2 class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

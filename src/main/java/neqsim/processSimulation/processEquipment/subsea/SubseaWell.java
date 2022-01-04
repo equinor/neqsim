@@ -14,7 +14,7 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * SubseaWell class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class SubseaWell extends ProcessEquipmentBaseClass {

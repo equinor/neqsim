@@ -5,11 +5,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>
- * shtokman class.
- * </p>
+ * <p>shtokman class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

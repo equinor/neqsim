@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * StirredCellSystem class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class StirredCellSystem

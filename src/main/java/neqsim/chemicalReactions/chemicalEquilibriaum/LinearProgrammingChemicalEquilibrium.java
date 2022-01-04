@@ -1,5 +1,3 @@
-
-
 /*
  * LinearProgrammingChemicalEquilibrium.java
  *

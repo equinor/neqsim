@@ -17,7 +17,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * interpolation to navigate the compressor map (as opposed to the standard class using reduced
  * variables according to Fan laws).
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class CompressorChartAlternativeMapLookup

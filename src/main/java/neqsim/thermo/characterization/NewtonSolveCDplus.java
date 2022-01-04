@@ -9,7 +9,7 @@ import org.apache.logging.log4j.*;
  * NewtonSolveCDplus class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class NewtonSolveCDplus implements java.io.Serializable {

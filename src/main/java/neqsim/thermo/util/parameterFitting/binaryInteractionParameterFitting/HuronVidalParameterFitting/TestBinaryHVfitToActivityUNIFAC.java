@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemUNIFACpsrk;
  * @version $Id: $Id
  */
 public class TestBinaryHVfitToActivityUNIFAC implements Cloneable {
-
     /**
      * <p>
      * main.

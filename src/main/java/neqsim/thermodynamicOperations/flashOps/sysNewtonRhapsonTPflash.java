@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * sysNewtonRhapsonTPflash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class sysNewtonRhapsonTPflash implements java.io.Serializable {

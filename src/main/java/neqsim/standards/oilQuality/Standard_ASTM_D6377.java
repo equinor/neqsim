@@ -50,6 +50,8 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
         }
 
         RVP = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
+
+        RVP = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
     }
 
     /** {@inheritDoc} */

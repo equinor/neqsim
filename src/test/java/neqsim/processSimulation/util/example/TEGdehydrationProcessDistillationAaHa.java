@@ -19,42 +19,38 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>
- * TEGdehydrationProcessDistillationAaHa class.
- * </p>
+ * <p>TEGdehydrationProcessDistillationAaHa class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TEGdehydrationProcessDistillationAaHa {
-    /**
-     * <p>
-     * getProcess.
-     * </p>
-     *
-     * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
-     */
-    public static neqsim.processSimulation.processSystem.ProcessSystem getProcess() {
-        neqsim.thermo.system.SystemInterface feedGas =
-                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
-        feedGas.addComponent("nitrogen", 1.42);
-        feedGas.addComponent("CO2", 0.5339);
-        feedGas.addComponent("methane", 95.2412);
-        feedGas.addComponent("ethane", 2.2029);
-        feedGas.addComponent("propane", 0.3231);
-        feedGas.addComponent("i-butane", 0.1341);
-        feedGas.addComponent("n-butane", 0.0827);
-        feedGas.addComponent("i-pentane", 0.0679);
-        feedGas.addComponent("n-pentane", 0.035);
-        feedGas.addComponent("n-hexane", 0.0176);
-        feedGas.addComponent("benzene", 0.0017);
-        feedGas.addComponent("toluene", 0.0043);
-        feedGas.addComponent("m-Xylene", 0.0031);
-        feedGas.addComponent("water", 0.0);
-        feedGas.addComponent("TEG", 0);
-        feedGas.setMixingRule(10);
-        feedGas.setMultiPhaseCheck(true);
+        /**
+         * <p>getProcess.</p>
+         *
+         * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
+         */
+        public static neqsim.processSimulation.processSystem.ProcessSystem getProcess() {
+                neqsim.thermo.system.SystemInterface feedGas =
+                                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+                feedGas.addComponent("nitrogen", 1.42);
+                feedGas.addComponent("CO2", 0.5339);
+                feedGas.addComponent("methane", 95.2412);
+                feedGas.addComponent("ethane", 2.2029);
+                feedGas.addComponent("propane", 0.3231);
+                feedGas.addComponent("i-butane", 0.1341);
+                feedGas.addComponent("n-butane", 0.0827);
+                feedGas.addComponent("i-pentane", 0.0679);
+                feedGas.addComponent("n-pentane", 0.035);
+                feedGas.addComponent("n-hexane", 0.0176);
+                feedGas.addComponent("benzene", 0.0017);
+                feedGas.addComponent("toluene", 0.0043);
+                feedGas.addComponent("m-Xylene", 0.0031);
+                feedGas.addComponent("water", 0.0);
+                feedGas.addComponent("TEG", 0);
+                feedGas.setMixingRule(10);
+                feedGas.setMultiPhaseCheck(true);
 
         Stream dryFeedGas = new Stream("dry feed gas", feedGas);
         dryFeedGas.setFlowRate(25.32, "MSm3/day");
@@ -300,17 +296,15 @@ public class TEGdehydrationProcessDistillationAaHa {
         return operations;
     }
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    @SuppressWarnings("unused")
-    public static void main(String[] args) {
-        neqsim.processSimulation.processSystem.ProcessSystem operations =
-                TEGdehydrationProcessDistillationAaHa.getProcess();
+        /**
+         * <p>main.</p>
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
+        @SuppressWarnings("unused")
+        public static void main(String[] args) {
+                neqsim.processSimulation.processSystem.ProcessSystem operations =
+                                TEGdehydrationProcessDistillationAaHa.getProcess();
 
         operations.run();
         // operations.run();

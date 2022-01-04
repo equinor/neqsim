@@ -1,21 +1,17 @@
-/*
- * bubblePointFlash.java
- *
- * Created on 14. oktober 2000, 16:30
- */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
  * cricondebarFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class cricondebarFlash extends constantDutyPressureFlash {
@@ -53,7 +49,8 @@ public class cricondebarFlash extends constantDutyPressureFlash {
      * @return a double
      */
     public double calcx() {
-        double ktot = 0.0, xtotal = 0;
+        // double ktot = 0;
+        double xtotal = 0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
             system.getPhases()[0].getComponents()[i].setK(
                     Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
@@ -65,7 +62,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
             system.getPhases()[1].getComponents()[i]
                     .setx(1.0 / system.getPhases()[0].getComponents()[i].getK()
                             * system.getPhases()[1].getComponents()[i].getz());
-            ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
+            // ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
         }
         xtotal = 0.0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
@@ -83,12 +80,12 @@ public class cricondebarFlash extends constantDutyPressureFlash {
      */
     public double initMoleFraction() {
         double[] XI = new double[system.getPhase(0).getNumberOfComponents()];
-        double sumX = 0.0;
+        // double sumX = 0.0;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             XI[i] = Math.exp(Math.log(system.getPhase(0).getComponent(i).getz())
                     + system.getPhase(0).getComponent(i).getLogFugasityCoeffisient()
                     - system.getPhase(1).getComponent(i).getLogFugasityCoeffisient());
-            sumX += XI[i];
+            // sumX += XI[i];
         }
         double tempSumXI = 1.0;// sumX;
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
@@ -197,10 +194,11 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         // system.setPressure(system.getPhase(0).getPseudoCriticalPressure() / 2.0);
         system.init(3);
 
-        int iterations = 0, maxNumberOfIterations = 50;
+        int iterations = 0;
         localOperation.TPflash();
-        double Q1 = 0, Qold = 0.0, dQ1dT = 1.0, oldTemperature = 0, oldIterTemp = 0;
-        double dewTemp = 0, dewPres;
+        double Q1 = 0, Qold = 0.0, dQ1dT = 1.0, oldTemperature = 0;
+        double dewTemp = 0;
+        // double dewPres = 0;
 
         for (int ii = 0; ii < 45; ii++) {
             system.setPressure(system.getPressure() + 1.0);
@@ -208,13 +206,12 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                 // if(ii<2) localOperation.dewPointTemperatureFlash();
                 // else localOperation.dewPointPressureFlash();
                 dewTemp = system.getTemperature();
-                dewPres = system.getPressure();
+                // dewPres = system.getPressure();
                 // system.display();
             } catch (Exception e) {
                 logger.error("error", e);
             }
 
-            oldIterTemp = system.getTemperature();
             iterations = 0;
             do {
                 iterations++;
@@ -264,6 +261,7 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                     - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
+
         }
         fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
         // logger.info("sumx" + sumxx);//

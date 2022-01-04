@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  * NewtonSolveABCD class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class NewtonSolveABCD implements java.io.Serializable {

@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * checkScalePotential class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class checkScalePotential extends constantDutyTemperatureFlash {
@@ -202,6 +202,7 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     //
                     // double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
                     // double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
+
                 }
             }
         } catch (Exception e) {

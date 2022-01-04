@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * CompressorChart class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class CompressorChart implements CompressorChartInterface, java.io.Serializable {

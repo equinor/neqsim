@@ -46,7 +46,8 @@ public class Diamond {
                 pressure = Double.parseDouble(dataSet.getString("Pressure"));
                 x = Double.parseDouble(dataSet.getString("x"));
 
-                SystemInterface testSystem = new SystemSrkSchwartzentruberEos(temperature, 0.9 * pressure);
+                SystemInterface testSystem =
+                        new SystemSrkSchwartzentruberEos(temperature, 0.9 * pressure);
                 testSystem.addComponent("CO2", x);
                 testSystem.addComponent("water", 1 - x);
 

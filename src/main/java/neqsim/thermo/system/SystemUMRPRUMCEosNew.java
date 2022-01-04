@@ -15,7 +15,6 @@ package neqsim.thermo.system;
  * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
-
     /**
      * <p>
      * Constructor for SystemUMRPRUMCEosNew.

@@ -22,7 +22,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * Abstract FluidBoundary class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.Serializable {

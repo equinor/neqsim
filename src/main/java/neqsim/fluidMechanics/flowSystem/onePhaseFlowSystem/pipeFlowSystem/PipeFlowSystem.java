@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * PipeFlowSystem class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class PipeFlowSystem

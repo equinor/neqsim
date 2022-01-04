@@ -7,7 +7,7 @@ import neqsim.processSimulation.processEquipment.pump.Pump;
  * PumpResponse class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class PumpResponse {

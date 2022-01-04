@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateInhibitorwtFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
@@ -110,6 +110,7 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                                     + system.getPhase("aqueous").getComponent("water").getx()
                                             * system.getPhase("aqueous").getComponent("water")
                                                     .getMolarMass());
+
                 }
                 error = -(wtp - wtfrac);
 

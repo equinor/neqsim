@@ -91,6 +91,7 @@ public class ComponentHydrate extends Component {
                     } else {
                         dataSet = database.getResultSet(
                                 ("SELECT * FROM comp WHERE name='" + component_name + "'"));
+
                     }
                     dataSet.next();
                     dataSet.getString("FORMULA");

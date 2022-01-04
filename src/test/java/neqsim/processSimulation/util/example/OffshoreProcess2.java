@@ -10,11 +10,9 @@ import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * OffshoreProcess2 class.
- * </p>
+ * <p>OffshoreProcess2 class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

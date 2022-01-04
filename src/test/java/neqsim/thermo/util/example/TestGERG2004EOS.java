@@ -13,9 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 
 /**
- * <p>
- * TestGERG2004EOS class.
- * </p>
+ * <p>TestGERG2004EOS class.</p>
  *
  * @author esol
  * @since 2.2.3
@@ -25,9 +23,7 @@ public class TestGERG2004EOS {
     static Logger logger = LogManager.getLogger(TestGERG2004EOS.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateInhibitorConcentrationFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureFlash {

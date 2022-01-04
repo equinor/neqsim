@@ -7,7 +7,7 @@ import neqsim.processSimulation.measurementDevice.MultiPhaseMeter;
  * MPMResponse class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class MPMResponse {

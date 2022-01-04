@@ -8,7 +8,7 @@ import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall.PipeWall;
  * PipeData class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class PipeData extends GeometryDefinition {

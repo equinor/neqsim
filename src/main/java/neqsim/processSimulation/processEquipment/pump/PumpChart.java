@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * PumpChart class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class PumpChart implements PumpChartInterface, java.io.Serializable {

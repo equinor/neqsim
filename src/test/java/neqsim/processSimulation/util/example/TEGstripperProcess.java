@@ -4,19 +4,15 @@ import neqsim.processSimulation.processEquipment.absorber.WaterStripperColumn;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>
- * TEGstripperProcess class.
- * </p>
+ * <p>TEGstripperProcess class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TEGstripperProcess {
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -54,7 +54,8 @@ public class FreezingPoint {
         testSystem2.init(0);
         testSystem2.init(1);
 
-        logger.info("activity coefficient water in teg " + testSystem.getPhase(1).getActivityCoefficient(1));
+        logger.info("activity coefficient water in teg "
+                + testSystem.getPhase(1).getActivityCoefficient(1));
         try {
             // testOps.freezingPointTemperatureFlash();
             // testOps.waterDewPointTemperatureFlash();
@@ -76,6 +77,7 @@ public class FreezingPoint {
                         * testSystem.getPhase(1).getComponent("methanol").getMolarMass()
                         + testSystem.getPhase(1).getComponent("water").getx()
                                 * testSystem.getPhase(1).getComponent("water").getMolarMass()));
-        logger.info("mol% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx());
+        logger.info(
+                "mol% methanol " + 100 * testSystem.getPhase(1).getComponent("methanol").getx());
     }
 }

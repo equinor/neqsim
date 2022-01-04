@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * bubblePointPressureFlashDer class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
@@ -180,6 +180,7 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                 }
                 // logger.info("iter in bub calc " + iterations + " pres " +
                 // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
+
             } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
                     || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
                     && (iterations < maxNumberOfIterations)) || iterations < 5);
@@ -192,6 +193,7 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
             }
             // logger.info("iter in bub calc " + iterations + " pres " +
             // system.getPressure()+ " chem iter " + chemIter);
+
         } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2
                 || !chemSolved) && chemIter < 20);
         // if(system.getPressure()>300) system.setPressure(300.0);

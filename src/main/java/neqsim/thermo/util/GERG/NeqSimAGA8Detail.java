@@ -1,5 +1,6 @@
 package neqsim.thermo.util.GERG;
 
+
 /**
  * <p>
  * NeqSimAGA8Detail class.

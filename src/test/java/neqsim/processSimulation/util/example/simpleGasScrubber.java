@@ -5,11 +5,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * simpleGasScrubber class.
- * </p>
+ * <p>simpleGasScrubber class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

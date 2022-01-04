@@ -19,9 +19,7 @@ class CompressorTest {
     neqsim.processSimulation.processEquipment.compressor.Compressor compressor1 = null;
 
     /**
-     * <p>
-     * setUp.
-     * </p>
+     * <p>setUp.</p>
      *
      * @throws java.lang.Exception if any.
      */
@@ -42,9 +40,7 @@ class CompressorTest {
     }
 
     /**
-     * <p>
-     * testCompressorSchultzMethod.
-     * </p>
+     * <p>testCompressorSchultzMethod.</p>
      */
     @Test
     public void testCompressorSchultzMethod() {
@@ -58,9 +54,7 @@ class CompressorTest {
     }
 
     /**
-     * <p>
-     * testCompressorRigorousMethod.
-     * </p>
+     * <p>testCompressorRigorousMethod.</p>
      */
     @Test
     public void testCompressorRigorousMethod() {
@@ -74,9 +68,7 @@ class CompressorTest {
     }
 
     /**
-     * <p>
-     * testIsentropicCalcMethod.
-     * </p>
+     * <p>testIsentropicCalcMethod.</p>
      */
     @Test
     public void testIsentropicCalcMethod() {

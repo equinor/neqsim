@@ -29,4 +29,5 @@ public interface PhaseGEInterface {
      */
     public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
             double temperature, double pressure, int phasetype);
+
 }

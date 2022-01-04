@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * Abstract FlowSystem class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class FlowSystem implements FlowSystemInterface, java.io.Serializable {

@@ -16,7 +16,7 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract constantDutyFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class constantDutyFlash implements constantDutyFlashInterface {

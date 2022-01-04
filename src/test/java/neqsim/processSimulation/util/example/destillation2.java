@@ -4,11 +4,9 @@ import neqsim.processSimulation.processEquipment.distillation.DistillationColumn
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>
- * destillation2 class.
- * </p>
+ * <p>destillation2 class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

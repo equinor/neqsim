@@ -9,7 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * DuanSun class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class DuanSun {
@@ -682,5 +682,6 @@ public class DuanSun {
                 "CO2 in liquid " + fluid1.getPhase(0).getComponent(0).getFugasityCoeffisient());
         System.out
                 .println("CO2 in liquid " + fluid1.getPhase("aqueous").getComponent("CO2").getx());
+
     }
 }

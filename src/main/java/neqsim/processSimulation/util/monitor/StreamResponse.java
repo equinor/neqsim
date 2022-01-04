@@ -3,11 +3,9 @@ package neqsim.processSimulation.util.monitor;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>
- * StreamResponse class.
- * </p>
+ * <p>StreamResponse class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class StreamResponse {
@@ -24,21 +22,17 @@ public class StreamResponse {
     public Double massflowAqueous;
 
     /**
-     * <p>
-     * Constructor for StreamResponse.
-     * </p>
+     * <p>Constructor for StreamResponse.</p>
      */
-    public StreamResponse() {}
+    public StreamResponse() {
+    }
 
     /**
-     * <p>
-     * Constructor for StreamResponse.
-     * </p>
+     * <p>Constructor for StreamResponse.</p>
      *
-     * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
-     *        object
+     * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
-    public StreamResponse(StreamInterface inputStream) {
+    public StreamResponse(StreamInterface inputStream){
         name = inputStream.getName();
         fluid = new Fluid(inputStream.getFluid());
         temperature = inputStream.getTemperature("C");
@@ -66,9 +60,8 @@ public class StreamResponse {
     }
 
     /**
-     * <p>
-     * print.
-     * </p>
+     * <p>print.</p>
      */
-    public void print() {}
+    public void print(){
+    }
 }

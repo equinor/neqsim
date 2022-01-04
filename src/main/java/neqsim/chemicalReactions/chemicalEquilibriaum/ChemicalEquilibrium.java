@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemInterface;
  * ChemicalEquilibrium class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class ChemicalEquilibrium implements java.io.Serializable {

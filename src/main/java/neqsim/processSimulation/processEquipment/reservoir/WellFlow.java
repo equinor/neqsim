@@ -5,7 +5,7 @@ package neqsim.processSimulation.processEquipment.reservoir;
  * WellFlow class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class WellFlow {

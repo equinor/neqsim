@@ -5,7 +5,7 @@ package neqsim.processSimulation.processEquipment.compressor;
  * CompressorChartInterface interface.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public interface CompressorChartInterface extends Cloneable {

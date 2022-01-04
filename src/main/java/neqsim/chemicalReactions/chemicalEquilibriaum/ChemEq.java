@@ -7,7 +7,7 @@ import Jama.Matrix;
  * ChemEq class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class ChemEq implements java.io.Serializable {

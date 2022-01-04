@@ -7,11 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * HydrateFlash class.
- * </p>
+ * <p>HydrateFlash class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,9 +17,7 @@ public class HydrateFlash {
     static Logger logger = LogManager.getLogger(HydrateFlash.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

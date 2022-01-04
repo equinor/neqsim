@@ -17,13 +17,18 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  * @since 2.2.3
  */
+/**
+ * <p>ReadFluidData2 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class ReadFluidData2 {
     static Logger logger = LogManager.getLogger(ReadFluidData.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -234,6 +234,7 @@ public class CriticalPointFlash extends Flash {
                         + valstart + " pressure " + system.getPressure());
             } while (Math.abs(dVc) > 1e-5 && iter < 112
                     && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
+
         }
         system.display();
         // solve(fmatrix);

@@ -11,7 +11,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * freezingPointTemperatureFlashOld class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class freezingPointTemperatureFlashOld extends constantDutyTemperatureFlash {

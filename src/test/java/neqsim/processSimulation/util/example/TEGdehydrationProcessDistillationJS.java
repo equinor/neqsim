@@ -18,11 +18,9 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>
- * TEGdehydrationProcessDistillationJS class.
- * </p>
+ * <p>TEGdehydrationProcessDistillationJS class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -153,16 +151,12 @@ public class TEGdehydrationProcessDistillationJS {
     public double coldTEGpumpIsentropicEfficiency = 0.75;
 
     /**
-     * <p>
-     * Constructor for TEGdehydrationProcessDistillationJS.
-     * </p>
+     * <p>Constructor for TEGdehydrationProcessDistillationJS.</p>
      */
     public TEGdehydrationProcessDistillationJS() {}
 
     /**
-     * <p>
-     * getProcess.
-     * </p>
+     * <p>getProcess.</p>
      *
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
@@ -424,9 +418,7 @@ public class TEGdehydrationProcessDistillationJS {
     }
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

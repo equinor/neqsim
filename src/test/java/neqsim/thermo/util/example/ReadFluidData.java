@@ -6,12 +6,18 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/*
+ *
+ * @author esol
+ * 
+ * @version
+ */
 /**
  * <p>
  * ReadFluidData class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

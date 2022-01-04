@@ -1,9 +1,3 @@
-/*
- * NetCdf.java
- *
- * Created on 5. august 2001, 21:52
- */
-
 package neqsim.dataPresentation.fileHandeling.createNetCDF.netCDF2D;
 
 import java.io.IOException;

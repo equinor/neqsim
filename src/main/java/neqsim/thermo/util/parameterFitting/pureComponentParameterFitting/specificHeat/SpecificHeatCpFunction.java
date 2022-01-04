@@ -9,7 +9,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * SpecificHeatCpFunction class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {

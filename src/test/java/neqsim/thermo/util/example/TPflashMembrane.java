@@ -12,6 +12,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * </p>
  *
  * @author esol
+ * 
+ * @version
+ */
+/**
+ * <p>TPflashMembrane class.</p>
+ *
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,9 +26,7 @@ public class TPflashMembrane {
     static Logger logger = LogManager.getLogger(TPflashMembrane.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

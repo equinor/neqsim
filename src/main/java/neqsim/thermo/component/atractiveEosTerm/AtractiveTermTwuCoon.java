@@ -171,6 +171,7 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         - Math.pow(Tr, a) * Math.pow(b, 2) * Math.pow(Math.pow(Tr, c), 2)
                                 * Math.pow(c, 2) / Math.pow(t, 2)
                                 * Math.exp(b * (1 - Math.pow(Tr, c))));
+
     }
 
     /** {@inheritDoc} */

@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract OnePhaseFlowSystem class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class OnePhaseFlowSystem extends FlowSystem {

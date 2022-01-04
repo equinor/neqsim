@@ -11,11 +11,9 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>
- * OffshoreProcess class.
- * </p>
+ * <p>OffshoreProcess class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

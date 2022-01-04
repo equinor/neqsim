@@ -12,6 +12,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * </p>
  *
  * @author esol
+ * 
+ * @version
+ */
+/**
+ * <p>LNGfilling class.</p>
+ *
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,9 +26,7 @@ public class LNGfilling {
     static Logger logger = LogManager.getLogger(LNGfilling.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -74,13 +79,13 @@ public class LNGfilling {
 // testSystem.setMultiPhaseCheck(true);
 // testOps.setSystem(testSystem);
 //
-// System.out.println("new model name " + testSystem.getModelName());
-// try{
-// testOps.TPflash();
-// testSystem.display();
-// }
-// catch(Exception e){
-// System.out.println(e.toString());
-// }
-// }
-// }
+//        System.out.println("new model name " + testSystem.getModelName());
+//        try{
+//            testOps.TPflash();
+//            testSystem.display();
+//        }
+//        catch(Exception e){
+//            System.out.println(e.toString());
+//        }
+//    }
+//}

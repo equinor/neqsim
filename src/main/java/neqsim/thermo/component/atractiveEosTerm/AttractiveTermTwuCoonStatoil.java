@@ -7,7 +7,7 @@ import neqsim.thermo.component.ComponentEosInterface;
  * AttractiveTermTwuCoonStatoil class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
@@ -144,6 +144,7 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
                         * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
                 + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b)
                         * (c * c) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
+
     }
 
     /** {@inheritDoc} */

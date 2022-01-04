@@ -1,11 +1,9 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 /**
- * <p>
- * AntiSurge class.
- * </p>
+ * <p>AntiSurge class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class AntiSurge implements java.io.Serializable {
@@ -16,9 +14,7 @@ public class AntiSurge implements java.io.Serializable {
     private double currentSurgeFraction = 0.0;
 
     /**
-     * <p>
-     * isActive.
-     * </p>
+     * <p>isActive.</p>
      *
      * @return a boolean
      */
@@ -27,9 +23,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * setActive.
-     * </p>
+     * <p>setActive.</p>
      *
      * @param isActive a boolean
      */
@@ -38,9 +32,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * isSurge.
-     * </p>
+     * <p>isSurge.</p>
      *
      * @return a boolean
      */
@@ -49,9 +41,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * setSurge.
-     * </p>
+     * <p>setSurge.</p>
      *
      * @param isSurge a boolean
      */
@@ -60,9 +50,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * Getter for the field <code>surgeControlFactor</code>.
-     * </p>
+     * <p>Getter for the field <code>surgeControlFactor</code>.</p>
      *
      * @return a double
      */
@@ -71,9 +59,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * Setter for the field <code>surgeControlFactor</code>.
-     * </p>
+     * <p>Setter for the field <code>surgeControlFactor</code>.</p>
      *
      * @param antiSurgeSafetyFactor a double
      */
@@ -82,9 +68,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * Getter for the field <code>currentSurgeFraction</code>.
-     * </p>
+     * <p>Getter for the field <code>currentSurgeFraction</code>.</p>
      *
      * @return a double
      */
@@ -93,9 +77,7 @@ public class AntiSurge implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * Setter for the field <code>currentSurgeFraction</code>.
-     * </p>
+     * <p>Setter for the field <code>currentSurgeFraction</code>.</p>
      *
      * @param currentSurgeFraction a double
      */

@@ -18,7 +18,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * GasTurbine class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class GasTurbine extends ProcessEquipmentBaseClass {

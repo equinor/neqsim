@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * sysNewtonRhapsonPhaseEnvelope class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class sysNewtonRhapsonPhaseEnvelope implements java.io.Serializable {

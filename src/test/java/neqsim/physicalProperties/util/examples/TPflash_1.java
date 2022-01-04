@@ -6,12 +6,15 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
+/*
+*
+* @author  esol
+* @version
+*/
 /**
- * <p>
- * TPflash_1 class.
- * </p>
+ * <p>TPflash_1 class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,9 +22,7 @@ public class TPflash_1 {
     static Logger logger = LogManager.getLogger(TPflash_1.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

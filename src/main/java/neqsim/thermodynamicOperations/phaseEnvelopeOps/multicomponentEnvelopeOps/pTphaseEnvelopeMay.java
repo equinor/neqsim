@@ -24,7 +24,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * pTphaseEnvelopeMay class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class pTphaseEnvelopeMay extends BaseOperation {

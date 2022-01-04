@@ -6,11 +6,9 @@ import neqsim.processSimulation.processEquipment.util.MoleFractionControllerUtil
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>
- * threePhaseSeparation class.
- * </p>
+ * <p>threePhaseSeparation class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

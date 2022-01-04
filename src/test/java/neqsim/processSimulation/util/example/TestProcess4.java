@@ -4,11 +4,9 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>
- * TestProcess4 class.
- * </p>
+ * <p>TestProcess4 class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

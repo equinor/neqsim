@@ -5,7 +5,7 @@ package neqsim.thermo.system;
  * SystemSrkTwuCoonStatoilEos class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class SystemSrkTwuCoonStatoilEos extends SystemSrkEos {

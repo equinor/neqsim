@@ -8,7 +8,7 @@ import neqsim.processSimulation.processEquipment.separator.ThreePhaseSeparator;
  * ThreePhaseSeparatorResponse class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class ThreePhaseSeparatorResponse {

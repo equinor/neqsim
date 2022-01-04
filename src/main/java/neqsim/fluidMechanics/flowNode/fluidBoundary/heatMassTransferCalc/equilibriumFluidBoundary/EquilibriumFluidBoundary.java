@@ -8,11 +8,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * EquilibriumFluidBoundary class.
- * </p>
+ * <p>EquilibriumFluidBoundary class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class EquilibriumFluidBoundary
@@ -20,16 +18,12 @@ public class EquilibriumFluidBoundary
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>
-     * Constructor for EquilibriumFluidBoundary.
-     * </p>
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
      */
     public EquilibriumFluidBoundary() {}
 
     /**
-     * <p>
-     * Constructor for EquilibriumFluidBoundary.
-     * </p>
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -40,9 +34,7 @@ public class EquilibriumFluidBoundary
     }
 
     /**
-     * <p>
-     * Constructor for EquilibriumFluidBoundary.
-     * </p>
+     * <p>Constructor for EquilibriumFluidBoundary.</p>
      *
      * @param flowNode a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      */
@@ -75,9 +67,7 @@ public class EquilibriumFluidBoundary
     }
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -9,7 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * PropertyGenerator class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class PropertyGenerator {

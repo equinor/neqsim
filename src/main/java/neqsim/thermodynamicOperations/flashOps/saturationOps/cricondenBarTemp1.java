@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * cricondenBarTemp1 class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class cricondenBarTemp1 implements java.io.Serializable {

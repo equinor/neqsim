@@ -15,27 +15,32 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  * @since 2.2.3
  */
+/**
+ * <p>TestUNIFAC_1 class.</p>
+ *
+ * @author asmund
+ * @version $Id: $Id
+ * @since 2.2.3
+ */
 public class TestUNIFAC_1 {
     static Logger logger = LogManager.getLogger(TestUNIFAC_1.class);
 
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    @SuppressWarnings("unused")
-    public static void main(String args[]) {
-        SystemInterface testSystem = new SystemPsrkEos(273.15 + 120.0, 0.15);
-        SystemInterface testSystem2 = new SystemPsrkEos(273.15 + 120.0, 0.15);
-        // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15 + 25.0,
-        // 1.01325301325);
-        // SystemInterface testSystem = new SystemNRTL(273.15 + 174.0,1.301325);
-        // SystemInterface testSystem = new SystemPsrkEos(273.15 + 74.0,1.301325);
-        // SystemInterface testSystem = new SystemSrkEos(143.15,1.301325);
-        // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(193.15
-        // ,10.301325);
+        /**
+         * <p>main.</p>
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
+        @SuppressWarnings("unused")
+        public static void main(String args[]) {
+                SystemInterface testSystem = new SystemPsrkEos(273.15 + 120.0, 0.15);
+                SystemInterface testSystem2 = new SystemPsrkEos(273.15 + 120.0, 0.15);
+                // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(273.15 + 25.0,
+                // 1.01325301325);
+                // SystemInterface testSystem = new SystemNRTL(273.15 + 174.0,1.301325);
+                // SystemInterface testSystem = new SystemPsrkEos(273.15 + 74.0,1.301325);
+                // SystemInterface testSystem = new SystemSrkEos(143.15,1.301325);
+                // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(193.15
+                // ,10.301325);
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         // testSystem.addComponent("acetone", 100.0);

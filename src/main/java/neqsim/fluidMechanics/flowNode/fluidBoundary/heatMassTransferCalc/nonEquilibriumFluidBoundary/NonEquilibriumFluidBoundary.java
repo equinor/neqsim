@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract NonEquilibriumFluidBoundary class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class NonEquilibriumFluidBoundary

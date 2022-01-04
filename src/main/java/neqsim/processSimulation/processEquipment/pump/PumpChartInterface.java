@@ -5,7 +5,7 @@ package neqsim.processSimulation.processEquipment.pump;
  * PumpChartInterface interface.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public interface PumpChartInterface extends Cloneable {

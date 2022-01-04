@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * SulfureDeposition class.
- * </p>
+ * <p>SulfureDeposition class.</p>
  *
  * @author esol
  * @since 2.2.3
@@ -19,9 +17,7 @@ public class SulfureDeposition {
     static Logger logger = LogManager.getLogger(SulfureDeposition.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

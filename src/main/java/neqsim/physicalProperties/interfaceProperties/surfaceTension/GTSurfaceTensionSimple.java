@@ -308,6 +308,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j])
                     * del_den_interface[referenceComponentNumber];// *
                                                                   // thermo.ThermodynamicConstantsInterface.avagadroNumber;
+
         }
 
         // System.out.println("del den ref " +

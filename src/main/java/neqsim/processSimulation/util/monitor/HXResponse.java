@@ -7,12 +7,11 @@ import neqsim.processSimulation.processEquipment.heatExchanger.HeatExchanger;
  * HXResponse class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class HXResponse {
     public String name = "test";
-
 
     public Double feedTemperature1;
     public Double dischargeTemperature1;
@@ -23,15 +22,12 @@ public class HXResponse {
 
     public Double dutyBalance;
 
-
-
     /**
      * <p>
      * Constructor for HXResponse.
      * </p>
      */
     public HXResponse() {}
-
 
     /**
      * <p>

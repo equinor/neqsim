@@ -25,7 +25,7 @@ import neqsim.util.util.DoubleCloneable;
  * Abstract FlowNode class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class FlowNode implements FlowNodeInterface, ThermodynamicConstantsInterface {

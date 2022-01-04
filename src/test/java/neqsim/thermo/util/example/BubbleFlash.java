@@ -13,9 +13,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 
 /**
- * <p>
- * BubbleFlash class.
- * </p>
+ * <p>BubbleFlash class.</p>
  *
  * @author esol
  * @since 2.2.3
@@ -25,9 +23,7 @@ public class BubbleFlash {
     static Logger logger = LogManager.getLogger(BubbleFlash.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

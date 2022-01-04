@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateFormationPressureFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash {

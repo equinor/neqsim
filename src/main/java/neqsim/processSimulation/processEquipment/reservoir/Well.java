@@ -9,7 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * Well class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class Well implements java.io.Serializable {

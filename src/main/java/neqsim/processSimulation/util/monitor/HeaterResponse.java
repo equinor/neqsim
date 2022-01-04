@@ -7,11 +7,12 @@ import neqsim.processSimulation.processEquipment.heatExchanger.Heater;
  * HeaterResponse class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class HeaterResponse {
     public String name = "test";
+
 
     public Double feedTemperature;
     public Double dischargeTemperature;
@@ -25,7 +26,6 @@ public class HeaterResponse {
      * </p>
      */
     public HeaterResponse() {}
-
 
     /**
      * <p>
@@ -42,5 +42,6 @@ public class HeaterResponse {
         dischargeTemperature = inputHeater.getOutStream().getTemperature("C");
 
         duty = inputHeater.getDuty();
+
     }
 }

@@ -15,7 +15,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * waterDewPointTemperatureMultiphaseFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTemperatureFlash {

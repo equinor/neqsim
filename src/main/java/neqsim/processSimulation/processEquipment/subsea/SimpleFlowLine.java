@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  * SimpleFlowLine class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class SimpleFlowLine extends ProcessEquipmentBaseClass {

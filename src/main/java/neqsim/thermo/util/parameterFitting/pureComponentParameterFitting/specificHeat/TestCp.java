@@ -16,7 +16,7 @@ import neqsim.util.database.NeqSimExperimentDatabase;
  * TestCp class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class TestCp {

@@ -171,6 +171,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                 trays.get(1).getLiquidOutStream());
         trays.get(0).init();
         ((Runnable) trays.get(0)).run();
+
     }
 
     /**
@@ -406,6 +407,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                                     .getComponent("water").getNumberOfmoles()
                             + " pressure " + trays.get(i).getGasOutStream().getPressure()
                             + " temperature " + trays.get(i).getGasOutStream().getTemperature("C"));
+
         }
 
         double massError = 0.0;
@@ -487,6 +489,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         column.displayResult();
         System.out.println("reboiler duty" + ((Reboiler) column.getReboiler()).getDuty());
         System.out.println("condeser duty" + ((Condenser) column.getCondenser()).getDuty());
+
     }
 
     /**

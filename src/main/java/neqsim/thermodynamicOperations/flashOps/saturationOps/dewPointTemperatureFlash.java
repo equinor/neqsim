@@ -12,7 +12,7 @@ import neqsim.thermo.system.SystemInterface;
  * dewPointTemperatureFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class dewPointTemperatureFlash extends constantDutyTemperatureFlash {

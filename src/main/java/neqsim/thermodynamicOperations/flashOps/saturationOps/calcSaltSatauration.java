@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * calcSaltSatauration class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class calcSaltSatauration extends constantDutyTemperatureFlash {

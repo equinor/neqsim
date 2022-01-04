@@ -7,26 +7,24 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * PressureLoadingCurve class.
- * </p>
+ * <p>PressureLoadingCurve class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class PressureLoadingCurve {
     static Logger logger = LogManager.getLogger(PressureLoadingCurve.class);
 
-    /**
-     * This method is just meant to test the thermo package.
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    @SuppressWarnings("unused")
-    public static void main(String args[]) {
-        double[][] points;
-        SystemInterface testSystem = new SystemFurstElectrolyteEos((273.15 + 75.0), 1.3);
+        /**
+         * This method is just meant to test the thermo package.
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
+        @SuppressWarnings("unused")
+        public static void main(String args[]) {
+                double[][] points;
+                SystemInterface testSystem = new SystemFurstElectrolyteEos((273.15 + 75.0), 1.3);
 
         double loading = 0.65;
         double molProsMDEA = 11.21;

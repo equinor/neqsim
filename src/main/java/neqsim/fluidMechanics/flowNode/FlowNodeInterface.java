@@ -11,7 +11,7 @@ import neqsim.util.util.DoubleCloneable;
  * FlowNodeInterface interface.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public interface FlowNodeInterface extends Cloneable {

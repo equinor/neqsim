@@ -139,6 +139,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
                                 .getComponentNumber();
                         compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentName();
+
                     }
                 }
 

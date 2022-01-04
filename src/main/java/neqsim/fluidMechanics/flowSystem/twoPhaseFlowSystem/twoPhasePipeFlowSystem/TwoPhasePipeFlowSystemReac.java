@@ -9,7 +9,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * TwoPhasePipeFlowSystemReac class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class TwoPhasePipeFlowSystemReac extends TwoPhasePipeFlowSystem {

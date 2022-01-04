@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * H2Sdistribution class.
- * </p>
+ * <p>H2Sdistribution class.</p>
  *
  * @author esol
  * @since 2.2.3
@@ -19,9 +17,7 @@ public class H2Sdistribution {
     static Logger logger = LogManager.getLogger(H2Sdistribution.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

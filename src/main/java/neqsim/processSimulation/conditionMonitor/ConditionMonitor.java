@@ -8,7 +8,7 @@ import neqsim.processSimulation.processSystem.ProcessSystem;
  * ConditionMonitor class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class ConditionMonitor implements java.io.Serializable, Runnable {

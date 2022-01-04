@@ -16,7 +16,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * addIonToScaleSaturation class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {

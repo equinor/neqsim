@@ -2,14 +2,14 @@ package neqsim.thermo.util.example;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>ModelBaseTest class.</p>
+ * <p>
+ * ModelBaseTest class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -21,19 +21,9 @@ public class ModelBaseTest {
     neqsim.thermo.ThermodynamicModelTest fugTest;
 
     /**
-     * <p>setUp.</p>
-     */
-    @BeforeAll
-    public static void setUp() {}
-
-    /**
-     * <p>tearDown.</p>
-     */
-    @AfterAll
-    public static void tearDown() {}
-
-    /**
-     * <p>testInit0.</p>
+     * <p>
+     * testInit0.
+     * </p>
      */
     @Test
     public void testInit0() {
@@ -45,7 +35,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testInit1.</p>
+     * <p>
+     * testInit1.
+     * </p>
      */
     @Test
     public void testInit1() {
@@ -57,7 +49,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testActivity.</p>
+     * <p>
+     * testActivity.
+     * </p>
      */
     @Test
     public void testActivity() {
@@ -71,7 +65,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testVolume.</p>
+     * <p>
+     * testVolume.
+     * </p>
      */
     @Test
     public void testVolume() {
@@ -85,7 +81,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testGibbs.</p>
+     * <p>
+     * testGibbs.
+     * </p>
      */
     @Test
     public void testGibbs() {
@@ -99,7 +97,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testFugasities.</p>
+     * <p>
+     * testFugasities.
+     * </p>
      */
     @Test
     public void testFugasities() {
@@ -110,7 +110,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testFugasitiesdT.</p>
+     * <p>
+     * testFugasitiesdT.
+     * </p>
      */
     @Test
     public void testFugasitiesdT() {
@@ -121,7 +123,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testFugasitiesdP.</p>
+     * <p>
+     * testFugasitiesdP.
+     * </p>
      */
     @Test
     public void testFugasitiesdP() {
@@ -132,7 +136,9 @@ public class ModelBaseTest {
     }
 
     /**
-     * <p>testFugasitiesdn.</p>
+     * <p>
+     * testFugasitiesdn.
+     * </p>
      */
     @Test
     public void testFugasitiesdn() {

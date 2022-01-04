@@ -17,7 +17,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * freezingPointTemperatureFlashTR class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class freezingPointTemperatureFlashTR extends constantDutyTemperatureFlash

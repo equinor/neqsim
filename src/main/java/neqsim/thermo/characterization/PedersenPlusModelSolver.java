@@ -9,7 +9,7 @@ import org.apache.logging.log4j.*;
  * PedersenPlusModelSolver class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class PedersenPlusModelSolver implements java.io.Serializable {

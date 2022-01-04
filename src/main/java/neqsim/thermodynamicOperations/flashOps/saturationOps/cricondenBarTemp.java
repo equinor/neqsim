@@ -8,7 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * cricondenBarTemp class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class cricondenBarTemp implements java.io.Serializable {
@@ -73,6 +73,7 @@ public class cricondenBarTemp implements java.io.Serializable {
                     - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
+
         }
     }
 
@@ -135,6 +136,7 @@ public class cricondenBarTemp implements java.io.Serializable {
                             / system.getPhases()[1].getComponents()[i].getx());
             system.getPhases()[1].getComponents()[i]
                     .setK(system.getPhases()[0].getComponents()[i].getK());
+
         }
 
         system.init(3);

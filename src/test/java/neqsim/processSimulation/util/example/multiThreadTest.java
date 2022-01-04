@@ -11,11 +11,9 @@ import neqsim.processSimulation.processEquipment.util.Recycle;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * multiThreadTest class.
- * </p>
+ * <p>multiThreadTest class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

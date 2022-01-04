@@ -7,19 +7,15 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 
 /**
- * <p>
- * MasstransferMeOH class.
- * </p>
+ * <p>MasstransferMeOH class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class MasstransferMeOH {
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

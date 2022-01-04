@@ -27,10 +27,10 @@ public class CompositionEstimation {
         this.reservoirPressure = reservoirPressure;
     }
 
-    //
+    // correltaion from Haaland et. al. 1999
     /**
      * <p>
-     * estimateH2Sconcentration. correlation from Haaland et. al. 1999
+     * estimateH2Sconcentration.
      * </p>
      *
      * @return a double

@@ -14,7 +14,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * TwoPhasePackedBedFlowNode class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {

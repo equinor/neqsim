@@ -6,11 +6,9 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
- * NewtonSolveAB class.
- * </p>
+ * <p>NewtonSolveAB class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class NewtonSolveAB implements java.io.Serializable {
@@ -26,16 +24,12 @@ public class NewtonSolveAB implements java.io.Serializable {
     SystemInterface system = null;
 
     /**
-     * <p>
-     * Constructor for NewtonSolveAB.
-     * </p>
+     * <p>Constructor for NewtonSolveAB.</p>
      */
     public NewtonSolveAB() {}
 
     /**
-     * <p>
-     * Constructor for NewtonSolveAB.
-     * </p>
+     * <p>Constructor for NewtonSolveAB.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
@@ -52,9 +46,7 @@ public class NewtonSolveAB implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * Setter for the field <code>fvec</code>.
-     * </p>
+     * <p>Setter for the field <code>fvec</code>.</p>
      */
     public void setfvec() {
         double f0 = -characterizeClass.getZPlus();
@@ -76,9 +68,7 @@ public class NewtonSolveAB implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * setJac.
-     * </p>
+     * <p>setJac.</p>
      */
     public void setJac() {
         Jac.timesEquals(0.0);
@@ -118,9 +108,7 @@ public class NewtonSolveAB implements java.io.Serializable {
     }
 
     /**
-     * <p>
-     * solve.
-     * </p>
+     * <p>solve.</p>
      */
     public void solve() {
         do {

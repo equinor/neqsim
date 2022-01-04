@@ -14,7 +14,7 @@ import neqsim.thermo.system.SystemInterface;
  * HCdewPointPressureFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {

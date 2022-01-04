@@ -12,6 +12,13 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * </p>
  *
  * @author esol
+ * 
+ * @version
+ */
+/**
+ * <p>TestPCSAFT1 class.</p>
+ *
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,9 +26,7 @@ public class TestPCSAFT1 {
     static Logger logger = LogManager.getLogger(TestPCSAFT1.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

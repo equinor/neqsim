@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * BubbleFlashCPA class.
- * </p>
+ * <p>BubbleFlashCPA class.</p>
  *
  * @author esol
  * @since 2.2.3
@@ -19,9 +17,7 @@ public class BubbleFlashCPA {
     static Logger logger = LogManager.getLogger(BubbleFlashCPA.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

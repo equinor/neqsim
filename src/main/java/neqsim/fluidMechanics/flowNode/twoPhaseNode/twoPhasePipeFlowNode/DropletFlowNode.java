@@ -10,11 +10,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * DropletFlowNode class.
- * </p>
+ * <p>DropletFlowNode class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class DropletFlowNode extends TwoPhaseFlowNode {
@@ -22,22 +20,17 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     private double averageDropletDiameter = 100.0e-6;
 
     /**
-     * <p>
-     * Constructor for DropletFlowNode.
-     * </p>
+     * <p>Constructor for DropletFlowNode.</p>
      */
     public DropletFlowNode() {
         this.flowNodeType = "droplet";
     }
 
     /**
-     * <p>
-     * Constructor for DropletFlowNode.
-     * </p>
+     * <p>Constructor for DropletFlowNode.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
-     *        object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
      */
     public DropletFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -49,14 +42,11 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * Constructor for DropletFlowNode.
-     * </p>
+     * <p>Constructor for DropletFlowNode.</p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
-     *        object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
      */
     public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
@@ -144,9 +134,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * mainOld.
-     * </p>
+     * <p>mainOld.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -226,9 +214,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -304,9 +290,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * Getter for the field <code>averageDropletDiameter</code>.
-     * </p>
+     * <p>Getter for the field <code>averageDropletDiameter</code>.</p>
      *
      * @return a double
      */
@@ -315,9 +299,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>
-     * Setter for the field <code>averageDropletDiameter</code>.
-     * </p>
+     * <p>Setter for the field <code>averageDropletDiameter</code>.</p>
      *
      * @param averageDropletDiameter a double
      */

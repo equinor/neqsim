@@ -8,11 +8,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
- * WaxFlash class.
- * </p>
+ * <p>WaxFlash class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -20,9 +18,7 @@ public class WaxFlash {
     static Logger logger = LogManager.getLogger(WaxFlash.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

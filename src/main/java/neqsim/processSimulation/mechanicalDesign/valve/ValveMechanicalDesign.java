@@ -18,7 +18,7 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;;
  * ValveMechanicalDesign class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class ValveMechanicalDesign extends MechanicalDesign {

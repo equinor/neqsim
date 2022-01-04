@@ -9,19 +9,15 @@ import neqsim.processSimulation.processEquipment.util.Adjuster;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>
- * MEGinjection class.
- * </p>
+ * <p>MEGinjection class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class MEGinjection {
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -6,11 +6,9 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>
- * Calculator class.
- * </p>
+ * <p>Calculator class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class Calculator extends ProcessEquipmentBaseClass {
@@ -19,9 +17,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     String type = "sumTEG";
 
     /**
-     * <p>
-     * Constructor for Calculator.
-     * </p>
+     * <p>Constructor for Calculator.</p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -30,21 +26,16 @@ public class Calculator extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>
-     * addInputVariable.
-     * </p>
+     * <p>addInputVariable.</p>
      *
-     * @param unit a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface}
-     *        object
+     * @param unit a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public void addInputVariable(ProcessEquipmentInterface unit) {
         inputVariable.add(unit);
     }
 
     /**
-     * <p>
-     * Getter for the field <code>outputVariable</code>.
-     * </p>
+     * <p>Getter for the field <code>outputVariable</code>.</p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
@@ -79,12 +70,9 @@ public class Calculator extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>
-     * Setter for the field <code>outputVariable</code>.
-     * </p>
+     * <p>Setter for the field <code>outputVariable</code>.</p>
      *
-     * @param outputVariable a
-     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param outputVariable a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public void setOutputVariable(ProcessEquipmentInterface outputVariable) {
         this.outputVariable = outputVariable;

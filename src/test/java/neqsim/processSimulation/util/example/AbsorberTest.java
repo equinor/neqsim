@@ -3,11 +3,9 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>
- * AbsorberTest class.
- * </p>
+ * <p>AbsorberTest class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */

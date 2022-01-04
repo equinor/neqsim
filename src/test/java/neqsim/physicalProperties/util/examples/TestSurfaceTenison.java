@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * TestSurfaceTenison class.
- * </p>
+ * <p>TestSurfaceTenison class.</p>
  *
  * @author esol //
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class TestSurfaceTenison {
     static Logger logger = LogManager.getLogger(TestSurfaceTenison.class);
 
     /**
-     * <p>
-     * main.
-     * </p>
+     * <p>main.</p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

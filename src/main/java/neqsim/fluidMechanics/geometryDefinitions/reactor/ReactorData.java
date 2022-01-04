@@ -7,7 +7,7 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
  * ReactorData class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class ReactorData extends GeometryDefinition {

@@ -1144,6 +1144,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                                                          // * compArray[j].getaDiffT()
                                                          // +compArray[j].getaT() *
                                                          // compArray[compNumb].getaDiffT())*(1-intparam[compNumb][j]);
+
             }
 
             A *= getB();
@@ -1934,6 +1935,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 for (int j = 0; j < numbcomp; j++) {
                     W += compArray[i].getNumberOfMolesInPhase()
                             * compArray[j].getNumberOfMolesInPhase() * getWij(i, j, temperature);// wij[0][i][j];
+
                 }
             }
             return -W;
@@ -1972,6 +1974,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 for (int j = 0; j < numbcomp; j++) {
                     WT += compArray[i].getNumberOfMolesInPhase()
                             * compArray[j].getNumberOfMolesInPhase() * getWijT(i, j, temperature);// wij[0][i][j];
+
                 }
             }
             return -WT;
@@ -1987,6 +1990,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                 for (int j = 0; j < numbcomp; j++) {
                     WTT += compArray[i].getNumberOfMolesInPhase()
                             * compArray[j].getNumberOfMolesInPhase() * getWijTT(i, j, temperature);// wij[0][i][j];
+
                 }
             }
             return -WTT;
@@ -2081,6 +2085,7 @@ public class EosMixingRules implements Cloneable, ThermodynamicConstantsInterfac
                                     + phase.getComponents()[l].getComponentName() + "') OR (comp1='"
                                     + phase.getComponents()[l].getComponentName() + "' AND comp2='"
                                     + component_name + "')");
+
                         }
                         dataSet.next();
                         if (dataSet.getString("comp1").trim()

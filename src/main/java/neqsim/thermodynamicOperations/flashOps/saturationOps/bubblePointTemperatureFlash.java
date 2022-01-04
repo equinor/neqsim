@@ -13,7 +13,7 @@ import org.apache.logging.log4j.*;
  * bubblePointTemperatureFlash class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
@@ -78,6 +78,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                                             .getFugasityCoeffisient()
                                     / system.getPhases()[0].getComponents()[i]
                                             .getFugasityCoeffisient());
+
                 } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
                         && (iterations < maxNumberOfIterations));
 

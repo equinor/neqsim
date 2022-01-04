@@ -8,7 +8,7 @@ import neqsim.fluidMechanics.flowNode.twoPhaseNode.twoPhasePipeFlowNode.Stratifi
  * FlowNodeSelector class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class FlowNodeSelector {

@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * bubblePointTemperatureNoDer class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {

@@ -10,7 +10,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * Hydrocyclone class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class Hydrocyclone extends Separator {

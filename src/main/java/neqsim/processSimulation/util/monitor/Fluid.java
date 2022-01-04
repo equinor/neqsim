@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemInterface;
  * Fluid class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class Fluid {

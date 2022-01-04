@@ -7,11 +7,9 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>
- * TPflash_benchmark_UMR class.
- * </p>
+ * <p>TPflash_benchmark_UMR class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class TPflash_benchmark_UMR {

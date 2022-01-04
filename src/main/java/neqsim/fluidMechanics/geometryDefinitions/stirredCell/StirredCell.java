@@ -7,7 +7,7 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
  * StirredCell class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class StirredCell extends GeometryDefinition {

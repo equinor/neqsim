@@ -12,7 +12,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * Filter class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public class Filter extends ProcessEquipmentBaseClass {

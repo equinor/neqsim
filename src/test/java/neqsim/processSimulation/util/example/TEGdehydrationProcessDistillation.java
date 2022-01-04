@@ -17,43 +17,39 @@ import neqsim.processSimulation.processEquipment.util.StreamSaturatorUtil;
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>
- * TEGdehydrationProcessDistillation class.
- * </p>
+ * <p>TEGdehydrationProcessDistillation class.</p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TEGdehydrationProcessDistillation {
-    /**
-     * <p>
-     * main.
-     * </p>
-     *
-     * @param args an array of {@link java.lang.String} objects
-     */
-    @SuppressWarnings("unused")
-    public static void main(String[] args) {
-        // Create the input fluid to the TEG process and saturate it with water at
-        // scrubber conditions
-        neqsim.thermo.system.SystemInterface feedGas =
-                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
-        feedGas.addComponent("nitrogen", 1.03);
-        feedGas.addComponent("CO2", 1.42);
-        feedGas.addComponent("methane", 83.88);
-        feedGas.addComponent("ethane", 8.07);
-        feedGas.addComponent("propane", 3.54);
-        feedGas.addComponent("i-butane", 0.54);
-        feedGas.addComponent("n-butane", 0.84);
-        feedGas.addComponent("i-pentane", 0.21);
-        feedGas.addComponent("n-pentane", 0.19);
-        feedGas.addComponent("n-hexane", 0.28);
-        feedGas.addComponent("water", 0.0);
-        feedGas.addComponent("TEG", 0);
-        feedGas.createDatabase(true);
-        feedGas.setMixingRule(10);
-        feedGas.setMultiPhaseCheck(true);
+        /**
+         * <p>main.</p>
+         *
+         * @param args an array of {@link java.lang.String} objects
+         */
+        @SuppressWarnings("unused")
+        public static void main(String[] args) {
+                // Create the input fluid to the TEG process and saturate it with water at
+                // scrubber conditions
+                neqsim.thermo.system.SystemInterface feedGas =
+                                new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+                feedGas.addComponent("nitrogen", 1.03);
+                feedGas.addComponent("CO2", 1.42);
+                feedGas.addComponent("methane", 83.88);
+                feedGas.addComponent("ethane", 8.07);
+                feedGas.addComponent("propane", 3.54);
+                feedGas.addComponent("i-butane", 0.54);
+                feedGas.addComponent("n-butane", 0.84);
+                feedGas.addComponent("i-pentane", 0.21);
+                feedGas.addComponent("n-pentane", 0.19);
+                feedGas.addComponent("n-hexane", 0.28);
+                feedGas.addComponent("water", 0.0);
+                feedGas.addComponent("TEG", 0);
+                feedGas.createDatabase(true);
+                feedGas.setMixingRule(10);
+                feedGas.setMultiPhaseCheck(true);
 
         Stream dryFeedGas = new Stream("dry feed gas", feedGas);
         dryFeedGas.setFlowRate(11.23, "MSm3/day");

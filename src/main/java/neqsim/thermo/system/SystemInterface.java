@@ -16,7 +16,7 @@ import neqsim.thermo.phase.PhaseInterface;
  * SystemInterface interface.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public interface SystemInterface extends Cloneable, java.io.Serializable {

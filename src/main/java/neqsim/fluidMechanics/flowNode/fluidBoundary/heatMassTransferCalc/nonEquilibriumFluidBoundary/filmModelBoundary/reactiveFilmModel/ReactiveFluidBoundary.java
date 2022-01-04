@@ -10,7 +10,7 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract ReactiveFluidBoundary class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {

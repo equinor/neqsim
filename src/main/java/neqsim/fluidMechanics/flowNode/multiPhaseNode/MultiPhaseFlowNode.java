@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract MultiPhaseFlowNode class.
  * </p>
  *
- * @author esol
+ * @author asmund
  * @version $Id: $Id
  */
 public abstract class MultiPhaseFlowNode extends FlowNode {

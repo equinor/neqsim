@@ -295,6 +295,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                                         .getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
                                                          // +
                                                          // 0.5*diff4Matrix[p].get(j,0));
+
             }
 
             pipe.getNode(j).getBulkSystem().getPhases()[0].normalize();

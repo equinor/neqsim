@@ -1069,6 +1069,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                     neeval += componentArray[moleculeNumber[j]].getNumberOfMolesInPhase()
                             * delta[i][j] * ((ComponentSrkCPA) componentArray[moleculeNumber[j]])
                                     .getXsite()[assSiteNumber[j]];
+
                 }
                 neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
                 ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i],
@@ -1958,6 +1959,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
                     neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase()
                             * delta[i][j] * ((ComponentSrkCPA) getComponent(moleculeNumber[j]))
                                     .getXsite()[assSiteNumber[j]];
+
                 }
                 neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
                 ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i],
@@ -2093,6 +2095,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
             }
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
+
         } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10 || Math.abs(h) > 1e-12)
                 && iterations < 100);
 
