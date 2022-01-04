@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Problem280809LNGphaseEnvelope class.</p>
+ * <p>
+ * Problem280809LNGphaseEnvelope class.
+ * </p>
  *
  * @author lozhang
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class Problem280809LNGphaseEnvelope {
     static Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -38,7 +42,6 @@ public class Problem280809LNGphaseEnvelope {
         try {
             testOps.calcPTphaseEnvelope(true);// 0.05, 0.000005);
             testOps.displayResult();
-
         } catch (Exception e) {
             logger.error("error", e);
         }
@@ -47,6 +50,5 @@ public class Problem280809LNGphaseEnvelope {
         // testOps.displayResult();
         // System.out.println("Cricondenbar " + testOps.get("cricondenbar")[0] + " " +
         // testOps.get("cricondenbar")[1]);
-
     }
 }

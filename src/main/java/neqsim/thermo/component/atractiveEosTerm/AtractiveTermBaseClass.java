@@ -19,7 +19,6 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermBaseClass implements AtractiveTermInterface {
-
     private static final long serialVersionUID = 1000;
 
     private ComponentEosInterface component = null;
@@ -34,12 +33,12 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
      * Constructor for AtractiveTermBaseClass.
      * </p>
      */
-    public AtractiveTermBaseClass() {
-
-    }
+    public AtractiveTermBaseClass() {}
 
     /**
-     * <p>Constructor for AtractiveTermBaseClass.</p>
+     * <p>
+     * Constructor for AtractiveTermBaseClass.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -130,5 +129,4 @@ public class AtractiveTermBaseClass implements AtractiveTermInterface {
     void setComponent(ComponentEosInterface component) {
         this.component = component;
     }
-
 }

@@ -23,7 +23,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class StirredCellSolver extends TwoPhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     Matrix diffMatrix;
     double dn[][];
@@ -398,5 +397,4 @@ public class StirredCellSolver extends TwoPhasePipeFlowSolver
     public void solveTDMA() {
         initProfiles();
     }
-
 }

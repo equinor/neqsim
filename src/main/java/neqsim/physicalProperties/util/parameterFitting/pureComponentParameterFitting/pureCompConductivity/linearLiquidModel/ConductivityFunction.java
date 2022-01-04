@@ -11,11 +11,12 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class ConductivityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ConductivityFunction.</p>
+     * <p>
+     * Constructor for ConductivityFunction.
+     * </p>
      */
     public ConductivityFunction() {
         params = new double[3];

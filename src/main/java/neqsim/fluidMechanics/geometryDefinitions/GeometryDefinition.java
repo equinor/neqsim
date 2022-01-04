@@ -21,7 +21,6 @@ import neqsim.fluidMechanics.geometryDefinitions.surrounding.SurroundingEnvironm
  */
 public abstract class GeometryDefinition
         implements GeometryDefinitionInterface, neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     /** {@inheritDoc} */

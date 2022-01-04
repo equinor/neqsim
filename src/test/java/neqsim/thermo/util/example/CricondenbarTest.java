@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>CricondenbarTest class.</p>
+ * <p>
+ * CricondenbarTest class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class CricondenbarTest {
     static Logger logger = LogManager.getLogger(CricondenbarTest.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -42,7 +46,6 @@ public class CricondenbarTest {
             // testSystem.setTemperature(250.0);
             testOps.calcCricondenBar();
             // 8 testOps.TPflash();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }

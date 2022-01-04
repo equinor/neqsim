@@ -17,11 +17,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentGENRTLmodifiedWS.</p>
+     * <p>
+     * Constructor for ComponentGENRTLmodifiedWS.
+     * </p>
      */
     public ComponentGENRTLmodifiedWS() {}
 
@@ -159,7 +160,6 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
             // System.out.println("hei");
 
             for (l = 0; l < numberOfComponents; l++) {
-
                 Dij = WSgij[l][j];
                 DijT = WSgijT[l][j];
                 alpha = WSalpha[l][j];
@@ -217,7 +217,6 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
 
         // if derivates....
         if (type == 3) {
-
             double dAdn = 0;
             double dBdn = 0;
             double Etemp = 0;

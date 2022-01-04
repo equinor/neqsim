@@ -12,16 +12,15 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the SRK equation of state for
- * gas and Unifac for liquids
+ * This class defines a thermodynamic system using the SRK equation of state for gas and Unifac for
+ * liquids
  */
 public class SystemUNIFAC extends SystemEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -39,7 +38,9 @@ public class SystemUNIFAC extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemUNIFAC.</p>
+     * <p>
+     * Constructor for SystemUNIFAC.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -59,7 +60,9 @@ public class SystemUNIFAC extends SystemEos {
     }
 
     /**
-     * <p>Constructor for SystemUNIFAC.</p>
+     * <p>
+     * Constructor for SystemUNIFAC.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -101,9 +104,9 @@ public class SystemUNIFAC extends SystemEos {
             logger.error("Cloning failed.", e);
         }
 
-//        for(int i = 0; i < numberOfPhases; i++) {
-//            clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
-//        }
+        // for(int i = 0; i < numberOfPhases; i++) {
+        // clonedSystem.phaseArray[i] = (PhaseInterface) phaseArray[i].clone();
+        // }
 
         return clonedSystem;
     }

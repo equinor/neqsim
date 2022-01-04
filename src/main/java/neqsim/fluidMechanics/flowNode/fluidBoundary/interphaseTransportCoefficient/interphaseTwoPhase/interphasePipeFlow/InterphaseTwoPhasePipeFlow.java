@@ -18,7 +18,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * @version $Id: $Id
  */
 public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -37,5 +36,4 @@ public class InterphaseTwoPhasePipeFlow extends InterphaseTwoPhase {
     public InterphaseTwoPhasePipeFlow(FlowNodeInterface node) {
         // flowNode = node;
     }
-
 }

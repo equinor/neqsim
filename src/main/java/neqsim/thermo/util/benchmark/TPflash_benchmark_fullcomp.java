@@ -7,9 +7,11 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TPflash_benchmark_fullcomp class.</p>
+ * <p>
+ * TPflash_benchmark_fullcomp class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class TPflash_benchmark_fullcomp {

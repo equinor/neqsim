@@ -10,26 +10,28 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
-/*
+/**
+ * <p>
+ * density class.
+ * </p>
  *
  * @author agrawalnj
- */
-/**
- * <p>density class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  */
 public class density {
     static Logger logger = LogManager.getLogger(density.class);
 
     /**
-     * <p>Constructor for density.</p>
+     * <p>
+     * Constructor for density.
+     * </p>
      */
     public density() {}
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -64,7 +66,8 @@ public class density {
             testSystem.init(1);
             testSystem.initPhysicalProperties();
 
-            try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                 p.println(loading + " "
                         + testSystem.getPhase(1).getPhysicalProperties().getDensity() / 1000);
             } catch (FileNotFoundException e) {

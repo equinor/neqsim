@@ -21,7 +21,6 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * @version $Id: $Id
  */
 public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     public CPAMixing cpaSelect = new CPAMixing();
@@ -36,7 +35,9 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     static Logger logger = LogManager.getLogger(PhasePCSAFTa.class);
 
     /**
-     * <p>Constructor for PhasePCSAFTa.</p>
+     * <p>
+     * Constructor for PhasePCSAFTa.
+     * </p>
      */
     public PhasePCSAFTa() {
         super();
@@ -97,7 +98,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         do {
             super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         } while (!solveX());
-
     }
 
     /** {@inheritDoc} */
@@ -268,7 +268,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         double tot = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int k = 0; k < numberOfComponents; k++) {
-
                 htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
@@ -299,7 +298,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         double tot = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int k = 0; k < numberOfComponents; k++) {
-
                 htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
@@ -389,7 +387,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double BonV = phase== 0 ? 0.99:1e-5;
@@ -458,7 +455,6 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
             BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-
         }
         if (iterations >= 10000) {
             throw new neqsim.util.exception.TooManyIterationsException();

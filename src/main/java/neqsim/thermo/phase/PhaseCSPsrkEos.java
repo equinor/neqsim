@@ -18,7 +18,6 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class PhaseCSPsrkEos extends PhaseSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     double f_scale_mix = 0;
@@ -29,7 +28,9 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     double mrefBWRSPhase = 0;
 
     /**
-     * <p>Constructor for PhaseCSPsrkEos.</p>
+     * <p>
+     * Constructor for PhaseCSPsrkEos.
+     * </p>
      */
     public PhaseCSPsrkEos() {
         super();
@@ -225,7 +226,6 @@ public class PhaseCSPsrkEos extends PhaseSrkEos {
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         if (BonV < 0) {

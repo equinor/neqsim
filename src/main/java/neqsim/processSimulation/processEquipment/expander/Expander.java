@@ -19,11 +19,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Expander extends Compressor implements ExpanderInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for Expander.</p>
+     * <p>
+     * Constructor for Expander.
+     * </p>
      */
     public Expander() {
         super();
@@ -117,5 +118,4 @@ public class Expander extends Compressor implements ExpanderInterface {
         // thermoSystem.display();
         outStream.setThermoSystem(getThermoSystem());
     }
-
 }

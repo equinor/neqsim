@@ -18,13 +18,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class ScalePotentialCheckStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
 
     /**
-     * <p>Constructor for ScalePotentialCheckStream.</p>
+     * <p>
+     * Constructor for ScalePotentialCheckStream.
+     * </p>
      */
     public ScalePotentialCheckStream() {
         super();
@@ -102,5 +103,4 @@ public class ScalePotentialCheckStream extends Stream {
     public void displayResult() {
         reactiveThermoSystem.display(name);
     }
-
 }

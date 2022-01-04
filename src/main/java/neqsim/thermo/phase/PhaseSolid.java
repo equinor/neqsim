@@ -16,11 +16,12 @@ import neqsim.thermo.component.ComponentSolid;
  * @version $Id: $Id
  */
 public abstract class PhaseSolid extends PhaseSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseSolid.</p>
+     * <p>
+     * Constructor for PhaseSolid.
+     * </p>
      */
     public PhaseSolid() {
         super();
@@ -98,5 +99,4 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         molarVolume = density / getMolarMass() * 1e-5;
         return density;
     }
-
 }

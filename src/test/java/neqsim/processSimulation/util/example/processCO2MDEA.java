@@ -9,9 +9,11 @@ import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>processCO2MDEA class.</p>
+ * <p>
+ * processCO2MDEA class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

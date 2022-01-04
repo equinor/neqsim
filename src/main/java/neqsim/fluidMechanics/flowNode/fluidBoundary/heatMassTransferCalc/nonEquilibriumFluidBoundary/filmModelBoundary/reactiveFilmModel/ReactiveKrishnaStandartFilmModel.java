@@ -6,7 +6,7 @@
 
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.KrishnaStandartFilmModel;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEquilibriumFluidBoundary.filmModelBoundary.reactiveFilmModel.enhancementFactor.EnhancementFactorAlg;
@@ -22,13 +22,14 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
-
     private static final long serialVersionUID = 1000;
 
     int enhancementType = 1;
 
     /**
-     * <p>Constructor for ReactiveKrishnaStandartFilmModel.</p>
+     * <p>
+     * Constructor for ReactiveKrishnaStandartFilmModel.
+     * </p>
      */
     public ReactiveKrishnaStandartFilmModel() {}
 
@@ -91,5 +92,4 @@ public class ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel {
             enhancementFactor = new EnhancementFactorNumeric(this);
         }
     }
-
 }

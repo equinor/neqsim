@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class NeqHeater extends Heater {
-
     private static final long serialVersionUID = 1000;
 
     StreamInterface outStream;
@@ -28,7 +27,9 @@ public class NeqHeater extends Heater {
     double dH = 0.0;
 
     /**
-     * <p>Constructor for NeqHeater.</p>
+     * <p>
+     * Constructor for NeqHeater.
+     * </p>
      */
     public NeqHeater() {}
 

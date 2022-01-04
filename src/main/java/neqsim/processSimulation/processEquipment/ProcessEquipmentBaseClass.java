@@ -12,13 +12,14 @@ import neqsim.processSimulation.processEquipment.stream.EnergyStream;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract ProcessEquipmentBaseClass class.</p>
+ * <p>
+ * Abstract ProcessEquipmentBaseClass class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInterface {
-
     private static final long serialVersionUID = 1000;
 
     private ControllerDeviceInterface controller = null;
@@ -40,7 +41,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>Constructor for ProcessEquipmentBaseClass.</p>
+     * <p>
+     * Constructor for ProcessEquipmentBaseClass.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -92,7 +95,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>getProperty.</p>
+     * <p>
+     * getProperty.
+     * </p>
      *
      * @param propertyName a {@link java.lang.String} object
      * @return a {@link java.lang.Object} object
@@ -116,9 +121,12 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>Setter for the field <code>flowValveController</code>.</p>
+     * <p>
+     * Setter for the field <code>flowValveController</code>.
+     * </p>
      *
-     * @param controller a {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface} object
+     * @param controller a
+     *        {@link neqsim.processSimulation.controllerDevice.ControllerDeviceInterface} object
      */
     public void setFlowValveController(ControllerDeviceInterface controller) {
         this.flowValveController = controller;
@@ -137,7 +145,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>Setter for the field <code>mechanicalDesign</code>.</p>
+     * <p>
+     * Setter for the field <code>mechanicalDesign</code>.
+     * </p>
      *
      * @param mechanicalDesign the mechanicalDesign to set
      */
@@ -170,7 +180,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>Getter for the field <code>energyStream</code>.</p>
+     * <p>
+     * Getter for the field <code>energyStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream} object
      */
@@ -179,9 +191,12 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>Setter for the field <code>energyStream</code>.</p>
+     * <p>
+     * Setter for the field <code>energyStream</code>.
+     * </p>
      *
-     * @param energyStream a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream} object
+     * @param energyStream a {@link neqsim.processSimulation.processEquipment.stream.EnergyStream}
+     *        object
      */
     public void setEnergyStream(EnergyStream energyStream) {
         setEnergyStream(true);
@@ -189,7 +204,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>isSetEnergyStream.</p>
+     * <p>
+     * isSetEnergyStream.
+     * </p>
      *
      * @return a boolean
      */
@@ -198,7 +215,9 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>Setter for the field <code>energyStream</code>.</p>
+     * <p>
+     * Setter for the field <code>energyStream</code>.
+     * </p>
      *
      * @param isSetEnergyStream a boolean
      */
@@ -214,9 +233,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 
     /** {@inheritDoc} */
     @Override
-    public void setPressure(double pressure) {
-
-    }
+    public void setPressure(double pressure) {}
 
     /** {@inheritDoc} */
     @Override
@@ -238,9 +255,7 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
 
     /** {@inheritDoc} */
     @Override
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
     public String conditionAnalysisMessage = "";
 
@@ -251,12 +266,13 @@ public abstract class ProcessEquipmentBaseClass implements ProcessEquipmentInter
     }
 
     /**
-     * <p>getResultTable.</p>
+     * <p>
+     * getResultTable.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */
     public String[][] getResultTable() {
         return null;
     }
-
 }

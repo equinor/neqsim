@@ -8,11 +8,10 @@ import neqsim.thermo.system.SystemInterface;
  * sysNewtonRhapsonTPflash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class sysNewtonRhapsonTPflash implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     int neq = 0, iter = 0;
     int ic02p = -100, ic03p = -100, testcrit = 0, npCrit = 0;
@@ -39,7 +38,9 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
     public sysNewtonRhapsonTPflash() {}
 
     /**
-     * <p>Constructor for sysNewtonRhapsonTPflash.</p>
+     * <p>
+     * Constructor for sysNewtonRhapsonTPflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param numberOfPhases a int
@@ -66,13 +67,11 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
      */
     public void setfvec() {
         for (int i = 0; i < numberOfComponents; i++) {
-
             fvec.set(i, 0, Math
                     .log(system.getPhase(0).getComponents()[i].getFugasityCoeffisient()
                             * system.getPhase(0).getComponents()[i].getx() * system.getPressure())
                     - Math.log(system.getPhase(1).getComponents()[i].getFugasityCoeffisient()
                             * system.getPhase(1).getComponents()[i].getx() * system.getPressure()));
-
         }
     }
 
@@ -135,7 +134,6 @@ public class sysNewtonRhapsonTPflash implements java.io.Serializable {
                     / system.getPhase(1).getComponents()[i].getx());
             system.getPhase(1).getComponents()[i]
                     .setK(system.getPhase(0).getComponents()[i].getK());
-
         }
 
         system.init(3);

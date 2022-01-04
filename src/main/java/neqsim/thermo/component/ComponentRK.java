@@ -17,11 +17,12 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermRk;
  * @version $Id: $Id
  */
 public class ComponentRK extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentRK.</p>
+     * <p>
+     * Constructor for ComponentRK.
+     * </p>
      */
     public ComponentRK() {}
 
@@ -76,7 +77,6 @@ public class ComponentRK extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public ComponentRK clone() {
-
         ComponentRK clonedComponent = null;
         try {
             clonedComponent = (ComponentRK) super.clone();

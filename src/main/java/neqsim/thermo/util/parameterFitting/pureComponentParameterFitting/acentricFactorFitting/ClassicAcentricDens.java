@@ -4,26 +4,30 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>ClassicAcentricDens class.</p>
+ * <p>
+ * ClassicAcentricDens class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ClassicAcentricDens extends ClassicAcentricFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ClassicAcentricDens.class);
 
     int phasetype = 1;
 
-
     /**
-     * <p>Constructor for ClassicAcentricDens.</p>
+     * <p>
+     * Constructor for ClassicAcentricDens.
+     * </p>
      */
     public ClassicAcentricDens() {}
 
     /**
-     * <p>Constructor for ClassicAcentricDens.</p>
+     * <p>
+     * Constructor for ClassicAcentricDens.
+     * </p>
      *
      * @param phase a int
      */

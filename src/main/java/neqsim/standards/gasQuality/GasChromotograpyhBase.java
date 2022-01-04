@@ -8,13 +8,14 @@ package neqsim.standards.gasQuality;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>GasChromotograpyhBase class.</p>
+ * <p>
+ * GasChromotograpyhBase class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class GasChromotograpyhBase extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
 
     String componentName = "", unit = "mol%";
@@ -28,7 +29,9 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
     }
 
     /**
-     * <p>Constructor for GasChromotograpyhBase.</p>
+     * <p>
+     * Constructor for GasChromotograpyhBase.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      * @param component a {@link java.lang.String} object
@@ -39,17 +42,16 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
         name = "gas cromotography";
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calculate() {
+    public void calculate() {
         thermoSystem.init(0);
         thermoSystem.init(0);
-
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         unit = returnUnit;
         if (returnUnit.equals("mol%")) {
             return 100 * thermoSystem.getPhase(0).getComponent(componentName).getz();
@@ -61,21 +63,21 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         return thermoSystem.getPhase(0).getComponent(componentName).getz();
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         return unit;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return true;
     }
 }

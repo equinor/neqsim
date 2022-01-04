@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version Method was revised by Even Solbraa 21.01.2019
  */
 public class PFCTConductivityMethodMod86 extends Conductivity {
-
     private static final long serialVersionUID = 1000;
 
     /** Constant <code>referenceSystem</code> */
@@ -59,7 +58,6 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
     /** {@inheritDoc} */
     @Override
     public double calcConductivity() {
-
         double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC(),
                 Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC(),
                 M0 = referenceSystem.getPhase(0).getComponent(0).getMolarMass() * 1e3;
@@ -253,7 +251,6 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
      * @return a double
      */
     public double getRefComponentViscosity(double temp, double pres) {
-
         double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3,
                 1.219979e3, -9.627993e1, 4.274152, -8.141531e-2};
         double visRefE = 1.0;
@@ -297,7 +294,6 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
      * @return a double
      */
     public double calcMixLPViscosity() {
-
         double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC(),
                 Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC(),
                 M0 = referenceSystem.getPhase(0).getComponent(0).getMolarMass() * 1e3;

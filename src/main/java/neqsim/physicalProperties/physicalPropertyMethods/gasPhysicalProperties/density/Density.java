@@ -20,12 +20,13 @@ import neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.G
  */
 public class Density extends GasPhysicalPropertyMethod implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
     /**
-     * <p>Constructor for Density.</p>
+     * <p>
+     * Constructor for Density.
+     * </p>
      */
     public Density() {}
 
@@ -64,7 +65,6 @@ public class Density extends GasPhysicalPropertyMethod implements
      */
     @Override
     public double calcDensity() {
-
         double tempVar = 0;
         if (gasPhase.getPhase().useVolumeCorrection()) {
             for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {

@@ -20,7 +20,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class dTPflash extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(dTPflash.class);
     String[] flashComp = null;
@@ -28,7 +27,9 @@ public class dTPflash extends TPflash {
     // SystemInterface clonedSystem;
 
     /**
-     * <p>Constructor for dTPflash.</p>
+     * <p>
+     * Constructor for dTPflash.
+     * </p>
      */
     public dTPflash() {}
 
@@ -48,7 +49,6 @@ public class dTPflash extends TPflash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         iterations = 0;
         double diff = 0.0;
         double fracdiff = 0.0;
@@ -98,6 +98,5 @@ public class dTPflash extends TPflash {
         if (diff > 1e-10) {
             logger.error("not able to converge dPflash....continuing....");
         }
-
     }
 }

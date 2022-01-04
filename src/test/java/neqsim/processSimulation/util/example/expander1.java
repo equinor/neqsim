@@ -3,9 +3,11 @@ package neqsim.processSimulation.util.example;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>expander1 class.</p>
+ * <p>
+ * expander1 class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -16,8 +18,8 @@ public class expander1 {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0),
-                120.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 120.00);
         testSystem.addComponent("methane", 180.00);
         testSystem.addComponent("ethane", 10.00);
         testSystem.addComponent("propane", 1.00);
@@ -31,15 +33,16 @@ public class expander1 {
 
         // neqsim.processSimulation.processEquipment.expander.Expander expander = new
         // neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
-        neqsim.processSimulation.processEquipment.compressor.Compressor expander = new neqsim.processSimulation.processEquipment.compressor.Compressor(
-                stream_1);
+        neqsim.processSimulation.processEquipment.compressor.Compressor expander =
+                new neqsim.processSimulation.processEquipment.compressor.Compressor(stream_1);
 
         expander.setOutletPressure(80.0);
         expander.setPolytropicEfficiency(0.9);
         expander.setIsentropicEfficiency(0.9);
         expander.setUsePolytropicCalc(true);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(expander);
 

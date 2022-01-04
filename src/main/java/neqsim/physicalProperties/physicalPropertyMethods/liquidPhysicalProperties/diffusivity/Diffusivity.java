@@ -11,7 +11,6 @@ abstract class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
@@ -19,7 +18,9 @@ abstract class Diffusivity extends
     double[] effectiveDiffusionCoefficient;
 
     /**
-     * <p>Constructor for Diffusivity.</p>
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      */
     public Diffusivity() {}
 
@@ -38,7 +39,6 @@ abstract class Diffusivity extends
         binaryDiffusionCoeffisients = new double[liquidPhase.getPhase()
                 .getNumberOfComponents()][liquidPhase.getPhase().getNumberOfComponents()];
         effectiveDiffusionCoefficient = new double[liquidPhase.getPhase().getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */
@@ -65,7 +65,6 @@ abstract class Diffusivity extends
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
                 binaryDiffusionCoeffisients[i][j] =

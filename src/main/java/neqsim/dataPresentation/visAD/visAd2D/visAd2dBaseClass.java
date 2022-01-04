@@ -33,7 +33,6 @@ import visad.*;
  * @version $Id: $Id
  */
 public class visAd2dBaseClass extends visAdBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private RealType x, y, index;
@@ -147,7 +146,6 @@ public class visAd2dBaseClass extends visAdBaseClass {
     /** {@inheritDoc} */
     @Override
     public void init() throws RemoteException, VisADException {
-
         index_set = new Integer1DSet(index, xy_samples[0].length);
 
         points_ff = new FlatField(func_i_tuple, index_set);

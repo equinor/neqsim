@@ -3,13 +3,14 @@ package neqsim.processSimulation.mechanicalDesign.separator.sectionType;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
- * <p>SepDesignSection class.</p>
+ * <p>
+ * SepDesignSection class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     SeparatorSection separatorSection = null;
@@ -19,16 +20,22 @@ public class SepDesignSection {
     public String nominalSize = "";
 
     /**
-     * <p>Constructor for SepDesignSection.</p>
+     * <p>
+     * Constructor for SepDesignSection.
+     * </p>
      *
-     * @param separatorSection a {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection} object
+     * @param separatorSection a
+     *        {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *        object
      */
     public SepDesignSection(SeparatorSection separatorSection) {
         this.separatorSection = separatorSection;
     }
 
     /**
-     * <p>calcDesign.</p>
+     * <p>
+     * calcDesign.
+     * </p>
      */
     public void calcDesign() {
         totalWeight = 1.0;
@@ -36,7 +43,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>Getter for the field <code>totalWeight</code>.</p>
+     * <p>
+     * Getter for the field <code>totalWeight</code>.
+     * </p>
      *
      * @return the totalWeight
      */
@@ -45,7 +54,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>Setter for the field <code>totalWeight</code>.</p>
+     * <p>
+     * Setter for the field <code>totalWeight</code>.
+     * </p>
      *
      * @param totalWeight the totalWeight to set
      */
@@ -54,7 +65,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>Getter for the field <code>totalHeight</code>.</p>
+     * <p>
+     * Getter for the field <code>totalHeight</code>.
+     * </p>
      *
      * @return the totalHeight
      */
@@ -63,7 +76,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>Setter for the field <code>totalHeight</code>.</p>
+     * <p>
+     * Setter for the field <code>totalHeight</code>.
+     * </p>
      *
      * @param totalHeight the totalHeight to set
      */
@@ -72,7 +87,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>getANSIclass.</p>
+     * <p>
+     * getANSIclass.
+     * </p>
      *
      * @return the ANSIclass
      */
@@ -81,7 +98,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>setANSIclass.</p>
+     * <p>
+     * setANSIclass.
+     * </p>
      *
      * @param ANSIclass the ANSIclass to set
      */
@@ -90,7 +109,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>Getter for the field <code>nominalSize</code>.</p>
+     * <p>
+     * Getter for the field <code>nominalSize</code>.
+     * </p>
      *
      * @return the nominalSize
      */
@@ -99,7 +120,9 @@ public class SepDesignSection {
     }
 
     /**
-     * <p>Setter for the field <code>nominalSize</code>.</p>
+     * <p>
+     * Setter for the field <code>nominalSize</code>.
+     * </p>
      *
      * @param nominalSize the nominalSize to set
      */

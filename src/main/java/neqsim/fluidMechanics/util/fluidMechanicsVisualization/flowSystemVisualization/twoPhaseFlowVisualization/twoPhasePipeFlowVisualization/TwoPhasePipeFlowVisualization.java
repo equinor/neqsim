@@ -20,7 +20,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  */
 public class TwoPhasePipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.TwoPhaseFlowVisualization {
-
     private static final long serialVersionUID = 1000;
 
     double[][][] pressurePoint = new double[2][10][10];
@@ -42,7 +41,9 @@ public class TwoPhasePipeFlowVisualization extends
     visAdInterface plot;
 
     /**
-     * <p>Constructor for TwoPhasePipeFlowVisualization.</p>
+     * <p>
+     * Constructor for TwoPhasePipeFlowVisualization.
+     * </p>
      */
     public TwoPhasePipeFlowVisualization() {}
 
@@ -213,5 +214,4 @@ public class TwoPhasePipeFlowVisualization extends
         // file.setYvalues(temperaturePoint[0][0], "time","sec");
         file.createFile();
     }
-
 }

@@ -6,36 +6,45 @@
 package neqsim.processSimulation.processEquipment.heatExchanger;
 
 /**
- * <p>HeaterInterface interface.</p>
+ * <p>
+ * HeaterInterface interface.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface HeaterInterface {
-
     /**
-     * <p>setName.</p>
+     * <p>
+     * setName.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
     public void setName(String name);
 
     /**
-     * <p>getName.</p>
+     * <p>
+     * getName.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
     public String getName();
 
     /**
-     * <p>setdT.</p>
+     * <p>
+     * setdT.
+     * </p>
      *
      * @param dT a double
      */
     public void setdT(double dT);
 
     /**
-     * <p>setOutTP.</p>
+     * <p>
+     * setOutTP.
+     * </p>
      *
      * @param temperature a double
      * @param pressure a double
@@ -43,7 +52,9 @@ public interface HeaterInterface {
     public void setOutTP(double temperature, double pressure);
 
     /**
-     * <p>setOutTemperature.</p>
+     * <p>
+     * setOutTemperature.
+     * </p>
      *
      * @param temperature a double
      * @param unit a {@link java.lang.String} object
@@ -51,7 +62,9 @@ public interface HeaterInterface {
     public void setOutTemperature(double temperature, String unit);
 
     /**
-     * <p>setOutPressure.</p>
+     * <p>
+     * setOutPressure.
+     * </p>
      *
      * @param pressure a double
      * @param unit a {@link java.lang.String} object

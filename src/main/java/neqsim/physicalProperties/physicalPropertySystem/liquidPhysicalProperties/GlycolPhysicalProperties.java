@@ -21,11 +21,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class GlycolPhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for GlycolPhysicalProperties.</p>
+     * <p>
+     * Constructor for GlycolPhysicalProperties.
+     * </p>
      */
     public GlycolPhysicalProperties() {}
 

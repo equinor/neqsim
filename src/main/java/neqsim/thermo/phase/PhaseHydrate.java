@@ -18,12 +18,13 @@ import neqsim.thermo.component.ComponentHydratePVTsim;
  * @version $Id: $Id
  */
 public class PhaseHydrate extends Phase {
-
     private static final long serialVersionUID = 1000;
     String hydrateModel = "PVTsimHydrateModel";
 
     /**
-     * <p>Constructor for PhaseHydrate.</p>
+     * <p>
+     * Constructor for PhaseHydrate.
+     * </p>
      */
     public PhaseHydrate() {
         phaseTypeName = "hydrate";

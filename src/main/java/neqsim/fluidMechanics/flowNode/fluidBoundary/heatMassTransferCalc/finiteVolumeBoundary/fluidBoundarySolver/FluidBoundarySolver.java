@@ -6,7 +6,7 @@
 
 package neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySolver;
 
-import Jama.*;
+import Jama.Matrix;
 import neqsim.MathLib.generalMath.TDMAsolve;
 import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteVolumeBoundary.fluidBoundarySystem.FluidBoundarySystemInterface;
 
@@ -19,7 +19,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.finiteV
  * @version $Id: $Id
  */
 public class FluidBoundarySolver implements FluidBoundarySolverInterface {
-
     private static final long serialVersionUID = 1000;
 
     FluidBoundarySystemInterface boundary;
@@ -32,7 +31,9 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
     boolean reactive = false;
 
     /**
-     * <p>Constructor for FluidBoundarySolver.</p>
+     * <p>
+     * Constructor for FluidBoundarySolver.
+     * </p>
      */
     public FluidBoundarySolver() {}
 
@@ -280,7 +281,5 @@ public class FluidBoundarySolver implements FluidBoundarySolverInterface {
 
             System.out.println("maxDiff " + maxDiff);
         } while (Math.abs(maxDiff) > 1e-10 && iterTop < 10);// diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
-
     }
-
 }

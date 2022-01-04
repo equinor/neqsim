@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 
 abstract class Phase implements PhaseInterface {
-
     private static final long serialVersionUID = 1000;
 
     public ComponentInterface[] componentArray;
@@ -47,7 +46,9 @@ abstract class Phase implements PhaseInterface {
 
     // Class methods
     /**
-     * <p>Constructor for Phase.</p>
+     * <p>
+     * Constructor for Phase.
+     * </p>
      */
     public Phase() {
         componentArray = new ComponentInterface[MAX_NUMBER_OF_COMPONENTS];
@@ -443,7 +444,6 @@ abstract class Phase implements PhaseInterface {
             physicalPropertyHandler = new PhysicalPropertyHandler();
         }
         physicalPropertyHandler.setPhysicalProperties(this, type);
-
     }
 
     /** {@inheritDoc} */
@@ -549,7 +549,6 @@ abstract class Phase implements PhaseInterface {
     @Override
     public double calcAT(int comp, PhaseInterface phase, double temperature, double pressure,
             int numbcomp) {
-
         return 1;
     }
 
@@ -671,7 +670,6 @@ abstract class Phase implements PhaseInterface {
     /** {@inheritDoc} */
     @Override
     public double calcR() {
-
         double R = 8.314 / getMolarMass();
 
         return R;
@@ -1241,6 +1239,7 @@ abstract class Phase implements PhaseInterface {
      * {@inheritDoc}
      *
      * method to return conductivity of a phase
+     * 
      * @deprecated use {@link #getThermalConductivity()} instead.
      */
     @Override
@@ -1275,6 +1274,7 @@ abstract class Phase implements PhaseInterface {
      * {@inheritDoc}
      *
      * method to return conductivity in a given unit
+     * 
      * @deprecated use {@link #getThermalConductivity(String unit)} instead.
      */
     @Override
@@ -1339,7 +1339,6 @@ abstract class Phase implements PhaseInterface {
                 refPhase[i].setPhaseType(this.getPhaseType());
                 refPhase[i].init(refPhase[i].getNumberOfMolesInPhase(), 1, 0, this.getPhaseType(),
                         1.0);
-
             } else {
                 // System.out.println("ref " + name);
                 if (getComponent(i).isIsTBPfraction() || getComponent(i).isIsPlusFraction()) {
@@ -2064,7 +2063,6 @@ abstract class Phase implements PhaseInterface {
     /** {@inheritDoc} */
     @Override
     public void setMixingRuleGEModel(String name) {}
-
 
     /**
      * {@inheritDoc}

@@ -6,13 +6,14 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.nonEqui
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract ReactiveFluidBoundary class.</p>
+ * <p>
+ * Abstract ReactiveFluidBoundary class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
-
     private static final long serialVersionUID = 1000;
 
     protected int neq = 0;
@@ -26,13 +27,16 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     public double[][] molFractionDifference;
 
     /**
-     * <p>Constructor for ReactiveFluidBoundary.</p>
+     * <p>
+     * Constructor for ReactiveFluidBoundary.
+     * </p>
      */
-    public ReactiveFluidBoundary() {
-    }
+    public ReactiveFluidBoundary() {}
 
     /**
-     * <p>Constructor for ReactiveFluidBoundary.</p>
+     * <p>
+     * Constructor for ReactiveFluidBoundary.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -42,15 +46,22 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         Jac = new Matrix(neq, neq);
         fvec = new Matrix(neq, 1);
 
-//        massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        totalMassTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        totalMassTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        molFractionDifference = new double[2][getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1];
+        // massTransferCoefficientMatrix[0] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // massTransferCoefficientMatrix[1] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // totalMassTransferCoefficientMatrix[0] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // totalMassTransferCoefficientMatrix[1] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // molFractionDifference = new
+        // double[2][getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1];
     }
 
     /**
-     * <p>Constructor for ReactiveFluidBoundary.</p>
+     * <p>
+     * Constructor for ReactiveFluidBoundary.
+     * </p>
      *
      * @param flowNode a {@link neqsim.fluidMechanics.flowNode.FlowNodeInterface} object
      */
@@ -60,12 +71,17 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         Jac = new Matrix(neq, neq);
         fvec = new Matrix(neq, 1);
 
-//        massTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        massTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        totalMassTransferCoefficientMatrix[0] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        totalMassTransferCoefficientMatrix[1] = new Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
-//        interphaseSystem =  (SystemInterface) bulkSystem.clone();
-//        molFractionDifference = new double[2][getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1];
+        // massTransferCoefficientMatrix[0] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // massTransferCoefficientMatrix[1] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // totalMassTransferCoefficientMatrix[0] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // totalMassTransferCoefficientMatrix[1] = new
+        // Matrix(getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1,getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1);
+        // interphaseSystem = (SystemInterface) bulkSystem.clone();
+        // molFractionDifference = new
+        // double[2][getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()-1];
     }
 
     /** {@inheritDoc} */
@@ -82,54 +98,58 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         return clonedSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setfvecMassTrans() {
+    public void setfvecMassTrans() {
         double sumx = 0, sumy = 0;
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
-            fvec.set(i, 0,
-                    Math.log((interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+            fvec.set(i, 0, Math.log(
+                    (interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
                             * interphaseSystem.getPhases()[0].getComponents()[i].getx()))
-                            - Math.log((interphaseSystem.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                                    * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
+                    - Math.log((interphaseSystem.getPhases()[1].getComponents()[i]
+                            .getFugasityCoeffisient()
+                            * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
             sumx += interphaseSystem.getPhases()[0].getComponents()[i].getx();
             sumy += interphaseSystem.getPhases()[1].getComponents()[i].getx();
-
         }
         fvec.set(bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1, 0, 1 - sumx);
         fvec.set(bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0, 1 - sumy);
 
         for (int i = bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1; i < (2
                 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents()); i++) {
-            fvec.set(i, 0,
-                    (totalMassTransferCoefficientMatrix[1].get(
+            fvec.set(i, 0, (totalMassTransferCoefficientMatrix[1].get(
+                    i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1),
+                    i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1))
+                    * (bulkSystem.getPhases()[0].getComponents()[i
+                            - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)]
+                                    .getx()
+                            - interphaseSystem.getPhases()[0].getComponents()[i
+                                    - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents()
+                                            + 1)].getx())
+                    + (totalMassTransferCoefficientMatrix[0].get(
                             i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1),
                             i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1))
-                            * (bulkSystem.getPhases()[0].getComponents()[i
-                                    - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)].getx()
-                                    - interphaseSystem.getPhases()[0].getComponents()[i
-                                            - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)].getx())
-                            + (totalMassTransferCoefficientMatrix[0].get(
-                                    i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1),
-                                    i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1))
-                                    * (bulkSystem.getPhases()[1].getComponents()[i
-                                            - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)].getx()
-                                            - interphaseSystem.getPhases()[1].getComponents()[i
-                                                    - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1)]
+                            * (bulkSystem.getPhases()[1].getComponents()[i
+                                    - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents()
+                                            + 1)].getx()
+                                    - interphaseSystem.getPhases()[1].getComponents()[i
+                                            - (bulkSystem.getPhases()[0]
+                                                    .getNumberOfMolecularComponents() + 1)]
                                                             .getx()))));
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setfvecMassTrans2() {
+    public void setfvecMassTrans2() {
         double sumx = 0.0, sumy = 0.0;
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
-            fvec.set(i, 0,
-                    Math.log((interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
+            fvec.set(i, 0, Math.log(
+                    (interphaseSystem.getPhases()[0].getComponents()[i].getFugasityCoeffisient()
                             * interphaseSystem.getPhases()[0].getComponents()[i].getx()))
-                            - Math.log((interphaseSystem.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
-                                    * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
+                    - Math.log((interphaseSystem.getPhases()[1].getComponents()[i]
+                            .getFugasityCoeffisient()
+                            * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
             sumx += interphaseSystem.getPhases()[1].getComponents()[i].getx();
             sumy += interphaseSystem.getPhases()[0].getComponents()[i].getx();
         }
@@ -173,30 +193,34 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // System.out.println("xn gas flux");
         // x.transpose().times(totalFlux).print(10,10);
 
-        Matrix errX = nFlux.getMatrix(0, bulkSystem.getPhases()[1].getNumberOfMolecularComponents() - 2, 0, 0)
+        Matrix errX = nFlux
+                .getMatrix(0, bulkSystem.getPhases()[1].getNumberOfMolecularComponents() - 2, 0, 0)
                 .plus(fluxX).minus(x.transpose().times(totalFlux));
-        Matrix errY = nFlux.getMatrix(0, bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 2, 0, 0)
+        Matrix errY = nFlux
+                .getMatrix(0, bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 2, 0, 0)
                 .minus(fluxY).minus(y.transpose().times(totalFlux));
 
         for (int i = bulkSystem.getPhases()[0].getNumberOfMolecularComponents()
-                + 2; i < (2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 1); i++) {
-            fvec.set(i, 0, errX.get((i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 2)), 0));
+                + 2; i < (2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents()
+                        + 1); i++) {
+            fvec.set(i, 0, errX.get(
+                    (i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 2)), 0));
             fvec.set((i + (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1)), 0,
-                    errY.get((i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 2)), 0));
+                    errY.get((i - (bulkSystem.getPhases()[0].getNumberOfMolecularComponents() + 2)),
+                            0));
         }
 
         /*
-         * System.out.println("fvec"); fvec.print(30,30); errX.print(10,10);
-         * errY.print(10,10);
+         * System.out.println("fvec"); fvec.print(30,30); errX.print(10,10); errY.print(10,10);
          */
         // fluxX.print(10,10);
         // fluxY.print(10,10);
         // Matrix fluxY = totalMassTransferCoefficientMatrix[1]
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setJacMassTrans() {
+    public void setJacMassTrans() {
         double dij = 0, tempJ = 0;
         Jac.timesEquals(0.0);
 
@@ -238,7 +262,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         for (int i = bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i < 2
                 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1; i++) {
             for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); j++) {
-                dij = i == (j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents()) ? 1.0 : 0.0;
+                dij = i == (j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents()) ? 1.0
+                        : 0.0;
                 tempJ = -dij * (totalMassTransferCoefficientMatrix[1].get(
                         i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
                         i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()));
@@ -259,9 +284,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setJacMassTrans2() {
+    public void setJacMassTrans2() {
         double dij = 0, tempJ = 0;
         Jac.timesEquals(0.0);
 
@@ -297,7 +322,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         for (int i = bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i < 2
                 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1; i++) {
             for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); j++) {
-                dij = i == (j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents()) ? 1.0 : 0.0;
+                dij = i == (j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents()) ? 1.0
+                        : 0.0;
                 // tempJ =
                 // -dij*(totalMassTransferCoefficientMatrix[1].get(i-bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
                 // i-bulkSystem.getPhases()[0].getNumberOfMolecularComponents()));
@@ -308,14 +334,16 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
                 // interphaseSystem.getPhases()[0].getComponents()[i-bulkSystem.getPhases()[0].getNumberOfMolecularComponents()].getx());
                 if (j != bulkSystem.getPhases()[0].getNumberOfMolecularComponents() - 1) {
                     Jac.set(i + 2, j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
-                            -totalMassTransferCoefficientMatrix[1]
-                                    .get(i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), j)
+                            -totalMassTransferCoefficientMatrix[1].get(
+                                    i - bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
+                                    j)
                                     * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
                                     / bulkSystem.getPhases()[1].getMolarMass());// tempJ);
                 }
                 Jac.set(i + 2, j + 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
                         dij - bulkSystem.getPhases()[1].getComponents()[i
-                                - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()].getx());
+                                - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()]
+                                        .getx());
             }
         }
 
@@ -341,7 +369,8 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
                 Jac.set(i + 1 + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
                         j + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(),
                         dij - bulkSystem.getPhases()[0].getComponents()[i
-                                - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()].getx());
+                                - bulkSystem.getPhases()[0].getNumberOfMolecularComponents()]
+                                        .getx());
             }
         }
         // System.out.println("jac");
@@ -349,9 +378,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // totalMassTransferCoefficientMatrix[0].print(20,20);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setuMassTrans() {
+    public void setuMassTrans() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
             // System.out.println("i");
             uMassTrans.set(i, 0, interphaseSystem.getPhases()[0].getComponents()[i].getx());
@@ -361,29 +390,32 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
 
         for (int i = 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i < 3
                 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
-            uMassTrans.set(i, 0, nFlux.get(i - 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0));
+            uMassTrans.set(i, 0, nFlux
+                    .get(i - 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0));
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void updateMassTrans() {
+    public void updateMassTrans() {
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
             interphaseSystem.getPhases()[0].getComponents()[i].setx(uMassTrans.get(i, 0));
-            interphaseSystem.getPhases()[1].getComponents()[i]
-                    .setx(uMassTrans.get(i + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0));
+            interphaseSystem.getPhases()[1].getComponents()[i].setx(uMassTrans
+                    .get(i + bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0));
         }
 
         for (int i = 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i < 3
                 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
-            nFlux.set(i - 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0, uMassTrans.get(i, 0));
+            nFlux.set(i - 2 * bulkSystem.getPhases()[0].getNumberOfMolecularComponents(), 0,
+                    uMassTrans.get(i, 0));
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calcMolFractionDifference() {
-        for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfMolecularComponents() - 1; i++) {
+    public void calcMolFractionDifference() {
+        for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfMolecularComponents()
+                - 1; i++) {
             molFractionDifference[0][i] = bulkSystem.getPhases()[0].getComponents()[i].getx()
                     - interphaseSystem.getPhases()[0].getComponents()[i].getx();
             molFractionDifference[1][i] = bulkSystem.getPhases()[1].getComponents()[i].getx()
@@ -391,9 +423,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calcHeatTransferCoeffisients(int phase) {
+    public void calcHeatTransferCoeffisients(int phase) {
         prandtlNumber[phase] = getBulkSystem().getPhases()[phase].getCp()
                 * getBulkSystem().getPhases()[phase].getPhysicalProperties().getViscosity()
                 / getBulkSystem().getPhases()[phase].getPhysicalProperties().getConductivity();
@@ -401,9 +433,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
                 .calcInterphaseHeatTransferCoefficient(phase, prandtlNumber[phase], flowNode);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calcHeatTransferCorrection(int phase) {
+    public void calcHeatTransferCorrection(int phase) {
         double temp = 0;
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
             temp += bulkSystem.getPhases()[0].getComponents()[i].getNumberOfMolesInPhase()
@@ -412,28 +444,28 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         heatTransferCorrection[phase] = temp;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void initMassTransferCalc() {
+    public void initMassTransferCalc() {
         super.initMassTransferCalc();
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void initHeatTransferCalc() {
+    public void initHeatTransferCalc() {
         super.initHeatTransferCalc();
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init() {
+    public void init() {
         calcMolFractionDifference();
         super.init();
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void heatTransSolve() {
+    public void heatTransSolve() {
         double f = 0;
         double df = 0;
         double dhtot = 0.0;
@@ -447,9 +479,11 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
             }
 
             f = heatTransferCoefficient[0] * heatTransferCorrection[0]
-                    * (bulkSystem.getPhases()[0].getTemperature() - interphaseSystem.getTemperature())
+                    * (bulkSystem.getPhases()[0].getTemperature()
+                            - interphaseSystem.getTemperature())
                     + heatTransferCoefficient[1] * heatTransferCorrection[1]
-                            * (bulkSystem.getPhases()[1].getTemperature() - interphaseSystem.getTemperature())
+                            * (bulkSystem.getPhases()[1].getTemperature()
+                                    - interphaseSystem.getTemperature())
                     + dhtot;
 
             df = -heatTransferCoefficient[0] * heatTransferCorrection[0]
@@ -461,12 +495,11 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
             // System.out.println("gas temp " + bulkSystem.getPhases()[0].getTemperature());
             // System.out.println("liq temp " + bulkSystem.getPhases()[1].getTemperature());
         } while (Math.abs(f) > 1e-10);
-
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void massTransSolve() {
+    public void massTransSolve() {
         int iter = 0;
         setuMassTrans();
 
@@ -490,9 +523,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         // uMassTrans.print(30,30);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double[] calcFluxes() {
+    public double[] calcFluxes() {
         double sum = 0.0;
         // System.out.println("starter...");
         for (int i = 0; i < bulkSystem.getPhases()[0].getNumberOfMolecularComponents(); i++) {
@@ -504,7 +537,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
     }
 
     /**
-     * <p>calcFluxes2.</p>
+     * <p>
+     * calcFluxes2.
+     * </p>
      *
      * @return an array of {@link double} objects
      */
@@ -520,9 +555,9 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
         return nFlux.transpose().getArray()[0];
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void solve() {
+    public void solve() {
         int iterOuter = 0;
         double totalFluxOld = totalFlux;
         do {
@@ -541,7 +576,5 @@ public abstract class ReactiveFluidBoundary extends KrishnaStandartFilmModel {
 
         // System.out.println("iterOuter " +iterOuter);
         init();
-
     }
-
 }

@@ -17,11 +17,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentKentEisenberg extends ComponentGeNRTL {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentKentEisenberg.</p>
+     * <p>
+     * Constructor for ComponentKentEisenberg.
+     * </p>
      */
     public ComponentKentEisenberg() {}
 
@@ -62,5 +63,4 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
         // System.out.println("gamma " + gamma);
         return fugasityCoeffisient;
     }
-
 }

@@ -7,9 +7,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>StoneWallCurve class.</p>
+ * <p>
+ * StoneWallCurve class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class StoneWallCurve implements java.io.Serializable {
@@ -23,7 +25,9 @@ public class StoneWallCurve implements java.io.Serializable {
     PolynomialFunction flowFitterFunc = null;
 
     /**
-     * <p>Constructor for StoneWallCurve.</p>
+     * <p>
+     * Constructor for StoneWallCurve.
+     * </p>
      */
     public StoneWallCurve() {
         // flow = new double[] {453.2, 600.0, 750.0};
@@ -31,7 +35,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>Constructor for StoneWallCurve.</p>
+     * <p>
+     * Constructor for StoneWallCurve.
+     * </p>
      *
      * @param flow an array of {@link double} objects
      * @param head an array of {@link double} objects
@@ -42,7 +48,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>setCurve.</p>
+     * <p>
+     * setCurve.
+     * </p>
      *
      * @param chartConditions an array of {@link double} objects
      * @param flow an array of {@link double} objects
@@ -59,7 +67,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>getStoneWallFlow.</p>
+     * <p>
+     * getStoneWallFlow.
+     * </p>
      *
      * @param head a double
      * @return a double
@@ -69,7 +79,9 @@ public class StoneWallCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>isStoneWall.</p>
+     * <p>
+     * isStoneWall.
+     * </p>
      *
      * @param head a double
      * @param flow a double

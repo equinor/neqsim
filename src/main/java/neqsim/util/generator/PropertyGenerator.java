@@ -5,19 +5,22 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>PropertyGenerator class.</p>
+ * <p>
+ * PropertyGenerator class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class PropertyGenerator {
-
     double[] temperatures, pressures;
     SystemInterface fluid = null;
     HashMap<String, double[]> properties = new HashMap<String, double[]>();
 
     /**
-     * <p>Constructor for PropertyGenerator.</p>
+     * <p>
+     * Constructor for PropertyGenerator.
+     * </p>
      *
      * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
      * @param temperatures an array of {@link double} objects
@@ -30,7 +33,9 @@ public class PropertyGenerator {
     }
 
     /**
-     * <p>calculate.</p>
+     * <p>
+     * calculate.
+     * </p>
      *
      * @return a {@link java.util.HashMap} object
      */
@@ -156,7 +161,6 @@ public class PropertyGenerator {
                 joulethomsoncoefficientGas[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
                 thermalconductivitygas[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
-
             } else {
                 molarmassGas[i] = Double.NaN;
                 ZGas[i] = Double.NaN;
@@ -175,7 +179,6 @@ public class PropertyGenerator {
                 gammaGas[i] = Double.NaN;
                 joulethomsoncoefficientGas[i] = Double.NaN;
                 thermalconductivitygas[i] = Double.NaN;
-
             }
             if (fluid.hasPhaseType("oil")) {
                 int phasenumb = fluid.getPhaseNumberOfPhase("oil");
@@ -197,7 +200,6 @@ public class PropertyGenerator {
                 joulethomsoncoefficientOil[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
                 thermalconductivityOil[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
-
             } else {
                 molarmassOil[i] = Double.NaN;
                 ZOil[i] = Double.NaN;
@@ -216,7 +218,6 @@ public class PropertyGenerator {
                 gammaOil[i] = Double.NaN;
                 joulethomsoncoefficientOil[i] = Double.NaN;
                 thermalconductivityOil[i] = Double.NaN;
-
             }
             if (fluid.hasPhaseType("aqueous")) {
                 int phasenumb = fluid.getPhaseNumberOfPhase("aqueous");
@@ -238,7 +239,6 @@ public class PropertyGenerator {
                 joulethomsoncoefficientAqueous[i] =
                         fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
                 thermalconductivityAqueous[i] = fluid.getPhase(phasenumb).getConductivity("W/mK");
-
             } else {
                 molarmassAqueous[i] = Double.NaN;
                 ZAqueous[i] = Double.NaN;
@@ -256,7 +256,6 @@ public class PropertyGenerator {
                 gammaAqueous[i] = Double.NaN;
                 joulethomsoncoefficientAqueous[i] = Double.NaN;
                 thermalconductivityAqueous[i] = Double.NaN;
-
             }
         }
         properties.put("molarmass[kg/mol]", molarmass);
@@ -337,7 +336,9 @@ public class PropertyGenerator {
      * // Displays the content of the DataFrame to stdout df.show(); }
      */
     /**
-     * <p>getValue.</p>
+     * <p>
+     * getValue.
+     * </p>
      *
      * @param propertyName a {@link java.lang.String} object
      * @return a double

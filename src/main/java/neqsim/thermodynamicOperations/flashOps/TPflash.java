@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class TPflash extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPflash.class);
 
@@ -28,7 +27,9 @@ public class TPflash extends Flash {
     double presdiff = 1.0;
 
     /**
-     * <p>Constructor for TPflash.</p>
+     * <p>
+     * Constructor for TPflash.
+     * </p>
      */
     public TPflash() {}
 
@@ -107,7 +108,6 @@ public class TPflash extends Flash {
         }
         system.calc_x_y();
         system.init(1);
-
     }
 
     /**
@@ -448,7 +448,6 @@ public class TPflash extends Flash {
                                 Math.abs(xchem[i] - system.getPhase(phase).getComponent(i).getx())
                                         / xchem[i];
                     }
-
                 }
                 diffChem = Math.abs(oldChemDiff - chemdev);
             }

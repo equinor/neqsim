@@ -8,61 +8,76 @@ package neqsim.thermo.phase;
 import neqsim.thermo.mixingRule.EosMixingRulesInterface;
 
 /**
- * <p>PhaseEosInterface interface.</p>
+ * <p>
+ * PhaseEosInterface interface.
+ * </p>
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface PhaseEosInterface extends PhaseInterface {
-
     /** {@inheritDoc} */
     @Override
     double getMolarVolume();
 
     /**
-     * <p>getMixingRule.</p>
+     * <p>
+     * getMixingRule.
+     * </p>
      *
      * @return a {@link neqsim.thermo.mixingRule.EosMixingRulesInterface} object
      */
     public EosMixingRulesInterface getMixingRule();
 
     /**
-     * <p>getMixingRuleName.</p>
+     * <p>
+     * getMixingRuleName.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
     public java.lang.String getMixingRuleName();
 
     /**
-     * <p>calcPressure.</p>
+     * <p>
+     * calcPressure.
+     * </p>
      *
      * @return a double
      */
     public double calcPressure();
 
     /**
-     * <p>calcPressuredV.</p>
+     * <p>
+     * calcPressuredV.
+     * </p>
      *
      * @return a double
      */
     public double calcPressuredV();
 
     /**
-     * <p>getPressureRepulsive.</p>
+     * <p>
+     * getPressureRepulsive.
+     * </p>
      *
      * @return a double
      */
     public double getPressureRepulsive();
 
     /**
-     * <p>getPressureAtractive.</p>
+     * <p>
+     * getPressureAtractive.
+     * </p>
      *
      * @return a double
      */
     public double getPressureAtractive();
 
     /**
-     * <p>displayInteractionCoefficients.</p>
+     * <p>
+     * displayInteractionCoefficients.
+     * </p>
      *
      * @param intType a {@link java.lang.String} object
      */
@@ -79,14 +94,18 @@ public interface PhaseEosInterface extends PhaseInterface {
     // pressure, int numbcomp);
 
     /**
-     * <p>F.</p>
+     * <p>
+     * F.
+     * </p>
      *
      * @return a double
      */
     public double F();
 
     /**
-     * <p>dFdN.</p>
+     * <p>
+     * dFdN.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -94,7 +113,9 @@ public interface PhaseEosInterface extends PhaseInterface {
     public double dFdN(int i);
 
     /**
-     * <p>dFdNdN.</p>
+     * <p>
+     * dFdNdN.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -103,7 +124,9 @@ public interface PhaseEosInterface extends PhaseInterface {
     public double dFdNdN(int i, int j);
 
     /**
-     * <p>dFdNdV.</p>
+     * <p>
+     * dFdNdV.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -111,7 +134,9 @@ public interface PhaseEosInterface extends PhaseInterface {
     public double dFdNdV(int i);
 
     /**
-     * <p>dFdNdT.</p>
+     * <p>
+     * dFdNdT.
+     * </p>
      *
      * @param i a int
      * @return a double
@@ -119,14 +144,18 @@ public interface PhaseEosInterface extends PhaseInterface {
     public double dFdNdT(int i);
 
     /**
-     * <p>getAresTV.</p>
+     * <p>
+     * getAresTV.
+     * </p>
      *
      * @return a double
      */
     public double getAresTV();
 
     /**
-     * <p>getSresTV.</p>
+     * <p>
+     * getSresTV.
+     * </p>
      *
      * @return a double
      */

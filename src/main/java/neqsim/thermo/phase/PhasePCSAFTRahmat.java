@@ -19,7 +19,6 @@ import neqsim.thermo.component.ComponentPCSAFT;
  * @version $Id: $Id
  */
 public class PhasePCSAFTRahmat extends PhasePCSAFT {
-
     private static final long serialVersionUID = 1000;
 
     double nSAFT = 1.0;
@@ -70,7 +69,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     static Logger logger = LogManager.getLogger(PhasePCSAFTRahmat.class);
 
     /**
-     * <p>Constructor for PhasePCSAFTRahmat.</p>
+     * <p>
+     * Constructor for PhasePCSAFTRahmat.
+     * </p>
      */
     public PhasePCSAFTRahmat() {
         super();
@@ -518,7 +519,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                                 2);
 
         return temp;
-
     }
 
     // added by rahmat
@@ -856,11 +856,9 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
         for (int i = 0; i < numberOfComponents; i++) {
             temp1 += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getmSAFTi()
                     * Math.pow(((ComponentPCSAFT) getComponent(i)).getdSAFTi(), 3.0);
-
         }
         // System.out.println("d saft calc " + temp/getNumberOfMolesInPhase());
         return temp1 / getNumberOfMolesInPhase();
-
     }
 
     /** {@inheritDoc} */
@@ -1029,7 +1027,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
                         * F1dispI1dVdV)
                 + (-2.0 * ThermodynamicConstantsInterface.pi * F1dispVolTerm * getF1dispSumTerm()
                         * F1dispI1dVdVdV));
-
     }
 
     // added by Rahmat
@@ -1219,7 +1216,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     /** {@inheritDoc} */
     @Override
     public double dFdVdVdV() {
-
         return (useHS * dF_HC_SAFTdVdVdV() + useDISP1 * dF_DISP1_SAFTdVdVdV()
                 + useDISP2 * dF_DISP2_SAFTdVdVdV()) * 1.0e-20;
     }
@@ -1398,7 +1394,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double BonV = phase== 0 ? 0.99:1e-5;
@@ -1487,7 +1482,6 @@ public class PhasePCSAFTRahmat extends PhasePCSAFT {
          * Btemp + "  D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
          */
         return getMolarVolume();
-
     }
 
     /** {@inheritDoc} */

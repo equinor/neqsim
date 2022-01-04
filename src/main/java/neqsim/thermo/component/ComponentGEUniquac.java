@@ -17,7 +17,6 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class ComponentGEUniquac extends ComponentGE {
-
     private static final long serialVersionUID = 1000;
 
     double r = 0, q = 0;
@@ -25,7 +24,9 @@ public class ComponentGEUniquac extends ComponentGE {
     static Logger logger = LogManager.getLogger(ComponentGEUniquac.class);
 
     /**
-     * <p>Constructor for ComponentGEUniquac.</p>
+     * <p>
+     * Constructor for ComponentGEUniquac.
+     * </p>
      */
     public ComponentGEUniquac() {}
 
@@ -76,7 +77,6 @@ public class ComponentGEUniquac extends ComponentGE {
             String err = e.toString();
             logger.error(err);
         }
-
     }
 
     /**
@@ -104,7 +104,6 @@ public class ComponentGEUniquac extends ComponentGE {
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
             double[][] intparam, String[][] mixRule) {
-
         return 0.0;
     }
 

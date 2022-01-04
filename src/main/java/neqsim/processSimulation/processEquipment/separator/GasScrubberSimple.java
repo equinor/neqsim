@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class GasScrubberSimple extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -29,7 +28,9 @@ public class GasScrubberSimple extends Separator {
     String name = new String();
 
     /**
-     * <p>Constructor for GasScrubberSimple.</p>
+     * <p>
+     * Constructor for GasScrubberSimple.
+     * </p>
      */
     public GasScrubberSimple() {
         super();
@@ -115,7 +116,6 @@ public class GasScrubberSimple extends Separator {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
         thermoOps.TPflash();

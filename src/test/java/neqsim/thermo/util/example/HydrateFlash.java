@@ -7,9 +7,11 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HydrateFlash class.</p>
+ * <p>
+ * HydrateFlash class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -17,7 +19,9 @@ public class HydrateFlash {
     static Logger logger = LogManager.getLogger(HydrateFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -128,7 +132,6 @@ public class HydrateFlash {
             // testOps.bubblePointPressureFlash(false);
             // testOps.hydrateFormationTemperature(1);
             // testOps.waterPrecipitationTemperature();
-
         } catch (Exception e) {
             logger.error(e.toString(), e);
         }

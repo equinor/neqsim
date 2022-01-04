@@ -18,12 +18,13 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class PhysicalPropertyMethod implements PhysicalPropertyMethodInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMethod.class);
 
     /**
-     * <p>Constructor for PhysicalPropertyMethod.</p>
+     * <p>
+     * Constructor for PhysicalPropertyMethod.
+     * </p>
      */
     public PhysicalPropertyMethod() {}
 

@@ -17,12 +17,11 @@ import neqsim.thermo.system.SystemSrkEos;
  * interpolation to navigate the compressor map (as opposed to the standard class using reduced
  * variables according to Fan laws).
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class CompressorChartAlternativeMapLookup
         implements CompressorChartInterface, java.io.Serializable {
-
     static Logger logger = LogManager.getLogger(CompressorChart.class);
     ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
     ArrayList<Double> chartSpeeds = new ArrayList<Double>();
@@ -68,7 +67,6 @@ public class CompressorChartAlternativeMapLookup
     @Override
     public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
             double[][] head, double[][] polyEff) {
-
         for (int i = 0; i < speed.length; i++) {
             CompressorCurve curve = new CompressorCurve(speed[i], flow[i], head[i], polyEff[i]);
             chartValues.add(curve);
@@ -87,7 +85,6 @@ public class CompressorChartAlternativeMapLookup
      * @return a {@link java.util.ArrayList} object
      */
     public ArrayList<Double> getClosestRefSpeeds(double speed) {
-
         ArrayList<Double> closestRefSpeeds = new ArrayList<Double>();
         Double[] speedArray = new Double[chartSpeeds.size()];
         speedArray = chartSpeeds.toArray(speedArray);
@@ -113,7 +110,6 @@ public class CompressorChartAlternativeMapLookup
                 closestRefSpeeds.add(speedArray[pos - 1]);
                 closestRefSpeeds.add(speedArray[pos]);
             }
-
         }
         return closestRefSpeeds;
     }
@@ -243,7 +239,6 @@ public class CompressorChartAlternativeMapLookup
     /** {@inheritDoc} */
     @Override
     public int getSpeed(double flow, double head) {
-
         int iter = 1;
         double error = 1.0, derrordspeed = 1.0;
         double newspeed = referenceSpeed;
@@ -551,8 +546,5 @@ public class CompressorChartAlternativeMapLookup
 
     /** {@inheritDoc} */
     @Override
-    public void plot() {
-
-    }
-
+    public void plot() {}
 }

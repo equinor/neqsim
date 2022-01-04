@@ -1,9 +1,11 @@
 package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhasePipeFlowSystem;
 
 /**
- * <p>TwoPhasePipeFlowSystem class.</p>
+ * <p>
+ * TwoPhasePipeFlowSystem class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class TwoPhasePipeFlowSystem
@@ -11,7 +13,9 @@ public class TwoPhasePipeFlowSystem
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TwoPhasePipeFlowSystem.</p>
+     * <p>
+     * Constructor for TwoPhasePipeFlowSystem.
+     * </p>
      */
     public TwoPhasePipeFlowSystem() {}
 
@@ -99,7 +103,9 @@ public class TwoPhasePipeFlowSystem
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

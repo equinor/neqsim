@@ -19,7 +19,6 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version $Id: $Id
  */
 public class FlowSystemVisualization implements FlowSystemVisualizationInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeVisualizationInterface[][] flowNodes;
@@ -28,7 +27,9 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     protected double[] absTime;
 
     /**
-     * <p>Constructor for FlowSystemVisualization.</p>
+     * <p>
+     * Constructor for FlowSystemVisualization.
+     * </p>
      */
     public FlowSystemVisualization() {}
 
@@ -94,5 +95,4 @@ public class FlowSystemVisualization implements FlowSystemVisualizationInterface
     /** {@inheritDoc} */
     @Override
     public void displayResult(String name) {}
-
 }

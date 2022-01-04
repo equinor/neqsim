@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Stream extends ProcessEquipmentBaseClass implements StreamInterface, Cloneable {
-
     /**
      * <p>
      * Getter for the field <code>gasQuality</code>.
@@ -53,7 +52,9 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     protected StreamInterface stream = null;
 
     /**
-     * <p>Constructor for Stream.</p>
+     * <p>
+     * Constructor for Stream.
+     * </p>
      */
     public Stream() {}
 
@@ -479,7 +480,6 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public Object getProperty(String propertyName, String unit, String phase, String component) {
         // getFluid().getProperties.containsKey(propertyName)) {
         // if(properties.containsKey(propertyName)) {
-
         // }
         // else
         return null;
@@ -518,5 +518,4 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     public void setStream(StreamInterface stream) {
         this.stream = stream;
     }
-
 }

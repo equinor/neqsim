@@ -26,14 +26,15 @@ import org.jfree.data.xy.XYSeriesCollection;
  * @version $Id: $Id
  */
 public class graph2b extends javax.swing.JFrame {
-
     private static final long serialVersionUID = 1000;
 
     XYDataset xyData;
     String titl, xaxtitle, yaxtitle;
 
     /**
-     * <p>Constructor for graph2b.</p>
+     * <p>
+     * Constructor for graph2b.
+     * </p>
      */
     public graph2b() {
         initComponents();
@@ -142,7 +143,6 @@ public class graph2b extends javax.swing.JFrame {
      */
     public graph2b(double[][] xpoints, double[][] points, String[] seriesNames, String tit,
             String xaxis, String yaxis) {
-
         XYSeriesCollection seriesCol = new XYSeriesCollection();
 
         for (int serLen = 0; serLen < points.length; serLen++) {
@@ -236,7 +236,6 @@ public class graph2b extends javax.swing.JFrame {
         getContentPane().add(jTextPane1, java.awt.BorderLayout.NORTH);
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
-
     }// GEN-END:initComponents
 
     private void exit(java.awt.event.WindowEvent evt) {// GEN-FIRST:event_exit

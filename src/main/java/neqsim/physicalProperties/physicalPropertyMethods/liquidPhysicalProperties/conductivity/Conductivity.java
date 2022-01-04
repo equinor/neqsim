@@ -20,7 +20,6 @@ public class Conductivity extends
         neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ConductivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Conductivity.class);
 
@@ -28,7 +27,9 @@ public class Conductivity extends
     public double[] pureComponentConductivity;
 
     /**
-     * <p>Constructor for Conductivity.</p>
+     * <p>
+     * Constructor for Conductivity.
+     * </p>
      */
     public Conductivity() {}
 

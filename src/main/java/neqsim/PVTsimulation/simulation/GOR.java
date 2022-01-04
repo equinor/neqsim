@@ -4,13 +4,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>GOR class.</p>
+ * <p>
+ * GOR class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class GOR extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double[] temperature = null;
@@ -21,7 +22,9 @@ public class GOR extends BasePVTsimulation {
     double oilVolumeStdCond = 0;
 
     /**
-     * <p>Constructor for GOR.</p>
+     * <p>
+     * Constructor for GOR.
+     * </p>
      *
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -34,20 +37,22 @@ public class GOR extends BasePVTsimulation {
     }
 
     /**
-     * <p>setTemperaturesAndPressures.</p>
+     * <p>
+     * setTemperaturesAndPressures.
+     * </p>
      *
      * @param temperature an array of {@link double} objects
      * @param pressure an array of {@link double} objects
      */
     public void setTemperaturesAndPressures(double[] temperature, double[] pressure) {
-
         this.pressure = pressure;
         this.temperature = temperature;
-
     }
 
     /**
-     * <p>runCalc.</p>
+     * <p>
+     * runCalc.
+     * </p>
      */
     public void runCalc() {
         Sm3gas = new double[pressure.length];
@@ -88,7 +93,9 @@ public class GOR extends BasePVTsimulation {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -123,15 +130,16 @@ public class GOR extends BasePVTsimulation {
         tempSystem.setMixingRule(2);
 
         GOR sepSim = new GOR(tempSystem);
-        double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
-        double[] pres = { 500, 400, 200, 100, 50.0, 5.0, 1.01325 };
+        double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
+        double[] pres = {500, 400, 200, 100, 50.0, 5.0, 1.01325};
         sepSim.setTemperaturesAndPressures(temps, pres);
         sepSim.runCalc();
-
     }
 
     /**
-     * <p>getGOR.</p>
+     * <p>
+     * getGOR.
+     * </p>
      *
      * @return the GOR
      */
@@ -140,7 +148,9 @@ public class GOR extends BasePVTsimulation {
     }
 
     /**
-     * <p>getBofactor.</p>
+     * <p>
+     * getBofactor.
+     * </p>
      *
      * @return the Bofactor
      */

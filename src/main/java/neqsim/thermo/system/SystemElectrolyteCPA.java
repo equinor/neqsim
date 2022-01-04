@@ -18,11 +18,12 @@ import neqsim.thermo.util.constants.FurstElectrolyteConstants;
  * This class defines a thermodynamic system using the Electrolyte CPA EoS of Equinor
  */
 public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for SystemElectrolyteCPA.</p>
+     * <p>
+     * Constructor for SystemElectrolyteCPA.
+     * </p>
      */
     public SystemElectrolyteCPA() {
         super();
@@ -72,5 +73,4 @@ public class SystemElectrolyteCPA extends SystemFurstElectrolyteEos {
 
         return clonedSystem;
     }
-
 }

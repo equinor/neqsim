@@ -5,18 +5,20 @@ package neqsim.thermo.util.parameterFitting.Procede.Density;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>RackettZ class.</p>
+ * <p>
+ * RackettZ class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class RackettZ extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
-
     /**
-     * <p>Constructor for RackettZ.</p>
+     * <p>
+     * Constructor for RackettZ.
+     * </p>
      */
     public RackettZ() {
         params = new double[1];
@@ -44,5 +46,4 @@ public class RackettZ extends LevenbergMarquardtFunction {
             system.getPhases()[1].getComponents()[0].setRacketZ(value);
         }
     }
-
 }

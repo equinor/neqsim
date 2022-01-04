@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     double Wi = 0, WiT = 0.0, epsi = 0, epsiV = 0, epsIonici = 0, epsIoniciV = 0, dEpsdNi = 0,
@@ -28,7 +27,9 @@ public class ComponentModifiedFurstElectrolyteEos extends ComponentSrk {
     double sr2On = 1.0, lrOn = 1.0, bornOn = 1.0;
 
     /**
-     * <p>Constructor for ComponentModifiedFurstElectrolyteEos.</p>
+     * <p>
+     * Constructor for ComponentModifiedFurstElectrolyteEos.
+     * </p>
      */
     public ComponentModifiedFurstElectrolyteEos() {}
 

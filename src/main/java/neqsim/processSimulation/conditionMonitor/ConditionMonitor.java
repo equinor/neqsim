@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
- * <p>ConditionMonitor class.</p>
+ * <p>
+ * ConditionMonitor class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class ConditionMonitor implements java.io.Serializable, Runnable {
@@ -16,14 +18,16 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     String report;
 
     /**
-     * <p>Constructor for ConditionMonitor.</p>
+     * <p>
+     * Constructor for ConditionMonitor.
+     * </p>
      */
-    public ConditionMonitor() {
-
-    }
+    public ConditionMonitor() {}
 
     /**
-     * <p>Constructor for ConditionMonitor.</p>
+     * <p>
+     * Constructor for ConditionMonitor.
+     * </p>
      *
      * @param refprocess a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
@@ -33,21 +37,26 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     }
 
     /**
-     * <p>conditionAnalysis.</p>
+     * <p>
+     * conditionAnalysis.
+     * </p>
      *
      * @param unitName a {@link java.lang.String} object
      */
     public void conditionAnalysis(String unitName) {
-        neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass refUn = (neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass) refprocess
-                .getUnit(unitName);
-        ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
-                .runConditionAnalysis(refUn);
-        report += ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process.getUnit(unitName))
-                .getConditionAnalysisMessage();
+        neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass refUn =
+                (neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass) refprocess
+                        .getUnit(unitName);
+        ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process
+                .getUnit(unitName)).runConditionAnalysis(refUn);
+        report += ((neqsim.processSimulation.processEquipment.ProcessEquipmentInterface) process
+                .getUnit(unitName)).getConditionAnalysisMessage();
     }
 
     /**
-     * <p>conditionAnalysis.</p>
+     * <p>
+     * conditionAnalysis.
+     * </p>
      */
     public void conditionAnalysis() {
         ArrayList<String> names = process.getAllUnitNames();
@@ -55,18 +64,22 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
             conditionAnalysis(names.get(i));
         }
     }
-    
+
     /**
-     * <p>Getter for the field <code>report</code>.</p>
+     * <p>
+     * Getter for the field <code>report</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
     public String getReport() {
-    	return report;
+        return report;
     }
 
     /**
-     * <p>Getter for the field <code>process</code>.</p>
+     * <p>
+     * Getter for the field <code>process</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processSystem.ProcessSystem} object
      */
@@ -79,5 +92,4 @@ public class ConditionMonitor implements java.io.Serializable, Runnable {
     public void run() {
         process = refprocess.copy();
     }
-
 }

@@ -15,14 +15,15 @@ package neqsim.util.unit;
  * @version $Id: $Id
  */
 public class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected double SIvalue = 0.0, invalue = 0.0, factor = 1.0;
     protected String inunit = null;
 
     /**
-     * <p>Constructor for BaseUnit.</p>
+     * <p>
+     * Constructor for BaseUnit.
+     * </p>
      */
     public BaseUnit() {}
 
@@ -56,5 +57,4 @@ public class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConstantsInter
     public double getValue(double val, String fromunit, String tounit) {
         return 0.0;
     }
-
 }

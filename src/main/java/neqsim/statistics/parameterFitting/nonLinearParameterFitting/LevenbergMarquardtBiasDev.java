@@ -15,11 +15,12 @@ package neqsim.statistics.parameterFitting.nonLinearParameterFitting;
  * @version $Id: $Id
  */
 public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for LevenbergMarquardtBiasDev.</p>
+     * <p>
+     * Constructor for LevenbergMarquardtBiasDev.
+     * </p>
      */
     public LevenbergMarquardtBiasDev() {
         super();
@@ -43,7 +44,6 @@ public class LevenbergMarquardtBiasDev extends LevenbergMarquardt {
     public double calcChiSquare() {
         double chiSquare = 0;
         for (int i = 0; i < sampleSet.getLength(); i++) {
-
             chiSquare += (sampleSet.getSample(i).getSampleValue()
                     - this.calcValue(sampleSet.getSample(i)))
                     / sampleSet.getSample(i).getStandardDeviation();

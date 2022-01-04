@@ -9,13 +9,14 @@ package neqsim.standards.salesContract;
 import neqsim.standards.StandardInterface;
 
 /**
- * <p>ContractSpecification class.</p>
+ * <p>
+ * ContractSpecification class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class ContractSpecification {
-
     private static final long serialVersionUID = 1000;
 
     StandardInterface standard = null;
@@ -32,11 +33,12 @@ public class ContractSpecification {
     /**
      * Creates a new instance of ContractSpecification
      */
-    public ContractSpecification() {
-    }
+    public ContractSpecification() {}
 
     /**
-     * <p>Constructor for ContractSpecification.</p>
+     * <p>
+     * Constructor for ContractSpecification.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param description a {@link java.lang.String} object
@@ -52,8 +54,9 @@ public class ContractSpecification {
      * @param comments a {@link java.lang.String} object
      */
     public ContractSpecification(String name, String description, String country, String terminal,
-            StandardInterface standard, double minValue, double maxValue, String unit, double referenceTemperature,
-            double referenceTemperatureComb, double referencePressure, String comments) {
+            StandardInterface standard, double minValue, double maxValue, String unit,
+            double referenceTemperature, double referenceTemperatureComb, double referencePressure,
+            String comments) {
         this.name = name;
         this.country = country;
         this.terminal = terminal;
@@ -114,7 +117,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>minValue</code>.</p>
+     * <p>
+     * Setter for the field <code>minValue</code>.
+     * </p>
      *
      * @param minValue a double
      */
@@ -123,7 +128,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>maxValue</code>.</p>
+     * <p>
+     * Getter for the field <code>maxValue</code>.
+     * </p>
      *
      * @return a double
      */
@@ -132,7 +139,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>maxValue</code>.</p>
+     * <p>
+     * Setter for the field <code>maxValue</code>.
+     * </p>
      *
      * @param maxValue a double
      */
@@ -141,7 +150,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>unit</code>.</p>
+     * <p>
+     * Getter for the field <code>unit</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -150,7 +161,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>unit</code>.</p>
+     * <p>
+     * Setter for the field <code>unit</code>.
+     * </p>
      *
      * @param unit a {@link java.lang.String} object
      */
@@ -159,7 +172,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>referenceTemperatureMeasurement</code>.</p>
+     * <p>
+     * Getter for the field <code>referenceTemperatureMeasurement</code>.
+     * </p>
      *
      * @return a double
      */
@@ -168,7 +183,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>referenceTemperatureMeasurement</code>.</p>
+     * <p>
+     * Setter for the field <code>referenceTemperatureMeasurement</code>.
+     * </p>
      *
      * @param referenceTemperature a double
      */
@@ -177,7 +194,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>referencePressure</code>.</p>
+     * <p>
+     * Getter for the field <code>referencePressure</code>.
+     * </p>
      *
      * @return a double
      */
@@ -186,7 +205,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>referencePressure</code>.</p>
+     * <p>
+     * Setter for the field <code>referencePressure</code>.
+     * </p>
      *
      * @param referencePressure a double
      */
@@ -195,7 +216,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>comments</code>.</p>
+     * <p>
+     * Getter for the field <code>comments</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -204,7 +227,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>comments</code>.</p>
+     * <p>
+     * Setter for the field <code>comments</code>.
+     * </p>
      *
      * @param comments a {@link java.lang.String} object
      */
@@ -213,7 +238,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>name</code>.</p>
+     * <p>
+     * Getter for the field <code>name</code>.
+     * </p>
      *
      * @return the name
      */
@@ -222,7 +249,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>name</code>.</p>
+     * <p>
+     * Setter for the field <code>name</code>.
+     * </p>
      *
      * @param name the name to set
      */
@@ -231,7 +260,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>referenceTemperatureCombustion</code>.</p>
+     * <p>
+     * Getter for the field <code>referenceTemperatureCombustion</code>.
+     * </p>
      *
      * @return the referenceTemperatureCombustion
      */
@@ -240,17 +271,20 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>referenceTemperatureCombustion</code>.</p>
+     * <p>
+     * Setter for the field <code>referenceTemperatureCombustion</code>.
+     * </p>
      *
-     * @param referenceTemperatureCombustion the referenceTemperatureCombustion to
-     *                                       set
+     * @param referenceTemperatureCombustion the referenceTemperatureCombustion to set
      */
     public void setReferenceTemperatureCombustion(double referenceTemperatureCombustion) {
         this.referenceTemperatureCombustion = referenceTemperatureCombustion;
     }
 
     /**
-     * <p>Getter for the field <code>country</code>.</p>
+     * <p>
+     * Getter for the field <code>country</code>.
+     * </p>
      *
      * @return the country
      */
@@ -259,7 +293,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>country</code>.</p>
+     * <p>
+     * Setter for the field <code>country</code>.
+     * </p>
      *
      * @param country the country to set
      */
@@ -268,7 +304,9 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Getter for the field <code>terminal</code>.</p>
+     * <p>
+     * Getter for the field <code>terminal</code>.
+     * </p>
      *
      * @return the terminal
      */
@@ -277,12 +315,13 @@ public class ContractSpecification {
     }
 
     /**
-     * <p>Setter for the field <code>terminal</code>.</p>
+     * <p>
+     * Setter for the field <code>terminal</code>.
+     * </p>
      *
      * @param terminal the terminal to set
      */
     public void setTerminal(String terminal) {
         this.terminal = terminal;
     }
-
 }

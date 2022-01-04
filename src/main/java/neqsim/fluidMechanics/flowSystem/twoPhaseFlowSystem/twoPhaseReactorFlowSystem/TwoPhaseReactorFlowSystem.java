@@ -2,11 +2,12 @@ package neqsim.fluidMechanics.flowSystem.twoPhaseFlowSystem.twoPhaseReactorFlowS
 
 import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.twoPhaseFlowVisualization.twoPhasePipeFlowVisualization.TwoPhasePipeFlowVisualization;
 
-
 /**
- * <p>TwoPhaseReactorFlowSystem class.</p>
+ * <p>
+ * TwoPhaseReactorFlowSystem class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class TwoPhaseReactorFlowSystem
@@ -14,7 +15,9 @@ public class TwoPhaseReactorFlowSystem
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TwoPhaseReactorFlowSystem.</p>
+     * <p>
+     * Constructor for TwoPhaseReactorFlowSystem.
+     * </p>
      */
     public TwoPhaseReactorFlowSystem() {}
 
@@ -91,7 +94,9 @@ public class TwoPhaseReactorFlowSystem
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

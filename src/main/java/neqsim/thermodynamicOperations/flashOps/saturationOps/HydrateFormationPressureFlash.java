@@ -17,16 +17,17 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateFormationPressureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFormationPressureFlash.class);
 
     /**
-     * <p>Constructor for HydrateFormationPressureFlash.</p>
+     * <p>
+     * Constructor for HydrateFormationPressureFlash.
+     * </p>
      */
     public HydrateFormationPressureFlash() {}
 
@@ -91,5 +92,4 @@ public class HydrateFormationPressureFlash extends constantDutyTemperatureFlash 
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
 }

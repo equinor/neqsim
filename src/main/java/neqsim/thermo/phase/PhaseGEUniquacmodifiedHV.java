@@ -15,11 +15,12 @@ package neqsim.thermo.phase;
  * @version $Id: $Id
  */
 public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseGEUniquacmodifiedHV.</p>
+     * <p>
+     * Constructor for PhaseGEUniquacmodifiedHV.
+     * </p>
      */
     public PhaseGEUniquacmodifiedHV() {
         super();
@@ -50,5 +51,4 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
         return R * temperature * GE * numberOfMolesInPhase;
     }
-
 }

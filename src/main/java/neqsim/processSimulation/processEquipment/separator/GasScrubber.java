@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GasScrubber extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -32,7 +31,9 @@ public class GasScrubber extends Separator {
     String name = new String();
 
     /**
-     * <p>Constructor for GasScrubber.</p>
+     * <p>
+     * Constructor for GasScrubber.
+     * </p>
      */
     public GasScrubber() {
         super();

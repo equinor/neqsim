@@ -26,7 +26,6 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  */
 public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         implements PhaseCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     public CPAMixing cpaSelect = new CPAMixing();
@@ -54,11 +53,12 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     static Logger logger = LogManager.getLogger(PhaseElectrolyteCPA.class);
 
     /**
-     * <p>Constructor for PhaseElectrolyteCPA.</p>
+     * <p>
+     * Constructor for PhaseElectrolyteCPA.
+     * </p>
      */
     public PhaseElectrolyteCPA() {
         super();
-
     }
 
     /** {@inheritDoc} */
@@ -81,7 +81,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public void setMixingRule(int type) {
         super.setMixingRule(type);
         cpamix = cpaSelect.getMixingRule(1, this);
-
     }
 
     /** {@inheritDoc} */
@@ -743,7 +742,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             }
             // System.out.println("corrmatrix error " );
             // System.out.println("error " + corrMatrix.norm1());
-
         } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
         // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
@@ -779,7 +777,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                             getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j]
                                     * ((ComponentCPAInterface) getComponent(moleculeNumber[j]))
                                             .getXsite()[assSiteNumber[j]];
-
                 }
                 neeval = 1.0 / (1.0 + 1.0 / getTotalVolume() * neeval);
                 ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i],
@@ -893,7 +890,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         // file.createFile();
         if (phase == 1) {
             return solvedBonVlow;
-
         } else {
             return solvedBonVHigh;
         }
@@ -904,7 +900,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public double molarVolume2(double pressure, double temperature, double A, double B,
             int phasetype) throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double[][] calcRootVolFinder = calcRootVolFinder();
@@ -987,7 +982,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                             ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
-
             }
 
             if (BonV < 0) {
@@ -1033,7 +1027,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public double molarVolume(double pressure, double temperature, double A, double B,
             int phasetype) throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phasetype == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // if (pressure > 1000) {
@@ -1063,7 +1056,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         int iterations = 0;
 
         do {
-
             iterations++;
             volInit();
             gcpa = calc_g();
@@ -1125,7 +1117,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                     // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
                     // temperature * R);
                 }
-
             } else if (BonV < 0) {
                 if (iterations < 3) {
                     BonV = Math.abs(BonVold + BonV) / 2.0;
@@ -1138,7 +1129,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             }
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-
         } while ((Math.abs((BonV - BonVold) / BonV) > 1.0e-10 || Math.abs(h) > 1e-9)
                 && iterations < 100);
 
@@ -1185,7 +1175,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     public double molarVolumeChangePhase(double pressure, double temperature, double A, double B,
             int phasetype) throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         // double BonV = phasetype == 1 ? 2.0 / (2.0 + temperature /
         // getPseudoCriticalTemperature()) : pressure * getB() / (numberOfMolesInPhase *
         // temperature * R);
@@ -1267,7 +1256,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
                             ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                             : pressure * getB() / (numberOfMolesInPhase * temperature * R);
                 }
-
             }
 
             if (BonV < 0) {
@@ -1386,7 +1374,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
             }
         }
         return result;
-
     }
 
     /** {@inheritDoc} */

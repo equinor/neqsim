@@ -15,11 +15,12 @@ package neqsim.dataPresentation;
  * @version $Id: $Id
  */
 public class userInterface implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for userInterface.</p>
+     * <p>
+     * Constructor for userInterface.
+     * </p>
      */
     public userInterface() {}
 }

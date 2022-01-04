@@ -23,7 +23,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String fileName = "c:/test5.nc";
@@ -45,7 +44,9 @@ public class Pipeline extends ProcessEquipmentBaseClass implements PipeLineInter
     double[] wallHeatTransferCoeffs = {1e-5, 1e-5};// , 1e-5, 1e-5, 1e-5};
 
     /**
-     * <p>Constructor for Pipeline.</p>
+     * <p>
+     * Constructor for Pipeline.
+     * </p>
      */
     public Pipeline() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);

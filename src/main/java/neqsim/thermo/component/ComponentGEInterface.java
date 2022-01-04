@@ -8,15 +8,18 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>ComponentGEInterface interface.</p>
+ * <p>
+ * ComponentGEInterface interface.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface ComponentGEInterface extends ComponentInterface {
-
     /**
-     * <p>getGamma.</p>
+     * <p>
+     * getGamma.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -29,46 +32,59 @@ public interface ComponentGEInterface extends ComponentInterface {
      * @param mixRule an array of {@link java.lang.String} objects
      * @return a double
      */
-    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
+    public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
+            double[][] intparam, String[][] mixRule);
 
     /**
-     * <p>getGamma.</p>
+     * <p>
+     * getGamma.
+     * </p>
      *
      * @return a double
      */
     public double getGamma();
 
     /**
-     * <p>getlnGamma.</p>
+     * <p>
+     * getlnGamma.
+     * </p>
      *
      * @return a double
      */
     public double getlnGamma();
 
     /**
-     * <p>getGammaRefCor.</p>
+     * <p>
+     * getGammaRefCor.
+     * </p>
      *
      * @return a double
      */
     public double getGammaRefCor();
 
     /**
-     * <p>getlnGammadt.</p>
+     * <p>
+     * getlnGammadt.
+     * </p>
      *
      * @return a double
      */
     public double getlnGammadt();
 
     /**
-     * <p>getlnGammadtdt.</p>
+     * <p>
+     * getlnGammadtdt.
+     * </p>
      *
      * @return a double
      */
     public double getlnGammadtdt();
 
     /**
-     * <p>getlnGammadn.</p>
+     * <p>
+     * getlnGammadn.
+     * </p>
      *
      * @param k a int
      * @return a double
@@ -76,7 +92,9 @@ public interface ComponentGEInterface extends ComponentInterface {
     public double getlnGammadn(int k);
 
     /**
-     * <p>setlnGammadn.</p>
+     * <p>
+     * setlnGammadn.
+     * </p>
      *
      * @param k a int
      * @param val a double

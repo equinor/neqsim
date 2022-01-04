@@ -8,15 +8,18 @@ package neqsim.physicalProperties.mixingRule;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>PhysicalPropertyMixingRuleInterface interface.</p>
+ * <p>
+ * PhysicalPropertyMixingRuleInterface interface.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
-
     /**
-     * <p>getViscosityGij.</p>
+     * <p>
+     * getViscosityGij.
+     * </p>
      *
      * @param i a int
      * @param j a int
@@ -25,7 +28,9 @@ public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
     public double getViscosityGij(int i, int j);
 
     /**
-     * <p>setViscosityGij.</p>
+     * <p>
+     * setViscosityGij.
+     * </p>
      *
      * @param val a double
      * @param i a int
@@ -34,16 +39,21 @@ public interface PhysicalPropertyMixingRuleInterface extends Cloneable {
     public void setViscosityGij(double val, int i, int j);
 
     /**
-     * <p>initMixingRules.</p>
+     * <p>
+     * initMixingRules.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      */
     public void initMixingRules(PhaseInterface phase);
 
     /**
-     * <p>clone.</p>
+     * <p>
+     * clone.
+     * </p>
      *
-     * @return a {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface} object
+     * @return a {@link neqsim.physicalProperties.mixingRule.PhysicalPropertyMixingRuleInterface}
+     *         object
      */
     public PhysicalPropertyMixingRuleInterface clone();
 }

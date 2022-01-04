@@ -6,9 +6,11 @@ import neqsim.processSimulation.processEquipment.pipeline.OnePhasePipeLine;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>gasPipeline class.</p>
+ * <p>
+ * gasPipeline class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

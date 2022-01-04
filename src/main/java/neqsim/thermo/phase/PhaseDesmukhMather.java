@@ -19,7 +19,6 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class PhaseDesmukhMather extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double GE = 0.0;
@@ -30,8 +29,8 @@ public class PhaseDesmukhMather extends PhaseGE {
      * 
      * static Logger logger = LogManager.getLogger(PhaseDesmukhMather.class);
      * 
-    /**
-     * * <p>
+     * /** *
+     * <p>
      * Constructor for PhaseDesmukhMather.
      * </p>
      */

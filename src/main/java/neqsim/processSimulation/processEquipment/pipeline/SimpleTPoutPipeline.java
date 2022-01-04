@@ -21,7 +21,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SimpleTPoutPipeline extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -29,7 +28,9 @@ public class SimpleTPoutPipeline extends Pipeline {
     double dH = 0.0;
 
     /**
-     * <p>Constructor for SimpleTPoutPipeline.</p>
+     * <p>
+     * Constructor for SimpleTPoutPipeline.
+     * </p>
      */
     public SimpleTPoutPipeline() {}
 
@@ -101,7 +102,6 @@ public class SimpleTPoutPipeline extends Pipeline {
         System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
         System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1, 1));
         System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2, 1));
-
     }
 
     /** {@inheritDoc} */
@@ -122,8 +122,5 @@ public class SimpleTPoutPipeline extends Pipeline {
 
     /** {@inheritDoc} */
     @Override
-    public void setInitialFlowPattern(String flowPattern) {
-
-    }
-
+    public void setInitialFlowPattern(String flowPattern) {}
 }

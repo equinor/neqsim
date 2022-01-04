@@ -21,7 +21,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class HeatExchanger extends Heater implements HeatExchangerInterface {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -41,7 +40,9 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     private String flowArrangement = "concentric tube counterflow";
 
     /**
-     * <p>Constructor for HeatExchanger.</p>
+     * <p>
+     * Constructor for HeatExchanger.
+     * </p>
      */
     public HeatExchanger() {
         outStream = new Stream[2];
@@ -573,5 +574,4 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface {
     public void setHotColdDutyBalance(double hotColdDutyBalance) {
         this.hotColdDutyBalance = hotColdDutyBalance;
     }
-
 }

@@ -20,7 +20,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version $Id: $Id
  */
 public class Adjuster extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     ProcessEquipmentInterface adjustedEquipment = null, targetEquipment = null;
@@ -36,7 +35,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     static Logger logger = LogManager.getLogger(Adjuster.class);
 
     /**
-     * <p>Constructor for Adjuster.</p>
+     * <p>
+     * Constructor for Adjuster.
+     * </p>
      */
     public Adjuster() {}
 
@@ -209,9 +210,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-
-    }
+    public void displayResult() {}
 
     /**
      * <p>
@@ -306,5 +305,4 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     public void setActivateWhenLess(boolean activateWhenLess) {
         this.activateWhenLess = activateWhenLess;
     }
-
 }

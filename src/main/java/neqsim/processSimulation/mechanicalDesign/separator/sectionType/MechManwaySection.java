@@ -3,29 +3,33 @@ package neqsim.processSimulation.mechanicalDesign.separator.sectionType;
 import neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection;
 
 /**
- * <p>MechManwaySection class.</p>
+ * <p>
+ * MechManwaySection class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class MechManwaySection extends SepDesignSection {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for MechManwaySection.</p>
+     * <p>
+     * Constructor for MechManwaySection.
+     * </p>
      *
-     * @param separatorSection a {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection} object
+     * @param separatorSection a
+     *        {@link neqsim.processSimulation.processEquipment.separator.sectionType.SeparatorSection}
+     *        object
      */
     public MechManwaySection(SeparatorSection separatorSection) {
         super(separatorSection);
         nominalSize = "DN 500";
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
-
+    public void calcDesign() {
         if (nominalSize.equals("DN 500")) {
             if (getANSIclass() == 150) {
                 totalWeight = 317;

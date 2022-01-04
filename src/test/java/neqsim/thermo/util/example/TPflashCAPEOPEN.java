@@ -4,20 +4,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
-*
-* @author esol @version
-*/
 /**
- * <p>TPflashCAPEOPEN class.</p>
+ * <p>
+ * TPflashCAPEOPEN class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TPflashCAPEOPEN {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -50,18 +50,17 @@ public class TPflashCAPEOPEN {
         testSystem.init(0);
         testSystem.setNumberOfPhases(1);
         testSystem.setMolarComposition(
-                new double[] { 0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0 });
+                new double[] {0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0});
         testSystem.init(0, 0);
         testSystem.setPhaseType(0, "gas");
         testSystem.init(3);
         testSystem.initPhysicalProperties();
 
         testSystem.setMolarComposition(
-                new double[] { 0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0 });
+                new double[] {0.0, 0.01, 0.01, 7.2, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0});
         testSystem.init(0, 0);
         testSystem.setPhaseType(0, "liquid");
         testSystem.init(3);
         testSystem.initPhysicalProperties();
-
     }
 }

@@ -16,11 +16,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentElectrolyteCPAstatoil.</p>
+     * <p>
+     * Constructor for ComponentElectrolyteCPAstatoil.
+     * </p>
      */
     public ComponentElectrolyteCPAstatoil() {}
 
@@ -70,7 +71,6 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
     /** {@inheritDoc} */
     @Override
     public ComponentElectrolyteCPAstatoil clone() {
-
         ComponentElectrolyteCPAstatoil clonedComponent = null;
         try {
             clonedComponent = (ComponentElectrolyteCPAstatoil) super.clone();
@@ -107,5 +107,4 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
                 - 0.475 * getBi() * 1.0 / (temp * temp)
                         * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
     }
-
 }

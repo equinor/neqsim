@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TimeSeries implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected double[] timeSeries, outletMolarFlowRate, outletMolarFlowRates;
@@ -28,7 +27,9 @@ public class TimeSeries implements java.io.Serializable {
     protected double[] times, timeSteps;
 
     /**
-     * <p>Constructor for TimeSeries.</p>
+     * <p>
+     * Constructor for TimeSeries.
+     * </p>
      */
     public TimeSeries() {
         this.timeSeries = new double[1];
@@ -163,5 +164,4 @@ public class TimeSeries implements java.io.Serializable {
     public double getTime(int i) {
         return times[i];
     }
-
 }

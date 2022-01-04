@@ -8,9 +8,11 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TPflash_benchmark class.</p>
+ * <p>
+ * TPflash_benchmark class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class TPflash_benchmark {

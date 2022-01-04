@@ -8,7 +8,6 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.mixingRule.EosMixingRules;
@@ -23,7 +22,6 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  * @version $Id: $Id
  */
 public class PhaseGE extends Phase implements PhaseGEInterface {
-
     private static final long serialVersionUID = 1000;
 
     EosMixingRules mixSelect = new EosMixingRules();
@@ -32,7 +30,9 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     static Logger logger = LogManager.getLogger(PhaseGE.class);
 
     /**
-     * <p>Constructor for PhaseGE.</p>
+     * <p>
+     * Constructor for PhaseGE.
+     * </p>
      */
     public PhaseGE() {
         super();
@@ -110,7 +110,6 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
             // Calc Cp /Cv
             // Calc enthalpy/entropys
         }
-
     }
 
     /** {@inheritDoc} */
@@ -205,9 +204,7 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
      *
      * @param DijT an array of {@link double} objects
      */
-    public void setDijT(double[][] DijT) {
-
-    }
+    public void setDijT(double[][] DijT) {}
 
     /** {@inheritDoc} */
     @Override
@@ -330,5 +327,4 @@ public class PhaseGE extends Phase implements PhaseGEInterface {
     public double getMolarVolume() {
         return 1.0 / (getDensity() / getMolarMass()) * 1.0e5;
     }
-
 }

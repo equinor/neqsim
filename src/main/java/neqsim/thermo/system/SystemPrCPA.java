@@ -12,7 +12,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
  * This class defines a thermodynamic system using the PR-CPA equation of state
  */
 public class SystemPrCPA extends SystemPrEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -37,7 +36,9 @@ public class SystemPrCPA extends SystemPrEos {
     }
 
     /**
-     * <p>Constructor for SystemPrCPA.</p>
+     * <p>
+     * Constructor for SystemPrCPA.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -54,7 +55,9 @@ public class SystemPrCPA extends SystemPrEos {
     }
 
     /**
-     * <p>Constructor for SystemPrCPA.</p>
+     * <p>
+     * Constructor for SystemPrCPA.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -103,5 +106,4 @@ public class SystemPrCPA extends SystemPrEos {
         //
         return clonedSystem;
     }
-
 }

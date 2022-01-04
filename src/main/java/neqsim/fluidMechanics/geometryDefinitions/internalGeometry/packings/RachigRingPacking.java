@@ -15,11 +15,12 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * @version $Id: $Id
  */
 public class RachigRingPacking extends Packing {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for RachigRingPacking.</p>
+     * <p>
+     * Constructor for RachigRingPacking.
+     * </p>
      */
     public RachigRingPacking() {}
 
@@ -46,5 +47,4 @@ public class RachigRingPacking extends Packing {
     public RachigRingPacking(String name, String material, int size) {
         super(name, material, size);
     }
-
 }

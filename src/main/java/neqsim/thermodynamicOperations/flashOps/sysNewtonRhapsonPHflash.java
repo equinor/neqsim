@@ -12,11 +12,10 @@ import neqsim.thermo.system.SystemInterface;
  * sysNewtonRhapsonPHflash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(sysNewtonRhapsonPHflash.class);
     int neq = 0, iter = 0;
@@ -52,7 +51,9 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     public sysNewtonRhapsonPHflash() {}
 
     /**
-     * <p>Constructor for sysNewtonRhapsonPHflash.</p>
+     * <p>
+     * Constructor for sysNewtonRhapsonPHflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param numberOfPhases a int
@@ -201,7 +202,6 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
      * </p>
      */
     public void init() {
-
         double temp = system.getBeta();
 
         for (int i = 0; i < numberOfComponents; i++) {
@@ -267,5 +267,4 @@ public class sysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         init();
         return iter;
     }
-
 }

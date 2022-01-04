@@ -16,11 +16,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentGENRTLmodifiedHV.</p>
+     * <p>
+     * Constructor for ComponentGENRTLmodifiedHV.
+     * </p>
      */
     public ComponentGENRTLmodifiedHV() {}
 
@@ -380,7 +381,6 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
                                 * (dgiidt * gjj + dgjjdt * gii) * 0.5;
                 dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature)
                         + dgijdt / (R * temperature) - gij / (R * temperature * temperature);
-
             }
 
             F += E / C * (tau2 - D / C);
@@ -404,7 +404,6 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
         // if derivates....
         if (type == 3) {
-
             double dAdn = 0;
             double dBdn = 0;
             double Etemp = 0;

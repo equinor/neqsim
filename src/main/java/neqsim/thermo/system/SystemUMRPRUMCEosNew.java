@@ -7,19 +7,19 @@
 package neqsim.thermo.system;
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the UMR-PRU with MC paramters
- * equation of state
+ * This class defines a thermodynamic system using the UMR-PRU with MC paramters equation of state
  */
 public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
 
-
     /**
-     * <p>Constructor for SystemUMRPRUMCEosNew.</p>
+     * <p>
+     * Constructor for SystemUMRPRUMCEosNew.
+     * </p>
      */
     public SystemUMRPRUMCEosNew() {
         super();
@@ -28,7 +28,9 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
     }
 
     /**
-     * <p>Constructor for SystemUMRPRUMCEosNew.</p>
+     * <p>
+     * Constructor for SystemUMRPRUMCEosNew.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -40,7 +42,9 @@ public class SystemUMRPRUMCEosNew extends SystemUMRPRUMCEos {
     }
 
     /**
-     * <p>Constructor for SystemUMRPRUMCEosNew.</p>
+     * <p>
+     * Constructor for SystemUMRPRUMCEosNew.
+     * </p>
      *
      * @param T a double
      * @param P a double

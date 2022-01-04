@@ -6,16 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TPflashWater class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TPflashWater class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -23,7 +19,9 @@ public class TPflashWater {
     static Logger logger = LogManager.getLogger(TPflashWater.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -43,7 +41,6 @@ public class TPflashWater {
 
         try {
             testOps.TPflash();
-
         } catch (Exception e) {
             logger.error(e.toString());
         }

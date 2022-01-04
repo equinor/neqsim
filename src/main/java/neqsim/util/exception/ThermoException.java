@@ -15,11 +15,12 @@ package neqsim.util.exception;
  * @version $Id: $Id
  */
 public class ThermoException extends java.lang.Exception {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ThermoException.</p>
+     * <p>
+     * Constructor for ThermoException.
+     * </p>
      */
     public ThermoException() {}
 

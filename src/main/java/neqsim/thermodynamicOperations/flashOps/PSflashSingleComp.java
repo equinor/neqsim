@@ -16,13 +16,14 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PSflashSingleComp extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Sspec = 0;
 
     /**
-     * <p>Constructor for PSflashSingleComp.</p>
+     * <p>
+     * Constructor for PSflashSingleComp.
+     * </p>
      */
     public PSflashSingleComp() {}
 

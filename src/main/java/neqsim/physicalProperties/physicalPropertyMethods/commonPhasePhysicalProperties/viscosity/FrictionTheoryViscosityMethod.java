@@ -17,7 +17,6 @@ import org.apache.logging.log4j.*;
  */
 public class FrictionTheoryViscosityMethod extends Viscosity
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     public double[] pureComponentViscosity, Fc, omegaVisc;
@@ -52,7 +51,9 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     //
     // protected double kaprr_fconst = 1.37290e-8;
     /**
-     * <p>Constructor for FrictionTheoryViscosityMethod.</p>
+     * <p>
+     * Constructor for FrictionTheoryViscosityMethod.
+     * </p>
      */
     public FrictionTheoryViscosityMethod() {}
 
@@ -87,7 +88,6 @@ public class FrictionTheoryViscosityMethod extends Viscosity
 
             kaprr_fconst = 1.37290e-8;
         }
-
     }
 
     /** {@inheritDoc} */
@@ -196,7 +196,6 @@ public class FrictionTheoryViscosityMethod extends Viscosity
      * @return a double
      */
     public double getRedKapa(int compNumb, double phi, double bigGamma) {
-
         return kapac_fconst + kapa_fconst[0][0] * (bigGamma - 1.0)
                 + (kapa_fconst[1][0] + kapa_fconst[1][1] * phi) * (Math.exp(bigGamma - 1.0) - 1.0)
                 + (kapa_fconst[2][0] + kapa_fconst[2][1] * phi + kapa_fconst[2][2] * phi * phi)
@@ -306,5 +305,4 @@ public class FrictionTheoryViscosityMethod extends Viscosity
     public double getTBPviscosityCorrection() {
         return TBPcorrection;
     }
-
 }

@@ -13,16 +13,17 @@ import org.apache.logging.log4j.*;
  * bubblePointTemperatureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointTemperatureFlash.class);
 
     /**
-     * <p>Constructor for bubblePointTemperatureFlash.</p>
+     * <p>
+     * Constructor for bubblePointTemperatureFlash.
+     * </p>
      */
     public bubblePointTemperatureFlash() {}
 
@@ -40,7 +41,6 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         int iterations = 0, maxNumberOfIterations = 10000;
         double yold = 0, ytotal = 1;
         double deriv = 0, funk = 0;
@@ -62,7 +62,6 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
             ytotal = 0;
             system.init(2);
             for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-
                 do {
                     iterations++;
 
@@ -79,7 +78,6 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
                                             .getFugasityCoeffisient()
                                     / system.getPhases()[0].getComponents()[i]
                                             .getFugasityCoeffisient());
-
                 } while ((Math.abs(yold - system.getPhases()[1].getComponents()[i].getx()) > 1e-10)
                         && (iterations < maxNumberOfIterations));
 
@@ -96,9 +94,7 @@ public class bubblePointTemperatureFlash extends constantDutyTemperatureFlash {
             logger.info("temp: " + system.getTemperature());
             // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
             system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
-
         } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
-
     }
 
     /** {@inheritDoc} */

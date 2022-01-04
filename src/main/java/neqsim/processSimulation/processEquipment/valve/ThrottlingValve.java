@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String name = new String();
@@ -38,7 +37,9 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     private boolean acceptNegativeDP = true;
 
     /**
-     * <p>Constructor for ThrottlingValve.</p>
+     * <p>
+     * Constructor for ThrottlingValve.
+     * </p>
      */
     public ThrottlingValve() {}
 
@@ -161,7 +162,6 @@ public class ThrottlingValve extends ProcessEquipmentBaseClass implements ValveI
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         // System.out.println("valve running..");
         // outStream.setSpecification(inletStream.getSpecification());
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();

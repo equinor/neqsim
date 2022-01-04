@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TwoPhaseSeparator extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -29,7 +28,9 @@ public class TwoPhaseSeparator extends Separator {
     String name = new String();
 
     /**
-     * <p>Constructor for TwoPhaseSeparator.</p>
+     * <p>
+     * Constructor for TwoPhaseSeparator.
+     * </p>
      */
     public TwoPhaseSeparator() {}
 
@@ -133,5 +134,4 @@ public class TwoPhaseSeparator extends Separator {
      * </p>
      */
     public void runTransient() {}
-
 }

@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class PFCTViscosityMethodMod86 extends Viscosity {
-
     private static final long serialVersionUID = 1000;
 
     // SystemInterface referenceSystem = new SystemBWRSEos(273.15, 1.01325);
@@ -141,7 +140,6 @@ public class PFCTViscosityMethodMod86 extends Viscosity {
      * @return a double
      */
     public double getRefComponentViscosity(double temp, double pres) {
-
         referenceSystem.setTemperature(temp);
         // System.out.println("ref temp " + temp);
         referenceSystem.setPressure(pres);

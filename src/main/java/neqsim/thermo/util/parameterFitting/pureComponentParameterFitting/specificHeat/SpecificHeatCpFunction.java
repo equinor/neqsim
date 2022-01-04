@@ -1,13 +1,15 @@
 package neqsim.thermo.util.parameterFitting.pureComponentParameterFitting.specificHeat;
 
-import org.apache.logging.log4j.*;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>SpecificHeatCpFunction class.</p>
+ * <p>
+ * SpecificHeatCpFunction class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
@@ -15,15 +17,17 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
     static Logger logger = LogManager.getLogger(SpecificHeatCpFunction.class);
 
     /**
-     * <p>Constructor for SpecificHeatCpFunction.</p>
+     * <p>
+     * Constructor for SpecificHeatCpFunction.
+     * </p>
      */
     public SpecificHeatCpFunction() {
         params = new double[4];
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(0);
         try {
             thermoOps.TPflash();
@@ -35,9 +39,9 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
         return system.getPhase(0).getCp("kJ/kgK");
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         if (i == 1) {
             system.getPhases()[0].getComponents()[0].setCpB(value);
@@ -56,5 +60,4 @@ public class SpecificHeatCpFunction extends LevenbergMarquardtFunction {
             system.getPhases()[1].getComponents()[0].setCpD(value);
         }
     }
-
 }

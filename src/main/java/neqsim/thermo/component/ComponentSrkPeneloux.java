@@ -8,25 +8,29 @@ package neqsim.thermo.component;
 import neqsim.thermo.component.atractiveEosTerm.AtractiveTermSrk;
 
 /**
- * <p>ComponentSrkPeneloux class.</p>
+ * <p>
+ * ComponentSrkPeneloux class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ComponentSrkPeneloux extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
     /**
-     * <p>Constructor for ComponentSrkPeneloux.</p>
+     * <p>
+     * Constructor for ComponentSrkPeneloux.
+     * </p>
      */
-    public ComponentSrkPeneloux() {
-    }
+    public ComponentSrkPeneloux() {}
 
     /**
-     * <p>Constructor for ComponentSrkPeneloux.</p>
+     * <p>
+     * Constructor for ComponentSrkPeneloux.
+     * </p>
      *
      * @param moles a double
      */
@@ -35,18 +39,21 @@ public class ComponentSrkPeneloux extends ComponentSrk {
     }
 
     /**
-     * <p>Constructor for ComponentSrkPeneloux.</p>
+     * <p>
+     * Constructor for ComponentSrkPeneloux.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentSrkPeneloux(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentSrkPeneloux(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
 
-        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
-                / criticalPressure;
+        a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
+                * criticalTemperature / criticalPressure;
         b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
         // double volCorr = getVolumeCorrection() / 1.0e5 * 0.0;
         // b -= volCorr;
@@ -56,14 +63,15 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         // atractiveParameter = new AtractiveTermSchwartzentruber(this);
         setAtractiveParameter(new AtractiveTermSrk(this));
 
-        double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630,
-                -0.1611763157 };
+        double[] surfTensInfluenceParamtemp =
+                {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
         this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     /**
-     * <p>Constructor for ComponentSrkPeneloux.</p>
+     * <p>
+     * Constructor for ComponentSrkPeneloux.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -72,14 +80,14 @@ public class ComponentSrkPeneloux extends ComponentSrk {
      * @param a a double
      * @param moles a double
      */
-    public ComponentSrkPeneloux(int number, double TC, double PC, double M, double a, double moles) {
+    public ComponentSrkPeneloux(int number, double TC, double PC, double M, double a,
+            double moles) {
         super(number, TC, PC, M, a, moles);
     }
 
     /** {@inheritDoc} */
     @Override
     public ComponentSrkPeneloux clone() {
-
         ComponentSrkPeneloux clonedComponent = null;
         try {
             clonedComponent = (ComponentSrkPeneloux) super.clone();
@@ -90,15 +98,16 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         return clonedComponent;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if (ionicCharge != 0) {
             return 0.0;
         }
@@ -110,11 +119,10 @@ public class ComponentSrkPeneloux extends ComponentSrk {
         return 0.40768 * (0.29441 - this.getRacketZ()) * R * criticalTemperature / criticalPressure;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcb() {
+    public double calcb() {
         double volCorr = getVolumeCorrection();
         return (factTemp - 1.0) / 3.0 * R * criticalTemperature / criticalPressure - volCorr;
     }
-
 }

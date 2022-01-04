@@ -7,27 +7,33 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract TwoPhaseFlowNode class.</p>
+ * <p>
+ * Abstract TwoPhaseFlowNode class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public abstract class TwoPhaseFlowNode extends FlowNode {
-
     private static final long serialVersionUID = 1000;
 
     // public double[] molarMassTransferFlux;
     // public double[] molarMassTransfer;
     /**
-     * <p>Constructor for TwoPhaseFlowNode.</p>
+     * <p>
+     * Constructor for TwoPhaseFlowNode.
+     * </p>
      */
     public TwoPhaseFlowNode() {}
 
     /**
-     * <p>Constructor for TwoPhaseFlowNode.</p>
+     * <p>
+     * Constructor for TwoPhaseFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public TwoPhaseFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -63,7 +69,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>initVelocity.</p>
+     * <p>
+     * initVelocity.
+     * </p>
      *
      * @return a double
      */
@@ -154,7 +162,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcHydraulicDiameter.</p>
+     * <p>
+     * calcHydraulicDiameter.
+     * </p>
      *
      * @return a double
      */
@@ -166,7 +176,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcReynoldNumber.</p>
+     * <p>
+     * calcReynoldNumber.
+     * </p>
      *
      * @return a double
      */
@@ -181,7 +193,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcWallFrictionFactor.</p>
+     * <p>
+     * calcWallFrictionFactor.
+     * </p>
      *
      * @return a double
      */
@@ -222,7 +236,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcContactLength.</p>
+     * <p>
+     * calcContactLength.
+     * </p>
      *
      * @return a double
      */
@@ -262,7 +278,9 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcGasLiquidContactArea.</p>
+     * <p>
+     * calcGasLiquidContactArea.
+     * </p>
      *
      * @return a double
      */
@@ -285,7 +303,6 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     /** {@inheritDoc} */
     @Override
     public void update() {
-
         // System.out.println("reac heat " +
         // getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
         double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);// getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,

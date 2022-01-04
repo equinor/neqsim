@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false, setOutPressure = false;
@@ -36,7 +35,9 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
     double coolingMediumTemperature = 278.15;
 
     /**
-     * <p>Constructor for Heater.</p>
+     * <p>
+     * Constructor for Heater.
+     * </p>
      */
     public Heater() {}
 
@@ -348,7 +349,5 @@ public class Heater extends ProcessEquipmentBaseClass implements HeaterInterface
                 - inStream.getThermoSystem().getExergy(sourrondingTemperature, unit);
 
         return entrop;
-
     }
-
 }

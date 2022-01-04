@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class NumericalDerivative implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     final static double CON = 1.4;
@@ -28,7 +27,9 @@ public class NumericalDerivative implements java.io.Serializable {
     final static double SAFE = 2;
 
     /**
-     * <p>Constructor for NumericalDerivative.</p>
+     * <p>
+     * Constructor for NumericalDerivative.
+     * </p>
      */
     public NumericalDerivative() {}
 
@@ -46,8 +47,6 @@ public class NumericalDerivative implements java.io.Serializable {
      */
     public static double fugcoefDiffPres(ComponentInterface component, PhaseInterface phase,
             int numberOfComponents, double temperature, double pressure) {
-
-
         double ans = 00001;
         // double errt, fac, hh, err = 0.0000000001;
         // double h = pressure / 50;
@@ -105,7 +104,6 @@ public class NumericalDerivative implements java.io.Serializable {
      */
     public static double fugcoefDiffTemp(ComponentInterface component, PhaseInterface phase,
             int numberOfComponents, double temperature, double pressure, int phasetype) {
-
         double ans = 0.000001;
         // double errt, fac, hh, err = 0.00000000000001;
         // double h = temperature / 50;

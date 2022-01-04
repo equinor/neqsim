@@ -12,12 +12,13 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class ComponentWonWax extends ComponentSolid {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ComponentWonWax.class);
 
     /**
-     * <p>Constructor for ComponentWonWax.</p>
+     * <p>
+     * Constructor for ComponentWonWax.
+     * </p>
      */
     public ComponentWonWax() {}
 

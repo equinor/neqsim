@@ -27,7 +27,6 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class ChemicalReactionOperations
         implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface system;

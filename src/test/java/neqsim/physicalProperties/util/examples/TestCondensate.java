@@ -6,15 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
-*
-* @author  esol
-* @version
-*/
 /**
- * <p>TestCondensate class.</p>
+ * <p>
+ * TestCondensate class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -22,7 +19,9 @@ public class TestCondensate {
     static Logger logger = LogManager.getLogger(TestCondensate.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

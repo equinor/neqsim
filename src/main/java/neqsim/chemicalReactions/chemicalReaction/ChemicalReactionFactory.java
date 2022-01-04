@@ -11,13 +11,14 @@ package neqsim.chemicalReactions.chemicalReaction;
 import java.util.ArrayList;
 
 /**
- * <p>ChemicalReactionFactory class.</p>
+ * <p>
+ * ChemicalReactionFactory class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class ChemicalReactionFactory {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -26,7 +27,9 @@ public class ChemicalReactionFactory {
     public ChemicalReactionFactory() {}
 
     /**
-     * <p>getChemicalReaction.</p>
+     * <p>
+     * getChemicalReaction.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @return a {@link neqsim.chemicalReactions.chemicalReaction.ChemicalReaction} object
@@ -67,7 +70,6 @@ public class ChemicalReactionFactory {
 
             // System.out.println("reaction added ok...");
             dataSet.close();
-
         } catch (Exception e) {
             e.printStackTrace();
             String err = e.toString();

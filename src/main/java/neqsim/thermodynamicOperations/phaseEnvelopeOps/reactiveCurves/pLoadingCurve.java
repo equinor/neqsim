@@ -27,7 +27,6 @@ import neqsim.thermodynamicOperations.OperationInterface;
  * @version $Id: $Id
  */
 public class pLoadingCurve implements OperationInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pLoadingCurve.class);
 
@@ -53,7 +52,9 @@ public class pLoadingCurve implements OperationInterface {
     int speceq = 0;
 
     /**
-     * <p>Constructor for pLoadingCurve.</p>
+     * <p>
+     * Constructor for pLoadingCurve.
+     * </p>
      */
     public pLoadingCurve() {}
 
@@ -197,7 +198,5 @@ public class pLoadingCurve implements OperationInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

@@ -19,7 +19,6 @@ import neqsim.thermo.component.ComponentBWRS;
  * @version $Id: $Id
  */
 public class PhaseBWRSEos extends PhaseSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     int OP = 9;
@@ -28,7 +27,9 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     static Logger logger = LogManager.getLogger(PhaseBWRSEos.class);
 
     /**
-     * <p>Constructor for PhaseBWRSEos.</p>
+     * <p>
+     * Constructor for PhaseBWRSEos.
+     * </p>
      */
     public PhaseBWRSEos() {
         super();
@@ -341,7 +342,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
                 / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS()) * (getEL() - 1.0);
         temp += oldTemp;
         for (int i = 1; i < OE; i++) {
-
             oldTemp = -((ComponentBWRS) componentArray[0]).getBEdT(i)
                     / (2.0 * ((ComponentBWRS) componentArray[0]).getGammaBWRS())
                     * (getEL() * Math.pow(getMolarDensity(), 2.0 * i) - (2.0 * i)
@@ -460,7 +460,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     /** {@inheritDoc} */
     @Override
     public double dFdT() {
-
         // double dv = temperature/1000.0;
         // temperature = temperature + dv;
         // init(numberOfMolesInPhase, numberOfComponents, 3, phaseType, 1.0);
@@ -555,7 +554,6 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         double Btemp = getB();

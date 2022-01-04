@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SolidFlash12 extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash12.class);
 
@@ -34,7 +33,9 @@ public class SolidFlash12 extends TPflash {
     int solidIndex = 0;
 
     /**
-     * <p>Constructor for SolidFlash12.</p>
+     * <p>
+     * Constructor for SolidFlash12.
+     * </p>
      */
     public SolidFlash12() {}
 
@@ -302,13 +303,11 @@ public class SolidFlash12 extends TPflash {
         if (tempVar > 0 && tempVar < 1.0) {
             system.setBeta(system.getNumberOfPhases() - 1, tempVar);
         }
-
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         int iter = 0;
 
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -327,7 +326,6 @@ public class SolidFlash12 extends TPflash {
             this.solveBeta();
             // checkX();
         } while (iter < 1);
-
     }
 
     /**
@@ -338,16 +336,13 @@ public class SolidFlash12 extends TPflash {
      * @return a int
      */
     public int checkAndAddSolidPhase() {
-
         double[] solidCandidate = new double[system.getPhases()[0].getNumberOfComponents()];
 
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-
             if (system.getTemperature() > system.getPhase(0).getComponent(k)
                     .getTriplePointTemperature()) {
                 solidCandidate[k] = -10;
             } else {
-
                 solidCandidate[k] = system.getPhase(0).getComponents()[k].getz();
                 system.getPhases()[3].getComponent(k).setx(1.0);
 

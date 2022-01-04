@@ -7,16 +7,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TestPCSAFT class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TestPCSAFT class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -24,7 +20,9 @@ public class TestPCSAFT {
     static Logger logger = LogManager.getLogger(TestPCSAFT.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -1,9 +1,11 @@
 package neqsim.processSimulation.processEquipment.pump;
 
 /**
- * <p>PumpCurve class.</p>
+ * <p>
+ * PumpCurve class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class PumpCurve implements java.io.Serializable {
@@ -14,7 +16,9 @@ public class PumpCurve implements java.io.Serializable {
     public double speed = 1000.0;
 
     /**
-     * <p>Constructor for PumpCurve.</p>
+     * <p>
+     * Constructor for PumpCurve.
+     * </p>
      */
     public PumpCurve() {
         flow = new double[] {453.2, 600.0, 750.0};
@@ -23,7 +27,9 @@ public class PumpCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>Constructor for PumpCurve.</p>
+     * <p>
+     * Constructor for PumpCurve.
+     * </p>
      *
      * @param speed a double
      * @param flow an array of {@link double} objects

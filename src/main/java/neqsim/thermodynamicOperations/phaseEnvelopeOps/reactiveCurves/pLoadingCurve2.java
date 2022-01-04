@@ -22,7 +22,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class pLoadingCurve2 extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pLoadingCurve2.class);
 
@@ -49,7 +48,9 @@ public class pLoadingCurve2 extends BaseOperation {
     int speceq = 0;
 
     /**
-     * <p>Constructor for pLoadingCurve2.</p>
+     * <p>
+     * Constructor for pLoadingCurve2.
+     * </p>
      */
     public pLoadingCurve2() {}
 

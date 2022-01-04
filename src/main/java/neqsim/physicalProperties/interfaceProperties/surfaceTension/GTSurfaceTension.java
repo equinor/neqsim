@@ -69,7 +69,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class GTSurfaceTension extends SurfaceTension {
-
     private static final long serialVersionUID = 1000;
 
     int useFullGT = 1; // 1 will use full gradient theory 0 - will use ODE solver and one component

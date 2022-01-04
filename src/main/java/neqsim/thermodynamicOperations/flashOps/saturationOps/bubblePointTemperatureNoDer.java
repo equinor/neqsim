@@ -6,24 +6,26 @@
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
  * bubblePointTemperatureNoDer class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointTemperatureNoDer.class);
 
     /**
-     * <p>Constructor for bubblePointTemperatureNoDer.</p>
+     * <p>
+     * Constructor for bubblePointTemperatureNoDer.
+     * </p>
      */
     public bubblePointTemperatureNoDer() {}
 
@@ -130,7 +132,6 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
                 } while (Math.abs(system.getPhases()[0].getComponents()[i].getx() - yold) > 1e-4);
 
                 ktot += Math.abs(system.getPhases()[1].getComponents()[i].getK() - 1.0);
-
             }
             ytotal = 0.0;
             for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -172,5 +173,4 @@ public class bubblePointTemperatureNoDer extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
 }

@@ -15,7 +15,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SolidFlash1 extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash1.class);
 
@@ -31,7 +30,9 @@ public class SolidFlash1 extends TPflash {
     int FluidPhaseActiveDescriptors[]; // 1 = active; 0 = inactive
 
     /**
-     * <p>Constructor for SolidFlash1.</p>
+     * <p>
+     * Constructor for SolidFlash1.
+     * </p>
      */
     public SolidFlash1() {}
 
@@ -388,7 +389,6 @@ public class SolidFlash1 extends TPflash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         int iter = 0;
 
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -409,7 +409,6 @@ public class SolidFlash1 extends TPflash {
             if (system.getPhase(0).getFugacity(0) > system.getPhases()[3].getFugacity(0)) {
                 system.setPhaseIndex(0, 3);
             } else {
-
             }
             system.setBeta(0, 1.0);
             system.setNumberOfPhases(1);
@@ -443,7 +442,6 @@ public class SolidFlash1 extends TPflash {
             }
         }
         system.init(1);
-
     }
 
     /**
@@ -454,11 +452,9 @@ public class SolidFlash1 extends TPflash {
      * @return a int
      */
     public int checkAndAddSolidPhase() {
-
         double[] solidCandidate = new double[system.getPhases()[0].getNumberOfComponents()];
 
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-
             if (system.getTemperature() > system.getPhase(0).getComponent(k)
                     .getTriplePointTemperature()) {
                 solidCandidate[k] = 0;

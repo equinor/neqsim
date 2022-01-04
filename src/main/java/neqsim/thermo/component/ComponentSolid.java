@@ -16,7 +16,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentSolid extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     double dpdt = 1.0;
@@ -28,7 +27,9 @@ public class ComponentSolid extends ComponentSrk {
     double pureCompFug = 0.0;
 
     /**
-     * <p>Constructor for ComponentSolid.</p>
+     * <p>
+     * Constructor for ComponentSolid.
+     * </p>
      */
     public ComponentSolid() {}
 
@@ -138,7 +139,6 @@ public class ComponentSolid extends ComponentSrk {
      * @return a double
      */
     public double fugcoef(double temp, double pres) {
-
         if (Math.abs(Hsub) < 0.000001) {
             CCequation = false;
         }

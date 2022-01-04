@@ -17,12 +17,12 @@ import neqsim.fluidMechanics.util.fluidMechanicsDataHandeling.twoPhaseFileWriter
  * @version $Id: $Id
  */
 public class TwoPhasePipeFlowFileWriter extends TwoPhaseFileWriter {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TwoPhasePipeFlowFileWriter.</p>
+     * <p>
+     * Constructor for TwoPhasePipeFlowFileWriter.
+     * </p>
      */
     public TwoPhasePipeFlowFileWriter() {}
-
 }

@@ -15,14 +15,15 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * @version $Id: $Id
  */
 public class Packing implements PackingInterface {
-
     private static final long serialVersionUID = 1000;
 
     double voidFractionPacking = 0.951, size = 0, surfaceAreaPrVolume = 112.6;
     String name = null;
 
     /**
-     * <p>Constructor for Packing.</p>
+     * <p>
+     * Constructor for Packing.
+     * </p>
      */
     public Packing() {}
 
@@ -128,5 +129,4 @@ public class Packing implements PackingInterface {
     public double getSize() {
         return size;
     }
-
 }

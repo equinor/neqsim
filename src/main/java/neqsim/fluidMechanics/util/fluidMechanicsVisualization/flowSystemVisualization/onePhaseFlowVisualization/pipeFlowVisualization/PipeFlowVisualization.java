@@ -16,7 +16,6 @@ package neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisuali
  */
 public class PipeFlowVisualization extends
         neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowSystemVisualization.onePhaseFlowVisualization.OnePhaseFlowVisualization {
-
     private static final long serialVersionUID = 1000;
 
     double[][] pressurePoint = new double[10][10];
@@ -28,7 +27,9 @@ public class PipeFlowVisualization extends
     neqsim.dataPresentation.visAD.visAdInterface plot;
 
     /**
-     * <p>Constructor for PipeFlowVisualization.</p>
+     * <p>
+     * Constructor for PipeFlowVisualization.
+     * </p>
      */
     public PipeFlowVisualization() {}
 
@@ -193,5 +194,4 @@ public class PipeFlowVisualization extends
         }
         file.createFile();
     }
-
 }

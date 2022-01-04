@@ -25,7 +25,6 @@ import neqsim.dataPresentation.visAD.visAd2D.statistical2DPlot.lineFitPlot;
  * @version $Id: $Id
  */
 public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected SampleSet sampleSet = new SampleSet();
@@ -45,7 +44,9 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
     protected double absStdDev = 0.0, biasdev = 0.0, incompleteGammaComplemented = 0.0;
 
     /**
-     * <p>Constructor for StatisticsBaseClass.</p>
+     * <p>
+     * Constructor for StatisticsBaseClass.
+     * </p>
      */
     public StatisticsBaseClass() {}
 
@@ -411,7 +412,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
         absStdDev = 0.0;
 
         for (int i = 0; i < sampleSet.getLength(); i++) {
-
             expVal[i] = this.calcTrueValue(sampleSet.getSample(i).getSampleValue(),
                     sampleSet.getSample(i));
             calcVal[i] = this.calcTrueValue(sampleSet.getSample(i));
@@ -698,7 +698,6 @@ public abstract class StatisticsBaseClass implements Cloneable, StatisticsInterf
      * </p>
      */
     public void displayGraph() {
-
         try {
             if (sampleSet.getSample(0).getDependentValues().length <= 1) {
                 lineFitPlot plot = new lineFitPlot("test", "test");

@@ -14,18 +14,21 @@ import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>IonicInteractionParameterFittingFunction class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunction.class);
 
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunction.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunction.
+     * </p>
      */
     public IonicInteractionParameterFittingFunction() {}
 
@@ -131,7 +134,6 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
                     .setWijParameter(H3OplusNumb, MDEANumb, value);
             ((PhaseModifiedFurstElectrolyteEos) system.getPhases()[1]).getElectrolyteMixingRule()
                     .setWijParameter(H3OplusNumb, MDEANumb, value);
-
         }
 
         if (i == 4) {
@@ -236,7 +238,9 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
     }
 
     /**
-     * <p>setFittingParams5.</p>
+     * <p>
+     * setFittingParams5.
+     * </p>
      *
      * @param i a int
      * @param value a double
@@ -328,7 +332,9 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
     }
 
     /**
-     * <p>setFittingParams3.</p>
+     * <p>
+     * setFittingParams3.
+     * </p>
      *
      * @param i a int
      * @param value a double
@@ -373,5 +379,4 @@ public class IonicInteractionParameterFittingFunction extends LevenbergMarquardt
                     .setWijParameter(MDEAplusNumb, CO2Numb, value);
         }
     }
-
 }

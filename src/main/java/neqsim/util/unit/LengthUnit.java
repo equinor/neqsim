@@ -15,12 +15,12 @@ package neqsim.util.unit;
  * @version $Id: $Id
  */
 public class LengthUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for LengthUnit.</p>
+     * <p>
+     * Constructor for LengthUnit.
+     * </p>
      */
     public LengthUnit() {}
-
 }

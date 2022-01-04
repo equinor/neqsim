@@ -16,13 +16,14 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermMatCop extends AtractiveTermSrk {
-
     private static final long serialVersionUID = 1000;
 
     double orgpar = 0.0;
 
     /**
-     * <p>Constructor for AtractiveTermMatCop.</p>
+     * <p>
+     * Constructor for AtractiveTermMatCop.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -33,7 +34,9 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
     }
 
     /**
-     * <p>Constructor for AtractiveTermMatCop.</p>
+     * <p>
+     * Constructor for AtractiveTermMatCop.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
@@ -74,7 +77,6 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
         return Math.pow(1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
                 + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                 + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0), 2.0);
-
     }
 
     /** {@inheritDoc} */
@@ -82,7 +84,6 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
     public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 10000.0) {
             return super.aT(temperature);
-
         } else {
             return getComponent().geta() * alpha(temperature);
         }
@@ -101,7 +102,6 @@ public class AtractiveTermMatCop extends AtractiveTermSrk {
                         - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                                 / Math.sqrt(Tr) / TC);
-
     }
 
     /** {@inheritDoc} */

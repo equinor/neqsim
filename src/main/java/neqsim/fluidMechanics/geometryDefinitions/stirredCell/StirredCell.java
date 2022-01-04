@@ -3,33 +3,38 @@ package neqsim.fluidMechanics.geometryDefinitions.stirredCell;
 import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinition;
 
 /**
- * <p>StirredCell class.</p>
+ * <p>
+ * StirredCell class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class StirredCell extends GeometryDefinition {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for StirredCell.</p>
+     * <p>
+     * Constructor for StirredCell.
+     * </p>
      */
-    public StirredCell() {
-    }
+    public StirredCell() {}
 
     /**
-     * <p>Constructor for StirredCell.</p>
+     * <p>
+     * Constructor for StirredCell.
+     * </p>
      *
      * @param diameter a double
      */
     public StirredCell(double diameter) {
         super(diameter);
-
     }
 
     /**
-     * <p>Constructor for StirredCell.</p>
+     * <p>
+     * Constructor for StirredCell.
+     * </p>
      *
      * @param diameter a double
      * @param roughness a double

@@ -1,30 +1,33 @@
 package neqsim.processSimulation.processEquipment.reservoir;
 
-
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Well class.</p>
+ * <p>
+ * Well class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class Well implements java.io.Serializable {
-
     private StreamInterface stream = null;
     private String name;
     double x, y, z;
 
     /**
-     * <p>Constructor for Well.</p>
+     * <p>
+     * Constructor for Well.
+     * </p>
      */
-    public Well() {
-    }
+    public Well() {}
 
     /**
-     * <p>Constructor for Well.</p>
+     * <p>
+     * Constructor for Well.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -33,7 +36,9 @@ public class Well implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>stream</code>.</p>
+     * <p>
+     * Getter for the field <code>stream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -42,16 +47,21 @@ public class Well implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>stream</code>.</p>
+     * <p>
+     * Setter for the field <code>stream</code>.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setStream(StreamInterface stream) {
         this.stream = stream;
     }
 
     /**
-     * <p>getGOR.</p>
+     * <p>
+     * getGOR.
+     * </p>
      *
      * @return a double
      */
@@ -63,13 +73,16 @@ public class Well implements java.io.Serializable {
         ops.TPflash();
         double GOR = Double.NaN;
         if (locStream.hasPhaseType("gas") && locStream.hasPhaseType("oil")) {
-            GOR = locStream.getPhase("gas").getVolume("m3") / locStream.getPhase("oil").getVolume("m3");
+            GOR = locStream.getPhase("gas").getVolume("m3")
+                    / locStream.getPhase("oil").getVolume("m3");
         }
         return GOR;
     }
 
     /**
-     * <p>getStdGasProduction.</p>
+     * <p>
+     * getStdGasProduction.
+     * </p>
      *
      * @return a double
      */
@@ -87,7 +100,9 @@ public class Well implements java.io.Serializable {
     }
 
     /**
-     * <p>getStdOilProduction.</p>
+     * <p>
+     * getStdOilProduction.
+     * </p>
      *
      * @return a double
      */
@@ -105,7 +120,9 @@ public class Well implements java.io.Serializable {
     }
 
     /**
-     * <p>Getter for the field <code>name</code>.</p>
+     * <p>
+     * Getter for the field <code>name</code>.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
@@ -114,7 +131,9 @@ public class Well implements java.io.Serializable {
     }
 
     /**
-     * <p>Setter for the field <code>name</code>.</p>
+     * <p>
+     * Setter for the field <code>name</code>.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */

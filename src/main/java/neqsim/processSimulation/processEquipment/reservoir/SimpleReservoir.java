@@ -22,7 +22,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -45,7 +44,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     double time = 0.0;
 
     /**
-     * <p>Constructor for SimpleReservoir.</p>
+     * <p>
+     * Constructor for SimpleReservoir.
+     * </p>
      */
     public SimpleReservoir() {
         super();
@@ -284,7 +285,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
                 if (j == 1) {
                     relFact = oilVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
                     totalliquidVolume += oilVolume / thermoSystem2.getPhase(j).getMolarVolume();
-
                 } else if (j == 2) {
                     relFact = waterVolume / (thermoSystem2.getPhase(j).getVolume() * 1.0e-5);
                     totalliquidVolume += waterVolume / thermoSystem2.getPhase(j).getMolarVolume();
@@ -342,7 +342,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
         // gasOutStream.setFluid(thermoSystem.phaseToSystem("gas"));
         // gasOutStream.run();
-
     }
 
     /**
@@ -353,7 +352,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
      * @return a double
      */
     public double GORprodution() {
-
         double GOR = 0.0;
         double flow = 0.0;
         for (int i = 0; i < gasProducer.size(); i++) {
@@ -515,7 +513,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
         for (int k = 0; k < gasInjector.size(); k++) {
             gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
         }
-
     }
 
     /** {@inheritDoc} */
@@ -639,7 +636,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
 
         for (int i = 0; i < 300; i++) {
             // reservoirOps.runTransient(60 * 60 * 24 * 365);
-
         }
         System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr"));
 
@@ -663,7 +659,6 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
                     + producedOilStream.getPressure("bara") + " pipe out pres "
                     + testPipe.getOutStream().getFluid().getPressure());
         }
-
     }
 
     /**
@@ -749,5 +744,4 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     public double getTime() {
         return time;
     }
-
 }

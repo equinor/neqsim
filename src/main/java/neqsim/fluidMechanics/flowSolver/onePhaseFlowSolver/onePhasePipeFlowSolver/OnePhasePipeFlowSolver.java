@@ -19,7 +19,6 @@ import neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFl
  */
 public class OnePhasePipeFlowSolver
         extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
-
     private static final long serialVersionUID = 1000;
 
     protected double[] PbArray; // = new double[100];
@@ -35,7 +34,9 @@ public class OnePhasePipeFlowSolver
     protected PipeFlowSystem pipe;
 
     /**
-     * <p>Constructor for OnePhasePipeFlowSolver.</p>
+     * <p>
+     * Constructor for OnePhasePipeFlowSolver.
+     * </p>
      */
     public OnePhasePipeFlowSolver() {}
 
@@ -82,5 +83,4 @@ public class OnePhasePipeFlowSolver
 
         return clonedSystem;
     }
-
 }

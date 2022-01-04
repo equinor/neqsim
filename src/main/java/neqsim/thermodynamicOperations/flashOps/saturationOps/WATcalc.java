@@ -15,16 +15,17 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * WATcalc class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class WATcalc extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(WATcalc.class);
 
     /**
-     * <p>Constructor for WATcalc.</p>
+     * <p>
+     * Constructor for WATcalc.
+     * </p>
      */
     public WATcalc() {}
 

@@ -16,11 +16,12 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermUMRPRU extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for AtractiveTermUMRPRU.</p>
+     * <p>
+     * Constructor for AtractiveTermUMRPRU.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */

@@ -16,11 +16,12 @@ import neqsim.thermo.component.ComponentWax;
  * @version $Id: $Id
  */
 public class PhaseWax extends PhaseSolid {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseWax.</p>
+     * <p>
+     * Constructor for PhaseWax.
+     * </p>
      */
     public PhaseWax() {
         super();
@@ -50,7 +51,6 @@ public class PhaseWax extends PhaseSolid {
                            // betingelser
         super.init(totalNumberOfMoles, numberOfComponents, type, phase, beta);
         phaseTypeName = "wax";
-
     }
 
     /** {@inheritDoc} */
@@ -65,5 +65,4 @@ public class PhaseWax extends PhaseSolid {
         //// componentArray[compNumber] = new ComponentWonWax(componentName, moles,
         // molesInPhase, compNumber);
     }
-
 }

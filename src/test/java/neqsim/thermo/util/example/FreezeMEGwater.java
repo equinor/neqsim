@@ -8,9 +8,11 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>FreezeMEGwater class.</p>
+ * <p>
+ * FreezeMEGwater class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -18,7 +20,9 @@ public class FreezeMEGwater {
     static Logger logger = LogManager.getLogger(FreezeMEGwater.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

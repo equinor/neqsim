@@ -12,21 +12,21 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 
 /**
- * This class defines a thermodynamic system using the PC-SAFT with association
- * equation of state
+ * This class defines a thermodynamic system using the PC-SAFT with association equation of state
  */
 public class SystemPCSAFTa extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     // SystemSrkEos clonedSystem;
     /**
-     * <p>Constructor for SystemPCSAFTa.</p>
+     * <p>
+     * Constructor for SystemPCSAFTa.
+     * </p>
      */
     public SystemPCSAFTa() {
         super();
@@ -41,7 +41,9 @@ public class SystemPCSAFTa extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemPCSAFTa.</p>
+     * <p>
+     * Constructor for SystemPCSAFTa.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -59,7 +61,9 @@ public class SystemPCSAFTa extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemPCSAFTa.</p>
+     * <p>
+     * Constructor for SystemPCSAFTa.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -113,5 +117,4 @@ public class SystemPCSAFTa extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

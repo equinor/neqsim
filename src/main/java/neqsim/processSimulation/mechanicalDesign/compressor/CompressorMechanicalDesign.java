@@ -14,53 +14,55 @@ import neqsim.processSimulation.processEquipment.separator.Separator;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 
 /**
- * <p>CompressorMechanicalDesign class.</p>
+ * <p>
+ * CompressorMechanicalDesign class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class CompressorMechanicalDesign extends MechanicalDesign {
-
     private static final long serialVersionUID = 1000;
 
     double compressorFactor = 0.0;
 
     /**
-     * <p>Constructor for CompressorMechanicalDesign.</p>
+     * <p>
+     * Constructor for CompressorMechanicalDesign.
+     * </p>
      *
-     * @param equipment a {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
+     * @param equipment a
+     *        {@link neqsim.processSimulation.processEquipment.ProcessEquipmentInterface} object
      */
     public CompressorMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
         costEstimate = new CompressorCostEstimate(this);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void readDesignSpecifications() {
-
+    public void readDesignSpecifications() {
         super.readDesignSpecifications();
 
         if (getDesignStandard().containsKey("compressor design codes")) {
             System.out.println("compressor code standard: "
                     + getDesignStandard().get("compressor design codes").getStandardName());
-            compressorFactor = ((CompressorDesignStandard) getDesignStandard().get("compressor design codes"))
-                    .getCompressorFactor();
+            compressorFactor =
+                    ((CompressorDesignStandard) getDesignStandard().get("compressor design codes"))
+                            .getCompressorFactor();
         } else {
             System.out.println("no pressure vessel code standard specified......");
         }
-
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void displayResults() {
-
+    public void displayResults() {
         JFrame dialog = new JFrame("Unit design " + getProcessEquipment().getName());
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "Name", "Value", "Unit" };
+        String[] names = {"Name", "Value", "Unit"};
         String[][] table = new String[16][3];// createTable(getProcessEquipment().getName());
 
         table[1][0] = "Separator Inner Diameter";
@@ -110,9 +112,9 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         dialog.setVisible(true);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calcDesign() {
+    public void calcDesign() {
         super.calcDesign();
         Compressor compressor = (Compressor) getProcessEquipment();
         double Fg = 1.0;
@@ -124,8 +126,10 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         // double moduleWidth = 0.0, moduleHeight = 0.0, moduleLength = 0.0;
         double materialsCost = 0.0;
 
-        double molecularWeight = ((Compressor) getProcessEquipment()).getThermoSystem().getMolarMass() * 1000.0;
-        double flowRate = ((Compressor) getProcessEquipment()).getThermoSystem().getVolume() / 1.0e5;
+        double molecularWeight =
+                ((Compressor) getProcessEquipment()).getThermoSystem().getMolarMass() * 1000.0;
+        double flowRate =
+                ((Compressor) getProcessEquipment()).getThermoSystem().getVolume() / 1.0e5;
         // double gasDensity = ((Compressor)
         // getProcessEquipment()).getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
         // double liqDensity = ((Compressor)
@@ -144,9 +148,11 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
         // alternative design
         double bubbleDiameter = 250.0e-6;
-        double bubVelocity = 1;// 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 /
+        double bubVelocity = 1;// 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) /
+                               // 18.0 /
                                // liqViscosity;
-        double Ar = 1.0;// ((Separator) getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
+        double Ar = 1.0;// ((Separator)
+                        // getProcessEquipment()).getThermoSystem().getPhase(1).getVolume()
                         // / 1e5 / bubVelocity;
         double Daim = Math.sqrt(Ar / 4.0);
         double Length2 = 4.0 * Daim;
@@ -176,11 +182,12 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
 
         setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
 
-        System.out.println("wall thickness: " + compressor.getName() + " " + getWallThickness() + " m");
+        System.out.println(
+                "wall thickness: " + compressor.getName() + " " + getWallThickness() + " m");
         System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
         System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-        System.out.println(
-                "foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
+        System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength
+                + " height " + moduleHeight + " meter.");
         System.out.println("mechanical price: " + materialsCost + " kNOK");
 
         setWeigthVesselShell(emptyVesselWeight);
@@ -209,36 +216,35 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
         setModuleLength(moduleLength);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setDesign() {
+    public void setDesign() {
         ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
         ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
         // this method will be implemented to set calculated design...
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getOuterDiameter() {
+    public double getOuterDiameter() {
         return outerDiameter;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getWallThickness() {
+    public double getWallThickness() {
         return wallThickness;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setWallThickness(double wallThickness) {
+    public void setWallThickness(double wallThickness) {
         this.wallThickness = wallThickness;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setOuterDiameter(double outerDiameter) {
+    public void setOuterDiameter(double outerDiameter) {
         this.outerDiameter = outerDiameter;
     }
-
 }

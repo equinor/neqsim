@@ -4,18 +4,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>FreezeSolidFunction class.</p>
+ * <p>
+ * FreezeSolidFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class FreezeSolidFunction extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FreezeSolidFunction.class);
 
     /**
-     * <p>Constructor for FreezeSolidFunction.</p>
+     * <p>
+     * Constructor for FreezeSolidFunction.
+     * </p>
      */
     public FreezeSolidFunction() {}
 
@@ -30,5 +33,4 @@ public class FreezeSolidFunction extends HuronVidalFunction {
         }
         return system.getTemperature();
     }
-
 }

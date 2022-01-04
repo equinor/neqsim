@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-
 /**
  * <p>
  * FugTestConstP class.
@@ -20,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class FugTestConstP extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(FugTestConstP.class);
     public double temp = 0.0, pres = 0.0;
@@ -31,7 +29,9 @@ public class FugTestConstP extends constantDutyTemperatureFlash
     public boolean compNameGiven = false;
 
     /**
-     * <p>Constructor for FugTestConstP.</p>
+     * <p>
+     * Constructor for FugTestConstP.
+     * </p>
      */
     public FugTestConstP() {}
 
@@ -143,7 +143,6 @@ public class FugTestConstP extends constantDutyTemperatureFlash
                     // lagre data i fil
 
                     // if(Math.abs(Fugrel[1][i]-1)<0.01)testSystem.display();
-
                 } // end iterasjons lokke
 
                 String[] title = new String[2];

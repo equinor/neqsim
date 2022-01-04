@@ -22,7 +22,6 @@ import ucar.nc2.Variable;
  * @version $Id: $Id
  */
 public class NetCdf2D {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/temp/example.nc";
@@ -35,7 +34,9 @@ public class NetCdf2D {
     int yLength = 0;
 
     /**
-     * <p>Constructor for NetCdf2D.</p>
+     * <p>
+     * Constructor for NetCdf2D.
+     * </p>
      */
     public NetCdf2D() {}
 
@@ -88,7 +89,6 @@ public class NetCdf2D {
      * </p>
      */
     public void createFile() {
-
         try {
             NetcdfFileWriter ncfile =
                     NetcdfFileWriter.createNew(NetcdfFileWriter.Version.netcdf3, fileName, null);
@@ -112,16 +112,13 @@ public class NetCdf2D {
             Variable u =
                     ncfile.addVariable(null, lonD.get(i).getName(), ucar.ma2.DataType.DOUBLE, dim2);
             // u.addAttribute(new Attribute("units", "degrees_east"));
-
         }
 
         // ncfile.addGroupAttribute(null, new Attribute("title", "Example Data"));
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
-
             System.err.println("ERROR creating file");
         }
 
@@ -132,18 +129,15 @@ public class NetCdf2D {
                 v = ncfile.findVariable(lonD.get(i).getName());
                 ncfile.write(v, Array.factory(yvalues2[i]));
             }
-
         } catch (Exception e) {
             System.err.println("ERROR writing file");
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
 
     /**
@@ -161,5 +155,4 @@ public class NetCdf2D {
         test.setYvalues(y, "length", "meter");
         test.createFile();
     }
-
 }

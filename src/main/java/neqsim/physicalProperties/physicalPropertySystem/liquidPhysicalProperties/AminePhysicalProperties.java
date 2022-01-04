@@ -21,11 +21,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class AminePhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for AminePhysicalProperties.</p>
+     * <p>
+     * Constructor for AminePhysicalProperties.
+     * </p>
      */
     public AminePhysicalProperties() {}
 

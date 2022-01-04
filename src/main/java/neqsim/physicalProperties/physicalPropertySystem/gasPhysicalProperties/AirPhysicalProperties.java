@@ -17,11 +17,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class AirPhysicalProperties extends GasPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for AirPhysicalProperties.</p>
+     * <p>
+     * Constructor for AirPhysicalProperties.
+     * </p>
      */
     public AirPhysicalProperties() {}
 

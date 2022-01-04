@@ -19,7 +19,6 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionSimple extends SurfaceTension {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionSimple.class);
 
@@ -33,7 +32,9 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     private double[][][] dmudn2 = null;
 
     /**
-     * <p>Constructor for GTSurfaceTensionSimple.</p>
+     * <p>
+     * Constructor for GTSurfaceTensionSimple.
+     * </p>
      */
     public GTSurfaceTensionSimple() {}
 
@@ -260,7 +261,6 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
                                 new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama)
                                         .getSolver();
                         ans2 = solver1.solve(bRealMatrix);
-
                     } catch (Exception e) {
                         logger.error("error", e);
                     }
@@ -308,7 +308,6 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
             surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j])
                     * del_den_interface[referenceComponentNumber];// *
                                                                   // thermo.ThermodynamicConstantsInterface.avagadroNumber;
-
         }
 
         // System.out.println("del den ref " +

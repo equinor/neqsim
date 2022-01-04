@@ -5,20 +5,20 @@
  */
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
  * checkScalePotential class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class checkScalePotential extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(checkScalePotential.class);
 
@@ -27,7 +27,9 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     String[][] resultTable = null;
 
     /**
-     * <p>Constructor for checkScalePotential.</p>
+     * <p>
+     * Constructor for checkScalePotential.
+     * </p>
      */
     public checkScalePotential() {}
 
@@ -48,7 +50,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         double ksp = 0.0;
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
@@ -201,7 +202,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                     //
                     // double x1max =system.getPhase(phaseNumber).getComponent(name1).getx()/maxn;
                     // double x2max =system.getPhase(phaseNumber).getComponent(name2).getx()/maxn;
-
                 }
             }
         } catch (Exception e) {
@@ -214,7 +214,6 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
                 system.getChemicalReactionOperations().solveChemEq(phaseNumber, 1);
             }
         }
-
     }
 
     /** {@inheritDoc} */
@@ -232,5 +231,4 @@ public class checkScalePotential extends constantDutyTemperatureFlash {
         logger.info("checking table...scale " + resultTable[1][2]);
         return resultTable;
     }
-
 }

@@ -21,12 +21,13 @@ public class Density extends
         neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DensityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Density.class);
 
     /**
-     * <p>Constructor for Density.</p>
+     * <p>
+     * Constructor for Density.
+     * </p>
      */
     public Density() {}
 
@@ -65,7 +66,6 @@ public class Density extends
      */
     @Override
     public double calcDensity() {
-
         double tempVar = 0.0;
         if (solidPhase.getPhase().useVolumeCorrection()) {
             for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {

@@ -6,16 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TestUNIFAC class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TestUNIFAC class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -23,7 +19,9 @@ public class TestUNIFAC {
     static Logger logger = LogManager.getLogger(TestUNIFAC.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -59,7 +57,6 @@ public class TestUNIFAC {
             // testOps.bubblePointTemperatureFlash();
         } catch (Exception e) {
             logger.error(e.toString(), e);
-
         }
         testSystem.display();
         logger.info(testSystem.getPhase(1).getActivityCoefficient(0));

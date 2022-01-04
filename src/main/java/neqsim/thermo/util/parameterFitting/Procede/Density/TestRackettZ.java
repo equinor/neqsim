@@ -12,22 +12,24 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestRackettZ class.</p>
+ * <p>
+ * TestRackettZ class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestRackettZ {
-
     static Logger logger = LogManager.getLogger(TestRackettZ.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

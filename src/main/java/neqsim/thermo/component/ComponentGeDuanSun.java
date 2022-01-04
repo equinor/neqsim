@@ -12,13 +12,14 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentGeDuanSun extends ComponentGE {
-
     private static final long serialVersionUID = 1000;
 
     double r = 0, q = 0;
 
     /**
-     * <p>Constructor for ComponentGeDuanSun.</p>
+     * <p>
+     * Constructor for ComponentGeDuanSun.
+     * </p>
      */
     public ComponentGeDuanSun() {}
 
@@ -62,7 +63,6 @@ public class ComponentGeDuanSun extends ComponentGE {
      */
     public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
-
         double type = phase.getInitType();
         double A = 0, B = 0, C = 0, D = 0, E = 0, F = 0, ny = 0, tau = 0, tau2 = 0, G = 0, G2 = 0,
                 alpha = 0, Dij = 0, Djj = 0, Dji = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0,
@@ -137,7 +137,6 @@ public class ComponentGeDuanSun extends ComponentGE {
             // System.out.println("hei");
 
             for (l = 0; l < numberOfComponents; l++) {
-
                 Dij = HVgij[l][j];
                 alpha = HValpha[l][j];
                 tau = Dij / (temperature);
@@ -192,7 +191,6 @@ public class ComponentGeDuanSun extends ComponentGE {
         // System.out.println("gamma " +gamma);
         // if derivates....
         if (type == 3) {
-
             double dAdn = 0;
             double dBdn = 0;
             double Etemp = 0;
@@ -265,7 +263,6 @@ public class ComponentGeDuanSun extends ComponentGE {
      */
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij) {
-
         if (componentName.equals("CO2")) {
             return 0.9;
         } else if (componentName.equals("water")) {
@@ -507,7 +504,6 @@ public class ComponentGeDuanSun extends ComponentGE {
         // return gammaO2;
         // }else
         return gamma;
-
     }
     /////////////////////////////////////////////////////
     /*
@@ -552,5 +548,4 @@ public class ComponentGeDuanSun extends ComponentGE {
     public double getLngamma() {
         return lngamma;
     }
-
 }

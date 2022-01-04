@@ -7,17 +7,18 @@ import neqsim.thermo.component.ComponentEosInterface;
  * AttractiveTermTwuCoonStatoil class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private double a = 0.0, b = 0.0, c = 0.0;
 
     /**
-     * <p>Constructor for AttractiveTermTwuCoonStatoil.</p>
+     * <p>
+     * Constructor for AttractiveTermTwuCoonStatoil.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -29,7 +30,9 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
     }
 
     /**
-     * <p>Constructor for AttractiveTermTwuCoonStatoil.</p>
+     * <p>
+     * Constructor for AttractiveTermTwuCoonStatoil.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
@@ -38,7 +41,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         this(component);
         // this.parameters [0] for aa benytte gitte input parametre
         System.arraycopy(params, 0, this.parameters, 0, params.length);
-
     }
 
     /** {@inheritDoc} */
@@ -74,7 +76,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
         // System.out.println("alpha here " + Math.pow( 1.0 +
         // m*(1.0-Math.sqrt(temperature/component.getTC()))-parameters[0]*(1.0-temperature/component.getTC())*(1.0+parameters[1]*temperature/component.getTC()+parameters[2]*Math.pow(temperature/component.getTC(),2.0)),2.0));
         return Math.pow((Tr), (c * (b - 1))) * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
-
     }
 
     // private double alphaCrit(double temperature){
@@ -102,7 +103,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
     /** {@inheritDoc} */
     @Override
     public double aT(double temperature) {
-
         return getComponent().geta() * alpha(temperature);
     }
 
@@ -121,7 +121,6 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
                 * Math.exp(a * (1 - Math.pow((Tr), (b * c))))
                 - Math.pow((Tr), (c * (b - 1))) * a * Math.pow((Tr), (b * c)) * b * c / t
                         * Math.exp(a * (1 - Math.pow((Tr), (b * c))));
-
     }
 
     /** {@inheritDoc} */
@@ -145,20 +144,17 @@ public class AttractiveTermTwuCoonStatoil extends AtractiveTermBaseClass {
                         * Math.exp(a * (1 - Math.pow(Tr, (b * c))))
                 + Math.pow(Tr, (c * (b - 1))) * (a * a) * (Math.pow(Tr, (2 * b * c))) * (b * b)
                         * (c * c) / (t * t) * Math.exp(a * (1 - Math.pow(Tr, (b * c))));
-
     }
 
     /** {@inheritDoc} */
     @Override
     public double diffaT(double temperature) {
-
         return getComponent().geta() * diffalphaT(temperature);
     }
 
     /** {@inheritDoc} */
     @Override
     public double diffdiffaT(double temperature) {
-
         return getComponent().geta() * diffdiffalphaT(temperature);
     }
 }

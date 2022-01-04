@@ -18,13 +18,14 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class IronIonSaturationStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface reactiveThermoSystem;
 
     /**
-     * <p>Constructor for IronIonSaturationStream.</p>
+     * <p>
+     * Constructor for IronIonSaturationStream.
+     * </p>
      */
     public IronIonSaturationStream() {
         super();
@@ -114,5 +115,4 @@ public class IronIonSaturationStream extends Stream {
     public void displayResult() {
         reactiveThermoSystem.display(name);
     }
-
 }

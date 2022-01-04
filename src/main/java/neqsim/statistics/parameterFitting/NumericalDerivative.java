@@ -15,7 +15,6 @@ package neqsim.statistics.parameterFitting;
  * @version $Id: $Id
  */
 public class NumericalDerivative implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     final static double CON = 1.4;
@@ -25,7 +24,9 @@ public class NumericalDerivative implements java.io.Serializable {
     final static double SAFE = 2.0;
 
     /**
-     * <p>Constructor for NumericalDerivative.</p>
+     * <p>
+     * Constructor for NumericalDerivative.
+     * </p>
      */
     public NumericalDerivative() {}
 
@@ -41,7 +42,6 @@ public class NumericalDerivative implements java.io.Serializable {
      */
     public static double calcDerivative(StatisticsBaseClass system, int sampleNumber,
             int parameterNumber) {
-
         double errt, fac, hh, ans, err;
         double h = Math.abs(system.getSampleSet().getSample(sampleNumber).getFunction()
                 .getFittingParams(parameterNumber)) / 1.0e3;

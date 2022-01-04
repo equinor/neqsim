@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentHydrateStatoil extends ComponentHydrate {
-
     private static final long serialVersionUID = 1000;
 
     double coordNumb[][] = new double[2][2];
@@ -23,7 +22,9 @@ public class ComponentHydrateStatoil extends ComponentHydrate {
     static Logger logger = LogManager.getLogger(ComponentHydrateStatoil.class);
 
     /**
-     * <p>Constructor for ComponentHydrateStatoil.</p>
+     * <p>
+     * Constructor for ComponentHydrateStatoil.
+     * </p>
      */
     public ComponentHydrateStatoil() {}
 

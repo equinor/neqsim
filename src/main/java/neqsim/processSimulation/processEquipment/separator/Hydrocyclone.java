@@ -10,7 +10,7 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * Hydrocyclone class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class Hydrocyclone extends Separator {
@@ -25,7 +25,9 @@ public class Hydrocyclone extends Separator {
     StreamInterface waterOutStream = new Stream(waterSystem);
 
     /**
-     * <p>Constructor for Hydrocyclone.</p>
+     * <p>
+     * Constructor for Hydrocyclone.
+     * </p>
      */
     public Hydrocyclone() {
         super();
@@ -140,7 +142,6 @@ public class Hydrocyclone extends Separator {
     @Override
     public void displayResult() {
         thermoSystem.display("from here " + getName());
-
     }
 
     /** {@inheritDoc} */
@@ -155,5 +156,4 @@ public class Hydrocyclone extends Separator {
      * </p>
      */
     public void runTransient() {}
-
 }

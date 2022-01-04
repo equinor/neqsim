@@ -19,7 +19,6 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
  */
 public class TwoPhasePipeFlowSolver
         extends neqsim.fluidMechanics.flowSolver.onePhaseFlowSolver.OnePhaseFlowSolver {
-
     private static final long serialVersionUID = 1000;
 
     protected double[] PbArray; // = new double[100];
@@ -39,7 +38,9 @@ public class TwoPhasePipeFlowSolver
     protected int numberOfNodes;
 
     /**
-     * <p>Constructor for TwoPhasePipeFlowSolver.</p>
+     * <p>
+     * Constructor for TwoPhasePipeFlowSolver.
+     * </p>
      */
     public TwoPhasePipeFlowSolver() {}
 
@@ -93,5 +94,4 @@ public class TwoPhasePipeFlowSolver
 
         return clonedSystem;
     }
-
 }

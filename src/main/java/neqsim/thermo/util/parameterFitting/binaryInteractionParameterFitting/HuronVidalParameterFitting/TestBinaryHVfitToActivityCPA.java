@@ -12,22 +12,24 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>TestBinaryHVfitToActivityCPA class.</p>
+ * <p>
+ * TestBinaryHVfitToActivityCPA class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestBinaryHVfitToActivityCPA implements Cloneable {
-
     static Logger logger = LogManager.getLogger(TestBinaryHVfitToActivityCPA.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -44,7 +46,6 @@ public class TestBinaryHVfitToActivityCPA implements Cloneable {
         for (int i = 0; i < 1; i++) {
             numb++;
             for (int j = 0; j < 10; j++) {
-
                 BinaryHVparameterFitToActivityCoefficientFunction function =
                         new BinaryHVparameterFitToActivityCoefficientFunction();
                 SystemInterface testSystem = new SystemSrkEos(268.15 + 10.0 * i, 1.0);
@@ -84,7 +85,6 @@ public class TestBinaryHVfitToActivityCPA implements Cloneable {
         for (int i = 0; i < 0; i++) {
             numb++;
             for (int j = 0; j < 10; j++) {
-
                 BinaryHVparameterFitToActivityCoefficientFunction function =
                         new BinaryHVparameterFitToActivityCoefficientFunction();
                 SystemInterface testSystem = new SystemPrEos(300.0 + 20.0 * i, 1.0);
@@ -123,7 +123,6 @@ public class TestBinaryHVfitToActivityCPA implements Cloneable {
         for (int i = 0; i < 0; i++) {
             numb++;
             for (int j = 0; j < 0; j++) {
-
                 BinaryHVparameterFitToActivityCoefficientFunction function =
                         new BinaryHVparameterFitToActivityCoefficientFunction();
                 SystemInterface testSystem = new SystemPrEos(253.0 + 20.0 * i, 1.0);

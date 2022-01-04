@@ -1,8 +1,3 @@
-/*
- * LengthUnit.java
- *
- * Created on 25. januar 2002, 20:23
- */
 package neqsim.util.unit;
 
 /**
@@ -14,11 +9,12 @@ package neqsim.util.unit;
  * @version $Id: $Id
  */
 public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TemperatureUnit.</p>
+     * <p>
+     * Constructor for TemperatureUnit.
+     * </p>
      *
      * @param value a double
      * @param name a {@link java.lang.String} object
@@ -52,7 +48,6 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
      * @return a double
      */
     public double getConversionFactor(String name) {
-
         double conversionFactor = 1.0;
         switch (name) {
             case "K":
@@ -64,5 +59,4 @@ public class TemperatureUnit extends neqsim.util.unit.BaseUnit {
         }
         return conversionFactor;
     }
-
 }

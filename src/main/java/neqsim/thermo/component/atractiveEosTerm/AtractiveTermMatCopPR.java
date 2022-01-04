@@ -16,14 +16,15 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermMatCopPR extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
 
     double orgpar = 0.0;
     boolean useStandardAlphaForSupercritical = true;
 
     /**
-     * <p>Constructor for AtractiveTermMatCopPR.</p>
+     * <p>
+     * Constructor for AtractiveTermMatCopPR.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -42,11 +43,12 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
             parameters[1] = 2.945E0;
             parameters[2] = -5.982E0;
         }
-
     }
 
     /**
-     * <p>Constructor for AtractiveTermMatCopPR.</p>
+     * <p>
+     * Constructor for AtractiveTermMatCopPR.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
@@ -127,7 +129,6 @@ public class AtractiveTermMatCopPR extends AtractiveTermPr {
                 * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
                         - parameters[1] * rootTR / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * rootTR * rootTR / Math.sqrt(Tr) / TC);
-
     }
 
     /** {@inheritDoc} */

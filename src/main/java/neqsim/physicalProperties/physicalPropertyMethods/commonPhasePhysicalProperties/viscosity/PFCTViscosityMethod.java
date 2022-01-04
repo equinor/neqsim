@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class PFCTViscosityMethod extends Viscosity {
-
     private static final long serialVersionUID = 1000;
 
     int phaseTypeNumb = 1;
@@ -31,7 +30,9 @@ public class PFCTViscosityMethod extends Viscosity {
             4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
 
     /**
-     * <p>Constructor for PFCTViscosityMethod.</p>
+     * <p>
+     * Constructor for PFCTViscosityMethod.
+     * </p>
      */
     public PFCTViscosityMethod() {}
 
@@ -54,7 +55,6 @@ public class PFCTViscosityMethod extends Viscosity {
     /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
-
         int phaseTypeNumb = 0;
         // if(phase.getPhase().getPhaseType()==0) phaseTypeNumb=1;
 
@@ -138,7 +138,6 @@ public class PFCTViscosityMethod extends Viscosity {
      * @return a double
      */
     public double getRefComponentViscosity(double temp, double pres) {
-
         referenceSystem.setTemperature(temp);
         // System.out.println("ref temp " + temp);
         referenceSystem.setPressure(pres);
@@ -175,5 +174,4 @@ public class PFCTViscosityMethod extends Viscosity {
         // System.out.println("ref visc " + refVisc);
         return refVisc;
     }
-
 }

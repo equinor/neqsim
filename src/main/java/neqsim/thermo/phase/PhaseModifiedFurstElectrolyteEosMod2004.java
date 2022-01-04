@@ -19,7 +19,6 @@ import neqsim.thermo.component.ComponentModifiedFurstElectrolyteEos;
  * @version $Id: $Id
  */
 public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
-
     private static final long serialVersionUID = 1000;
     double gammaold = 0, alphaLRdTdV = 0;
     double W = 0, WT = 0, WTT = 0, eps = 0, epsdV = 0, epsdVdV = 0, epsIonic = 0, bornX = 0,
@@ -36,7 +35,9 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     // PhaseInterface[] refPhase;// = new PhaseInterface[10];
 
     /**
-     * <p>Constructor for PhaseModifiedFurstElectrolyteEosMod2004.</p>
+     * <p>
+     * Constructor for PhaseModifiedFurstElectrolyteEosMod2004.
+     * </p>
      */
     public PhaseModifiedFurstElectrolyteEosMod2004() {
         super();
@@ -487,7 +488,6 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         // double BonV = phase== 0 ?
         // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
         double BonV = phase == 0 ? 0.99 : 1e-5;
@@ -944,7 +944,6 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
                     * Math.pow(componentArray[i].getIonicCharge(), 2.0)
                     / (1.0 + getShieldingParameter()
                             * componentArray[i].getLennardJonesMolecularDiameter() * 1e-10);
-
         }
         return ans2 + ans;
     }
@@ -1725,5 +1724,4 @@ public class PhaseModifiedFurstElectrolyteEosMod2004 extends PhaseSrkEos {
     public double getEpsIonicdVdV() {
         return epsIonicdVdV;
     }
-
 }

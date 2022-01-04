@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhasePCSAFT;
  * @version $Id: $Id
  */
 public class ComponentPCSAFT extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     private double dSAFTi = 1.0, dmSAFTdi = 1.0;
@@ -32,7 +31,9 @@ public class ComponentPCSAFT extends ComponentSrk {
     int useHS = 1, useDISP1 = 1, useDISP2 = 1;
 
     /**
-     * <p>Constructor for ComponentPCSAFT.</p>
+     * <p>
+     * Constructor for ComponentPCSAFT.
+     * </p>
      */
     public ComponentPCSAFT() {
         super();
@@ -62,7 +63,6 @@ public class ComponentPCSAFT extends ComponentSrk {
     public ComponentPCSAFT(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**
@@ -84,7 +84,6 @@ public class ComponentPCSAFT extends ComponentSrk {
     /** {@inheritDoc} */
     @Override
     public ComponentPCSAFT clone() {
-
         ComponentPCSAFT clonedComponent = null;
         try {
             clonedComponent = (ComponentPCSAFT) super.clone();
@@ -227,7 +226,6 @@ public class ComponentPCSAFT extends ComponentSrk {
      */
     public double dF_DISP2_SAFTdN(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure) {
-
         return ((PhasePCSAFT) phase).F_DISP2_SAFT() / phase.getNumberOfMolesInPhase()
                 + phase.getNumberOfMolesInPhase() * ((-ThermodynamicConstantsInterface.pi
                         * getDmSAFTdi() * ((PhasePCSAFT) phase).getF1dispVolTerm()
@@ -305,7 +303,6 @@ public class ComponentPCSAFT extends ComponentSrk {
             // System.out.println("kij "+
             // ((PhaseEosInterface)phase).getMixingRule().getBinaryInteractionParameter(componentNumber,
             // i));
-
         }
         return -2.0 / Math.pow(phase.getNumberOfMolesInPhase(), 1.0)
                 * ((PhasePCSAFT) phase).getF2dispSumTerm()
@@ -504,5 +501,4 @@ public class ComponentPCSAFT extends ComponentSrk {
     public void setDlogghsSAFTdi(double dlogghsSAFTdi) {
         this.dlogghsSAFTdi = dlogghsSAFTdi;
     }
-
 }

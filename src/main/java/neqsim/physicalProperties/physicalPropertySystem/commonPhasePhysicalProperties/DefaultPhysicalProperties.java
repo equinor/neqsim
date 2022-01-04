@@ -18,11 +18,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class DefaultPhysicalProperties extends PhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for DefaultPhysicalProperties.</p>
+     * <p>
+     * Constructor for DefaultPhysicalProperties.
+     * </p>
      */
     public DefaultPhysicalProperties() {}
 

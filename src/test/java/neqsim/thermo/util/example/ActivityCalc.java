@@ -10,7 +10,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>ActivityCalc class.</p>
+ * <p>
+ * ActivityCalc class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -18,7 +20,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 public class ActivityCalc {
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -43,6 +47,5 @@ public class ActivityCalc {
 
         testSystem.display();
         System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
-
     }
 }

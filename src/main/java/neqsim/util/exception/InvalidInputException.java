@@ -15,11 +15,12 @@ package neqsim.util.exception;
  * @version $Id: $Id
  */
 public class InvalidInputException extends neqsim.util.exception.ThermoException {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for InvalidInputException.</p>
+     * <p>
+     * Constructor for InvalidInputException.
+     * </p>
      */
     public InvalidInputException() {}
 

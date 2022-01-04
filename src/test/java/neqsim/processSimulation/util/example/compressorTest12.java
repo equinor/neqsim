@@ -4,9 +4,11 @@ import neqsim.processSimulation.processEquipment.compressor.Compressor;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>compressorTest12 class.</p>
+ * <p>
+ * compressorTest12 class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

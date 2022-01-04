@@ -17,7 +17,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  * @version $Id: $Id
  */
 public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
-
     private static final long serialVersionUID = 1000;
 
     public double[] temperature = new double[2];
@@ -35,7 +34,9 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
     public int numberOfComponents = 0;
 
     /**
-     * <p>Constructor for FlowNodeVisualization.</p>
+     * <p>
+     * Constructor for FlowNodeVisualization.
+     * </p>
      */
     public FlowNodeVisualization() {}
 
@@ -145,5 +146,4 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
     public double getPhaseFraction(int phase) {
         return phaseFraction[phase];
     }
-
 }

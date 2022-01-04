@@ -1,15 +1,18 @@
 package neqsim.util.unit;
 
 /**
- * <p>NeqSimUnitSet class.</p>
+ * <p>
+ * NeqSimUnitSet class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class NeqSimUnitSet {
-
     /**
-     * <p>Getter for the field <code>componentConcentrationUnit</code>.</p>
+     * <p>
+     * Getter for the field <code>componentConcentrationUnit</code>.
+     * </p>
      *
      * @return the componentConcentrationUnit
      */
@@ -18,7 +21,9 @@ public class NeqSimUnitSet {
     }
 
     /**
-     * <p>Setter for the field <code>componentConcentrationUnit</code>.</p>
+     * <p>
+     * Setter for the field <code>componentConcentrationUnit</code>.
+     * </p>
      *
      * @param componentConcentrationUnit the componentConcentrationUnit to set
      */
@@ -29,7 +34,9 @@ public class NeqSimUnitSet {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Getter for the field <code>flowRateUnit</code>.</p>
+     * <p>
+     * Getter for the field <code>flowRateUnit</code>.
+     * </p>
      *
      * @return the flowRateUnit
      */
@@ -38,7 +45,9 @@ public class NeqSimUnitSet {
     }
 
     /**
-     * <p>Setter for the field <code>flowRateUnit</code>.</p>
+     * <p>
+     * Setter for the field <code>flowRateUnit</code>.
+     * </p>
      *
      * @param flowRateUnit the flowRateUnit to set
      */
@@ -47,7 +56,9 @@ public class NeqSimUnitSet {
     }
 
     /**
-     * <p>Getter for the field <code>pressureUnit</code>.</p>
+     * <p>
+     * Getter for the field <code>pressureUnit</code>.
+     * </p>
      *
      * @return the pressureUnit
      */
@@ -56,7 +67,9 @@ public class NeqSimUnitSet {
     }
 
     /**
-     * <p>Setter for the field <code>pressureUnit</code>.</p>
+     * <p>
+     * Setter for the field <code>pressureUnit</code>.
+     * </p>
      *
      * @param pressureUnit the pressureUnit to set
      */
@@ -65,7 +78,9 @@ public class NeqSimUnitSet {
     }
 
     /**
-     * <p>Getter for the field <code>temperatureUnit</code>.</p>
+     * <p>
+     * Getter for the field <code>temperatureUnit</code>.
+     * </p>
      *
      * @return the temperatureUnit
      */
@@ -74,7 +89,9 @@ public class NeqSimUnitSet {
     }
 
     /**
-     * <p>Setter for the field <code>temperatureUnit</code>.</p>
+     * <p>
+     * Setter for the field <code>temperatureUnit</code>.
+     * </p>
      *
      * @param temperatureUnit the temperatureUnit to set
      */
@@ -86,5 +103,4 @@ public class NeqSimUnitSet {
     private String pressureUnit = "bara";
     private String flowRateUnit = "mol/sec";
     private String componentConcentrationUnit = "molefraction";
-
 }

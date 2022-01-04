@@ -16,11 +16,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentSrkCPAs extends ComponentSrkCPA {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentSrkCPAs.</p>
+     * <p>
+     * Constructor for ComponentSrkCPAs.
+     * </p>
      */
     public ComponentSrkCPAs() {}
 
@@ -69,7 +70,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     /** {@inheritDoc} */
     @Override
     public ComponentSrkCPAs clone() {
-
         ComponentSrkCPAs clonedComponent = null;
         try {
             clonedComponent = (ComponentSrkCPAs) super.clone();

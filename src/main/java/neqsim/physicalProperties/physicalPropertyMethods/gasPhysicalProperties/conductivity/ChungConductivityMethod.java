@@ -14,13 +14,14 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
  * @version $Id: $Id
  */
 public class ChungConductivityMethod extends Conductivity {
-
     private static final long serialVersionUID = 1000;
     double conductivity = 0;
     public double[] pureComponentConductivity;
 
     /**
-     * <p>Constructor for ChungConductivityMethod.</p>
+     * <p>
+     * Constructor for ChungConductivityMethod.
+     * </p>
      */
     public ChungConductivityMethod() {}
 

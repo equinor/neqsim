@@ -6,9 +6,11 @@ import neqsim.processSimulation.processEquipment.util.MoleFractionControllerUtil
 import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 
 /**
- * <p>threePhaseSeparation class.</p>
+ * <p>
+ * threePhaseSeparation class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -19,7 +21,8 @@ public class threePhaseSeparation {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface system1 = new neqsim.thermo.system.SystemSrkCPAs((273.15 + 15.0), 80.00);
+        neqsim.thermo.system.SystemInterface system1 =
+                new neqsim.thermo.system.SystemSrkCPAs((273.15 + 15.0), 80.00);
         system1.addComponent("CO2", 0.309);
         system1.addComponent("nitrogen", 1.854);
         system1.addComponent("methane", 94.90446);
@@ -72,7 +75,8 @@ public class threePhaseSeparation {
         // werRemoval.setRelativeMoleFractionReduction("water", -0.99);
         // waterRemoval.getOutStream();
 
-        MoleFractionControllerUtil TEGsaturator = new MoleFractionControllerUtil(waterRemoval.getOutStream());
+        MoleFractionControllerUtil TEGsaturator =
+                new MoleFractionControllerUtil(waterRemoval.getOutStream());
         TEGsaturator.setMoleFraction("water", 5.0e-6);
         // TEGsaturator.getOutStream();
 
@@ -82,7 +86,8 @@ public class threePhaseSeparation {
         // ThreePhaseSeparator separator2 = new ThreePhaseSeparator("Separator LP",
         // LP_valve.getOutStream());
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(separator);
         // operations.add(stream_2);

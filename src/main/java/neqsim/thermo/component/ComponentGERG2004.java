@@ -16,11 +16,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentGERG2004 extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentGERG2004.</p>
+     * <p>
+     * Constructor for ComponentGERG2004.
+     * </p>
      */
     public ComponentGERG2004() {}
 
@@ -48,7 +49,6 @@ public class ComponentGERG2004 extends ComponentEos {
     public ComponentGERG2004(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**
@@ -70,7 +70,6 @@ public class ComponentGERG2004 extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public ComponentGERG2004 clone() {
-
         ComponentGERG2004 clonedComponent = null;
         try {
             clonedComponent = (ComponentGERG2004) super.clone();
@@ -109,7 +108,6 @@ public class ComponentGERG2004 extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
-
         return fugasityCoeffisient;
     }
 

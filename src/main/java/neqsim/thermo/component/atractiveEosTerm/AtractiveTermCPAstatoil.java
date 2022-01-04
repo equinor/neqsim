@@ -16,13 +16,14 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
-
     private static final long serialVersionUID = 1000;
 
     double orgpar = 0.0;
 
     /**
-     * <p>Constructor for AtractiveTermCPAstatoil.</p>
+     * <p>
+     * Constructor for AtractiveTermCPAstatoil.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -92,7 +93,6 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
     public double aT(double temperature) {
         if (temperature / getComponent().getTC() > 1.0) {
             return super.aT(temperature);
-
         } else {
             return getComponent().geta() * alpha(temperature);
         }
@@ -111,7 +111,6 @@ public class AtractiveTermCPAstatoil extends AtractiveTermSrk {
                         - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                                 / Math.sqrt(Tr) / TC);
-
     }
 
     /** {@inheritDoc} */

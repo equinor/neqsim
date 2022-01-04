@@ -21,12 +21,11 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * freezingPointTemperatureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
         implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(freezingPointTemperatureFlash.class);
 
@@ -36,7 +35,9 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
     public String phaseName = "oil";
 
     /**
-     * <p>Constructor for freezingPointTemperatureFlash.</p>
+     * <p>
+     * Constructor for freezingPointTemperatureFlash.
+     * </p>
      */
     public freezingPointTemperatureFlash() {}
 
@@ -163,7 +164,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
                     maxTemperature = oldTemperature;
                 }
             } // end if
-
         } // end for lokke
 
         if (SolidForms) {
@@ -182,7 +182,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
      * @param FCompTemp an array of {@link double} objects
      */
     public void printToFile(String name, String[] FCompNames, double[] FCompTemp) {
-
         for (int n = 0; n < system.getPhases()[0].getNumberOfComponents(); n++) {
             name = name + "_" + system.getPhase(0).getComponent(n).getComponentName();
         }
@@ -194,7 +193,6 @@ public class freezingPointTemperatureFlash extends constantDutyTemperatureFlash
             pr_writer.flush();
 
             for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
-
                 // print line to output file
                 pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k])
                         + "," + system.getPressure() + ","

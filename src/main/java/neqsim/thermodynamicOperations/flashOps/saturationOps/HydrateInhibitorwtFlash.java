@@ -16,11 +16,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateInhibitorwtFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
 
     double wtfrac = 0.5;
@@ -29,7 +28,9 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     static Logger logger = LogManager.getLogger(HydrateInhibitorwtFlash.class);
 
     /**
-     * <p>Constructor for HydrateInhibitorwtFlash.</p>
+     * <p>
+     * Constructor for HydrateInhibitorwtFlash.
+     * </p>
      */
     public HydrateInhibitorwtFlash() {}
 
@@ -46,7 +47,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
         super(system);
         wtfrac = wtfr;
         this.inhibitor = inhibitor;
-
     }
 
     /**
@@ -61,7 +61,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
         double oldWt = 1.0, newWt = 2.0;
@@ -79,7 +78,6 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                 if (iter < 4) {
                     system.addComponent(inhibitor, error * 0.01);
                 } else {
-
                     double newC = -error / derrordC;
                     double correction = newC * 0.5;// (newC -
                                                    // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles())
@@ -112,16 +110,13 @@ public class HydrateInhibitorwtFlash extends constantDutyTemperatureFlash {
                                     + system.getPhase("aqueous").getComponent("water").getx()
                                             * system.getPhase("aqueous").getComponent("water")
                                                     .getMolarMass());
-
                 }
                 error = -(wtp - wtfrac);
 
                 logger.info("error " + error);
-
             } catch (Exception e) {
                 logger.error("error", e);
             }
-
         } while ((Math.abs(error) > 1e-5 && iter < 100) || iter < 3);
         // system.display();
     }

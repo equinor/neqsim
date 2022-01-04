@@ -13,7 +13,9 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  */
 
 /**
- * <p>TestGERGwater class.</p>
+ * <p>
+ * TestGERGwater class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -23,7 +25,9 @@ public class TestGERGwater {
     static Logger logger = LogManager.getLogger(TestGERGwater.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -57,6 +61,5 @@ public class TestGERGwater {
         } catch (Exception e) {
             logger.error(e.toString());
         }
-
     }
 }

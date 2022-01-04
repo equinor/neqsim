@@ -23,7 +23,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class NeqSimBlobDatabase
         implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
      * <p>
      * createTemporaryTables.
@@ -61,10 +60,11 @@ public class NeqSimBlobDatabase
     protected Connection databaseConnection = null;
 
     /**
-     * <p>Constructor for NeqSimBlobDatabase.</p>
+     * <p>
+     * Constructor for NeqSimBlobDatabase.
+     * </p>
      */
     public NeqSimBlobDatabase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -73,12 +73,13 @@ public class NeqSimBlobDatabase
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
     /**
-     * <p>openConnection.</p>
+     * <p>
+     * openConnection.
+     * </p>
      *
      * @return a Connection object
      * @throws java.sql.SQLException if any.
@@ -103,7 +104,6 @@ public class NeqSimBlobDatabase
                 return DriverManager
                         .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
                                 + dir + "\\data\\NeqSimDatabase");
-
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -130,7 +130,6 @@ public class NeqSimBlobDatabase
                 logger.error("error", e);
             }
         }
-
     }
 
     /**
@@ -241,7 +240,6 @@ public class NeqSimBlobDatabase
      */
     public Statement getStatement() {
         return statement;
-
     }
 
     /**
@@ -253,7 +251,6 @@ public class NeqSimBlobDatabase
      */
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**

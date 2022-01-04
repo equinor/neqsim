@@ -17,11 +17,12 @@ import neqsim.thermo.component.ComponentPR;
  * @version $Id: $Id
  */
 public class PhasePrEos extends PhaseEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhasePrEos.</p>
+     * <p>
+     * Constructor for PhasePrEos.
+     * </p>
      */
     public PhasePrEos() {
         super();
@@ -53,5 +54,4 @@ public class PhasePrEos extends PhaseEos {
         componentArray[compNumber] =
                 new ComponentPR(componentName, moles, molesInPhase, compNumber);
     }
-
 }

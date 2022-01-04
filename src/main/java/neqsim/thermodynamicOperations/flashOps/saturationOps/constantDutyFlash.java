@@ -16,11 +16,10 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract constantDutyFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public abstract class constantDutyFlash implements constantDutyFlashInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(constantDutyFlash.class);
 
@@ -37,7 +36,9 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
     int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
 
     /**
-     * <p>Constructor for constantDutyFlash.</p>
+     * <p>
+     * Constructor for constantDutyFlash.
+     * </p>
      */
     public constantDutyFlash() {}
 
@@ -110,7 +111,6 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
             Told = system.getTemperature();
             system.setTemperature((Told - funk / deriv * 0.9));
             logger.info("Temp: " + system.getTemperature());
-
         } while (Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7);
     }
 
@@ -163,7 +163,5 @@ public abstract class constantDutyFlash implements constantDutyFlashInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void addData(String name, double[][] data) {
-
-    }
+    public void addData(String name, double[][] data) {}
 }

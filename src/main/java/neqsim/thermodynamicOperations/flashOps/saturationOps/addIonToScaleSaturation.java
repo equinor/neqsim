@@ -6,20 +6,20 @@
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
  * addIonToScaleSaturation class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(addIonToScaleSaturation.class);
     String saltName = "", scaleSaltName = "", nameOfIonToBeAdded = "";
@@ -27,7 +27,9 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
     String[][] resultTable = null;
 
     /**
-     * <p>Constructor for addIonToScaleSaturation.</p>
+     * <p>
+     * Constructor for addIonToScaleSaturation.
+     * </p>
      */
     public addIonToScaleSaturation() {}
 
@@ -197,5 +199,4 @@ public class addIonToScaleSaturation extends constantDutyTemperatureFlash {
         logger.info("checking table...scale " + resultTable[1][2]);
         return resultTable;
     }
-
 }

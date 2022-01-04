@@ -16,13 +16,14 @@ import neqsim.thermo.component.ComponentGEWilson;
  * @version $Id: $Id
  */
 public class PhaseGEWilson extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double GE = 0;
 
     /**
-     * <p>Constructor for PhaseGEWilson.</p>
+     * <p>
+     * Constructor for PhaseGEWilson.
+     * </p>
      */
     public PhaseGEWilson() {
         super();

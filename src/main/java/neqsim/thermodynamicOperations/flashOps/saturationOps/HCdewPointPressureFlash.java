@@ -14,16 +14,17 @@ import neqsim.thermo.system.SystemInterface;
  * HCdewPointPressureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class HCdewPointPressureFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HCdewPointPressureFlash.class);
 
     /**
-     * <p>Constructor for HCdewPointPressureFlash.</p>
+     * <p>
+     * Constructor for HCdewPointPressureFlash.
+     * </p>
      */
     public HCdewPointPressureFlash() {}
 

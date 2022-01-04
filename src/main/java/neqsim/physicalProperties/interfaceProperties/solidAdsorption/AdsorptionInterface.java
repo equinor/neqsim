@@ -1,22 +1,27 @@
 package neqsim.physicalProperties.interfaceProperties.solidAdsorption;
 
 /**
- * <p>AdsorptionInterface interface.</p>
+ * <p>
+ * AdsorptionInterface interface.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstantsInterface {
-
     /**
-     * <p>calcAdorption.</p>
+     * <p>
+     * calcAdorption.
+     * </p>
      *
      * @param phase a int
      */
     public void calcAdorption(int phase);
 
     /**
-     * <p>getSurfaceExess.</p>
+     * <p>
+     * getSurfaceExess.
+     * </p>
      *
      * @param component a int
      * @return a double
@@ -24,14 +29,18 @@ public interface AdsorptionInterface extends neqsim.thermo.ThermodynamicConstant
     public double getSurfaceExess(int component);
 
     /**
-     * <p>setSolidMaterial.</p>
+     * <p>
+     * setSolidMaterial.
+     * </p>
      *
      * @param solidM a {@link java.lang.String} object
      */
     public void setSolidMaterial(String solidM);
 
     /**
-     * <p>getSurfaceExcess.</p>
+     * <p>
+     * getSurfaceExcess.
+     * </p>
      *
      * @param componentName a {@link java.lang.String} object
      * @return a double

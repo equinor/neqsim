@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>ModelTest class.</p>
+ * <p>
+ * ModelTest class.
+ * </p>
  *
  * @author esol
  * @since 2.2.3
@@ -17,7 +19,9 @@ public class ModelTest {
     static Logger logger = LogManager.getLogger(ModelTest.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -80,6 +84,5 @@ public class ModelTest {
         double numCp = (ent1 - ent2) / 0.002;
 
         logger.info("Cp " + cp + " numCp " + numCp);
-
     }
 }

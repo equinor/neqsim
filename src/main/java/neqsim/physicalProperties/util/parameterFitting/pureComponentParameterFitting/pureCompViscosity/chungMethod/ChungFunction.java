@@ -3,17 +3,20 @@ package neqsim.physicalProperties.util.parameterFitting.pureComponentParameterFi
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>ChungFunction class.</p>
+ * <p>
+ * ChungFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ChungFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ChungFunction.</p>
+     * <p>
+     * Constructor for ChungFunction.
+     * </p>
      */
     public ChungFunction() {
         params = new double[1];

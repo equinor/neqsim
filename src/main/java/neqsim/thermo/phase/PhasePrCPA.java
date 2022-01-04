@@ -19,7 +19,6 @@ import neqsim.thermo.mixingRule.CPAMixingInterface;
  * @version $Id: $Id
  */
 public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     int totalNumberOfAccociationSites = 0;
@@ -32,7 +31,9 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     int[][][][] crossAccociationScheme = null;
 
     /**
-     * <p>Constructor for PhasePrCPA.</p>
+     * <p>
+     * Constructor for PhasePrCPA.
+     * </p>
      */
     public PhasePrCPA() {
         super();
@@ -262,7 +263,6 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         double tot = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int k = 0; k < numberOfComponents; k++) {
-
                 htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
@@ -293,7 +293,6 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
         double tot = 0.0;
         for (int i = 0; i < numberOfComponents; i++) {
             for (int k = 0; k < numberOfComponents; k++) {
-
                 htot = 0.0;
                 for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
                     for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
@@ -491,5 +490,4 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
         this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;
     }
-
 }

@@ -33,7 +33,6 @@ import visad.java2d.DisplayImplJ2D;
  * @version $Id: $Id
  */
 public class lineFitPlot {
-
     private static final long serialVersionUID = 1000;
 
     private RealType x, y, index;
@@ -59,7 +58,9 @@ public class lineFitPlot {
     float[][] xy_disc_samples;
 
     /**
-     * <p>Constructor for lineFitPlot.</p>
+     * <p>
+     * Constructor for lineFitPlot.
+     * </p>
      *
      * @param firstax a {@link java.lang.String} object
      * @param yax a {@link java.lang.String} object
@@ -67,7 +68,6 @@ public class lineFitPlot {
      * @throws visad.VisADException if any.
      */
     public lineFitPlot(String firstax, String yax) throws RemoteException, VisADException {
-
         x = RealType.getRealType("test1");
         y = RealType.getRealType("test");
 
@@ -179,7 +179,6 @@ public class lineFitPlot {
      * @throws visad.VisADException if any.
      */
     public void init() throws RemoteException, VisADException {
-
         index_set = new Integer1DSet(index, xy_samples[0].length);
         points_ff = new FlatField(func_i_tuple, index_set);
         points_ff.setSamples(xy_samples);
@@ -247,7 +246,6 @@ public class lineFitPlot {
      * @throws visad.VisADException if any.
      */
     public static void main(String[] args) throws RemoteException, VisADException {
-
         lineFitPlot plot = new lineFitPlot("long", "alt");
 
         double[][] z = {{0, 0.5, 1, 3, 1}, {2, 6, 4, 1, 3}, {1, 3, 2, 1, 1}, {3, 2, 1, 3, 2},

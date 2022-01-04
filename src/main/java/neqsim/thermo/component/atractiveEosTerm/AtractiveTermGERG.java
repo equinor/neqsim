@@ -17,13 +17,14 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermGERG extends AtractiveTermPr {
-
     private static final long serialVersionUID = 1000;
     protected double parametersGERG[] = {0.905436, -0.213781, 0.26005};
     protected double parametersSolidGERG[] = {0.106025, 2.683845, -4.75638};
 
     /**
-     * <p>Constructor for AtractiveTermGERG.</p>
+     * <p>
+     * Constructor for AtractiveTermGERG.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -112,7 +113,6 @@ public class AtractiveTermGERG extends AtractiveTermPr {
                         - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
                         - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
                                 / Math.sqrt(Tr) / TC);
-
     }
 
     /**
@@ -172,5 +172,4 @@ public class AtractiveTermGERG extends AtractiveTermPr {
             return super.diffdiffaT(temperature);
         }
     }
-
 }

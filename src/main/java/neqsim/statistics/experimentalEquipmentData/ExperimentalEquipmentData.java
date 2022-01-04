@@ -15,7 +15,6 @@ package neqsim.statistics.experimentalEquipmentData;
  * @version $Id: $Id
  */
 public class ExperimentalEquipmentData {
-
     private static final long serialVersionUID = 1000;
 
     protected double diameter = 0, length = 0;
@@ -23,7 +22,9 @@ public class ExperimentalEquipmentData {
     protected double diameterUncertaty = 0, lengthUncertanty = 0;
 
     /**
-     * <p>Constructor for ExperimentalEquipmentData.</p>
+     * <p>
+     * Constructor for ExperimentalEquipmentData.
+     * </p>
      */
     public ExperimentalEquipmentData() {}
 }

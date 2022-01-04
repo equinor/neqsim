@@ -18,7 +18,6 @@ import neqsim.MathLib.generalMath.TDMAsolve;
  */
 public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     Matrix diffMatrix;
@@ -35,12 +34,16 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     protected double oldEnergy[];
 
     /**
-     * <p>Constructor for OnePhaseFixedStaggeredGrid.</p>
+     * <p>
+     * Constructor for OnePhaseFixedStaggeredGrid.
+     * </p>
      */
     public OnePhaseFixedStaggeredGrid() {}
 
     /**
-     * <p>Constructor for OnePhaseFixedStaggeredGrid.</p>
+     * <p>
+     * Constructor for OnePhaseFixedStaggeredGrid.
+     * </p>
      *
      * @param pipe a
      *        {@link neqsim.fluidMechanics.flowSystem.onePhaseFlowSystem.pipeFlowSystem.PipeFlowSystem}
@@ -213,7 +216,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
             pipe.getNode(i).init();
             // if(dynamic) System.out.println("i " + i +" diff 0 " +(diffMatrix.get(i, 0) )
             // + " new pressure " + pipe.getNode(i).getBulkSystem().getPressure());
-
         }
     }
 
@@ -293,7 +295,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                                         .getMolarMass());// pipe.getNode(j).getBulkSystem().getPhases()[0].getComponents()[p].getx()
                                                          // +
                                                          // 0.5*diff4Matrix[p].get(j,0));
-
             }
 
             pipe.getNode(j).getBulkSystem().getPhases()[0].normalize();
@@ -501,7 +502,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
      * </p>
      */
     public void setEnergyMatrixTDMA() {
-
         a[0] = 0;
         b[0] = 1.0;
         c[0] = 0;
@@ -696,9 +696,7 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
                 oldComposition[j][i] = sol4Matrix[j].get(i, 0); // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getx()
                                                                 // *
                                                                 // pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[j].getMolarMass()/pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
-
             }
-
         }
     }
 

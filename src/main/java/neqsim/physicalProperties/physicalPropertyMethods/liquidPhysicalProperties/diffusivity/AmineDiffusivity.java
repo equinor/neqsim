@@ -12,12 +12,13 @@ import org.apache.logging.log4j.Logger;
  * @version $Id: $Id
  */
 public class AmineDiffusivity extends SiddiqiLucasMethod {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AmineDiffusivity.class);
 
     /**
-     * <p>Constructor for AmineDiffusivity.</p>
+     * <p>
+     * Constructor for AmineDiffusivity.
+     * </p>
      */
     public AmineDiffusivity() {}
 
@@ -95,5 +96,4 @@ public class AmineDiffusivity extends SiddiqiLucasMethod {
         }
         return binaryDiffusionCoeffisients;
     }
-
 }

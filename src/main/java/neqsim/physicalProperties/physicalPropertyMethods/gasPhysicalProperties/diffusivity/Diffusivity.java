@@ -15,7 +15,6 @@ public class Diffusivity extends
         neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.GasPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.DiffusivityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Diffusivity.class);
 
@@ -23,7 +22,9 @@ public class Diffusivity extends
     double[] effectiveDiffusionCoefficient;
 
     /**
-     * <p>Constructor for Diffusivity.</p>
+     * <p>
+     * Constructor for Diffusivity.
+     * </p>
      */
     public Diffusivity() {}
 
@@ -88,7 +89,6 @@ public class Diffusivity extends
     @Override
     public double[][] calcDiffusionCoeffisients(int binaryDiffusionCoefficientMethod,
             int multicomponentDiffusionMethod) {
-
         for (int i = 0; i < gasPhase.getPhase().getNumberOfComponents(); i++) {
             for (int j = i; j < gasPhase.getPhase().getNumberOfComponents(); j++) {
                 binaryDiffusionCoeffisients[i][j] =
@@ -149,5 +149,4 @@ public class Diffusivity extends
          */
         return binaryDiffusionCoeffisients[i][j];
     }
-
 }

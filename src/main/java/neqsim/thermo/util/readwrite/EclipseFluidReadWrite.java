@@ -13,16 +13,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>EclipseFluidReadWrite class.</p>
+ * <p>
+ * EclipseFluidReadWrite class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class EclipseFluidReadWrite {
     static Logger logger = LogManager.getLogger(EclipseFluidReadWrite.class);
 
     /**
-     * <p>read.</p>
+     * <p>
+     * read.
+     * </p>
      *
      * @param inputFile a {@link java.lang.String} object
      * @return a {@link neqsim.thermo.system.SystemInterface} object
@@ -220,7 +224,6 @@ public class EclipseFluidReadWrite {
                             .setVolumeCorrectionConst(SSHIFT.get(counter));
                 }
                 fluid.changeComponentName(name, names.get(counter));
-
             }
             // System.out.println(st);
             fluid.setMixingRule(2);
@@ -245,7 +248,9 @@ public class EclipseFluidReadWrite {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      * @throws java.lang.Exception if any.
@@ -261,5 +266,4 @@ public class EclipseFluidReadWrite {
         // new neqsim.thermo.ThermodynamicModelTest(fluid);
         // testModel.runTest();
     }
-
 }

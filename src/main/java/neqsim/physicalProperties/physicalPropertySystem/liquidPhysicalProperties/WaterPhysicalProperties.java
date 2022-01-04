@@ -21,11 +21,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class WaterPhysicalProperties extends LiquidPhysicalProperties {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for WaterPhysicalProperties.</p>
+     * <p>
+     * Constructor for WaterPhysicalProperties.
+     * </p>
      */
     public WaterPhysicalProperties() {}
 

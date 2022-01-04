@@ -13,13 +13,14 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessModuleBaseClass;
 
 /**
- * <p>GlycolDehydrationlModule class.</p>
+ * <p>
+ * GlycolDehydrationlModule class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected StreamInterface gasStreamToAbsorber = null, strippingGas = null,
@@ -82,7 +83,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>solveAbsorptionFactor.</p>
+     * <p>
+     * solveAbsorptionFactor.
+     * </p>
      *
      * @param Ea a double
      * @return a double
@@ -121,7 +124,6 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
             calcDesign();
         }
         getOperations().run();
-
     }
 
     /** {@inheritDoc} */
@@ -268,11 +270,12 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         if (specificationName.equals("regenerationPressure")) {
             regenerationPressure = value;
         }
-
     }
 
     /**
-     * <p>calcGlycolConcentration.</p>
+     * <p>
+     * calcGlycolConcentration.
+     * </p>
      *
      * @param y0 a double
      * @return a double
@@ -315,7 +318,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>calcKglycol.</p>
+     * <p>
+     * calcKglycol.
+     * </p>
      *
      * @return a double
      */
@@ -417,7 +422,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -502,11 +509,12 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
         ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).run();
         ((ProcessEquipmentBaseClass) operations.getUnit("reboiler")).displayResult();
         // TEGplant.getOutputStream("condenserStripper").displayResult();
-
     }
 
     /**
-     * <p>Getter for the field <code>flashPressure</code>.</p>
+     * <p>
+     * Getter for the field <code>flashPressure</code>.
+     * </p>
      *
      * @return a double
      */
@@ -515,7 +523,9 @@ public class GlycolDehydrationlModule extends ProcessModuleBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>flashPressure</code>.</p>
+     * <p>
+     * Setter for the field <code>flashPressure</code>.
+     * </p>
      *
      * @param flashPressure a double
      */

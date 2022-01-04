@@ -17,12 +17,13 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundaryNode implements FluidBoundaryNodeInterface {
-
     private static final long serialVersionUID = 1000;
     protected SystemInterface system;
 
     /**
-     * <p>Constructor for FluidBoundaryNode.</p>
+     * <p>
+     * Constructor for FluidBoundaryNode.
+     * </p>
      */
     public FluidBoundaryNode() {}
 

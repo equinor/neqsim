@@ -17,7 +17,6 @@ import Jama.*;
  * @version $Id: $Id
  */
 public class DataSmoothor {
-
     private static final long serialVersionUID = 1000;
 
     double[] nonSmoothedNumbers, smoothedNumbers, cCoef;
@@ -28,7 +27,9 @@ public class DataSmoothor {
     double sum = 0, fac = 0;
 
     /**
-     * <p>Constructor for DataSmoothor.</p>
+     * <p>
+     * Constructor for DataSmoothor.
+     * </p>
      */
     public DataSmoothor() {}
 
@@ -128,7 +129,6 @@ public class DataSmoothor {
             cCoef[kk] = sum;
         }
         // new Matrix(cCoef,1).print(10,2);
-
     }
 
     /**

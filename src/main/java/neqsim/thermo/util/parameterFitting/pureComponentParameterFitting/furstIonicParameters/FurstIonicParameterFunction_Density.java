@@ -4,18 +4,20 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>FurstIonicParameterFunction_Density class.</p>
+ * <p>
+ * FurstIonicParameterFunction_Density class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class FurstIonicParameterFunction_Density extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
-
     /**
-     * <p>Constructor for FurstIonicParameterFunction_Density.</p>
+     * <p>
+     * Constructor for FurstIonicParameterFunction_Density.
+     * </p>
      */
     public FurstIonicParameterFunction_Density() {
         // params = new double[3];

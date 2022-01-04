@@ -16,14 +16,15 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version $Id: $Id
  */
 public class SafetyValve extends ThrottlingValve {
-
     private static final long serialVersionUID = 1000;
 
     private double pressureSpec = 10.0;
     private double fullOpenPressure = 10.0;
 
     /**
-     * <p>Constructor for SafetyValve.</p>
+     * <p>
+     * Constructor for SafetyValve.
+     * </p>
      */
     public SafetyValve() {
         super();
@@ -95,5 +96,4 @@ public class SafetyValve extends ThrottlingValve {
     public void setFullOpenPressure(double fullOpenPressure) {
         this.fullOpenPressure = fullOpenPressure;
     }
-
 }

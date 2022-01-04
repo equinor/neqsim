@@ -17,14 +17,15 @@ import org.apache.logging.log4j.*;
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class LBCViscosityMethod extends Viscosity {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
 
     double a[] = {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
     /**
-     * <p>Constructor for LBCViscosityMethod.</p>
+     * <p>
+     * Constructor for LBCViscosityMethod.
+     * </p>
      */
     public LBCViscosityMethod() {}
 
@@ -92,5 +93,4 @@ public class LBCViscosityMethod extends Viscosity {
     public double getPureComponentViscosity(int i) {
         return 0;
     }
-
 }

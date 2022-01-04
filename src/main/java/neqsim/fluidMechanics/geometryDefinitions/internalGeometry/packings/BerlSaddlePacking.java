@@ -15,11 +15,12 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * @version $Id: $Id
  */
 public class BerlSaddlePacking extends Packing {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for BerlSaddlePacking.</p>
+     * <p>
+     * Constructor for BerlSaddlePacking.
+     * </p>
      */
     public BerlSaddlePacking() {}
 
@@ -33,5 +34,4 @@ public class BerlSaddlePacking extends Packing {
     public BerlSaddlePacking(String name) {
         super(name);
     }
-
 }

@@ -12,7 +12,9 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimExperimentDatabase;
 
 /**
- * <p>TestBinaryHVParameterFittingToSolubilityData_LuciaPropane class.</p>
+ * <p>
+ * TestBinaryHVParameterFittingToSolubilityData_LuciaPropane class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -22,12 +24,13 @@ public class TestBinaryHVParameterFittingToSolubilityData_LuciaPropane {
             LogManager.getLogger(TestBinaryHVParameterFittingToSolubilityData_LuciaPropane.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 

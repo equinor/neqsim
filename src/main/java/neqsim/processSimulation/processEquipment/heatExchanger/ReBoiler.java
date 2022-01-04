@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class ReBoiler extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -30,7 +29,9 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     private double reboilerDuty = 0.0;
 
     /**
-     * <p>Constructor for ReBoiler.</p>
+     * <p>
+     * Constructor for ReBoiler.
+     * </p>
      */
     public ReBoiler() {}
 
@@ -116,5 +117,4 @@ public class ReBoiler extends ProcessEquipmentBaseClass {
     public void setReboilerDuty(double reboilerDuty) {
         this.reboilerDuty = reboilerDuty;
     }
-
 }

@@ -22,7 +22,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class AdiabaticPipe extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     double inletPressure = 0;
@@ -39,7 +38,9 @@ public class AdiabaticPipe extends Pipeline {
     String pipeSpecification = "AP02";
 
     /**
-     * <p>Constructor for AdiabaticPipe.</p>
+     * <p>
+     * Constructor for AdiabaticPipe.
+     * </p>
      */
     public AdiabaticPipe() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
@@ -218,7 +219,6 @@ public class AdiabaticPipe extends Pipeline {
                 system.setPressure(calcPressureOut());
             } while (Math.abs(system.getPressure() - oldPressure) > 1e-2 && iter < 25);
         } else {
-
             calcFlow();
             system.setPressure(pressureOut);
             system.init(3);
@@ -247,7 +247,6 @@ public class AdiabaticPipe extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void runTransient() {
-
         run();
     }
 

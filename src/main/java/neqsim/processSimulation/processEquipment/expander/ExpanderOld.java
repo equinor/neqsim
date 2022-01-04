@@ -5,9 +5,14 @@
  */
 package neqsim.processSimulation.processEquipment.expander;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
@@ -23,7 +28,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -34,7 +38,9 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     double pressure = 0.0;
 
     /**
-     * <p>Constructor for ExpanderOld.</p>
+     * <p>
+     * Constructor for ExpanderOld.
+     * </p>
      */
     public ExpanderOld() {}
 
@@ -109,7 +115,6 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     /** {@inheritDoc} */
     @Override
     public void displayResult() {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
@@ -210,5 +215,4 @@ public class ExpanderOld extends ProcessEquipmentBaseClass implements ExpanderIn
     /** {@inheritDoc} */
     @Override
     public void runTransient() {}
-
 }

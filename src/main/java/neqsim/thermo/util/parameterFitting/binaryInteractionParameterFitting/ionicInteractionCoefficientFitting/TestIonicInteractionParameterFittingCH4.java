@@ -12,18 +12,20 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestIonicInteractionParameterFittingCH4 class.</p>
+ * <p>
+ * TestIonicInteractionParameterFittingCH4 class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestIonicInteractionParameterFittingCH4 {
-
     static Logger logger = LogManager.getLogger(TestIonicInteractionParameterFittingCH4.class);
 
-
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

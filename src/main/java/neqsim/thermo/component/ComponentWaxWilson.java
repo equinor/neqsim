@@ -17,11 +17,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentWaxWilson extends ComponentSolid {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentWaxWilson.</p>
+     * <p>
+     * Constructor for ComponentWaxWilson.
+     * </p>
      */
     public ComponentWaxWilson() {}
 
@@ -101,7 +102,6 @@ public class ComponentWaxWilson extends ComponentSolid {
         fugasityCoeffisient = solidActivityCoefficient * SolidFug / (phase1.getPressure() * getx());
         logFugasityCoeffisient = Math.log(fugasityCoeffisient);
         return fugasityCoeffisient;
-
     }
 
     /**
@@ -144,7 +144,6 @@ public class ComponentWaxWilson extends ComponentSolid {
      * @return a double
      */
     public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
-
         double param1 = 0.0; // ((ComponentWaxWilson)
                              // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
         double param2 = 0.0;// ((ComponentWaxWilson)
@@ -153,7 +152,6 @@ public class ComponentWaxWilson extends ComponentSolid {
         // carbon molecule .....
         if ((phase1.getComponent(comp1).getMolarMass() - 1.0e-10) > phase1.getComponent(comp2)
                 .getMolarMass()) {
-
             // enthalpy sublimation nC16 134.9kj/mol; nC14 117.6kj/mol
             // param1 = -2/6*(117.6 * 1e3 - R*phase1.getTemperature());
             // param2 = -2/6*(134.9 * 1e3 - R*phase1.getTemperature());
@@ -214,6 +212,5 @@ public class ComponentWaxWilson extends ComponentSolid {
         double deltaHsub = (deltaHvap + deltaHf + deltaHtrans);
 
         return -2.0 / coordinationNumber * (deltaHsub - R * phase1.getTemperature());
-
     }
 }

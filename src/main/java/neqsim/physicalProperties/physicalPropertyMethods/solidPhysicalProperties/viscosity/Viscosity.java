@@ -21,14 +21,15 @@ public class Viscosity extends
         neqsim.physicalProperties.physicalPropertyMethods.solidPhysicalProperties.SolidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
 
     public double[] pureComponentViscosity;
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      */
     public Viscosity() {}
 
@@ -63,7 +64,6 @@ public class Viscosity extends
     /** {@inheritDoc} */
     @Override
     public double calcViscosity() {
-
         double viscosity = NaN;
         return viscosity;
     }
@@ -73,9 +73,7 @@ public class Viscosity extends
      * calcPureComponentViscosity.
      * </p>
      */
-    public void calcPureComponentViscosity() {
-
-    }
+    public void calcPureComponentViscosity() {}
 
     /** {@inheritDoc} */
     @Override

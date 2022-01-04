@@ -7,7 +7,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TVPexample class.</p>
+ * <p>
+ * TVPexample class.
+ * </p>
  *
  * @author MLLU
  * @version $Id: $Id
@@ -17,7 +19,9 @@ public class TVPexample {
     static Logger logger = LogManager.getLogger(TVPexample.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -47,6 +51,5 @@ public class TVPexample {
             logger.error("Exception thrown in bubble point flash");
         }
         testSystem.display();
-
     }
 }

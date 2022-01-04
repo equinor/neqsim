@@ -34,7 +34,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 abstract class ComponentEos extends Component implements ComponentEosInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -91,7 +90,6 @@ abstract class ComponentEos extends Component implements ComponentEosInterface {
     /** {@inheritDoc} */
     @Override
     public ComponentEos clone() {
-
         ComponentEos clonedComponent = null;
         try {
             clonedComponent = (ComponentEos) super.clone();

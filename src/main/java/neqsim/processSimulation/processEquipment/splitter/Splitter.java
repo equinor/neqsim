@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -30,7 +29,9 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     double[] splitFactor = new double[1];
 
     /**
-     * <p>Constructor for Splitter.</p>
+     * <p>
+     * Constructor for Splitter.
+     * </p>
      */
     public Splitter() {}
 
@@ -146,5 +147,4 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     /** {@inheritDoc} */
     @Override
     public void runTransient(double dt) {}
-
 }

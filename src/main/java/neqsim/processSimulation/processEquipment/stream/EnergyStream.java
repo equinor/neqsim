@@ -1,9 +1,11 @@
 package neqsim.processSimulation.processEquipment.stream;
 
 /**
- * <p>EnergyStream class.</p>
+ * <p>
+ * EnergyStream class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class EnergyStream implements java.io.Serializable, Cloneable {
@@ -22,7 +24,9 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>duty</code>.</p>
+     * <p>
+     * Getter for the field <code>duty</code>.
+     * </p>
      *
      * @return a double
      */
@@ -31,7 +35,9 @@ public class EnergyStream implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>Setter for the field <code>duty</code>.</p>
+     * <p>
+     * Setter for the field <code>duty</code>.
+     * </p>
      *
      * @param duty a double
      */

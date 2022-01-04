@@ -15,7 +15,6 @@ package neqsim.MathLib.nonLinearSolver;
  * @version $Id: $Id
  */
 public class newtonRhapson implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     int order;
@@ -25,7 +24,9 @@ public class newtonRhapson implements java.io.Serializable {
     double xNew = 0, xNew2, x = 0;
 
     /**
-     * <p>Constructor for newtonRhapson.</p>
+     * <p>
+     * Constructor for newtonRhapson.
+     * </p>
      */
     public newtonRhapson() {}
 
@@ -188,7 +189,6 @@ public class newtonRhapson implements java.io.Serializable {
             x = xNew;
             xNew = x - funkValue(x) / derivValue(x);
             xNew2 = xNew;
-
         } while (Math.abs(funkValue(x)) > 1e-10 && iterations <= maxIterations);
 
         if (iterations == maxIterations) {

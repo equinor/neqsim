@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public abstract class PhysicalProperties
         implements PhysicalPropertiesInterface, ThermodynamicConstantsInterface {
-
     /** {@inheritDoc} */
     @Override
     public void setMixingRule(
@@ -44,7 +43,9 @@ public abstract class PhysicalProperties
     private double[] waxViscosityParameter = {37.82, 83.96, 8.559e6};
 
     /**
-     * <p>Constructor for PhysicalProperties.</p>
+     * <p>
+     * Constructor for PhysicalProperties.
+     * </p>
      */
     public PhysicalProperties() {}
 
@@ -148,7 +149,6 @@ public abstract class PhysicalProperties
                     new neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.conductivity.PFCTConductivityMethodMod86(
                             this);
         }
-
     }
 
     /** {@inheritDoc} */
@@ -290,7 +290,6 @@ public abstract class PhysicalProperties
     /** {@inheritDoc} */
     @Override
     public double getViscosityOfWaxyOil(double waxVolumeFraction, double shareRate) {
-
         return viscosity * (Math.exp(waxViscosityParameter[0] * waxVolumeFraction)
                 + waxViscosityParameter[1] * waxVolumeFraction / Math.sqrt(shareRate)
                 + waxViscosityParameter[2] * Math.pow(waxVolumeFraction, 4.0) / shareRate);

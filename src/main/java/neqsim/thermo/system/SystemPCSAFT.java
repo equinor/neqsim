@@ -13,21 +13,21 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
  *
- * @author  Even Solbraa
+ * @author Even Solbraa
  * @version
  */
 /**
- * This class defines a thermodynamic system using the PC-SAFT EoS equation of
- * state
+ * This class defines a thermodynamic system using the PC-SAFT EoS equation of state
  */
 public class SystemPCSAFT extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SystemPCSAFT.class);
 
     // SystemSrkEos clonedSystem;
     /**
-     * <p>Constructor for SystemPCSAFT.</p>
+     * <p>
+     * Constructor for SystemPCSAFT.
+     * </p>
      */
     public SystemPCSAFT() {
         super();
@@ -43,7 +43,9 @@ public class SystemPCSAFT extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemPCSAFT.</p>
+     * <p>
+     * Constructor for SystemPCSAFT.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -62,7 +64,9 @@ public class SystemPCSAFT extends SystemSrkEos {
     }
 
     /**
-     * <p>Constructor for SystemPCSAFT.</p>
+     * <p>
+     * Constructor for SystemPCSAFT.
+     * </p>
      *
      * @param T a double
      * @param P a double
@@ -117,14 +121,15 @@ public class SystemPCSAFT extends SystemSrkEos {
         return clonedSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass, double density) {
-
+    public void addTBPfraction(String componentName2, double numberOfMoles, double molarMass,
+            double density) {
         // componentName = (componentName + "_" + getFluidName());
         super.addTBPfraction(componentName2, numberOfMoles, molarMass, density);
         // addComponent(componentName2, numberOfMoles, 290.0, 30.0, 0.11);
-        String componentName = getPhase(0).getComponent(getPhase(0).getNumberOfComponents() - 1).getComponentName();
+        String componentName = getPhase(0).getComponent(getPhase(0).getNumberOfComponents() - 1)
+                .getComponentName();
         for (int i = 0; i < numberOfPhases; i++) {
             // getPhase(phaseIndex[i]).getComponent(componentName).setMolarMass(molarMass);
             // getPhase(phaseIndex[i]).getComponent(componentName).setIsTBPfraction(true);
@@ -142,7 +147,9 @@ public class SystemPCSAFT extends SystemSrkEos {
     }
 
     /**
-     * <p>commonInitialization.</p>
+     * <p>
+     * commonInitialization.
+     * </p>
      */
     public void commonInitialization() {
         setImplementedCompositionDeriativesofFugacity(false);

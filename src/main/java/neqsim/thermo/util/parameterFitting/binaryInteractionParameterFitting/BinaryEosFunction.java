@@ -4,17 +4,20 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
- * <p>BinaryEosFunction class.</p>
+ * <p>
+ * BinaryEosFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class BinaryEosFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for BinaryEosFunction.</p>
+     * <p>
+     * Constructor for BinaryEosFunction.
+     * </p>
      */
     public BinaryEosFunction() {
         params = new double[1];
@@ -71,5 +74,4 @@ public class BinaryEosFunction extends LevenbergMarquardtFunction {
                     .setBinaryInteractionParameter(0, 1, value[i]);
         }
     }
-
 }

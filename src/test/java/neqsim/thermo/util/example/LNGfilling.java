@@ -6,15 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author  esol
- * @version
- */
 /**
- * <p>LNGfilling class.</p>
+ * <p>
+ * LNGfilling class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -22,7 +19,9 @@ public class LNGfilling {
     static Logger logger = LogManager.getLogger(LNGfilling.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -67,21 +66,21 @@ public class LNGfilling {
         // +testSystem.getPhase(0).getComponent("water").getx()*testSystem.getPhase(0).getPressure()*testSystem.getPhase(0).getComponent(0).getFugasityCoefficient());
     }
 }
-//        testSystem = testSystem.setModel("GERG-water");
-//        testSystem.setMixingRule(8);
+// testSystem = testSystem.setModel("GERG-water");
+// testSystem.setMixingRule(8);
 //
-//        testSystem = testSystem.autoSelectModel();
-//        testSystem.autoSelectMixingRule();
-//          testSystem.setMultiPhaseCheck(true);
-//        testOps.setSystem(testSystem);
+// testSystem = testSystem.autoSelectModel();
+// testSystem.autoSelectMixingRule();
+// testSystem.setMultiPhaseCheck(true);
+// testOps.setSystem(testSystem);
 //
-//        System.out.println("new model name " + testSystem.getModelName());
-//        try{
-//            testOps.TPflash();
-//            testSystem.display();
-//        }
-//        catch(Exception e){
-//            System.out.println(e.toString());
-//        }
-//    }
-//}
+// System.out.println("new model name " + testSystem.getModelName());
+// try{
+// testOps.TPflash();
+// testSystem.display();
+// }
+// catch(Exception e){
+// System.out.println(e.toString());
+// }
+// }
+// }

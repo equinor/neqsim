@@ -9,33 +9,41 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>CompressorInterface interface.</p>
+ * <p>
+ * CompressorInterface interface.
+ * </p>
  *
- * @author  esol
+ * @author esol
  * @version $Id: $Id
  */
 public interface CompressorInterface extends ProcessEquipmentInterface {
-
     /** {@inheritDoc} */
     @Override
     public void run();
 
     /**
-     * <p>setOutletPressure.</p>
+     * <p>
+     * setOutletPressure.
+     * </p>
      *
      * @param pressure a double
      */
     public void setOutletPressure(double pressure);
 
     /**
-     * <p>setInletStream.</p>
+     * <p>
+     * setInletStream.
+     * </p>
      *
-     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inletStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setInletStream(StreamInterface inletStream);
 
     /**
-     * <p>getEnergy.</p>
+     * <p>
+     * getEnergy.
+     * </p>
      *
      * @return a double
      */
@@ -46,47 +54,61 @@ public interface CompressorInterface extends ProcessEquipmentInterface {
     public String getName();
 
     /**
-     * <p>getOutStream.</p>
+     * <p>
+     * getOutStream.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
     public StreamInterface getOutStream();
 
     /**
-     * <p>getIsentropicEfficiency.</p>
+     * <p>
+     * getIsentropicEfficiency.
+     * </p>
      *
      * @return a double
      */
     public double getIsentropicEfficiency();
 
     /**
-     * <p>setIsentropicEfficiency.</p>
+     * <p>
+     * setIsentropicEfficiency.
+     * </p>
      *
      * @param isentropicEfficientcy a double
      */
     public void setIsentropicEfficiency(double isentropicEfficientcy);
 
     /**
-     * <p>runTransient.</p>
+     * <p>
+     * runTransient.
+     * </p>
      */
     public void runTransient();
 
     /**
-     * <p>getPolytropicEfficiency.</p>
+     * <p>
+     * getPolytropicEfficiency.
+     * </p>
      *
      * @return a double
      */
     public double getPolytropicEfficiency();
 
     /**
-     * <p>setPolytropicEfficiency.</p>
+     * <p>
+     * setPolytropicEfficiency.
+     * </p>
      *
      * @param polytropicEfficiency a double
      */
     public void setPolytropicEfficiency(double polytropicEfficiency);
 
     /**
-     * <p>getAntiSurge.</p>
+     * <p>
+     * getAntiSurge.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.compressor.AntiSurge} object
      */

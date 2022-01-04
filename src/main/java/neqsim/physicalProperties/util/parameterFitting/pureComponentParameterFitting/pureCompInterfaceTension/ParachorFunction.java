@@ -9,26 +9,29 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import org.apache.logging.log4j.*;
 
 /**
- * <p>ParachorFunction class.</p>
+ * <p>
+ * ParachorFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ParachorFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ParachorFunction.class);
 
     /**
-     * <p>Constructor for ParachorFunction.</p>
+     * <p>
+     * Constructor for ParachorFunction.
+     * </p>
      */
     public ParachorFunction() {
         params = new double[1];
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcValue(double[] dependentValues) {
+    public double calcValue(double[] dependentValues) {
         system.init(3);
         try {
             thermoOps.bubblePointPressureFlash(false);
@@ -39,12 +42,11 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
         return system.getInterphaseProperties().getSurfaceTension(0, 1) * 1e3;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setFittingParams(int i, double value) {
+    public void setFittingParams(int i, double value) {
         params[i] = value;
         system.getPhases()[0].getComponent(0).setParachorParameter(value);
         system.getPhases()[1].getComponent(0).setParachorParameter(value);
-
     }
 }

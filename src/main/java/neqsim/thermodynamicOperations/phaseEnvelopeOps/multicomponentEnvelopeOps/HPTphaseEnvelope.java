@@ -26,7 +26,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class HPTphaseEnvelope extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
 
     double[][] points = new double[10][10];
@@ -39,7 +38,9 @@ public class HPTphaseEnvelope extends BaseOperation {
     static Logger logger = LogManager.getLogger(HPTphaseEnvelope.class);
 
     /**
-     * <p>Constructor for HPTphaseEnvelope.</p>
+     * <p>
+     * Constructor for HPTphaseEnvelope.
+     * </p>
      */
     public HPTphaseEnvelope() {}
 
@@ -70,7 +71,6 @@ public class HPTphaseEnvelope extends BaseOperation {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         int np = 0;
 
         for (int i = 0; i < 10; i++) {

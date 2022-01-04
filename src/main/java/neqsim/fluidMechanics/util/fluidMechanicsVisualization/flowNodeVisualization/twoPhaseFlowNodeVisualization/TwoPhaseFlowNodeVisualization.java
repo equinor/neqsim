@@ -18,11 +18,12 @@ import neqsim.fluidMechanics.util.fluidMechanicsVisualization.flowNodeVisualizat
  * @version $Id: $Id
  */
 public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TwoPhaseFlowNodeVisualization.</p>
+     * <p>
+     * Constructor for TwoPhaseFlowNodeVisualization.
+     * </p>
      */
     public TwoPhaseFlowNodeVisualization() {}
 
@@ -69,5 +70,4 @@ public class TwoPhaseFlowNodeVisualization extends FlowNodeVisualization {
         interfaceTemperature[1] =
                 node.getFluidBoundary().getInterphaseSystem().getPhases()[1].getTemperature();
     }
-
 }

@@ -23,7 +23,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -43,7 +42,9 @@ public class Pump extends ProcessEquipmentBaseClass implements PumpInterface {
     private PumpChart pumpChart = new PumpChart();
 
     /**
-     * <p>Constructor for Pump.</p>
+     * <p>
+     * Constructor for Pump.
+     * </p>
      */
     public Pump() {}
 

@@ -10,25 +10,30 @@ import java.text.DecimalFormatSymbols;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>calcIonicComposition class.</p>
+ * <p>
+ * calcIonicComposition class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class calcIonicComposition extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     int phaseNumber;
     String[][] resultTable = null;
 
     /**
-     * <p>Constructor for calcIonicComposition.</p>
+     * <p>
+     * Constructor for calcIonicComposition.
+     * </p>
      */
     public calcIonicComposition() {}
 
     /**
-     * <p>Constructor for calcIonicComposition.</p>
+     * <p>
+     * Constructor for calcIonicComposition.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param phase a int

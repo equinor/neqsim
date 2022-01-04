@@ -18,11 +18,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version $Id: $Id
  */
 public class OnePhasePipeLine extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for OnePhasePipeLine.</p>
+     * <p>
+     * Constructor for OnePhasePipeLine.
+     * </p>
      */
     public OnePhasePipeLine() {}
 
@@ -43,9 +44,7 @@ public class OnePhasePipeLine extends Pipeline {
      * createSystem.
      * </p>
      */
-    public void createSystem() {
-
-    }
+    public void createSystem() {}
 
     /** {@inheritDoc} */
     @Override

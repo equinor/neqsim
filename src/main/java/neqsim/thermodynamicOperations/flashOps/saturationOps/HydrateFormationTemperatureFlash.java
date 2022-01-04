@@ -16,16 +16,17 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateFormationTemperatureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
 
     /**
-     * <p>Constructor for HydrateFormationTemperatureFlash.</p>
+     * <p>
+     * Constructor for HydrateFormationTemperatureFlash.
+     * </p>
      */
     public HydrateFormationTemperatureFlash() {}
 
@@ -76,7 +77,6 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
 
             if (iter < 2) {
                 system.setTemperature((system.getTemperature() + 0.1));
-
             } else {
                 double dT = (Math.abs(diff / dDiffdT)) > 10 ? Math.signum(diff / dDiffdT) * 10
                         : diff / dDiffdT;
@@ -96,7 +96,6 @@ public class HydrateFormationTemperatureFlash extends constantDutyTemperatureFla
                 Thread.sleep(100);
             } catch (InterruptedException iex) {
             }
-
         } while (Math.abs((olfFug - system.getPhase(4).getFugacity("water")) / olfFug) > 1e-6
                 && iter < 100 || iter < 3);
     }

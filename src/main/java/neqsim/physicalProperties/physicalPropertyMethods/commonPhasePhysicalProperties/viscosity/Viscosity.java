@@ -12,13 +12,14 @@ abstract class Viscosity extends
         neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProperties.CommonPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
     public double[] pureComponentViscosity;
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      */
     public Viscosity() {}
 
@@ -45,7 +46,6 @@ abstract class Viscosity extends
     public void calcPureComponentViscosity() {
         pureComponentViscosity = new double[phase.getPhase().getNumberOfComponents()];
         for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
-
             if (phase.getPhase().getTemperature() > phase.getPhase().getComponents()[i].getTC()) {
                 pureComponentViscosity[i] = 5.0e-1;
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 1) {
@@ -54,7 +54,6 @@ abstract class Viscosity extends
                         * Math.pow(phase.getPhase().getTemperature(),
                                 phase.getPhase().getComponents()[i].getLiquidViscosityParameter(1));
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 2) {
-
             } else if (phase.getPhase().getComponents()[i].getLiquidViscosityModel() == 3) {
                 pureComponentViscosity[i] =
                         Math.exp(phase.getPhase().getComponents()[i].getLiquidViscosityParameter(0)

@@ -18,11 +18,12 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedWS;
  * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseGENRTLmodifiedWS.</p>
+     * <p>
+     * Constructor for PhaseGENRTLmodifiedWS.
+     * </p>
      */
     public PhaseGENRTLmodifiedWS() {
         super();
@@ -127,5 +128,4 @@ public class PhaseGENRTLmodifiedWS extends PhaseGENRTLmodifiedHV {
         }
         return R * temperature * GE * numberOfMolesInPhase;
     }
-
 }

@@ -15,13 +15,14 @@ package neqsim.util.util;
  * @version $Id: $Id
  */
 public class DoubleCloneable implements Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     double doubleValue;
 
     /**
-     * <p>Constructor for DoubleCloneable.</p>
+     * <p>
+     * Constructor for DoubleCloneable.
+     * </p>
      */
     public DoubleCloneable() {}
 

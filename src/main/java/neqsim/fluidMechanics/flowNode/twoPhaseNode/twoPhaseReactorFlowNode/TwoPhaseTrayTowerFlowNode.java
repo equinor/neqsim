@@ -10,26 +10,33 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TwoPhaseTrayTowerFlowNode class.</p>
+ * <p>
+ * TwoPhaseTrayTowerFlowNode class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     * <p>
+     * Constructor for TwoPhaseTrayTowerFlowNode.
+     * </p>
      */
     public TwoPhaseTrayTowerFlowNode() {
         this.flowNodeType = "stratified";
     }
 
     /**
-     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     * <p>
+     * Constructor for TwoPhaseTrayTowerFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public TwoPhaseTrayTowerFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -41,11 +48,14 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>Constructor for TwoPhaseTrayTowerFlowNode.</p>
+     * <p>
+     * Constructor for TwoPhaseTrayTowerFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public TwoPhaseTrayTowerFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
@@ -109,7 +119,9 @@ public class TwoPhaseTrayTowerFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -18,11 +18,12 @@ import visad.VisADException;
  * @version $Id: $Id
  */
 public class visAdBaseClass implements visAdInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for visAdBaseClass.</p>
+     * <p>
+     * Constructor for visAdBaseClass.
+     * </p>
      */
     public visAdBaseClass() {}
 

@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version
  */
 abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -106,7 +105,6 @@ abstract class ComponentPrCPA extends ComponentPR implements ComponentCPAInterfa
     /** {@inheritDoc} */
     @Override
     public ComponentPrCPA clone() {
-
         ComponentPrCPA clonedComponent = null;
         try {
             clonedComponent = (ComponentPrCPA) super.clone();

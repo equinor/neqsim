@@ -17,11 +17,12 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermMollerup extends AtractiveTermBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for AtractiveTermMollerup.</p>
+     * <p>
+     * Constructor for AtractiveTermMollerup.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -30,7 +31,9 @@ public class AtractiveTermMollerup extends AtractiveTermBaseClass {
     }
 
     /**
-     * <p>Constructor for AtractiveTermMollerup.</p>
+     * <p>
+     * Constructor for AtractiveTermMollerup.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
@@ -95,5 +98,4 @@ public class AtractiveTermMollerup extends AtractiveTermBaseClass {
     public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);
     }
-
 }

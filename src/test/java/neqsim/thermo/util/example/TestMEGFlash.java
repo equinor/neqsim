@@ -7,9 +7,11 @@ import neqsim.thermo.system.SystemSrkCPAs;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>TestMEGFlash class.</p>
+ * <p>
+ * TestMEGFlash class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -17,7 +19,9 @@ public class TestMEGFlash {
     static Logger logger = LogManager.getLogger(TestMEGFlash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

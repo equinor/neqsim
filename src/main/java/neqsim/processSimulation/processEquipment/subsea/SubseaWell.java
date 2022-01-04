@@ -10,22 +10,26 @@ import neqsim.processSimulation.processEquipment.valve.ThrottlingValve;
 import neqsim.processSimulation.processSystem.ProcessSystem;
 
 /**
- * <p>SubseaWell class.</p>
+ * <p>
+ * SubseaWell class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class SubseaWell extends ProcessEquipmentBaseClass {
-
     protected StreamInterface inStream;
     private StreamInterface outStream;
     public double height = 1000.0, length = 1200.0;
     AdiabaticTwoPhasePipe pipeline;
 
     /**
-     * <p>Constructor for SubseaWell.</p>
+     * <p>
+     * Constructor for SubseaWell.
+     * </p>
      *
-     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param instream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public SubseaWell(StreamInterface instream) {
         this.inStream = instream;
@@ -34,9 +38,12 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Getter for the field <code>pipeline</code>.</p>
+     * <p>
+     * Getter for the field <code>pipeline</code>.
+     * </p>
      *
-     * @return a {@link neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe} object
+     * @return a {@link neqsim.processSimulation.processEquipment.pipeline.AdiabaticTwoPhasePipe}
+     *         object
      */
     public AdiabaticTwoPhasePipe getPipeline() {
         return pipeline;
@@ -45,7 +52,6 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         pipeline.run();
         getOutStream().setFluid(pipeline.getOutStream().getFluid());
 
@@ -69,12 +75,13 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-
         neqsim.thermo.system.SystemInterface testSystem =
                 new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 250.00);
         testSystem.addComponent("nitrogen", 0.100);
@@ -163,11 +170,12 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
             System.out.println("time " + res.get(i)[0] + " oil production " + res.get(i)[1]
                     + " total production MSm3 oe " + res.get(i)[2]);
         }
-
     }
 
     /**
-     * <p>Getter for the field <code>outStream</code>.</p>
+     * <p>
+     * Getter for the field <code>outStream</code>.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
      */
@@ -176,9 +184,12 @@ public class SubseaWell extends ProcessEquipmentBaseClass {
     }
 
     /**
-     * <p>Setter for the field <code>outStream</code>.</p>
+     * <p>
+     * Setter for the field <code>outStream</code>.
+     * </p>
      *
-     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param outStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public void setOutStream(StreamInterface outStream) {
         this.outStream = outStream;

@@ -15,16 +15,17 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * waterDewPointTemperatureMultiphaseFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(waterDewPointTemperatureMultiphaseFlash.class);
 
     /**
-     * <p>Constructor for waterDewPointTemperatureMultiphaseFlash.</p>
+     * <p>
+     * Constructor for waterDewPointTemperatureMultiphaseFlash.
+     * </p>
      */
     public waterDewPointTemperatureMultiphaseFlash() {}
 
@@ -42,7 +43,6 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         ThermodynamicOperations TPflashOps = new ThermodynamicOperations(system);
         system.setMultiPhaseCheck(true);
         boolean hasAqueousPhase = false;
@@ -69,7 +69,6 @@ public class waterDewPointTemperatureMultiphaseFlash extends constantDutyTempera
         } while ((i < 350 && Math.abs(dT) > 1e-5));
         logger.info("i " + i);
         // system.display();
-
     }
 
     /** {@inheritDoc} */

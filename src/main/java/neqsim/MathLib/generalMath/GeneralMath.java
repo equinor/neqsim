@@ -9,11 +9,12 @@ package neqsim.MathLib.generalMath;
  * @version $Id: $Id
  */
 public class GeneralMath implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for GeneralMath.</p>
+     * <p>
+     * Constructor for GeneralMath.
+     * </p>
      */
     public GeneralMath() {}
 

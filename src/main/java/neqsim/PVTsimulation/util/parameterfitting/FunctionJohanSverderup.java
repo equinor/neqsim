@@ -4,19 +4,22 @@ import neqsim.PVTsimulation.simulation.SaturationPressure;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>FunctionJohanSverderup class.</p>
+ * <p>
+ * FunctionJohanSverderup class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
 
     /**
-     * <p>Constructor for FunctionJohanSverderup.</p>
+     * <p>
+     * Constructor for FunctionJohanSverderup.
+     * </p>
      */
     public FunctionJohanSverderup() {
         params = new double[1];

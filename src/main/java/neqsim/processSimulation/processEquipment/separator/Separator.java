@@ -28,7 +28,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned,
@@ -50,7 +49,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
     /**
-     * <p>Constructor for Separator.</p>
+     * <p>
+     * Constructor for Separator.
+     * </p>
      */
     public Separator() {
         super();
@@ -101,7 +102,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
-
     }
 
     /**
@@ -295,7 +295,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                 * getSeparatorLength();
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * getInternalDiameter()
                 * getInternalDiameter() * getSeparatorLength();
-
     }
 
     /**
@@ -482,7 +481,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
                         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
                 / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
         return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
-
     }
 
     /**
@@ -683,7 +681,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
             try {
                 getLiquidOutStream().getThermoSystem().init(3);
             } catch (Exception e) {
-
             }
         }
         if (thermoSystem.hasPhaseType("gas")) {
@@ -712,7 +709,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     /** {@inheritDoc} */
     @Override
     public double getExergyChange(String unit, double sourrondingTemperature) {
-
         //
         double exergy = 0.0;
         for (int i = 0; i < numberOfInputStreams; i++) {

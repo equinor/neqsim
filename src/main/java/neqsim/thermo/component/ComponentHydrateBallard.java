@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentHydrateBallard extends ComponentHydrate {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
 

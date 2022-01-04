@@ -18,11 +18,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class StaticNeqMixer extends StaticMixer {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for StaticNeqMixer.</p>
+     * <p>
+     * Constructor for StaticNeqMixer.
+     * </p>
      */
     public StaticNeqMixer() {}
 
@@ -44,10 +45,8 @@ public class StaticNeqMixer extends StaticMixer {
         String compName = new String();
 
         for (int k = 1; k < streams.size(); k++) {
-
             for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
                     .getNumberOfComponents(); i++) {
-
                 boolean gotComponent = false;
                 String componentName =
                         streams.get(k).getThermoSystem().getPhases()[0].getComponents()[i]
@@ -71,7 +70,6 @@ public class StaticNeqMixer extends StaticMixer {
                         compName =
                                 streams.get(0).getThermoSystem().getPhases()[0].getComponents()[p]
                                         .getComponentName();
-
                     }
                 }
 
@@ -92,7 +90,6 @@ public class StaticNeqMixer extends StaticMixer {
         mixedStream.getThermoSystem().init_x_y();
         mixedStream.getThermoSystem().initBeta();
         mixedStream.getThermoSystem().init(2);
-
     }
 
     /** {@inheritDoc} */
@@ -135,5 +132,4 @@ public class StaticNeqMixer extends StaticMixer {
     public String getName() {
         return name;
     }
-
 }

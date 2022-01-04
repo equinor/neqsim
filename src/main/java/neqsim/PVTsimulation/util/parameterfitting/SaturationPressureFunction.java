@@ -5,19 +5,22 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>SaturationPressureFunction class.</p>
+ * <p>
+ * SaturationPressureFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class SaturationPressureFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
 
     /**
-     * <p>Constructor for SaturationPressureFunction.</p>
+     * <p>
+     * Constructor for SaturationPressureFunction.
+     * </p>
      */
     public SaturationPressureFunction() {
         params = new double[1];

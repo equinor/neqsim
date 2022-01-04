@@ -3,25 +3,29 @@ package neqsim.processSimulation.processEquipment.pipeline;
 import java.util.*;
 
 /**
- * <p>Fittings class.</p>
+ * <p>
+ * Fittings class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class Fittings {
-
     private static final long serialVersionUID = 1000;
 
     ArrayList<Fitting> fittingList = new ArrayList<Fitting>();
 
     /**
-     * <p>Constructor for Fittings.</p>
+     * <p>
+     * Constructor for Fittings.
+     * </p>
      */
-    public Fittings() {
-    }
+    public Fittings() {}
 
     /**
-     * <p>add.</p>
+     * <p>
+     * add.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param LdivD a double
@@ -31,7 +35,9 @@ public class Fittings {
     }
 
     /**
-     * <p>add.</p>
+     * <p>
+     * add.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -40,7 +46,9 @@ public class Fittings {
     }
 
     /**
-     * <p>getFittingsList.</p>
+     * <p>
+     * getFittingsList.
+     * </p>
      *
      * @return a {@link java.util.ArrayList} object
      */
@@ -49,7 +57,6 @@ public class Fittings {
     }
 
     public class Fitting {
-
         private static final long serialVersionUID = 1000;
 
         private String fittingName = "";
@@ -63,10 +70,12 @@ public class Fittings {
         public Fitting(String name) {
             this.fittingName = name;
 
-            neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+            neqsim.util.database.NeqSimDataBase database =
+                    new neqsim.util.database.NeqSimDataBase();
             java.sql.ResultSet dataSet = null;
             try {
-                dataSet = database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"));
+                dataSet =
+                        database.getResultSet(("SELECT * FROM fittings WHERE name='" + name + "'"));
                 dataSet.next();
                 LtoD = (Double.parseDouble(dataSet.getString("LtoD")));
                 System.out.printf("LtoD " + LtoD);

@@ -12,17 +12,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestDiffusivity class.</p>
+ * <p>
+ * TestDiffusivity class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestDiffusivity {
-
     static Logger logger = LogManager.getLogger(TestDiffusivity.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -77,6 +80,5 @@ public class TestDiffusivity {
         // optim.runMonteCarloSimulation();
         optim.displayGraph();
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

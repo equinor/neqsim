@@ -18,7 +18,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  */
 public class InterphasePackedBed extends InterphaseReactorFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -104,5 +103,4 @@ public class InterphasePackedBed extends InterphaseReactorFlow
         }
         return massTrans;
     }
-
 }

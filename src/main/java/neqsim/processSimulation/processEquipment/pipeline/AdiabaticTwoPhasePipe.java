@@ -22,7 +22,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class AdiabaticTwoPhasePipe extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     double inletPressure = 0;
@@ -42,7 +41,9 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     String pipeSpecification = "AP02";
 
     /**
-     * <p>Constructor for AdiabaticTwoPhasePipe.</p>
+     * <p>
+     * Constructor for AdiabaticTwoPhasePipe.
+     * </p>
      */
     public AdiabaticTwoPhasePipe() {
         mechanicalDesign = new PipelineMechanicalDeisgn(this);
@@ -257,7 +258,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
                     if (outP < 1e-10 || Double.isNaN(outP))
                         break;
-
                 } while (Math.abs(system.getNumberOfMoles() - oldPressure) / oldPressure > 1e-3
                         && iter < 3);
                 // calcFlow(pressureOutLimit);
@@ -290,7 +290,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
                     testOps = new ThermodynamicOperations(system);
                     testOps.TPflash();
                 } while (Math.abs(system.getPressure() - oldPressure) > 1e-2 && iter < 25);
-
             }
         }
         testOps = new ThermodynamicOperations(system);
@@ -298,7 +297,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
         System.out.println("flow rate " + system.getFlowRate(maxflowunit));
         // system.setMultiPhaseCheck(false);
         outStream.setThermoSystem(system);
-
     }
 
     /** {@inheritDoc} */
@@ -316,7 +314,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     /** {@inheritDoc} */
     @Override
     public void runTransient() {
-
         run();
     }
 

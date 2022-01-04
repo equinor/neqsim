@@ -4,27 +4,32 @@ import neqsim.physicalProperties.physicalPropertyMethods.commonPhasePhysicalProp
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>ViscosityFunction class.</p>
+ * <p>
+ * ViscosityFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
     boolean includeWaxEmulsionViscosity = true;
 
     /**
-     * <p>Constructor for ViscosityFunction.</p>
+     * <p>
+     * Constructor for ViscosityFunction.
+     * </p>
      */
     public ViscosityFunction() {
         params = new double[1];
     }
 
     /**
-     * <p>Constructor for ViscosityFunction.</p>
+     * <p>
+     * Constructor for ViscosityFunction.
+     * </p>
      *
      * @param includeWax a boolean
      */
@@ -55,6 +60,5 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
 
         ((FrictionTheoryViscosityMethod) system.getPhase(0).getPhysicalProperties()
                 .getViscosityModel()).setTBPviscosityCorrection(value);
-
     }
 }

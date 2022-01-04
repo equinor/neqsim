@@ -17,11 +17,12 @@ import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEosMod2004;
  * @version $Id: $Id
  */
 public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for SystemFurstElectrolyteEosMod2004.</p>
+     * <p>
+     * Constructor for SystemFurstElectrolyteEosMod2004.
+     * </p>
      */
     public SystemFurstElectrolyteEosMod2004() {
         super();
@@ -69,5 +70,4 @@ public class SystemFurstElectrolyteEosMod2004 extends SystemSrkEos {
 
         return clonedSystem;
     }
-
 }

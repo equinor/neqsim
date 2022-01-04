@@ -18,14 +18,15 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class ComponentDesmukhMather extends ComponentGE {
-
     private static final long serialVersionUID = 1000;
 
     private double deshMathIonicDiameter = 1.0;
     static Logger logger = LogManager.getLogger(ComponentDesmukhMather.class);
 
     /**
-     * <p>Constructor for ComponentDesmukhMather.</p>
+     * <p>
+     * Constructor for ComponentDesmukhMather.
+     * </p>
      */
     public ComponentDesmukhMather() {}
 
@@ -47,7 +48,6 @@ public class ComponentDesmukhMather extends ComponentGE {
 
         try {
             if (!component_name.equals("default")) {
-
                 try {
                     dataSet = database.getResultSet(
                             ("SELECT * FROM comptemp WHERE name='" + component_name + "'"));
@@ -115,7 +115,6 @@ public class ComponentDesmukhMather extends ComponentGE {
                 temp += 2.0 * ((PhaseDesmukhMather) phase).getBetaDesMatij(i, getComponentNumber())
                         * phase.getComponent(i).getMolality(phase);// phase.getComponent(i).getMolarity(phase);
             }
-
         }
         // System.out.println("molality MDEA "+
         // phase.getComponent("MDEA").getMolality(phase));
@@ -152,7 +151,6 @@ public class ComponentDesmukhMather extends ComponentGE {
             fugasityCoeffisient =
                     gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure(); // sjekke
                                                                                         // denne
-
         } else {
             fugasityCoeffisient = 1e-15;
             // System.out.println("fug " + fugasityCoeffisient);

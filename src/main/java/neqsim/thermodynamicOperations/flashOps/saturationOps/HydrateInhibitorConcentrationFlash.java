@@ -16,11 +16,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * HydrateInhibitorConcentrationFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(HydrateInhibitorConcentrationFlash.class);
 
@@ -28,7 +27,9 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
     String inhibitor = "MEG";
 
     /**
-     * <p>Constructor for HydrateInhibitorConcentrationFlash.</p>
+     * <p>
+     * Constructor for HydrateInhibitorConcentrationFlash.
+     * </p>
      */
     public HydrateInhibitorConcentrationFlash() {}
 
@@ -60,7 +61,6 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         ThermodynamicOperations ops = new ThermodynamicOperations(system);
         int iter = 0;
         double oldWt = 1.0, newWt = 2.0;
@@ -78,7 +78,6 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
                 if (iter < 4) {
                     system.addComponent(inhibitor, error * 0.01);
                 } else {
-
                     double newC = -error / derrordC;
                     double correction = newC * 0.5;// (newC -
                                                    // system.getPhase(0).getComponent(inhibitor).getNumberOfmoles())
@@ -93,11 +92,9 @@ public class HydrateInhibitorConcentrationFlash extends constantDutyTemperatureF
                 error = system.getTemperature() - hydT;
 
                 logger.info("error " + error);
-
             } catch (Exception e) {
                 logger.error("error", e);
             }
-
         } while ((Math.abs(error) > 1e-3 && iter < 100) || iter < 3);
     }
 

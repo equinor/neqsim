@@ -4,13 +4,14 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>CVDFunction class.</p>
+ * <p>
+ * CVDFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class CVDFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     double molarMass = 0.0;
@@ -18,14 +19,18 @@ public class CVDFunction extends LevenbergMarquardtFunction {
     double Zsaturation = 0;
 
     /**
-     * <p>Constructor for CVDFunction.</p>
+     * <p>
+     * Constructor for CVDFunction.
+     * </p>
      */
     public CVDFunction() {
         params = new double[3];
     }
 
     /**
-     * <p>calcSaturationConditions.</p>
+     * <p>
+     * calcSaturationConditions.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */

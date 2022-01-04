@@ -9,13 +9,14 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>VUflash class.</p>
+ * <p>
+ * VUflash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class VUflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Uspec = 0;
@@ -23,12 +24,16 @@ public class VUflash extends Flash {
     Flash pHFlash;
 
     /**
-     * <p>Constructor for VUflash.</p>
+     * <p>
+     * Constructor for VUflash.
+     * </p>
      */
     public VUflash() {}
 
     /**
-     * <p>Constructor for VUflash.</p>
+     * <p>
+     * Constructor for VUflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Vspec a double
@@ -94,5 +99,4 @@ public class VUflash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

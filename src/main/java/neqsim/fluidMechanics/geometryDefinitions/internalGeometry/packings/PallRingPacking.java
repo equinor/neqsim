@@ -15,11 +15,12 @@ package neqsim.fluidMechanics.geometryDefinitions.internalGeometry.packings;
  * @version $Id: $Id
  */
 public class PallRingPacking extends Packing {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PallRingPacking.</p>
+     * <p>
+     * Constructor for PallRingPacking.
+     * </p>
      */
     public PallRingPacking() {
         super();
@@ -48,5 +49,4 @@ public class PallRingPacking extends Packing {
     public PallRingPacking(String name, String material, int size) {
         super(name, material, size);
     }
-
 }

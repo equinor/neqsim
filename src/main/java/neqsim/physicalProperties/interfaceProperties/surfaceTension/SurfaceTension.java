@@ -18,13 +18,14 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SurfaceTension extends InterfaceProperties implements SurfaceTensionInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface system;
 
     /**
-     * <p>Constructor for SurfaceTension.</p>
+     * <p>
+     * Constructor for SurfaceTension.
+     * </p>
      */
     public SurfaceTension() {}
 
@@ -75,5 +76,4 @@ public class SurfaceTension extends InterfaceProperties implements SurfaceTensio
         }
         return compNumb;
     }
-
 }

@@ -14,7 +14,6 @@ import neqsim.util.database.NeqSimDataBase;
  * @version $Id: $Id
  */
 public class ComponentHydrate extends Component {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ComponentHydrate.class);
 
@@ -41,7 +40,9 @@ public class ComponentHydrate extends Component {
     PhaseInterface refPhase = null;
 
     /**
-     * <p>Constructor for ComponentHydrate.</p>
+     * <p>
+     * Constructor for ComponentHydrate.
+     * </p>
      */
     public ComponentHydrate() {}
 
@@ -90,7 +91,6 @@ public class ComponentHydrate extends Component {
                     } else {
                         dataSet = database.getResultSet(
                                 ("SELECT * FROM comp WHERE name='" + component_name + "'"));
-
                     }
                     dataSet.next();
                     dataSet.getString("FORMULA");
@@ -110,7 +110,6 @@ public class ComponentHydrate extends Component {
             }
         } catch (Exception e) {
             logger.error("error in comp", e);
-
         } finally {
             try {
                 if (dataSet != null) {
@@ -124,7 +123,6 @@ public class ComponentHydrate extends Component {
                 }
             } catch (Exception e) {
                 logger.error("error closing database.....", e);
-
             }
         }
     }
@@ -184,7 +182,6 @@ public class ComponentHydrate extends Component {
             double fugold = 0.0;
 
             do {
-
                 val = 0;
                 tempy = 0.0;
                 fugold = fugasityCoeffisient;

@@ -5,19 +5,21 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>CharacterisationFunction class.</p>
+ * <p>
+ * CharacterisationFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class CharacterisationFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(CharacterisationFunction.class);
 
-
     /**
-     * <p>Constructor for CharacterisationFunction.</p>
+     * <p>
+     * Constructor for CharacterisationFunction.
+     * </p>
      */
     public CharacterisationFunction() {
         params = new double[1];

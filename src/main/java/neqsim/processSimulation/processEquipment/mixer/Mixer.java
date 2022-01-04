@@ -31,7 +31,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
@@ -42,7 +41,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     static Logger logger = LogManager.getLogger(Mixer.class);
 
     /**
-     * <p>Constructor for Mixer.</p>
+     * <p>
+     * Constructor for Mixer.
+     * </p>
      */
     public Mixer() {}
 
@@ -118,7 +119,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             }
             for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
                     .getNumberOfComponents(); i++) {
-
                 boolean gotComponent = false;
                 String componentName =
                         streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
@@ -137,7 +137,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
                                 .getComponentNumber();
                         compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentName();
-
                     }
                 }
 
@@ -174,7 +173,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }
@@ -252,7 +250,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
                     mixedStream.getThermoSystem().setTemperature(getOutTemperature());
                 testOps.TPflash();
             }
-
         }
 
         // System.out.println("enthalpy: " +

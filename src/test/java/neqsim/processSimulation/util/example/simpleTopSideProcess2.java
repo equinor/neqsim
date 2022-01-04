@@ -8,9 +8,11 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
 import neqsim.processSimulation.processEquipment.util.Recycle;
 
 /**
- * <p>simpleTopSideProcess2 class.</p>
+ * <p>
+ * simpleTopSideProcess2 class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

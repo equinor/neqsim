@@ -18,7 +18,6 @@ import neqsim.thermo.component.ComponentGEUniquac;
  * @version $Id: $Id
  */
 public class PhaseGEUniquac extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double[][] alpha;
@@ -28,7 +27,9 @@ public class PhaseGEUniquac extends PhaseGE {
     double GE = 0.0;
 
     /**
-     * <p>Constructor for PhaseGEUniquac.</p>
+     * <p>
+     * Constructor for PhaseGEUniquac.
+     * </p>
      */
     public PhaseGEUniquac() {
         super();
@@ -112,5 +113,4 @@ public class PhaseGEUniquac extends PhaseGE {
         // phaseType);
         return GE;
     }
-
 }

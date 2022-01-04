@@ -3,27 +3,33 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- * <p>JointEfficiencyPlateStandard class.</p>
+ * <p>
+ * JointEfficiencyPlateStandard class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class JointEfficiencyPlateStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for JointEfficiencyPlateStandard.</p>
+     * <p>
+     * Constructor for JointEfficiencyPlateStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      */
     public JointEfficiencyPlateStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
     }
 
     /**
-     * <p>getJEFactor.</p>
+     * <p>
+     * getJEFactor.
+     * </p>
      *
      * @return the JEFactor
      */
@@ -32,7 +38,9 @@ public class JointEfficiencyPlateStandard extends DesignStandard {
     }
 
     /**
-     * <p>setJEFactor.</p>
+     * <p>
+     * setJEFactor.
+     * </p>
      *
      * @param JEFactor the JEFactor to set
      */
@@ -45,16 +53,16 @@ public class JointEfficiencyPlateStandard extends DesignStandard {
     private double JEFactor = 1.0;
 
     /**
-     * <p>readJointEfficiencyStandard.</p>
+     * <p>
+     * readJointEfficiencyStandard.
+     * </p>
      *
      * @param typeName a {@link java.lang.String} object
      * @param radiagraphType a {@link java.lang.String} object
      */
     public void readJointEfficiencyStandard(String typeName, String radiagraphType) {
-
-//... to be implemented  
-// read from techncal requirements_mechanical table.....
+        // ... to be implemented
+        // read from techncal requirements_mechanical table.....
         JEFactor = 1.0;
-
     }
 }

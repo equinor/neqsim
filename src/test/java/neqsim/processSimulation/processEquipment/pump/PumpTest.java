@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test;
 import neqsim.processSimulation.processEquipment.stream.Stream;
 
 /**
- * <p>PumpTest class.</p>
+ * <p>
+ * PumpTest class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

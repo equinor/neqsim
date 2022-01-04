@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentBWRS extends ComponentSrk {
-
     private static final long serialVersionUID = 1000;
 
     int OP = 9;
@@ -43,7 +42,9 @@ public class ComponentBWRS extends ComponentSrk {
     static Logger logger = LogManager.getLogger(ComponentBWRS.class);
 
     /**
-     * <p>Constructor for ComponentBWRS.</p>
+     * <p>
+     * Constructor for ComponentBWRS.
+     * </p>
      */
     public ComponentBWRS() {}
 
@@ -123,7 +124,6 @@ public class ComponentBWRS extends ComponentSrk {
     /** {@inheritDoc} */
     @Override
     public ComponentBWRS clone() {
-
         ComponentBWRS clonedComponent = null;
         try {
             clonedComponent = (ComponentBWRS) super.clone();
@@ -507,5 +507,4 @@ public class ComponentBWRS extends ComponentSrk {
     public void setRhoc(double rhoc) {
         this.rhoc = rhoc;
     }
-
 }

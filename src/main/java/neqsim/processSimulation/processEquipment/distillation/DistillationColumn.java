@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class DistillationColumn extends ProcessEquipmentBaseClass implements DistillationInterface {
-
     private static final long serialVersionUID = 1000;
     private boolean doInitializion = true;
     boolean hasReboiler = false, hasCondenser = false;
@@ -172,7 +171,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                 trays.get(1).getLiquidOutStream());
         trays.get(0).init();
         ((Runnable) trays.get(0)).run();
-
     }
 
     /**
@@ -408,7 +406,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
                                     .getComponent("water").getNumberOfmoles()
                             + " pressure " + trays.get(i).getGasOutStream().getPressure()
                             + " temperature " + trays.get(i).getGasOutStream().getTemperature("C"));
-
         }
 
         double massError = 0.0;
@@ -427,7 +424,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
      * </p>
      */
     public void energyBalanceCheck() {
-
         double[] energyInput = new double[numberOfTrays];
         double[] energyOutput = new double[numberOfTrays];
         double[] energyBalance = new double[numberOfTrays];
@@ -491,7 +487,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         column.displayResult();
         System.out.println("reboiler duty" + ((Reboiler) column.getReboiler()).getDuty());
         System.out.println("condeser duty" + ((Condenser) column.getCondenser()).getDuty());
-
     }
 
     /**

@@ -22,14 +22,15 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class Kinetics implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
     protected ChemicalReactionOperations operations;
     double phiInfinite = 0.0;
     boolean isIrreversible;
 
     /**
-     * <p>Constructor for Kinetics.</p>
+     * <p>
+     * Constructor for Kinetics.
+     * </p>
      */
     public Kinetics() {}
 

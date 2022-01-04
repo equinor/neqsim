@@ -6,26 +6,30 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 
 /**
- * <p>IonicInteractionParameterFittingFunctionAcid class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunctionAcid class.
+ * </p>
  *
  * @author Neeraj
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunctionAcid extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     int type = 0;
     int phase = 0;
     static Logger logger = LogManager.getLogger(IonicInteractionParameterFittingFunctionAcid.class);
 
-
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunctionAcid.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionAcid.
+     * </p>
      */
     public IonicInteractionParameterFittingFunctionAcid() {}
 
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunctionAcid.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunctionAcid.
+     * </p>
      *
      * @param phase a int
      * @param type a int

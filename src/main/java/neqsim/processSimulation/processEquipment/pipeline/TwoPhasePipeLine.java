@@ -18,11 +18,12 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version $Id: $Id
  */
 public class TwoPhasePipeLine extends Pipeline {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for TwoPhasePipeLine.</p>
+     * <p>
+     * Constructor for TwoPhasePipeLine.
+     * </p>
      */
     public TwoPhasePipeLine() {}
 
@@ -66,5 +67,4 @@ public class TwoPhasePipeLine extends Pipeline {
         pipe.print();
         pipe.getDisplay().createNetCdfFile(fileName);
     }
-
 }

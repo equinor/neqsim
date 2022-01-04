@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentHydrateGF extends ComponentHydrate {
-
     private static final long serialVersionUID = 1000;
 
     double Ak[][] = new double[2][2]; // [structure][cavitytype]
@@ -44,7 +43,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
         neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
         java.sql.ResultSet dataSet = null;
         if (!component_name.equals("default")) {
-
             try {
                 // System.out.println("reading GF hydrate parameters ..............");
                 try {
@@ -101,10 +99,8 @@ public class ComponentHydrateGF extends ComponentHydrate {
      * @return a double
      */
     public double fugcoef2(PhaseInterface phase, int numberOfComps, double temp, double pres) {
-
         // this is empty hydrate latice fugacity coefficient equation 8.9
         if (componentName.equals("water")) {
-
             // this is the empty hydrate fugacity devited by pressure (why??)
             double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
             if (hydrateStructure == -1) {
@@ -200,7 +196,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
             for (int structure = 0; structure < 2; structure++) {
                 hydrateStructure = structure;
                 if (componentName.equals("water")) {
-
                     // this is the empty hydrate fugacity devited by pressure (why??)
                     double solvol = getMolarVolumeHydrate(hydrateStructure, temp);
 
@@ -289,7 +284,6 @@ public class ComponentHydrateGF extends ComponentHydrate {
     /** {@inheritDoc} */
     @Override
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
-
         // this is equation 8.8
         if (componentName.equals("water")) {
             return 0.0;

@@ -66,7 +66,6 @@ import neqsim.thermodynamicOperations.propertyGenerator.OLGApropertyTableGenerat
  * @version $Id: $Id
  */
 public class ThermodynamicOperations implements java.io.Serializable, Cloneable {
-
     private static final long serialVersionUID = 1000;
 
     private Thread thermoOperationThread = new Thread();
@@ -79,7 +78,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     static Logger logger = LogManager.getLogger(ThermodynamicOperations.class);
 
     /**
-     * <p>Constructor for ThermodynamicOperations.</p>
+     * <p>
+     * Constructor for ThermodynamicOperations.
+     * </p>
      */
     public ThermodynamicOperations() {}
 
@@ -271,7 +272,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     public void PHflash(double Hspec) {
         this.PHflash(Hspec, 0);
     }
-
 
     /**
      * <p>
@@ -665,7 +665,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in bubblePointTemperatureFlash() - could not find solution - possible no bubble point exists");
         }
-
     }
 
     /**
@@ -968,7 +967,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             opsTemp.TPflash();
             systemTemp.display();
             systemTemp = systemTemp.phaseToSystem(0);
-
         }
 
         opsTemp = new ThermodynamicOperations(systemTemp);
@@ -1045,7 +1043,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * @throws java.lang.Exception if any.
      */
     public void hydrateFormationTemperature(double initialTemperatureGuess) throws Exception {
-
         system.setTemperature(initialTemperatureGuess);
         operation = new HydrateFormationTemperatureFlash(system);
         for (int i = 0; i < system.getPhase(4).getNumberOfComponents(); i++) {
@@ -1097,7 +1094,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         }
         // logger.info("Hydrate structure " + (((ComponentHydrate)
         // system.getPhase(4).getComponent("water")).getHydrateStructure() + 1));
-
     }
 
     /**
@@ -1129,7 +1125,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      * @param cricondenBarY an array of {@link double} objects
      */
     public void calcCricoP(double[] cricondenBar, double[] cricondenBarX, double[] cricondenBarY) {
-
         double phasefraction = 1.0 - 1e-10;
 
         operation = new CricondenBarFlash(system, fileName, phasefraction, cricondenBar,
@@ -1149,7 +1144,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
      */
     public void calcCricoT(double[] cricondenTherm, double[] cricondenThermX,
             double[] cricondenThermY) {
-
         double phasefraction = 1.0 - 1e-10;
 
         operation = new CricondenThermFlash(system, fileName, phasefraction, cricondenTherm,
@@ -1244,7 +1238,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in bubblePointPressureFlash() - could not find solution - possible no dew point exists");
         }
-
     }
 
     /**
@@ -1392,7 +1385,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in dewPointTemperatureFlash() - could not find solution - possible no dew point exists");
         }
-
     }
 
     /**
@@ -1415,7 +1407,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
             throw new neqsim.util.exception.IsNaNException(
                     "error in dewPointTemperatureFlash() - could not find solution - possible no dew point exists");
         }
-
     }
 
     /**
@@ -1869,7 +1860,6 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         operation = new calcIonicComposition(system, phaseNumber);
         getOperation().run();
         resultTable = getOperation().getResultTable();
-
     }
 
     /**

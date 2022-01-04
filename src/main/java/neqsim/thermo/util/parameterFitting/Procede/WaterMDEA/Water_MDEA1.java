@@ -12,23 +12,27 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Water_MDEA1 class.</p>
+ * <p>
+ * Water_MDEA1 class.
+ * </p>
  *
  * @author agrawalnj
  * @version $Id: $Id
  */
 public class Water_MDEA1 {
-
     static Logger logger = LogManager.getLogger(Water_MDEA1.class);
 
     /**
-     * <p>Constructor for Water_MDEA1.</p>
+     * <p>
+     * Constructor for Water_MDEA1.
+     * </p>
      */
-    public Water_MDEA1() {
-    }
+    public Water_MDEA1() {}
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args the command line arguments
      */
@@ -38,7 +42,6 @@ public class Water_MDEA1 {
         double x = 0;
 
         for (x = 0.85; x <= 1; x += 0.010) {
-
             SystemInterface testSystem = new SystemSrkSchwartzentruberEos(temperature, pressure);
             testSystem.addComponent("water", x);
             testSystem.addComponent("MDEA", 1 - x);
@@ -69,10 +72,12 @@ public class Water_MDEA1 {
              * logger.info("Excess Heat kJ "+testSystem.getPhase(1).getComponent(1).
              * getHresTP(temperature)/1000);
              */
-            try (PrintStream p = new PrintStream(new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
+            try (PrintStream p = new PrintStream(
+                    new FileOutputStream("C:/java/NeqSimSource/Patrick.txt", true))) {
                 // p.println(x+" "+testSystem.getPhase(0).getComponent(0).getx()+"
                 // "+testSystem.getPhase(0).getComponent(1).getx());
-                p.println(x + " " + testSystem.getPhase(0).getComponent(1).getx() + " " + testSystem.getPressure() + " "
+                p.println(x + " " + testSystem.getPhase(0).getComponent(1).getx() + " "
+                        + testSystem.getPressure() + " "
                         + testSystem.getPhase(0).getComponent(1).getFugasityCoeffisient());
                 // p.println(x+" "+aMDEA+" "+awater);
             } catch (FileNotFoundException e) {

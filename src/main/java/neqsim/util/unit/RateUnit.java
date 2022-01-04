@@ -19,14 +19,15 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
  * @version $Id: $Id
  */
 public class RateUnit extends neqsim.util.unit.BaseUnit {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(RateUnit.class);
 
     double molarmass = 0.0, stddens = 0.0, boilp = 0.0;
 
     /**
-     * <p>Constructor for RateUnit.</p>
+     * <p>
+     * Constructor for RateUnit.
+     * </p>
      *
      * @param value a double
      * @param name a {@link java.lang.String} object
@@ -111,5 +112,4 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
 
         return factor;
     }
-
 }

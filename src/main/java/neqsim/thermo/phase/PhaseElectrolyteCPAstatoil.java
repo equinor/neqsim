@@ -16,11 +16,12 @@ import neqsim.thermo.component.ComponentElectrolyteCPAstatoil;
  * @version $Id: $Id
  */
 public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseElectrolyteCPAstatoil.</p>
+     * <p>
+     * Constructor for PhaseElectrolyteCPAstatoil.
+     * </p>
      */
     public PhaseElectrolyteCPAstatoil() {
         super();
@@ -92,5 +93,4 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
                         / (Math.pow(getTotalVolume(), 4.0));
         return gvv;
     }
-
 }

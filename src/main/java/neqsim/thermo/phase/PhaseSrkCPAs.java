@@ -18,11 +18,12 @@ import neqsim.thermo.component.ComponentSrkCPAs;
  * @version $Id: $Id
  */
 public class PhaseSrkCPAs extends PhaseSrkCPA {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseSrkCPAs.</p>
+     * <p>
+     * Constructor for PhaseSrkCPAs.
+     * </p>
      */
     public PhaseSrkCPAs() {
         super();
@@ -96,5 +97,4 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
                 - 0.285E1 / (temp1) * getB() / (totVol4);
         return gvv;
     }
-
 }

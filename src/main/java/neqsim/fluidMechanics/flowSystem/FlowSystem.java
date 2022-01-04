@@ -11,13 +11,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Abstract FlowSystem class.</p>
+ * <p>
+ * Abstract FlowSystem class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public abstract class FlowSystem implements FlowSystemInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected FlowNodeInterface[] flowNode;
@@ -39,12 +40,16 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     boolean equilibriumHeatTransfer = true, equilibriumMassTransfer = false;
 
     /**
-     * <p>Constructor for FlowSystem.</p>
+     * <p>
+     * Constructor for FlowSystem.
+     * </p>
      */
     public FlowSystem() {}
 
     /**
-     * <p>Constructor for FlowSystem.</p>
+     * <p>
+     * Constructor for FlowSystem.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -76,7 +81,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     /**
-     * <p>flowLegInit.</p>
+     * <p>
+     * flowLegInit.
+     * </p>
      */
     public void flowLegInit() {
         for (int i = 0; i < numberOfFlowLegs; i++) {
@@ -138,7 +145,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     /**
-     * <p>calcTotalNumberOfNodes.</p>
+     * <p>
+     * calcTotalNumberOfNodes.
+     * </p>
      *
      * @return a int
      */
@@ -289,7 +298,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     public void calcFluxes() {}
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -298,7 +309,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     /**
-     * <p>solveTransient.</p>
+     * <p>
+     * solveTransient.
+     * </p>
      */
     public void solveTransient() {}
 
@@ -354,7 +367,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     /**
-     * <p>setEquilibriumMassTransferModel.</p>
+     * <p>
+     * setEquilibriumMassTransferModel.
+     * </p>
      *
      * @param startNode a int
      * @param endNode a int
@@ -367,12 +382,13 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
                 flowNode[i].setInterphaseModelType(0);
             }
             flowNode[i].getFluidBoundary().setMassTransferCalc(false);
-
         }
     }
 
     /**
-     * <p>setNonEquilibriumMassTransferModel.</p>
+     * <p>
+     * setNonEquilibriumMassTransferModel.
+     * </p>
      *
      * @param startNode a int
      * @param endNode a int
@@ -389,7 +405,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     /**
-     * <p>setNonEquilibriumHeatTransferModel.</p>
+     * <p>
+     * setNonEquilibriumHeatTransferModel.
+     * </p>
      *
      * @param startNode a int
      * @param endNode a int
@@ -401,7 +419,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     }
 
     /**
-     * <p>setEquilibriumHeatTransferModel.</p>
+     * <p>
+     * setEquilibriumHeatTransferModel.
+     * </p>
      *
      * @param startNode a int
      * @param endNode a int

@@ -17,7 +17,6 @@ import neqsim.thermo.mixingRule.EosMixingRulesInterface;
  * @version
  */
 abstract class PhaseEos extends Phase implements PhaseEosInterface {
-
     private static final long serialVersionUID = 1000;
 
     private double loc_A, loc_AT, loc_ATT, loc_B, f_loc = 0, g = 0;
@@ -44,7 +43,9 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     }
 
     /**
-     * <p>Constructor for PhaseEos.</p>
+     * <p>
+     * Constructor for PhaseEos.
+     * </p>
      */
     public PhaseEos() {
         super();
@@ -202,7 +203,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     public double molarVolume2(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         if (BonV < 0) {
@@ -289,7 +289,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
@@ -578,7 +577,6 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
     /** {@inheritDoc} */
     @Override
     public double getCpres() {
-
         return getCvres() + R * (-temperature / R * Math.pow(getdPdTVn(), 2.0) / getdPdVTn()
                 - numberOfMolesInPhase);
     }
@@ -764,9 +762,9 @@ abstract class PhaseEos extends Phase implements PhaseEosInterface {
         return -1.0 / (R * (numberOfMolesInPhase * molarVolume + delta1 * loc_B)
                 * (numberOfMolesInPhase * molarVolume + delta2 * loc_B));
     }
+
     ////// NYE metoder fredag 25.08.public double dFdN(PhaseInterface phase, int
     ////// numberOfComponents, double temperature, double pressure, int phasetype){
-
     /** {@inheritDoc} */
     @Override
     public double FnV() {

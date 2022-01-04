@@ -17,17 +17,16 @@ import neqsim.thermo.component.ComponentInterface;
  * @version $Id: $Id
  */
 public class PhaseDefault extends Phase {
-
     private static final long serialVersionUID = 1000;
 
     protected ComponentInterface defComponent = null;
 
     /**
-     * <p>Constructor for PhaseDefault.</p>
+     * <p>
+     * Constructor for PhaseDefault.
+     * </p>
      */
-    public PhaseDefault() {
-
-    }
+    public PhaseDefault() {}
 
     /**
      * <p>

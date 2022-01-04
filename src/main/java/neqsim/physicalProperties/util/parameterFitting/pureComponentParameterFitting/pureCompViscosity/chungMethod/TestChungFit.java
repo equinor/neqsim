@@ -12,17 +12,20 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestChungFit class.</p>
+ * <p>
+ * TestChungFit class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestChungFit {
-
     static Logger logger = LogManager.getLogger(TestChungFit.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -36,7 +39,6 @@ public class TestChungFit {
                                                                                           // ComponentName='MDEA*'");
 
         try {
-
             while (dataSet.next()) {
                 ChungFunction function = new ChungFunction();
                 double guess[] = {0.3211};
@@ -70,6 +72,5 @@ public class TestChungFit {
         // optim.runMonteCarloSimulation();
         optim.displayResult();
         optim.displayCurveFit();
-
     }
 }

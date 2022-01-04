@@ -26,7 +26,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Compressor extends ProcessEquipmentBaseClass implements CompressorInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
     public SystemInterface thermoSystem;
@@ -52,7 +51,9 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     private String polytropicMethod = "detailed";
 
     /**
-     * <p>Constructor for Compressor.</p>
+     * <p>
+     * Constructor for Compressor.
+     * </p>
      */
     public Compressor() {
         mechanicalDesign = new CompressorMechanicalDesign(this);
@@ -440,7 +441,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
         }
 
         if (usePolytropicCalc) {
-
             if (powerSet) {
                 // dH = (getPower() - hinn) / polytropicEfficiency;
                 double hout = hinn * (1 - 0 + fractionAntiSurge) + dH;
@@ -613,7 +613,6 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     /** {@inheritDoc} */
     @Override
     public void displayResult() {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
@@ -1090,5 +1089,4 @@ public class Compressor extends ProcessEquipmentBaseClass implements CompressorI
     public void setPolytropicMethod(String polytropicMethod) {
         this.polytropicMethod = polytropicMethod;
     }
-
 }

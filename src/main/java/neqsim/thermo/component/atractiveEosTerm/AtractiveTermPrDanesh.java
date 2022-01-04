@@ -17,13 +17,14 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
-
     private static final long serialVersionUID = 1000;
 
     double mMod = 0;
 
     /**
-     * <p>Constructor for AtractiveTermPrDanesh.</p>
+     * <p>
+     * Constructor for AtractiveTermPrDanesh.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -94,7 +95,6 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
                         / Math.sqrt(temperature * temperature * temperature
                                 / (Math.pow(getComponent().getTC(), 3.0)))
                         / (getComponent().getTC() * getComponent().getTC()) / 2.0;
-
     }
 
     /** {@inheritDoc} */
@@ -108,5 +108,4 @@ public class AtractiveTermPrDanesh extends AtractiveTermPr1978 {
     public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);
     }
-
 }

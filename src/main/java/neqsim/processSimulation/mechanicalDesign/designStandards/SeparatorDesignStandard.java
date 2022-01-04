@@ -4,17 +4,20 @@ import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 import neqsim.processSimulation.processEquipment.separator.SeparatorInterface;
 
 /**
- * <p>SeparatorDesignStandard class.</p>
+ * <p>
+ * SeparatorDesignStandard class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SeparatorDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>getFg.</p>
+     * <p>
+     * getFg.
+     * </p>
      *
      * @return the Fg
      */
@@ -23,7 +26,9 @@ public class SeparatorDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>setFg.</p>
+     * <p>
+     * setFg.
+     * </p>
      *
      * @param Fg the Fg to set
      */
@@ -36,14 +41,18 @@ public class SeparatorDesignStandard extends DesignStandard {
     private double volumetricDesignFactor = 1.0;
 
     /**
-     * <p>Constructor for SeparatorDesignStandard.</p>
+     * <p>
+     * Constructor for SeparatorDesignStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      */
     public SeparatorDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -65,7 +74,6 @@ public class SeparatorDesignStandard extends DesignStandard {
                                 + Double.parseDouble(dataSet.getString("MINVALUE"))) / 2.0;
                     }
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -86,7 +94,9 @@ public class SeparatorDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>gasLoadFactor</code>.</p>
+     * <p>
+     * Getter for the field <code>gasLoadFactor</code>.
+     * </p>
      *
      * @return a double
      */
@@ -99,7 +109,9 @@ public class SeparatorDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Getter for the field <code>volumetricDesignFactor</code>.</p>
+     * <p>
+     * Getter for the field <code>volumetricDesignFactor</code>.
+     * </p>
      *
      * @return a double
      */
@@ -112,7 +124,9 @@ public class SeparatorDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>Setter for the field <code>volumetricDesignFactor</code>.</p>
+     * <p>
+     * Setter for the field <code>volumetricDesignFactor</code>.
+     * </p>
      *
      * @param volumetricDesignFactor the volumetricDesignFactor to set
      */
@@ -121,16 +135,19 @@ public class SeparatorDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>getLiquidRetentionTime.</p>
+     * <p>
+     * getLiquidRetentionTime.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      * @return a double
      */
     public double getLiquidRetentionTime(String name, MechanicalDesign equipmentInn) {
         double retTime = 90.0;
-        double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem().getPhase(1)
-                .getPhysicalProperties().getDensity() / 1000.0;
+        double dens = ((SeparatorInterface) equipmentInn.getProcessEquipment()).getThermoSystem()
+                .getPhase(1).getPhysicalProperties().getDensity() / 1000.0;
 
         // select correct residensetime from database
         // to be implmented

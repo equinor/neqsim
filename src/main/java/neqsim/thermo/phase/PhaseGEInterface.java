@@ -7,15 +7,18 @@
 package neqsim.thermo.phase;
 
 /**
- * <p>PhaseGEInterface interface.</p>
+ * <p>
+ * PhaseGEInterface interface.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface PhaseGEInterface {
-
     /**
-     * <p>getExessGibbsEnergy.</p>
+     * <p>
+     * getExessGibbsEnergy.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -24,7 +27,6 @@ public interface PhaseGEInterface {
      * @param phasetype a int
      * @return a double
      */
-    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
-            int phasetype);
-
+    public double getExessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
+            double temperature, double pressure, int phasetype);
 }

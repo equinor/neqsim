@@ -3,18 +3,21 @@ package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.Eo
 import neqsim.thermo.phase.PhaseEosInterface;
 
 /**
- * <p>BinaryCPAparameterFitToActivityCoefficientFunction class.</p>
+ * <p>
+ * BinaryCPAparameterFitToActivityCoefficientFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class BinaryCPAparameterFitToActivityCoefficientFunction
         extends EosInteractionParameterFittingFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for BinaryCPAparameterFitToActivityCoefficientFunction.</p>
+     * <p>
+     * Constructor for BinaryCPAparameterFitToActivityCoefficientFunction.
+     * </p>
      */
     public BinaryCPAparameterFitToActivityCoefficientFunction() {}
 

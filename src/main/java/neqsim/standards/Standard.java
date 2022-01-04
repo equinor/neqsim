@@ -6,22 +6,28 @@
 
 package neqsim.standards;
 
-import java.awt.*;
-import java.text.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Container;
+import java.text.DecimalFormat;
+import java.text.FieldPosition;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import neqsim.standards.salesContract.BaseContract;
 import neqsim.standards.salesContract.ContractInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Abstract Standard class.</p>
+ * <p>
+ * Abstract Standard class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public abstract class Standard implements StandardInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String name = "Base Standard";
@@ -35,11 +41,12 @@ public abstract class Standard implements StandardInterface {
     /**
      * Creates a new instance of Standard
      */
-    public Standard() {
-    }
+    public Standard() {}
 
     /**
-     * <p>Constructor for Standard.</p>
+     * <p>
+     * Constructor for Standard.
+     * </p>
      *
      * @param thermoSyst a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -47,45 +54,45 @@ public abstract class Standard implements StandardInterface {
         thermoSystem = thermoSyst;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setThermoSystem(SystemInterface thermoSystem) {
+    public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setSalesContract(String name) {
+    public void setSalesContract(String name) {
         if (name.equals("baseContract")) {
             salesContract = new BaseContract();
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setSalesContract(ContractInterface salesContract) {
+    public void setSalesContract(ContractInterface salesContract) {
         this.salesContract = salesContract;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public ContractInterface getSalesContract() {
+    public ContractInterface getSalesContract() {
         return salesContract;
     }
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Getter for property name.
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property name.
+     */
     @Override
-	public String getName() {
+    public String getName() {
         return name;
     }
 
@@ -98,13 +105,13 @@ public abstract class Standard implements StandardInterface {
         this.name = name;
     }
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Getter for property standardDescription.
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property standardDescription.
+     */
     @Override
-	public String getStandardDescription() {
+    public String getStandardDescription() {
         return standardDescription;
     }
 
@@ -117,9 +124,9 @@ public abstract class Standard implements StandardInterface {
         this.standardDescription = standardDescription;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public String[][] createTable(String name) {
+    public String[][] createTable(String name) {
         thermoSystem.setNumberOfPhases(1);
 
         thermoSystem.createTable(name);
@@ -128,7 +135,7 @@ public abstract class Standard implements StandardInterface {
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.#####E0");
         String[][] table = new String[thermoSystem.getPhases()[0].getNumberOfComponents() + 30][6];
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         table[0][0] = "";// getPhases()[0].getPhaseTypeName();//"";
 
         for (int i = 0; i < thermoSystem.getPhases()[0].getNumberOfComponents() + 30; i++) {
@@ -146,10 +153,10 @@ public abstract class Standard implements StandardInterface {
             for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
                 table[j + 1][0] = thermoSystem.getPhases()[0].getComponents()[j].getName();
                 buf = new StringBuffer();
-                table[j + 1][i + 1] = nf
-                        .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponents()[j].getx(), buf,
-                                test)
-                        .toString();
+                table[j + 1][i + 1] = nf.format(
+                        thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponents()[j]
+                                .getx(),
+                        buf, test).toString();
                 table[j + 1][4] = "[-]";
             }
         }
@@ -158,14 +165,14 @@ public abstract class Standard implements StandardInterface {
         return table;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void display(String name) {
+    public void display(String name) {
         JDialog dialog = new JDialog(new JFrame(), "Standard-Report");
         Container dialogContentPane = dialog.getContentPane();
         dialogContentPane.setLayout(new BorderLayout());
 
-        String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
+        String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
         String[][] table = createTable(name);
         JTable Jtab = new JTable(table, names);
         JScrollPane scrollpane = new JScrollPane(Jtab);
@@ -174,20 +181,22 @@ public abstract class Standard implements StandardInterface {
         dialog.setVisible(true);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public String[][] getResultTable() {
+    public String[][] getResultTable() {
         return resultTable;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setResultTable(String[][] resultTable) {
+    public void setResultTable(String[][] resultTable) {
         this.resultTable = resultTable;
     }
 
     /**
-     * <p>Getter for the field <code>referenceState</code>.</p>
+     * <p>
+     * Getter for the field <code>referenceState</code>.
+     * </p>
      *
      * @return the referenceState
      */
@@ -196,12 +205,13 @@ public abstract class Standard implements StandardInterface {
     }
 
     /**
-     * <p>Setter for the field <code>referenceState</code>.</p>
+     * <p>
+     * Setter for the field <code>referenceState</code>.
+     * </p>
      *
      * @param referenceState the referenceState to set
      */
     public void setReferenceState(String referenceState) {
         this.referenceState = referenceState;
     }
-
 }

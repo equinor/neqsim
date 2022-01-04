@@ -19,7 +19,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  */
 public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -50,7 +49,6 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
                             + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
                     2.0);
         }
-
     }
 
     /** {@inheritDoc} */
@@ -200,5 +198,4 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
     // //System.out.println("mass trans " +massTrans + " phase " + phase);
     // return massTrans;
     // }
-
 }

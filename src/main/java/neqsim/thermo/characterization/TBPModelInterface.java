@@ -3,15 +3,18 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>TBPModelInterface interface.</p>
+ * <p>
+ * TBPModelInterface interface.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public interface TBPModelInterface {
-
     /**
-     * <p>calcTC.</p>
+     * <p>
+     * calcTC.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -20,7 +23,9 @@ public interface TBPModelInterface {
     public double calcTC(double molarMass, double density);
 
     /**
-     * <p>calcPC.</p>
+     * <p>
+     * calcPC.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -29,7 +34,9 @@ public interface TBPModelInterface {
     public double calcPC(double molarMass, double density);
 
     /**
-     * <p>calcm.</p>
+     * <p>
+     * calcm.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -38,7 +45,9 @@ public interface TBPModelInterface {
     public double calcm(double molarMass, double density);
 
     /**
-     * <p>calcTB.</p>
+     * <p>
+     * calcTB.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -47,7 +56,9 @@ public interface TBPModelInterface {
     public double calcTB(double molarMass, double density);
 
     /**
-     * <p>calcAcentricFactorKeslerLee.</p>
+     * <p>
+     * calcAcentricFactorKeslerLee.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -56,7 +67,9 @@ public interface TBPModelInterface {
     public double calcAcentricFactorKeslerLee(double molarMass, double density);
 
     /**
-     * <p>calcAcentricFactor.</p>
+     * <p>
+     * calcAcentricFactor.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -65,7 +78,9 @@ public interface TBPModelInterface {
     public double calcAcentricFactor(double molarMass, double density);
 
     /**
-     * <p>calcRacketZ.</p>
+     * <p>
+     * calcRacketZ.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      * @param molarMass a double
@@ -75,7 +90,9 @@ public interface TBPModelInterface {
     public double calcRacketZ(SystemInterface thermoSystem, double molarMass, double density);
 
     /**
-     * <p>calcCriticalVolume.</p>
+     * <p>
+     * calcCriticalVolume.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -84,7 +101,9 @@ public interface TBPModelInterface {
     public double calcCriticalVolume(double molarMass, double density);
 
     /**
-     * <p>calcParachorParameter.</p>
+     * <p>
+     * calcParachorParameter.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -93,7 +112,9 @@ public interface TBPModelInterface {
     public double calcParachorParameter(double molarMass, double density);
 
     /**
-     * <p>calcCriticalViscosity.</p>
+     * <p>
+     * calcCriticalViscosity.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -102,14 +123,18 @@ public interface TBPModelInterface {
     public double calcCriticalViscosity(double molarMass, double density);
 
     /**
-     * <p>isCalcm.</p>
+     * <p>
+     * isCalcm.
+     * </p>
      *
      * @return a boolean
      */
     public boolean isCalcm();
 
     /**
-     * <p>calcWatsonCharacterizationFactor.</p>
+     * <p>
+     * calcWatsonCharacterizationFactor.
+     * </p>
      *
      * @param molarMass a double
      * @param density a double
@@ -118,10 +143,11 @@ public interface TBPModelInterface {
     public double calcWatsonCharacterizationFactor(double molarMass, double density);
 
     /**
-     * <p>getName.</p>
+     * <p>
+     * getName.
+     * </p>
      *
      * @return a {@link java.lang.String} object
      */
     public String getName();
-
 }

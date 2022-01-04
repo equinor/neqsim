@@ -9,9 +9,11 @@ import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>compressorTest class.</p>
+ * <p>
+ * compressorTest class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -22,7 +24,8 @@ public class compressorTest {
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String args[]) {
-        neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+        neqsim.thermo.system.SystemInterface testSystem =
+                new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
         testSystem.addComponent("CO2", 1800.00);
         testSystem.addComponent("water", 1200.0);
         testSystem.createDatabase(true);
@@ -46,7 +49,8 @@ public class compressorTest {
 
         mixer.addStream(stream_2);
 
-        neqsim.processSimulation.processSystem.ProcessSystem operations = new neqsim.processSimulation.processSystem.ProcessSystem();
+        neqsim.processSimulation.processSystem.ProcessSystem operations =
+                new neqsim.processSimulation.processSystem.ProcessSystem();
         operations.add(stream_1);
         operations.add(stream_2);
         operations.add(mixer);

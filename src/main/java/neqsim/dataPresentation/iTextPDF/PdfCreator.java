@@ -7,13 +7,14 @@
 package neqsim.dataPresentation.iTextPDF;
 
 /**
- * <p>PdfCreator class.</p>
+ * <p>
+ * PdfCreator class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class PdfCreator {
-
     private static final long serialVersionUID = 1000;
     // Rectangle pageSize = new Rectangle(144, 720);
     // Document document = new Document(pageSize);
@@ -32,14 +33,17 @@ public class PdfCreator {
                 docName = System.getProperty("NeqSim.home") + "/work/neqsimResults.pdf";
             }
 
-            com.lowagie.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(docName));
+            com.lowagie.text.pdf.PdfWriter.getInstance(document,
+                    new java.io.FileOutputStream(docName));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * <p>Getter for the field <code>document</code>.</p>
+     * <p>
+     * Getter for the field <code>document</code>.
+     * </p>
      *
      * @return a {@link com.lowagie.text.Document} object
      */
@@ -48,14 +52,18 @@ public class PdfCreator {
     }
 
     /**
-     * <p>closeDocument.</p>
+     * <p>
+     * closeDocument.
+     * </p>
      */
     public void closeDocument() {
         document.close();
     }
 
     /**
-     * <p>generatePDF.</p>
+     * <p>
+     * generatePDF.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -65,7 +73,9 @@ public class PdfCreator {
     }
 
     /**
-     * <p>openPDF.</p>
+     * <p>
+     * openPDF.
+     * </p>
      */
     public void openPDF() {
         try {
@@ -74,5 +84,4 @@ public class PdfCreator {
             e.printStackTrace();
         }
     }
-
 }

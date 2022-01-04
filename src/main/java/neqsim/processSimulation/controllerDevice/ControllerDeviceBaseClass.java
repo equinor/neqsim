@@ -9,13 +9,14 @@ package neqsim.processSimulation.controllerDevice;
 import neqsim.processSimulation.measurementDevice.MeasurementDeviceInterface;
 
 /**
- * <p>ControllerDeviceBaseClass class.</p>
+ * <p>
+ * ControllerDeviceBaseClass class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
-
     private static final long serialVersionUID = 1000;
 
     private String name = "controller", unit = "[?]";
@@ -116,7 +117,9 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     /**
-     * <p>getKsp.</p>
+     * <p>
+     * getKsp.
+     * </p>
      *
      * @return a double
      */
@@ -125,7 +128,9 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     /**
-     * <p>setKsp.</p>
+     * <p>
+     * setKsp.
+     * </p>
      *
      * @param Ksp a double
      */
@@ -142,7 +147,9 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     /**
-     * <p>getTint.</p>
+     * <p>
+     * getTint.
+     * </p>
      *
      * @return a double
      */
@@ -151,7 +158,9 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     /**
-     * <p>setTint.</p>
+     * <p>
+     * setTint.
+     * </p>
      *
      * @param Tint a double
      */
@@ -160,7 +169,9 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     /**
-     * <p>getTderiv.</p>
+     * <p>
+     * getTderiv.
+     * </p>
      *
      * @return a double
      */
@@ -169,12 +180,13 @@ public class ControllerDeviceBaseClass implements ControllerDeviceInterface {
     }
 
     /**
-     * <p>setTderiv.</p>
+     * <p>
+     * setTderiv.
+     * </p>
      *
      * @param Tderiv a double
      */
     public void setTderiv(double Tderiv) {
         this.Tderiv = Tderiv;
     }
-
 }

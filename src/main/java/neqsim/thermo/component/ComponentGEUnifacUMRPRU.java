@@ -20,7 +20,6 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(ComponentGEUnifacUMRPRU.class);
 
@@ -33,7 +32,9 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
             sum2MixdT = null, sum2MixdTdT = null;
 
     /**
-     * <p>Constructor for ComponentGEUnifacUMRPRU.</p>
+     * <p>
+     * Constructor for ComponentGEUnifacUMRPRU.
+     * </p>
      */
     public ComponentGEUnifacUMRPRU() {}
 
@@ -367,7 +368,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
 
         int initType = phase.getInitType();
-
     }
 
     // TODO impement dlngammadn
@@ -461,7 +461,6 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
         }
 
         if (initType > 2) {
-
             dlngammadn = new double[numberOfComponents];
 
             for (int ii = 0; ii < getNumberOfUNIFACgroups(); ii++) {

@@ -18,7 +18,6 @@ import neqsim.statistics.parameterFitting.StatisticsBaseClass;
  * @version $Id: $Id
  */
 public class LevenbergMarquardt extends StatisticsBaseClass {
-
     private static final long serialVersionUID = 1000;
     double oldChiSquare = 1e100;
     double newChiSquare = 0;
@@ -29,7 +28,9 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     private int maxNumberOfIterations = 50;
 
     /**
-     * <p>Constructor for LevenbergMarquardt.</p>
+     * <p>
+     * Constructor for LevenbergMarquardt.
+     * </p>
      */
     public LevenbergMarquardt() {
         thisThread = new Thread();
@@ -157,5 +158,4 @@ public class LevenbergMarquardt extends StatisticsBaseClass {
     public void setMaxNumberOfIterations(int maxNumberOfIterations) {
         this.maxNumberOfIterations = maxNumberOfIterations;
     }
-
 }

@@ -6,14 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemUMRPRUMCEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author esol @version
- */
 /**
- * <p>TestUMRPRU class.</p>
+ * <p>
+ * TestUMRPRU class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -21,7 +19,9 @@ public class TestUMRPRU {
     static Logger logger = LogManager.getLogger(TestUMRPRU.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -107,6 +107,5 @@ public class TestUMRPRU {
         // thermo.ThermodynamicModelTest(testSystem);
         // testModel.runTest();
         // testSystem.display();
-
     }
 }

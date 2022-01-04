@@ -22,7 +22,6 @@ import neqsim.thermo.component.ComponentGEUniquac;
  * @version $Id: $Id
  */
 public class PhaseGEUnifac extends PhaseGEUniquac {
-
     private static final long serialVersionUID = 1000;
 
     /**

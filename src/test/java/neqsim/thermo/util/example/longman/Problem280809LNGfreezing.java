@@ -7,9 +7,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>Problem280809LNGfreezing class.</p>
+ * <p>
+ * Problem280809LNGfreezing class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -17,7 +19,9 @@ public class Problem280809LNGfreezing {
     static Logger logger = LogManager.getLogger(Problem280809LNGfreezing.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

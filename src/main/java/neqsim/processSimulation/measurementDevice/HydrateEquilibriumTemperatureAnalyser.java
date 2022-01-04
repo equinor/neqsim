@@ -5,13 +5,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HydrateEquilibriumTemperatureAnalyser class.</p>
+ * <p>
+ * HydrateEquilibriumTemperatureAnalyser class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -21,14 +22,19 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     private double referencePressure = 0;
 
     /**
-     * <p>Constructor for HydrateEquilibriumTemperatureAnalyser.</p>
+     * <p>
+     * Constructor for HydrateEquilibriumTemperatureAnalyser.
+     * </p>
      */
     public HydrateEquilibriumTemperatureAnalyser() {}
 
     /**
-     * <p>Constructor for HydrateEquilibriumTemperatureAnalyser.</p>
+     * <p>
+     * Constructor for HydrateEquilibriumTemperatureAnalyser.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public HydrateEquilibriumTemperatureAnalyser(StreamInterface stream) {
         this.stream = stream;
@@ -77,7 +83,9 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     }
 
     /**
-     * <p>Getter for the field <code>referencePressure</code>.</p>
+     * <p>
+     * Getter for the field <code>referencePressure</code>.
+     * </p>
      *
      * @return a double
      */
@@ -86,12 +94,13 @@ public class HydrateEquilibriumTemperatureAnalyser extends MeasurementDeviceBase
     }
 
     /**
-     * <p>Setter for the field <code>referencePressure</code>.</p>
+     * <p>
+     * Setter for the field <code>referencePressure</code>.
+     * </p>
      *
      * @param referencePressure a double
      */
     public void setReferencePressure(double referencePressure) {
         this.referencePressure = referencePressure;
     }
-
 }

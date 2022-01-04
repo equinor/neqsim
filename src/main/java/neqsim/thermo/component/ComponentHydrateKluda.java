@@ -13,7 +13,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentHydrateKluda extends Component {
-
     private static final long serialVersionUID = 1000;
 
     double par1_struc1 = 17.44;
@@ -29,7 +28,9 @@ public class ComponentHydrateKluda extends Component {
     static Logger logger = LogManager.getLogger(ComponentHydrateKluda.class);
 
     /**
-     * <p>Constructor for ComponentHydrateKluda.</p>
+     * <p>
+     * Constructor for ComponentHydrateKluda.
+     * </p>
      */
     public ComponentHydrateKluda() {}
 
@@ -103,7 +104,6 @@ public class ComponentHydrateKluda extends Component {
      * @return a double
      */
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
-
         if (componentName.equals("water")) {
             double val = 1.0;
             double tempy = 1.0;
@@ -204,7 +204,6 @@ public class ComponentHydrateKluda extends Component {
      * @return a double
      */
     public double getEmptyHydrateStructureVapourPressuredT(int type, double temperature) {
-
         if (type == 0) {
             return -par2_struc1 / (temperature * temperature)
                     * Math.exp(par1_struc1 + par2_struc1 / temperature);
@@ -236,7 +235,6 @@ public class ComponentHydrateKluda extends Component {
                     temp += ((ComponentHydrateKluda) phase.getComponent(i)).calcCKI(stucture,
                             cavityType, phase) * reffug[i];
                 }
-
             }
             return yki / temp;
         } else {

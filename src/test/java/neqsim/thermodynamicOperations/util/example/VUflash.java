@@ -6,22 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- * TPflash.java
- *
- * Created on 27. september 2001, 09:43
- */
-
-/*
+/**
+ * <p>
+ * VUflash class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>VUflash class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -29,7 +19,9 @@ public class VUflash {
     static Logger logger = LogManager.getLogger(VUflash.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

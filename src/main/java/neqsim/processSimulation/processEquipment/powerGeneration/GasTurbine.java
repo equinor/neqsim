@@ -18,11 +18,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * GasTurbine class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class GasTurbine extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Compressor.class);
 
@@ -194,7 +193,6 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
 
         System.out.println("power generated " + gasturb.getPower() / 1.0e6);
         System.out.println("heat generated " + gasturb.getHeat() / 1.0e6);
-
     }
 
     /**
@@ -218,5 +216,4 @@ public class GasTurbine extends ProcessEquipmentBaseClass {
     public void setHeat(double heat) {
         this.heat = heat;
     }
-
 }

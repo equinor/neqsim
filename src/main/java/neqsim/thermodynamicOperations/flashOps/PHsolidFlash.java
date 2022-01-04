@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class PHsolidFlash extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PHsolidFlash.class);
 
@@ -28,7 +27,9 @@ public class PHsolidFlash extends Flash {
     double enthalpyspec = 0.5;
 
     /**
-     * <p>Constructor for PHsolidFlash.</p>
+     * <p>
+     * Constructor for PHsolidFlash.
+     * </p>
      */
     public PHsolidFlash() {}
 
@@ -86,7 +87,6 @@ public class PHsolidFlash extends Flash {
 
             logger.info("temp " + system.getTemperature() + " err " + err);
         } while (Math.abs(dt) > 1e-8 && iter < 200);
-
     }
 
     /** {@inheritDoc} */

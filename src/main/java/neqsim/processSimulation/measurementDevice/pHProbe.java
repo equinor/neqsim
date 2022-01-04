@@ -5,13 +5,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>pHProbe class.</p>
+ * <p>
+ * pHProbe class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class pHProbe extends MeasurementDeviceBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     protected int streamNumber = 0;
@@ -23,14 +24,19 @@ public class pHProbe extends MeasurementDeviceBaseClass {
     protected ThermodynamicOperations thermoOps;
 
     /**
-     * <p>Constructor for pHProbe.</p>
+     * <p>
+     * Constructor for pHProbe.
+     * </p>
      */
     public pHProbe() {}
 
     /**
-     * <p>Constructor for pHProbe.</p>
+     * <p>
+     * Constructor for pHProbe.
+     * </p>
      *
-     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param stream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
     public pHProbe(StreamInterface stream) {
         this.stream = stream;
@@ -39,7 +45,9 @@ public class pHProbe extends MeasurementDeviceBaseClass {
     }
 
     /**
-     * <p>run.</p>
+     * <p>
+     * run.
+     * </p>
      */
     public void run() {
         if (stream != null) {

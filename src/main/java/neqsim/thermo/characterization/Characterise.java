@@ -5,7 +5,9 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Characterise class.</p>
+ * <p>
+ * Characterise class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,7 +31,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     public Characterise() {}
 
     /**
-     * <p>Constructor for Characterise.</p>
+     * <p>
+     * Constructor for Characterise.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -49,7 +53,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>setThermoSystem.</p>
+     * <p>
+     * setThermoSystem.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -72,7 +78,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>getTBPModel.</p>
+     * <p>
+     * getTBPModel.
+     * </p>
      *
      * @return a {@link neqsim.thermo.characterization.TBPModelInterface} object
      */
@@ -81,7 +89,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>setTBPModel.</p>
+     * <p>
+     * setTBPModel.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -90,7 +100,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>Setter for the field <code>lumpingModel</code>.</p>
+     * <p>
+     * Setter for the field <code>lumpingModel</code>.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -99,7 +111,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>Setter for the field <code>plusFractionModel</code>.</p>
+     * <p>
+     * Setter for the field <code>plusFractionModel</code>.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      */
@@ -108,7 +122,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>plusFractionModel</code>.</p>
+     * <p>
+     * Getter for the field <code>plusFractionModel</code>.
+     * </p>
      *
      * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
      */
@@ -117,7 +133,9 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>Getter for the field <code>lumpingModel</code>.</p>
+     * <p>
+     * Getter for the field <code>lumpingModel</code>.
+     * </p>
      *
      * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
      */
@@ -126,12 +144,13 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * <p>characterisePlusFraction.</p>
+     * <p>
+     * characterisePlusFraction.
+     * </p>
      */
     public void characterisePlusFraction() {
         system.init(0);
         if (plusFractionModel.hasPlusFraction()) {
-
             if (plusFractionModel.getMPlus() > plusFractionModel.getMaxPlusMolarMass()) {
                 logger.error(
                         "plus fraction molar mass too heavy for " + plusFractionModel.getName());

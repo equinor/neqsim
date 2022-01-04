@@ -20,7 +20,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SimpleAdsorber extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     boolean setTemperature = false;
@@ -37,7 +36,9 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
     private double stageEfficiency = 0.25;
 
     /**
-     * <p>Constructor for SimpleAdsorber.</p>
+     * <p>
+     * Constructor for SimpleAdsorber.
+     * </p>
      */
     public SimpleAdsorber() {
         mechanicalDesign = new AdsorberMechanicalDesign(this);
@@ -184,7 +185,6 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
         } while (Math.abs(error) > 1e-4 && iter < 30
                 && outStream[1].getThermoSystem().getPhase(1).getBeta() > 0
                 && outStream[0].getThermoSystem().getPhase(1).getBeta() > 0);
-
     }
 
     /** {@inheritDoc} */

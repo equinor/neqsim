@@ -13,15 +13,16 @@ import neqsim.thermo.system.SystemInterface;
  * constantDutyPressureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class constantDutyPressureFlash extends constantDutyFlash {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for constantDutyPressureFlash.</p>
+     * <p>
+     * Constructor for constantDutyPressureFlash.
+     * </p>
      */
     public constantDutyPressureFlash() {}
 
@@ -39,7 +40,6 @@ public class constantDutyPressureFlash extends constantDutyFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         // system.calc_x_y();
         // system.init(2);
 
@@ -92,7 +92,6 @@ public class constantDutyPressureFlash extends constantDutyFlash {
             system.setPressure(pres);
         } while ((Math.abs((system.getPressure() - Pold) / system.getPressure()) > 1e-10
                 && iterations < 300) || iterations < 3);
-
     }
 
     /** {@inheritDoc} */
@@ -110,5 +109,4 @@ public class constantDutyPressureFlash extends constantDutyFlash {
     public SystemInterface getThermoSystem() {
         return system;
     }
-
 }

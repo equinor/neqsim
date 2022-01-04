@@ -21,7 +21,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Tank extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem, gasSystem, waterSystem, liquidSystem, thermoSystemCloned;
@@ -40,7 +39,9 @@ public class Tank extends ProcessEquipmentBaseClass {
     private double liquidLevel = liquidVolume / (liquidVolume + gasVolume);
 
     /**
-     * <p>Constructor for Tank.</p>
+     * <p>
+     * Constructor for Tank.
+     * </p>
      */
     public Tank() {}
 
@@ -84,7 +85,6 @@ public class Tank extends ProcessEquipmentBaseClass {
         thermoSystem = (SystemInterface) inletStream.getThermoSystem().clone();
         liquidSystem = thermoSystem.phaseToSystem(thermoSystem.getPhases()[1]);
         liquidOutStream = new Stream(liquidSystem);
-
     }
 
     /**
@@ -210,7 +210,6 @@ public class Tank extends ProcessEquipmentBaseClass {
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
                 * separatorLength;
         System.out.println("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
-
     }
 
     /** {@inheritDoc} */
@@ -282,7 +281,6 @@ public class Tank extends ProcessEquipmentBaseClass {
                 * separatorLength;
         gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
                 * separatorLength;
-
     }
 
     /**

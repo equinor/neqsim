@@ -3,17 +3,20 @@ package neqsim.physicalProperties.util.parameterFitting.binaryComponentParameter
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>DiffusivityFunction class.</p>
+ * <p>
+ * DiffusivityFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class DiffusivityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for DiffusivityFunction.</p>
+     * <p>
+     * Constructor for DiffusivityFunction.
+     * </p>
      */
     public DiffusivityFunction() {}
 

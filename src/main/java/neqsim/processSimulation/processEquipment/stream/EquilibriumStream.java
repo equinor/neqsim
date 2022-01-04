@@ -18,11 +18,12 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class EquilibriumStream extends Stream {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for EquilibriumStream.</p>
+     * <p>
+     * Constructor for EquilibriumStream.
+     * </p>
      */
     public EquilibriumStream() {}
 
@@ -85,5 +86,4 @@ public class EquilibriumStream extends Stream {
         System.out.println("number of phases: " + thermoSystem.getNumberOfPhases());
         System.out.println("beta: " + thermoSystem.getBeta());
     }
-
 }

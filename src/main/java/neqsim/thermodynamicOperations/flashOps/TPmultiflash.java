@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TPmultiflash extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflash.class);
 
@@ -41,7 +40,9 @@ public class TPmultiflash extends TPflash {
     double[] multTerm, multTerm2;
 
     /**
-     * <p>Constructor for TPmultiflash.</p>
+     * <p>
+     * Constructor for TPmultiflash.
+     * </p>
      */
     public TPmultiflash() {}
 
@@ -376,7 +377,6 @@ public class TPmultiflash extends TPflash {
                 err = 0;
 
                 if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
-
                     if (iter % 7 == 0) {
                         double vec1 = 0.0, vec2 = 0.0, prod1 = 0.0, prod2 = 0.0;
 
@@ -713,7 +713,6 @@ public class TPmultiflash extends TPflash {
                 err = 0;
 
                 if (iter <= 20 || !system.isImplementedCompositionDeriativesofFugacity()) {
-
                     if (iter % 7 == 0) {
                         double vec1 = 0.0, vec2 = 0.0, prod1 = 0.0, prod2 = 0.0;
 

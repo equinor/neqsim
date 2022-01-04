@@ -17,14 +17,15 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private double a = -0.201158, b = 0.141599, c = 2.29528, d = -0.660145, e = 0.500315,
             f = 2.63165;
 
     /**
-     * <p>Constructor for AtractiveTermTwuCoon.</p>
+     * <p>
+     * Constructor for AtractiveTermTwuCoon.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -90,7 +91,6 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
     }
 
     private double diffdiffalphaCritT(double temperature) {
-
         double t = temperature;
         double TC = getComponent().getTC();
         double Tr = (t / TC);
@@ -101,7 +101,6 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         * Math.pow(temperature / TC, 1.0 * d) * d * d / (temperature * temperature)
                 + 2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / TC, 1.0 * d))), 2.0) * c
                         * Math.pow(temperature / TC, 1.0 * d) * d / (temperature * temperature);
-
     }
 
     /** {@inheritDoc} */
@@ -172,7 +171,6 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
                         - Math.pow(Tr, a) * Math.pow(b, 2) * Math.pow(Math.pow(Tr, c), 2)
                                 * Math.pow(c, 2) / Math.pow(t, 2)
                                 * Math.exp(b * (1 - Math.pow(Tr, c))));
-
     }
 
     /** {@inheritDoc} */
@@ -194,5 +192,4 @@ public class AtractiveTermTwuCoon extends AtractiveTermBaseClass {
             return getComponent().geta() * diffdiffalphaT(temperature);
         }
     }
-
 }

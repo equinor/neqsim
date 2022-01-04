@@ -3,22 +3,26 @@ package neqsim.processSimulation.mechanicalDesign.designStandards;
 import neqsim.processSimulation.mechanicalDesign.MechanicalDesign;
 
 /**
- * <p>PipelineDesignStandard class.</p>
+ * <p>
+ * PipelineDesignStandard class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class PipelineDesignStandard extends DesignStandard {
-
     private static final long serialVersionUID = 1000;
 
     double safetyFactor = 1.0;
 
     /**
-     * <p>Constructor for PipelineDesignStandard.</p>
+     * <p>
+     * Constructor for PipelineDesignStandard.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
-     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign} object
+     * @param equipmentInn a {@link neqsim.processSimulation.mechanicalDesign.MechanicalDesign}
+     *        object
      */
     public PipelineDesignStandard(String name, MechanicalDesign equipmentInn) {
         super(name, equipmentInn);
@@ -28,7 +32,8 @@ public class PipelineDesignStandard extends DesignStandard {
         // double jointEfficiency =
         // equipment.getJointEfficiencyStandard().getJEFactor();
 
-        neqsim.util.database.NeqSimTechnicalDesignDatabase database = new neqsim.util.database.NeqSimTechnicalDesignDatabase();
+        neqsim.util.database.NeqSimTechnicalDesignDatabase database =
+                new neqsim.util.database.NeqSimTechnicalDesignDatabase();
         java.sql.ResultSet dataSet = null;
         try {
             try {
@@ -40,13 +45,10 @@ public class PipelineDesignStandard extends DesignStandard {
                     if (specName.equals("safetyFactor")) {
                         safetyFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
                     }
-
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -62,7 +64,9 @@ public class PipelineDesignStandard extends DesignStandard {
     }
 
     /**
-     * <p>calcPipelineWallThickness.</p>
+     * <p>
+     * calcPipelineWallThickness.
+     * </p>
      *
      * @return a double
      */

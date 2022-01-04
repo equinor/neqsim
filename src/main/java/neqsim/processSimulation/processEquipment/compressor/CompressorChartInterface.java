@@ -1,13 +1,14 @@
 package neqsim.processSimulation.processEquipment.compressor;
 
 /**
- * <p>CompressorChartInterface interface.</p>
+ * <p>
+ * CompressorChartInterface interface.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public interface CompressorChartInterface extends Cloneable {
-
     /**
      * This method is used add a curve to the CompressorChart object
      *
@@ -27,14 +28,14 @@ public interface CompressorChartInterface extends Cloneable {
      * @param head an array of {@link double} objects
      * @param polyEff an array of {@link double} objects
      */
-    public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
-            double[][] polyEff);
+    public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
+            double[][] head, double[][] polyEff);
 
     /**
      * Get method for polytropic head from reference curves.
      *
-     * @param  flow [m3/h], speed in [rpm].
-     * @return      polytropic head in unit [getHeadUnit]
+     * @param flow [m3/h], speed in [rpm].
+     * @return polytropic head in unit [getHeadUnit]
      * @param speed a double
      */
     public double getPolytropicHead(double flow, double speed);
@@ -42,8 +43,8 @@ public interface CompressorChartInterface extends Cloneable {
     /**
      * Get method for polytropic efficiency from reference curves.
      *
-     * @param  flow [m3/h], speed in [rpm].
-     * @return      polytropic efficiency [%].
+     * @param flow [m3/h], speed in [rpm].
+     * @return polytropic efficiency [%].
      * @param speed a double
      */
     public double getPolytropicEfficiency(double flow, double speed);
@@ -56,11 +57,12 @@ public interface CompressorChartInterface extends Cloneable {
      * @param refPressure a double
      * @param refZ a double
      */
-    public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ);
+    public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
+            double refZ);
 
     /**
-     * Checks if set to use compressor chart for compressor calculations (chart is
-     * set for compressor)
+     * Checks if set to use compressor chart for compressor calculations (chart is set for
+     * compressor)
      *
      * @return a boolean
      */
@@ -88,51 +90,61 @@ public interface CompressorChartInterface extends Cloneable {
     public void setHeadUnit(String headUnit);
 
     /**
-     * get method for kappa setting. true = real kappa is used, false = ideal kappa
-     * is used
+     * get method for kappa setting. true = real kappa is used, false = ideal kappa is used
      *
      * @return true/false flag
      */
     public boolean useRealKappa();
 
     /**
-     * set method for kappa setting. true = real kappa is used, false = ideal kappa
-     * is used
+     * set method for kappa setting. true = real kappa is used, false = ideal kappa is used
      *
      * @param useRealKappa a boolean
      */
     public void setUseRealKappa(boolean useRealKappa);
 
     /**
-     * <p>getSurgeCurve.</p>
+     * <p>
+     * getSurgeCurve.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.compressor.SurgeCurve} object
      */
     public SurgeCurve getSurgeCurve();
 
     /**
-     * <p>setSurgeCurve.</p>
+     * <p>
+     * setSurgeCurve.
+     * </p>
      *
-     * @param surgeCurve a {@link neqsim.processSimulation.processEquipment.compressor.SurgeCurve} object
+     * @param surgeCurve a {@link neqsim.processSimulation.processEquipment.compressor.SurgeCurve}
+     *        object
      */
     public void setSurgeCurve(SurgeCurve surgeCurve);
 
     /**
-     * <p>getStoneWallCurve.</p>
+     * <p>
+     * getStoneWallCurve.
+     * </p>
      *
      * @return a {@link neqsim.processSimulation.processEquipment.compressor.StoneWallCurve} object
      */
     public StoneWallCurve getStoneWallCurve();
 
     /**
-     * <p>setStoneWallCurve.</p>
+     * <p>
+     * setStoneWallCurve.
+     * </p>
      *
-     * @param stoneWallCurve a {@link neqsim.processSimulation.processEquipment.compressor.StoneWallCurve} object
+     * @param stoneWallCurve a
+     *        {@link neqsim.processSimulation.processEquipment.compressor.StoneWallCurve} object
      */
     public void setStoneWallCurve(StoneWallCurve stoneWallCurve);
 
     /**
-     * <p>getSpeed.</p>
+     * <p>
+     * getSpeed.
+     * </p>
      *
      * @param flow a double
      * @param head a double
@@ -141,8 +153,9 @@ public interface CompressorChartInterface extends Cloneable {
     public int getSpeed(double flow, double head);
 
     /**
-     * <p>plot.</p>
+     * <p>
+     * plot.
+     * </p>
      */
     public void plot();
-
 }

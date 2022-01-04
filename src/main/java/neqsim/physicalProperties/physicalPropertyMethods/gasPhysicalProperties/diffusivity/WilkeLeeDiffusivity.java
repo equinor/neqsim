@@ -9,13 +9,14 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
  * @version $Id: $Id
  */
 public class WilkeLeeDiffusivity extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     double[][] binaryDiffusionCoeffisients, binaryLennardJonesOmega;
 
     /**
-     * <p>Constructor for WilkeLeeDiffusivity.</p>
+     * <p>
+     * Constructor for WilkeLeeDiffusivity.
+     * </p>
      */
     public WilkeLeeDiffusivity() {}
 
@@ -56,5 +57,4 @@ public class WilkeLeeDiffusivity extends Diffusivity {
                         * binaryLennardJonesOmega[i][j]);
         return binaryDiffusionCoeffisients[i][j] * 1e-4;
     }
-
 }

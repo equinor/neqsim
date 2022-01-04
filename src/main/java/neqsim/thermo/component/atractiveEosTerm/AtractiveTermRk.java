@@ -17,11 +17,12 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermRk extends AtractiveTermBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for AtractiveTermRk.</p>
+     * <p>
+     * Constructor for AtractiveTermRk.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -69,7 +70,6 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
                         * Math.pow(temperature, 4.0))
                 + getComponent().getTC() / (Math.sqrt(getComponent().getTC() / temperature)
                         * Math.pow(temperature, 3.0));
-
     }
 
     /** {@inheritDoc} */
@@ -83,5 +83,4 @@ public class AtractiveTermRk extends AtractiveTermBaseClass {
     public double diffdiffaT(double temperature) {
         return getComponent().geta() * diffdiffalphaT(temperature);
     }
-
 }

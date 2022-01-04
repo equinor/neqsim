@@ -5,20 +5,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>BasePVTsimulation class.</p>
+ * <p>
+ * BasePVTsimulation class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class BasePVTsimulation implements SimulationInterface {
-
     private static final long serialVersionUID = 1000;
 
     private SystemInterface thermoSystem = null;
     private SystemInterface baseThermoSystem = null;
     public ThermodynamicOperations thermoOps = null;
     private double pressure;
-    public double[] pressures = { 381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3 };
+    public double[] pressures = {381.5, 338.9, 290.6, 242.3, 194.1, 145.8, 145.8, 97.5, 49.3};
     public double temperature = 289.0;
     double[][] experimentalData = null;
     double saturationVolume = 0, saturationPressure = 0;
@@ -26,7 +27,9 @@ public class BasePVTsimulation implements SimulationInterface {
     public LevenbergMarquardt optimizer = new LevenbergMarquardt();
 
     /**
-     * <p>Constructor for BasePVTsimulation.</p>
+     * <p>
+     * Constructor for BasePVTsimulation.
+     * </p>
      *
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -37,7 +40,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Setter for the field <code>experimentalData</code>.</p>
+     * <p>
+     * Setter for the field <code>experimentalData</code>.
+     * </p>
      *
      * @param expData an array of {@link double} objects
      */
@@ -46,7 +51,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Getter for the field <code>saturationPressure</code>.</p>
+     * <p>
+     * Getter for the field <code>saturationPressure</code>.
+     * </p>
      *
      * @return a double
      */
@@ -54,33 +61,34 @@ public class BasePVTsimulation implements SimulationInterface {
         return saturationPressure;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getThermoSystem() {
+    public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void run() {
+    public void run() {
         thermoOps = new ThermodynamicOperations(getThermoSystem());
-
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public SystemInterface getBaseThermoSystem() {
+    public SystemInterface getBaseThermoSystem() {
         return baseThermoSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setThermoSystem(SystemInterface thermoSystem) {
+    public void setThermoSystem(SystemInterface thermoSystem) {
         this.thermoSystem = thermoSystem;
     }
 
     /**
-     * <p>Getter for the field <code>pressure</code>.</p>
+     * <p>
+     * Getter for the field <code>pressure</code>.
+     * </p>
      *
      * @return the pressure
      */
@@ -89,7 +97,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Setter for the field <code>pressure</code>.</p>
+     * <p>
+     * Setter for the field <code>pressure</code>.
+     * </p>
      *
      * @param pressure the pressure to set
      */
@@ -98,7 +108,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Getter for the field <code>temperature</code>.</p>
+     * <p>
+     * Getter for the field <code>temperature</code>.
+     * </p>
      *
      * @return the temperature
      */
@@ -107,7 +119,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Setter for the field <code>temperature</code>.</p>
+     * <p>
+     * Setter for the field <code>temperature</code>.
+     * </p>
      *
      * @param temperature the temperature to set
      */
@@ -116,7 +130,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Getter for the field <code>pressures</code>.</p>
+     * <p>
+     * Getter for the field <code>pressures</code>.
+     * </p>
      *
      * @return the pressures
      */
@@ -125,7 +141,9 @@ public class BasePVTsimulation implements SimulationInterface {
     }
 
     /**
-     * <p>Setter for the field <code>pressures</code>.</p>
+     * <p>
+     * Setter for the field <code>pressures</code>.
+     * </p>
      *
      * @param pressures the pressures to set
      */
@@ -133,19 +151,20 @@ public class BasePVTsimulation implements SimulationInterface {
         this.pressures = pressures;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public LevenbergMarquardt getOptimizer() {
+    public LevenbergMarquardt getOptimizer() {
         return optimizer;
     }
 
     /**
-     * <p>getZsaturation.</p>
+     * <p>
+     * getZsaturation.
+     * </p>
      *
      * @return the Zsaturation
      */
     public double getZsaturation() {
         return Zsaturation;
     }
-
 }

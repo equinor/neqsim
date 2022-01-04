@@ -16,11 +16,12 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  * @version $Id: $Id
  */
 public class ViscosityFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ViscosityFunction.</p>
+     * <p>
+     * Constructor for ViscosityFunction.
+     * </p>
      */
     public ViscosityFunction() {}
 

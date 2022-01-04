@@ -12,17 +12,20 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestParachorFit class.</p>
+ * <p>
+ * TestParachorFit class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class TestParachorFit {
-
     static Logger logger = LogManager.getLogger(TestParachorFit.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -74,6 +77,5 @@ public class TestParachorFit {
         optim.displayCurveFit();
 
         // optim.writeToTextFile("c:/testFit.txt");
-
     }
 }

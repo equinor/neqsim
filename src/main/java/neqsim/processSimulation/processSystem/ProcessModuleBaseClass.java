@@ -11,13 +11,14 @@ import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract ProcessModuleBaseClass class.</p>
+ * <p>
+ * Abstract ProcessModuleBaseClass class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public abstract class ProcessModuleBaseClass implements ModuleInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected String preferedThermodynamicModel = "", moduleName = "";
@@ -82,12 +83,16 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     }
 
     /**
-     * <p>calcDesign.</p>
+     * <p>
+     * calcDesign.
+     * </p>
      */
     public abstract void calcDesign();
 
     /**
-     * <p>setDesign.</p>
+     * <p>
+     * setDesign.
+     * </p>
      */
     public abstract void setDesign();
 
@@ -136,14 +141,14 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     }
 
     /**
-     * <p>setSpecification.</p>
+     * <p>
+     * setSpecification.
+     * </p>
      *
      * @param specificationName a {@link java.lang.String} object
      * @param value a double
      */
-    public void setSpecification(String specificationName, double value) {
-
-    }
+    public void setSpecification(String specificationName, double value) {}
 
     /** {@inheritDoc} */
     @Override
@@ -168,7 +173,9 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     }
 
     /**
-     * <p>setProperty.</p>
+     * <p>
+     * setProperty.
+     * </p>
      *
      * @param propertyName a {@link java.lang.String} object
      * @param value a double
@@ -184,9 +191,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void setPressure(double pressure) {
-
-    }
+    public void setPressure(double pressure) {}
 
     /** {@inheritDoc} */
     @Override
@@ -208,9 +213,7 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
 
     /** {@inheritDoc} */
     @Override
-    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
-
-    }
+    public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
 
     /** {@inheritDoc} */
     @Override
@@ -219,7 +222,9 @@ public abstract class ProcessModuleBaseClass implements ModuleInterface {
     }
 
     /**
-     * <p>getResultTable.</p>
+     * <p>
+     * getResultTable.
+     * </p>
      *
      * @return an array of {@link java.lang.String} objects
      */

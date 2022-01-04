@@ -6,20 +6,23 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>IonicInteractionParameterFittingFunction_Sleipnernoacid class.</p>
+ * <p>
+ * IonicInteractionParameterFittingFunction_Sleipnernoacid class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class IonicInteractionParameterFittingFunction_Sleipnernoacid
         extends LevenbergMarquardtFunction implements ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger =
             LogManager.getLogger(IonicInteractionParameterFittingFunction_Sleipnernoacid.class);
 
     /**
-     * <p>Constructor for IonicInteractionParameterFittingFunction_Sleipnernoacid.</p>
+     * <p>
+     * Constructor for IonicInteractionParameterFittingFunction_Sleipnernoacid.
+     * </p>
      */
     public IonicInteractionParameterFittingFunction_Sleipnernoacid() {}
 
@@ -125,6 +128,5 @@ public class IonicInteractionParameterFittingFunction_Sleipnernoacid
          * ((PhaseModifiedFurstElectrolyteEos)system.getPhases()[1]).
          * getElectrolyteMixingRule()).setWijParameter(MDEAplusNumb, AcidnegNumb, value); }
          */
-
     }
 }

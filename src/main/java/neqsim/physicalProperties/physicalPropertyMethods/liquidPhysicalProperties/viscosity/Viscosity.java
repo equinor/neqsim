@@ -20,14 +20,15 @@ public class Viscosity extends
         neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperties.LiquidPhysicalPropertyMethod
         implements
         neqsim.physicalProperties.physicalPropertyMethods.methodInterface.ViscosityInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(Viscosity.class);
 
     public double[] pureComponentViscosity;
 
     /**
-     * <p>Constructor for Viscosity.</p>
+     * <p>
+     * Constructor for Viscosity.
+     * </p>
      */
     public Viscosity() {}
 
@@ -72,7 +73,6 @@ public class Viscosity extends
             tempVar += liquidPhase.getPhase().getWtFrac(i) * Math.log(pureComponentViscosity[i]);
             // tempVar += liquidPhase.getPhase().getComponents()[i].getx() *
             // Math.log(pureComponentViscosity[i]);
-
         }
         tempVar2 = 0;
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -102,7 +102,6 @@ public class Viscosity extends
     public void calcPureComponentViscosity() {
         pureComponentViscosity = new double[liquidPhase.getPhase().getNumberOfComponents()];
         for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
-
             if (liquidPhase.getPhase().getTemperature() > liquidPhase.getPhase().getComponents()[i]
                     .getTC()) {
                 pureComponentViscosity[i] = 5.0e-1;

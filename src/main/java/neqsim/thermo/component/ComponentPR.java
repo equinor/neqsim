@@ -16,11 +16,12 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermPr;
  * @version $Id: $Id
  */
 public class ComponentPR extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentPR.</p>
+     * <p>
+     * Constructor for ComponentPR.
+     * </p>
      */
     public ComponentPR() {}
 
@@ -80,7 +81,6 @@ public class ComponentPR extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public ComponentPR clone() {
-
         ComponentPR clonedComponent = null;
         try {
             clonedComponent = (ComponentPR) super.clone();
@@ -109,7 +109,6 @@ public class ComponentPR extends ComponentEos {
     public double calcb() {
         return .077803333 * R * criticalTemperature / criticalPressure;
     }
-
 
     /** {@inheritDoc} */
     @Override

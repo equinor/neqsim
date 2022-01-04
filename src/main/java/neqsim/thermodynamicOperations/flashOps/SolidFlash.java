@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class SolidFlash extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidFlash.class);
 
@@ -29,7 +28,9 @@ public class SolidFlash extends TPflash {
     boolean secondTime = false;
 
     /**
-     * <p>Constructor for SolidFlash.</p>
+     * <p>
+     * Constructor for SolidFlash.
+     * </p>
      */
     public SolidFlash() {}
 
@@ -90,7 +91,6 @@ public class SolidFlash extends TPflash {
                  * (system.getPhase(k).getComponent(i).getx() < 0.0) {
                  * system.getPhase(k).getComponent(i).setx(1.0e-30); }
                  */
-
             }
             system.getPhase(k).normalize();
         }

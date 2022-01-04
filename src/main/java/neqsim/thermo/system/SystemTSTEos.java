@@ -20,7 +20,6 @@ import neqsim.thermo.phase.PhaseTSTEos;
  * This class defines a thermodynamic system using the SRK equation of state
  */
 public class SystemTSTEos extends SystemEos {
-
     private static final long serialVersionUID = 1000;
     /** Creates a thermodynamic system using the SRK equation of state. */
     double[][] TBPfractionCoefs = {{73.404, 97.356, 0.61874, -2059.3, 0.0},
@@ -120,5 +119,4 @@ public class SystemTSTEos extends SystemEos {
 
         return clonedSystem;
     }
-
 }

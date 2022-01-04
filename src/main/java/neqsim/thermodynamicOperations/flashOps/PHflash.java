@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PHflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Hspec = 0;
@@ -24,7 +23,9 @@ public class PHflash extends Flash {
     int type = 0;
 
     /**
-     * <p>Constructor for PHflash.</p>
+     * <p>
+     * Constructor for PHflash.
+     * </p>
      */
     public PHflash() {}
 
@@ -141,7 +142,6 @@ public class PHflash extends Flash {
             // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
             // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
             // " error "+ error + " correction " + newCorr + " factor "+ factor);
-
         } while (((Math.abs(error) + Math.abs(erorOld)) > 1e-8 || iterations < 3)
                 && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter " + iterations
@@ -197,7 +197,6 @@ public class PHflash extends Flash {
             // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
             // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
             // "+ factor);
-
         } while (((error + erorOld) > 1e-8 || iterations < 3) && iterations < 200);
         // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
         // " error "+ error );
@@ -216,7 +215,6 @@ public class PHflash extends Flash {
                     system.getPhases()[0].getNumberOfComponents(), 0);
             secondOrderSolver.setSpec(Hspec);
             secondOrderSolver.solve(1);
-
         }
         // System.out.println("enthalpy: " + system.getEnthalpy());
         // System.out.println("Temperature: " + system.getTemperature());
@@ -227,5 +225,4 @@ public class PHflash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

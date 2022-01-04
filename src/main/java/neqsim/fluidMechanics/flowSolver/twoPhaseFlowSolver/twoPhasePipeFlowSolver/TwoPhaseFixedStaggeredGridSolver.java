@@ -20,7 +20,6 @@ import neqsim.fluidMechanics.flowSystem.FlowSystemInterface;
  */
 public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         implements neqsim.thermo.ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     Matrix diffMatrix;
     double dn[][];
@@ -37,12 +36,16 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     protected double oldEnergy[][];
 
     /**
-     * <p>Constructor for TwoPhaseFixedStaggeredGridSolver.</p>
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
      */
     public TwoPhaseFixedStaggeredGridSolver() {}
 
     /**
-     * <p>Constructor for TwoPhaseFixedStaggeredGridSolver.</p>
+     * <p>
+     * Constructor for TwoPhaseFixedStaggeredGridSolver.
+     * </p>
      *
      * @param pipe a {@link neqsim.fluidMechanics.flowSystem.FlowSystemInterface} object
      * @param length a double
@@ -153,9 +156,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
                         molDiff[i - 1][0][componentNumber]);
                 pipe.getNode(i + 1).getBulkSystem().getPhases()[1].addMoles(componentNumber,
                         molDiff[i - 1][1][componentNumber]);
-
             }
-
         }
         pipe.getNode(numberOfNodes - 1).init();
         pipe.getNode(numberOfNodes - 1).calcFluxes();

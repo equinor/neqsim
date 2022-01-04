@@ -17,11 +17,12 @@ import neqsim.thermo.component.ComponentTST;
  * @version $Id: $Id
  */
 public class PhaseTSTEos extends PhaseEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseTSTEos.</p>
+     * <p>
+     * Constructor for PhaseTSTEos.
+     * </p>
      */
     public PhaseTSTEos() {
         super();
@@ -52,5 +53,4 @@ public class PhaseTSTEos extends PhaseEos {
         componentArray[compNumber] =
                 new ComponentTST(componentName, moles, molesInPhase, compNumber);
     }
-
 }

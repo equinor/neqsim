@@ -15,7 +15,6 @@ package neqsim.physicalProperties.physicalPropertyMethods.gasPhysicalProperties.
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
  */
 public class ChungViscosityMethod extends Viscosity {
-
     private static final long serialVersionUID = 1000;
 
     public double[] pureComponentViscosity, relativeViscosity, Fc, omegaVisc;
@@ -28,7 +27,9 @@ public class ChungViscosityMethod extends Viscosity {
                     {-0.2382, 0.06770, -0.8163, 4.025}, {0.06863, 0.3479, 0.5926, -0.727}};
 
     /**
-     * <p>Constructor for ChungViscosityMethod.</p>
+     * <p>
+     * Constructor for ChungViscosityMethod.
+     * </p>
      */
     public ChungViscosityMethod() {}
 
@@ -72,7 +73,6 @@ public class ChungViscosityMethod extends Viscosity {
                                         / gasPhase.getPhase().getComponents()[j].getMolarMass()),
                                 0.5);
                 tempVar += gasPhase.getPhase().getComponents()[j].getx() * tempVar2;
-
             }
 
             viscosity += gasPhase.getPhase().getComponents()[i].getx() * pureComponentViscosity[i]
@@ -150,5 +150,4 @@ public class ChungViscosityMethod extends Viscosity {
                             2.0 / 3.0));
         }
     }
-
 }

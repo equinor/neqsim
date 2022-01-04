@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class IncompressiblePipeFlow extends AdiabaticPipe {
-
     private static final long serialVersionUID = 1000;
 
     Fittings fittings = new Fittings();
@@ -27,7 +26,9 @@ public class IncompressiblePipeFlow extends AdiabaticPipe {
     double momentum = 0;
 
     /**
-     * <p>Constructor for IncompressiblePipeFlow.</p>
+     * <p>
+     * Constructor for IncompressiblePipeFlow.
+     * </p>
      */
     public IncompressiblePipeFlow() {}
 

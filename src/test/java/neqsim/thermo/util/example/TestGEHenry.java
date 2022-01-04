@@ -6,15 +6,12 @@ import neqsim.thermo.system.SystemGEWilson;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author  esol
- * @version
- */
 /**
- * <p>TestGEHenry class.</p>
+ * <p>
+ * TestGEHenry class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -22,7 +19,9 @@ public class TestGEHenry {
     static Logger logger = LogManager.getLogger(TestGEHenry.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

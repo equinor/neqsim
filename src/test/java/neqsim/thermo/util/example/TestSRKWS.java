@@ -6,16 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPsrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TestSRKWS class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TestSRKWS class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -23,7 +19,9 @@ public class TestSRKWS {
     static Logger logger = LogManager.getLogger(TestSRKWS.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

@@ -15,11 +15,12 @@ package neqsim.util.exception;
  * @version $Id: $Id
  */
 public class IsNaNException extends neqsim.util.exception.ThermoException {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for IsNaNException.</p>
+     * <p>
+     * Constructor for IsNaNException.
+     * </p>
      */
     public IsNaNException() {}
 

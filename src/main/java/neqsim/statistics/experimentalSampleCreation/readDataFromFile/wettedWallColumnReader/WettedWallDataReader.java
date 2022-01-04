@@ -20,9 +20,10 @@ import neqsim.statistics.experimentalSampleCreation.readDataFromFile.DataReader;
  * @version $Id: $Id
  */
 public class WettedWallDataReader extends DataReader {
-
     /**
-     * <p>Constructor for WettedWallDataReader.</p>
+     * <p>
+     * Constructor for WettedWallDataReader.
+     * </p>
      */
     public WettedWallDataReader() {}
 

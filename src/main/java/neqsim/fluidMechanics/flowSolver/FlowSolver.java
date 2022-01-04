@@ -15,7 +15,6 @@ package neqsim.fluidMechanics.flowSolver;
  * @version $Id: $Id
  */
 public abstract class FlowSolver implements FlowSolverInterface, java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     protected int numberOfVelocityNodes = 0;
@@ -25,7 +24,9 @@ public abstract class FlowSolver implements FlowSolverInterface, java.io.Seriali
     protected int solverType = 0;
 
     /**
-     * <p>Constructor for FlowSolver.</p>
+     * <p>
+     * Constructor for FlowSolver.
+     * </p>
      */
     public FlowSolver() {}
 

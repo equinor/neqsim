@@ -20,7 +20,6 @@ import ucar.nc2.NetcdfFileWriteable;
  * @version $Id: $Id
  */
 public class NetCdf implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/temp/example.nc";
@@ -31,7 +30,9 @@ public class NetCdf implements java.io.Serializable {
     NetcdfFileWriteable ncfile;
 
     /**
-     * <p>Constructor for NetCdf.</p>
+     * <p>
+     * Constructor for NetCdf.
+     * </p>
      */
     public NetCdf() {}
 
@@ -117,34 +118,23 @@ public class NetCdf implements java.io.Serializable {
         ncfile.addGlobalAttribute("title", "Example Data");
 
         try {
-
             ncfile.create();
-
         } catch (IOException e) {
-
             System.err.println("ERROR creating file");
-
         }
 
         try {
-
             ncfile.write("T", Array.factory(zvalues));
             ncfile.write(latD.getName(), Array.factory(xvalues));
             ncfile.write(lonD.getName(), Array.factory(yvalues));
-
         } catch (Exception e) {
-
             System.err.println("ERROR writing file");
-
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
-
 }

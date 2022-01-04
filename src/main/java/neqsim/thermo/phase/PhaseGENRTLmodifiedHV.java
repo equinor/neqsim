@@ -18,14 +18,15 @@ import neqsim.thermo.component.ComponentGENRTLmodifiedHV;
  * @version $Id: $Id
  */
 public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
-
     private static final long serialVersionUID = 1000;
 
     double[][] DijT;
     int type = 0;
 
     /**
-     * <p>Constructor for PhaseGENRTLmodifiedHV.</p>
+     * <p>
+     * Constructor for PhaseGENRTLmodifiedHV.
+     * </p>
      */
     public PhaseGENRTLmodifiedHV() {
         super();
@@ -163,5 +164,4 @@ public class PhaseGENRTLmodifiedHV extends PhaseGENRTL {
         }
         return R * temperature * temperature * val;
     }
-
 }

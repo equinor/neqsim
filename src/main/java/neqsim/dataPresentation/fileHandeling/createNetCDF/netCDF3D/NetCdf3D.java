@@ -20,7 +20,6 @@ import ucar.nc2.NetcdfFileWriteable;
  * @version $Id: $Id
  */
 public class NetCdf3D {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/temp/example.nc";
@@ -34,7 +33,9 @@ public class NetCdf3D {
     int zLength = 0;
 
     /**
-     * <p>Constructor for NetCdf3D.</p>
+     * <p>
+     * Constructor for NetCdf3D.
+     * </p>
      */
     public NetCdf3D() {}
 
@@ -127,11 +128,8 @@ public class NetCdf3D {
 
         try {
             ncfile.create();
-
         } catch (IOException e) {
-
             System.err.println("ERROR creating file");
-
         }
 
         try {
@@ -140,20 +138,14 @@ public class NetCdf3D {
             }
             ncfile.write(latD.getName(), Array.factory(xvalues));
             ncfile.write(lonD.getName(), Array.factory(yvalues));
-
         } catch (Exception e) {
-
             System.err.println("ERROR writing file");
-
         }
 
         try {
             ncfile.close();
-
         } catch (IOException e) {
         }
         System.out.println("created " + fileName + " successfully");
-
     }
-
 }

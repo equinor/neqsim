@@ -17,7 +17,6 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -108,7 +107,6 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
     /** {@inheritDoc} */
     @Override
     public ComponentPCSAFTa clone() {
-
         ComponentPCSAFTa clonedComponent = null;
         try {
             clonedComponent = (ComponentPCSAFTa) super.clone();

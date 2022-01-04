@@ -6,24 +6,26 @@
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
  * bubblePointPressureFlashDer class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(bubblePointPressureFlashDer.class);
 
     /**
-     * <p>Constructor for bubblePointPressureFlashDer.</p>
+     * <p>
+     * Constructor for bubblePointPressureFlashDer.
+     * </p>
      */
     public bubblePointPressureFlashDer() {}
 
@@ -178,7 +180,6 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
                 }
                 // logger.info("iter in bub calc " + iterations + " pres " +
                 // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
-
             } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
                     || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-6)
                     && (iterations < maxNumberOfIterations)) || iterations < 5);
@@ -191,7 +192,6 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
             }
             // logger.info("iter in bub calc " + iterations + " pres " +
             // system.getPressure()+ " chem iter " + chemIter);
-
         } while ((Math.abs(oldChemPres - system.getPressure()) / oldChemPres > 1e-6 || chemIter < 2
                 || !chemSolved) && chemIter < 20);
         // if(system.getPressure()>300) system.setPressure(300.0);
@@ -211,5 +211,4 @@ public class bubblePointPressureFlashDer extends constantDutyPressureFlash {
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
 }

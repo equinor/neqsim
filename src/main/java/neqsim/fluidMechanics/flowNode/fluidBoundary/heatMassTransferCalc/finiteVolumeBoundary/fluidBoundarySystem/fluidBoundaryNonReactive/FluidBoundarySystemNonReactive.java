@@ -24,11 +24,12 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for FluidBoundarySystemNonReactive.</p>
+     * <p>
+     * Constructor for FluidBoundarySystemNonReactive.
+     * </p>
      */
     public FluidBoundarySystemNonReactive() {}
 
@@ -85,5 +86,4 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
         // System.out.println("enhancement " +
         // test.getFluidBoundary().getEnhancementFactor().getNumericInterface().getEnhancementFactor(0));
     }
-
 }

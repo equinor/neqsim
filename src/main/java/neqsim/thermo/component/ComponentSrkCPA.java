@@ -18,7 +18,6 @@ import neqsim.thermo.phase.PhaseSrkCPA;
  * @version $Id: $Id
  */
 public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterface {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -88,7 +87,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
         // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     /**
@@ -127,13 +125,11 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
         // double[] surfTensInfluenceParamtemp = {-0.0286407191587279700,
         // -1.85760887578596, 0.520588, -0.1386439759, 1.1216308727071944};
         // this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
-
     }
 
     /** {@inheritDoc} */
     @Override
     public ComponentSrkCPA clone() {
-
         ComponentSrkCPA clonedComponent = null;
         try {
             clonedComponent = (ComponentSrkCPA) super.clone();
@@ -290,7 +286,6 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
      */
     public double dFCPAdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure) {
-
         double temp1 = 0;
         for (int i = 0; i < numberOfAssociationSites; i++) {
             temp1 += 1.0 / getXsite()[i] * getXsitedni(i, j);

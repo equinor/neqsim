@@ -4,13 +4,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>HydrateEquilibriumLine class.</p>
+ * <p>
+ * HydrateEquilibriumLine class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
 
     double[][] hydratePoints = null;
@@ -18,7 +19,9 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
     int numberOfPoints = 10;
 
     /**
-     * <p>Constructor for HydrateEquilibriumLine.</p>
+     * <p>
+     * Constructor for HydrateEquilibriumLine.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param minPres a double
@@ -30,10 +33,9 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
         maxPressure = maxPres;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void run() {
-
+    public void run() {
         SystemInterface system = (SystemInterface) this.system.clone();
         hydratePoints = new double[2][numberOfPoints];
         system.setHydrateCheck(true);
@@ -42,7 +44,6 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
         system.setPressure(minPressure);
         double dp = (maxPressure - minPressure) / (numberOfPoints - 1.0);
         for (int i = 0; i < numberOfPoints; i++) {
-
             system.setPressure(minPressure + dp * i);
             try {
                 ops.hydrateFormationTemperature();
@@ -52,14 +53,12 @@ public class HydrateEquilibriumLine extends constantDutyTemperatureFlash {
             hydratePoints[0][i] = system.getTemperature();
             hydratePoints[1][i] = system.getPressure();
             // system.display();
-
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double[][] getPoints(int i) {
+    public double[][] getPoints(int i) {
         return hydratePoints;
     }
-
 }

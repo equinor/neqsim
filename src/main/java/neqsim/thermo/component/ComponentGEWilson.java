@@ -18,11 +18,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentGEWilson extends ComponentGE {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentGEWilson.</p>
+     * <p>
+     * Constructor for ComponentGEWilson.
+     * </p>
      */
     public ComponentGEWilson() {}
 
@@ -83,7 +84,6 @@ public class ComponentGEWilson extends ComponentGE {
     public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
             double pressure, int phasetype, double[][] HValpha, double[][] HVgij,
             double[][] intparam, String[][] mixRule) {
-
         return 0.0;
     }
 
@@ -125,7 +125,6 @@ public class ComponentGEWilson extends ComponentGE {
      * @return a double
      */
     public double getCharEnergyParamter(PhaseInterface phase1, int comp1, int comp2) {
-
         double param1 = 0.0; // ((ComponentWaxWilson)
                              // phase1.getComponent(comp1)).getWilsonInteractionEnergy(phase1);
         double param2 = 0.0;// ((ComponentWaxWilson)
@@ -201,7 +200,5 @@ public class ComponentGEWilson extends ComponentGE {
         double deltaHsub = (deltaHvap + deltaHf + deltaHtrans);
 
         return -2.0 / coordinationNumber * (deltaHsub - R * phase1.getTemperature());
-
     }
-
 }

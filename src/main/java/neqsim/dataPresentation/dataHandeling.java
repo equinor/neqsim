@@ -15,11 +15,12 @@ import java.text.DecimalFormat;
  * @version $Id: $Id
  */
 public class dataHandeling {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for dataHandeling.</p>
+     * <p>
+     * Constructor for dataHandeling.
+     * </p>
      */
     public dataHandeling() {}
 
@@ -120,7 +121,6 @@ public class dataHandeling {
      * @param filename a {@link java.lang.String} object
      */
     public void printToFile(double[][] points, String filename) {
-
         DecimalFormat nf = new DecimalFormat();
         nf.setMaximumFractionDigits(5);
         nf.applyPattern("#.####E0");

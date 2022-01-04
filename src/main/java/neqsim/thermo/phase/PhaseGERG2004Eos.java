@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import neqsim.thermo.component.ComponentGERG2004;
@@ -17,7 +12,6 @@ import neqsim.thermo.util.JNI.GERG2004EOS;
  * @version $Id: $Id
  */
 public class PhaseGERG2004Eos extends PhaseEos {
-
     private static final long serialVersionUID = 1000;
 
     private GERG2004EOS gergEOS = new GERG2004EOS();
@@ -30,7 +24,9 @@ public class PhaseGERG2004Eos extends PhaseEos {
             internalEnery = 0.0, JTcoef = 0.0;
 
     /**
-     * <p>Constructor for PhaseGERG2004Eos.</p>
+     * <p>
+     * Constructor for PhaseGERG2004Eos.
+     * </p>
      */
     public PhaseGERG2004Eos() {
         super();

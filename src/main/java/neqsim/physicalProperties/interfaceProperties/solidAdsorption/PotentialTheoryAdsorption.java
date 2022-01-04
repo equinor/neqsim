@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class PotentialTheoryAdsorption implements AdsorptionInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PotentialTheoryAdsorption.class);
 
@@ -51,7 +50,6 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
         epsField = new double[system.getPhase(0).getNumberOfComponents()][integrationSteps];
         fugacityField = new double[system.getPhase(0).getNumberOfComponents()][integrationSteps];
         deltaz = new double[system.getPhase(0).getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */
@@ -184,7 +182,6 @@ public class PotentialTheoryAdsorption implements AdsorptionInterface {
                 } catch (Exception e) {
                     logger.error("error closing adsorption database.....", e);
                 }
-
             }
         }
     }

@@ -17,11 +17,12 @@ import neqsim.thermo.component.atractiveEosTerm.AtractiveTermTwu;
  * @version $Id: $Id
  */
 public class ComponentTST extends ComponentEos {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentTST.</p>
+     * <p>
+     * Constructor for ComponentTST.
+     * </p>
      */
     public ComponentTST() {}
 
@@ -78,7 +79,6 @@ public class ComponentTST extends ComponentEos {
     /** {@inheritDoc} */
     @Override
     public ComponentTST clone() {
-
         ComponentTST clonedComponent = null;
         try {
             clonedComponent = (ComponentTST) super.clone();

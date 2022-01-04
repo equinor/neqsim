@@ -4,17 +4,20 @@ import neqsim.processSimulation.mechanicalDesign.separator.sectionType.MechManwa
 import neqsim.processSimulation.processEquipment.separator.Separator;
 
 /**
- * <p>ManwaySection class.</p>
+ * <p>
+ * ManwaySection class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class ManwaySection extends SeparatorSection {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ManwaySection.</p>
+     * <p>
+     * Constructor for ManwaySection.
+     * </p>
      *
      * @param type a {@link java.lang.String} object
      * @param sep a {@link neqsim.processSimulation.processEquipment.separator.Separator} object
@@ -25,7 +28,9 @@ public class ManwaySection extends SeparatorSection {
     }
 
     /**
-     * <p>Constructor for ManwaySection.</p>
+     * <p>
+     * Constructor for ManwaySection.
+     * </p>
      *
      * @param name a {@link java.lang.String} object
      * @param type a {@link java.lang.String} object
@@ -36,9 +41,9 @@ public class ManwaySection extends SeparatorSection {
         setName(name);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcEfficiency() {
+    public double calcEfficiency() {
         return 1.0;
     }
 }

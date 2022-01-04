@@ -1,8 +1,8 @@
 /*
-* System_SRK_EOS.java
-*
-* Created on 8. april 2000, 23:14
-*/
+ * System_SRK_EOS.java
+ *
+ * Created on 8. april 2000, 23:14
+ */
 package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,13 +11,15 @@ import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>ComponentElectrolyteCPAOld class.</p>
+ * <p>
+ * ComponentElectrolyteCPAOld class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyteEos implements ComponentCPAInterface {
-
+public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyteEos
+        implements ComponentCPAInterface {
     private static final long serialVersionUID = 1000;
 
     int cpaon = 1;
@@ -30,13 +32,16 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     static Logger logger = LogManager.getLogger(ComponentElectrolyteCPAOld.class);
 
     /**
-     * <p>Constructor for ComponentElectrolyteCPAOld.</p>
+     * <p>
+     * Constructor for ComponentElectrolyteCPAOld.
+     * </p>
      */
-    public ComponentElectrolyteCPAOld() {
-    }
+    public ComponentElectrolyteCPAOld() {}
 
     /**
-     * <p>Constructor for ComponentElectrolyteCPAOld.</p>
+     * <p>
+     * Constructor for ComponentElectrolyteCPAOld.
+     * </p>
      *
      * @param moles a double
      */
@@ -45,14 +50,17 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
 
     /**
-     * <p>Constructor for ComponentElectrolyteCPAOld.</p>
+     * <p>
+     * Constructor for ComponentElectrolyteCPAOld.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentElectrolyteCPAOld(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentElectrolyteCPAOld(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         xsite = new double[numberOfAssociationSites];
         xsitedV = new double[numberOfAssociationSites];
@@ -77,7 +85,9 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
 
     /**
-     * <p>Constructor for ComponentElectrolyteCPAOld.</p>
+     * <p>
+     * Constructor for ComponentElectrolyteCPAOld.
+     * </p>
      *
      * @param number a int
      * @param TC a double
@@ -86,7 +96,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * @param a a double
      * @param moles a double
      */
-    public ComponentElectrolyteCPAOld(int number, double TC, double PC, double M, double a, double moles) {
+    public ComponentElectrolyteCPAOld(int number, double TC, double PC, double M, double a,
+            double moles) {
         super(number, TC, PC, M, a, moles);
         xsite = new double[numberOfAssociationSites];
         xsitedV = new double[numberOfAssociationSites];
@@ -110,7 +121,6 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     /** {@inheritDoc} */
     @Override
     public ComponentElectrolyteCPAOld clone() {
-
         ComponentElectrolyteCPAOld clonedComponent = null;
         try {
             clonedComponent = (ComponentElectrolyteCPAOld) super.clone();
@@ -128,15 +138,16 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         return clonedComponent;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int type) {
+    public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
+            int type) {
         super.init(temperature, pressure, totalNumberOfMoles, beta, type);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getVolumeCorrection() {
+    public double getVolumeCorrection() {
         if ((aCPA > 1.0e-10) && cpaon == 1) {
             return 0.0;
         } else {
@@ -144,30 +155,30 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setAtractiveTerm(int i) {
+    public void setAtractiveTerm(int i) {
         super.setAtractiveTerm(i);
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
             getAtractiveTerm().setm(mCPA);
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void seta(double a) {
+    public void seta(double a) {
         aCPA = a;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setb(double a) {
+    public void setb(double a) {
         bCPA = a;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calca() {
+    public double calca() {
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
             return aCPA;
         } else {
@@ -175,9 +186,9 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcb() {
+    public double calcb() {
         if (Math.abs(aCPA) > 1e-6 && cpaon == 1) {
             return bCPA;
         } else {
@@ -185,9 +196,10 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         }
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
         double Fcpa = 0.0;
         // if(phase.getPhaseType()==1) cpaon=0;
@@ -196,28 +208,33 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         return Fsup + cpaon * Fcpa;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
                 + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         return super.dFdNdV(phase, numberOfComponents, temperature, pressure)
                 + dFCPAdNdV(phase, numberOfComponents, temperature, pressure);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
     }
 
     /**
-     * <p>dFCPAdN.</p>
+     * <p>
+     * dFCPAdN.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -225,7 +242,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * @param pressure a double
      * @return a double
      */
-    public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         double xi = 0.0;
         for (int i = 0; i < numberOfAssociationSites; i++) {
             xi += Math.log(xsite[i]);
@@ -234,7 +252,9 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
 
     /**
-     * <p>dFCPAdNdV.</p>
+     * <p>
+     * dFCPAdNdV.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -242,14 +262,17 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * @param pressure a double
      * @return a double
      */
-    public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         double xi = dFCPAdNdXidXdV(phase);
         double xi2 = -((PhaseCPAInterface) phase).getHcpatot() / 2.0 * calc_lngidV(phase);
         return xi + xi2;
     }
 
     /**
-     * <p>dFCPAdNdT.</p>
+     * <p>
+     * dFCPAdNdT.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @param numberOfComponents a int
@@ -257,7 +280,8 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
      * @param pressure a double
      * @return a double
      */
-    public double dFCPAdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    public double dFCPAdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
+            double pressure) {
         double xi = 0.0;
         for (int i = 0; i < numberOfAssociationSites; i++) {
             xi += (1.0 / xsite[i] - 1.0 / 2.0) * xsitedT[i];
@@ -266,52 +290,58 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
 
     /**
-     * <p>calc_lngidV.</p>
+     * <p>
+     * calc_lngidV.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
     public double calc_lngidV(PhaseInterface phase) {
         return 2.0 * getBi() * (10.0)
-                / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
+                / ((8.0 * phase.getTotalVolume() - phase.getB())
+                        * (4.0 * phase.getTotalVolume() - phase.getB()))
                 - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-                        * (32 * Math.pow(phase.getTotalVolume(), 2.0) - 12.0 * phase.getTotalVolume() * phase.getB()
+                        * (32 * Math.pow(phase.getTotalVolume(), 2.0)
+                                - 12.0 * phase.getTotalVolume() * phase.getB()
                                 + Math.pow(phase.getB(), 2.0))
                         / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
                                 * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
-
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFCPAdVdXi(int site, PhaseInterface phase) {
+    public double dFCPAdVdXi(int site, PhaseInterface phase) {
         return 1.0 / (2.0 * phase.getTotalVolume())
-                * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
+                * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav())
+                * getNumberOfMolesInPhase();
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFCPAdNdXi(int site, PhaseInterface phase) {
+    public double dFCPAdNdXi(int site, PhaseInterface phase) {
         double xi = 1.0 / xsite[site];
 
         // return xi - tempp;
         return xi + getNumberOfMolesInPhase() / 2.0 * calc_lngi(phase);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
+    public double dFCPAdXidXj(int sitei, int sitej, int compj, PhaseInterface phase) {
         return 0.0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double dFCPAdXi(int site, PhaseInterface phase) {
+    public double dFCPAdXi(int site, PhaseInterface phase) {
         return 0.0;
     }
 
     /**
-     * <p>dFCPAdNdXidXdV.</p>
+     * <p>
+     * dFCPAdNdXidXdV.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
@@ -325,22 +355,25 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
     }
 
     /**
-     * <p>calc_lngi.</p>
+     * <p>
+     * calc_lngi.
+     * </p>
      *
      * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
      * @return a double
      */
     public double calc_lngi(PhaseInterface phase) {
-        return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
+        return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi()
+                / phase.getTotalVolume();
     }
 
-	/**
-	 * {@inheritDoc}
-	 *
-	 * Getter for property xsite.
-	 */
+    /**
+     * {@inheritDoc}
+     *
+     * Getter for property xsite.
+     */
     @Override
-	public double[] getXsite() {
+    public double[] getXsite() {
         return this.xsite;
     }
 
@@ -353,27 +386,27 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         this.xsite = xsite;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsite(int i, double xsite) {
+    public void setXsite(int i, double xsite) {
         this.xsite[i] = xsite;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double[] getXsitedV() {
+    public double[] getXsitedV() {
         return this.xsitedV;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsitedV(int i, double xsitedV) {
+    public void setXsitedV(int i, double xsitedV) {
         this.xsitedV[i] = xsitedV;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double[] getXsiteOld() {
+    public double[] getXsiteOld() {
         return this.xsiteOld;
     }
 
@@ -386,36 +419,33 @@ public class ComponentElectrolyteCPAOld extends ComponentModifiedFurstElectrolyt
         this.xsiteOld = xsiteOld;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsiteOld(int i, double xsiteOld) {
-    }
+    public void setXsiteOld(int i, double xsiteOld) {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double[] getXsitedT() {
+    public double[] getXsitedT() {
         return null;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double[] getXsitedTdT() {
+    public double[] getXsitedTdT() {
         return null;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsitedT(int i, double xsitedT) {
-    }
+    public void setXsitedT(int i, double xsitedT) {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsitedTdT(int i, double xsitedT) {
-    }
+    public void setXsitedTdT(int i, double xsitedT) {}
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void setXsitedni(int xnumb, int compnumb, double val) {
+    public void setXsitedni(int xnumb, int compnumb, double val) {
         xsitedni[xnumb][compnumb] = val;
     }
 }

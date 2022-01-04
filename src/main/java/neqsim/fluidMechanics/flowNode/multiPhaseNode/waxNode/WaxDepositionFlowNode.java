@@ -11,26 +11,33 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>WaxDepositionFlowNode class.</p>
+ * <p>
+ * WaxDepositionFlowNode class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for WaxDepositionFlowNode.</p>
+     * <p>
+     * Constructor for WaxDepositionFlowNode.
+     * </p>
      */
     public WaxDepositionFlowNode() {
         this.flowNodeType = "wax deposition node";
     }
 
     /**
-     * <p>Constructor for WaxDepositionFlowNode.</p>
+     * <p>
+     * Constructor for WaxDepositionFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public WaxDepositionFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -42,11 +49,14 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     }
 
     /**
-     * <p>Constructor for WaxDepositionFlowNode.</p>
+     * <p>
+     * Constructor for WaxDepositionFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public WaxDepositionFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
@@ -107,7 +117,9 @@ public class WaxDepositionFlowNode extends MultiPhaseFlowNode {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

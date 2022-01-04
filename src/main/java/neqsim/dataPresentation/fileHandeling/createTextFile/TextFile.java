@@ -12,7 +12,6 @@ import java.io.FileWriter;
  * @version $Id: $Id
  */
 public class TextFile implements java.io.Serializable {
-
     private static final long serialVersionUID = 1000;
 
     String fileName = "c:/example.txt";
@@ -20,7 +19,9 @@ public class TextFile implements java.io.Serializable {
     // NetcdfFileWriteable ncfile;
 
     /**
-     * <p>Constructor for TextFile.</p>
+     * <p>
+     * Constructor for TextFile.
+     * </p>
      */
     public TextFile() {}
 

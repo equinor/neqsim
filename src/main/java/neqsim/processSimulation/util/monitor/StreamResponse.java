@@ -3,9 +3,11 @@ package neqsim.processSimulation.util.monitor;
 import neqsim.processSimulation.processEquipment.stream.StreamInterface;
 
 /**
- * <p>StreamResponse class.</p>
+ * <p>
+ * StreamResponse class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class StreamResponse {
@@ -22,49 +24,51 @@ public class StreamResponse {
     public Double massflowAqueous;
 
     /**
-     * <p>Constructor for StreamResponse.</p>
+     * <p>
+     * Constructor for StreamResponse.
+     * </p>
      */
-    public StreamResponse() {
-    }
+    public StreamResponse() {}
 
     /**
-     * <p>Constructor for StreamResponse.</p>
+     * <p>
+     * Constructor for StreamResponse.
+     * </p>
      *
-     * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface} object
+     * @param inputStream a {@link neqsim.processSimulation.processEquipment.stream.StreamInterface}
+     *        object
      */
-    public StreamResponse(StreamInterface inputStream){
+    public StreamResponse(StreamInterface inputStream) {
         name = inputStream.getName();
         fluid = new Fluid(inputStream.getFluid());
         temperature = inputStream.getTemperature("C");
         pressure = inputStream.getPressure("bara");
         molarMass = inputStream.getFluid().getMolarMass();
-        massDensity =  inputStream.getFluid().getDensity("kg/m3");
-        massflow =  inputStream.getFluid().getFlowRate("kg/hr");
-        volumeFlow =  inputStream.getFluid().getFlowRate("m3/hr");
-        
-        if(inputStream.getFluid().hasPhaseType("gas")){
-        	massflowGas = inputStream.getFluid().getPhase("gas").getFlowRate("kg/hr");
+        massDensity = inputStream.getFluid().getDensity("kg/m3");
+        massflow = inputStream.getFluid().getFlowRate("kg/hr");
+        volumeFlow = inputStream.getFluid().getFlowRate("m3/hr");
+
+        if (inputStream.getFluid().hasPhaseType("gas")) {
+            massflowGas = inputStream.getFluid().getPhase("gas").getFlowRate("kg/hr");
+        } else {
+            massflowGas = 0.0;
         }
-        else {
-        	massflowGas = 0.0;
+        if (inputStream.getFluid().hasPhaseType("aqueous")) {
+            massflowAqueous = inputStream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
+        } else {
+            massflowAqueous = 0.0;
         }
-        if(inputStream.getFluid().hasPhaseType("aqueous")){
-        	massflowAqueous = inputStream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
-        }
-        else {
-        	massflowAqueous = 0.0;
-        }
-        if(inputStream.getFluid().hasPhaseType("oil")){
-        	massflowOil = inputStream.getFluid().getPhase("oil").getFlowRate("kg/hr");
-        }
-        else {
-        	massflowOil = 0.0;
+        if (inputStream.getFluid().hasPhaseType("oil")) {
+            massflowOil = inputStream.getFluid().getPhase("oil").getFlowRate("kg/hr");
+        } else {
+            massflowOil = 0.0;
         }
     }
 
     /**
-     * <p>print.</p>
+     * <p>
+     * print.
+     * </p>
      */
-    public void print(){
-    }
+    public void print() {}
 }

@@ -6,10 +6,11 @@
 
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.component.ComponentGEUnifacPSRK;
 import neqsim.thermo.component.ComponentGEUniquac;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
@@ -20,12 +21,13 @@ import org.apache.logging.log4j.*;
  * @version $Id: $Id
  */
 public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhaseGEUnifacPSRK.class);
 
     /**
-     * <p>Constructor for PhaseGEUnifacPSRK.</p>
+     * <p>
+     * Constructor for PhaseGEUnifacPSRK.
+     * </p>
      */
     public PhaseGEUnifacPSRK() {
         super();
@@ -201,5 +203,4 @@ public class PhaseGEUnifacPSRK extends PhaseGEUnifac {
         }
         logger.info("finished finding interaction coefficient...C");
     }
-
 }

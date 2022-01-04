@@ -20,7 +20,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class ThreePhaseSeparator extends Separator {
-
     private static final long serialVersionUID = 1000;
 
     StreamInterface waterOutStream = new Stream(waterSystem);
@@ -45,7 +44,9 @@ public class ThreePhaseSeparator extends Separator {
     String aqueousInOilSpec = "mole";
 
     /**
-     * <p>Constructor for ThreePhaseSeparator.</p>
+     * <p>
+     * Constructor for ThreePhaseSeparator.
+     * </p>
      */
     public ThreePhaseSeparator() {
         super();
@@ -117,7 +118,6 @@ public class ThreePhaseSeparator extends Separator {
             aqueousInOil = val;
             aqueousInOilSpec = specType;
         }
-
     }
 
     /** {@inheritDoc} */

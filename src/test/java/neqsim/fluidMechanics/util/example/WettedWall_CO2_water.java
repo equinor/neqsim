@@ -9,9 +9,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>WettedWall_CO2_water class.</p>
+ * <p>
+ * WettedWall_CO2_water class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */

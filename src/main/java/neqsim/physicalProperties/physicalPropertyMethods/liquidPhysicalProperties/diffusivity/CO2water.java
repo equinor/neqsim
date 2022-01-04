@@ -9,11 +9,12 @@ package neqsim.physicalProperties.physicalPropertyMethods.liquidPhysicalProperti
  * @version $Id: $Id
  */
 public class CO2water extends Diffusivity {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for CO2water.</p>
+     * <p>
+     * Constructor for CO2water.
+     * </p>
      */
     public CO2water() {}
 

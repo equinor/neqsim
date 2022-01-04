@@ -7,25 +7,31 @@ import neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>Abstract MultiPhaseFlowNode class.</p>
+ * <p>
+ * Abstract MultiPhaseFlowNode class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public abstract class MultiPhaseFlowNode extends FlowNode {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for MultiPhaseFlowNode.</p>
+     * <p>
+     * Constructor for MultiPhaseFlowNode.
+     * </p>
      */
     public MultiPhaseFlowNode() {}
 
     /**
-     * <p>Constructor for MultiPhaseFlowNode.</p>
+     * <p>
+     * Constructor for MultiPhaseFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public MultiPhaseFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -48,7 +54,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>initVelocity.</p>
+     * <p>
+     * initVelocity.
+     * </p>
      *
      * @return a double
      */
@@ -133,7 +141,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcHydraulicDiameter.</p>
+     * <p>
+     * calcHydraulicDiameter.
+     * </p>
      *
      * @return a double
      */
@@ -145,7 +155,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcReynoldNumber.</p>
+     * <p>
+     * calcReynoldNumber.
+     * </p>
      *
      * @return a double
      */
@@ -160,7 +172,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcWallFrictionFactor.</p>
+     * <p>
+     * calcWallFrictionFactor.
+     * </p>
      *
      * @return a double
      */
@@ -201,7 +215,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcContactLength.</p>
+     * <p>
+     * calcContactLength.
+     * </p>
      *
      * @return a double
      */
@@ -241,7 +257,9 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     }
 
     /**
-     * <p>calcGasLiquidContactArea.</p>
+     * <p>
+     * calcGasLiquidContactArea.
+     * </p>
      *
      * @return a double
      */
@@ -264,7 +282,6 @@ public abstract class MultiPhaseFlowNode extends FlowNode {
     /** {@inheritDoc} */
     @Override
     public void update() {
-
         double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);// getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
                                                                          // getPrandtlNumber(0),
                                                                          // this) *

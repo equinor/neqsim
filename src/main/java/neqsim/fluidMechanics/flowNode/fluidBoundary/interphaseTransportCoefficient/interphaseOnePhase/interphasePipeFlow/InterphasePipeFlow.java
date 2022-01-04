@@ -19,7 +19,6 @@ import neqsim.fluidMechanics.flowNode.fluidBoundary.interphaseTransportCoefficie
  * @version $Id: $Id
  */
 public class InterphasePipeFlow extends InterphaseOnePhase {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -63,7 +62,6 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
                             + Math.pow(node.getGeometry().getRelativeRoughnes() / 3.7, 1.11)))),
                     2.0);
         }
-
     }
 
     /** {@inheritDoc} */
@@ -100,5 +98,4 @@ public class InterphasePipeFlow extends InterphaseOnePhase {
                     * Math.pow(schmidtNumber, -2.0 / 3.0) * temp;
         }
     }
-
 }

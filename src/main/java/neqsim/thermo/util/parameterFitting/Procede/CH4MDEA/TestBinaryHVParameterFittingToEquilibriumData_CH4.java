@@ -15,23 +15,25 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>TestBinaryHVParameterFittingToEquilibriumData_CH4 class.</p>
+ * <p>
+ * TestBinaryHVParameterFittingToEquilibriumData_CH4 class.
+ * </p>
  *
  * @author Neeraj Agrawal
  * @version $Id: $Id
  */
 public class TestBinaryHVParameterFittingToEquilibriumData_CH4 {
-
     static Logger logger =
             LogManager.getLogger(TestBinaryHVParameterFittingToEquilibriumData_CH4.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
     public static void main(String[] args) {
-
         LevenbergMarquardt optim = new LevenbergMarquardt();
         ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
 
@@ -40,7 +42,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData_CH4 {
         ResultSet dataSet = database.getResultSet("SELECT * FROM CH4MDEA");
         double guess[] = {500, -500, 1e-10, 1e-10, 0.3};
         try {
-
             while (dataSet.next()) {
                 BinaryHVParameterFittingFunction_CH4 function =
                         new BinaryHVParameterFittingFunction_CH4();
@@ -75,7 +76,6 @@ public class TestBinaryHVParameterFittingToEquilibriumData_CH4 {
                 sample.setThermodynamicSystem(testSystem);
                 sample.setReference(Double.toString(ID));
                 sampleList.add(sample);
-
             }
         } catch (Exception e) {
             logger.error("database error" + e);

@@ -14,7 +14,6 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 abstract class Component implements ComponentInterface {
-
     private static final long serialVersionUID = 1000;
 
     double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
@@ -90,7 +89,9 @@ abstract class Component implements ComponentInterface {
     static Logger logger = LogManager.getLogger(Component.class);
 
     /**
-     * <p>Constructor for Component.</p>
+     * <p>
+     * Constructor for Component.
+     * </p>
      */
     // Class methods
     public Component() {}
@@ -104,9 +105,7 @@ abstract class Component implements ComponentInterface {
      * @param moles a double
      */
     public Component(int number, double moles) {
-
         numberOfMoles = moles;
-
     }
 
     /**
@@ -468,7 +467,6 @@ abstract class Component implements ComponentInterface {
     /** {@inheritDoc} */
     @Override
     public Component clone() {
-
         Component clonedComponent = null;
         try {
             clonedComponent = (Component) super.clone();
@@ -529,7 +527,6 @@ abstract class Component implements ComponentInterface {
     @Override
     public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
             int type) {
-
         if (type == 0) {
             z = numberOfMoles / totalNumberOfMoles;
             K = Math.exp(Math.log(criticalPressure / pressure) + 5.373 * (1.0 + srkacentricFactor)
@@ -938,7 +935,6 @@ abstract class Component implements ComponentInterface {
     @Override
     public final void setNumberOfMolesInPhase(double totmoles) {
         numberOfMolesInPhase = totmoles * x;
-
     }
 
     /** {@inheritDoc} */
@@ -1116,7 +1112,6 @@ abstract class Component implements ComponentInterface {
     public double getChemicalPotential(PhaseInterface phase) {
         return getGibbsEnergy(phase.getTemperature(), phase.getPressure()) / numberOfMolesInPhase;
         // return getGresTV;
-
     }
 
     /**
@@ -1189,7 +1184,6 @@ abstract class Component implements ComponentInterface {
     /** {@inheritDoc} */
     @Override
     public double getAntoineVaporPressure(double temp) {
-
         if (antoineLiqVapPresType.equals("pow10")) {
             return Math.pow(10.0, AntoineA - (AntoineB / (temp + AntoineC - 273.15))); // equation
                                                                                        // and
@@ -1789,7 +1783,6 @@ abstract class Component implements ComponentInterface {
                             (AntoineASolid - AntoineBSolid / (temperature + AntoineCSolid)))
                     * Math.pow(10, AntoineASolid) / Math.pow((temperature + AntoineCSolid), 2);
         }
-
     }
 
     /** {@inheritDoc} */
@@ -2117,7 +2110,6 @@ abstract class Component implements ComponentInterface {
                         + CpLiquid[2] * Math.pow(temperature, 2.0)
                         + CpLiquid[3] * Math.pow(temperature, 3.0)
                         + CpLiquid[4] * Math.pow(temperature, 4.0));
-
     }
 
     /**

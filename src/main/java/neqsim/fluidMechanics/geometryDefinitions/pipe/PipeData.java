@@ -8,11 +8,10 @@ import neqsim.fluidMechanics.geometryDefinitions.internalGeometry.wall.PipeWall;
  * PipeData class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class PipeData extends GeometryDefinition {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -34,7 +33,6 @@ public class PipeData extends GeometryDefinition {
     public PipeData(double diameter) {
         super(diameter);
         wall = new PipeWall();
-
     }
 
     /**

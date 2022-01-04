@@ -25,7 +25,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class WettedWallColumnSampleCreator extends SampleCreator {
-
     private static final long serialVersionUID = 1000;
     WettedWallDataReader reader;
     DataSmoothor smoothor;
@@ -37,7 +36,9 @@ public class WettedWallColumnSampleCreator extends SampleCreator {
             smoothedCo2SupplyRate, smoothedColumnWallTemperature;
 
     /**
-     * <p>Constructor for WettedWallColumnSampleCreator.</p>
+     * <p>
+     * Constructor for WettedWallColumnSampleCreator.
+     * </p>
      */
     public WettedWallColumnSampleCreator() {}
 

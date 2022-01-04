@@ -6,16 +6,12 @@ import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
+/**
+ * <p>
+ * TestElectrolyteCPAstatoil class.
+ * </p>
  *
  * @author esol
- * 
- * @version
- */
-/**
- * <p>TestElectrolyteCPAstatoil class.</p>
- *
- * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -23,7 +19,9 @@ public class TestElectrolyteCPAstatoil {
     static Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

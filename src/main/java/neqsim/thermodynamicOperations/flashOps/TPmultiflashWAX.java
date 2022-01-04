@@ -1,10 +1,3 @@
-
-
-/*
- * TPflash.java
- *
- * Created on 2. oktober 2000, 22:26
- */
 package neqsim.thermodynamicOperations.flashOps;
 
 import java.util.ArrayList;
@@ -22,7 +15,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class TPmultiflashWAX extends TPflash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(TPmultiflashWAX.class);
 
@@ -35,7 +27,9 @@ public class TPmultiflashWAX extends TPflash {
     boolean doStabilityAnalysis = true;
 
     /**
-     * <p>Constructor for TPmultiflashWAX.</p>
+     * <p>
+     * Constructor for TPmultiflashWAX.
+     * </p>
      */
     public TPmultiflashWAX() {}
 
@@ -215,7 +209,6 @@ public class TPmultiflashWAX extends TPflash {
             if (updateFugacities) {
                 system.init(1);
             }
-
         } while ((ans.norm2() > 1e-6 && iter < 20) || iter < 3);
     }
 

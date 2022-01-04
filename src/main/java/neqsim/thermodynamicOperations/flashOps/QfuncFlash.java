@@ -5,13 +5,14 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>QfuncFlash class.</p>
+ * <p>
+ * QfuncFlash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class QfuncFlash extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(QfuncFlash.class);
 
@@ -20,12 +21,16 @@ public class QfuncFlash extends Flash {
     int type = 0;
 
     /**
-     * <p>Constructor for QfuncFlash.</p>
+     * <p>
+     * Constructor for QfuncFlash.
+     * </p>
      */
     public QfuncFlash() {}
 
     /**
-     * <p>Constructor for QfuncFlash.</p>
+     * <p>
+     * Constructor for QfuncFlash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Hspec a double
@@ -39,7 +44,9 @@ public class QfuncFlash extends Flash {
     }
 
     /**
-     * <p>calcdQdTT.</p>
+     * <p>
+     * calcdQdTT.
+     * </p>
      *
      * @return a double
      */
@@ -49,7 +56,9 @@ public class QfuncFlash extends Flash {
     }
 
     /**
-     * <p>calcdQdT.</p>
+     * <p>
+     * calcdQdT.
+     * </p>
      *
      * @return a double
      */
@@ -59,7 +68,9 @@ public class QfuncFlash extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */
@@ -94,5 +105,4 @@ public class QfuncFlash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

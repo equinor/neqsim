@@ -16,11 +16,12 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentWax extends ComponentSolid {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for ComponentWax.</p>
+     * <p>
+     * Constructor for ComponentWax.
+     * </p>
      */
     public ComponentWax() {}
 

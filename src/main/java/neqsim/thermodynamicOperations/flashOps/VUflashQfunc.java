@@ -12,13 +12,14 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>VUflashQfunc class.</p>
+ * <p>
+ * VUflashQfunc class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class VUflashQfunc extends Flash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(VUflashQfunc.class);
 
@@ -26,12 +27,16 @@ public class VUflashQfunc extends Flash {
     Flash tpFlash;
 
     /**
-     * <p>Constructor for VUflashQfunc.</p>
+     * <p>
+     * Constructor for VUflashQfunc.
+     * </p>
      */
     public VUflashQfunc() {}
 
     /**
-     * <p>Constructor for VUflashQfunc.</p>
+     * <p>
+     * Constructor for VUflashQfunc.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Vspec a double
@@ -45,7 +50,9 @@ public class VUflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdPP.</p>
+     * <p>
+     * calcdQdPP.
+     * </p>
      *
      * @return a double
      */
@@ -59,12 +66,13 @@ public class VUflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdTT.</p>
+     * <p>
+     * calcdQdTT.
+     * </p>
      *
      * @return a double
      */
     public double calcdQdTT() {
-
         double dQdTT = -system.getCp()
                 / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
                 - calcdQdT() / system.getTemperature();
@@ -72,7 +80,9 @@ public class VUflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdT.</p>
+     * <p>
+     * calcdQdT.
+     * </p>
      *
      * @return a double
      */
@@ -83,7 +93,9 @@ public class VUflashQfunc extends Flash {
     }
 
     /**
-     * <p>calcdQdP.</p>
+     * <p>
+     * calcdQdP.
+     * </p>
      *
      * @return a double
      */
@@ -94,7 +106,9 @@ public class VUflashQfunc extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */
@@ -133,7 +147,6 @@ public class VUflashQfunc extends Flash {
         // logger.info("internaleng: " + system.getInternalEnergy());
         // logger.info("volume: " + system.getVolume());
         solveQ();
-
     }
 
     /** {@inheritDoc} */
@@ -143,7 +156,9 @@ public class VUflashQfunc extends Flash {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */

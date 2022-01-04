@@ -9,9 +9,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>BubbleFlowNode class.</p>
+ * <p>
+ * BubbleFlowNode class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class BubbleFlowNode extends TwoPhaseFlowNode {
@@ -19,17 +21,22 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     private double averageBubbleDiameter = 0.001;
 
     /**
-     * <p>Constructor for BubbleFlowNode.</p>
+     * <p>
+     * Constructor for BubbleFlowNode.
+     * </p>
      */
     public BubbleFlowNode() {
         this.flowNodeType = "bubble";
     }
 
     /**
-     * <p>Constructor for BubbleFlowNode.</p>
+     * <p>
+     * Constructor for BubbleFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public BubbleFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
         super(system, pipe);
@@ -41,11 +48,14 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>Constructor for BubbleFlowNode.</p>
+     * <p>
+     * Constructor for BubbleFlowNode.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface} object
+     * @param pipe a {@link neqsim.fluidMechanics.geometryDefinitions.GeometryDefinitionInterface}
+     *        object
      */
     public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem,
             GeometryDefinitionInterface pipe) {
@@ -133,7 +143,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -195,7 +207,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>Getter for the field <code>averageBubbleDiameter</code>.</p>
+     * <p>
+     * Getter for the field <code>averageBubbleDiameter</code>.
+     * </p>
      *
      * @return a double
      */
@@ -204,7 +218,9 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     }
 
     /**
-     * <p>Setter for the field <code>averageBubbleDiameter</code>.</p>
+     * <p>
+     * Setter for the field <code>averageBubbleDiameter</code>.
+     * </p>
      *
      * @param averageBubbleDiameter a double
      */

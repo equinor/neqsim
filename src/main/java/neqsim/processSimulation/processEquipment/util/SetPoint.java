@@ -7,7 +7,6 @@ package neqsim.processSimulation.processEquipment.util;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.processSimulation.processEquipment.ProcessEquipmentBaseClass;
 import neqsim.processSimulation.processEquipment.ProcessEquipmentInterface;
 import neqsim.processSimulation.processEquipment.stream.Stream;
@@ -21,7 +20,6 @@ import neqsim.processSimulation.processEquipment.stream.Stream;
  * @version $Id: $Id
  */
 public class SetPoint extends ProcessEquipmentBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     ProcessEquipmentInterface sourceEquipment = null, targetEquipment = null;
@@ -33,7 +31,9 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     static Logger logger = LogManager.getLogger(SetPoint.class);
 
     /**
-     * <p>Constructor for SetPoint.</p>
+     * <p>
+     * Constructor for SetPoint.
+     * </p>
      */
     public SetPoint() {}
 
@@ -185,7 +185,6 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         if (targetVariable.equals("pressure")) {
             targetEquipment.setPressure(sourceEquipment.getPressure());
         } else {
@@ -204,9 +203,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-
-    }
+    public void displayResult() {}
 
     /**
      * <p>
@@ -235,5 +232,4 @@ public class SetPoint extends ProcessEquipmentBaseClass {
 
         operations.run();
     }
-
 }

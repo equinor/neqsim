@@ -17,14 +17,15 @@ import neqsim.thermo.phase.PhaseInterface;
  * @version $Id: $Id
  */
 public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
-
     private static final long serialVersionUID = 1000;
 
     double[][] bij = new double[1][1];
     double[][] cij = new double[1][1];
 
     /**
-     * <p>Constructor for ComponentGEUnifacPSRK.</p>
+     * <p>
+     * Constructor for ComponentGEUnifacPSRK.
+     * </p>
      */
     public ComponentGEUnifacPSRK() {}
 
@@ -41,7 +42,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
     public ComponentGEUnifacPSRK(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
-
     }
 
     /**
@@ -194,7 +194,6 @@ public class ComponentGEUnifacPSRK extends ComponentGEUnifac {
 
         for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
             calclnGammak(i, phase);
-
         }
 
         lngammaResidual = 0.0;

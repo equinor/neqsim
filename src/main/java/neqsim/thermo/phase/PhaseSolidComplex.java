@@ -14,11 +14,12 @@ package neqsim.thermo.phase;
  * @version $Id: $Id
  */
 public class PhaseSolidComplex extends PhaseSolid {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for PhaseSolidComplex.</p>
+     * <p>
+     * Constructor for PhaseSolidComplex.
+     * </p>
      */
     public PhaseSolidComplex() {
         super();

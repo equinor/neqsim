@@ -18,13 +18,14 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  * @version $Id: $Id
  */
 public class PipeLeg extends FlowLeg {
-
     private static final long serialVersionUID = 1000;
 
     // FlowNodeInterface[] node;
 
     /**
-     * <p>Constructor for PipeLeg.</p>
+     * <p>
+     * Constructor for PipeLeg.
+     * </p>
      */
     public PipeLeg() {
         super();
@@ -53,5 +54,4 @@ public class PipeLeg extends FlowLeg {
         // inletTotalNormalVolumetricFlowRate);
         super.createFlowNodes();
     }
-
 }

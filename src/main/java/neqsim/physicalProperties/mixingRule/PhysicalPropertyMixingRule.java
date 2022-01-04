@@ -20,14 +20,15 @@ import neqsim.thermo.phase.PhaseInterface;
  */
 public class PhysicalPropertyMixingRule
         implements PhysicalPropertyMixingRuleInterface, ThermodynamicConstantsInterface {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(PhysicalPropertyMixingRule.class);
 
     public double[][] Gij;
 
     /**
-     * <p>Constructor for PhysicalPropertyMixingRule.</p>
+     * <p>
+     * Constructor for PhysicalPropertyMixingRule.
+     * </p>
      */
     public PhysicalPropertyMixingRule() {}
 

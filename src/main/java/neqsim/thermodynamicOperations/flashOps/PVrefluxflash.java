@@ -8,13 +8,14 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>PVrefluxflash class.</p>
+ * <p>
+ * PVrefluxflash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class PVrefluxflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     Flash tpFlash;
@@ -22,12 +23,16 @@ public class PVrefluxflash extends Flash {
     double refluxSpec = 0.5;
 
     /**
-     * <p>Constructor for PVrefluxflash.</p>
+     * <p>
+     * Constructor for PVrefluxflash.
+     * </p>
      */
     public PVrefluxflash() {}
 
     /**
-     * <p>Constructor for PVrefluxflash.</p>
+     * <p>
+     * Constructor for PVrefluxflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param refluxSpec a double
@@ -81,7 +86,6 @@ public class PVrefluxflash extends Flash {
             // System.out.println("temp " + system.getTemperature() + " err " + err + "
             // volfor " + system.getPhase(refluxPhase).getVolume() / system.getVolume());
         } while (Math.abs(dt) > 1e-8 && Math.abs(f_func) > 1e-6 && iter < 1000);
-
     }
 
     /** {@inheritDoc} */

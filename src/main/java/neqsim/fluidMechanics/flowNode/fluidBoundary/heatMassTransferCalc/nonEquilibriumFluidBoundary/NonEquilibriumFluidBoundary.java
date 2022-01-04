@@ -9,12 +9,11 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract NonEquilibriumFluidBoundary class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public abstract class NonEquilibriumFluidBoundary
         extends neqsim.fluidMechanics.flowNode.fluidBoundary.heatMassTransferCalc.FluidBoundary {
-
     private static final long serialVersionUID = 1000;
 
     protected int neq = 0;
@@ -128,7 +127,6 @@ public abstract class NonEquilibriumFluidBoundary
                             * interphaseSystem.getPhases()[1].getComponents()[i].getx())));
             sumx += interphaseSystem.getPhases()[0].getComponents()[i].getx();
             sumy += interphaseSystem.getPhases()[1].getComponents()[i].getx();
-
         }
         fvec.set(bulkSystem.getPhases()[0].getNumberOfComponents() - 1, 0, 1.0 - sumx);
         fvec.set(bulkSystem.getPhases()[0].getNumberOfComponents(), 0, 1.0 - sumy);

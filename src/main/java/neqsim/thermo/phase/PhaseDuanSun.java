@@ -17,7 +17,6 @@ import neqsim.thermo.component.ComponentGeDuanSun;
  * @version $Id: $Id
  */
 public class PhaseDuanSun extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double[][] alpha;
@@ -27,7 +26,9 @@ public class PhaseDuanSun extends PhaseGE {
     double GE = 0.0;
 
     /**
-     * <p>Constructor for PhaseDuanSun.</p>
+     * <p>
+     * Constructor for PhaseDuanSun.
+     * </p>
      */
     public PhaseDuanSun() {
         super();
@@ -119,5 +120,4 @@ public class PhaseDuanSun extends PhaseGE {
         // pressure, phaseType);
         return GE;
     }
-
 }

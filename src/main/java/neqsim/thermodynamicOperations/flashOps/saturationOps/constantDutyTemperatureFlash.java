@@ -12,15 +12,16 @@ import neqsim.thermo.system.SystemInterface;
  * constantDutyTemperatureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class constantDutyTemperatureFlash extends constantDutyFlash {
-
     private static final long serialVersionUID = 1000;
 
     /**
-     * <p>Constructor for constantDutyTemperatureFlash.</p>
+     * <p>
+     * Constructor for constantDutyTemperatureFlash.
+     * </p>
      */
     public constantDutyTemperatureFlash() {}
 
@@ -38,7 +39,6 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         system.init(0);
         system.init(2);
 
@@ -88,7 +88,6 @@ public class constantDutyTemperatureFlash extends constantDutyFlash {
             Told = system.getTemperature();
             system.setTemperature((Told - funk / deriv * 0.7));
             // System.out.println("Temp: " + system.getTemperature() + " funk " + funk);
-
         } while ((Math.abs((system.getTemperature() - Told) / system.getTemperature()) > 1e-7
                 && iterations < 300) || iterations < 3);
     }

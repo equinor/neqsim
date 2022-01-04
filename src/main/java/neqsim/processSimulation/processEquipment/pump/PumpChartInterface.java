@@ -1,13 +1,14 @@
 package neqsim.processSimulation.processEquipment.pump;
 
 /**
- * <p>PumpChartInterface interface.</p>
+ * <p>
+ * PumpChartInterface interface.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public interface PumpChartInterface extends Cloneable {
-
     /**
      * This method is used add a curve to the CompressorChart object
      *
@@ -27,14 +28,14 @@ public interface PumpChartInterface extends Cloneable {
      * @param head an array of {@link double} objects
      * @param polyEff an array of {@link double} objects
      */
-    public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
-            double[][] polyEff);
+    public void setCurves(double[] chartConditions, double[] speed, double[][] flow,
+            double[][] head, double[][] polyEff);
 
     /**
      * Get method for polytropic head from reference curves.
      *
-     * @param  flow [m3/h], speed in [rpm].
-     * @return      polytropic head in unit [getHeadUnit]
+     * @param flow [m3/h], speed in [rpm].
+     * @return polytropic head in unit [getHeadUnit]
      * @param speed a double
      */
     public double getHead(double flow, double speed);
@@ -42,8 +43,8 @@ public interface PumpChartInterface extends Cloneable {
     /**
      * Get method for efficiency from reference curves.
      *
-     * @param  flow [m3/h], speed in [rpm].
-     * @return      efficiency [%].
+     * @param flow [m3/h], speed in [rpm].
+     * @return efficiency [%].
      * @param speed a double
      */
     public double getEfficiency(double flow, double speed);
@@ -56,11 +57,12 @@ public interface PumpChartInterface extends Cloneable {
      * @param refPressure a double
      * @param refZ a double
      */
-    public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ);
+    public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
+            double refZ);
 
     /**
-     * Checks if set to use compressor chart for compressor calculations (chart is
-     * set for compressor)
+     * Checks if set to use compressor chart for compressor calculations (chart is set for
+     * compressor)
      *
      * @return a boolean
      */
@@ -88,23 +90,23 @@ public interface PumpChartInterface extends Cloneable {
     public void setHeadUnit(String headUnit);
 
     /**
-     * get method for kappa setting. true = real kappa is used, false = ideal kappa
-     * is used
+     * get method for kappa setting. true = real kappa is used, false = ideal kappa is used
      *
      * @return true/false flag
      */
     public boolean useRealKappa();
 
     /**
-     * set method for kappa setting. true = real kappa is used, false = ideal kappa
-     * is used
+     * set method for kappa setting. true = real kappa is used, false = ideal kappa is used
      *
      * @param useRealKappa a boolean
      */
     public void setUseRealKappa(boolean useRealKappa);
 
     /**
-     * <p>getSpeed.</p>
+     * <p>
+     * getSpeed.
+     * </p>
      *
      * @param flow a double
      * @param head a double
@@ -113,8 +115,9 @@ public interface PumpChartInterface extends Cloneable {
     public int getSpeed(double flow, double head);
 
     /**
-     * <p>plot.</p>
+     * <p>
+     * plot.
+     * </p>
      */
     public void plot();
-
 }

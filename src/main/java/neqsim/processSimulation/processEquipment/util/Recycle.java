@@ -23,7 +23,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface {
-
     private static final long serialVersionUID = 1000;
 
     protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
@@ -40,7 +39,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     int maxIterations = 10;
 
     /**
-     * <p>Constructor for Recycle.</p>
+     * <p>
+     * Constructor for Recycle.
+     * </p>
      */
     public Recycle() {}
 
@@ -117,10 +118,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
         String compName = new String();
 
         for (int k = 1; k < streams.size(); k++) {
-
             for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
                     .getNumberOfComponents(); i++) {
-
                 boolean gotComponent = false;
                 String componentName =
                         streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
@@ -140,7 +139,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
                                 .getComponentNumber();
                         compName = streams.get(0).getThermoSystem().getPhase(0).getComponent(p)
                                 .getComponentName();
-
                     }
                 }
 
@@ -173,7 +171,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
             gtemp += streams.get(k).getThermoSystem().getTemperature()
                     * streams.get(k).getThermoSystem().getNumberOfMoles()
                     / mixedStream.getThermoSystem().getNumberOfMoles();
-
         }
         return gtemp;
     }
@@ -324,9 +321,7 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
 
     /** {@inheritDoc} */
     @Override
-    public void displayResult() {
-
-    }
+    public void displayResult() {}
 
     /** {@inheritDoc} */
     @Override

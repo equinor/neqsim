@@ -19,7 +19,6 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * @version $Id: $Id
  */
 public class SampleCreator {
-
     private static final long serialVersionUID = 1000;
 
     protected SystemInterface system;
@@ -27,7 +26,9 @@ public class SampleCreator {
     ExperimentalEquipmentData equipment;
 
     /**
-     * <p>Constructor for SampleCreator.</p>
+     * <p>
+     * Constructor for SampleCreator.
+     * </p>
      */
     public SampleCreator() {}
 

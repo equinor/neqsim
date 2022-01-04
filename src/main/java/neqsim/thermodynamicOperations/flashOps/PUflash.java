@@ -3,25 +3,30 @@ package neqsim.thermodynamicOperations.flashOps;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>PUflash class.</p>
+ * <p>
+ * PUflash class.
+ * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
  */
 public class PUflash extends Flash {
-
     private static final long serialVersionUID = 1000;
 
     double Uspec = 0;
     Flash tpFlash;
 
     /**
-     * <p>Constructor for PUflash.</p>
+     * <p>
+     * Constructor for PUflash.
+     * </p>
      */
     public PUflash() {}
 
     /**
-     * <p>Constructor for PUflash.</p>
+     * <p>
+     * Constructor for PUflash.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param Uspec a double
@@ -33,7 +38,9 @@ public class PUflash extends Flash {
     }
 
     /**
-     * <p>calcdQdTT.</p>
+     * <p>
+     * calcdQdTT.
+     * </p>
      *
      * @return a double
      */
@@ -43,7 +50,9 @@ public class PUflash extends Flash {
     }
 
     /**
-     * <p>calcdQdT.</p>
+     * <p>
+     * calcdQdT.
+     * </p>
      *
      * @return a double
      */
@@ -53,7 +62,9 @@ public class PUflash extends Flash {
     }
 
     /**
-     * <p>solveQ.</p>
+     * <p>
+     * solveQ.
+     * </p>
      *
      * @return a double
      */
@@ -81,7 +92,7 @@ public class PUflash extends Flash {
             tpFlash.run();
             erorOld = error;
             error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-            //System.out.println("error " + error);
+            // System.out.println("error " + error);
             // System.out.println("temperature " + system.getTemperature() + " " +
             // iterations);
         } while (error > 1e-8 && iterations < 500);
@@ -95,7 +106,7 @@ public class PUflash extends Flash {
         tpFlash.run();
         // System.out.println("internal energy start: " + system.getInternalEnergy());
         solveQ();
-        //System.out.println("internal energy end: " + system.getInternalEnergy());
+        // System.out.println("internal energy end: " + system.getInternalEnergy());
         // System.out.println("enthalpy: " + system.getEnthalpy());
         // System.out.println("Temperature: " + system.getTemperature());
     }
@@ -105,5 +116,4 @@ public class PUflash extends Flash {
     public org.jfree.chart.JFreeChart getJFreeChart(String name) {
         return null;
     }
-
 }

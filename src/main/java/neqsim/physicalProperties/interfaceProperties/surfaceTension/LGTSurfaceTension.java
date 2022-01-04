@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
  * @version $Id: $Id
  */
 public class LGTSurfaceTension extends SurfaceTension {
-
     private static final long serialVersionUID = 1000;
 
     int ite_step = 200;
@@ -26,7 +25,9 @@ public class LGTSurfaceTension extends SurfaceTension {
     double[] pressure_interface = null;
 
     /**
-     * <p>Constructor for LGTSurfaceTension.</p>
+     * <p>
+     * Constructor for LGTSurfaceTension.
+     * </p>
      */
     public LGTSurfaceTension() {}
 
@@ -76,7 +77,6 @@ public class LGTSurfaceTension extends SurfaceTension {
         z_step = new double[ite_step];
 
         for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-
             mu_equi[i] = system.getPhase(interface1).getComponent(i)
                     .getChemicalPotential(system.getPhase(interface1));
             den_interface[0][i] = 1e5 * system.getPhase(interface1).getComponent(i).getx()
@@ -111,7 +111,6 @@ public class LGTSurfaceTension extends SurfaceTension {
         // localSystem.getPressure());
 
         for (int j = 1; j < ite_step; j++) {
-
             for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
                 del_den_interface[i] = (1e5 * system.getPhase(interface2).getComponent(i).getx()
                         / system.getPhase(interface2).getMolarVolume()

@@ -5,19 +5,21 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMarquardtFunction;
 
 /**
- * <p>AntoineSolidFunction class.</p>
+ * <p>
+ * AntoineSolidFunction class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class AntoineSolidFunction extends LevenbergMarquardtFunction {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(AntoineSolidFunction.class);
 
-
     /**
-     * <p>Constructor for AntoineSolidFunction.</p>
+     * <p>
+     * Constructor for AntoineSolidFunction.
+     * </p>
      */
     public AntoineSolidFunction() {
         params = new double[2];

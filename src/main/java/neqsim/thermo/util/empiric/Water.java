@@ -5,7 +5,7 @@ package neqsim.thermo.util.empiric;
  * Water class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class Water {

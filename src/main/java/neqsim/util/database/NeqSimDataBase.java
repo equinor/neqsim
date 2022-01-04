@@ -25,7 +25,6 @@ import org.apache.logging.log4j.Logger;
  * @version Dec 2018
  */
 public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
-
     /**
      * <p>
      * createTemporaryTables.
@@ -68,10 +67,11 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
     protected Connection databaseConnection = null;
 
     /**
-     * <p>Constructor for NeqSimDataBase.</p>
+     * <p>
+     * Constructor for NeqSimDataBase.
+     * </p>
      */
     public NeqSimDataBase() {
-
         setDataBaseType(dataBaseType);
 
         try {
@@ -80,19 +80,19 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         } catch (Exception ex) {
             logger.error("SQLException " + ex.getMessage());
             throw new RuntimeException(ex);
-
         }
     }
 
     /**
-     * <p>openConnection.</p>
+     * <p>
+     * openConnection.
+     * </p>
      *
      * @return a Connection object
      * @throws java.sql.SQLException if any.
      * @throws java.lang.ClassNotFoundException if any.
      */
     public Connection openConnection() throws SQLException, ClassNotFoundException {
-
         javax.naming.InitialContext ctx = null;
         javax.sql.DataSource ds = null;
         try {
@@ -113,7 +113,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
                 return DriverManager
                         .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ="
                                 + dir + "\\data\\NeqSimDatabase");
-
             } else if (dataBaseType.equals("H2") || dataBaseType.equals("H2RT")) {
                 return DriverManager.getConnection(connectionString, "sa", "");
             } else if (dataBaseType.equals("MSAccessUCanAccess")) {
@@ -270,7 +269,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      */
     public Statement getStatement() {
         return statement;
-
     }
 
     /**
@@ -282,7 +280,6 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
      */
     public void setStatement(Statement statement) {
         this.statement = statement;
-
     }
 
     /**
@@ -344,12 +341,10 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
         try {
             dataSet.next();
             logger.info("dataset " + dataSet.getString("molarmass"));
-
         } catch (Exception e) {
             logger.error("failed " + e.toString());
             throw new RuntimeException(e);
         }
-
     }
 
     /**

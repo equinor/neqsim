@@ -17,7 +17,6 @@ import neqsim.fluidMechanics.flowNode.FlowNodeInterface;
  * @version $Id: $Id
  */
 public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
-
     private static final long serialVersionUID = 1000;
 
     /**
@@ -36,5 +35,4 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
     public InterphaseAnnularFlow(FlowNodeInterface node) {
         // flowNode = node;
     }
-
 }

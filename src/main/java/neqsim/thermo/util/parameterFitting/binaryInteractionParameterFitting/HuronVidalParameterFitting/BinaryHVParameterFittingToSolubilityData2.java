@@ -1,25 +1,29 @@
 package neqsim.thermo.util.parameterFitting.binaryInteractionParameterFitting.HuronVidalParameterFitting;
 
 /**
- * <p>BinaryHVParameterFittingToSolubilityData2 class.</p>
+ * <p>
+ * BinaryHVParameterFittingToSolubilityData2 class.
+ * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class BinaryHVParameterFittingToSolubilityData2 extends HuronVidalFunction {
-
     private static final long serialVersionUID = 1000;
 
     int phase = 1;
 
-
     /**
-     * <p>Constructor for BinaryHVParameterFittingToSolubilityData2.</p>
+     * <p>
+     * Constructor for BinaryHVParameterFittingToSolubilityData2.
+     * </p>
      */
     public BinaryHVParameterFittingToSolubilityData2() {}
 
     /**
-     * <p>Constructor for BinaryHVParameterFittingToSolubilityData2.</p>
+     * <p>
+     * Constructor for BinaryHVParameterFittingToSolubilityData2.
+     * </p>
      *
      * @param phase a int
      */

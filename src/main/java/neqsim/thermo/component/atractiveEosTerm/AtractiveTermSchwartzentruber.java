@@ -17,13 +17,14 @@ import neqsim.thermo.component.ComponentEosInterface;
  * @version $Id: $Id
  */
 public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
-
     private static final long serialVersionUID = 1000;
 
     private double c = 0.0, d = 0.0;
 
     /**
-     * <p>Constructor for AtractiveTermSchwartzentruber.</p>
+     * <p>
+     * Constructor for AtractiveTermSchwartzentruber.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      */
@@ -34,7 +35,9 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
     }
 
     /**
-     * <p>Constructor for AtractiveTermSchwartzentruber.</p>
+     * <p>
+     * Constructor for AtractiveTermSchwartzentruber.
+     * </p>
      *
      * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
      * @param params an array of {@link double} objects
@@ -194,5 +197,4 @@ public class AtractiveTermSchwartzentruber extends AtractiveTermBaseClass {
             return getComponent().geta() * diffdiffalphaT(temperature);
         }
     }
-
 }

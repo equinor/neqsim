@@ -18,7 +18,6 @@ import neqsim.thermo.component.ComponentGeNRTL;
  * @version $Id: $Id
  */
 public class PhaseGENRTL extends PhaseGE {
-
     private static final long serialVersionUID = 1000;
 
     double[][] alpha;
@@ -28,7 +27,9 @@ public class PhaseGENRTL extends PhaseGE {
     double GE = 0.0;
 
     /**
-     * <p>Constructor for PhaseGENRTL.</p>
+     * <p>
+     * Constructor for PhaseGENRTL.
+     * </p>
      */
     public PhaseGENRTL() {
         super();

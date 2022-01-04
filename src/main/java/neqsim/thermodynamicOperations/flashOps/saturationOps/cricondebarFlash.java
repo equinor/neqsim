@@ -15,18 +15,19 @@ import org.apache.logging.log4j.*;
  * cricondebarFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class cricondebarFlash extends constantDutyPressureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(constantDutyFlash.class);
 
     Matrix Jac, fvec;
 
     /**
-     * <p>Constructor for cricondebarFlash.</p>
+     * <p>
+     * Constructor for cricondebarFlash.
+     * </p>
      */
     public cricondebarFlash() {}
 
@@ -42,7 +43,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
         Jac = new Matrix(system.getPhase(0).getNumberOfComponents() + 1,
                 system.getPhase(0).getNumberOfComponents() + 1);
         fvec = new Matrix(system.getPhase(0).getNumberOfComponents() + 1, 1);
-
     }
 
     /**
@@ -55,7 +55,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
     public double calcx() {
         double ktot = 0.0, xtotal = 0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-
             system.getPhases()[0].getComponents()[i].setK(
                     Math.exp(system.getPhases()[1].getComponents()[i].getLogFugasityCoeffisient()
                             - system.getPhases()[0].getComponents()[i]
@@ -185,7 +184,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                         - damping * dx.get(system.getPhase(0).getNumberOfComponents(), 0));
             } while (Math.abs(fvec.norm2()) > 1.0e-12 && iterations < maxNumberOfIterations
                     && Math.abs(presOld - system.getPressure()) < 10.0);
-
         } while (Math.abs(oldIterTemp - system.getTemperature()) > 1e-3);
     }
 
@@ -243,7 +241,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
 
                 logger.info("temp " + system.getTemperature() + "dewTemp " + dewTemp + " Q1 " + Q1
                         + " pressure " + system.getPressure());
-
             } while (Math.abs(Q1) > 1e-10 && iterations < 15);// maxNumberOfIterations);
             logger.info("temp " + system.getTemperature() + " Q1 " + Q1);
             // if(ii<2) system.setTemperature(dewTemp-);
@@ -267,7 +264,6 @@ public class cricondebarFlash extends constantDutyPressureFlash {
                     - Math.log(system.getPhases()[1].getComponents()[i].getFugasityCoeffisient()
                             * system.getPhases()[1].getComponents()[i].getx()
                             * system.getPressure()));
-
         }
         fvec.set(system.getPhase(0).getNumberOfComponents(), 0, 1.0 - sumxx);
         // logger.info("sumx" + sumxx);//

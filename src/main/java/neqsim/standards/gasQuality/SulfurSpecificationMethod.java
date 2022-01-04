@@ -9,13 +9,14 @@ package neqsim.standards.gasQuality;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>SulfurSpecificationMethod class.</p>
+ * <p>
+ * SulfurSpecificationMethod class.
+ * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class SulfurSpecificationMethod extends neqsim.standards.Standard {
-
     private static final long serialVersionUID = 1000;
 
     SystemInterface thermoSystem;
@@ -23,7 +24,9 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
     double H2Scontent = 0.0;
 
     /**
-     * <p>Constructor for SulfurSpecificationMethod.</p>
+     * <p>
+     * Constructor for SulfurSpecificationMethod.
+     * </p>
      */
     public SulfurSpecificationMethod() {
         name = "SulfurSpecificationMethod";
@@ -31,7 +34,9 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
     }
 
     /**
-     * <p>Constructor for SulfurSpecificationMethod.</p>
+     * <p>
+     * Constructor for SulfurSpecificationMethod.
+     * </p>
      *
      * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -40,15 +45,15 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
         this.thermoSystem = thermoSystem;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public void calculate() {
+    public void calculate() {
         thermoSystem.init(0);
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String returnParameter, java.lang.String returnUnit) {
+    public double getValue(String returnParameter, java.lang.String returnUnit) {
         thermoSystem.init(0);
         if (thermoSystem.getPhase(0).hasComponent("H2S")) {
             if (returnParameter.equals("H2S content")) {
@@ -59,21 +64,21 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
         return 0.0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getValue(String returnParameter) {
+    public double getValue(String returnParameter) {
         return getValue(returnParameter, "");
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public String getUnit(String returnParameter) {
+    public String getUnit(String returnParameter) {
         return unit;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public boolean isOnSpec() {
+    public boolean isOnSpec() {
         return true;
     }
 }

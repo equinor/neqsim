@@ -15,16 +15,17 @@ import neqsim.thermo.system.SystemInterface;
  * waterDewPointTemperatureFlash class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(waterDewPointTemperatureFlash.class);
 
     /**
-     * <p>Constructor for waterDewPointTemperatureFlash.</p>
+     * <p>
+     * Constructor for waterDewPointTemperatureFlash.
+     * </p>
      */
     public waterDewPointTemperatureFlash() {}
 
@@ -42,7 +43,6 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         int iterations = 0, maxNumberOfIterations = 15000;
         double yold = 0, ytotal = 1;
         double deriv = 0, funk = 0;
@@ -95,7 +95,6 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
                     // logger.info("temp " + system.getTemperature());
                     // if(system.getPhase(0).getComponent(k).getComponentName().equals("MEG"))
                     // logger.info("funk " + funk + " temp " + system.getTemperature());
-
                 } while (Math.abs(funk) >= 0.0000001 && iterations < 10000);
 
                 // logger.info("funk " + funk + k + " " + system.getTemperature());
@@ -115,5 +114,4 @@ public class waterDewPointTemperatureFlash extends constantDutyTemperatureFlash 
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
 }

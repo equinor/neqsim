@@ -20,13 +20,14 @@ import neqsim.thermodynamicOperations.BaseOperation;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
 /**
- * <p>pTphaseEnvelopeMay class.</p>
+ * <p>
+ * pTphaseEnvelopeMay class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class pTphaseEnvelopeMay extends BaseOperation {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(pTphaseEnvelopeMay.class);
 
@@ -80,12 +81,16 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     double Tmin = 0.0;
 
     /**
-     * <p>Constructor for pTphaseEnvelopeMay.</p>
+     * <p>
+     * Constructor for pTphaseEnvelopeMay.
+     * </p>
      */
     public pTphaseEnvelopeMay() {}
 
     /**
-     * <p>Constructor for pTphaseEnvelopeMay.</p>
+     * <p>
+     * Constructor for pTphaseEnvelopeMay.
+     * </p>
      *
      * @param system a {@link neqsim.thermo.system.SystemInterface} object
      * @param name a {@link java.lang.String} object
@@ -108,16 +113,13 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         this.lowPres = lowPres;
         oldDeltalnK = new double[system.getPhase(0).getNumberOfComponents()];
         deltalnK = new double[system.getPhase(0).getNumberOfComponents()];
-
     }
 
     /** {@inheritDoc} */
     @Override
     public void run() {
-
         speceq = 0; // initialization
         try {
-
             points[0] = new double[10000]; // declarations for points
             points[1] = new double[10000]; // declarations for points
 
@@ -196,7 +198,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
             startPres = system.getPressure();
             nonLinSolver.setu();
             for (np = 1; np < 9980; np++) {
-
                 try {
                     // solves the np point of the envelope
                     nonLinSolver.calcInc(np);
@@ -211,7 +212,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     // and then stops
 
                     if (restart) {
-
                         restart = false;
                         // keep values
                         Tmin = points[0][np - 2];
@@ -240,9 +240,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                         }
                         run();
                         break;
-
                     } else {
-
                         np = np - 1;
                         break;
                     }
@@ -314,11 +312,9 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                 pointsS[np - 1] = system.getPhase(1).getEntropy()
                         / system.getPhase(1).getNumberOfMolesInPhase()
                         / system.getPhase(1).getMolarMass() / 1e3;
-
             }
 
             try {
-
                 int ncr = nonLinSolver.getNpCrit();
                 if (ncr == 0) {
                     ncr = np;
@@ -373,7 +369,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     pointsS2[0][i] = pointsS[i];
                     pointsV2[1][i] = points[1][i];
                     pointsV2[0][i] = pointsV[i];
-
                 }
                 if (ncr2 > 2) {
                     for (int i = 1; i < (ncr2 - 2); i++) {
@@ -390,7 +385,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                 }
 
                 if (hascopiedPoints) {
-
                     if (ncrfirst > npfirst) {
                         ncr = copiedPoints[0].length - 1;
                         ncr2 = npfirst - ncr;
@@ -439,7 +433,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                         pointsS2[4][i] = copiedPoints[3][i];
                         pointsV2[5][i] = copiedPoints[1][i];
                         pointsV2[4][i] = copiedPoints[4][i];
-
                     }
                     if (ncr2 > 2) {
                         for (int i = 1; i < (ncr2 - 2); i++) {
@@ -452,10 +445,8 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                             pointsS2[6][i] = copiedPoints[3][i + ncr - 1];
                             pointsV2[7][i] = copiedPoints[1][i + ncr - 1];
                             pointsV2[6][i] = copiedPoints[4][i + ncr - 1];
-
                         }
                     }
-
                 }
 
                 // critical point
@@ -471,14 +462,12 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     points2[2][0] = system.getTC();
                     points2[3][0] = system.getPC();
                 }
-
             } catch (Exception e2) {
                 double nef = 0.;
                 logger.error("error", e2);
             }
 
             try {
-
                 if (outputToFile) {
                     // update this
                     String name1 = new String();
@@ -496,9 +485,7 @@ public class pTphaseEnvelopeMay extends BaseOperation {
                     file2.setXvalues(points2[0], "temp", "sec");
                     file2.setYvalues(points2[1], "pres", "meter");
                     file2.createFile();
-
                 }
-
             } catch (Exception e3) {
                 double nef = 0.;
                 logger.error("error", e3);
@@ -510,10 +497,11 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     }
 
     /**
-     * <p>calcHydrateLine.</p>
+     * <p>
+     * calcHydrateLine.
+     * </p>
      */
     public void calcHydrateLine() {
-
         ThermodynamicOperations opsHyd = new ThermodynamicOperations(system);
         try {
             opsHyd.hydrateEquilibriumLine(10.0, 300.0);
@@ -522,7 +510,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         }
 
         double[][] hydData = opsHyd.getData();
-
     }
 
     /** {@inheritDoc} */
@@ -698,14 +685,15 @@ public class pTphaseEnvelopeMay extends BaseOperation {
     }
 
     /**
-     * <p>tempKWilson.</p>
+     * <p>
+     * tempKWilson.
+     * </p>
      *
      * @param beta a double
      * @param P a double
      * @return a double
      */
     public double tempKWilson(double beta, double P) {
-
         // Initiallizes the temperature of a saturation point for given pressure
         // based on K values of Wilson
         // see Michelsen book thermodynamics & computational aspects
@@ -759,7 +747,6 @@ public class pTphaseEnvelopeMay extends BaseOperation {
 
         // solve for Tstart with Newton
         for (int i = 0; i < 1000; i++) {
-
             initT = 0.;
             dinitT = 0.;
             for (int j = 0; j < numberOfComponents; j++) {
@@ -817,5 +804,4 @@ public class pTphaseEnvelopeMay extends BaseOperation {
         graph2 = new graph2b(points2, navn, title, "Temperature [K]", "Pressure [bara]");
         return graph2.getChart();
     }
-
 }

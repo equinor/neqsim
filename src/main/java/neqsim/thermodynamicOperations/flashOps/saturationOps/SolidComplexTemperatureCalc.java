@@ -15,11 +15,10 @@ import neqsim.thermodynamicOperations.ThermodynamicOperations;
  * SolidComplexTemperatureCalc class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(SolidComplexTemperatureCalc.class);
 
@@ -32,7 +31,9 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
     public static double TrefComplex = 244.19;
 
     /**
-     * <p>Constructor for SolidComplexTemperatureCalc.</p>
+     * <p>
+     * Constructor for SolidComplexTemperatureCalc.
+     * </p>
      */
     public SolidComplexTemperatureCalc() {}
 
@@ -73,7 +74,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             // HrefComplex = 4863.59239495220;
             HrefComplex = 6629.1366952637;
             TrefComplex = 244.19;
-
         }
 
         if (comp1.equals("methanol") && comp2.equals("water")) {
@@ -81,7 +81,6 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             HrefComplex = 8540.0;
             TrefComplex = 171.25;
         }
-
     }
 
     /**
@@ -202,9 +201,7 @@ public class SolidComplexTemperatureCalc extends constantDutyTemperatureFlash {
             oldError = error;
             // logger.info("temperature " + temperature);
             system.setTemperature(system.getTemperature() + deltaT);
-
         } while (Math.abs(deltaT) > 0.001 && iteration < 50);
-
     }
 
     /** {@inheritDoc} */

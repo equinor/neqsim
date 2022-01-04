@@ -7,9 +7,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>SurgeCurve class.</p>
+ * <p>
+ * SurgeCurve class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class SurgeCurve implements java.io.Serializable {
@@ -24,12 +26,16 @@ public class SurgeCurve implements java.io.Serializable {
     PolynomialFunction flowFitterFunc = null;
 
     /**
-     * <p>Constructor for SurgeCurve.</p>
+     * <p>
+     * Constructor for SurgeCurve.
+     * </p>
      */
     public SurgeCurve() {}
 
     /**
-     * <p>Constructor for SurgeCurve.</p>
+     * <p>
+     * Constructor for SurgeCurve.
+     * </p>
      *
      * @param flow an array of {@link double} objects
      * @param head an array of {@link double} objects
@@ -40,7 +46,9 @@ public class SurgeCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>setCurve.</p>
+     * <p>
+     * setCurve.
+     * </p>
      *
      * @param chartConditions an array of {@link double} objects
      * @param flow an array of {@link double} objects
@@ -65,7 +73,9 @@ public class SurgeCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>getSurgeFlow.</p>
+     * <p>
+     * getSurgeFlow.
+     * </p>
      *
      * @param head a double
      * @return a double
@@ -75,7 +85,9 @@ public class SurgeCurve implements java.io.Serializable {
     }
 
     /**
-     * <p>isSurge.</p>
+     * <p>
+     * isSurge.
+     * </p>
      *
      * @param head a double
      * @param flow a double

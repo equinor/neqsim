@@ -1,8 +1,3 @@
-/*
- * PhaseSrkEos.java
- *
- * Created on 3. juni 2000, 14:38
- */
 package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +14,6 @@ import neqsim.thermo.component.ComponentPCSAFT;
  * @version $Id: $Id
  */
 public class PhasePCSAFT extends PhaseSrkEos {
-
     private static final long serialVersionUID = 1000;
 
     double nSAFT = 1.0;
@@ -61,7 +55,9 @@ public class PhasePCSAFT extends PhaseSrkEos {
     static Logger logger = LogManager.getLogger(PhasePCSAFT.class);
 
     /**
-     * <p>Constructor for PhasePCSAFT.</p>
+     * <p>
+     * Constructor for PhasePCSAFT.
+     * </p>
      */
     public PhasePCSAFT() {
         super();
@@ -1125,7 +1121,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
     public double molarVolume22(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double volume =
                 phase == 0 ? getB() / (2.0 / (2.0 + temperature / getPseudoCriticalTemperature()))
                         : (numberOfMolesInPhase * temperature * R) / pressure;
@@ -1159,7 +1154,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
     public double molarVolume(double pressure, double temperature, double A, double B, int phase)
             throws neqsim.util.exception.IsNaNException,
             neqsim.util.exception.TooManyIterationsException {
-
         double BonV = phase == 0 ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
                 : pressure * getB() / (numberOfMolesInPhase * temperature * R);
         // double BonV = phase== 0 ? 0.99:1e-5;
@@ -1207,7 +1201,6 @@ public class PhasePCSAFT extends PhaseSrkEos {
             BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
             setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
             Z = pressure * getMolarVolume() / (R * temperature);
-
         }
 
         if (iterations >= 2000) {

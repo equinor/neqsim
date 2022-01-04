@@ -4,13 +4,14 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>DifferentialLiberation class.</p>
+ * <p>
+ * DifferentialLiberation class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class DifferentialLiberation extends BasePVTsimulation {
-
     private static final long serialVersionUID = 1000;
 
     double VoilStd = 0.0;
@@ -28,7 +29,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     double[] gasVolume;
 
     /**
-     * <p>Constructor for DifferentialLiberation.</p>
+     * <p>
+     * Constructor for DifferentialLiberation.
+     * </p>
      *
      * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
      */
@@ -37,18 +40,21 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>calcSaturationConditions.</p>
+     * <p>
+     * calcSaturationConditions.
+     * </p>
      */
     public void calcSaturationConditions() {
-
         getThermoSystem().setPressure(1.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-        } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
+        } while (getThermoSystem().getNumberOfPhases() == 1
+                && getThermoSystem().getPressure() < 1000.0);
         do {
             getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
             thermoOps.TPflash();
-        } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
+        } while (getThermoSystem().getNumberOfPhases() > 1
+                && getThermoSystem().getPressure() < 1000.0);
         double minPres = getThermoSystem().getPressure() - 10.0;
         double maxPres = getThermoSystem().getPressure();
         do {
@@ -61,8 +67,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
             }
         } while (Math.abs(maxPres - minPres) > 1e-5);
         /*
-         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) {
-         * e.printStackTrace(); }
+         * try { thermoOps.dewPointPressureFlash(); } catch (Exception e) { e.printStackTrace(); }
          */
         saturationVolume = getThermoSystem().getVolume();
         saturationPressure = getThermoSystem().getPressure();
@@ -70,7 +75,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>runCalc.</p>
+     * <p>
+     * runCalc.
+     * </p>
      */
     public void runCalc() {
         saturationConditionFound = false;
@@ -112,22 +119,27 @@ public class DifferentialLiberation extends BasePVTsimulation {
                     }
                 }
                 gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume()
-                        * getThermoSystem().getPhase(0).getPressure() / 1.01325 / getThermoSystem().getPhase(0).getZ()
-                        * 288.15 / getThermoSystem().getTemperature();
+                        * getThermoSystem().getPhase(0).getPressure() / 1.01325
+                        / getThermoSystem().getPhase(0).getZ() * 288.15
+                        / getThermoSystem().getTemperature();
                 totalGasStandardVolume += getGasStandardVolume()[i];
                 // if (totalVolume[i] > saturationVolume) {
                 Zgas[i] = getThermoSystem().getPhase(0).getZ();
                 relGasGravity[i] = getThermoSystem().getPhase(0).getMolarMass() / 0.028;
                 getThermoSystem().initPhysicalProperties();
-                if (getThermoSystem().hasPhaseType("gas") && getThermoSystem().hasPhaseType("oil")) {
+                if (getThermoSystem().hasPhaseType("gas")
+                        && getThermoSystem().hasPhaseType("oil")) {
                     liquidVolume[i] = getThermoSystem().getPhase(1).getVolume();
-                    oilDensity[i] = getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
+                    oilDensity[i] =
+                            getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
                 } else if (getThermoSystem().hasPhaseType("oil")) {
                     liquidVolume[i] = getThermoSystem().getPhase(0).getVolume();
-                    oilDensity[i] = getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+                    oilDensity[i] =
+                            getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
                 } else {
                     liquidVolume[i] = getThermoSystem().getPhase(0).getVolume();
-                    oilDensity[i] = getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+                    oilDensity[i] =
+                            getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
                 }
 
                 if (getThermoSystem().getNumberOfPhases() > 1) {
@@ -137,11 +149,13 @@ public class DifferentialLiberation extends BasePVTsimulation {
                 }
 
                 liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
-                double volumeCorrection = getThermoSystem().getVolume() - getThermoSystem().getPhase(1).getVolume();
+                double volumeCorrection =
+                        getThermoSystem().getVolume() - getThermoSystem().getPhase(1).getVolume();
                 double test = volumeCorrection / getThermoSystem().getPhase(0).getMolarVolume();
 
                 for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-                    getThermoSystem().addComponent(j, -test * getThermoSystem().getPhase(0).getComponent(j).getx());
+                    getThermoSystem().addComponent(j,
+                            -test * getThermoSystem().getPhase(0).getComponent(j).getx());
                 }
             }
         }
@@ -164,15 +178,18 @@ public class DifferentialLiberation extends BasePVTsimulation {
                 Bg[i] = gasVolume[i] / getGasStandardVolume()[i];
                 Rs[i] = (totalGasStandardVolume - total) / VoilStd;
             }
-            System.out.println("Bo " + getBo()[i] + " Bg " + getBg()[i] + " Rs " + getRs()[i] + " oil density "
-                    + getOilDensity()[i] + "  gas gracvity " + getRelGasGravity()[i] + " Zgas " + getZgas()[i]
-                    + " gasstdvol " + getGasStandardVolume()[i]);
+            System.out.println(
+                    "Bo " + getBo()[i] + " Bg " + getBg()[i] + " Rs " + getRs()[i] + " oil density "
+                            + getOilDensity()[i] + "  gas gracvity " + getRelGasGravity()[i]
+                            + " Zgas " + getZgas()[i] + " gasstdvol " + getGasStandardVolume()[i]);
         }
         System.out.println("test finished");
     }
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -200,11 +217,12 @@ public class DifferentialLiberation extends BasePVTsimulation {
 
         DifferentialLiberation CVDsim = new DifferentialLiberation(tempSystem);
         CVDsim.runCalc();
-
     }
 
     /**
-     * <p>Getter for the field <code>relativeVolume</code>.</p>
+     * <p>
+     * Getter for the field <code>relativeVolume</code>.
+     * </p>
      *
      * @return the relativeVolume
      */
@@ -212,14 +230,16 @@ public class DifferentialLiberation extends BasePVTsimulation {
         return relativeVolume;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getSaturationPressure() {
+    public double getSaturationPressure() {
         return saturationPressure;
     }
 
     /**
-     * <p>getBo.</p>
+     * <p>
+     * getBo.
+     * </p>
      *
      * @return the Bo
      */
@@ -228,7 +248,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>getBg.</p>
+     * <p>
+     * getBg.
+     * </p>
      *
      * @return the Bg
      */
@@ -237,7 +259,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>getRs.</p>
+     * <p>
+     * getRs.
+     * </p>
      *
      * @return the Rs
      */
@@ -246,7 +270,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>getZgas.</p>
+     * <p>
+     * getZgas.
+     * </p>
      *
      * @return the Zgas
      */
@@ -255,7 +281,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>relGasGravity</code>.</p>
+     * <p>
+     * Getter for the field <code>relGasGravity</code>.
+     * </p>
      *
      * @return the relGasGravity
      */
@@ -264,7 +292,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>gasStandardVolume</code>.</p>
+     * <p>
+     * Getter for the field <code>gasStandardVolume</code>.
+     * </p>
      *
      * @return the gasStandardVolume
      */
@@ -273,7 +303,9 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     /**
-     * <p>Getter for the field <code>oilDensity</code>.</p>
+     * <p>
+     * Getter for the field <code>oilDensity</code>.
+     * </p>
      *
      * @return the oilDensity
      */

@@ -6,15 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPA;
 import neqsim.thermodynamicOperations.ThermodynamicOperations;
 
-/*
- *
- * @author  esol
- * @version
- */
 /**
- * <p>TPflashMethanolWaterPropane class.</p>
+ * <p>
+ * TPflashMethanolWaterPropane class.
+ * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
@@ -22,7 +19,9 @@ public class TPflashMethanolWaterPropane {
     static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
     /**
-     * <p>main.</p>
+     * <p>
+     * main.
+     * </p>
      *
      * @param args an array of {@link java.lang.String} objects
      */
@@ -31,9 +30,8 @@ public class TPflashMethanolWaterPropane {
 
         ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
         /*
-         * testSystem.addComponent("methane", 150.0e-2);
-         * testSystem.addComponent("propane", 150.0e-3);
-         * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
+         * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane",
+         * 150.0e-3); testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water",
          * 0.5);
          * 
          * testSystem.createDatabase(true); testSystem.setMixingRule(10);

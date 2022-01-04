@@ -6,25 +6,27 @@
 
 package neqsim.thermodynamicOperations.flashOps.saturationOps;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
-import org.apache.logging.log4j.*;
 
 /**
  * <p>
  * calcSaltSatauration class.
  * </p>
  *
- * @author asmund
+ * @author esol
  * @version $Id: $Id
  */
 public class calcSaltSatauration extends constantDutyTemperatureFlash {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(calcSaltSatauration.class);
     String saltName;
 
     /**
-     * <p>Constructor for calcSaltSatauration.</p>
+     * <p>
+     * Constructor for calcSaltSatauration.
+     * </p>
      */
     public calcSaltSatauration() {}
 
@@ -132,15 +134,12 @@ public class calcSaltSatauration extends constantDutyTemperatureFlash {
             // system.init(1);
             system.init(0);
             system.initPhysicalProperties();
-
         } while (Math.abs(err / ksp) > 1e-5 && iter < 1000);
 
         logger.info("solution found after " + iter + " iterations in calcSaltSatauration()");
-
     }
 
     /** {@inheritDoc} */
     @Override
     public void printToFile(String name) {}
-
 }

@@ -18,7 +18,6 @@ import no.uib.cipr.matrix.DenseMatrix;
  * @version $Id: $Id
  */
 public class GTSurfaceTensionFullGT {
-
     private static final long serialVersionUID = 1000;
     static Logger logger = LogManager.getLogger(GTSurfaceTensionFullGT.class);
 
@@ -51,7 +50,7 @@ public class GTSurfaceTensionFullGT {
     public GTSurfaceTensionFullGT(SystemInterface flashedSystem, int phase1, int phase2) {
         int i = 0;
 
-        /* Setup local system clone and some parameters. */
+        // Setup local system clone and some parameters.
         this.sys = (SystemInterface) flashedSystem.clone();
 
         this.ncomp = this.sys.getPhase(0).getNumberOfComponents();
@@ -239,7 +238,6 @@ public class GTSurfaceTensionFullGT {
                         rhotmp[j][k] = alpha * rhomat[kk][k] + (1 - alpha) * rhomat[kk + 1][k];
                     }
                 }
-
             }
 
             // Update the current guess
@@ -254,7 +252,6 @@ public class GTSurfaceTensionFullGT {
                 debugPlot(xgrid, rhomat);
             }
             // End Remesh
-
         }
         return sigma;
     }
@@ -420,7 +417,6 @@ public class GTSurfaceTensionFullGT {
                     }
                 }
             }
-
         }
 
         return sigma;
@@ -441,7 +437,6 @@ public class GTSurfaceTensionFullGT {
      */
     public static void directsolve(double rres[][], double JJ[][][], double C[][], double H,
             int Ngrid, double rhomat[][], int ncomp) {
-
         int i, j, k;
         double H2 = H * H;
         double bbtmp;
@@ -575,7 +570,6 @@ public class GTSurfaceTensionFullGT {
      * @param drhodz an array of {@link double} objects
      */
     public double calc_std_integral(double z[], double C[][], double drhodz[][]) {
-
         double h1 = z[1] - z[0];
         double mean, std_integral;
         int Ngrid = drhodz.length + 1;
