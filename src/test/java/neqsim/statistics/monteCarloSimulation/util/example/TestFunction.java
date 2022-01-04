@@ -7,6 +7,7 @@ import neqsim.statistics.parameterFitting.nonLinearParameterFitting.LevenbergMar
  *
  * @author Even Solbraa
  * @since 2.2.3
+ * @version $Id: $Id
  */
 public class TestFunction extends LevenbergMarquardtFunction {
     /** {@inheritDoc} */

@@ -1,8 +1,3 @@
-/*
- * Class.java
- *
- * Created on 19. november 2001, 11:43
- */
 package neqsim.thermo.component;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,8 +6,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
+ * <p>
+ * ComponentHydrate class.
+ * </p>
+ *
  * @author esol
- * @version
+ * @version $Id: $Id
  */
 public class ComponentHydrate extends Component {
 
@@ -42,10 +41,20 @@ public class ComponentHydrate extends Component {
     PhaseInterface refPhase = null;
 
     /**
-     * Creates new Class
+     * <p>Constructor for ComponentHydrate.</p>
      */
     public ComponentHydrate() {}
 
+    /**
+     * <p>
+     * Constructor for ComponentHydrate.
+     * </p>
+     *
+     * @param component_name a {@link java.lang.String} object
+     * @param moles a double
+     * @param molesInPhase a double
+     * @param compnumber a int
+     */
     public ComponentHydrate(String component_name, double moles, double molesInPhase,
             int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
@@ -120,22 +129,53 @@ public class ComponentHydrate extends Component {
         }
     }
 
+    /**
+     * <p>
+     * readHydrateParameters.
+     * </p>
+     */
     public void readHydrateParameters() {}
 
+    /** {@inheritDoc} */
     @Override
     public double fugcoef(PhaseInterface phase) {
         return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
                 phase.getPressure());
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>hydrateStructure</code>.
+     * </p>
+     *
+     * @param structure a int
+     */
     public void setHydrateStructure(int structure) {
         this.hydrateStructure = structure;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>hydrateStructure</code>.
+     * </p>
+     *
+     * @return a int
+     */
     public int getHydrateStructure() {
         return this.hydrateStructure;
     }
 
+    /**
+     * <p>
+     * fugcoef.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @return a double
+     */
     public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
             fugasityCoeffisient = -1e50;
@@ -189,6 +229,15 @@ public class ComponentHydrate extends Component {
         return fugasityCoeffisient;
     }
 
+    /**
+     * <p>
+     * getEmptyHydrateStructureVapourPressure.
+     * </p>
+     *
+     * @param type a int
+     * @param temperature a double
+     * @return a double
+     */
     public double getEmptyHydrateStructureVapourPressure(int type, double temperature) {
         if (type == -1) {
             return getSolidVaporPressure(temperature);
@@ -200,15 +249,45 @@ public class ComponentHydrate extends Component {
         }
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>emptyHydrateVapourPressureConstant</code>.
+     * </p>
+     *
+     * @param hydrateStructure a int
+     * @param parameterNumber a int
+     * @param value a double
+     */
     public void setEmptyHydrateVapourPressureConstant(int hydrateStructure, int parameterNumber,
             double value) {
         emptyHydrateVapourPressureConstant[hydrateStructure][parameterNumber] = value;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>emptyHydrateVapourPressureConstant</code>.
+     * </p>
+     *
+     * @param hydrateStructure a int
+     * @param parameterNumber a int
+     * @return a double
+     */
     public double getEmptyHydrateVapourPressureConstant(int hydrateStructure, int parameterNumber) {
         return emptyHydrateVapourPressureConstant[hydrateStructure][parameterNumber];
     }
 
+    /**
+     * <p>
+     * calcChemPotEmpty.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @param hydrateStruct a int
+     * @return a double
+     */
     public double calcChemPotEmpty(PhaseInterface phase, int numberOfComps, double temp,
             double pres, int hydrateStruct) {
         double dGf = 0.0, dHf = 0.0, Cpa = getCpA(), Cpb = getCpB(), Cpc = getCpC(), Cpd = getCpD();
@@ -234,6 +313,18 @@ public class ComponentHydrate extends Component {
                 + deltaMolarVolume / R / ((temp + T0) / 2.0) * (pres * 1e5 - 1e5);
     }
 
+    /**
+     * <p>
+     * calcChemPotIdealWater.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @param numberOfComps a int
+     * @param temp a double
+     * @param pres a double
+     * @param hydrateStruct a int
+     * @return a double
+     */
     public double calcChemPotIdealWater(PhaseInterface phase, int numberOfComps, double temp,
             double pres, int hydrateStruct) {
         double dGf = -228700.0, dHf = -242000.0, Cpa = getCpA(), Cpb = getCpB(), Cpc = getCpC(),
@@ -247,6 +338,16 @@ public class ComponentHydrate extends Component {
         return (dGf / R / T0 + 1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0));
     }
 
+    /**
+     * <p>
+     * calcYKI.
+     * </p>
+     *
+     * @param stucture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
@@ -267,6 +368,16 @@ public class ComponentHydrate extends Component {
         // else return 0.0;
     }
 
+    /**
+     * <p>
+     * calcCKI.
+     * </p>
+     *
+     * @param stucture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         double cki = 4.0 * pi / (boltzmannConstant * phase.getTemperature())
                 * potIntegral(stucture, cavityType, phase);
@@ -274,11 +385,29 @@ public class ComponentHydrate extends Component {
         return cki;
     }
 
+    /**
+     * <p>
+     * setRefFug.
+     * </p>
+     *
+     * @param compNumbm a int
+     * @param val a double
+     */
     public void setRefFug(int compNumbm, double val) {
         // System.out.println("ref fug setting " + val);
         reffug[compNumbm] = val;
     }
 
+    /**
+     * <p>
+     * potIntegral.
+     * </p>
+     *
+     * @param stucture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
         double val = 0.0;
         double endval = cavRadius[stucture][cavityType] - getSphericalCoreRadiusHydrate();
@@ -295,6 +424,17 @@ public class ComponentHydrate extends Component {
         return val / 100000.0;
     }
 
+    /**
+     * <p>
+     * getPot.
+     * </p>
+     *
+     * @param radius a double
+     * @param struccture a int
+     * @param cavityType a int
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     * @return a double
+     */
     public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
         double pot = 2.0 * coordNumb[struccture][cavityType]
                 * this.getLennardJonesEnergyParameterHydrate()
@@ -318,6 +458,18 @@ public class ComponentHydrate extends Component {
         return pot;
     }
 
+    /**
+     * <p>
+     * delt.
+     * </p>
+     *
+     * @param n a double
+     * @param radius a double
+     * @param struccture a int
+     * @param cavityType a int
+     * @param comp a {@link neqsim.thermo.component.ComponentInterface} object
+     * @return a double
+     */
     public double delt(double n, double radius, int struccture, int cavityType,
             ComponentInterface comp) {
         double delt = 1.0 / n * (Math
@@ -334,30 +486,83 @@ public class ComponentHydrate extends Component {
         return delt;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dGfHydrate</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getDGfHydrate() {
         return dGfHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dGfHydrate</code>.
+     * </p>
+     *
+     * @param dGfHydrate an array of {@link double} objects
+     */
     public void setDGfHydrate(double[] dGfHydrate) {
         this.dGfHydrate = dGfHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dGfHydrate</code>.
+     * </p>
+     *
+     * @param dGfHydrate a double
+     * @param i a int
+     */
     public void setDGfHydrate(double dGfHydrate, int i) {
         this.dGfHydrate[i] = dGfHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dHfHydrate</code>.
+     * </p>
+     *
+     * @param dHfHydrate a double
+     * @param i a int
+     */
     public void setDHfHydrate(double dHfHydrate, int i) {
         this.dHfHydrate[i] = dHfHydrate;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>dHfHydrate</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
+     */
     public double[] getDHfHydrate() {
         return dHfHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>dHfHydrate</code>.
+     * </p>
+     *
+     * @param dHfHydrate an array of {@link double} objects
+     */
     public void setDHfHydrate(double[] dHfHydrate) {
         this.dHfHydrate = dHfHydrate;
     }
 
+    /**
+     * <p>
+     * getMolarVolumeHydrate.
+     * </p>
+     *
+     * @param structure a int
+     * @param temperature a double
+     * @return a double
+     */
     public double getMolarVolumeHydrate(int structure, double temperature) {
         // taken from chem.eng.sci Avlonitis 1994
         double TO = 273.15;
@@ -378,31 +583,80 @@ public class ComponentHydrate extends Component {
         }
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>sphericalCoreRadiusHydrate</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getSphericalCoreRadiusHydrate() {
         return sphericalCoreRadiusHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>sphericalCoreRadiusHydrate</code>.
+     * </p>
+     *
+     * @param sphericalCoreRadiusHydrate a double
+     */
     public void setSphericalCoreRadiusHydrate(double sphericalCoreRadiusHydrate) {
         this.sphericalCoreRadiusHydrate = sphericalCoreRadiusHydrate;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>lennardJonesEnergyParameterHydrate</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getLennardJonesEnergyParameterHydrate() {
         return lennardJonesEnergyParameterHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>lennardJonesEnergyParameterHydrate</code>.
+     * </p>
+     *
+     * @param lennardJonesEnergyParameterHydrate a double
+     */
     public void setLennardJonesEnergyParameterHydrate(double lennardJonesEnergyParameterHydrate) {
         this.lennardJonesEnergyParameterHydrate = lennardJonesEnergyParameterHydrate;
     }
 
+    /**
+     * <p>
+     * Getter for the field <code>lennardJonesMolecularDiameterHydrate</code>.
+     * </p>
+     *
+     * @return a double
+     */
     public double getLennardJonesMolecularDiameterHydrate() {
         return lennardJonesMolecularDiameterHydrate;
     }
 
+    /**
+     * <p>
+     * Setter for the field <code>lennardJonesMolecularDiameterHydrate</code>.
+     * </p>
+     *
+     * @param lennardJonesMolecularDiameterHydrate a double
+     */
     public void setLennardJonesMolecularDiameterHydrate(
             double lennardJonesMolecularDiameterHydrate) {
         this.lennardJonesMolecularDiameterHydrate = lennardJonesMolecularDiameterHydrate;
     }
 
+    /**
+     * <p>
+     * setSolidRefFluidPhase.
+     * </p>
+     *
+     * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+     */
     public void setSolidRefFluidPhase(PhaseInterface phase) {
         try {
             refPhase = phase.getClass().getDeclaredConstructor().newInstance();
@@ -465,16 +719,27 @@ public class ComponentHydrate extends Component {
     // }
 
     /**
+     * <p>
+     * Getter for the field <code>cavprwat</code>.
+     * </p>
+     *
      * @return the cavprwat
+     * @param structure a int
+     * @param cavityType a int
      */
     public double getCavprwat(int structure, int cavityType) {
         return getCavprwat()[structure][cavityType];
     }
 
     /**
-     * @return the cavprwat
+     * <p>
+     * Getter for the field <code>cavprwat</code>.
+     * </p>
+     *
+     * @return an array of {@link double} objects
      */
     public double[][] getCavprwat() {
         return cavprwat;
     }
 }
+

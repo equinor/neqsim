@@ -1,15 +1,13 @@
-/*
- * Class.java
- *
- * Created on 19. november 2001, 11:43
- */
 package neqsim.thermo.component;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
-import org.apache.logging.log4j.*;
 
 /**
- * <p>ComponentHydrateBallard class.</p>
+ * <p>
+ * ComponentHydrateBallard class.
+ * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,20 +18,22 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     static Logger logger = LogManager.getLogger(ComponentHydrateBallard.class);
 
     /**
-     * Creates new Class
+     * <p>Constructor for ComponentHydrateBallard.</p>
      */
-    public ComponentHydrateBallard() {
-    }
+    public ComponentHydrateBallard() {}
 
     /**
-     * <p>Constructor for ComponentHydrateBallard.</p>
+     * <p>
+     * Constructor for ComponentHydrateBallard.
+     * </p>
      *
      * @param component_name a {@link java.lang.String} object
      * @param moles a double
      * @param molesInPhase a double
      * @param compnumber a int
      */
-    public ComponentHydrateBallard(String component_name, double moles, double molesInPhase, int compnumber) {
+    public ComponentHydrateBallard(String component_name, double moles, double molesInPhase,
+            int compnumber) {
         super(component_name, moles, molesInPhase, compnumber);
         coordNumb[0][0] = 20.0;
         coordNumb[0][1] = 24.0;
@@ -54,15 +54,16 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         cavprwat[1][1] = 1.0 / 17.0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double fugcoef(PhaseInterface phase) {
-        return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure());
+    public double fugcoef(PhaseInterface phase) {
+        return fugcoef(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+                phase.getPressure());
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
+    public double fugcoef(PhaseInterface phase, int numberOfComps, double temp, double pres) {
         if (componentName.equals("water")) {
             refPhase.setTemperature(temp);
             refPhase.setPressure(pres);
@@ -81,7 +82,8 @@ public class ComponentHydrateBallard extends ComponentHydrate {
             for (int cavType = 0; cavType < 2; cavType++) {
                 tempy = 0.0;
                 for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-                    double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType, phase);
+                    double tee = ((ComponentHydrate) phase.getComponent(j))
+                            .calcYKI(hydrateStructure, cavType, phase);
                     tempy += tee;
                 }
                 val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
@@ -90,10 +92,9 @@ public class ComponentHydrateBallard extends ComponentHydrate {
                     + " calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) "
                     + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure) + " "
                     + calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure));
-            fugasityCoeffisient = alphaWater
-                    * Math.exp(
-                            wateralphaRef + val + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure)
-                                    - calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure))
+            fugasityCoeffisient = alphaWater * Math.exp(wateralphaRef + val
+                    + calcChemPotEmpty(phase, numberOfComps, temp, pres, hydrateStructure)
+                    - calcChemPotIdealWater(phase, numberOfComps, temp, pres, hydrateStructure))
                     / (pres);
             // System.out.println("fugcoef " + tempfugcoef + "structure " +
             // (hydrateStruct+1));
@@ -107,9 +108,9 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return fugasityCoeffisient;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
+    public double calcYKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
         }
@@ -117,8 +118,8 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         double temp = 1.0;
         for (int i = 0; i < phase.getNumberOfComponents(); i++) {
             if (phase.getComponent(i).isHydrateFormer()) {
-                temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase) * 1.0e5
-                        * reffug[i];
+                temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType,
+                        phase) * 1.0e5 * reffug[i];
             }
             // System.out.println("yk2 "+
             // ((ComponentHydrateBallard)phase.getComponent(i)).calcCKI(stucture,
@@ -131,21 +132,21 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         // else return 0.0;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
+    public double calcCKI(int stucture, int cavityType, PhaseInterface phase) {
         if (componentName.equals("water")) {
             return 0.0;
         }
-        double cki = 4.0 * pi / (phase.getTemperature() * R) * potIntegral(stucture, cavityType, phase)
-                * avagadroNumber;
+        double cki = 4.0 * pi / (phase.getTemperature() * R)
+                * potIntegral(stucture, cavityType, phase) * avagadroNumber;
         // System.out.println("cki " + cki + " " + componentName);
         return cki / 1.0e30;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
+    public double potIntegral(int stucture, int cavityType, PhaseInterface phase) {
         double val = 0.0;
         double endval = cavRadius[stucture][cavityType] - getSphericalCoreRadius();
         double x = 0.0, step = endval / 100.0;
@@ -168,18 +169,20 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         return val;
     }
 
-	/** {@inheritDoc} */
+    /** {@inheritDoc} */
     @Override
-	public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
+    public double getPot(double radius, int struccture, int cavityType, PhaseInterface phase) {
         double pot = 2.0 * coordNumb[struccture][cavityType] * this.getLennardJonesEnergyParameter()
                 * ((Math.pow(this.getLennardJonesMolecularDiameter(), 12.0)
                         / (Math.pow(cavRadius[struccture][cavityType], 11.0) * radius)
-                        * (delt(10.0, radius, struccture, cavityType) + getSphericalCoreRadius()
-                                / cavRadius[struccture][cavityType] * delt(11.0, radius, struccture, cavityType)))
+                        * (delt(10.0, radius, struccture, cavityType)
+                                + getSphericalCoreRadius() / cavRadius[struccture][cavityType]
+                                        * delt(11.0, radius, struccture, cavityType)))
                         - (Math.pow(this.getLennardJonesMolecularDiameter(), 6.0)
                                 / (Math.pow(cavRadius[struccture][cavityType], 5.0) * radius)
                                 * (delt(4.0, radius, struccture, cavityType)
-                                        + getSphericalCoreRadius() / cavRadius[struccture][cavityType]
+                                        + getSphericalCoreRadius()
+                                                / cavRadius[struccture][cavityType]
                                                 * delt(5.0, radius, struccture, cavityType))));
 
         pot = Math.exp(-pot / (phase.getTemperature())) * radius * radius;
@@ -194,7 +197,9 @@ public class ComponentHydrateBallard extends ComponentHydrate {
     }
 
     /**
-     * <p>delt.</p>
+     * <p>
+     * delt.
+     * </p>
      *
      * @param n a double
      * @param radius a double
@@ -206,9 +211,9 @@ public class ComponentHydrateBallard extends ComponentHydrate {
         double diff1 = (radius + getSphericalCoreRadius()) / cavRadius[struccture][cavityType];
         double diff2 = (radius - getSphericalCoreRadius()) / cavRadius[struccture][cavityType];
         double delt = 1.0 / n * (Math.pow(1.0 - diff1, -n) - Math.pow(1.0 + diff2, -n));
-//        System.out.println("diff1 " + diff1);
-//        System.out.println("diff2 " + diff2);
-//        System.out.println("delt " + delt);
+        // System.out.println("diff1 " + diff1);
+        // System.out.println("diff2 " + diff2);
+        // System.out.println("delt " + delt);
         if (Double.isNaN(delt)) {
             logger.error("delt NaN ...");
         }
